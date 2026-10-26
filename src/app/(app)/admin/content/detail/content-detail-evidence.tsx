@@ -26,7 +26,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
   );
   return (
               <details className="group/details border-t border-[#E2E2DF]/60 pt-5 mt-5" open>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-normal text-[#141413] select-none">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[14px] font-normal text-[#141413] select-none">
                   <div className="flex items-center gap-2">
                     <span>数据截图证据</span>
                     {activeScreenshots.length > 0 && (

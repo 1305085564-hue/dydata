@@ -73,7 +73,7 @@ export function ContentListSecondaryFilters({
       <DropdownMenuTrigger
         type="button"
         className={cn(
-          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[13px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
+          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[14px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
           secondarySummary.isActive
             ? "text-[#141413] font-medium shadow-input"
             : "text-[#1F1E1D] font-normal"
@@ -96,7 +96,7 @@ export function ContentListSecondaryFilters({
           {/* 1. 指定账号 */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-              <span className="text-[13px] text-[#1F1E1D]">指定账号</span>
+              <span className="text-[14px] text-[#1F1E1D]">指定账号</span>
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1 truncate max-w-24",
@@ -128,7 +128,7 @@ export function ContentListSecondaryFilters({
               >
                 <DropdownMenuRadioItem
                   value="all"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   全部账号
                 </DropdownMenuRadioItem>
@@ -136,7 +136,7 @@ export function ContentListSecondaryFilters({
                   <DropdownMenuRadioItem
                     key={a.id}
                     value={a.id}
-                    className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                    className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                   >
                     {accountDisplayLabels.get(a.id) ?? a.name}
                   </DropdownMenuRadioItem>
@@ -151,7 +151,7 @@ export function ContentListSecondaryFilters({
           {/* 3. 24h 播放量档位 */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-              <span className="text-[13px] text-[#1F1E1D]">播放量档位</span>
+              <span className="text-[14px] text-[#1F1E1D]">播放量档位</span>
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1 truncate max-w-20",
@@ -168,7 +168,7 @@ export function ContentListSecondaryFilters({
               >
                 <DropdownMenuRadioItem
                   value="all"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   全部流量
                 </DropdownMenuRadioItem>
@@ -176,7 +176,7 @@ export function ContentListSecondaryFilters({
                   <DropdownMenuRadioItem
                     key={bucket.key}
                     value={bucket.key}
-                    className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                    className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                   >
                     {bucket.label}
                   </DropdownMenuRadioItem>
@@ -184,7 +184,7 @@ export function ContentListSecondaryFilters({
                 <DropdownMenuRadioItem
                   value={CUSTOM_PLAY_BUCKET_KEY}
                   closeOnClick={false}
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   自定义区间…
                 </DropdownMenuRadioItem>
@@ -223,7 +223,7 @@ export function ContentListSecondaryFilters({
           {/* 4. 评级 */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-              <span className="text-[13px] text-[#1F1E1D]">评级</span>
+              <span className="text-[14px] text-[#1F1E1D]">评级</span>
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1",
@@ -242,37 +242,37 @@ export function ContentListSecondaryFilters({
               >
                 <DropdownMenuRadioItem
                   value="all"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   全部
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="excellent"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   优
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="good"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   良
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="fair"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   普
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="poor"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   劣
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="unrated"
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   未评级
                 </DropdownMenuRadioItem>
@@ -359,7 +359,7 @@ function DataHighlightSubmenu({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-        <span className="text-[13px] text-[#1F1E1D]">数据高亮</span>
+        <span className="text-[14px] text-[#1F1E1D]">数据高亮</span>
         <span
           className={cn(
             "ml-auto text-[12px] mr-1",
@@ -373,7 +373,7 @@ function DataHighlightSubmenu({
         {/* 字段选择：嵌套子菜单，12 项可滚动 */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-            <span className="text-[13px] text-[#1F1E1D]">选择字段</span>
+            <span className="text-[14px] text-[#1F1E1D]">选择字段</span>
             <span
               className={cn(
                 "ml-auto text-[12px] mr-1",
@@ -393,7 +393,7 @@ function DataHighlightSubmenu({
                   key={field.key}
                   value={field.key}
                   closeOnClick={false}
-                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
                   {field.label}
                 </DropdownMenuRadioItem>
@@ -501,7 +501,7 @@ function DataHighlightSubmenu({
             <DropdownMenuItem
               onClick={handleToggleHighlightOnly}
               closeOnClick={false}
-              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+              className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
             >
               <Check className={cn("mr-1 size-3.5", filters.highlightOnly ? "text-status-warning" : "opacity-0")} />
               只看命中高亮的行

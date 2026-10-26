@@ -513,7 +513,7 @@ export function ContentListTable({
                     }
                   }}
                   onMouseLeave={() => setHoveredColKey(null)}
-                  className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]"
+                  className="divide-y divide-[#E2E2DF]/60 text-[14px] text-[#1F1E1D]"
                 >
                   {visibleRows.length === 0 ? (
                     <tr>
@@ -563,7 +563,7 @@ export function ContentListTable({
                                     onSelectVideoId(video.id);
                                   }}
                                   aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
-                                  className="truncate text-left text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
+                                  className="truncate text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
                                 >
                                   {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                                 </button>
@@ -609,7 +609,7 @@ export function ContentListTable({
                           {/* 核心指标（排在互动率前面） */}
                           <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
-                              <span className="text-[13px] font-normal text-[#1F1E1D]">
+                              <span className="text-[14px] font-normal text-[#1F1E1D]">
                                 <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
                                 <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
                               </span>

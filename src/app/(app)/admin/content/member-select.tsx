@@ -42,7 +42,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          "inline-flex h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 text-[13px] text-[#1F1E1D] shadow-input cursor-pointer select-none transition-colors hover:bg-[#EBEBE9] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-[state=open]:border-[#78716C]",
+          "inline-flex h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 text-[14px] text-[#1F1E1D] shadow-input cursor-pointer select-none transition-colors hover:bg-[#EBEBE9] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-[state=open]:border-[#78716C]",
         )}
       >
         <span className={cn("whitespace-nowrap", isAll && "text-[#78716C]")}>
@@ -60,7 +60,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="搜索成员…"
-              className="h-8 pl-7 text-[13px]"
+              className="h-8 pl-7 text-[14px]"
             />
           </div>
         </div>
@@ -71,7 +71,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
             type="button"
             onClick={() => handleSelect("")}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-left transition-colors",
+              "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-left transition-colors",
               isAll
                 ? "bg-[#E4E4E1] text-[#141413] font-medium"
                 : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
@@ -94,7 +94,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
                   type="button"
                   onClick={() => handleSelect(p.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-left transition-colors",
+                    "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-left transition-colors",
                     selected
                       ? "bg-[#E4E4E1] text-[#141413] font-medium"
                       : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",

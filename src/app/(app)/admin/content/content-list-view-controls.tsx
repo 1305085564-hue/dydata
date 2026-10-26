@@ -34,7 +34,7 @@ export function ContentListViewControls({
               disabled={isViewLoading}
               aria-pressed={view === "all"}
               className={cn(
-                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer border shadow-input",
+                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
                 isViewLoading && "cursor-wait",
                 view === "all"
                   ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
@@ -50,7 +50,7 @@ export function ContentListViewControls({
                 disabled={isViewLoading}
                 aria-pressed={view === "trash"}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer border shadow-input",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
                   isViewLoading && "cursor-wait",
                   view === "trash"
                     ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
@@ -82,7 +82,7 @@ export function ContentListViewControls({
                 type="button"
                 onClick={toggleOnlyAnomaly}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer select-none",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
                     : anomalyCountForTime > 0

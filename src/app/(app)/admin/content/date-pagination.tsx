@@ -149,7 +149,7 @@ export function DatePagination({
           if (next) setViewMonth(toYearMonth(currentDate || today));
         }}
       >
-        <PopoverTrigger className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
+        <PopoverTrigger className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
           <Calendar className="size-3.5 text-[#78716C]" />
           <span className="font-medium">{loadingLabel}</span>
         </PopoverTrigger>
@@ -163,7 +163,7 @@ export function DatePagination({
             >
               <ChevronLeft className="size-4" />
             </button>
-            <span className="text-[13px] font-medium text-[#141413]">
+            <span className="text-[14px] font-medium text-[#141413]">
               {year}年{month + 1}月
             </span>
             <button
@@ -195,7 +195,7 @@ export function DatePagination({
                   type="button"
                   onClick={() => pickDate(date)}
                   className={cn(
-                    "relative flex h-9 items-center justify-center rounded-md text-[13px] transition-colors cursor-pointer",
+                    "relative flex h-9 items-center justify-center rounded-md text-[14px] transition-colors cursor-pointer",
                     isSelected
                       ? "bg-[#141413] text-white font-medium"
                       : count
@@ -224,7 +224,7 @@ export function DatePagination({
             <button
               type="button"
               onClick={() => pickDate(today)}
-              className="w-full rounded-md py-1.5 text-[13px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+              className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
             >
               跳到今天
             </button>
@@ -232,7 +232,7 @@ export function DatePagination({
               type="button"
               onClick={() => availableDates[0] && pickDate(availableDates[0])}
               disabled={availableDates.length === 0}
-              className="w-full rounded-md py-1.5 text-[13px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               跳到最新
             </button>

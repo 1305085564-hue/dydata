@@ -29,7 +29,7 @@ const ContentDetailDialog = dynamic(
   {
     ssr: false,
     loading: () => (
-      <section className="flex min-h-[360px] flex-col items-center justify-center py-16 text-center text-[13px] text-[#78716C]">
+      <section className="flex min-h-[360px] flex-col items-center justify-center py-16 text-center text-[14px] text-[#78716C]">
         正在加载视频详情…
       </section>
     ),
@@ -372,10 +372,10 @@ export function ContentPageClient({
             欢迎使用视频复盘工作台
           </DialogTitle>
         </DialogHeader>
-        <p className="text-[13px] text-[#1F1E1D] leading-relaxed">
+        <p className="text-[14px] text-[#1F1E1D] leading-relaxed">
           复盘页按天组织：打开就停在最近有作品的一天，你可以逐日回看：
         </p>
-        <ol className="space-y-2 text-[13px] text-[#1F1E1D]">
+        <ol className="space-y-2 text-[14px] text-[#1F1E1D]">
           <li className="flex items-start gap-2">
             <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-status-danger/10 text-status-danger font-normal text-[12px]">
               1

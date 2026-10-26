@@ -163,7 +163,7 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-current text-[#D97757]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                      <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
                         爆款数据核心大盘
                       </h3>
                       {overallGrade && (
@@ -289,7 +289,7 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                      <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
                         快照全量指标明细
                       </h3>
                     </div>

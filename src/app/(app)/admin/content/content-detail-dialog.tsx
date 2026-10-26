@@ -384,7 +384,7 @@ export function ContentDetailDialog({
 
         {/* 移入回收站就地确认横幅（防误触作废日报） */}
         {showConfirmTrash && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
               <AlertTriangle className="size-4 text-status-warning shrink-0" />
               <span>确认移入回收站？该作品将隐藏，关联的成员绩效日报将同步作废。</span>
@@ -414,7 +414,7 @@ export function ContentDetailDialog({
 
         {/* 永久删除就地确认横幅（消除 Sheet 外再叠弹窗） */}
         {showConfirmPurge && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
               <AlertTriangle className="size-4 text-status-danger shrink-0" />
               <span>确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。</span>
@@ -444,7 +444,7 @@ export function ContentDetailDialog({
 
         {/* 恢复就地确认横幅（会连带复活关联日报，与另两个生命周期操作同规格） */}
         {showConfirmRestore && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
               <AlertTriangle className="size-4 text-status-success shrink-0" />
               <span>确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。</span>
@@ -510,7 +510,7 @@ export function ContentDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#1F1E1D]" />
-                    <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                    <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
                       视频文案内容库
                     </h3>
                     <span className="text-[12px] text-[#78716C] font-normal">
@@ -533,7 +533,7 @@ export function ContentDetailDialog({
                   )}
                 </div>
 
-                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
+                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[14px] leading-[1.8] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -544,7 +544,7 @@ export function ContentDetailDialog({
               {onToggleTopicLibrary && <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[13px] font-medium text-[#141413]">选题库</h3>
+                    <h3 className="text-[14px] font-medium text-[#141413]">选题库</h3>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"
