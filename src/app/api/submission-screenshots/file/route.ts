@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
+import { createRequestContext } from "@/lib/request-context";
+import { reportScreenshotReadFailure, type ScreenshotReadFailureEvent } from "@/lib/screenshot-read-observability";
 import { createClient } from "@/lib/supabase/server";
 import { __internal as screenshotAccess } from "@/lib/submission-screenshot-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -23,6 +26,7 @@ interface FileRouteDependencies {
     expiresIn: number
   ) => Promise<{ signedUrl: string | null; error: { message?: string } | null }>;
   readScreenshot?: (path: string) => Promise<ScreenshotReadResult>;
+  reportReadFailure?: (event: ScreenshotReadFailureEvent) => void;
 }
 
 /**
@@ -100,8 +104,25 @@ export async function buildSubmissionScreenshotFileResponse(
       ? await readSubmissionScreenshot(path, { createSignedUrl: dependencies.createSignedUrl })
       : await readSubmissionScreenshot(path);
   if (storage.kind === "failure") {
-    console.info("[screenshot-storage]", JSON.stringify({ event: "read_failed", mode, auth_ms: authMs, errors: storage.errors }));
-    return NextResponse.json({ error: storage.notFound ? "截图不存在或暂时无法读取" : "截图存储暂时不可用" }, { status: storage.notFound ? 404 : 502 });
+    const { requestId } = createRequestContext({ route: "/api/submission-screenshots/file", operation: "read-screenshot" });
+    if (!storage.notFound) {
+      try {
+        (dependencies.reportReadFailure ?? reportScreenshotReadFailure)({
+          requestId, mode, authMs,
+          imageKey: createHash("sha256").update(path).digest("hex").slice(0, 16),
+          failure: storage.failure,
+        });
+      } catch { /* 观测失败不能改变读图响应。 */ }
+    }
+    const response = NextResponse.json({
+      error: storage.notFound ? "截图不存在或暂时无法读取" : "截图存储暂时不可用",
+      error_code: storage.notFound ? "SCREENSHOT_NOT_FOUND" : "SCREENSHOT_STORAGE_UNAVAILABLE",
+      requestId,
+    }, { status: storage.notFound ? 404 : 502 });
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("x-dydata-request-id", requestId);
+    if (!storage.notFound) response.headers.set("Retry-After", "2");
+    return response;
   }
 
   if (storage.kind === "redirect") {

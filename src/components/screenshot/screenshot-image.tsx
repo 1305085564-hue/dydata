@@ -12,6 +12,7 @@ import {
 } from "react";
 import { ImageOff, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createScreenshotRecovery } from "./screenshot-recovery";
 import {
   SCREENSHOT_RETRY_DELAY_MS,
   onScreenshotError,
@@ -83,7 +84,7 @@ export function ScreenshotPlaceholder({
 }
 
 /**
- * 截图专用 <img>：加载失败时先无感重试一次，仍失败才显示「截图无法显示」占位。
+ * 截图专用 <img>：先快速重试一次；占位后有界延后恢复，重新联网也可恢复。
  *
  * 只用于截图（`/api/submission-screenshots/file`），不要拿它包封面图之类
  * 语义不同的图片——这里的文案是「截图无法显示」，用错地方会撒谎。
@@ -104,6 +105,7 @@ export function ScreenshotImage({
   const [renderKey, setRenderKey] = useState(0);
   const [stateSrc, setStateSrc] = useState(src);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recovery = useRef<ReturnType<typeof createScreenshotRecovery<ReturnType<typeof setTimeout>>> | null>(null);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimer.current) {
@@ -131,6 +133,7 @@ export function ScreenshotImage({
 
     if (!decision.retry) {
       setStatus(decision.state.status);
+      recovery.current?.failed();
       return;
     }
 
@@ -145,6 +148,7 @@ export function ScreenshotImage({
   const handleLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
       clearRetryTimer();
+      recovery.current?.loaded();
       setAttempts(0);
       setStatus("loading");
       onLoad?.(event);
@@ -152,12 +156,35 @@ export function ScreenshotImage({
     [clearRetryTimer, onLoad]
   );
 
-  const handleManualRetry = useCallback(() => {
+  const handleRecovery = useCallback(() => {
     clearRetryTimer();
     setAttempts(0);
     setRenderKey((key) => key + 1);
     setStatus("loading");
   }, [clearRetryTimer]);
+
+  useEffect(() => {
+    const controller = createScreenshotRecovery({
+      retry: handleRecovery,
+      isOnline: () => navigator.onLine,
+      schedule: (run, delay) => setTimeout(run, delay),
+      cancel: (timer) => clearTimeout(timer),
+    });
+    recovery.current = controller;
+    window.addEventListener("online", controller.online);
+    window.addEventListener("offline", controller.offline);
+    return () => {
+      window.removeEventListener("online", controller.online);
+      window.removeEventListener("offline", controller.offline);
+      controller.dispose();
+      recovery.current = null;
+    };
+  }, [src, handleRecovery]);
+
+  const handleManualRetry = useCallback(() => {
+    recovery.current?.loaded();
+    handleRecovery();
+  }, [handleRecovery]);
 
   const handleManualRetryClick = useCallback(
     (event: MouseEvent<HTMLSpanElement>) => {

@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { cosDeleteObject, cosGetObject, cosHeadObject, cosPutObject, readCosConfig, type CosConfig } from "@/lib/cos/client";
+import { cosDeleteObject, cosGetObject, cosHeadObject, cosPutObject, readCosConfig, type CosConfig, type CosFailureDetail } from "@/lib/cos/client";
 
 export const SCREENSHOT_BUCKET = "submission-screenshots";
 export const DEFAULT_COS_READ_TIMEOUT_MS = 3_000;
@@ -42,7 +42,7 @@ function logStorage(event: string, detail: Record<string, unknown> = {}) {
 export type ScreenshotReadResult =
   | { kind: "redirect"; backend: "supabase"; signedUrl: string; fellBack: false }
   | { kind: "bytes"; backend: ScreenshotBackend; body: Uint8Array; contentType: string | null; etag: string | null; fellBack: boolean }
-  | { kind: "failure"; notFound: boolean; errors: string[] };
+  | { kind: "failure"; notFound: boolean; errors: string[]; failure?: CosFailureDetail };
 
 async function downloadFromSupabase(path: string) {
   const started = Date.now();
@@ -85,7 +85,7 @@ export async function readSubmissionScreenshot(
       return { kind: "bytes", backend: "supabase", body: supabase.body, contentType: supabase.contentType, etag: null, fellBack: true };
     }
     errors.push(`supabase:${supabase.error}`);
-    return { kind: "failure", notFound: Boolean(cosStatus === 404 && supabase.notFound), errors };
+    return { kind: "failure", notFound: Boolean(cosStatus === 404 && supabase.notFound), errors, failure: cos.failure };
   }
 
   const createSignedUrl = options.createSignedUrl ?? (async (targetPath, expiresIn) => {
@@ -111,7 +111,7 @@ export async function readSubmissionScreenshot(
     }
     errors.push(`cos:${cos.error ?? cosStatus}`);
     logStorage("read_failed", { backend: "cos", status: cosStatus, reason: cos.error ?? `cos_status_${cosStatus}`, cos_ms: Date.now() - startedAt, timeout_ms: cosTimeoutMs, fallback_reason: "supabase_primary_failed" });
-    return { kind: "failure", notFound: signed.error?.message?.includes("not found") === true && cosStatus === 404, errors };
+    return { kind: "failure", notFound: signed.error?.message?.includes("not found") === true && cosStatus === 404, errors, failure: cos.failure };
   }
 
   return { kind: "failure", notFound: true, errors };

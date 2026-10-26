@@ -278,3 +278,45 @@ test("关联授权服务失败明确503，不伪装成功或读图", async () =>
     assert.equal(response.status, 503);
   });
 });
+
+test("存储故障响应不可缓存且带关联编号，日志不泄露原图路径或底层原文", async () => {
+  const reports: unknown[] = [];
+  const response = await buildSubmissionScreenshotFileResponse(
+    new Request("https://dydata.cc/api/submission-screenshots/file?path=user-1%2Fprivate.png", { headers: { "x-request-id": "cookie=do-not-echo" } }),
+    {
+      getUser: async () => ({ id: "user-1" }),
+      getVisibleUserIds: async () => ["user-1"],
+      readScreenshot: async () => ({ kind: "failure", notFound: false, errors: ["cos:token=do-not-log"], failure: { kind: "network", code: "ECONNRESET", phase: "headers", attempts: 2 } }),
+      reportReadFailure: (report: unknown) => { reports.push(report); },
+    },
+  );
+  assert.equal(response.status, 502);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("retry-after"), "2");
+  const body = await response.json();
+  assert.equal(body.error_code, "SCREENSHOT_STORAGE_UNAVAILABLE");
+  assert.match(body.requestId, /^[0-9a-f-]{36}$/);
+  assert.equal(response.headers.get("x-dydata-request-id"), body.requestId);
+  assert.equal(reports.length, 1);
+  const report = reports[0] as { requestId: string; failure: { code: string } };
+  assert.equal(report.requestId, body.requestId);
+  assert.equal(report.failure.code, "ECONNRESET");
+  assert.doesNotMatch(JSON.stringify(reports), /private\.png|token=|do-not-log|do-not-echo/);
+});
+
+test("明确缺失仍返回404且不进入系统故障上报，不以自动恢复掩盖缺图", async () => {
+  let reports = 0;
+  const response = await buildSubmissionScreenshotFileResponse(
+    new Request("https://dydata.cc/api/submission-screenshots/file?path=user-1%2Fmissing.png"),
+    {
+      getUser: async () => ({ id: "user-1" }),
+      getVisibleUserIds: async () => ["user-1"],
+      readScreenshot: async () => ({ kind: "failure", notFound: true, errors: ["cos:404", "supabase:404"] }),
+      reportReadFailure: () => { reports++; },
+    },
+  );
+  assert.equal(response.status, 404);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("retry-after"), null);
+  assert.equal(reports, 0);
+});
