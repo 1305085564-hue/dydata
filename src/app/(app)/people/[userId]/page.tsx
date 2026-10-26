@@ -63,7 +63,7 @@ function NoticeCard({ title, description }: { title: string; description: string
   return (
     <div className="mx-auto w-full max-w-2xl pt-12">
       <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/40 p-8 text-center">
-        <div className="text-[14px] font-medium text-[#141413]">{title}</div>
+        <div className="text-[14px] text-[#141413]">{title}</div>
         <p className="text-[14px] text-[#78716C]">{description}</p>
         <Link
           href="/admin/collaboration"
@@ -389,7 +389,7 @@ export default async function PersonProfilePage({
       <Section title="最近状态">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[14px] font-medium text-[#141413]">异常作品</span>
+            <span className="text-[14px] text-[#141413]">异常作品</span>
             <span className="text-[12px] tabular-nums text-[#78716C]">共 {anomalies.length} 篇</span>
           </div>
           {anomalies.length === 0 ? (
