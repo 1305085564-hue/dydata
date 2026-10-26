@@ -36,7 +36,7 @@ function ItemHeading({
       data-slot="item-heading"
       {...(Tag === "button" ? { type } : null)}
       className={cn(
-        "text-[14px] leading-[1.40] font-medium",
+        "text-[14px] leading-[1.40]",
         muted ? "text-[#78716C]" : "text-[#141413]",
         className
       )}

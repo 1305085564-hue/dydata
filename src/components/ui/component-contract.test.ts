@@ -30,9 +30,10 @@ test("SectionHeading 保持章节定名规格：20px / 400 / #141413", () => {
   );
 });
 
-test("ItemHeading 保持条目定名规格：定名墨 #141413，降级只降墨度不降字号", () => {
+test("ItemHeading 保持条目定名规格：定名墨 #141413，层级不靠字重", () => {
   const item = readComponent("item-heading");
-  assert.match(item, /"text-\[14px\] leading-\[1\.40\] font-medium"/);
+  assert.match(item, /"text-\[14px\] leading-\[1\.40\]"/);
+  assert.doesNotMatch(item, /font-(medium|semibold|bold)/);
   assert.match(item, /muted \? "text-\[#78716C\]" : "text-\[#141413\]"/);
 });
 
@@ -61,6 +62,6 @@ test("ItemHeading 的 muted 真实渲染：降墨度、不降字号字重", () =
   assert.match(muted, /text-\[#78716C\]/);
   assert.doesNotMatch(muted, /text-\[#141413\]/);
   assert.match(muted, /text-\[14px\]/);
-  assert.match(muted, /font-medium/);
+  assert.doesNotMatch(muted, /font-(medium|semibold|bold)/);
   assert.match(muted, /<span/);
 });
