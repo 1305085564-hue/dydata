@@ -359,11 +359,17 @@ export async function replaceDailyReportUsageRecord(
     p_follows: prepared.data.follows,
     p_source: prepared.data.source,
     p_note: prepared.data.note,
-    p_result_flag: prepared.data.result_flag,
+    // 必须显式归一成 null：RPC 走 JSON 请求体，undefined 会被 JSON.stringify 直接丢掉，
+    // 参数少一个就匹配不到 12 参函数（PostgREST 回 PGRST202），整单提交被回滚。
+    p_result_flag: prepared.data.result_flag ?? null,
   });
 
   const replaced = pickUsageRecordFields(Array.isArray(data) ? data[0] : data);
   if (error || !replaced) {
+    console.error("[conversion-hub] replace usage rpc failed", {
+      code: error?.code,
+      message: error?.message,
+    });
     return toServerError("替换话术使用记录失败");
   }
 

@@ -891,6 +891,8 @@ async function handleVideoSubmit(
       source: "daily_report",
       daily_report_id: persistedReport.id,
       note: null,
+      // 日报提交不判定话术效果，显式给 null；漏传会让 RPC 参数缺失、整单回滚。
+      result_flag: null,
     });
 
     if (!usageRecordResult.ok) {

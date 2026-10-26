@@ -74,6 +74,70 @@ test("replaceDailyReportUsageRecord 使用单个 RPC 替换旧记录，不先删
   ]);
 });
 
+test("RPC 参数里必须带 p_result_flag，否则 JSON 序列化丢参数导致函数匹配失败", async () => {
+  let captured: Record<string, unknown> = {};
+  let capturedBody = "";
+
+  class Query {
+    constructor(private readonly table: string) {}
+
+    select() { return this; }
+    delete() { return this; }
+    insert() { return this; }
+    eq() { return this; }
+    order() { return this; }
+    limit() { return this; }
+    maybeSingle() { return this; }
+    single() { return this; }
+
+    then(resolve: (value: unknown) => void) {
+      let result: { data: unknown; error: null };
+      if (this.table === "profiles") {
+        result = { data: { id: "user-1", role: "member", permissions: {}, team_id: "team-1" }, error: null };
+      } else if (this.table === "daily_reports") {
+        result = { data: { id: "report-1", user_id: "user-1", account_id: "account-1" }, error: null };
+      } else if (this.table === "accounts") {
+        result = { data: { id: "account-1", name: "账号 A", profile_id: "user-1" }, error: null };
+      } else if (this.table === "violation_cases") {
+        result = { data: { id: "case-1", status: "verified", is_deleted: false }, error: null };
+      } else {
+        result = { data: [], error: null };
+      }
+      return Promise.resolve(result).then(resolve);
+    }
+  }
+
+  const supabase = {
+    from(table: string) {
+      return new Query(table);
+    },
+    rpc(_name: string, params: Record<string, unknown>) {
+      captured = params;
+      capturedBody = JSON.stringify(params);
+      return Promise.resolve({ data: [{ id: "usage-1" }], error: null });
+    },
+  };
+
+  // 复刻日报提交的真实调用：不传 result_flag（可选字段）
+  const result = await replaceDailyReportUsageRecord(supabase as never, "user-1", {
+    case_id: "case-1",
+    script_text: null,
+    script_format: "oral",
+    account_id: "account-1",
+    used_at: "2026-10-26",
+    views: 100,
+    follows: 5,
+    source: "daily_report",
+    daily_report_id: "report-1",
+    note: null,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(captured.p_result_flag, null);
+  assert.equal(JSON.parse(capturedBody).p_result_flag, null);
+  assert.equal(Object.keys(captured).length, 12);
+});
+
 test("替换记录缺 daily_report_id 时返回校验错误", async () => {
   const result = await replaceDailyReportUsageRecord({} as never, "user-1", {
     daily_report_id: null,
