@@ -47,7 +47,7 @@ export function PoolPagination({
                 type="button"
                 onClick={() => onPageChange(page)}
                 aria-current={currentPage === page ? "page" : undefined}
-                className={`w-8 h-8 rounded-md text-[13px] transition-colors cursor-pointer ${
+                className={`w-8 h-8 rounded-md text-[14px] transition-colors cursor-pointer ${
                   currentPage === page
                     ? "bg-white text-[#141413] font-normal shadow-input border border-[#E2E2DF]"
                     : "text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413]"

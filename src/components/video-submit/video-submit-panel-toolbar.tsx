@@ -54,7 +54,7 @@ export function VideoSubmitPanelToolbar({
                   创作立卷 · 表达纪事
                 </h1>
               </div>
-              <p className="text-[13px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
+              <p className="text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
                 从容记录每一次真实表达 · 数据沉淀与运营复盘
               </p>
             </div>
@@ -73,7 +73,7 @@ export function VideoSubmitPanelToolbar({
                 type="button"
                 onClick={() => setIsCalendarOpen((prev) => !prev)}
                 className={cn(
-                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
+                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
                   isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
                 )}
                 aria-expanded={isCalendarOpen}

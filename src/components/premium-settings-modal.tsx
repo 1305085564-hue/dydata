@@ -302,7 +302,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[14px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "profile"
                     ? "bg-[#E4E4E1] text-[#141413] font-normal"
                     : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
@@ -316,7 +316,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[14px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "accounts"
                     ? "bg-[#E4E4E1] text-[#141413] font-normal"
                     : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
@@ -330,7 +330,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[14px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "system"
                     ? "bg-[#E4E4E1] text-[#141413] font-normal"
                     : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
@@ -345,7 +345,7 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-normal text-[#1F1E1D] hover:text-status-danger hover:bg-[#EBEBE9] transition-colors duration-100"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[14px] font-normal text-[#1F1E1D] hover:text-status-danger hover:bg-[#EBEBE9] transition-colors duration-100"
                 >
                   <LogOut className="size-4 text-[#78716C] group-hover:text-status-danger" />
                   退出当前系统
@@ -367,7 +367,7 @@ export function PremiumSettingsModal({
                   <ItemHeading as="h3">
                     个人资料设置
                   </ItemHeading>
-                  <p className="text-[13px] text-[#1F1E1D] mt-1">
+                  <p className="text-[14px] text-[#1F1E1D] mt-1">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
@@ -433,7 +433,7 @@ export function PremiumSettingsModal({
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-[13px] font-normal text-[#141413]">
+                        <p className="truncate text-[14px] font-normal text-[#141413]">
                           {editingName}
                         </p>
                         <p className="text-[12px] text-[#78716C] mt-0.5">
@@ -458,7 +458,7 @@ export function PremiumSettingsModal({
                     <ItemHeading as="h3">
                       账号矩阵配置
                     </ItemHeading>
-                    <p className="text-[13px] text-[#1F1E1D] mt-0.5">
+                    <p className="text-[14px] text-[#1F1E1D] mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
                   </div>
@@ -681,7 +681,7 @@ export function PremiumSettingsModal({
                   <ItemHeading as="h3">
                     系统参数配置
                   </ItemHeading>
-                  <p className="text-[13px] text-[#1F1E1D] mt-1">
+                  <p className="text-[14px] text-[#1F1E1D] mt-1">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
                 </div>
@@ -691,7 +691,7 @@ export function PremiumSettingsModal({
                   <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all shadow-card-ring">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <span className="text-[13px] font-normal text-[#141413]">
+                        <span className="text-[14px] font-normal text-[#141413]">
                           启用每日催交动态提醒
                         </span>
                         <span className="block text-[12px] text-[#78716C] mt-0.5">

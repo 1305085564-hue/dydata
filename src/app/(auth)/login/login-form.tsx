@@ -101,7 +101,7 @@ export function LoginForm({
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
           <Alert variant="error">
-            <span className="text-[13px] font-normal text-[#1F1E1D]">
+            <span className="text-[14px] font-normal text-[#1F1E1D]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
@@ -116,7 +116,7 @@ export function LoginForm({
         )}
         {showExpiredAlert && (
           <Alert variant="warning">
-            <span className="text-[13px] font-normal text-status-warning">
+            <span className="text-[14px] font-normal text-status-warning">
               登录会话已过期，请重新登录
             </span>
             <button
@@ -141,7 +141,7 @@ export function LoginForm({
             required
             type="email"
             value={emailValue}
-            className="h-9 text-[13px]"
+            className="h-9 text-[14px]"
           />
         </div>
 
@@ -167,7 +167,7 @@ export function LoginForm({
               value={password}
               ref={passwordInputRef}
               aria-invalid={Boolean(state.error)}
-              className="h-9 pr-9 text-[13px]"
+              className="h-9 pr-9 text-[14px]"
             />
             <button
               type="button"
@@ -187,7 +187,7 @@ export function LoginForm({
         </div>
 
         <label
-          className="flex items-center gap-2 text-[13px] text-[#78716C] cursor-pointer select-none"
+          className="flex items-center gap-2 text-[14px] text-[#78716C] cursor-pointer select-none"
           htmlFor="keep-logged-in"
         >
           <Checkbox
@@ -201,7 +201,7 @@ export function LoginForm({
 
         <SubmitButton />
 
-        <p className="text-center text-[13px] text-[#78716C]">
+        <p className="text-center text-[14px] text-[#78716C]">
           还没有账号？
           <Link className="ml-1 text-[#1F1E1D] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
             去注册

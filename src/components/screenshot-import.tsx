@@ -244,7 +244,7 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1 rounded-xl bg-[#FCFCFB] p-3.5 text-[13px] text-[#1F1E1D] shadow-card-ring">
+      <div className="space-y-1 rounded-xl bg-[#FCFCFB] p-3.5 text-[14px] text-[#1F1E1D] shadow-card-ring">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>
@@ -281,9 +281,9 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">
-          <p className="text-[13px] font-normal text-[#141413]">拖拽截图到这里，或点击选择图片</p>
-          <p className="text-[13px] text-[#78716C]">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
-          {fileName ? <p className="text-[13px] text-[#1F1E1D]">当前文件：{fileName}</p> : null}
+          <p className="text-[14px] font-normal text-[#141413]">拖拽截图到这里，或点击选择图片</p>
+          <p className="text-[14px] text-[#78716C]">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
+          {fileName ? <p className="text-[14px] text-[#1F1E1D]">当前文件：{fileName}</p> : null}
         </div>
       </div>
 
@@ -305,7 +305,7 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
             {FIELD_META.map((field) => (
               <Card key={field.key} className="p-4 gap-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-[13px] font-normal text-[#141413]">{field.label}</div>
+                  <div className="text-[14px] font-normal text-[#141413]">{field.label}</div>
                   <Badge
                     variant={getBadgeVariant(confidence[field.key])}
                     className={getBadgeClassName(confidence[field.key])}

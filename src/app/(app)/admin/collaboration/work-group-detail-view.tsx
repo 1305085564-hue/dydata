@@ -119,7 +119,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-[14px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <ArrowLeft className="size-3.5" />
             全部小队
@@ -140,7 +140,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={() => onOpenManageDrawer(summary.id)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <UserPlus className="size-3.5 text-[#D97757]" />
             成员管理
@@ -165,7 +165,7 @@ export function WorkGroupDetailView({
           <Card className="overflow-hidden p-0 gap-0">
             <Table>
               <TableHeader>
-                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
                   <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[120px]">
                     <button
                       type="button"
@@ -211,7 +211,7 @@ export function WorkGroupDetailView({
                   )}
                 </TableRow>
               </TableHeader>
-              <TableBody className="text-[13px]">
+              <TableBody className="text-[14px]">
                 {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
                 <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/60">
                   <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">

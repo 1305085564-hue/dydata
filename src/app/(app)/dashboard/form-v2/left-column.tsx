@@ -276,7 +276,7 @@ export function FormV2LeftColumn({
                       type="button"
                       onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
                       className={cn(
-                        "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-normal transition-all cursor-pointer",
+                        "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[14px] font-normal transition-all cursor-pointer",
                         isSelected
                           ? "bg-white text-[#141413] shadow-input font-normal"
                           : "text-[#78716C] hover:text-[#141413]"
@@ -303,7 +303,7 @@ export function FormV2LeftColumn({
                       type="button"
                       onClick={() => updateMeta("videoForm", form)}
                       className={cn(
-                        "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-normal transition-all cursor-pointer",
+                        "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[14px] font-normal transition-all cursor-pointer",
                         isSelected
                           ? "bg-white text-[#141413] shadow-input font-normal"
                           : "text-[#78716C] hover:text-[#141413]"

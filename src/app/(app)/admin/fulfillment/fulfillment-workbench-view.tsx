@@ -127,7 +127,7 @@ export function FulfillmentWorkbenchView({
         {isLoadingCalendar ? (
           <Card className="flex items-center justify-center py-16 gap-0">
             <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
-            <span className="text-[13px] font-normal text-[#78716C]">
+            <span className="text-[14px] font-normal text-[#78716C]">
               正在刷新日历数据...
             </span>
           </Card>

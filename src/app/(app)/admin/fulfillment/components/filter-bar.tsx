@@ -243,7 +243,7 @@ export function FilterBar({
             <DialogTitle>
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">
+            <DialogDescription className="text-[14px] text-[#78716C] mt-2 leading-relaxed">
               {confirmToggleTarget
                 ? "开启后，系统将在每日 18:00 查阅全员发布进度，向今日尚未提交作品的伙伴送达轻提醒。"
                 : "暂停后，将不再自动发送每日 18:00 的晚间提醒，可在需要时随时恢复。"}

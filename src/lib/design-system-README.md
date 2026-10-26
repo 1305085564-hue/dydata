@@ -68,7 +68,7 @@ export function AiTyping() {
   );
 
   return (
-    <p className="text-[13px] leading-6 text-[var(--color-text-secondary)]">
+    <p className="text-[14px] leading-6 text-[var(--color-text-secondary)]">
       {displayText}
       <span className={cursorClassName} aria-hidden="true" />
       {isComplete ? "" : null}

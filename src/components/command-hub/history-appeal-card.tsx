@@ -76,7 +76,7 @@ export function HistoryAppealCard({
 
       {/* Reason */}
       {appeal.reason && (
-        <div className="text-[13px] text-[#1F1E1D] leading-relaxed">
+        <div className="text-[14px] text-[#1F1E1D] leading-relaxed">
           <span className="text-[#78716C]">补交事由：</span>
           <span>{appeal.reason}</span>
         </div>

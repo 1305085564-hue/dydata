@@ -77,7 +77,7 @@ export function ModelFamilySelect({
         <SelectTrigger
           title={triggerTitle}
           className={cn(
-            "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors hover:bg-[#F7F7F6]/80 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10",
+            "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[14px] text-[#1F1E1D] shadow-input transition-colors hover:bg-[#F7F7F6]/80 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10",
             className
           )}
           aria-label="选择调度模型系列"

@@ -31,7 +31,7 @@ export function MemberAlerts({
     <>
         {/* ── 待审批入团申请预警栏（复用标准 Alert 规范） ── */}
         {pendingRequests.length > 0 && (
-          <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
+          <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[14px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/10 text-status-warning">
                 <span className="size-1.5 rounded-full bg-current text-status-warning" />
@@ -48,7 +48,7 @@ export function MemberAlerts({
                   className="flex items-center justify-between gap-4 py-2"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-normal text-[#141413]">{req.applicantName}</span>
+                    <span className="text-[14px] font-normal text-[#141413]">{req.applicantName}</span>
                     <span className="mx-2 text-[#E2E2DF]">·</span>
                     <span className="text-[12px] text-[#1F1E1D]">申请加入：{req.targetTeamName}</span>
                     <span className="mx-2 text-[#E2E2DF]">·</span>
@@ -83,7 +83,7 @@ export function MemberAlerts({
         )}
 
         {orphanExemptionCount > 0 && (
-          <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
+          <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[14px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/10 text-status-danger">
                 <span className="size-1.5 rounded-full bg-current text-status-danger" />
@@ -105,7 +105,7 @@ export function MemberAlerts({
                     <div key={request.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className="text-[13px] font-normal text-[#141413]">
+                          <span className="text-[14px] font-normal text-[#141413]">
                             {request.applicant_name}
                           </span>
                           <span className="text-[12px] text-status-danger">
@@ -155,7 +155,7 @@ export function MemberAlerts({
                 })}
               </AlertDescription>
             ) : (
-              <AlertDescription className="text-[13px] leading-[1.7] text-[#78716C]">
+              <AlertDescription className="text-[14px] leading-[1.7] text-[#78716C]">
                 有待公司所有者处理的归属异常
               </AlertDescription>
             )}

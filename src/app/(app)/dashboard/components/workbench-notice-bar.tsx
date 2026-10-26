@@ -185,7 +185,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
         key={notice.id}
         data-topic-context={notice.topicId}
         className={cn(
-          "flex items-center justify-between gap-2 text-[13px] text-[#78716C] min-h-[34px]",
+          "flex items-center justify-between gap-2 text-[14px] text-[#78716C] min-h-[34px]",
           isExpanded ? "py-2 px-3 sm:px-3.5" : "py-1.5 px-3 sm:px-3.5",
         )}
       >
@@ -195,7 +195,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             {notice.title}
           </span>
           {notice.description && (
-            <span className="truncate text-[#78716C] text-[12px] sm:text-[13px]">
+            <span className="truncate text-[#78716C] text-[12px] sm:text-[14px]">
               {notice.description}
             </span>
           )}

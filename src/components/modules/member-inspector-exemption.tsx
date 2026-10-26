@@ -43,7 +43,7 @@ export function MemberInspectorExemption({
                             />
                             <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-[13px] text-[#1F1E1D]">不参与考核</span>
+                                <span className="text-[14px] text-[#1F1E1D]">不参与考核</span>
                                 {activeMemberExemptionState.isPermanent ? (
                                   <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
                                     已设置不参与考核

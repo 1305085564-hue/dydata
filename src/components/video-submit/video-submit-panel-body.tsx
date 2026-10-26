@@ -121,14 +121,14 @@ export function VideoSubmitPanelBody({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="success">今日已归档</Badge>
-                        <span className="text-[12px] sm:text-[13px] font-normal text-[#78716C]">
+                        <span className="text-[12px] sm:text-[14px] font-normal text-[#78716C]">
                           已完成今日记录 · {activeDateReports.length || 1} 条作品
                         </span>
                       </div>
                       <SectionHeading as="h3">
                         万事俱备，静候佳音
                       </SectionHeading>
-                      <p className="text-[12px] sm:text-[13px] text-[#78716C]">
+                      <p className="text-[12px] sm:text-[14px] text-[#78716C]">
                         今日作品已妥善入库，数据已同步至总览。
                       </p>
                     </div>
@@ -277,7 +277,7 @@ export function VideoSubmitPanelBody({
                                 )}
                                 <div className="min-w-0 space-y-0.5">
                                   <div className="flex items-center gap-2">
-                                    <p className="text-[13px] sm:text-[14px] font-medium text-[#141413] truncate max-w-[240px] sm:max-w-md">
+                                    <p className="text-[14px] sm:text-[14px] font-medium text-[#141413] truncate max-w-[240px] sm:max-w-md">
                                       {reportTitle}
                                     </p>
                                     <span className="inline-flex items-center gap-1 text-[12px] text-status-success shrink-0 font-medium">
@@ -359,7 +359,7 @@ export function VideoSubmitPanelBody({
                         )}
                       />
                     </span>
-                    <span className="text-[13px] font-normal text-[#1F1E1D]">
+                    <span className="text-[14px] font-normal text-[#1F1E1D]">
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                   </div>
@@ -367,11 +367,11 @@ export function VideoSubmitPanelBody({
                     <SectionHeading as="h3">
                       {activeBizDate} · 豁免申请 ({activeDateStatus.label}) {/* 停笔调养 */}
                     </SectionHeading>
-                    <p className="mt-1 text-[13px] leading-relaxed text-[#78716C]">
+                    <p className="mt-1 text-[14px] leading-relaxed text-[#78716C]">
                       {activeDateStatus.description}
                     </p>
                     {activeExemptionState.reason && (
-                      <p className="mt-1 text-[13px] text-[#78716C]">
+                      <p className="mt-1 text-[14px] text-[#78716C]">
                         事由：{activeExemptionState.reason}
                       </p>
                     )}
@@ -405,7 +405,7 @@ export function VideoSubmitPanelBody({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
-                      <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · 发布日 {getPublishedDateKey(activeDateReport) ?? "未知"}</span>
+                      <span className="text-[14px] font-normal text-[#1F1E1D]">已立卷手稿 · 发布日 {getPublishedDateKey(activeDateReport) ?? "未知"}</span>
                     </div>
                     <p className="text-[14px] font-medium text-[#141413]">
                       {activeDateReport.title || "未命名手稿"}

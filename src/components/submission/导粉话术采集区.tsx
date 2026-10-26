@@ -62,7 +62,7 @@ export function ScriptCaptureSection({
                 aria-describedby={showError ? "script_capture_error" : undefined}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[13px] leading-[1.7] tracking-[0.005em] text-[#141413] placeholder:text-[#78716C]/70",
+                  "text-[14px] leading-[1.7] tracking-[0.005em] text-[#141413] placeholder:text-[#78716C]/70",
                   "outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10",
                 )}
               />

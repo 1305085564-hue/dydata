@@ -100,7 +100,7 @@ function MemberMultiSelect({
         aria-haspopup="listbox"
         aria-controls={isOpen ? panelId : undefined}
         className={cn(
-          "w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
+          "w-full h-7 px-2.5 text-[14px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
           isOpen && "ring-1 ring-[#141413]/10 border-[#141413]",
         )}
       >
@@ -210,7 +210,7 @@ function MemberMultiSelect({
                     aria-selected={isChecked}
                     onClick={() => toggleUser(m.id)}
                     className={cn(
-                      "flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer transition-colors text-[13px]",
+                      "flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer transition-colors text-[14px]",
                       isChecked ? "bg-status-warning/[0.08]" : "hover:bg-[#F7F7F6]",
                     )}
                   >
@@ -640,11 +640,11 @@ export function WorkGroupManageDrawer({
                     setSelectedGroupId(null);
                     setSelectedUserIdsToAdd([]);
                   }}
-                  className="text-[13px] text-[#78716C] hover:text-[#141413] underline cursor-pointer"
+                  className="text-[14px] text-[#78716C] hover:text-[#141413] underline cursor-pointer"
                 >
                   ← 返回小队列表
                 </button>
-                <span className="text-[13px] text-[#78716C]">
+                <span className="text-[14px] text-[#78716C]">
                   现有成员 ({activeGroupMembers.length} 人)
                 </span>
               </div>
@@ -705,7 +705,7 @@ export function WorkGroupManageDrawer({
                         className="py-2.5 px-3 hover:bg-[#F7F7F6] transition-colors border-b-0"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-normal text-[#141413]">
+                          <span className="text-[14px] font-normal text-[#141413]">
                             {member.name || "未命名"}
                           </span>
                           {activeGroup.kind === "operator" && member.peerGroupId && (
@@ -754,7 +754,7 @@ export function WorkGroupManageDrawer({
                         placeholder="例如：文案一组"
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
-                        className="w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 text-[#1F1E1D] placeholder:text-[#A8A29E]"
+                        className="w-full h-7 px-2.5 text-[14px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 text-[#1F1E1D] placeholder:text-[#A8A29E]"
                       />
                     </div>
                     <div>
@@ -763,7 +763,7 @@ export function WorkGroupManageDrawer({
                         value={newGroupKind}
                         onValueChange={(val) => setNewGroupKind(val as WorkGroupKind)}
                       >
-                        <SelectTrigger className="w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 text-[#1F1E1D]">
+                        <SelectTrigger className="w-full h-7 px-2.5 text-[14px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 text-[#1F1E1D]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -835,7 +835,7 @@ export function WorkGroupManageDrawer({
                               <ItemHeading as="h4">
                                 确认删除小队【{group.name}】？
                               </ItemHeading>
-                              <p className="text-[13px] text-[#78716C] mt-1 leading-relaxed">
+                              <p className="text-[14px] text-[#78716C] mt-1 leading-relaxed">
                                 {memberCount > 0
                                   ? `删除后该小队将解散，组内 ${memberCount} 名成员将自动移入未分配池（保留成员账号与历史产出），历史统计与作品不受影响。`
                                   : "删除后该小队将解散，历史统计与作品不受影响。"}
@@ -847,7 +847,7 @@ export function WorkGroupManageDrawer({
                               type="button"
                               disabled={isPending}
                               onClick={() => setConfirmingDeleteId(null)}
-                              className="px-3 py-1.5 text-[13px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-colors cursor-pointer"
+                              className="px-3 py-1.5 text-[14px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-colors cursor-pointer"
                             >
                               取消
                             </button>
@@ -884,7 +884,7 @@ export function WorkGroupManageDrawer({
                                   }
                                 }}
                                 autoFocus
-                                className="h-7 px-2 text-[13px] bg-[#F7F7F6] border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 flex-1 text-[#1F1E1D]"
+                                className="h-7 px-2 text-[14px] bg-[#F7F7F6] border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 flex-1 text-[#1F1E1D]"
                               />
                               <Button
                                 size="s"

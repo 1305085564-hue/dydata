@@ -63,7 +63,7 @@ export function MemberToolbar({
                 }
               }}
             >
-              <SelectTrigger size="sm" className="border-0 bg-transparent px-2.5 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:bg-[#F1F1F0]">
+              <SelectTrigger size="sm" className="border-0 bg-transparent px-2.5 text-[14px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:bg-[#F1F1F0]">
                 <SelectValue>
                   {selectedTeamId === ALL_TEAMS_ID
                     ? `全员 (${profilesForCurrentView.length})`
@@ -111,7 +111,7 @@ export function MemberToolbar({
                     replaceWorkspaceUrl({ query: nextQuery });
                   }}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-7 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-7 pl-8 pr-4 text-[14px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 
@@ -130,7 +130,7 @@ export function MemberToolbar({
 
             {/* 状态切换与计数 */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 text-[13px]" role="tablist">
+              <div className="flex items-center gap-3 text-[14px]" role="tablist">
                 <button
                   type="button"
                   role="tab"

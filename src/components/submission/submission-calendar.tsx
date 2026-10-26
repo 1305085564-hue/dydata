@@ -246,7 +246,7 @@ export function SubmissionCalendar({
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="h-7 flex items-center justify-center text-[13px] text-[#78716C]"
+            className="h-7 flex items-center justify-center text-[14px] text-[#78716C]"
           >
             {label}
           </div>

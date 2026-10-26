@@ -76,7 +76,7 @@ export function HistoryExemptionCard({
       )}
 
       {item.reason && (
-        <div className="text-[13px] text-[#1F1E1D] leading-relaxed">
+        <div className="text-[14px] text-[#1F1E1D] leading-relaxed">
           <span className="text-[#78716C]">事由：</span>
           <span>{item.reason}</span>
         </div>

@@ -85,7 +85,7 @@ export default async function CaliberPage() {
               </div>
               {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-[#57534E]">{item.value}</span> : null}
             </div>
-            <div className="mt-4 space-y-3 text-[13px] leading-7 text-[#1F1E1D]">
+            <div className="mt-4 space-y-3 text-[14px] leading-7 text-[#1F1E1D]">
               <div>
                 <p className="text-[12px] text-[#78716C]">规则是什么</p>
                 <p className="mt-0.5">{item.rule}</p>

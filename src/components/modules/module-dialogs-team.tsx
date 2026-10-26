@@ -46,7 +46,7 @@ export function ModuleDialogsTeam({
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>团队架构管理</DialogTitle>
-            <DialogDescription className="text-[13px] text-[#1F1E1D]">
+            <DialogDescription className="text-[14px] text-[#1F1E1D]">
               新建团队或维护现有团队架构
             </DialogDescription>
           </DialogHeader>
@@ -78,7 +78,7 @@ export function ModuleDialogsTeam({
             )}
 
             <div className="space-y-2 max-h-[260px] overflow-y-auto pt-2">
-              <span className="text-[13px] font-normal text-[#78716C] uppercase tracking-wider">
+              <span className="text-[14px] font-normal text-[#78716C] uppercase tracking-wider">
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (

@@ -63,7 +63,7 @@ export function PermissionGuard({
           <SectionHeading as="h2" className="tracking-tight">
             还没有「{moduleTitle}」权限
           </SectionHeading>
-          <p className="text-[13px] leading-relaxed text-[#1F1E1D]">
+          <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
             {description ||
               (showApplyButton
                 ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`
@@ -79,7 +79,7 @@ export function PermissionGuard({
               size="l"
               onClick={handlePermissionApply}
               disabled={isApplying}
-              className="rounded-xl px-5 text-[13px]"
+              className="rounded-xl px-5 text-[14px]"
             >
               <Send className="mr-1.5 size-4 stroke-[1.8]" />
               {isApplying ? "正在发送…" : "申请查看权限"}
@@ -91,7 +91,7 @@ export function PermissionGuard({
               type="button"
               variant="outline"
               size="l"
-              className="rounded-xl px-4 text-[13px]"
+              className="rounded-xl px-4 text-[14px]"
             >
               <ArrowLeft className="mr-1.5 size-4 stroke-[1.8]" />
               返回工作台

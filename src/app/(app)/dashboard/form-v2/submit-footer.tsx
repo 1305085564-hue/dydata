@@ -188,7 +188,7 @@ export function FormV2SubmitFooter({
             size="l"
             onClick={requestLateSubmission}
             disabled={isAppealSubmitting}
-            className="flex-1 sm:flex-initial px-4 text-[13px] font-normal"
+            className="flex-1 sm:flex-initial px-4 text-[14px] font-normal"
           >
             {isAppealSubmitting ? "申请中..." : "申请补交"}
           </Button>
@@ -199,7 +199,7 @@ export function FormV2SubmitFooter({
             variant="secondary"
             size="l"
             onClick={onCancel}
-            className="flex-1 sm:flex-initial px-4 text-[13px] font-normal"
+            className="flex-1 sm:flex-initial px-4 text-[14px] font-normal"
           >
             取消
           </Button>

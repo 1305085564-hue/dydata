@@ -19,7 +19,7 @@ export function PoolTable({
     <>
         {/* 表格视图：发丝细线、无斑马纹、数字右对齐 */}
         <Card className={`overflow-x-auto p-0 gap-0 transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
-          <table className="w-full min-w-[720px] text-left text-[13px] border-collapse">
+          <table className="w-full min-w-[720px] text-left text-[14px] border-collapse">
             <thead className="border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>

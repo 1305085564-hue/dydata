@@ -57,7 +57,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
                           <tr>
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
@@ -179,7 +179,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
                           <tr>
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
@@ -291,7 +291,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[520px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
                           <tr>
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>

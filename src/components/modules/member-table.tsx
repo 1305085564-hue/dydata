@@ -175,7 +175,7 @@ export function MemberTable({
                         <span className="flex shrink-0 items-center gap-2 sm:gap-6">
                         {/* 所属团队 */}
                         <span className="w-20 sm:w-28 text-left shrink-0">
-                          <span className="text-[13px] text-[#1F1E1D] truncate block" title={member.team_name || "未分配团队"}>
+                          <span className="text-[14px] text-[#1F1E1D] truncate block" title={member.team_name || "未分配团队"}>
                             {member.team_name || <span className="text-[#A8A29E]">未分配</span>}
                           </span>
                         </span>
@@ -196,7 +196,7 @@ export function MemberTable({
 
                         {/* 数据范围：小屏下沉入抽屉，sm+ 显示 */}
                         <span className="w-20 sm:w-24 text-left shrink-0 hidden sm:block">
-                          <span className="text-[12px] sm:text-[13px] text-[#78716C]">
+                          <span className="text-[12px] sm:text-[14px] text-[#78716C]">
                             {formatDataScope(
                               (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
                             )}

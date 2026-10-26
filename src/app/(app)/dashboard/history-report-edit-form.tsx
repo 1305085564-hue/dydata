@@ -788,7 +788,7 @@ export function HistoryReportEditForm({
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-[13px] font-normal text-[#141413]">
+            <div className="text-[14px] font-normal text-[#141413]">
               基础信息
             </div>
             <span className="text-[12px] text-[#78716C] tabular-nums">
@@ -841,7 +841,7 @@ export function HistoryReportEditForm({
 
         <section className="space-y-2 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
-            <div className="text-[13px] font-normal text-[#141413]">历史指标</div>
+            <div className="text-[14px] font-normal text-[#141413]">历史指标</div>
             <span className="text-[12px] text-[#A8A29E]">24 小时沉淀数据</span>
           </div>
           <div className="space-y-2">
@@ -939,7 +939,7 @@ export function HistoryReportEditForm({
               type="submit"
               size="m"
               disabled={isPending || !isHistoryEditDetailReady(editDetailStatus)}
-              className="px-3.5 text-[13px] cursor-pointer"
+              className="px-3.5 text-[14px] cursor-pointer"
             >
               {isPending
                 ? "保存中..."

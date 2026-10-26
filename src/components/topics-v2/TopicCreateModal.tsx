@@ -410,14 +410,14 @@ export function TopicCreateModal({
           >
             <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1 pr-1">
               {errorMsg && (
-                <div className="flex items-center gap-2 rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
+                <div className="flex items-center gap-2 rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[14px] font-normal text-[#1F1E1D]">
                   <AlertTriangle className="size-4 shrink-0 text-status-danger" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {topicsError && (
-                <div className="rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
+                <div className="rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[14px] font-normal text-[#1F1E1D]">
                   母题列表加载失败：{topicsError}
                 </div>
               )}
@@ -452,7 +452,7 @@ export function TopicCreateModal({
                       placeholder="例如：
 【选题】游资大佬集体发文投降，量化时代散户的生路在哪？
 【钩子】“游资大佬集体发文投降，量化时代散户的生路在哪？”"
-                      className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white/50 p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                      className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white/50 p-2.5 text-[14px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -484,7 +484,7 @@ export function TopicCreateModal({
                 </label>
                 <Select value={topicId} onValueChange={(val) => setTopicId(val || "")}>
                   <SelectTrigger
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="归属母题"
                   >
                     <SelectValue placeholder="选择一个八大母题" />
@@ -508,7 +508,7 @@ export function TopicCreateModal({
                   placeholder="例如：为什么游资打板开始失效？"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                   aria-label="子题标题"
                 />
               </div>
@@ -522,7 +522,7 @@ export function TopicCreateModal({
                   placeholder="例如：90% 的短线客还在死守龙头战法，却不知道资金早已变盘..."
                   value={hook}
                   onChange={(event) => setHook(event.target.value)}
-                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                   aria-label="一句话 Hook"
                 />
               </div>
@@ -537,7 +537,7 @@ export function TopicCreateModal({
                     placeholder="例如：避坑 / 警醒"
                     value={emotionTag}
                     onChange={(event) => setEmotionTag(event.target.value)}
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="情绪标签"
                   />
                 </div>
@@ -550,14 +550,14 @@ export function TopicCreateModal({
                     placeholder="例如：进阶交易者"
                     value={audience}
                     onChange={(event) => setAudience(event.target.value)}
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="目标受众"
                   />
                 </div>
               </div>
 
               {suggestions.length > 0 && (
-                <div className="rounded-xl bg-[#F1F1F0]/70 p-3 text-[13px]">
+                <div className="rounded-xl bg-[#F1F1F0]/70 p-3 text-[14px]">
                   <div className="mb-1 flex items-center gap-1 font-normal text-[#78716C] text-[12px]">
                     <Lightbulb className="size-4 shrink-0 text-status-warning" />
                     <span>发现相似选题 · 建议差异化切角</span>
@@ -569,7 +569,7 @@ export function TopicCreateModal({
                     {suggestions.map((suggestion) => (
                       <div
                         key={suggestion.id}
-                        className="rounded-md bg-white p-2 text-[13px] font-normal shadow-input border border-[#E2E2DF]"
+                        className="rounded-md bg-white p-2 text-[14px] font-normal shadow-input border border-[#E2E2DF]"
                       >
                         <div className="font-normal text-[#1F1E1D]">
                           {suggestion.title}
@@ -783,7 +783,7 @@ export function TopicCreateModal({
 
                       {/* 预览表格 */}
                       <Card className="overflow-x-auto max-h-60 p-0 gap-0">
-                        <table className="w-full text-left text-[13px] border-collapse min-w-[650px]">
+                        <table className="w-full text-left text-[14px] border-collapse min-w-[650px]">
                           <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] select-none">
                             <tr>
                               <th className="py-2 px-2.5 w-12 text-center">行号</th>

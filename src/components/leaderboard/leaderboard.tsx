@@ -536,11 +536,11 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-full text-[13px] font-normal tabular-nums ring-1",
+        "inline-flex size-8 items-center justify-center rounded-full text-[14px] font-normal tabular-nums ring-1",
         badgeClass
       )}
     >
-      <AnimatedNumber value={rank} duration={0.5} className="text-[13px] font-normal" />
+      <AnimatedNumber value={rank} duration={0.5} className="text-[14px] font-normal" />
     </span>
   );
 }

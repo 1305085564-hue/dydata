@@ -47,7 +47,7 @@ export function BreakdownEditForm({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full text-[13px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
+                  className="w-full text-[14px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                 />
                 {editTitleError && (
                   <p className="text-[12px] text-status-danger mt-1">{editTitleError}</p>
@@ -62,7 +62,7 @@ export function BreakdownEditForm({
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
                   rows={3}
-                  className="w-full text-[13px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
+                  className="w-full text-[14px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                 />
               </div>
 
@@ -75,7 +75,7 @@ export function BreakdownEditForm({
                     type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full text-[13px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
+                    className="w-full text-[14px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                   />
                 </div>
                 <div>
@@ -86,7 +86,7 @@ export function BreakdownEditForm({
                     type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full text-[13px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
+                    className="w-full text-[14px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                   />
                 </div>
               </div>

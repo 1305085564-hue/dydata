@@ -1172,7 +1172,7 @@ export function VideoSubmitFormV2({
 
   if (!account) {
     return (
-      <div className="py-6 text-[13px] text-[#78716C]">
+      <div className="py-6 text-[14px] text-[#78716C]">
         请先选择一个视频账号，再填写提交信息。
       </div>
     );

@@ -275,7 +275,7 @@ export function HealthBar({
             {isLoading ? (
               <div className="py-16 flex flex-col items-center justify-center text-[#78716C] gap-2">
                 <Loader2 className="size-5 animate-spin text-[#D97757]" />
-                <span className="text-[13px]">正在扫描待补归属作品…</span>
+                <span className="text-[14px]">正在扫描待补归属作品…</span>
               </div>
             ) : loadError ? (
               <div className="py-16 text-center space-y-2">

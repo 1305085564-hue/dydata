@@ -65,7 +65,7 @@ export interface TalentColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
       <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
@@ -282,7 +282,7 @@ export function TalentTab({
         <TableHeader>
           <TalentHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
         </TableHeader>
-        <TableBody className="text-[13px]">
+        <TableBody className="text-[14px]">
           {sorted.map((row) => (
             <TableRow
               key={row.userId}

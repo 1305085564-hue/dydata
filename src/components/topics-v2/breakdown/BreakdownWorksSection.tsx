@@ -82,13 +82,13 @@ export function BreakdownWorksSection({
                               {canReviewContent ? (
                                 <Link
                                   href={`/admin/content?videoId=${work.id}`}
-                                  className="text-[13px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:underline line-clamp-1 transition-colors"
+                                  className="text-[14px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:underline line-clamp-1 transition-colors"
                                   title="进入视频复盘"
                                 >
                                   {work.videoTitle || work.content || "未命名作品"}
                                 </Link>
                               ) : (
-                                <div className="text-[13px] font-normal text-[#1F1E1D] line-clamp-1">
+                                <div className="text-[14px] font-normal text-[#1F1E1D] line-clamp-1">
                                   {work.videoTitle || work.content || "未命名作品"}
                                 </div>
                               )}

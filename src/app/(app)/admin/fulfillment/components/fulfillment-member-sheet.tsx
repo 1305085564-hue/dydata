@@ -62,22 +62,22 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
   leave: {
     label: "标记请假",
     variant: "outline",
-    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
+    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[14px] font-normal",
   },
   waived: {
     label: "标记豁免",
     variant: "outline",
-    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
+    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[14px] font-normal",
   },
   absent: {
     label: "确认缺勤",
     variant: "destructive",
-    colorClass: "rounded-xl text-[13px] text-status-danger bg-status-danger/[0.08] hover:bg-status-danger/15 border border-status-danger/20 font-normal",
+    colorClass: "rounded-xl text-[14px] text-status-danger bg-status-danger/[0.08] hover:bg-status-danger/15 border border-status-danger/20 font-normal",
   },
   confirmed_published: {
     label: "确认已发",
     variant: "default",
-    colorClass: "rounded-xl text-[13px] font-normal",
+    colorClass: "rounded-xl text-[14px] font-normal",
   },
 };
 
@@ -328,7 +328,7 @@ export function FulfillmentMemberSheet({
             {/* 连续未发警示 */}
             {member.consecutiveMissing > 0 && (
               <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3 flex items-center justify-between">
-                <span className="text-[13px] text-status-danger font-medium flex items-center gap-1">
+                <span className="text-[14px] text-status-danger font-medium flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-status-danger" />
                   已连续未发布 {member.consecutiveMissing} 天
                 </span>
@@ -338,7 +338,7 @@ export function FulfillmentMemberSheet({
 
             {/* 历史记录时间轴 */}
             <div className="space-y-2">
-              <span className="text-[13px] font-medium text-[#141413] block">
+              <span className="text-[14px] font-medium text-[#141413] block">
                 全月打卡足迹时间轴
               </span>
               <Card className="max-h-[200px] overflow-y-auto p-0 gap-0 border border-[#E2E2DF]/60">
@@ -493,7 +493,7 @@ export function FulfillmentMemberSheet({
                 <DialogTitle className="text-[20px] font-medium text-[#141413]">
                   确认改判为「{ACTION_CONFIG[activeAction].label}」
                 </DialogTitle>
-                <DialogDescription className="text-[13px] text-[#78716C]">
+                <DialogDescription className="text-[14px] text-[#78716C]">
                   正在为 {member?.userName} 的 {effectiveDate} 记录标记为「
                   {ACTION_CONFIG[activeAction].label}」。
                 </DialogDescription>
@@ -508,7 +508,7 @@ export function FulfillmentMemberSheet({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="例如：调休 / 系统审核延迟"
-                  className="w-full rounded-md border border-[#E2E2DF] px-3 py-1.5 text-[13px] outline-none focus:border-[#141413]"
+                  className="w-full rounded-md border border-[#E2E2DF] px-3 py-1.5 text-[14px] outline-none focus:border-[#141413]"
                 />
               </div>
 

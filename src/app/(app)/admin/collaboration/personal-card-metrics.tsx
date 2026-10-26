@@ -48,7 +48,7 @@ export function PersonalCardMetrics({
               {/* 1. 运营数据 KPI 指标群（仅在有独立运营数据或处于运营 Tab 时展示，避免给非运营人员挂空盒子） */}
               {(data.operatorSummary || activeTab === "operators") && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[13px]">
+                  <div className="flex items-center justify-between text-[14px]">
                     <span className="text-[14px] font-normal text-[#1F1E1D]">本月运营概览</span>
                     {data.operatorSummary?.momChange != null && (
                       <span className="font-normal text-[12px]">

@@ -757,7 +757,7 @@ export function ComputePoolPanel() {
       {allModelsTestFailures && (
         <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[13px] text-[#C0685C]">
+            <div className="flex items-center gap-2 text-[14px] text-[#C0685C]">
               <span className="font-medium">
                 {allModelsTestFailures.failureCount > 0 ? "全池模型深度检测异常" : "全池模型深度检测结果"}
               </span>

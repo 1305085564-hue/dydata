@@ -67,7 +67,7 @@ export function FulfillmentStatsOverview({
               <span className="text-[20px] font-medium text-[#141413] tracking-tight tabular-nums">
                 {stats.publishedCount.toLocaleString()}
               </span>
-              <span className="text-[13px] font-normal text-[#78716C]">
+              <span className="text-[14px] font-normal text-[#78716C]">
                 / {stats.requiredCount.toLocaleString()} 条应发
               </span>
             </div>
@@ -111,7 +111,7 @@ export function FulfillmentStatsOverview({
               <span className="text-[20px] font-medium text-[#141413] tracking-tight tabular-nums">
                 {stats.totalMembers}
               </span>
-              <span className="text-[13px] font-normal text-[#78716C]">位伙伴</span>
+              <span className="text-[14px] font-normal text-[#78716C]">位伙伴</span>
             </div>
             <p className="mt-2 text-[12px] text-[#78716C]">
               今日已发 <span className="font-medium text-[#141413] tabular-nums">{stats.publishedToday}</span> 人
@@ -173,7 +173,7 @@ export function FulfillmentStatsOverview({
               >
                 {stats.consecutiveMissingMembers}
               </span>
-              <span className="text-[13px] font-normal text-[#78716C]">人连续未发</span>
+              <span className="text-[14px] font-normal text-[#78716C]">人连续未发</span>
             </div>
             <p className="mt-2 text-[12px] text-[#78716C]">
               连续未发布 ≥ 2 天成员
@@ -241,7 +241,7 @@ export function FulfillmentStatsOverview({
               >
                 {pendingActionable}
               </span>
-              <span className="text-[13px] font-normal text-[#78716C]">条需裁决</span>
+              <span className="text-[14px] font-normal text-[#78716C]">条需裁决</span>
             </div>
             <p className="mt-2 text-[12px] text-[#78716C]">
               今日待审补交与请假申请

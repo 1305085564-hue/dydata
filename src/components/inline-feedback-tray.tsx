@@ -86,7 +86,7 @@ export function InlineFeedbackTray({
         placeholder={placeholder}
         rows={2}
         className={cn(
-          "w-full rounded-md border bg-white p-2.5 sm:p-3 text-[13px] text-[#141413] placeholder:text-[#A8A29E] focus:outline-none transition-all resize-none shadow-input",
+          "w-full rounded-md border bg-white p-2.5 sm:p-3 text-[14px] text-[#141413] placeholder:text-[#A8A29E] focus:outline-none transition-all resize-none shadow-input",
           hasAttemptedSubmit && isInvalid
             ? "border-status-danger focus:border-status-danger focus:ring-1 focus:ring-status-danger/20"
             : "border-[#E2E2DF] focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10",

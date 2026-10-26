@@ -294,7 +294,7 @@ export function SubmissionSlotsSection({
                         )} />
                       </div>
                       <div className="min-w-0 space-y-0.5">
-                        <div className="text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] leading-tight truncate">
+                        <div className="text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] leading-tight truncate">
                           <span className="lg:hidden">{item.shortTitle}</span>
                           <span className="hidden lg:inline">{item.title}截图</span>
                           {!screenshotsRequired && (

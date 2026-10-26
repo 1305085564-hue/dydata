@@ -82,8 +82,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     source,
-    /text-\[13px\] text-\[#1F1E1D\] tracking-normal font-sans leading-relaxed/,
-    "副标题必须使用 text-[13px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed",
+    /text-\[14px\] text-\[#1F1E1D\] tracking-normal font-sans leading-relaxed/,
+    "副标题必须使用 text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed",
   );
   assert.match(
     source,

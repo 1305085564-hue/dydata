@@ -206,7 +206,7 @@ export function ExemptionDialogV2({
               </button>
             </div>
             {calendar.recentSelectionResult && (
-              <div className="rounded-xl border border-status-info/25 bg-status-info/[0.03] px-3 py-2 text-[13px] leading-relaxed text-[#1F1E1D]" role="status">
+              <div className="rounded-xl border border-status-info/25 bg-status-info/[0.03] px-3 py-2 text-[14px] leading-relaxed text-[#1F1E1D]" role="status">
                 已选择 {calendar.recentSelectionResult.selectedDates.length} 天
                 {calendar.recentSelectionResult.skipped.length > 0
                   ? `，${calendar.recentSelectionResult.skipped.length} 天已跳过：${calendar.recentSelectionResult.skipped.map((item) => `${item.date} ${item.reason}`).join("；")}`
@@ -227,7 +227,7 @@ export function ExemptionDialogV2({
               </button>
 
               <div className="flex items-center gap-1 px-1">
-                <span className="text-[13px] font-normal text-[#141413] tabular-nums">
+                <span className="text-[14px] font-normal text-[#141413] tabular-nums">
                   {viewYear}年{viewMonth}月
                 </span>
               </div>
@@ -309,7 +309,7 @@ export function ExemptionDialogV2({
                     onClick={() => isAvailable && calendar.toggleDate(date)}
                     disabled={!isAvailable}
                     className={cn(
-                      "relative flex h-10 flex-col items-center justify-center rounded-md text-[13px] font-normal tabular-nums transition-all duration-150 select-none",
+                      "relative flex h-10 flex-col items-center justify-center rounded-md text-[14px] font-normal tabular-nums transition-all duration-150 select-none",
                       // 选中态：对齐全站日历灰蓝
                       isSelected &&
                         "bg-status-info/[0.12] text-status-info ring-2 ring-status-info/20 ring-offset-2 z-10 font-normal shadow-input active:scale-[0.98]",
@@ -414,7 +414,7 @@ export function ExemptionDialogV2({
                   特殊豁免（不该交不交）
                 </button>
               </div>
-              <p className="text-[13px] leading-relaxed text-[#78716C]">
+              <p className="text-[14px] leading-relaxed text-[#78716C]">
                 {calendar.exemptionType === "leave"
                   ? "请假适用于原本需要提交，但因休假等原因无法完成的日期。"
                   : "特殊豁免适用于按规则本就不应提交的日期，例如账号停更或业务安排调整。"}
@@ -425,7 +425,7 @@ export function ExemptionDialogV2({
             {remindCount !== null && remindCount > 0 && (
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[13px]",
+                  "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[14px]",
                   remindCount > 2
                     ? "border-status-warning/30 bg-status-warning/[0.08] text-status-warning"
                     : "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
@@ -468,7 +468,7 @@ export function ExemptionDialogV2({
                   </div>
 
                   {calendar.selectedDates.length === 0 ? (
-                    <p className="text-[13px] text-[#A8A29E] py-1">
+                    <p className="text-[14px] text-[#A8A29E] py-1">
                       点击左侧日历勾选需要申请的日期
                     </p>
                   ) : (
@@ -537,7 +537,7 @@ export function ExemptionDialogV2({
                     }}
                     rows={3}
                     maxLength={100}
-                    className="w-full resize-none rounded-xl border border-[#E2E2DF] bg-white/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#1F1E1D] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                    className="w-full resize-none rounded-xl border border-[#E2E2DF] bg-white/50 px-3.5 py-2.5 text-[14px] leading-relaxed text-[#1F1E1D] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     placeholder={
                       calendar.exemptionType === "leave"
                         ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"

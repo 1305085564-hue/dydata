@@ -80,7 +80,7 @@ export function MemberInspectorBody({
                 {activeMember.membership_status === "archived" && (
                   <section className="space-y-3" aria-labelledby="archive-record-title">
                     <ItemHeading as="h4" id="archive-record-title">归档记录</ItemHeading>
-                    <dl className="space-y-2 border-t border-[#E2E2DF]/60 pt-3 text-[13px]">
+                    <dl className="space-y-2 border-t border-[#E2E2DF]/60 pt-3 text-[14px]">
                       {[
                         ["归档时间", activeMember.archived_at ? new Date(activeMember.archived_at).toLocaleString("zh-CN", { hour12: false }) : "历史记录未保留"],
                         ["操作人", activeMember.archived_by_name || "历史记录未保留"],
@@ -95,7 +95,7 @@ export function MemberInspectorBody({
                         </div>
                       ))}
                     </dl>
-                    <p className="border-t border-[#E2E2DF]/60 pt-3 text-[13px] leading-relaxed text-[#78716C]">
+                    <p className="border-t border-[#E2E2DF]/60 pt-3 text-[14px] leading-relaxed text-[#78716C]">
                       恢复后成为在职未分组成员，原团队不自动恢复。
                     </p>
                   </section>
@@ -110,7 +110,7 @@ export function MemberInspectorBody({
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
                         <div className="flex items-center gap-2">
                           <Building2 className="size-3.5 text-[#78716C] shrink-0" />
-                          <span className="text-[13px] text-[#1F1E1D]">所属团队</span>
+                          <span className="text-[14px] text-[#1F1E1D]">所属团队</span>
                         </div>
                         <div className="flex items-center gap-1">
                           {canEditActiveMemberTeam ? (
@@ -123,7 +123,7 @@ export function MemberInspectorBody({
                                 }
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[14px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配团队">
                                   {activeMember.team_name || (activeMember.team_id ? localTeams.find(t => t.id === activeMember.team_id)?.name : "未分配团队")}
                                 </SelectValue>
@@ -138,7 +138,7 @@ export function MemberInspectorBody({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="text-[13px] text-[#78716C]">
+                            <span className="text-[14px] text-[#78716C]">
                               {activeMember.team_name || "未分配团队"}
                             </span>
                           )}
@@ -149,7 +149,7 @@ export function MemberInspectorBody({
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
                         <div className="flex items-center gap-2">
                           <Users className="size-3.5 text-[#78716C] shrink-0" />
-                          <span className="text-[13px] text-[#1F1E1D]">工种小队</span>
+                          <span className="text-[14px] text-[#1F1E1D]">工种小队</span>
                         </div>
                         <div className="flex items-center gap-1">
                           {canEditWorkGroups && activeMember.team_id ? (
@@ -159,7 +159,7 @@ export function MemberInspectorBody({
                                 if (val) handleAssignPeerGroup(val);
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[14px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配小队">
                                   {activeMemberPeerGroup
                                     ? `${activeMemberPeerGroup.name} (${activeMemberPeerGroup.kind === "writer" ? "文案" : "达人"})`
@@ -176,7 +176,7 @@ export function MemberInspectorBody({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="text-[13px] text-[#78716C]">
+                            <span className="text-[14px] text-[#78716C]">
                               {!activeMember.team_id
                                 ? "需先分配团队"
                                 : activeMemberPeerGroup
@@ -191,7 +191,7 @@ export function MemberInspectorBody({
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
                         <div className="flex items-center gap-2">
                           <Users className="size-3.5 text-[#78716C] shrink-0" />
-                          <span className="text-[13px] text-[#1F1E1D]">运营小队</span>
+                          <span className="text-[14px] text-[#1F1E1D]">运营小队</span>
                         </div>
                         <div className="flex items-center gap-1">
                           {canEditWorkGroups && activeMember.team_id ? (
@@ -201,7 +201,7 @@ export function MemberInspectorBody({
                                 if (val) handleAssignOperatorGroup(val);
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[14px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配小队">
                                   {activeMemberOperatorGroup?.name || "未分配小队"}
                                 </SelectValue>
@@ -216,7 +216,7 @@ export function MemberInspectorBody({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="text-[13px] text-[#78716C]">
+                            <span className="text-[14px] text-[#78716C]">
                               {!activeMember.team_id
                                 ? "需先分配团队"
                                 : activeMemberOperatorGroup?.name || "未分配小队"}
@@ -235,11 +235,11 @@ export function MemberInspectorBody({
                           >
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
-                              <span className="text-[13px] text-[#1F1E1D]">
+                              <span className="text-[14px] text-[#1F1E1D]">
                                 {activeMemberCompanyRole === "admin" ? "降为组员" : "提升为组长 · 管理"}
                               </span>
                             </div>
-                            <span className="text-[13px] text-[#78716C] group-hover:text-[#141413] transition-colors">
+                            <span className="text-[14px] text-[#78716C] group-hover:text-[#141413] transition-colors">
                               切换身份
                             </span>
                           </button>
@@ -247,11 +247,11 @@ export function MemberInspectorBody({
                           <div className="flex items-center justify-between py-1.5 px-2 rounded-xl">
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] shrink-0" />
-                              <span className="text-[13px] text-[#1F1E1D]">
+                              <span className="text-[14px] text-[#1F1E1D]">
                                 {activeMemberCompanyRole === "admin" ? "组长 · 管理" : "组员"}
                               </span>
                             </div>
-                            <span className="text-[13px] text-[#78716C]">
+                            <span className="text-[14px] text-[#78716C]">
                               {getRoleLabel(runtimeRoleForView(activeMemberCompanyRole), { membershipStatus: activeMember.membership_status })}
                             </span>
                           </div>
@@ -281,9 +281,9 @@ export function MemberInspectorBody({
                         >
                           <div className="flex items-center gap-2">
                             <KeyRound className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
-                            <span className="text-[13px] text-[#1F1E1D]">重置账户密码</span>
+                            <span className="text-[14px] text-[#1F1E1D]">重置账户密码</span>
                           </div>
-                          <span className="text-[13px] text-[#78716C] group-hover:text-[#141413] transition-colors">
+                          <span className="text-[14px] text-[#78716C] group-hover:text-[#141413] transition-colors">
                             快捷重置
                           </span>
                         </button>
@@ -298,9 +298,9 @@ export function MemberInspectorBody({
                         >
                           <div className="flex items-center gap-2">
                             <UserMinus className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
-                            <span className="text-[13px] text-[#1F1E1D]">移出团队</span>
+                            <span className="text-[14px] text-[#1F1E1D]">移出团队</span>
                           </div>
-                          <span className="text-[13px] text-[#78716C] group-hover:text-status-danger transition-colors">
+                          <span className="text-[14px] text-[#78716C] group-hover:text-status-danger transition-colors">
                             保留账号
                           </span>
                         </button>
@@ -343,9 +343,9 @@ export function MemberInspectorBody({
                     >
                       <div className="flex items-center gap-2">
                         <Trash2 className="size-3.5 text-status-danger shrink-0" />
-                        <span className="text-[13px] text-status-danger font-normal">归档账号</span>
+                        <span className="text-[14px] text-status-danger font-normal">归档账号</span>
                       </div>
-                      <span className="text-[13px] text-status-danger font-normal group-hover:text-status-danger/80 transition-colors">
+                      <span className="text-[14px] text-status-danger font-normal group-hover:text-status-danger/80 transition-colors">
                         封禁登录并移出团队
                       </span>
                     </button>

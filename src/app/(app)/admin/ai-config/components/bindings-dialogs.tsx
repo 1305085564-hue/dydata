@@ -124,7 +124,7 @@ export function BindingDialog({
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium text-[#141413]">
+                        <span className="text-[14px] font-medium text-[#141413]">
                           OCR+模型
                         </span>
                         <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
@@ -162,7 +162,7 @@ export function BindingDialog({
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-medium text-[#141413]">
+                      <span className="text-[14px] font-medium text-[#141413]">
                         视觉直识
                       </span>
                       <div className={cn(
@@ -226,7 +226,7 @@ export function BindingDialog({
                     min={1200}
                     max={8000}
                     step={200}
-                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-14 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-14 text-[14px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
                     value={outputTokenLimit}
                     onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
                   />
@@ -247,7 +247,7 @@ export function BindingDialog({
                     type="number"
                     min={1}
                     max={50}
-                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-10 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-10 text-[14px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
                     value={contextMessageLimit}
                     onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
                   />

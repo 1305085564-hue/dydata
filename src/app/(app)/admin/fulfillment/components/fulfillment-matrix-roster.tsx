@@ -463,7 +463,7 @@ export function FulfillmentMatrixRoster({
                           className="flex flex-col items-start text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer group/name w-full overflow-hidden"
                         >
                           <span
-                            className={`text-[13px] font-normal transition-colors group-hover/name:text-[#D97757] truncate w-full whitespace-nowrap ${
+                            className={`text-[14px] font-normal transition-colors group-hover/name:text-[#D97757] truncate w-full whitespace-nowrap ${
                               isRowHovered ? "text-[#D97757]" : "text-[#141413]"
                             }`}
                           >
@@ -488,7 +488,7 @@ export function FulfillmentMatrixRoster({
                         <div className="flex flex-col items-start gap-1 w-full">
                           {/* 顶行：实发 / 应发数值与达标、断更徽章两端对齐展示 */}
                           <div className="flex items-center justify-between gap-1 w-full">
-                            <div className="flex items-baseline gap-1 text-[13px] tabular-nums shrink-0">
+                            <div className="flex items-baseline gap-1 text-[14px] tabular-nums shrink-0">
                               <span
                                 className={`font-medium ${
                                   member.requiredCount > 0 &&
@@ -753,7 +753,7 @@ export function FulfillmentMatrixRoster({
           >
             <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2">
               <div>
-                <p className="text-[13px] font-normal text-[#141413]">
+                <p className="text-[14px] font-normal text-[#141413]">
                   {openMenuCell.member.userName}
                 </p>
                 <p className="text-[12px] text-[#78716C]">

@@ -71,7 +71,7 @@ export function PoolGrid({
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
-                    <p className="text-[13px] font-sans text-[#1F1E1D] line-clamp-2 leading-relaxed mb-2.5">
+                    <p className="text-[14px] font-sans text-[#1F1E1D] line-clamp-2 leading-relaxed mb-2.5">
                       <span className="text-[#D97757] mr-0.5 select-none font-normal">“</span>
                       {item.hook}
                       <span className="text-[#D97757] ml-0.5 select-none font-normal">”</span>

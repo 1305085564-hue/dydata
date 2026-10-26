@@ -28,7 +28,7 @@ export function ChannelModelTestList({ rows }: { rows: ChannelModelTestRow[] }) 
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-baseline gap-2 min-w-0">
-                <span className="text-[13px] font-medium text-[#141413]">{row.name}</span>
+                <span className="text-[14px] font-medium text-[#141413]">{row.name}</span>
                 {row.detail && (
                   <span className="font-mono text-[12px] text-[#78716C] break-all">{row.detail}</span>
                 )}

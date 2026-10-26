@@ -114,7 +114,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               prefetch={false}
               onMouseEnter={() => prefetchOnHover(group.href!)}
               className={cn(
-                "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[14px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                 isGroupActive
                   ? "text-[#141413] font-medium bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] font-normal hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
@@ -152,7 +152,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
               className={cn(
-                "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-3 text-[14px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                 isGroupActive || isDropdownOpen
                   ? "text-[#141413] font-medium bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] font-normal hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
@@ -193,7 +193,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                           onMouseEnter={() => prefetchOnHover(child.href)}
                           onClick={() => closeDropdown()}
                           className={cn(
-                            "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
+                            "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-[14px] transition-colors duration-150 group/item",
                             active
                               ? "bg-[#F1F1F0] text-[#141413] font-medium"
                               : "text-[#1F1E1D] font-normal hover:bg-[#EBEBE9] hover:text-[#141413]",

@@ -115,7 +115,7 @@ export function VideoSubmitPanelHistoryDialog({
                   {activityError ? (
                     <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
                   ) : isActivityLoading ? (
-                    <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
+                    <div className="flex h-40 items-center justify-center text-[14px] text-[#78716C]">
                       加载历史记录...
                     </div>
                   ) : !historyReports || historyReports.length === 0 ? (

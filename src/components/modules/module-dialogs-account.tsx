@@ -117,7 +117,7 @@ export function ModuleDialogsAccount({
                 <DialogTitle className="font-medium text-[#141413]">
                   设置不参与考核
                 </DialogTitle>
-                <DialogDescription className="text-[13px] text-[#78716C] leading-relaxed">
+                <DialogDescription className="text-[14px] text-[#78716C] leading-relaxed">
                   开启后「{setPermanentTarget?.name ?? "该成员"}」将不再进入履约、日报应发、催交等应交统计。历史日报与作品记录仍可查。
                   {setPermanentTarget?.exempt_type === "temporary" && (
                     <span className="block mt-1 text-[#B98A54]">
@@ -143,7 +143,7 @@ export function ModuleDialogsAccount({
                     maxLength={500}
                     rows={3}
                     placeholder="例如：合伙人 / 纯运营管理岗，不参与日常发文考核"
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 resize-none shadow-input disabled:opacity-50"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[14px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 resize-none shadow-input disabled:opacity-50"
                   />
                   <div className="flex items-center justify-between text-[12px]">
                     {permanentReasonError ? (

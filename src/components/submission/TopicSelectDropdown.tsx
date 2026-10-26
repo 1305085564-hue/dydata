@@ -245,7 +245,7 @@ export function TopicSelectDropdown({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索认领选题或全库选题..."
-              className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#141413] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#141413]/10"
+              className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[14px] text-[#141413] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#141413]/10"
             />
             {searchQuery && (
               <button
@@ -354,7 +354,7 @@ function TopicItemRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "group w-full flex items-start justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
+        "group w-full flex items-start justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[14px] transition-colors cursor-pointer",
         isSelected
           ? "bg-[#F1F1F0] text-[#141413] font-normal"
           : "hover:bg-[#FCFCFB] text-[#1F1E1D] hover:text-[#141413]"

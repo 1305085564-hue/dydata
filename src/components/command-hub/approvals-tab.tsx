@@ -62,7 +62,7 @@ export function ApprovalsTab({
   <div className="space-y-3">
     {/* Filter & Metric Bar: 纯净目录排版 */}
     <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-[#E2E2DF]/60">
-      <div className="flex items-center gap-4 text-[13px]">
+      <div className="flex items-center gap-4 text-[14px]">
         <button
           type="button"
           onClick={() => {
@@ -237,7 +237,7 @@ export function ApprovalsTab({
     {(approvalsLoading || actionsLoading) && pendingApprovals.length === 0 && todoItems.length === 0 ? (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Loader2 className="size-5 animate-spin text-[#D97757] mb-2" />
-        <p className="text-[13px] text-[#78716C]">正在同步工作台事项...</p>
+        <p className="text-[14px] text-[#78716C]">正在同步工作台事项...</p>
       </div>
     ) : visibleCards.length === 0 ? (
       <EmptyState
@@ -350,7 +350,7 @@ export function ApprovalsTab({
 {activeTab === "approvals" && !isAdmin && (
   <div className="space-y-3">
     <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/60">
-      <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
+      <div className="flex items-center gap-2 text-[14px] font-normal text-[#141413]">
         <span>待办事项</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">

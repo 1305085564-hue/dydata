@@ -114,7 +114,7 @@ export function WriterCertificationButton({
             <DialogTitle>
               取消文案认证
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-[#78716C]">
+            <DialogDescription className="text-[14px] text-[#78716C]">
               确认取消该成员的文案岗位认证？
             </DialogDescription>
           </DialogHeader>

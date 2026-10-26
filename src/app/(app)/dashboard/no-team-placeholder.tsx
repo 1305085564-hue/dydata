@@ -10,7 +10,7 @@ export function NoTeamPlaceholder() {
         <Users className="size-5 text-[#78716C]" />
       </div>
       <ItemHeading as="h2">静候团队接引</ItemHeading>
-      <p className="mt-2 text-[13px] leading-6 text-[#78716C]">
+      <p className="mt-2 text-[14px] leading-6 text-[#78716C]">
         你的账号还未加入任何创作团队，暂时无法提交数据。请联系管理员或组长将你拉入团队后再回到本页。
       </p>
     </div>

@@ -110,12 +110,12 @@ export function DangerousActionDialog({
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#78716C]">
               <Loader2 className="size-5 animate-spin text-[#D97757]" />
-              <span className="text-[13px]">正在深度核查关联业务依赖与渠道资源…</span>
+              <span className="text-[14px]">正在深度核查关联业务依赖与渠道资源…</span>
             </div>
           ) : isBlocked ? (
             /* 无法确认完整依赖：一律阻断（冻结裁决③） */
             <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/8 p-4 space-y-2.5 text-[12px] text-[#C0685C]">
-              <div className="flex items-center gap-1.5 font-medium text-[13px]">
+              <div className="flex items-center gap-1.5 font-medium text-[14px]">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>无法确定影响范围（系统已默认拦截执行）</span>
               </div>
@@ -141,7 +141,7 @@ export function DangerousActionDialog({
               {/* 独占/严重断供警告 */}
               {hasCriticalBindings && (
                 <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/10 p-3.5 space-y-2 text-[12px]">
-                  <div className="flex items-center gap-1.5 font-medium text-[#C0685C] text-[13px]">
+                  <div className="flex items-center gap-1.5 font-medium text-[#C0685C] text-[14px]">
                     <AlertTriangle className="size-4 shrink-0" />
                     <span>严重断供风险：以下业务将失去唯一可用模型供给</span>
                   </div>
@@ -190,7 +190,7 @@ export function DangerousActionDialog({
                     {channels.map((ch) => (
                       <div key={ch.id} className="p-3 space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-[#141413]">
+                          <span className="text-[14px] font-medium text-[#141413]">
                             渠道：{ch.name}
                           </span>
                           <span className="text-[12px] text-[#78716C]">
@@ -240,7 +240,7 @@ export function DangerousActionDialog({
               {/* 更窄的替代方案（冻结裁决③：必须提供，不能只给确定/取消） */}
               {onNarrowerAction && narrowerActionLabel && (
                 <div className="rounded-xl border border-[#D97757]/20 bg-[#D97757]/5 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#D97757]">
+                  <div className="flex items-center gap-1.5 text-[14px] font-medium text-[#D97757]">
                     <span>💡 更窄的替代操作（推荐）：</span>
                   </div>
                   <p className="text-[12px] text-[#78716C] leading-relaxed">

@@ -43,7 +43,7 @@ export function MemberInspector({
               {/* 抽屉头部 */}
               <SheetHeader className="pt-5 pb-4 flex flex-row items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-full bg-[#F1F1F0] text-[#1F1E1D] flex items-center justify-center font-normal text-[13px] shrink-0">
+                  <div className="size-9 rounded-full bg-[#F1F1F0] text-[#1F1E1D] flex items-center justify-center font-normal text-[14px] shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
                   <div className="min-w-0">
@@ -65,7 +65,7 @@ export function MemberInspector({
                         </span>
                       )}
                     </div>
-                    <SheetDescription className="text-[13px] text-[#1F1E1D] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <SheetDescription className="text-[14px] text-[#1F1E1D] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
@@ -94,7 +94,7 @@ export function MemberInspector({
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[13px] font-normal text-[#1F1E1D] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                      className="h-7 px-2.5 text-[14px] font-normal text-[#1F1E1D] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
                     >
                       <Sparkles className="size-3.5 text-[#D97757]" />
                       AI 诊断

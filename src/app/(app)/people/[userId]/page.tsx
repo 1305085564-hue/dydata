@@ -64,10 +64,10 @@ function NoticeCard({ title, description }: { title: string; description: string
     <div className="mx-auto w-full max-w-2xl pt-12">
       <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/40 p-8 text-center">
         <div className="text-[14px] font-medium text-[#1F1E1D]">{title}</div>
-        <p className="text-[13px] text-[#78716C]">{description}</p>
+        <p className="text-[14px] text-[#78716C]">{description}</p>
         <Link
           href="/admin/collaboration"
-          className="inline-block text-[13px] text-[#D97757] hover:underline"
+          className="inline-block text-[14px] text-[#D97757] hover:underline"
         >
           返回数据管理 ↗
         </Link>
@@ -264,7 +264,7 @@ export default async function PersonProfilePage({
       <Section title="成长走势 · 近 6 个月">
         <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
           <table className="w-full min-w-[520px] table-fixed text-[12px]">
-            <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[13px] font-normal text-[#78716C]">
+            <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
               <tr>
                 <th className="w-[96px] shrink-0 px-3 py-2.5 font-normal">月份</th>
                 <th className="px-3 py-2.5 font-normal">作品数</th>
@@ -305,7 +305,7 @@ export default async function PersonProfilePage({
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[480px] table-fixed text-[12px]">
-              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[13px] font-normal text-[#78716C]">
+              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
                 <tr>
                   <th className="px-3 py-2.5 font-normal">题材</th>
                   <th className="w-[96px] shrink-0 px-3 py-2.5 text-right font-normal">作品数</th>
@@ -342,7 +342,7 @@ export default async function PersonProfilePage({
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[520px] table-fixed text-[12px]">
-              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[13px] font-normal text-[#78716C]">
+              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
                 <tr>
                   <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
                   <th className="px-3 py-2.5 font-normal">账号 / 作品标题</th>
@@ -389,7 +389,7 @@ export default async function PersonProfilePage({
       <Section title="最近状态">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] font-medium text-[#1F1E1D]">异常作品</span>
+            <span className="text-[14px] font-medium text-[#1F1E1D]">异常作品</span>
             <span className="text-[12px] tabular-nums text-[#78716C]">共 {anomalies.length} 篇</span>
           </div>
           {anomalies.length === 0 ? (
@@ -397,7 +397,7 @@ export default async function PersonProfilePage({
           ) : (
             <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
               <table className="w-full min-w-[420px] table-fixed text-[12px]">
-                <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[13px] font-normal text-[#78716C]">
+                <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
                   <tr>
                     <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
                     <th className="px-3 py-2.5 font-normal">作品标题</th>

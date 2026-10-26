@@ -139,7 +139,7 @@ export function FormV2RightColumn({
             }}
             placeholder="输入视频标题"
             className={cn(
-              "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]",
+              "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[14px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]",
               hasAttemptedSubmit &&
                 !hasSlotIssues &&
                 meta.anomalyStatus !== "abnormal" &&
@@ -194,7 +194,7 @@ export function FormV2RightColumn({
             onChange={(event) => updateMeta("content", event.target.value)}
             placeholder="粘贴视频文案..."
             className={cn(
-              "min-h-[140px] w-full resize-none rounded-md p-3 bg-white border shadow-input text-[13px] leading-relaxed text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
+              "min-h-[140px] w-full resize-none rounded-md p-3 bg-white border shadow-input text-[14px] leading-relaxed text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
               hasAttemptedSubmit &&
                 !hasSlotIssues &&
                 issueSummary.missingRequiredMeta.includes("content")

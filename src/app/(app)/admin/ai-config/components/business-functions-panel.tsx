@@ -196,7 +196,7 @@ function MobileFeatureCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[13px] font-medium text-[#1F1E1D]">{label}</h3>
+            <h3 className="text-[14px] font-medium text-[#1F1E1D]">{label}</h3>
             {isGlobalDefault && <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">兜底</span>}
           </div>
           <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">{description}</p>
@@ -350,7 +350,7 @@ export function BusinessFunctionsPanel() {
         <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-[#D97757]" />
-            <span className="text-[13px] font-medium text-[#1F1E1D]">
+            <span className="text-[14px] font-medium text-[#1F1E1D]">
               业务模块调度列表
             </span>
           </div>
@@ -413,7 +413,7 @@ export function BusinessFunctionsPanel() {
             <TableRow className="bg-[#FAF9F6]/60 hover:bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
               <TableCell className="py-2.5 px-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-normal text-[#1F1E1D]">全局默认</span>
+                  <span className="text-[14px] font-normal text-[#1F1E1D]">全局默认</span>
                   <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                     兜底
                   </span>
@@ -471,7 +471,7 @@ export function BusinessFunctionsPanel() {
               >
                 <TableCell className="py-2.5 px-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-normal text-[#1F1E1D]">截图识别</span>
+                    <span className="text-[14px] font-normal text-[#1F1E1D]">截图识别</span>
                     <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
                       核心
                     </span>
@@ -594,7 +594,7 @@ export function BusinessFunctionsPanel() {
                   "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors",
                 )}
               >
-                <TableCell className="py-2.5 px-3 text-[13px] font-normal text-[#1F1E1D]">
+                <TableCell className="py-2.5 px-3 text-[14px] font-normal text-[#1F1E1D]">
                   {feature.label}
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
@@ -692,7 +692,7 @@ export function BusinessFunctionsPanel() {
       {/* 已停用/归档功能折叠区（若有） */}
       {archivedFeatures.length > 0 && (
         <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#FAF9F8]/60 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-[13px] text-[#78716C]">
+          <div className="flex items-center gap-2 text-[14px] text-[#78716C]">
             <Archive className="size-3.5" />
             <span>已停用的功能 ({archivedFeatures.length})</span>
           </div>

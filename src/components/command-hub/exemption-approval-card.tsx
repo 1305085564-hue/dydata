@@ -121,7 +121,7 @@ export function ExemptionApprovalCard({
         </div>
 
         {/* 申请事由：完整自然展示，不生硬截断，充分享受卡片空间 */}
-        <div className="mt-1.5 text-[13px] text-[#1F1E1D] leading-relaxed break-words">
+        <div className="mt-1.5 text-[14px] text-[#1F1E1D] leading-relaxed break-words">
           <span className="text-[#78716C]">事由：</span>
           <span>{group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}</span>
         </div>

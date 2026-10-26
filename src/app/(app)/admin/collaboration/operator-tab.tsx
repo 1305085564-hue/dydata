@@ -71,7 +71,7 @@ export interface OperatorColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
       <TableHead className="w-10 py-2 sticky left-0 bg-[#FCFCFB] z-20" />
       <TableHead className="py-2 text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         运营姓名
@@ -384,7 +384,7 @@ export function OperatorTab({
         <TableHeader>
           <OperatorHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
         </TableHeader>
-        <TableBody className="text-[13px]">
+        <TableBody className="text-[14px]">
           {sortedOperators.map((op) => {
             const canExpand = op.accounts.length > 0;
             const isExpanded = canExpand && expandedUserIds.has(op.userId);

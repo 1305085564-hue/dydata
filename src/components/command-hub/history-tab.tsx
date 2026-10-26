@@ -25,7 +25,7 @@ export function HistoryTab({
 {activeTab === "history" && isAdmin && (
   <div className="space-y-3">
     <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/60">
-      <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
+      <div className="flex items-center gap-2 text-[14px] font-normal text-[#141413]">
         <button
           type="button"
           onClick={() => onTabChange?.("approvals")}

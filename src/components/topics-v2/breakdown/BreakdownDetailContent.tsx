@@ -69,12 +69,12 @@ export function BreakdownDetailContent({
           />
         </Card>
       ) : detailError ? (
-        <div className="flex items-start gap-2 rounded-md border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[13px] text-[#1F1E1D]">
+        <div className="flex items-start gap-2 rounded-md border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[14px] text-[#1F1E1D]">
           <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/[0.08] text-status-danger mt-0.5">
             <span className="size-1.5 rounded-full bg-current text-status-danger" />
           </span>
           <div className="space-y-0.5 min-w-0 flex-1">
-            <p className="font-normal text-[#141413] text-[13px]">详情加载失败</p>
+            <p className="font-normal text-[#141413] text-[14px]">详情加载失败</p>
             <p className="text-[12px] text-[#78716C]">{detailError}</p>
           </div>
         </div>

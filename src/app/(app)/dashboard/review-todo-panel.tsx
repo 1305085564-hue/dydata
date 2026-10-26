@@ -50,7 +50,7 @@ export function ReviewTodoPanel({ initialTickets, loadError = null }: ReviewTodo
       </div>
       {error && <div role="alert" className="rounded-md border border-[#E2B4B4] bg-[#FFF8F8] px-3 py-2 text-[12px] text-[#9B3A3A]">{error}</div>}
       {tickets.length === 0 ? (
-        <Card className="p-4 text-[13px] text-[#78716C]">今日没有待复盘工单。</Card>
+        <Card className="p-4 text-[14px] text-[#78716C]">今日没有待复盘工单。</Card>
       ) : (
         <div className="flex flex-col gap-2">
           {tickets.map((ticket) => (

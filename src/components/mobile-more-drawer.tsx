@@ -117,7 +117,7 @@ export function MobileMoreDrawer({
                 <Bell className="size-4.5 stroke-[1.8]" />
               </div>
               <div>
-                <p className="font-normal text-[#141413] text-[13px]">行动中枢</p>
+                <p className="font-normal text-[#141413] text-[14px]">行动中枢</p>
                 <p className="text-[12px] text-[#78716C]">待办、审批与风险</p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export function MobileMoreDrawer({
                       type="button"
                       onClick={() => handleAccountSelect(account.id)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-[13px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
+                        "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-[14px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
                         isSelected
                           ? "bg-status-info/10 text-status-info font-normal"
                           : "text-[#1F1E1D] hover:bg-[#EBEBE9]",
@@ -188,7 +188,7 @@ export function MobileMoreDrawer({
                             href={child.href}
                             onClick={() => onOpenChange(false)}
                             className={cn(
-                              "flex items-center gap-2 rounded-xl p-2.5 text-[13px] font-normal transition-all active:scale-[0.99] active:duration-120",
+                              "flex items-center gap-2 rounded-xl p-2.5 text-[14px] font-normal transition-all active:scale-[0.99] active:duration-120",
                               active
                                 ? "bg-[#D97757]/10 text-[#D97757]"
                                 : "text-[#1F1E1D] hover:bg-[#F1F1F0]",
@@ -224,7 +224,7 @@ export function MobileMoreDrawer({
                       href={group.href}
                       onClick={() => onOpenChange(false)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-normal transition-all active:scale-[0.99] active:duration-120",
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-normal transition-all active:scale-[0.99] active:duration-120",
                         active
                           ? "bg-[#D97757]/10 text-[#D97757]"
                           : "text-[#1F1E1D] hover:bg-[#F1F1F0]",
@@ -259,7 +259,7 @@ export function MobileMoreDrawer({
                 onOpenChange(false);
                 onOpenSettings();
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors active:scale-[0.99] active:duration-120"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[14px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2">
                 <Sliders className="size-4 text-[#78716C]" />
@@ -271,7 +271,7 @@ export function MobileMoreDrawer({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-normal text-status-danger hover:bg-status-danger/10 transition-colors active:scale-[0.99] active:duration-120"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[14px] font-normal text-status-danger hover:bg-status-danger/10 transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2">
                 <LogOut className="size-4" />

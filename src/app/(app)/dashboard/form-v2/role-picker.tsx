@@ -103,7 +103,7 @@ export function FormV2RolePicker({
                   setSelectingRole(null);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
+                  "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[14px] transition-colors border cursor-pointer",
                   selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
                     ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
                     : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"
@@ -142,7 +142,7 @@ export function FormV2RolePicker({
                       setSelectingRole(null);
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
+                      "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[14px] transition-colors border cursor-pointer",
                       isSelected
                         ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
                         : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"

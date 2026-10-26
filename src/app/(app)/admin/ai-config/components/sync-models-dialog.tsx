@@ -441,7 +441,7 @@ export function SyncModelsDialog({
                 <AlertCircle className="size-4" />
               </div>
               <div className="space-y-1">
-                <p className="text-[13px] font-medium text-[#141413]">模型列表同步失败</p>
+                <p className="text-[14px] font-medium text-[#141413]">模型列表同步失败</p>
                 <p className="text-[12px] text-[#78716C] max-w-md mx-auto">{loadError}</p>
               </div>
               <Button
@@ -488,7 +488,7 @@ export function SyncModelsDialog({
                     ) : (
                       <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
                     )}
-                    <div className="text-[13px] text-[#141413]">
+                    <div className="text-[14px] text-[#141413]">
                       <span className="font-medium">
                         {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的模型" : "检测完成（全部通过）"}
                       </span>
@@ -551,7 +551,7 @@ export function SyncModelsDialog({
                   {reconciliation.verifiedUnavailableModelIds.length > 0 && (
                     <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/5 p-3 text-[12px] space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-[#C0685C] font-medium text-[13px]">
+                        <div className="flex items-center gap-2 text-[#C0685C] font-medium text-[14px]">
                           <AlertCircle className="size-4 shrink-0" />
                           <span>{reconciliation.verifiedUnavailableModelIds.length} 个模型上游已不再提供</span>
                         </div>
@@ -609,7 +609,7 @@ export function SyncModelsDialog({
                   {/* 情况 C: 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走 */}
                   {unverifiedCandidates.length > 0 && (
                     <div className="rounded-xl border border-[#B98A54]/25 bg-[#B98A54]/5 p-3 text-[12px] space-y-2">
-                      <div className="flex items-center gap-2 text-[#B98A54] font-medium text-[13px]">
+                      <div className="flex items-center gap-2 text-[#B98A54] font-medium text-[14px]">
                         <AlertCircle className="size-4 shrink-0" />
                         <span>{unverifiedCandidates.length} 个模型仅清单中未列出（疑似，未验证）</span>
                       </div>
@@ -703,11 +703,11 @@ export function SyncModelsDialog({
               {/* 模型列表主体 */}
               <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white select-none">
                 {currentInventory.length === 0 ? (
-                  <div className="p-10 text-center text-[13px] text-[#78716C]">
+                  <div className="p-10 text-center text-[14px] text-[#78716C]">
                     此渠道尚未返回任何模型
                   </div>
                 ) : filteredModels.length === 0 ? (
-                  <div className="p-10 text-center text-[13px] text-[#78716C]">
+                  <div className="p-10 text-center text-[14px] text-[#78716C]">
                     未找到匹配的型号
                   </div>
                 ) : (
@@ -745,7 +745,7 @@ export function SyncModelsDialog({
                     onMouseDown={(e) => handleRowMouseDown(item.modelId, e)}
                     onMouseEnter={() => handleRowMouseEnter(item.modelId)}
                     className={cn(
-                      "flex cursor-pointer select-none items-center justify-between gap-3 px-3.5 py-2.5 text-[13px] transition-colors",
+                      "flex cursor-pointer select-none items-center justify-between gap-3 px-3.5 py-2.5 text-[14px] transition-colors",
                       isChecked
                         ? "bg-[#FCFCFB] text-[#141413]"
                         : "text-[#1F1E1D] hover:bg-[#EBEBE9]/60",
@@ -758,7 +758,7 @@ export function SyncModelsDialog({
                         tabIndex={-1}
                       />
                       <div className="min-w-0">
-                        <div className="truncate font-medium text-[13px] text-[#141413]">
+                        <div className="truncate font-medium text-[14px] text-[#141413]">
                           {readableName}
                         </div>
                         <div className="truncate font-mono text-[12px] text-[#78716C]">

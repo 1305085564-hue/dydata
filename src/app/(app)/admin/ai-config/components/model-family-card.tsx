@@ -222,7 +222,7 @@ export function ModelFamilyCard({
                   if (e.key === "Escape") handleCancelModelName();
                 }}
                 autoFocus
-                className="h-6 px-1.5 text-[13px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                className="h-6 px-1.5 text-[14px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
               />
               <Button
                 variant="ghost"
@@ -378,7 +378,7 @@ export function ModelFamilyCard({
                           }}
                           autoFocus
                           disabled={savingKeyId === key.id}
-                          className="h-6 px-1.5 text-[13px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                          className="h-6 px-1.5 text-[14px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
                         />
                         <Button
                           variant="ghost"
@@ -402,7 +402,7 @@ export function ModelFamilyCard({
                     ) : (
                       <div className="flex items-center gap-1">
                         <span
-                          className="text-[13px] font-normal text-[#1F1E1D]"
+                          className="text-[14px] font-normal text-[#1F1E1D]"
                           title={key.api_key_masked ? `渠道凭证 ${key.api_key_masked}` : undefined}
                         >
                           {key.label}

@@ -319,7 +319,7 @@ export function ModelManagerDialog({
             <DialogTitle className="text-[20px] font-medium text-[#141413]">彻底删除模型确认</DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-3 py-2">
-            <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
+            <p className="text-[14px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
             <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
               此操作将清除其在 {confirmGroup?.items.length} 个渠道中的全部关联记录，此操作不可撤销。
             </div>

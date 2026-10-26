@@ -250,7 +250,7 @@ export function PulseVideoList({
               type="button"
               onClick={() => onSelectCap(cap.key)}
               className={cn(
-                "rounded-md px-3 py-2 text-[13px] transition-colors duration-150 shadow-input border cursor-pointer select-none",
+                "rounded-md px-3 py-2 text-[14px] transition-colors duration-150 shadow-input border cursor-pointer select-none",
                 isSelected
                   ? "bg-[#EBEBE9] border-[#E2E2DF] text-[#141413] font-medium"
                   : "bg-white border-[#E2E2DF] text-[#1F1E1D] font-normal hover:bg-[#F7F7F6]"
@@ -425,7 +425,7 @@ export function PulseVideoList({
                                 router.push(`/admin/content?videoId=${video.id}`);
                               }}
                               aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
-                              className="truncate text-left text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
+                              className="truncate text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
                             >
                               {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                             </button>
@@ -442,7 +442,7 @@ export function PulseVideoList({
                           {grade ? (
                             <span
                               className={cn(
-                                "text-[13px] font-normal",
+                                "text-[14px] font-normal",
                                 BREAKOUT_GRADE_TEXT_CLASS[grade]
                               )}
                             >
@@ -458,7 +458,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 播放 */}
-                        <TableCell className="text-right text-[13px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
                           {snap?.play_count != null ? (
                             formatCount(snap.play_count)
                           ) : (
@@ -467,7 +467,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 2s留存 */}
-                        <TableCell className="text-right text-[13px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
                           {snap?.bounce_rate_2s != null ? (
                             formatPercent(snap.bounce_rate_2s)
                           ) : (
@@ -476,7 +476,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 5s完播 */}
-                        <TableCell className="text-right text-[13px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
                           {snap?.completion_rate_5s != null ? (
                             formatPercent(snap.completion_rate_5s)
                           ) : (

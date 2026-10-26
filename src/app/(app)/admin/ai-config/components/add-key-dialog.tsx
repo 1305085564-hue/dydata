@@ -389,13 +389,13 @@ export function AddKeyDialog({
                   <SelectTrigger
                     id="provider-select"
                     aria-label="所属接入点"
-                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[14px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                   >
                     <SelectValue placeholder="选择接入点">
                       {bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "选择接入点"}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[13px] shadow-claude-float p-1 min-w-[240px]">
+                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[14px] shadow-claude-float p-1 min-w-[240px]">
                     {bundle?.providers.map((p) => (
                       <SelectItem
                         key={p.id}
@@ -515,7 +515,7 @@ export function AddKeyDialog({
                     if (labelError) setLabelError("");
                   }}
                   className={cn(
-                    "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                    "h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                     labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
@@ -538,7 +538,7 @@ export function AddKeyDialog({
                   }}
                   onBlur={() => setApiKey((value) => value.trim())}
                   className={cn(
-                    "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                    "h-8 text-[14px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                     keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
@@ -563,7 +563,7 @@ export function AddKeyDialog({
                     setPriority(next);
                     setPriorityError(Number.isInteger(next) && next >= 1 && next <= 999 ? "" : "只能填 1-999 的整数");
                   }}
-                  className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
+                  className="h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D]"
                 />
                 {priorityError && <p className="text-[#C0685C] text-[12px] mt-1">{priorityError}</p>}
               </div>

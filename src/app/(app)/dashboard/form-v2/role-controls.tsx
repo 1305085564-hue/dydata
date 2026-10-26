@@ -62,7 +62,7 @@ export function VideoStatusSegmented({
             onClick={() => onChange(option.value)}
             title={option.tip}
             className={cn(
-              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[13px] transition-all cursor-pointer",
+              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[14px] transition-all cursor-pointer",
               isActive
                 ? "bg-white text-[#1F1E1D] shadow-input font-normal"
                 : "text-[#78716C] hover:text-[#1F1E1D] font-normal"

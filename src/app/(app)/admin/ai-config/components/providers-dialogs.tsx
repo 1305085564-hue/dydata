@@ -113,7 +113,7 @@ export function ProviderQuickActionsDialog({
                 setDomainMismatchWarning(getProviderDomainMismatch(e.target.value, formData.base_url || ""));
               }}
               className={cn(
-                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 nameError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder="例如: API中转站A / 官方OpenAI"
@@ -134,7 +134,7 @@ export function ProviderQuickActionsDialog({
               }}
               onBlur={() => setDomainMismatchWarning(getProviderDomainMismatch(formData.name || "", formData.base_url || ""))}
               className={cn(
-                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[14px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 urlError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder="例如: https://api.openai.com/v1"
@@ -157,13 +157,13 @@ export function ProviderQuickActionsDialog({
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="填写此接入点的特点、费率或备用策略..."
-              className="text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
+              className="text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
             />
           </div>
 
           <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] px-3.5 py-2.5">
             <div>
-              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此接入点</Label>
+              <Label className="text-[14px] font-normal text-[#1F1E1D]">是否启用此接入点</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，系统将自动绕开此接入点下的全部渠道</p>
             </div>
             <Switch
@@ -411,7 +411,7 @@ export function ProvidersManagerDialog({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Server className="size-3.5 text-[#78716C]" />
-                            <span className="text-[13px] font-medium text-[#141413] truncate">{p.name}</span>
+                            <span className="text-[14px] font-medium text-[#141413] truncate">{p.name}</span>
                             {!p.is_enabled ? (
                               <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>
                             ) : (

@@ -127,7 +127,7 @@ export function FormV2Dialogs({
               onChange={(e) => setAppealReason(e.target.value)}
               maxLength={1000}
               rows={3}
-              className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+              className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[14px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
               placeholder="请输入补交原因（最多 1000 字）"
             />
           </div>

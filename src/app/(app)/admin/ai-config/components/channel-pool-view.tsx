@@ -218,7 +218,7 @@ export function ChannelPoolView({
         <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Server className="size-3.5 text-[#D97757]" />
-            <span className="text-[13px] font-medium text-[#1F1E1D]">渠道</span>
+            <span className="text-[14px] font-medium text-[#1F1E1D]">渠道</span>
             <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
           </div>
           <TooltipProvider delay={100}>
@@ -276,7 +276,7 @@ export function ChannelPoolView({
                     </span>
                     <span
                       className={cn(
-                        "text-[13px] truncate",
+                        "text-[14px] truncate",
                         isSelected ? "font-medium text-[#1F1E1D]" : "text-[#1F1E1D]"
                       )}
                     >
@@ -728,7 +728,7 @@ export function ChannelPoolView({
               {/* 渠道启用状态总开关 */}
               <div className="pt-2 border-t border-[#E2E2DF]/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[13px] text-[#1F1E1D] font-normal">是否启用渠道</span>
+                  <span className="text-[14px] text-[#1F1E1D] font-normal">是否启用渠道</span>
                   <p className="text-[12px] text-[#78716C]">
                     关闭后，系统将彻底跳过该渠道，不参与任何业务的模型算力调度。
                   </p>
@@ -745,7 +745,7 @@ export function ChannelPoolView({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-[13px] font-medium text-[#1F1E1D]">挂载模型与生效状态</h4>
+                  <h4 className="text-[14px] font-medium text-[#1F1E1D]">挂载模型与生效状态</h4>
                   <p className="text-[12px] text-[#78716C]">
                     此渠道支持的模型系列，可独立启闭或试跑连通性。
                   </p>
@@ -783,7 +783,7 @@ export function ChannelPoolView({
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-normal text-[#1F1E1D] truncate">
+                            <span className="text-[14px] font-normal text-[#1F1E1D] truncate">
                               {displayName}
                             </span>
                             {m.is_enabled && m.global_is_enabled === false && (

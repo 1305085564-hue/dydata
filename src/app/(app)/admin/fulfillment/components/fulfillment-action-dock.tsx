@@ -142,7 +142,7 @@ export function FulfillmentActionDock({
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-medium text-[#141413]">
+              <span className="text-[14px] font-medium text-[#141413]">
                 待处理事项
               </span>
               <span className="inline-flex items-center rounded-full bg-[#D97757]/15 px-2 py-0.5 text-[12px] font-medium text-[#D97757] tabular-nums">
@@ -452,7 +452,7 @@ export function FulfillmentActionDock({
               <DialogTitle className="text-[20px] font-medium text-[#141413]">
                 批量标记为「{ACTION_LABELS[batchAction]}」
               </DialogTitle>
-              <DialogDescription className="text-[13px] text-[#78716C]">
+              <DialogDescription className="text-[14px] text-[#78716C]">
                 您正在将已选的 {selectedIds.size} 位成员今日记录标记为「
                 {ACTION_LABELS[batchAction]}」。
               </DialogDescription>
@@ -467,7 +467,7 @@ export function FulfillmentActionDock({
                 value={batchReason}
                 onChange={(e) => setBatchReason(e.target.value)}
                 placeholder="例如：团队团建休假 / 线上例会豁免"
-                className="w-full rounded-md border border-[#E2E2DF] px-3 py-1.5 text-[13px] outline-none focus:border-[#141413]"
+                className="w-full rounded-md border border-[#E2E2DF] px-3 py-1.5 text-[14px] outline-none focus:border-[#141413]"
               />
             </div>
 

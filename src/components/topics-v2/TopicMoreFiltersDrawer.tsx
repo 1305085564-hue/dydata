@@ -198,7 +198,7 @@ export function TopicMoreFiltersDrawer({
                     }`}
                   >
                     <span className="space-y-0.5 pr-2">
-                      <span className="block text-[13px] font-normal text-[#1F1E1D]">
+                      <span className="block text-[14px] font-normal text-[#1F1E1D]">
                         {option.label}
                       </span>
                       <span className="block text-[12px] leading-normal text-[#78716C]">
@@ -225,7 +225,7 @@ export function TopicMoreFiltersDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-4 py-2 text-[13px] font-normal text-[#141413] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-4 py-2 text-[14px] font-normal text-[#141413] transition-colors cursor-pointer"
           >
             完成筛选
           </button>

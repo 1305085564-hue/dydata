@@ -47,7 +47,7 @@ export function ResetPasswordErrorNotice({
 }) {
   return (
     <Alert variant="error" className="flex-col items-start gap-2">
-      <p className="text-[13px] text-[#1F1E1D]">{message}</p>
+      <p className="text-[14px] text-[#1F1E1D]">{message}</p>
       <Link className="font-normal text-[#D97757] hover:text-[#C46A4D] transition-colors" href={href}>
         重新发送重置邮件 →
       </Link>
@@ -133,7 +133,7 @@ export function ResetPasswordForm() {
       <AuthShell title="设置新密码" subtitle="正在确认重置链接是否有效">
         <p
           aria-live="polite"
-          className="text-center text-[13px] text-[#78716C]"
+          className="text-center text-[14px] text-[#78716C]"
           role="status"
         >
           正在验证重置链接...
@@ -153,7 +153,7 @@ export function ResetPasswordForm() {
             href={forgotPasswordHref}
             message="重置链接无效或已过期，请重新发送重置邮件"
           />
-          <p className="text-[13px] text-[#78716C]">
+          <p className="text-[14px] text-[#78716C]">
             <Link
               className="text-[#1F1E1D] underline underline-offset-4"
               href={loginHref}
@@ -210,7 +210,7 @@ export function ResetPasswordForm() {
         <Button className="w-full" disabled={submitting} type="submit">
           {submitting ? "提交中" : "确认重置密码"}
         </Button>
-        <p className="text-center text-[13px] text-[#78716C]">
+        <p className="text-center text-[14px] text-[#78716C]">
           <Link
             className="text-[#1F1E1D] underline underline-offset-4"
             href={loginHref}

@@ -92,7 +92,7 @@ export function ShelfModelsPicker({
       {/* 区一：全站现役模型 · 自动继承上架 */}
       <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 p-3 shadow-card">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-[#141413]">
+          <span className="text-[14px] font-medium text-[#141413]">
             全站现役模型 · 自动继承上架 ({activeInheritedModels.length})
           </span>
           <span className="text-[12px] text-[#6FAA7D] font-mono">
@@ -123,7 +123,7 @@ export function ShelfModelsPicker({
                       checked={isChecked}
                       onCheckedChange={() => onToggleModel(item.modelId)}
                     />
-                    <span className="text-[13px] font-normal text-[#141413] truncate">
+                    <span className="text-[14px] font-normal text-[#141413] truncate">
                       {item.displayName}
                     </span>
                     {item.displayName !== item.modelId && (
@@ -145,7 +145,7 @@ export function ShelfModelsPicker({
       {/* 区二：该渠道支持的其他模型 / 回退候选 */}
       <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-card">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-[#141413]">
+          <span className="text-[14px] font-medium text-[#141413]">
             {isProbeSuccess
               ? `该渠道支持的其他可用模型 (${otherDiscoveredModels.length})`
               : `未直接探得上游 · 历史已知模型候选 (${otherDiscoveredModels.length})`}
@@ -175,7 +175,7 @@ export function ShelfModelsPicker({
                     />
                     <span
                       className={cn(
-                        "text-[13px] font-normal truncate",
+                        "text-[14px] font-normal truncate",
                         isChecked ? "text-[#141413] font-medium" : "text-[#78716C]"
                       )}
                     >
@@ -215,7 +215,7 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-[13px] text-[#141413]">
+        <div className="flex flex-wrap items-center gap-2 text-[14px] text-[#141413]">
           <span className="font-medium">渠道连通测试结果</span>
           <span className="text-[12px] text-[#78716C]">
             （测了 {testResults.results.length} 个模型 · 通过 {onlineCount} 个 · 未通过 {failureCount} 个）
@@ -253,7 +253,7 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
   return (
     <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[13px] text-[#C0685C]">
+        <div className="flex items-center gap-2 text-[14px] text-[#C0685C]">
           <span className="font-medium">未连通渠道手记</span>
           <span className="text-[12px]">({failedChannels.length} 个渠道探测异常)</span>
         </div>

@@ -50,7 +50,7 @@ export function BreakdownSummarySections({
                         <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
                       </div>
-                      <p className="text-[13px] not-italic text-[#1F1E1D] leading-relaxed">
+                      <p className="text-[14px] not-italic text-[#1F1E1D] leading-relaxed">
                         “{subTopicInfo.hook}”
                       </p>
                     </div>
@@ -62,7 +62,7 @@ export function BreakdownSummarySections({
                         <FileText className="size-3.5 text-[#78716C]" />
                         <span>内容提纲</span>
                       </div>
-                      <p className="text-[13px] text-[#1F1E1D] leading-relaxed whitespace-pre-line font-normal">
+                      <p className="text-[14px] text-[#1F1E1D] leading-relaxed whitespace-pre-line font-normal">
                         {subTopicInfo.outline}
                       </p>
                     </Card>
@@ -139,7 +139,7 @@ export function BreakdownSummarySections({
                       </span>
                       <span>已验证爆款</span>
                     </div>
-                    <p className="text-[13px] text-[#1F1E1D] font-normal leading-relaxed">
+                    <p className="text-[14px] text-[#1F1E1D] font-normal leading-relaxed">
                       该题来源于外部优质干货样本，外部实测播放已达标。团队内完成首条创作后将自动沉淀内部专属数据。
                     </p>
                   </div>

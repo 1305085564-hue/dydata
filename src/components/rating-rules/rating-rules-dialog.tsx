@@ -56,12 +56,12 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
         <h2 className="text-[20px] font-medium text-[#141413] tracking-tight">
           作品评级怎么看
         </h2>
-        <p className="text-[13px] text-[#78716C] mt-1.5 font-normal leading-[1.6]">
+        <p className="text-[14px] text-[#78716C] mt-1.5 font-normal leading-[1.6]">
           每篇作品发布后，系统会自动给一个评级。它只看你三个数据（互动率、点赞率/收藏率、转粉率）和播放量。
         </p>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto space-y-6 pt-5 pb-2 text-[13px] leading-[1.6] text-[#1F1E1D] pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto space-y-6 pt-5 pb-2 text-[14px] leading-[1.6] text-[#1F1E1D] pr-1">
         {/* 一、先认识三把尺子 */}
         <section className="space-y-3">
           <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
@@ -147,7 +147,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
               </tbody>
             </table>
           </div>
-          <p className="text-[13px] text-[#1F1E1D] leading-[1.6]">
+          <p className="text-[14px] text-[#1F1E1D] leading-[1.6]">
             达标线 {fourthTargetStr}，你做到 {fourthTargetStr} 是优；做到 {goodTargetFourthStr}（正好 {BREAKOUT_GRADE_THRESHOLDS.good}%）是良。三个指标各给一个标签，互不影响。
           </p>
           <p className="text-[12px] text-[#78716C]">
@@ -160,7 +160,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
           <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
             三、总评：整篇只有一个，只看互动率 + 点赞率/收藏率
           </h3>
-          <ol className="list-decimal list-outside pl-5 space-y-2 text-[13px] text-[#1F1E1D]">
+          <ol className="list-decimal list-outside pl-5 space-y-2 text-[14px] text-[#1F1E1D]">
             <li>
               播放量太低，直接判劣 —— 不到 {KPI_PLAY_FLOOR.toLocaleString()}，别的数据再好也是劣。
             </li>
@@ -249,7 +249,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
           <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
             五、想拿优，记住三条
           </h3>
-          <ol className="list-decimal list-outside pl-5 space-y-1.5 text-[13px] text-[#1F1E1D]">
+          <ol className="list-decimal list-outside pl-5 space-y-1.5 text-[14px] text-[#1F1E1D]">
             <li>播放量 ≥ {formatPlayWan(KPI_PLAY_EXCELLENT)}</li>
             <li>互动率 ≥ {interactionTargetStr}</li>
             <li>点赞率或收藏率 ≥ {fourthTargetStr}</li>

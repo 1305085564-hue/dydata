@@ -178,7 +178,7 @@ export function WorkGroupListTab({
       <Card className="overflow-hidden p-0 gap-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
               <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
                 <button
                   type="button"
@@ -205,7 +205,7 @@ export function WorkGroupListTab({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="text-[13px]">
+          <TableBody className="text-[14px]">
             {sorted.map((group) => (
               <TableRow
                 key={group.id}
@@ -272,7 +272,7 @@ export function WorkGroupListTab({
                       event.stopPropagation();
                       onSelectGroup(group.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded-md text-[13px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
+                    className="inline-flex items-center gap-1 rounded-md text-[14px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
                   >
                     进入
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />

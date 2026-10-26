@@ -85,7 +85,7 @@ export function SubmittedView({
           <SectionHeading as="h3">
             今日创作已成功立卷
           </SectionHeading>
-          <p className="text-[13px] text-[#78716C]">
+          <p className="text-[14px] text-[#78716C]">
             作品：<span className="font-normal text-[#141413]">{meta.videoTitle || "未命名作品"}</span> · 发布日：<span className="tabular-nums font-normal text-[#141413]">{publishedDate}</span>
           </p>
           <p className="text-[12px] text-[#A8A29E]">
@@ -104,7 +104,7 @@ export function SubmittedView({
               setHasUserInteracted(true);
               handleGoToTopics();
             }}
-            className="w-full max-w-xs font-normal text-[13px] shadow-input cursor-pointer"
+            className="w-full max-w-xs font-normal text-[14px] shadow-input cursor-pointer"
           >
             <Compass className="size-4" />
             <span>去选题库挑选明日选题</span>
@@ -241,7 +241,7 @@ export function SubmittedView({
                     <CheckCircle className="mt-0.5 size-4 shrink-0 text-status-success" />
                   )}
                   <div className="min-w-0">
-                    <p className="text-[13px] font-normal text-[#1F1E1D]">
+                    <p className="text-[14px] font-normal text-[#1F1E1D]">
                       {issue.title}
                     </p>
                     <p className="text-[12px] text-[#78716C]">

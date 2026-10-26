@@ -328,7 +328,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-normal tabular-nums text-[#1F1E1D]">
+                    <p className="text-[14px] font-normal tabular-nums text-[#1F1E1D]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </p>
                     <Button
