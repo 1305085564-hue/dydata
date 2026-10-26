@@ -179,7 +179,7 @@ export function MonthlyFulfillmentStrip({
         {/* 左侧：当月履约统计概览与今日状态指示 */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-serif text-[14px] text-[#141413] tracking-tight">
+            <span className="text-[14px] text-[#141413] tracking-tight">
               {monthLabel}履约账本
             </span>
             <span className="text-[12px] tabular-nums text-[#78716C] font-sans">
