@@ -115,7 +115,7 @@ export function DangerousActionDialog({
           ) : isBlocked ? (
             /* 无法确认完整依赖：一律阻断（冻结裁决③） */
             <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/8 p-4 space-y-2.5 text-[12px] text-[#C0685C]">
-              <div className="flex items-center gap-1.5 font-medium text-[14px]">
+              <div className="flex items-center gap-1.5 text-[14px]">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>无法确定影响范围（系统已默认拦截执行）</span>
               </div>
