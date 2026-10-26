@@ -340,9 +340,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   className="h-full w-full object-contain"
                 />
               </div>
-              <div className="pt-1 flex items-center justify-between text-[10px] text-[#78716C] px-0.5">
+              <div className="pt-1 flex items-center justify-between text-[12px] text-[#78716C] px-0.5">
                 <span>截图核对</span>
-                <span className="font-mono text-[9px] text-[#A8A29E]">
+                <span className="font-mono text-[12px] text-[#A8A29E]">
                   {magnifier.role === "screenshot_1" ? "基础数据" : "完播留存"}
                 </span>
               </div>

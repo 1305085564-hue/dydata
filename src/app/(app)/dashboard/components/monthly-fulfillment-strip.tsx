@@ -252,7 +252,7 @@ export function MonthlyFulfillmentStrip({
                   aria-label={title}
                   onClick={() => !isFuture && onSelectDate(dateKey)}
                   className={cn(
-                    "flex flex-col items-center justify-center h-[26px] min-w-[22px] px-1 rounded-[4px] border text-[11px] tabular-nums font-sans select-none transition-all duration-120",
+                    "flex flex-col items-center justify-center h-[26px] min-w-[24px] px-1 rounded-[4px] border text-[12px] tabular-nums font-sans select-none transition-all duration-120",
                     !isFuture && "cursor-pointer active:scale-95",
                     cellStyle,
                     isSelected && "ring-1.5 ring-[#141413] shadow-xs scale-105 z-10",

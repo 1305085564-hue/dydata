@@ -208,7 +208,7 @@ export function FormV2SubmitFooter({
           {showShortcutTip && (
             <div
               role="tooltip"
-              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-[#1F1E1D] text-white text-[11px] rounded-md shadow-lg pointer-events-none whitespace-nowrap z-20 animate-in fade-in zoom-in-95 duration-150"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-[#1F1E1D] text-white text-[12px] rounded-md shadow-lg pointer-events-none whitespace-nowrap z-20 animate-in fade-in zoom-in-95 duration-150"
             >
               按 Enter 提交
               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-[#1F1E1D]" />
