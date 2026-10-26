@@ -489,7 +489,7 @@ export function ChannelPoolView({
                   <div className="rounded-lg border border-[#C0685C]/25 bg-[#C0685C]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-[#C0685C]">
                       <AlertCircle className="size-4 shrink-0" />
-                      <span>上游比对发现 <span className="font-medium tabular-nums">{selectedReconciliation.verifiedUnavailableModelIds.length}</span> 个模型上游已不再提供（待收走）</span>
+                      <span>上游比对发现 <span className="tabular-nums">{selectedReconciliation.verifiedUnavailableModelIds.length}</span> 个模型上游已不再提供（待收走）</span>
                     </div>
                     <Button
                       variant="outline"
@@ -511,7 +511,7 @@ export function ChannelPoolView({
                   <div className="rounded-lg border border-[#B98A54]/25 bg-[#B98A54]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-[#B98A54]">
                       <AlertCircle className="size-4 shrink-0" />
-                      <span>上游比对发现 <span className="font-medium tabular-nums">{unverified.length}</span> 个模型仅清单中未列出（疑似，未验证）</span>
+                      <span>上游比对发现 <span className="tabular-nums">{unverified.length}</span> 个模型仅清单中未列出（疑似，未验证）</span>
                     </div>
                     <Button
                       variant="outline"
