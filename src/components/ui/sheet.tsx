@@ -69,7 +69,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-[70] flex flex-col gap-4 bg-white text-[13px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "fixed z-[70] flex flex-col gap-4 bg-white text-[14px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
           sideClasses[side],
           className,
         )}
@@ -163,7 +163,7 @@ function SheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="sheet-description"
-      className={cn("text-[13px] leading-[1.6] text-[#1F1E1D]", className)}
+      className={cn("text-[14px] leading-[1.6] text-[#1F1E1D]", className)}
       {...props}
     />
   )

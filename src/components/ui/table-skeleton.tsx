@@ -24,7 +24,7 @@ export function TableSkeleton({
       )}
       {...props}
     >
-      <table className="w-full border-collapse text-[13px]">
+      <table className="w-full border-collapse text-[14px]">
         {showHeader && (
           <thead>
             <tr className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/50">

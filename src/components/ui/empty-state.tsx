@@ -76,7 +76,7 @@ export function EmptyState({
       <div className="space-y-1">
         <p className={cn("text-[14px] font-medium text-[#1F1E1D]", !isCompact && "mt-4")}>{title}</p>
         {description && (
-          <p className="max-w-[240px] text-[13px] text-[#78716C] mt-1">{description}</p>
+          <p className="max-w-[240px] text-[14px] text-[#78716C] mt-1">{description}</p>
         )}
       </div>
 

@@ -26,12 +26,6 @@ test("CSS 自定义属性不允许自引用（循环引用会让 token 整体失
   }
 });
 
-test("--font-display 使用真实可用的系统字体栈（不再依赖已移除的 Google Fonts）", () => {
-  const globals = readSource("src/app/globals.css");
-  assert.match(globals, /--font-display:[^;]*'PingFang SC'/);
-  assert.doesNotMatch(globals, /fonts\.googleapis|fonts\.gstatic/);
-});
-
 test("shadcn 状态变体由本地 CSS 提供，不依赖命令行工具包参与生产构建", () => {
   const globals = readSource("src/app/globals.css");
   const variants = readSource("src/styles/shadcn-state-variants.css");
@@ -61,31 +55,28 @@ test("shadcn 状态变体由本地 CSS 提供，不依赖命令行工具包参�
   assert.equal(packageJson.devDependencies?.shadcn, undefined);
 });
 
-test("Windows 低密度屏有专用中文可读性兜底", () => {
+test("字号档位不使用半像素值（依赖即静默失效）", () => {
   const globals = readSource("src/app/globals.css");
-  const layout = readSource("src/app/layout.tsx");
 
-  assert.match(layout, /dataset\.os = "windows"/);
-  assert.match(layout, /dataset\.textDensity = "low"/);
-  assert.match(globals, /html\[data-os="windows"\]\[data-text-density="low"\] body/);
-  assert.match(globals, /font-family: var\(--font-sans\)/);
-  // 衬线小字回退清单按「整数字号档」枚举：12px 档（16px 以下唯一的衬线小字档）必须在列
-  assert.match(globals, /\.font-serif:is\([\s\S]*?\.text-\\\[12px\\\][\s\S]*?\)/);
-  // §2.3.4 半像素归正后，兜底清单不得再依赖半像素类名（依赖即静默失效）
   for (const value of ["9.5", "10.5", "11.5", "12.5", "13.5", "14.5"]) {
     assert.ok(!globals.includes(value), `globals.css 不应再出现半像素字号 ${value}`);
   }
 });
 
-test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助墨", () => {
+test("字体栈只用系统字体：sans 优先雅黑 UI，中文衬线钉死中易宋体", () => {
   const globals = readSource("src/app/globals.css");
 
   assert.match(globals, /--font-sans:[^;]*Microsoft YaHei UI/);
-  assert.match(globals, /--font-display:[^;]*Microsoft YaHei UI/);
-  // Windows 低密度屏的 :not(.dark) 覆盖块已按规范 §2.4 删除：--color-text-tertiary 与
-  // --muted-foreground 的根值本就是 #78716C，该覆盖零效果；辅助墨加深改由下方 utilities 唯一承担。
-  assert.ok(globals.includes(".text-\\[\\#78716C\\]"));
-  assert.match(globals, /color:\s*#78716C/);
+  // Inter 从未加载，两大系统默认均不预装（规范 §1.6）
+  assert.doesNotMatch(globals, /--font-sans:[^;]*\bInter\b/);
+  assert.match(
+    globals,
+    /--font-serif:\s*"Iowan Old Style", Charter, Georgia, "Songti SC", SimSun, serif;/,
+  );
+  // STSong 随 Office 才命中、NSimSun 观感漂移：中文衬线一律落中易宋体（规范 §1.6）
+  assert.doesNotMatch(globals, /STSong|NSimSun/);
+  assert.doesNotMatch(globals, /--font-display/);
+  assert.doesNotMatch(globals, /fonts\.googleapis|fonts\.gstatic/);
   assert.doesNotMatch(globals, /placeholder[^\n]*#78716C/);
 });
 

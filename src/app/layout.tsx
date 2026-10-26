@@ -4,21 +4,6 @@ import { RouteToaster } from "@/components/ui/route-toaster";
 
 import "./globals.css";
 
-const lowDensityTextScript = `
-(() => {
-  const nav = navigator;
-  const userAgentData = nav.userAgentData;
-  const platform = userAgentData?.platform || nav.platform || "";
-  const isWindows = /Windows/i.test(platform) || /Windows/i.test(nav.userAgent);
-  if (!isWindows) return;
-  const root = document.documentElement;
-  root.dataset.os = "windows";
-  if ((window.devicePixelRatio || 1) < 1.5) {
-    root.dataset.textDensity = "low";
-  }
-})();
-`;
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://dydata.cc"),
   title: {
@@ -71,7 +56,6 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased tabular-nums">
-        <script dangerouslySetInnerHTML={{ __html: lowDensityTextScript }} />
         {children}
         <RouteToaster />
       </body>

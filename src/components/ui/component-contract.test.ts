@@ -36,10 +36,10 @@ test("ItemHeading 保持条目定名规格，降级只降墨度不降字号字�
   assert.match(item, /muted \? "text-\[#78716C\]" : "text-\[#1F1E1D\]"/);
 });
 
-test("EmptyState 保持空状态唯一形态：标题 14px/500/正文墨，描述 13px/辅助墨", () => {
+test("EmptyState 保持空状态唯一形态：标题 14px/500/正文墨，描述 14px/辅助墨", () => {
   const emptyState = readComponent("empty-state");
   assert.match(emptyState, /"text-\[14px\] font-medium text-\[#1F1E1D\]"/);
-  assert.match(emptyState, /max-w-\[240px\] text-\[13px\] text-\[#78716C\]/);
+  assert.match(emptyState, /max-w-\[240px\] text-\[14px\] text-\[#78716C\]/);
   assert.match(emptyState, /variant\?: "default" \| "compact"/);
 });
 

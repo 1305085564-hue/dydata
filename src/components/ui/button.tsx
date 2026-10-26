@@ -24,11 +24,11 @@ const buttonVariants = cva(
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
-        // M 标准级 (28px, h-7 px-2.5 text-[13px]) - 工具栏、筛选器、次要操作
+        // M 标准级 (28px, h-7 px-2.5 text-[14px]) - 工具栏、筛选器、次要操作
         default:
-          "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        m: "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+          "h-7 gap-1 rounded-md px-2.5 text-[14px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        m: "h-7 gap-1 rounded-md px-2.5 text-[14px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-7 gap-1 rounded-md px-2.5 text-[14px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         // S 紧凑级 (24px, h-6 px-2 text-[12px]) - 表格行内小操作、标签按钮
         s: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         xs: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",

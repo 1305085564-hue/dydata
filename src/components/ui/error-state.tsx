@@ -44,7 +44,7 @@ export function ErrorState({
           {title}
         </SectionHeading>
         {description && (
-          <p className="text-[13px] leading-[1.65] text-[#78716C]">{description}</p>
+          <p className="text-[14px] leading-[1.65] text-[#78716C]">{description}</p>
         )}
       </div>
       <Button

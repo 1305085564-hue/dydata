@@ -4,7 +4,7 @@ import { Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative flex w-full items-center gap-2 rounded-xl border p-3 text-[13px] leading-relaxed transition-colors",
+  "relative flex w-full items-center gap-2 rounded-xl border p-3 text-[14px] leading-relaxed transition-colors",
   {
     variants: {
       variant: {
@@ -102,7 +102,7 @@ const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-[13px] text-[#78716C]", className)}
+    className={cn("text-[14px] text-[#78716C]", className)}
     {...props}
   />
 ));

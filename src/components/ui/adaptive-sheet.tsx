@@ -104,7 +104,7 @@ export function AdaptiveSheetContent({
         }}
         className={cn(
           // 通用层
-          "fixed z-[70] flex flex-col bg-[#FCFCFB] text-[13px] text-[#1F1E1D] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
+          "fixed z-[70] flex flex-col bg-[#FCFCFB] text-[14px] text-[#1F1E1D] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
           // 移动端：底部抽屉模式 (Bottom Sheet)
           "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl border-t border-[#E2E2DF] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",
@@ -185,7 +185,7 @@ export function AdaptiveSheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="adaptive-sheet-description"
-      className={cn("text-[13px] text-[#1F1E1D] leading-relaxed", className)}
+      className={cn("text-[14px] text-[#1F1E1D] leading-relaxed", className)}
       {...props}
     />
   );
