@@ -112,13 +112,13 @@ export function ContentListFiltersView({
                       key={opt.value}
                       type="button"
                       onClick={() => handleTimeRangeChange(opt.value)}
-                      className="w-full rounded-md px-2 py-1.5 text-left text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+                      className="w-full rounded-md px-2 py-1.5 text-left text-[14px] text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
                     >
                       {opt.label}
                     </button>
                   ))}
-                  <div className="my-1 h-px bg-[#E2E2DF]" />
-                  <div className="px-1 pb-0.5 text-[12px] text-[#1F1E1D]">自定义日期</div>
+                  <div className="my-1.5 h-px bg-[#E2E2DF]" />
+                  <div className="px-1 pb-0.5 text-[12px] text-[#78716C]">自定义日期</div>
                   <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
                     开始
                     <Input
