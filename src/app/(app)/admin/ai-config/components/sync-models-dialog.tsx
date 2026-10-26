@@ -489,14 +489,14 @@ export function SyncModelsDialog({
                       <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
                     )}
                     <div className="text-[14px] text-[#141413]">
-                      <span className="font-medium">
+                      <span>
                         {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的模型" : "检测完成（全部通过）"}
                       </span>
                       <span className="mx-1.5 text-[#78716C]/60">·</span>
                       <span className="text-[12px] text-[#78716C]">
                         测了 <span className=" text-[#141413] tabular-nums">{testSummary.results.length}</span> 个模型
-                        {" "}· 通过 <span className="font-medium text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
-                        {" "}· 未通过 <span className={cn("font-medium tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
+                        {" "}· 通过 <span className="text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
+                        {" "}· 未通过 <span className={cn("tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
                       </span>
                     </div>
                   </div>
