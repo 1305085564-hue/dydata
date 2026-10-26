@@ -151,7 +151,7 @@ export function DatePagination({
       >
         <PopoverTrigger className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
           <Calendar className="size-3.5 text-[#78716C]" />
-          <span className="">{loadingLabel}</span>
+          <span>{loadingLabel}</span>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-80 p-3">
           <div className="flex items-center justify-between pb-2">
