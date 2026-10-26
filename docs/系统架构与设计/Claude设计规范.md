@@ -14,15 +14,15 @@
 
 ### 0.1 字号封闭律 (原则1: Closed Systems)
 
-**只能用 28/20/14/12px，写法必须是 `text-[Npx]`**；禁 `text-xs/sm/base/lg` 等别名与 `rem`。档位、豁免与写法唯一律详见 §1.1，检查命令见 §7.1。
+**只能用 28/20/14/12px，写法必须是 `text-[Npx]`**；禁 `text-xs/sm/base/lg` 等别名与 `rem`。档位、豁免与写法唯一律详见 §1.1，由门禁强制（§7.1）。
 
 ### 0.2 字重一档 (原则2: Single Responsibility)
 
-**全站字重只有 400**，层级与激活态由字号、字体族、墨度、位置承担。详规见 §1.1「字重一档」与 §3.9，检查命令见 §7.1。
+**全站字重只有 400**，层级与激活态由字号、字体族、墨度、位置承担。详规见 §1.1「字重一档」与 §3.9，由门禁强制（§7.1）。
 
 ### 0.3 墨度四阶 (原则2: Single Responsibility)
 
-**`#141413` / `#1F1E1D` / `#78716C` / `#A8A29E`，四阶之外不得出现**；信号墨只承载"这里没有内容"；定名墨与正文墨相差极微，只作辅助信号。判据与禁用类名详见 §1.2，检查命令见 §7.1。
+**`#141413` / `#1F1E1D` / `#78716C` / `#A8A29E`，四阶之外不得出现**；信号墨只承载"这里没有内容"；定名墨与正文墨相差极微，只作辅助信号。判据与禁用类名详见 §1.2，由门禁强制（§7.1）。
 
 ### 0.4 同层单光 (原则4: Single Focal Point)
 
@@ -76,7 +76,7 @@
 | **元数据墨** | `#78716C` | 表头、字段名、时间戳、单位、表格次要列、辅助说明 |
 | **信号墨** | `#A8A29E` | **只承载"这里没有内容"**：占位符、空值 `—`、禁用态、图标装饰 |
 
-**四阶之外的文字灰一律不得出现。** 严禁使用 Tailwind 原生 `text-stone-*` / `text-zinc-*` / `text-slate-*` 类名。
+**四阶之外的文字灰一律不得出现**（含 Tailwind 原生灰阶类名，由门禁强制，见 §7.1）。
 
 **信号墨判据一句话**：这块浅墨是在说「这里没有内容」，还是「这里有内容但想写淡一点」？后者即违规，不得浅于 `#78716C`。
 
@@ -91,7 +91,7 @@
 | **紧凑 Tight** | 8px | `gap-2` / `space-y-2` | 筛选栏内各控件间、同级列表项/按钮组间 |
 | **亲密 Intimate** | 4px | `gap-1` / `space-y-1` | 大数与单位、标题与描述、图标与文字间 |
 
-**元素间距禁半档**：`gap-1.5`(6px)、`gap-2.5`(10px)、`gap-3.5`(14px) 及 `space-y` 同档全禁。
+**元素间距禁半档**：`gap` / `space-y` / `space-x` 的 1.5/2.5/3.5/4.5 全禁（由门禁强制，见 §7.1）。
 
 **内边距不受四级管辖**：它的职责是撑出控件高度与容器呼吸，由组件规格决定，允许 `py-1.5` / `px-2.5` 这类半档。
 
@@ -108,7 +108,7 @@
 | 浮层大容器（弹窗 Dialog / 抽屉 Sheet） | 16px | `rounded-2xl` |
 | 头像与状态点 | 全圆 | `rounded-full` |
 
-**禁用**：`rounded-lg`(8px)、裸 `rounded`(4px)、`rounded-sm`、`rounded-3xl`、自定义像素圆角。
+**禁用**：`rounded-lg`(8px)、裸 `rounded`(4px)、`rounded-sm`、`rounded-3xl`、自定义像素圆角（由门禁强制，见 §7.1）。
 
 **形状同源**：同一类元素全站只有一个圆角。
 
@@ -127,7 +127,7 @@
 
 **衬线间距锁死 `tracking-tight`**（约 -0.025em），禁 `tracking-normal` 与正间距。
 
-**20px 下限的缘由**：基线环境里中文衬线是中易宋体（拉丁为 Georgia），小字下横笔发虚；2026-10-26 Windows 实机目检 18px 仍虚、20px 起站得住。下限取 20px 即表内空间定名档，不新增字号。原先按 DPR 回退 Sans 的 `globals.css` 规则是小字衬线的死代码，待代码批次删除。
+**20px 下限**即表内空间定名档，不新增字号（缘由见《哲学》定律3；Windows 实机目检记录见《纠错索引》）。
 
 ### 1.6 渲染基线与字体栈
 
@@ -140,9 +140,9 @@
 
 **字体栈规则**：
 - 只用系统字体，不引入 webfont（性能优先，首屏零字体下载）。
-- sans 栈里的 `Inter` 未加载、两大系统默认均不预装，实际不会命中，待代码批次删除；`--font-display` 令牌全站无人使用，待代码批次删除（连同 `css-tokens.test.ts` 中的断言）。
+- 历史残留 `Inter`、`--font-display`、按 DPR 回退 Sans 的规则均已从 globals.css 删除，由 `src/styles/css-tokens.test.ts` 反向断言防回写，不得再写回。
 - **字重回退事实**：写 500 取 400；写 600 在雅黑取 700、在 Segoe UI 取 Semibold。这是 §1.1「字重一档」的依据，设计时不得假设 500 存在。
-- **中文衬线钉栈（2026-10-26 Windows 实机目检定案）**：原栈里的 STSong 华文宋体随 Office 安装才命中，观感逐机漂移；已定删除 `STSong, NSimSun`，Windows 统一落系统必装的中易宋体（笔画更实），Mac 仍命中 Songti SC。衬线 28px / 20px 在 100% 缩放下目检不虚、层级可分，继续承重。
+- **中文衬线钉栈**：Windows 统一落系统必装的中易宋体（笔画更实），Mac 命中 Songti SC；STSong、NSimSun 已删除（随 Office 才命中、观感逐机漂移），由 css-tokens.test.ts 断言防回写。定案缘由与目检记录见《纠错索引》。
 
 ---
 
@@ -199,7 +199,7 @@
 | 浮层（下拉、气泡、浮出面板） | `shadow-claude-float` |
 | 弹窗**与抽屉** | `shadow-claude-dialog` |
 
-**禁用** Tailwind 原生阴影：`shadow-2xs` / `shadow-xs` / `shadow-sm` / `shadow-md` / `shadow-2xl` / 裸 `shadow`。
+**禁用** Tailwind 原生阴影（`shadow-2xs/xs/sm/md/2xl`，由门禁强制，见 §7.1）。
 
 ---
 
@@ -227,31 +227,7 @@
 - 行 hover：`opacity-100`
 - 过渡：`transition-opacity duration-150`
 
-**代码示例**：
-```tsx
-<Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead className="text-left">姓名</TableHead> {/* 主键列 */}
-      <TableHead className="text-right">播放量</TableHead> {/* 核心指标 */}
-      <TableHead className="text-left">创建时间</TableHead> {/* 辅助列 */}
-      <TableHead className="text-right w-24">操作</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    <TableRow className="group">
-      <TableCell className="text-[#1F1E1D] font-normal">阿禅</TableCell>
-      <TableCell className="text-[#141413] text-right tabular-nums">1,234,567</TableCell>
-      <TableCell className="text-[#78716C]">2026-10-22</TableCell>
-      <TableCell className="text-right">
-        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
-          编辑
-        </Button>
-      </TableCell>
-    </TableRow>
-  </TableBody>
-</Table>
-```
+**用法样板**（照抄真实页面，不再维护文档内示例）：`src/app/(app)/admin/content/content-list-table.tsx`——主键列/核心指标列/辅助列的墨度分工与操作列渐进揭示均以该文件为准。
 
 ### 3.2 ui/button.tsx（三档尺寸）
 
@@ -344,6 +320,12 @@
 - `14px Sans #1F1E1D` 温和指引（≤30字；衬线不得小于 20px，见 §1.5）
 - 下方 `gap-3` 唯一操作入口
 
+**暖墨线描风格卡**（素材库：`src/components/editorial/editorial-illustrations.tsx`，AI 只选不创作）：
+- 单色暖墨（信号墨或元数据墨档），禁彩色、渐变、3D、投影
+- 线宽 1–1.5px，圆头端点与圆头连接，允许轻微不规则（手绘感，不用完美几何）
+- 题材限场景相关的具体静物（灯、桌、纸页、器物），一张图只说一件事
+- 出现节点仅《哲学》1.1 所列关键心理节点（迎宾、洞察、空态、归档）
+
 ### 3.8 卷首寄语 / 学者边注（装帧元素）
 
 **寄语（AI 结论块）**：
@@ -354,6 +336,8 @@
 **边注（行内/侧边提醒）**：
 - `bg-[#43718E]/10 rounded-md px-2.5 py-1.5` 或无底色
 - 配 `12px Sans #78716C`
+
+**结论必须带依据**：AI 结论后附一句"因为…"（数据来源或推理路径）；推测出的结论用边注标明"这是推测"，不假装全知（语气见《哲学》1.3）。
 
 ### 3.9 激活态配方（选中 / 当前 / 排序中）
 
@@ -418,6 +402,8 @@
 - **抽屉滑入**：`ease-[cubic-bezier(0.16,1,0.3,1)] duration-300`
 - **卡片入场**（首屏加载）：错开 50ms `animation-delay`，营造呼吸感
 - **骨架加载**：`#F1F1F0` → `#EBEBE9` 呼吸，等高占位，数据到达原地淡入、零布局跳动
+- **仪式节点慢动效**：迎宾、洞察呈现、归档定卷可用 400–600ms 缓入缓出（像呼吸，不像赶工），一屏至多一处；其余一律用 5.1 的利落节奏
+- **减弱动效兜底**：一切动效须提供 `prefers-reduced-motion` 回退（关闭或缩短为直接切换）——尊重注意力也包含尊重生理需要
 
 ### 5.3 微交互（不影响效率的细节）
 
@@ -456,33 +442,13 @@
   操作列：常态 opacity-0，行 hover opacity-100
 ```
 
-**代码骨架**：
-```tsx
-<AdminWorkspaceLayout
-  title="用户管理"
-  actions={
-    <div className="flex items-center gap-2">
-      <Button variant="outline">导出</Button>
-      <Button>新建用户</Button> {/* 主 CTA */}
-    </div>
-  }
->
-  {/* 筛选器 */}
-  <div className="flex items-center gap-2"> {/* 裸铺，无 Card */}
-    <Select>...</Select>
-    <Input placeholder="搜索姓名" className="w-fit" />
-  </div>
-
-  {/* 表格 */}
-  <Card className="mt-3"> {/* gap-3 呼吸 */}
-    <Table>...</Table>
-  </Card>
-</AdminWorkspaceLayout>
-```
+**结构样板**：`src/app/(app)/admin/content/`（视频复盘页）——页头走壳、筛选栏裸铺、表格托盘与呼吸间距均以该页为准。
 
 ### 6.2 工作台页（表单 + 卡片）
 
 **典型场景**：用户详情、内容编辑、设置页面
+
+**结构样板**：`src/app/(app)/dashboard/form-v2/`（创作表达录入页）——表单裸铺、底部唯一主 CTA 的单点聚光灯以该页为准。
 
 **决策路径**：
 ```
@@ -505,6 +471,8 @@
 
 **典型场景**：首页 Hero、空状态、404、登录注册
 
+**结构样板**：空态一律用 `src/components/ui/empty-state.tsx`（实际用法见 content-list-table.tsx）；落地页 Hero 见 `src/app/page.tsx`（唯一字号豁免所在）。
+
 **决策路径**：
 ```
 装帧比例可提高：衬线占比可达 40%
@@ -523,29 +491,11 @@
 
 ## §7 验证清单（实现后执行）
 
-### 7.1 自动检查（可执行）
+### 7.1 自动检查（门禁强制）
 
-**覆盖范围声明**：以下命令只覆盖机械规则（字号/墨度/半档留白/字重/衬线下限/圆角）。单点聚光灯、凹凸分明、配角裸铺、装饰必要性不在命令覆盖内，必须对照 §7.2 逐条目视自查——**命令全绿 ≠ 合规**。
+机械规则（字号/墨度/间距半档/字重/衬线下限/圆角/阴影）已由 `scripts/design-token-gate.mjs` 固化为门禁：`npm run gate:design`（已串入 `gate:static`）。基线棘轮模式：存量违规记录在 `scripts/design-token-baseline.json`，任何文件新增违规即红灯；下调基线须走《哲学》定律2（阿禅确认+纠错索引留档）。
 
-```bash
-# 字号封闭系统（已排除 Hero 豁免文件）
-rg -o --no-filename "text-\[[0-9.]+px\]" src/ -g '!**/app/page.tsx' | sort -u | grep -vE "\[(12|14|20|28)px\]"
-
-# 墨度封闭系统
-rg "text-(slate|zinc|gray|stone)-\d+" src/
-
-# 留白封闭系统
-rg "gap-(1\.5|2\.5|3\.5|4\.5)" src/
-
-# 字重（全站只有 400；OG 分享图为唯一豁免；第二段自动过滤合规的 400/normal 声明，剩余命中逐条核对）
-rg "font-(medium|semibold|bold|extrabold|black)|font-\[[0-9]+\]|fontWeight|font-weight" src/ -g '!**/opengraph-image.tsx' | rg -v "[:=]\s*['\"]?(400|normal)\b"
-
-# 衬线下限（命中即违规：衬线不得小于 20px）
-rg "font-serif" src/ | rg "text-\[(12|13|14|18)px\]"
-
-# 圆角违规
-rg "rounded-(sm|lg|3xl)" src/
-```
+**覆盖范围声明不变**：单点聚光灯、凹凸分明、配角裸铺、装饰必要性不在门禁覆盖内，必须对照 §7.2 逐条目视自查——**门禁全绿 ≠ 合规**。
 
 ### 7.2 目视检查
 
@@ -559,26 +509,6 @@ rg "rounded-(sm|lg|3xl)" src/
 - [ ] 条目名是否独占一行并紧跟元数据？
 - [ ] 改动涉及层级时，是否在 Windows 实机（100% / 125%）看过？
 
----
 
-## §8 快速决策索引
-
-| 遇到场景 | 查阅章节 |
-|---|---|
-| 不知道用哪个字号 | §1.1 字号四档 |
-| 不知道用哪个墨度 | §1.2 墨度四阶 |
-| 不知道留白该多大 | §1.3 留白四级 |
-| 不知道用哪个圆角 | §1.4 圆角三档 |
-| 不知道用哪个颜色 | §2.1-2.2 背景三层与主色状态色 |
-| 不知道表格怎么写 | §3.1 ui/table.tsx + §6.1 数据密集页 |
-| 不知道表单怎么布局 | §6.2 工作台页 |
-| 不知道空态怎么写 | §3.7 ui/empty-state.tsx + §6.3 引导页 |
-| 不知道激活态怎么写 | §3.9 激活态配方 |
-| 弹层里的分组名多大、像不像标题 | §3.6 容器阻尼律（判据）；标题档位归属见 §3.3 |
-| 想用字重强调 | 字重只有 400：回《哲学》§0 定律3 + §1.1「字重一档」 |
-| 不知道衬线能不能用 | §1.5（≥20px 才可） |
-| 想加边框但不确定 | 回《哲学》§2 原则3 (Hierarchy Without Ornament) |
-| 想加第二个主按钮 | 回《哲学》§2 原则4 (Single Focal Point) |
-| 想打破规则 | 回《哲学》§2 对应原则的"打破条件" |
 
 
