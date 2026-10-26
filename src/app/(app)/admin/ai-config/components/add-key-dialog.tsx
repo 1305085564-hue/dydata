@@ -348,7 +348,7 @@ export function AddKeyDialog({
           <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">
             {step === "input" ? (
               <>
-                <p className="text-[#1F1E1D] font-medium">接入点 = 上游服务商，渠道 = 这个服务商下的一条专线。</p>
+                <p className="text-[#1F1E1D]">接入点 = 上游服务商，渠道 = 这个服务商下的一条专线。</p>
                 <p>填写接入资料和渠道显示名，再同步可用模型。</p>
               </>
             ) : (
