@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
-import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { buildDataAccessScope, resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveVideoTopicLibraryStatuses } from "@/lib/topics/library";
 import { observeMutation } from "@/lib/observed-mutation";
@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 type TopicLibraryStatusDeps = {
   requireAdminActor: typeof requireAdminActor;
   buildDataAccessScope: typeof buildDataAccessScope;
+  resolveVideoReviewReadOnlyScope: typeof resolveVideoReviewReadOnlyScope;
   createAdminClient: typeof createAdminClient;
   resolveVideoTopicLibraryStatuses: typeof resolveVideoTopicLibraryStatuses;
 };
@@ -20,6 +21,7 @@ type TopicLibraryStatusDeps = {
 export const defaultTopicLibraryStatusDeps: TopicLibraryStatusDeps = {
   requireAdminActor,
   buildDataAccessScope,
+  resolveVideoReviewReadOnlyScope,
   createAdminClient,
   resolveVideoTopicLibraryStatuses,
 };
@@ -88,8 +90,9 @@ async function resolveStatusesResponse(
 
   try {
     const adminSupabase = deps.createAdminClient();
-    const scope = resolvedScope ?? await deps.buildDataAccessScope(adminSupabase, actorUserId);
-    if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
+    const baseScope = resolvedScope ?? await deps.buildDataAccessScope(adminSupabase, actorUserId);
+    if (!baseScope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
+    const scope = await deps.resolveVideoReviewReadOnlyScope(adminSupabase, baseScope);
 
     const videoRows: Array<{ id: string; topic_id: string | null }> = [];
     for (let index = 0; index < videoIds.length; index += 150) {

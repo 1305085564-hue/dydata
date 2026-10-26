@@ -128,6 +128,7 @@ const INVALID_AUTH_SESSION_CODES = new Set([
   "refresh_token_already_used",
   "refresh_token_not_found",
   "session_not_found",
+  "user_not_found",
 ]);
 
 export function isInvalidAuthSessionError(error: unknown) {
@@ -142,7 +143,11 @@ export function isInvalidAuthSessionError(error: unknown) {
     message.includes("invalid refresh token") ||
     message.includes("refresh token already used") ||
     message.includes("refresh token not found") ||
-    message.includes("auth session missing")
+    message.includes("auth session missing") ||
+    message.includes("invalid jwt") ||
+    message.includes("invalid claim") ||
+    message.includes("signature verification failed") ||
+    message.includes("token is expired")
   );
 }
 

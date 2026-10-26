@@ -30,11 +30,7 @@ import {
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
 import { findReadableSubmissionScreenshots } from "@/lib/screenshot-storage";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
-import {
-  DAILY_REPORT_WRITE_SELECT,
-  SNAPSHOT_WRITE_SELECT,
-  VIDEO_SUBMIT_RESPONSE_SELECT,
-} from "./response-fields";
+import * as submitResponseFields from "./response-fields";
 import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { resolveCreateSubmissionConflict } from "./create-conflict";
@@ -612,9 +608,9 @@ async function handleVideoSubmit(
         topic_id: resolveEditTopicId(normalized.mode, normalized.topic_id, existingVideo.topic_id ?? null),
       }))
       .eq("id", submissionVideoId)
-      .select(VIDEO_SUBMIT_RESPONSE_SELECT)
+      .select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT)
       .single()
-    : supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single(), rollbackAndMark);
+    : supabase.from("videos").insert(videoPayload).select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT).single(), rollbackAndMark);
   const persistedVideo = videoStep.ok ? videoStep.data : null;
   const videoError = videoStep.ok ? null : videoStep.error;
 
@@ -714,8 +710,8 @@ async function handleVideoSubmit(
 
   observation?.mark("write-snapshot");
   const snapshotStep = await runSubmissionPersistenceStep("snapshot", async () => existingSnapshot
-    ? await supabase.from("video_metrics_snapshots").update(effectiveSnapshotPayload).eq("id", existingSnapshot.id).select(SNAPSHOT_WRITE_SELECT).single()
-    : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(SNAPSHOT_WRITE_SELECT).single(), rollbackAndMark);
+    ? await supabase.from("video_metrics_snapshots").update(effectiveSnapshotPayload).eq("id", existingSnapshot.id).select(submitResponseFields.SNAPSHOT_WRITE_SELECT).single()
+    : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(submitResponseFields.SNAPSHOT_WRITE_SELECT).single(), rollbackAndMark);
   const persistedSnapshot = snapshotStep.ok ? snapshotStep.data : null;
   const snapshotError = snapshotStep.ok ? null : snapshotStep.error;
 
@@ -752,8 +748,8 @@ async function handleVideoSubmit(
 
   observation?.mark("write-report");
   const reportStep = await runSubmissionPersistenceStep("report", async () => existingReport
-    ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
-    : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single(), rollbackAndMark);
+    ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single()
+    : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single(), rollbackAndMark);
   const persistedReport = reportStep.ok ? reportStep.data : null;
   const dailyReportError = reportStep.ok ? null : reportStep.error;
 
@@ -977,7 +973,7 @@ async function handleVideoSubmit(
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,
-    daily_report_id: persistedReport.id,
+    ...submitResponseFields.buildSubmittedDailyReportFields(persistedReport),
     anomaly_status: normalized.anomaly_status,
     video: persistedVideo,
     ai_tags: aiTags,

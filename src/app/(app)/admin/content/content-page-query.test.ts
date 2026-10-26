@@ -13,7 +13,7 @@ const companyState: ContentPageQueryState = {
   teamId: null,
 };
 
-test("列表查询 URL 保留范围并只在 fresh 时绕过服务端缓存", () => {
+test("列表查询 URL 保留范围，fresh 只负责重置分页", () => {
   assert.equal(
     buildContentApiUrl("trash", "team", "team-1"),
     "/api/admin/content/list?view=trash&scope=team&teamId=team-1",

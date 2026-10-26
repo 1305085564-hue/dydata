@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
-import { clearAdminContentListCache } from "@/lib/loaders/admin-content-page";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { observeMutation } from "@/lib/observed-mutation";
@@ -20,7 +19,6 @@ type ReviewStatusDependencies = {
   buildPermissionContextForActor: typeof buildPermissionContextForActor;
   createAdminClient: () => SupabaseClient;
   now: () => Date;
-  clearAdminContentListCache: () => void;
 };
 
 const defaultDependencies: ReviewStatusDependencies = {
@@ -28,7 +26,6 @@ const defaultDependencies: ReviewStatusDependencies = {
   buildPermissionContextForActor,
   createAdminClient,
   now: () => new Date(),
-  clearAdminContentListCache,
 };
 
 type ReviewStatusInput = {
@@ -163,7 +160,6 @@ export async function buildVideoReviewStatusResponse(
     return NextResponse.json({ error: "视频不存在" }, { status: 404 });
   }
 
-  deps.clearAdminContentListCache();
   return NextResponse.json({ ok: true, video: updatedResult.data });
 }
 

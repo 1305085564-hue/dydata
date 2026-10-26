@@ -365,8 +365,8 @@ test("内容管理批量查询失败时抛错，不把失败批次当空数据",
   );
 });
 
-test("内容列表同范围 60 秒内复用服务端缓存，清缓存后重新取数", async () => {
-  const { clearAdminContentListCache, loadAdminContentListData } = await import("./admin-content-page");
+test("内容列表每次成功读取都重新查询，避免不同写入口留下旧结果", async () => {
+  const { loadAdminContentListData } = await import("./admin-content-page");
   let videoQueryCount = 0;
   const emptyThenable = {
     select() { return emptyThenable; },
@@ -381,55 +381,47 @@ test("内容列表同范围 60 秒内复用服务端缓存，清缓存后重新�
   const supabase = { from: () => emptyThenable } as never;
   const scope = {
     kind: "self",
-    visibleUserIds: ["user-1"],
+    visibleUserIds: ["list-no-cache-test-user"],
   } as never;
 
-  clearAdminContentListCache();
   await loadAdminContentListData({ supabase, view: "all", scope });
   const firstCount = videoQueryCount;
   assert.equal(firstCount > 0, true);
 
   await loadAdminContentListData({ supabase, view: "all", scope });
-  assert.equal(videoQueryCount, firstCount);
-
-  clearAdminContentListCache();
-  await loadAdminContentListData({ supabase, view: "all", scope });
   assert.equal(videoQueryCount, firstCount * 2);
-});
-
-test("内容列表 fresh 取数绕过 60 秒缓存，并把最新结果回填缓存", async () => {
-  const { clearAdminContentListCache, loadAdminContentListData } = await import("./admin-content-page");
-  let videoQueryCount = 0;
-  const emptyThenable = {
-    select() { return emptyThenable; },
-    eq() { return emptyThenable; },
-    order() { return emptyThenable; },
-    range() { return emptyThenable; },
-    then(resolve: (value: { data: unknown[]; error: null }) => void) {
-      videoQueryCount += 1;
-      return Promise.resolve({ data: [] as unknown[], error: null }).then(resolve);
-    },
-  };
-  const supabase = { from: () => emptyThenable } as never;
-  const scope = {
-    kind: "self",
-    visibleUserIds: ["user-1"],
-  } as never;
-
-  clearAdminContentListCache();
-  await loadAdminContentListData({ supabase, view: "all", scope });
-  const perLoadCount = videoQueryCount;
-
-  // 写操作后的取数：即使缓存命中且未过期也必须重新查库
-  await loadAdminContentListData({ supabase, view: "all", scope, fresh: true });
-  assert.equal(videoQueryCount, perLoadCount * 2);
-
-  // fresh 结果已回填，后续普通请求继续复用缓存
-  await loadAdminContentListData({ supabase, view: "all", scope });
-  assert.equal(videoQueryCount, perLoadCount * 2);
 });
 
 test("素材库首屏改走 read-model RPC", () => {
   assert.equal(typeof videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "string");
   assert.equal(videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "admin_videos_first_screen");
+});
+
+// A blocked list query must not delay the independent member options request.
+test("内容分页同时读取作品和成员选项", async () => {
+  const { loadAdminContentListData } = await import("./admin-content-page");
+  const { parseContentListQuery } = await import("@/lib/content/domain/content-list-query");
+  let releaseRpc!: (value: unknown) => void;
+  let optionsStarted = false;
+  const rpc = new Promise((resolve) => { releaseRpc = resolve; });
+  const options = {
+    select() { return options; },
+    in() { return options; },
+    order() { return options; },
+    then(resolve: (value: unknown) => void) {
+      optionsStarted = true;
+      return Promise.resolve({ data: [{ id: "user-1", name: "成员" }], error: null }).then(resolve);
+    },
+  };
+  const pending = loadAdminContentListData({
+    supabase: { rpc: () => rpc, from: () => options } as never,
+    scope: { userId: "user-1", kind: "self", visibleUserIds: ["user-1"] } as never,
+    query: { ...parseContentListQuery(new URLSearchParams()), perspective: "company", teamId: null },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  const startedBeforeRpcCompleted = optionsStarted;
+  releaseRpc({ data: { videos: [], snapshots: [] }, error: null });
+  const data = await pending;
+  assert.equal(startedBeforeRpcCompleted, true, "成员选项不应等待作品查询");
+  assert.deepEqual(data.profiles, [{ id: "user-1", name: "成员" }]);
 });

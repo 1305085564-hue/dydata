@@ -281,6 +281,34 @@ export async function resolveReadOnlyCompanyScope(
   };
 }
 
+/** 视频复盘成员的只读范围：当前 Supabase 项目就是公司边界，包含所有团队。 */
+export async function resolveVideoReviewReadOnlyScope(
+  supabase: ScopeSupabase,
+  scope: DataAccessScope,
+): Promise<DataAccessScope> {
+  if (scope.kind !== "self" || !scope.teamId) return scope;
+  // 视频复盘按 Supabase 项目划定公司边界，成员可只读查看项目内所有团队；
+  // 写操作继续使用未扩展的当前操作者范围和各自校验。
+  const rows = await loadWithMembershipFallback({
+    loadWithMembership: async () =>
+      supabase.from("profiles").select("id, membership_status"),
+    loadWithoutMembership: async () => supabase.from("profiles").select("id"),
+  });
+  assertSupabaseQuerySucceeded(rows.error, "加载公司只读成员范围失败");
+  const visibleRows = (rows.data ?? []) as CompanyVisibleRow[];
+  if (!visibleRows.some((row) => row.id === scope.userId)) {
+    visibleRows.unshift({ id: scope.userId });
+  }
+  return {
+    ...scope,
+    kind: "team",
+    visibleUserIds: Array.from(new Set(visibleRows.map((row) => row.id).filter(Boolean))),
+    activeVisibleUserIds: Array.from(
+      new Set(filterActiveMemberships(visibleRows).map((row) => row.id).filter(Boolean)),
+    ),
+  };
+}
+
 export function getActiveVisibleUserIds(scope: Pick<DataAccessScope, "activeVisibleUserIds" | "visibleUserIds">) {
   return scope.activeVisibleUserIds ?? scope.visibleUserIds;
 }

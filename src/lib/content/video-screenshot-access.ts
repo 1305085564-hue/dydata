@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
-import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { __internal as screenshotAccess, parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -11,7 +11,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 type DefaultDependencies = {
   getCurrentPermissionContext: typeof getCurrentPermissionContext;
   createAdminClient: typeof createAdminClient;
-  resolveReadOnlyCompanyScope: typeof resolveReadOnlyCompanyScope;
+  resolveVideoReviewReadOnlyScope: typeof resolveVideoReviewReadOnlyScope;
   loadAdminContentVideoDetail: typeof loadAdminContentVideoDetail;
 };
 
@@ -20,7 +20,7 @@ export type ContentVideoScreenshotAccessDependencies = Partial<DefaultDependenci
 const defaultDependencies: DefaultDependencies = {
   getCurrentPermissionContext,
   createAdminClient,
-  resolveReadOnlyCompanyScope,
+  resolveVideoReviewReadOnlyScope,
   loadAdminContentVideoDetail,
 };
 
@@ -43,7 +43,7 @@ export async function canReadContentVideoScreenshot(
   if (permissionContext.permissionInfo.permissions.view_video_review !== true) return false;
 
   const supabase = deps.createAdminClient() as SupabaseClient;
-  const scope = await deps.resolveReadOnlyCompanyScope(supabase, permissionContext.scope);
+  const scope = await deps.resolveVideoReviewReadOnlyScope(supabase, permissionContext.scope);
   // 作品引用本身不能跨越公司文件边界，即使快照误关联了其他公司的路径。
   if (!scope.visibleUserIds.includes(input.path.split("/", 1)[0])) return false;
   const detail = await deps.loadAdminContentVideoDetail({

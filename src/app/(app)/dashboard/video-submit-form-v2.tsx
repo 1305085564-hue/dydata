@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import {
   Select,
   SelectContent,
@@ -142,7 +143,7 @@ interface VideoSubmitFormProps {
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onCancel?: () => void;
-  onRequestEdit?: () => void;
+  onRequestEdit?: (target: { reportId: string | null; reportDate: string }) => void;
   onViewHistory?: () => void;
   onViewVideo?: (videoId: string) => void;
 }
@@ -335,6 +336,7 @@ export function VideoSubmitFormV2({
     undefined,
     createSubmissionUiState,
   );
+  const [submittedReportDate, setSubmittedReportDate] = useState<string | null>(null);
   const updateUi = useCallback(
     (updater: (current: SubmissionUiState) => SubmissionUiState) =>
       dispatchUi({ type: "update", updater }),
@@ -903,7 +905,13 @@ export function VideoSubmitFormV2({
     setIsSubmitted,
     updateSlotsState,
     onError: (message) => feedbackToast.error(message),
-    onRequestEdit,
+    onRequestEdit: () => onRequestEdit?.({
+      reportId: submittedReportId,
+      reportDate: submittedReportDate ?? getPublishedDateKey({
+        published_at: meta.publishedAt || null,
+        report_date: meta.bizDate,
+      }) ?? meta.bizDate,
+    }),
     onManualReview: (message) => toast.message(message),
   });
 
@@ -966,7 +974,7 @@ export function VideoSubmitFormV2({
     topicTitle: selectedTopicTitle || initialTopicTitle,
     supabase,
     pendingSubmissionPayloadRef,
-    setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
+    setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
   });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1189,6 +1197,7 @@ export function VideoSubmitFormV2({
           setIsSubmitted={setIsSubmitted}
           setSubmittedReportId={setSubmittedReportId}
           submittedReportId={submittedReportId}
+          submittedReportDate={submittedReportDate}
           submittedVideoId={submittedVideoId}
           setQualityCheck={setQualityCheck}
           qualityCheck={qualityCheck}

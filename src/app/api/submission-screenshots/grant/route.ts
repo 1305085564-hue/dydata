@@ -6,8 +6,17 @@ import {
   GRANT_COOKIE_PATH,
   GRANT_MAX_ALLOW_ENTRIES,
   GRANT_TTL_SECONDS,
-  buildGrantValue,
+  buildGrantValueResult,
 } from "@/lib/screenshot-grant";
+
+function buildSlowFallbackResponse(reason: "grant_oversize") {
+  // 超出 Cookie 容量仍保留 allow-list 上限，不把范围放宽成通配授权；
+  // 直接明确降级到逐作品校验，避免把一个可预期的容量边界变成浏览器 413 错误。
+  return NextResponse.json(
+    { exp: null, mode: "slow", reason },
+    { status: 200, headers: { "Cache-Control": "no-store" } },
+  );
+}
 
 export async function POST() {
   if (process.env.SCREENSHOT_GRANT_ENABLED === "0") {
@@ -28,18 +37,27 @@ export async function POST() {
   const allow = Array.from(new Set(permissionContext.scope.visibleUserIds));
   if (allow.length > GRANT_MAX_ALLOW_ENTRIES) {
     console.info("[screenshot-grant]", JSON.stringify({ event: "grant_oversize", count: allow.length }));
-    return NextResponse.json({ error: "grant_oversize" }, { status: 413 });
+    return buildSlowFallbackResponse("grant_oversize");
   }
 
   const exp = Math.floor(Date.now() / 1000) + GRANT_TTL_SECONDS;
-  const value = buildGrantValue({ v: 1, u: user.id, allow, exp });
-  if (!value) {
-    console.info("[screenshot-grant]", JSON.stringify({ event: "grant_oversize", count: allow.length, encoded: true }));
-    return NextResponse.json({ error: "grant_oversize" }, { status: 413 });
+  const grant = buildGrantValueResult({ v: 1, u: user.id, allow, exp });
+  if (grant.reason !== null) {
+    switch (grant.reason) {
+      case "secret_missing":
+        console.error("[screenshot-grant]", JSON.stringify({ event: "grant_unavailable", reason: grant.reason }));
+        return NextResponse.json({ error: "grant_unavailable" }, { status: 503 });
+      case "payload_invalid":
+        console.error("[screenshot-grant]", JSON.stringify({ event: "grant_invalid", reason: grant.reason }));
+        return NextResponse.json({ error: "grant_invalid" }, { status: 500 });
+      case "oversize":
+        console.info("[screenshot-grant]", JSON.stringify({ event: "grant_oversize", count: allow.length, encoded: true }));
+        return buildSlowFallbackResponse("grant_oversize");
+    }
   }
 
-  const response = NextResponse.json({ exp });
-  response.cookies.set(GRANT_COOKIE_NAME, value, {
+  const response = NextResponse.json({ exp, mode: "fast" });
+  response.cookies.set(GRANT_COOKIE_NAME, grant.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 
-import { __internal, buildAdminContentListResponse } from "./route";
+import { buildAdminContentListResponse } from "./route";
 
 function buildRequest(url: string) {
   return new NextRequest(url);
@@ -75,7 +75,6 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
     teamId: null,
     permissionInfo,
     scope,
-    fresh: false,
     query: {
       view: "all",
       page: 1,
@@ -110,7 +109,7 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
 });
 
-test("content list route fresh=1 跳过缓存并禁用浏览器缓存", async () => {
+test("content list route fresh=1 回到第一页并禁用所有响应缓存", async () => {
   const adminClient = { kind: "admin-content-client" } as never;
   const permissionInfo = {
     userId: "owner-1",
@@ -156,7 +155,8 @@ test("content list route fresh=1 跳过缓存并禁用浏览器缓存", async ()
   );
 
   assert.equal(response.status, 200);
-  assert.equal((receivedArgs as { fresh?: boolean } | null)?.fresh, true);
+  assert.equal((receivedArgs as { query?: { page?: number; cursor?: string | null } } | null)?.query?.page, 1);
+  assert.equal((receivedArgs as { query?: { cursor?: string | null } } | null)?.query?.cursor, null);
   assert.equal(response.headers.get("cache-control"), "no-store");
 });
 
@@ -179,7 +179,6 @@ test("content list route 非法 view 直接拒绝", async () => {
 });
 
 test("公司所有者默认只能使用本公司视角，不能加载其他公司", async () => {
-  __internal.resetAdminContentListCache();
   let teamOptionCalls = 0;
   let receivedOptions: unknown = null;
   const response = await buildAdminContentListResponse(
@@ -234,8 +233,7 @@ test("公司所有者默认只能使用本公司视角，不能加载其他公�
   assert.deepEqual(receivedOptions, { perspective: "team", teamId: "company-1" });
 });
 
-test("content list route 缓存下沉到 loader，路由每次请求都委托取数", async () => {
-  __internal.resetAdminContentListCache();
+test("content list route 每次委托取数且响应不缓存", async () => {
 
   let calls = 0;
   const deps = {
@@ -290,6 +288,6 @@ test("content list route 缓存下沉到 loader，路由每次请求都委托取
   assert.equal(responseA.status, 200);
   assert.equal(responseB.status, 200);
   assert.equal(calls, 2);
-  assert.equal(responseA.headers.get("cache-control"), "private, max-age=60");
-  assert.equal(responseB.headers.get("cache-control"), "private, max-age=60");
+  assert.equal(responseA.headers.get("cache-control"), "no-store");
+  assert.equal(responseB.headers.get("cache-control"), "no-store");
 });

@@ -36,6 +36,9 @@ export type VideoSubmitPanelBodyProps = {
   shouldShowActivityLoadingCard: boolean;
   shouldShowHistoricalSubmittedCard: boolean;
   activeDateReport: MonthReport | null;
+  requestedEditBizDate: string | null;
+  onRequestEditSubmittedReport: (target: { reportId: string | null; reportDate: string }) => void;
+  clearSubmittedEditTarget: () => void;
   activeDateReports: MonthReport[];
   selectedReportId: string | null;
   setSelectedReportId: (reportId: string | null) => void;

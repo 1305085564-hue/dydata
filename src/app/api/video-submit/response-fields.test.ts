@@ -3,6 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildSubmittedDailyReportFields,
   DAILY_REPORT_WRITE_SELECT,
   SNAPSHOT_WRITE_SELECT,
   VIDEO_SUBMIT_RESPONSE_SELECT,
@@ -13,7 +14,11 @@ test("视频提交写入只返回后续流程需要的固定字段", () => {
   assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\bid\b/);
   assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\buser_id\b/);
   assert.equal(SNAPSHOT_WRITE_SELECT, "id");
-  assert.equal(DAILY_REPORT_WRITE_SELECT, "id");
+  assert.equal(DAILY_REPORT_WRITE_SELECT, "id, report_date");
+  assert.deepEqual(
+    buildSubmittedDailyReportFields({ id: "report-1", report_date: "2026-10-25" }),
+    { daily_report_id: "report-1", daily_report_date: "2026-10-25" },
+  );
 });
 
 test("提交成功响应必须返回 daily_report_id，供样本质量检查按日报 id 调用", () => {
@@ -23,8 +28,8 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
   const submitRoute = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
   assert.match(
     submitRoute,
-    /daily_report_id:\s*persistedReport\.id/,
-    "video-submit 成功响应必须返回本次落库的日报 id",
+    /\.\.\.submitResponseFields\.buildSubmittedDailyReportFields\(persistedReport\)/,
+    "video-submit 成功响应必须返回本次日报 id 和服务端实际保存的归属日",
   );
 
   const qualityCheckControllerSource = readFileSync(

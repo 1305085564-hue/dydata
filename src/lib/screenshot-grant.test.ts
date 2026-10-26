@@ -5,6 +5,7 @@ import {
   GRANT_MAX_COOKIE_BYTES,
   GRANT_MAX_ALLOW_ENTRIES,
   buildGrantValue,
+  buildGrantValueResult,
   grantAllowsOwner,
   readGrantCookie,
   verifyGrantValue,
@@ -47,11 +48,25 @@ test("票据缺失、密钥错误和超大 Cookie 都可识别", () => {
   assert.equal(verifyGrantValue("x".repeat(GRANT_MAX_COOKIE_BYTES + 1), { env }).reason, "oversize");
 });
 
+test("签名密钥缺失明确归类为配置故障，不伪装成容量超限", () => {
+  assert.deepEqual(buildGrantValueResult(payload, {}), {
+    value: null,
+    reason: "secret_missing",
+  });
+});
+
 test("120 条 owner 的票据遵守 Cookie 上限，超出条目不签发", () => {
   const allow = Array.from({ length: GRANT_MAX_ALLOW_ENTRIES }, (_, index) => `owner-${index}`);
   const value = buildGrantValue({ ...payload, allow }, env);
   if (value) assert.ok(Buffer.byteLength(value) <= GRANT_MAX_COOKIE_BYTES);
   assert.equal(buildGrantValue({ ...payload, allow: [...allow, "owner-120"] }, env), null);
+});
+
+test("超出 owner 条目仍拒绝签发，不把容量边界变成通配授权", () => {
+  const allow = Array.from({ length: GRANT_MAX_ALLOW_ENTRIES + 1 }, (_, index) => `owner-${index}`);
+  const result = buildGrantValueResult({ ...payload, allow }, env);
+  assert.equal(result.value, null);
+  assert.equal(result.reason, "payload_invalid");
 });
 
 test("Cookie 读取只取 shot_grant，不把其他 Cookie 当票据", () => {

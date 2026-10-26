@@ -5,7 +5,7 @@ import {
 } from "@/lib/loaders/admin-content-page";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
-import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
 import type { FirstScreenObservation } from "@/lib/admin-first-screen-observability";
@@ -99,7 +99,7 @@ export async function ContentDataContainer({
   }
 
   const dataStart = nowMs();
-  const readOnlyScope = await resolveReadOnlyCompanyScope(
+  const readOnlyScope = await resolveVideoReviewReadOnlyScope(
     createAdminClient(),
     scopedPermissionContext.scope,
   );

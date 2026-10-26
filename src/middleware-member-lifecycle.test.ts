@@ -38,6 +38,9 @@ test("已失效 Supabase 会话错误会清理 Cookie，避免账号状态 503 �
     isInvalidAuthSessionError({ code: "refresh_token_already_used", message: "Invalid Refresh Token: Already Used" }),
     true,
   );
+  assert.equal(isInvalidAuthSessionError({ code: "invalid_claim", message: "Invalid JWT" }), true);
+  assert.equal(isInvalidAuthSessionError({ code: "user_not_found", message: "User from sub claim in JWT does not exist" }), true);
+  assert.equal(isInvalidAuthSessionError({ message: "signature verification failed" }), true);
   assert.equal(isInvalidAuthSessionError({ message: "fetch failed" }), false);
 });
 

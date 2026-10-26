@@ -33,7 +33,11 @@ export function ScreenshotGrantProvider({ children }: { children: React.ReactNod
         setState({ ready: true, exp: null, mode: "slow", reason });
         return null;
       }
-      const body = await response.json() as { exp?: number };
+      const body = await response.json() as { exp?: number | null; mode?: "fast" | "slow"; reason?: string };
+      if (body.mode === "slow") {
+        setState({ ready: true, exp: null, mode: "slow", reason: body.reason });
+        return null;
+      }
       if (!body.exp) throw new Error("grant_missing_exp");
       setState({ ready: true, exp: body.exp, mode: "fast" });
       return body.exp;

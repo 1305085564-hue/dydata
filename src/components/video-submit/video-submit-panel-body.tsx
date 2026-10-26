@@ -43,6 +43,9 @@ export function VideoSubmitPanelBody({
   shouldShowActivityLoadingCard,
   shouldShowHistoricalSubmittedCard,
   activeDateReport,
+  requestedEditBizDate,
+  onRequestEditSubmittedReport,
+  clearSubmittedEditTarget,
   activeDateReports,
   selectedReportId,
   setSelectedReportId,
@@ -490,6 +493,7 @@ export function VideoSubmitPanelBody({
                       : {
                           label: "返回概览",
                           onClick: () => {
+                            clearSubmittedEditTarget();
                             setRequestedMode(null);
                             if (activeBizDate !== today) {
                               onActiveBizDateChange?.(today);
@@ -504,6 +508,7 @@ export function VideoSubmitPanelBody({
                     variant="ghost"
                     size="sm"
                     onClick={() => {
+                      clearSubmittedEditTarget();
                       setRequestedMode(null);
                       if (activeBizDate !== today) {
                         onActiveBizDateChange?.(today);
@@ -532,7 +537,7 @@ export function VideoSubmitPanelBody({
                     : primarySummary
                 }
                 editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
-                initialBizDate={activeDateReport?.report_date ?? activeBizDate}
+                initialBizDate={requestedEditBizDate ?? activeDateReport?.report_date ?? activeBizDate}
                 initialTopicId={initialTopicId}
                 initialTopicTitle={initialTopicTitle}
                 submittedViewActive={submittedViewActive}
@@ -543,14 +548,16 @@ export function VideoSubmitPanelBody({
                 onViewHistory={onViewHistory}
                 onViewVideo={onViewVideo}
                 onCancel={() => {
+                  clearSubmittedEditTarget();
                   setSubmittedViewActive(false);
                   setRequestedMode(null);
                   if (activeBizDate !== today) {
                     onActiveBizDateChange?.(today);
                   }
                 }}
-                onRequestEdit={() => {
+                onRequestEdit={(target) => {
                   setSubmittedViewActive(false);
+                  onRequestEditSubmittedReport(target);
                   setRequestedMode("editToday");
                 }}
               />

@@ -19,7 +19,7 @@ test("详情接口按请求生命周期加载，并对范围外或不存在的�
         context: { scope: { visibleUserIds: ["member-1"] } },
       }) as never,
       buildPermissionContextForActor: async () => null as never,
-      resolveReadOnlyCompanyScope: async (_client, scope) => scope as never,
+      resolveVideoReviewReadOnlyScope: async (_client, scope) => scope as never,
       createAdminClient: () => ({}) as never,
       loadAdminContentVideoDetail: async ({ lifecycleState }) => {
         requestedLifecycle = lifecycleState;
@@ -30,5 +30,6 @@ test("详情接口按请求生命周期加载，并对范围外或不存在的�
 
   assert.equal(requestedLifecycle, "trashed");
   assert.equal(response.status, 404);
+  assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(JSON.stringify(await response.json()), /视频不存在/);
 });

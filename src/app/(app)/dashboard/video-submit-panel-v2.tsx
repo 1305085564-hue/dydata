@@ -109,6 +109,7 @@ export function VideoSubmitPanelV2({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [viewingReport, setViewingReport] = useState<MonthReport | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [submittedEditTarget, setSubmittedEditTarget] = useState<{ reportId: string | null; reportDate: string } | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
@@ -329,8 +330,8 @@ export function VideoSubmitPanelV2({
       setEditDetailLoadState({ status: "loading", detail: null, error: null });
       void fetchVideoSubmissionEditDetail({
         accountId: selectedAccount.id,
-        bizDate: activeDateReport?.report_date ?? activeBizDate,
-        reportId: activeDateReport?.id ?? null,
+        bizDate: submittedEditTarget?.reportDate ?? activeDateReport?.report_date ?? activeBizDate,
+        reportId: submittedEditTarget?.reportId ?? activeDateReport?.id ?? null,
       })
         .then((detail) => {
           if (!cancelled) setEditDetailLoadState({ status: "ready", detail, error: null });
@@ -349,7 +350,7 @@ export function VideoSubmitPanelV2({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [activeDateReport?.id, activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount]);
+  }, [activeDateReport?.id, activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount, submittedEditTarget?.reportDate, submittedEditTarget?.reportId]);
 
   const isPrimarySummaryMode = primaryMode === "summary" && primarySummary !== null;
   const shouldShowBlockedStateCard =
@@ -398,6 +399,7 @@ export function VideoSubmitPanelV2({
       setSubmittedViewActive(nextState.submittedViewActive);
       setRequestedMode(nextState.requestedMode);
       void loadActivity();
+      setSubmittedEditTarget(null);
 
       if (summaryOverride) {
         const key = summaryOverride.id ?? `${summaryOverride.account_id}-${summaryOverride.report_date}`;
@@ -418,6 +420,7 @@ export function VideoSubmitPanelV2({
     (date: string) => {
       setActiveBizDate(date);
       setSelectedReportId(null);
+      setSubmittedEditTarget(null);
       const nextState = resolvePanelDateSelection(date, today, Boolean(activityData), Boolean(activityError));
       setRequestedMode(nextState.requestedMode);
       setSubmittedViewActive(nextState.submittedViewActive);
@@ -520,6 +523,9 @@ export function VideoSubmitPanelV2({
           shouldShowActivityLoadingCard={shouldShowActivityLoadingCard}
           shouldShowHistoricalSubmittedCard={shouldShowHistoricalSubmittedCard}
           activeDateReport={activeDateReport}
+          requestedEditBizDate={submittedEditTarget?.reportDate ?? null}
+          onRequestEditSubmittedReport={setSubmittedEditTarget}
+          clearSubmittedEditTarget={() => setSubmittedEditTarget(null)}
           setRequestedMode={setRequestedMode}
           shouldShowEditDetailLoading={shouldShowEditDetailLoading}
           shouldShowEditDetailError={shouldShowEditDetailError}
