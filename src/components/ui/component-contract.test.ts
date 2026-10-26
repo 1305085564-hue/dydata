@@ -30,10 +30,10 @@ test("SectionHeading 保持章节定名规格：20px / 400 / #141413", () => {
   );
 });
 
-test("ItemHeading 保持条目定名规格，降级只降墨度不降字号字重", () => {
+test("ItemHeading 保持条目定名规格：定名墨 #141413，降级只降墨度不降字号", () => {
   const item = readComponent("item-heading");
   assert.match(item, /"text-\[14px\] leading-\[1\.40\] font-medium"/);
-  assert.match(item, /muted \? "text-\[#78716C\]" : "text-\[#1F1E1D\]"/);
+  assert.match(item, /muted \? "text-\[#78716C\]" : "text-\[#141413\]"/);
 });
 
 test("EmptyState 保持空状态唯一形态：标题 14px/400/正文墨，描述 14px/辅助墨", () => {
@@ -55,11 +55,11 @@ test("ItemHeading 的 muted 真实渲染：降墨度、不降字号字重", () =
     createElement(ItemHeading, { as: "span", muted: true }, "张三"),
   );
 
-  assert.match(normal, /text-\[#1F1E1D\]/);
+  assert.match(normal, /text-\[#141413\]/);
   assert.doesNotMatch(normal, /text-\[#78716C\]/);
 
   assert.match(muted, /text-\[#78716C\]/);
-  assert.doesNotMatch(muted, /text-\[#1F1E1D\]/);
+  assert.doesNotMatch(muted, /text-\[#141413\]/);
   assert.match(muted, /text-\[14px\]/);
   assert.match(muted, /font-medium/);
   assert.match(muted, /<span/);

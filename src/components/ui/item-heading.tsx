@@ -22,7 +22,7 @@ interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
 
 /**
  * 条目定名：列表行名、卡片名、表单段落标题。它统领的只有自己。
- * 14px / 500 / #1F1E1D / Sans（设计规范 §1.1）。
+ * 14px / #141413 定名墨 / Sans（设计规范 §1.1）。
  */
 function ItemHeading({
   as: Tag = "h4",
@@ -37,7 +37,7 @@ function ItemHeading({
       {...(Tag === "button" ? { type } : null)}
       className={cn(
         "text-[14px] leading-[1.40] font-medium",
-        muted ? "text-[#78716C]" : "text-[#1F1E1D]",
+        muted ? "text-[#78716C]" : "text-[#141413]",
         className
       )}
       {...props}

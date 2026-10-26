@@ -174,7 +174,7 @@ export function PersonalCardGrowth({
                           {/* 数据表现与穿透指引 */}
                           <div className="flex items-center gap-2 shrink-0 tabular-nums whitespace-nowrap">
                             <span className="text-[#78716C]">
-                              播 <span className="font-medium text-[#1F1E1D]">{formatBigNumber(hoveredWork.playCount)}</span>
+                              播 <span className="font-medium text-[#141413]">{formatBigNumber(hoveredWork.playCount)}</span>
                             </span>
                             {hoveredWork.hasSnapshot ? (
                               <>
@@ -229,7 +229,7 @@ export function PersonalCardGrowth({
                               <>
                                 {growthAverages.avgPlay != null && (
                                   <span className="text-[#78716C] tabular-nums">
-                                    均播 <span className="font-medium text-[#1F1E1D]">{formatBigNumber(growthAverages.avgPlay)}</span>
+                                    均播 <span className="font-medium text-[#141413]">{formatBigNumber(growthAverages.avgPlay)}</span>
                                   </span>
                                 )}
                                 {visibleMetrics.interaction && growthAverages.avgInteraction != null && (

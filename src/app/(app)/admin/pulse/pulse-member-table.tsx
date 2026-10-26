@@ -125,7 +125,7 @@ export function PulseMemberTable({
                           isExpanded && "rotate-90 text-[#141413]"
                         )}
                       />
-                      <span className="text-[14px] font-medium text-[#1F1E1D]">
+                      <span className="text-[14px] font-medium text-[#141413]">
                         {member.userName}
                       </span>
                     </div>

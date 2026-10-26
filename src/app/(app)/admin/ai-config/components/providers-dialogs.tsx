@@ -422,7 +422,7 @@ export function ProvidersManagerDialog({
                           <div className="text-[12px] text-[#78716C] mt-1 flex items-center gap-1.5 flex-wrap">
                             <span className="text-[#A8A29E]">挂载渠道:</span>
                             {keys.length ? (
-                              <span className="text-[#1F1E1D] font-mono font-medium">
+                              <span className="text-[#141413] font-mono font-medium">
                                 {keys.map((k) => k.label).join("、")}
                               </span>
                             ) : (

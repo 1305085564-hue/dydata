@@ -106,7 +106,14 @@ export function ModelFamilySelect({
               )}
             >
               <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
-                <span className="font-medium truncate">{f.displayName}</span>
+                <span
+                  className={cn(
+                    "font-medium truncate",
+                    f.schedulableCount === 0 ? "text-[#A8A29E]" : "text-[#141413]"
+                  )}
+                >
+                  {f.displayName}
+                </span>
                 <span className="text-[12px] text-[#78716C] shrink-0 font-mono whitespace-nowrap">
                   {f.schedulableCount === 0 ? "0 个可调度" : `${f.schedulableCount} 个可调度`}
                 </span>
