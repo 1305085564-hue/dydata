@@ -108,7 +108,7 @@ export function ModelFamilySelect({
               <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
                 <span
                   className={cn(
-                    "font-medium truncate",
+                    "truncate",
                     f.schedulableCount === 0 ? "text-[#A8A29E]" : "text-[#141413]"
                   )}
                 >
