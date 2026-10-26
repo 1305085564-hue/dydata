@@ -28,7 +28,7 @@
   }
 
   .toaster [data-sonner-toast] [data-title] {
-    font-weight: 500;
+    font-weight: 400;
   }
 
   .toaster [data-sonner-toast] [data-description] {

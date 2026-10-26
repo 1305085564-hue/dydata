@@ -31,7 +31,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#141413] text-[#FCFCFB] shadow-input">
               <Zap className="size-4 fill-white text-white" />
             </div>
-            <span className="font-serif text-[18px] tracking-tight text-[#141413]">
+            <span className="font-serif text-[20px] tracking-tight text-[#141413]">
               DYData
             </span>
             <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal tracking-wide text-[#78716C]">

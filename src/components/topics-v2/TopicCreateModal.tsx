@@ -786,11 +786,11 @@ export function TopicCreateModal({
                         <table className="w-full text-left text-[14px] border-collapse min-w-[650px]">
                           <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] select-none">
                             <tr>
-                              <th className="py-2 px-2.5 w-12 text-center">行号</th>
-                              <th className="py-2 px-2.5 w-24">母题</th>
-                              <th className="py-2 px-2.5 min-w-[180px]">选题标题 / Hook</th>
-                              <th className="py-2 px-2.5 w-20 text-right">历史播放</th>
-                              <th className="py-2 px-2.5 min-w-[140px]">校验结果</th>
+                              <th className="font-normal py-2 px-2.5 w-12 text-center">行号</th>
+                              <th className="font-normal py-2 px-2.5 w-24">母题</th>
+                              <th className="font-normal py-2 px-2.5 min-w-[180px]">选题标题 / Hook</th>
+                              <th className="font-normal py-2 px-2.5 w-20 text-right">历史播放</th>
+                              <th className="font-normal py-2 px-2.5 min-w-[140px]">校验结果</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E2E2DF] bg-white">

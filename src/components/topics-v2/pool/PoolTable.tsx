@@ -22,12 +22,12 @@ export function PoolTable({
           <table className="w-full min-w-[720px] text-left text-[14px] border-collapse">
             <thead className="border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
               <tr>
-                <th className="py-2.5 px-3">母题</th>
-                <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>
-                <th className="py-2.5 px-3 text-right">历史最高播放</th>
-                <th className="py-2.5 px-3 text-right">优质作品数</th>
-                <th className="py-2.5 px-3">近 7 天热度</th>
-                <th className="py-2.5 px-3 text-right">操作</th>
+                <th className="font-normal py-2.5 px-3">母题</th>
+                <th className="font-normal py-2.5 px-3 min-w-[240px]">选题名称</th>
+                <th className="font-normal py-2.5 px-3 text-right">历史最高播放</th>
+                <th className="font-normal py-2.5 px-3 text-right">优质作品数</th>
+                <th className="font-normal py-2.5 px-3">近 7 天热度</th>
+                <th className="font-normal py-2.5 px-3 text-right">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E2DF] bg-white">
