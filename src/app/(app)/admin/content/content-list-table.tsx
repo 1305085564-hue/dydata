@@ -492,8 +492,8 @@ export function ContentListTable({
                 isSpacious ? "min-w-[960px] xl:min-w-full" : "min-w-[960px] md:min-w-[1080px] lg:min-w-[1160px] xl:min-w-full"
               )}>
                 <colgroup>
-                  <col className="w-[56px]" />
-                  <col className="w-[240px]" />
+                  <col className="w-[61px]" />
+                  <col className="w-[339px]" />
                 </colgroup>
                 {/* 吸顶表头 */}
                 <ContentListTableHeader
