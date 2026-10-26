@@ -411,7 +411,7 @@ export function SyncModelsDialog({
         {/* 弹窗 Header：去掉接入点名，只显示渠道名称 */}
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-[20px] font-medium text-[#141413]">
+            <DialogTitle className="text-[20px] text-[#141413]">
               {keyLabel}
             </DialogTitle>
             {isRefreshing && (
@@ -431,7 +431,7 @@ export function SyncModelsDialog({
             <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
               <Loader2 className="size-6 animate-spin text-[#D97757]" />
               <div className="space-y-1">
-                <p className="text-[14px] font-medium text-[#141413]">正在拉取该渠道全部模型列表...</p>
+                <p className="text-[14px] text-[#141413]">正在拉取该渠道全部模型列表...</p>
                 <p className="text-[12px] text-[#78716C]">连接上游接入点中，请稍候</p>
               </div>
             </div>
@@ -441,7 +441,7 @@ export function SyncModelsDialog({
                 <AlertCircle className="size-4" />
               </div>
               <div className="space-y-1">
-                <p className="text-[14px] font-medium text-[#141413]">模型列表同步失败</p>
+                <p className="text-[14px] text-[#141413]">模型列表同步失败</p>
                 <p className="text-[12px] text-[#78716C] max-w-md mx-auto">{loadError}</p>
               </div>
               <Button
@@ -461,7 +461,7 @@ export function SyncModelsDialog({
                   <button
                     type="button"
                     onClick={() => keyId && void loadData(keyId)}
-                    className="font-medium underline hover:text-[#A55246] cursor-pointer"
+                    className=" underline hover:text-[#A55246] cursor-pointer"
                   >
                     重试
                   </button>
@@ -494,7 +494,7 @@ export function SyncModelsDialog({
                       </span>
                       <span className="mx-1.5 text-[#78716C]/60">·</span>
                       <span className="text-[12px] text-[#78716C]">
-                        测了 <span className="font-medium text-[#141413] tabular-nums">{testSummary.results.length}</span> 个模型
+                        测了 <span className=" text-[#141413] tabular-nums">{testSummary.results.length}</span> 个模型
                         {" "}· 通过 <span className="font-medium text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
                         {" "}· 未通过 <span className={cn("font-medium tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
                       </span>
@@ -525,7 +525,7 @@ export function SyncModelsDialog({
                   className="shrink-0 mb-2 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C]"
                 >
                   <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-                  <span className="text-[#141413] font-medium">
+                  <span className="text-[#141413] ">
                     正在检测 {currentInventory.length} 个模型…
                   </span>
                 </div>
@@ -539,7 +539,7 @@ export function SyncModelsDialog({
                     <div className="rounded-xl border border-[#A8A29E]/30 bg-[#FAF9F8] p-3 text-[12px] space-y-1">
                       <div className="flex items-center gap-2 text-[#78716C]">
                         <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
-                        <span className="font-medium text-[#141413]">上游模型比对状态：未知 · 尚未成功同步</span>
+                        <span className=" text-[#141413]">上游模型比对状态：未知 · 尚未成功同步</span>
                       </div>
                       <p className="text-[12px] text-[#78716C] pl-6">
                         上游接口响应不确定或未完全探活，不展示猜测数字。
@@ -551,7 +551,7 @@ export function SyncModelsDialog({
                   {reconciliation.verifiedUnavailableModelIds.length > 0 && (
                     <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/5 p-3 text-[12px] space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-[#C0685C] font-medium text-[14px]">
+                        <div className="flex items-center gap-2 text-[#C0685C] text-[14px]">
                           <AlertCircle className="size-4 shrink-0" />
                           <span>{reconciliation.verifiedUnavailableModelIds.length} 个模型上游已不再提供</span>
                         </div>
@@ -579,7 +579,7 @@ export function SyncModelsDialog({
                           return (
                             <div key={mId} className="flex items-center justify-between gap-2 px-3 py-2 text-[12px]">
                               <div className="min-w-0">
-                                <div className="font-medium text-[#141413] truncate">{displayName}</div>
+                                <div className=" text-[#141413] truncate">{displayName}</div>
                                 <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
@@ -609,7 +609,7 @@ export function SyncModelsDialog({
                   {/* 情况 C: 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走 */}
                   {unverifiedCandidates.length > 0 && (
                     <div className="rounded-xl border border-[#B98A54]/25 bg-[#B98A54]/5 p-3 text-[12px] space-y-2">
-                      <div className="flex items-center gap-2 text-[#B98A54] font-medium text-[14px]">
+                      <div className="flex items-center gap-2 text-[#B98A54] text-[14px]">
                         <AlertCircle className="size-4 shrink-0" />
                         <span>{unverifiedCandidates.length} 个模型仅清单中未列出（疑似，未验证）</span>
                       </div>
@@ -622,7 +622,7 @@ export function SyncModelsDialog({
                           return (
                             <div key={mId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[12px]">
                               <div className="min-w-0">
-                                <div className="font-medium text-[#141413] truncate">{displayName}</div>
+                                <div className=" text-[#141413] truncate">{displayName}</div>
                                 <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
                               <span className="text-[12px] text-[#B98A54] bg-[#B98A54]/10 px-1.5 py-0.5 rounded shrink-0">
@@ -758,7 +758,7 @@ export function SyncModelsDialog({
                         tabIndex={-1}
                       />
                       <div className="min-w-0">
-                        <div className="truncate font-medium text-[14px] text-[#141413]">
+                        <div className="truncate text-[14px] text-[#141413]">
                           {readableName}
                         </div>
                         <div className="truncate font-mono text-[12px] text-[#78716C]">

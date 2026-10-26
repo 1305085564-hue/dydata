@@ -22,11 +22,11 @@ test("Card 保持业务卡片主容器规格：白底 + 发丝环 + 12px 圆角"
   assert.match(card, /rounded-xl/);
 });
 
-test("SectionHeading 保持章节定名规格：20px / 500 / #141413", () => {
+test("SectionHeading 保持章节定名规格：20px / 400 / #141413", () => {
   const section = readComponent("section-heading");
   assert.match(
     section,
-    /"text-\[20px\] leading-\[1\.30\] font-medium text-\[#141413\]"/,
+    /"text-\[20px\] leading-\[1\.30\] text-\[#141413\]"/,
   );
 });
 
@@ -36,9 +36,9 @@ test("ItemHeading 保持条目定名规格，降级只降墨度不降字号字�
   assert.match(item, /muted \? "text-\[#78716C\]" : "text-\[#1F1E1D\]"/);
 });
 
-test("EmptyState 保持空状态唯一形态：标题 14px/500/正文墨，描述 14px/辅助墨", () => {
+test("EmptyState 保持空状态唯一形态：标题 14px/400/正文墨，描述 14px/辅助墨", () => {
   const emptyState = readComponent("empty-state");
-  assert.match(emptyState, /"text-\[14px\] font-medium text-\[#1F1E1D\]"/);
+  assert.match(emptyState, /"text-\[14px\] text-\[#1F1E1D\]"/);
   assert.match(emptyState, /max-w-\[240px\] text-\[14px\] text-\[#78716C\]/);
   assert.match(emptyState, /variant\?: "default" \| "compact"/);
 });

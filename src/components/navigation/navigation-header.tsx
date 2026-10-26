@@ -87,7 +87,7 @@ export function NavigationHeader({
               className="group flex min-h-[44px] min-w-[44px] shrink-0 items-center gap-2 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-status-info md:min-h-0 md:min-w-0"
             >
               <div className="flex flex-col justify-center">
-                <span className="text-[14px] font-medium leading-none text-[#141413]">DYData</span>
+                <span className="text-[14px] leading-none text-[#141413]">DYData</span>
                 <span className="mt-1 hidden text-[12px] font-normal leading-none tracking-wide text-[#78716C] transition-colors duration-200 group-hover:text-[#1F1E1D] sm:block">
                   创作数据读本
                 </span>

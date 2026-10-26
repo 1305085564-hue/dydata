@@ -169,7 +169,7 @@ export function MemberAiDialogs({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-medium text-[#141413] flex items-center gap-2">
+            <DialogTitle className=" text-[#141413] flex items-center gap-2">
               <AlertCircle className="size-5 text-[#D97757]" />
               确认执行 AI 管理建议动作
             </DialogTitle>

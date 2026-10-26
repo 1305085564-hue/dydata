@@ -222,7 +222,7 @@ export function ModelFamilyCard({
                   if (e.key === "Escape") handleCancelModelName();
                 }}
                 autoFocus
-                className="h-6 px-1.5 text-[14px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                className="h-6 px-1.5 text-[14px] border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
               />
               <Button
                 variant="ghost"
@@ -243,7 +243,7 @@ export function ModelFamilyCard({
             </div>
           ) : (
             <div className="flex items-center gap-1 min-w-0">
-              <span className="text-[14px] font-medium text-[#141413] truncate">
+              <span className="text-[14px] text-[#141413] truncate">
                 {currentDisplayName}
               </span>
               <button
@@ -378,7 +378,7 @@ export function ModelFamilyCard({
                           }}
                           autoFocus
                           disabled={savingKeyId === key.id}
-                          className="h-6 px-1.5 text-[14px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                          className="h-6 px-1.5 text-[14px] border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
                         />
                         <Button
                           variant="ghost"

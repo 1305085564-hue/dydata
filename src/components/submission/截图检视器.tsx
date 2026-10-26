@@ -85,7 +85,7 @@ export function ScreenshotInspector({
       <div className="flex items-center justify-between border-b border-[#E2E2DF] bg-[#F1F1F0] px-3.5 py-2.5 select-none">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-[#D97757]" />
-          <span className="text-[12px] font-medium text-[#141413]">{label}</span>
+          <span className="text-[12px] text-[#141413]">{label}</span>
         </div>
 
         <div className="flex items-center gap-1.5">

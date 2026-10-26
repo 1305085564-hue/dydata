@@ -163,13 +163,13 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-current text-[#D97757]" />
-                      <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
                         爆款数据核心大盘
                       </h3>
                       {overallGrade && (
                         <Badge
                           variant="secondary"
-                          className={`bg-[#F1F1F0] text-[12px] font-medium ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
+                          className={`bg-[#F1F1F0] text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
                           title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；较差一项最多被高项拉高 ${MAX_PULL_GRADES} 个档位（想拿优两项都不能低于良，想拿良两项都不能低于普）；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制；最终取较低档，转粉率不参与`}
                         >
                           综合{overallGrade}
@@ -289,7 +289,7 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
                         快照全量指标明细
                       </h3>
                     </div>

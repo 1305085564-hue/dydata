@@ -76,7 +76,7 @@ export type HighlightRuleMap = Partial<Record<HighlightFieldKey, HighlightRule>>
 export type HighlightValueRow = Record<HighlightFieldKey, number | null>;
 
 /** 命中单元格样式：淡琥珀底 + 同色加粗（设计封闭律：状态色只上淡底与文字，不上实底） */
-export const HIGHLIGHT_CELL_CLASS = "rounded px-1 bg-status-warning/[0.12] text-status-warning font-medium";
+export const HIGHLIGHT_CELL_CLASS = "rounded px-1 bg-status-warning/[0.12] text-status-warning ";
 
 export function isHighlightRuleMapEmpty(rules: HighlightRuleMap): boolean {
   return Object.values(rules).every((rule) => rule === undefined);

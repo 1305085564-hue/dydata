@@ -199,7 +199,7 @@ export default async function PersonProfilePage({
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-[#E2E2DF]/60 pb-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-[20px] font-medium text-[#1F1E1D]">{person.name}</h1>
+            <h1 className="font-normal text-[20px] text-[#1F1E1D]">{person.name}</h1>
             {person.membershipStatus !== "active" && (
               <Badge variant="secondary" className="text-[12px]">
                 已归档

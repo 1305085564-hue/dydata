@@ -23,7 +23,7 @@ export default function GlobalError({
         <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
           <Card className="flex max-w-md flex-col items-center gap-3  px-8 py-10 text-center">
             <p className="text-[28px] font-normal leading-none text-[#E2E2DF]">!</p>
-            <h1 className="text-[28px] leading-[1.20] font-medium tracking-tight text-[#141413]">页面出错了</h1>
+            <h1 className="text-[28px] leading-[1.20] tracking-tight text-[#141413]">页面出错了</h1>
             <p className="text-[14px] leading-6 text-[#1F1E1D]">
               刚才碰到了点问题，刷新一下通常就好了。
             </p>

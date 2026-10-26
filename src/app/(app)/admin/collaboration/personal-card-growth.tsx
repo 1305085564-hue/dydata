@@ -156,7 +156,7 @@ export function PersonalCardGrowth({
                         <div className="flex items-center justify-between w-full gap-3 min-w-0">
                           {/* 作品信息：日期与完整标题 */}
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="font-medium text-[#78716C] shrink-0 tabular-nums">
+                            <span className=" text-[#78716C] shrink-0 tabular-nums">
                               {hoveredWork.reportDate.slice(5)}
                             </span>
                             <span
@@ -181,7 +181,7 @@ export function PersonalCardGrowth({
                                 {visibleMetrics.interaction && (
                                   <span className="text-[#78716C]">
                                     互动{" "}
-                                    <span className="font-medium text-[#D97757]">
+                                    <span className=" text-[#D97757]">
                                       {hoveredWork.interactionRate != null ? `${hoveredWork.interactionRate}%` : "—"}
                                     </span>
                                   </span>
@@ -189,7 +189,7 @@ export function PersonalCardGrowth({
                                 {visibleMetrics.like && (
                                   <span className="text-[#78716C]">
                                     点赞{" "}
-                                    <span className="font-medium text-[#43718E]">
+                                    <span className=" text-[#43718E]">
                                       {hoveredWork.likeRate != null ? `${hoveredWork.likeRate}%` : "—"}
                                     </span>
                                   </span>
@@ -197,7 +197,7 @@ export function PersonalCardGrowth({
                                 {visibleMetrics.favorite && (
                                   <span className="text-[#78716C]">
                                     收藏{" "}
-                                    <span className="font-medium text-[#6FAA7D]">
+                                    <span className=" text-[#6FAA7D]">
                                       {hoveredWork.favoriteRate != null ? `${hoveredWork.favoriteRate}%` : "—"}
                                     </span>
                                   </span>
@@ -234,17 +234,17 @@ export function PersonalCardGrowth({
                                 )}
                                 {visibleMetrics.interaction && growthAverages.avgInteraction != null && (
                                   <span className="text-[#78716C] tabular-nums">
-                                    均互动 <span className="font-medium text-[#D97757]">{growthAverages.avgInteraction}%</span>
+                                    均互动 <span className=" text-[#D97757]">{growthAverages.avgInteraction}%</span>
                                   </span>
                                 )}
                                 {visibleMetrics.like && growthAverages.avgLike != null && (
                                   <span className="text-[#78716C] tabular-nums">
-                                    均点赞 <span className="font-medium text-[#43718E]">{growthAverages.avgLike}%</span>
+                                    均点赞 <span className=" text-[#43718E]">{growthAverages.avgLike}%</span>
                                   </span>
                                 )}
                                 {visibleMetrics.favorite && growthAverages.avgFavorite != null && (
                                   <span className="text-[#78716C] tabular-nums">
-                                    均收藏 <span className="font-medium text-[#6FAA7D]">{growthAverages.avgFavorite}%</span>
+                                    均收藏 <span className=" text-[#6FAA7D]">{growthAverages.avgFavorite}%</span>
                                   </span>
                                 )}
                               </>

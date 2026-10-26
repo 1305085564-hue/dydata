@@ -734,7 +734,7 @@ export function ComputePoolPanel() {
           className="flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C] shadow-input"
         >
           <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-          <span className="text-[#141413] font-medium">
+          <span className="text-[#141413] ">
             正在检测 {modelTestingState.total} 个模型…
           </span>
         </div>
@@ -783,7 +783,7 @@ export function ComputePoolPanel() {
                 className="flex flex-col gap-1 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-2 text-[12px]"
               >
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[#141413] font-medium truncate" title={f.keyLabel}>
+                  <span className="text-[#141413] truncate" title={f.keyLabel}>
                     {f.keyLabel}
                   </span>
                   <span className="text-[12px] px-1.5 py-0.2 rounded bg-[#C0685C]/10 text-[#C0685C] shrink-0 font-normal">

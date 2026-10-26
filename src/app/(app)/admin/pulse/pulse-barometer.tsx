@@ -18,7 +18,7 @@ export function PulseBarometer({ summary }: PulseBarometerProps) {
         {/* 1. 总播放 */}
         <div>
           <div className="text-[12px] font-normal text-[#78716C]">总播放</div>
-          <div className="mt-1 text-[20px] font-medium text-[#141413] tabular-nums leading-[1.30]">
+          <div className="mt-1 text-[20px] text-[#141413] tabular-nums leading-[1.30]">
             {totalPlay != null ? (
               formatCount(totalPlay)
             ) : (
@@ -30,7 +30,7 @@ export function PulseBarometer({ summary }: PulseBarometerProps) {
         {/* 2. 日环比 */}
         <div>
           <div className="text-[12px] font-normal text-[#78716C]">日环比</div>
-          <div className="mt-1 text-[20px] font-medium tabular-nums leading-[1.30]">
+          <div className="mt-1 text-[20px] tabular-nums leading-[1.30]">
             {dayOverDayRate === null ? (
               <span className="text-[#A8A29E] font-normal">—</span>
             ) : dayOverDayRate > 0 ? (
@@ -46,7 +46,7 @@ export function PulseBarometer({ summary }: PulseBarometerProps) {
         {/* 3. 发片数 */}
         <div>
           <div className="text-[12px] font-normal text-[#78716C]">发片数</div>
-          <div className="mt-1 text-[20px] font-medium text-[#141413] tabular-nums leading-[1.30]">
+          <div className="mt-1 text-[20px] text-[#141413] tabular-nums leading-[1.30]">
             {worksCount}
             <span className="text-[12px] font-normal text-[#78716C] ml-1">篇</span>
           </div>

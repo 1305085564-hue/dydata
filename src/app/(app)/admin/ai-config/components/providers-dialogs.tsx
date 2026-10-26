@@ -92,7 +92,7 @@ export function ProviderQuickActionsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
         <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[20px] font-medium text-[#141413]">
+          <DialogTitle className="text-[20px] text-[#141413]">
             {provider?.id ? "编辑接入点" : "新建接入点"}
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-relaxed">
@@ -377,7 +377,7 @@ export function ProvidersManagerDialog({
         <DialogContent className="flex max-h-[85vh] w-[94vw] max-w-xl flex-col rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader className="flex flex-row items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
             <div>
-              <DialogTitle className="text-[20px] font-medium text-[#141413]">接入点管理</DialogTitle>
+              <DialogTitle className="text-[20px] text-[#141413]">接入点管理</DialogTitle>
               <p className="mt-0.5 text-[12px] text-[#78716C]">
                 维护所有 AI 接入点与网络配置
               </p>
@@ -411,7 +411,7 @@ export function ProvidersManagerDialog({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Server className="size-3.5 text-[#78716C]" />
-                            <span className="text-[14px] font-medium text-[#141413] truncate">{p.name}</span>
+                            <span className="text-[14px] text-[#141413] truncate">{p.name}</span>
                             {!p.is_enabled ? (
                               <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>
                             ) : (

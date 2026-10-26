@@ -254,7 +254,7 @@ export function FulfillmentMemberSheet({
         aria-label="成员履约月历与考勤档案"
       >
         <SheetHeader className="border-b border-[#E2E2DF]/60 pb-3">
-          <SheetTitle className="text-[20px] font-medium text-[#141413]">
+          <SheetTitle className="text-[20px] text-[#141413]">
             {member?.userName || "成员"} · 履约档案
           </SheetTitle>
           <SheetDescription className="text-[12px] text-[#78716C]">
@@ -292,7 +292,7 @@ export function FulfillmentMemberSheet({
                 <div>
                   <span className="text-[12px] text-[#78716C] block">实发作品</span>
                   <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-[20px] font-medium text-[#141413] tabular-nums">
+                    <span className="text-[20px] text-[#141413] tabular-nums">
                       {member.publishedCount}
                     </span>
                     <span className="text-[12px] text-[#78716C]">/ {member.requiredCount} 条应发</span>
@@ -328,7 +328,7 @@ export function FulfillmentMemberSheet({
             {/* 连续未发警示 */}
             {member.consecutiveMissing > 0 && (
               <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3 flex items-center justify-between">
-                <span className="text-[14px] text-status-danger font-medium flex items-center gap-1">
+                <span className="text-[14px] text-status-danger flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-status-danger" />
                   已连续未发布 {member.consecutiveMissing} 天
                 </span>
@@ -338,7 +338,7 @@ export function FulfillmentMemberSheet({
 
             {/* 历史记录时间轴 */}
             <div className="space-y-2">
-              <span className="text-[14px] font-medium text-[#141413] block">
+              <span className="text-[14px] text-[#141413] block">
                 全月打卡足迹时间轴
               </span>
               <Card className="max-h-[200px] overflow-y-auto p-0 gap-0 border border-[#E2E2DF]/60">
@@ -387,7 +387,7 @@ export function FulfillmentMemberSheet({
               <div className="rounded-xl border border-[#E2E2DF]/60 p-3.5 space-y-3 bg-white">
                 <div className="flex items-center justify-between border-b border-[#E2E2DF]/50 pb-2">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#141413]">
+                    <span className="inline-flex items-center rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#141413]">
                       📅 {effectiveDate} {isToday ? "（今天）" : ""}
                     </span>
                     <span className="text-[12px] text-[#78716C]">单日明细与改判</span>
@@ -398,7 +398,7 @@ export function FulfillmentMemberSheet({
                 {/* 补交处理 */}
                 {dateAppeal && (
                   <div className="rounded-md border border-status-warning/20 bg-status-warning/5 p-2.5 text-[12px]">
-                    <div className="flex items-center justify-between text-status-warning font-medium">
+                    <div className="flex items-center justify-between text-status-warning ">
                       <span>补交事由</span>
                       <span>{dateAppeal.status === "pending" ? "待审核" : "已处理"}</span>
                     </div>
@@ -490,7 +490,7 @@ export function FulfillmentMemberSheet({
           <Dialog open={true} onOpenChange={(open) => !open && setActiveAction(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-[20px] font-medium text-[#141413]">
+                <DialogTitle className="text-[20px] text-[#141413]">
                   确认改判为「{ACTION_CONFIG[activeAction].label}」
                 </DialogTitle>
                 <DialogDescription className="text-[14px] text-[#78716C]">

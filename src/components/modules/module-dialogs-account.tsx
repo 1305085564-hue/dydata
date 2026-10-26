@@ -64,7 +64,7 @@ export function ModuleDialogsAccount({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-medium text-[#141413]">重置登录密码</DialogTitle>
+            <DialogTitle className=" text-[#141413]">重置登录密码</DialogTitle>
             <DialogDescription>
               为「{passwordResetTarget?.name}」设置新的临时登录密码（至少 6 位）。
             </DialogDescription>
@@ -114,7 +114,7 @@ export function ModuleDialogsAccount({
           >
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle className="font-medium text-[#141413]">
+                <DialogTitle className=" text-[#141413]">
                   设置不参与考核
                 </DialogTitle>
                 <DialogDescription className="text-[14px] text-[#78716C] leading-relaxed">

@@ -101,7 +101,7 @@ export function DangerousActionDialog({
             <div className="flex size-7 items-center justify-center rounded-lg bg-[#C0685C]/10 text-[#C0685C]">
               <ShieldAlert className="size-4" />
             </div>
-            <DialogTitle className="text-[20px] font-medium text-[#141413]">{title}</DialogTitle>
+            <DialogTitle className="text-[20px] text-[#141413]">{title}</DialogTitle>
           </div>
           <p className="text-[12px] text-[#78716C] leading-relaxed">{desc}</p>
         </DialogHeader>
@@ -141,7 +141,7 @@ export function DangerousActionDialog({
               {/* 独占/严重断供警告 */}
               {hasCriticalBindings && (
                 <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/10 p-3.5 space-y-2 text-[12px]">
-                  <div className="flex items-center gap-1.5 font-medium text-[#C0685C] text-[14px]">
+                  <div className="flex items-center gap-1.5 text-[#C0685C] text-[14px]">
                     <AlertTriangle className="size-4 shrink-0" />
                     <span>严重断供风险：以下业务将失去唯一可用模型供给</span>
                   </div>
@@ -149,7 +149,7 @@ export function DangerousActionDialog({
                     {criticalBindings.map((cb) => (
                       <span
                         key={cb.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-[#C0685C]/30 text-[#C0685C] font-medium text-[12px]"
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-[#C0685C]/30 text-[#C0685C] text-[12px]"
                       >
                         {cb.label}
                       </span>
@@ -164,7 +164,7 @@ export function DangerousActionDialog({
               {/* 涉及的业务功能 */}
               {businessFunctions.length > 0 && !hasCriticalBindings && (
                 <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 space-y-1.5">
-                  <span className="text-[12px] font-medium text-[#141413]">
+                  <span className="text-[12px] text-[#141413]">
                     直接受影响的业务功能（共 {businessFunctions.length} 项）：
                   </span>
                   <div className="flex flex-wrap gap-1.5 pt-1">
@@ -183,14 +183,14 @@ export function DangerousActionDialog({
               {/* 牵连的渠道真实名单（逐条列出，禁止折叠） */}
               {channels.length > 0 && (
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[#141413]">
+                  <span className="text-[12px] text-[#141413]">
                     牵连的渠道与模型明细：
                   </span>
                   <div className="rounded-xl border border-[#E2E2DF] divide-y divide-[#E2E2DF]/60 bg-[#FCFCFB] overflow-hidden">
                     {channels.map((ch) => (
                       <div key={ch.id} className="p-3 space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[14px] font-medium text-[#141413]">
+                          <span className="text-[14px] text-[#141413]">
                             渠道：{ch.name}
                           </span>
                           <span className="text-[12px] text-[#78716C]">
@@ -231,7 +231,7 @@ export function DangerousActionDialog({
               {preview?.remainingAvailableLineCount !== undefined && (
                 <div className="rounded-xl border border-[#E2E2DF] bg-white p-3 text-[12px] text-[#78716C] flex items-center justify-between">
                   <span>该模型在其他渠道的剩余可用线路：</span>
-                  <span className="font-mono font-medium text-[#141413]">
+                  <span className="font-mono text-[#141413]">
                     {preview.remainingAvailableLineCount} 条可用
                   </span>
                 </div>
@@ -240,7 +240,7 @@ export function DangerousActionDialog({
               {/* 更窄的替代方案（冻结裁决③：必须提供，不能只给确定/取消） */}
               {onNarrowerAction && narrowerActionLabel && (
                 <div className="rounded-xl border border-[#D97757]/20 bg-[#D97757]/5 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[14px] font-medium text-[#D97757]">
+                  <div className="flex items-center gap-1.5 text-[14px] text-[#D97757]">
                     <span>💡 更窄的替代操作（推荐）：</span>
                   </div>
                   <p className="text-[12px] text-[#78716C] leading-relaxed">

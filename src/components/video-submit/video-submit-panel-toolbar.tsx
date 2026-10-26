@@ -50,7 +50,7 @@ export function VideoSubmitPanelToolbar({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium text-[#141413] tracking-tight">
+                <h1 className="font-normal font-serif text-[1.75rem] leading-[1.20] text-[#141413] tracking-tight">
                   创作立卷 · 表达纪事
                 </h1>
               </div>

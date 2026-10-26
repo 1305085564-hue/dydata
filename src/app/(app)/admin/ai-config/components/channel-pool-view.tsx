@@ -218,7 +218,7 @@ export function ChannelPoolView({
         <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Server className="size-3.5 text-[#D97757]" />
-            <span className="text-[14px] font-medium text-[#1F1E1D]">渠道</span>
+            <span className="text-[14px] text-[#1F1E1D]">渠道</span>
             <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
           </div>
           <TooltipProvider delay={100}>
@@ -271,7 +271,7 @@ export function ChannelPoolView({
               >
                 <div className="flex items-center justify-between gap-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-mono text-[12px] font-medium text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0">
+                    <span className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0">
                       P{ch.priority}
                     </span>
                     <span
@@ -344,7 +344,7 @@ export function ChannelPoolView({
                   </div>
                 ) : (
                   <div className="group/name flex items-center gap-1.5">
-                    <h3 className="text-[14px] font-medium text-[#1F1E1D] truncate">
+                    <h3 className="font-normal text-[14px] text-[#1F1E1D] truncate">
                       {selectedChannel.label || "未命名渠道"}
                     </h3>
                     <TooltipProvider delay={100}>
@@ -370,7 +370,7 @@ export function ChannelPoolView({
                   </div>
                 )}
 
-                <span className="font-mono text-[12px] font-medium text-[#78716C] px-1.5 py-0.5 rounded bg-[#F1F1F0]">
+                <span className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.5 rounded bg-[#F1F1F0]">
                   P{selectedChannel.priority} 顺位
                 </span>
 
@@ -470,7 +470,7 @@ export function ChannelPoolView({
                   <div className="rounded-lg border border-[#A8A29E]/30 bg-[#FAF9F8] p-2.5 text-[12px] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-[#78716C]">
                       <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
-                      <span>上游模型比对状态：<span className="font-medium text-[#141413]">未知 · 尚未成功同步</span>（不展示猜测数字）</span>
+                      <span>上游模型比对状态：<span className=" text-[#141413]">未知 · 尚未成功同步</span>（不展示猜测数字）</span>
                     </div>
                     <Button
                       variant="outline"
@@ -745,7 +745,7 @@ export function ChannelPoolView({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-[14px] font-medium text-[#1F1E1D]">挂载模型与生效状态</h4>
+                  <h4 className="font-normal text-[14px] text-[#1F1E1D]">挂载模型与生效状态</h4>
                   <p className="text-[12px] text-[#78716C]">
                     此渠道支持的模型系列，可独立启闭或试跑连通性。
                   </p>

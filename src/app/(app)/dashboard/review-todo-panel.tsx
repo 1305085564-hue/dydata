@@ -45,7 +45,7 @@ export function ReviewTodoPanel({ initialTickets, loadError = null }: ReviewTodo
   return (
     <section className="flex flex-col gap-3" aria-label="复盘待办">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[20px] font-medium text-[#141413]">复盘待办</h2>
+        <h2 className="font-normal text-[20px] text-[#141413]">复盘待办</h2>
         {tickets.length > 0 && <span className="text-[12px] text-[#78716C]">{tickets.length} 条待确认</span>}
       </div>
       {error && <div role="alert" className="rounded-md border border-[#E2B4B4] bg-[#FFF8F8] px-3 py-2 text-[12px] text-[#9B3A3A]">{error}</div>}

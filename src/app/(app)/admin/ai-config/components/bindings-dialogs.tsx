@@ -68,7 +68,7 @@ export function BindingDialog({
         <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
           <div className="flex items-center justify-between pr-6">
             <div className="flex items-center gap-2">
-              <DialogTitle className="text-[20px] font-medium text-[#141413]">
+              <DialogTitle className="text-[20px] text-[#141413]">
                 业务模型路由 · {isOcr ? "截图识别" : (control?.label ?? "业务功能")}
               </DialogTitle>
               {isOcr && (
@@ -103,7 +103,7 @@ export function BindingDialog({
           {/* 1. 截图识别专属：双通道模式精致选择卡 */}
           {isOcr && (
             <div className="space-y-1.5">
-              <Label className="text-[12px] font-medium text-[#1F1E1D]">
+              <Label className="text-[12px] text-[#1F1E1D]">
                 识别通道模式
               </Label>
 
@@ -124,7 +124,7 @@ export function BindingDialog({
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[14px] font-medium text-[#141413]">
+                        <span className="text-[14px] text-[#141413]">
                           OCR+模型
                         </span>
                         <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
@@ -162,7 +162,7 @@ export function BindingDialog({
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[14px] font-medium text-[#141413]">
+                      <span className="text-[14px] text-[#141413]">
                         视觉直识
                       </span>
                       <div className={cn(
@@ -188,7 +188,7 @@ export function BindingDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 pt-1">
             {/* 左列：系统提示词（完全弹性撑满，自适应精准对齐右侧高度） */}
             <div className="flex flex-col space-y-1.5 h-full">
-              <Label htmlFor="binding-system-prompt" className="text-[12px] font-medium text-[#1F1E1D]">
+              <Label htmlFor="binding-system-prompt" className="text-[12px] text-[#1F1E1D]">
                 系统提示词 (可选)
               </Label>
               <textarea
@@ -204,7 +204,7 @@ export function BindingDialog({
             <div className="space-y-2.5 flex flex-col justify-start">
               {/* 1. 调度模型系列 */}
               <div className="space-y-1.5">
-                <Label className="text-[12px] font-medium text-[#1F1E1D]">
+                <Label className="text-[12px] text-[#1F1E1D]">
                   调度模型系列
                 </Label>
                 <ModelFamilySelect
@@ -216,7 +216,7 @@ export function BindingDialog({
 
               {/* 2. 最大输出 Token */}
               <div className="space-y-1.5">
-                <Label htmlFor="output-token-limit" className="text-[12px] font-medium text-[#1F1E1D]">
+                <Label htmlFor="output-token-limit" className="text-[12px] text-[#1F1E1D]">
                   最大输出 Token
                 </Label>
                 <div className="relative">
@@ -238,7 +238,7 @@ export function BindingDialog({
 
               {/* 3. 上下文消息轮数 */}
               <div className="space-y-1.5">
-                <Label htmlFor="context-limit" className="text-[12px] font-medium text-[#1F1E1D]">
+                <Label htmlFor="context-limit" className="text-[12px] text-[#1F1E1D]">
                   上下文消息轮数
                 </Label>
                 <div className="relative">

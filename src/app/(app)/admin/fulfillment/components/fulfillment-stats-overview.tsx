@@ -64,7 +64,7 @@ export function FulfillmentStatsOverview({
 
           <div className="mt-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-[20px] font-medium text-[#141413] tracking-tight tabular-nums">
+              <span className="text-[20px] text-[#141413] tracking-tight tabular-nums">
                 {stats.publishedCount.toLocaleString()}
               </span>
               <span className="text-[14px] font-normal text-[#78716C]">
@@ -108,13 +108,13 @@ export function FulfillmentStatsOverview({
 
           <div className="mt-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-[20px] font-medium text-[#141413] tracking-tight tabular-nums">
+              <span className="text-[20px] text-[#141413] tracking-tight tabular-nums">
                 {stats.totalMembers}
               </span>
               <span className="text-[14px] font-normal text-[#78716C]">位伙伴</span>
             </div>
             <p className="mt-2 text-[12px] text-[#78716C]">
-              今日已发 <span className="font-medium text-[#141413] tabular-nums">{stats.publishedToday}</span> 人
+              今日已发 <span className=" text-[#141413] tabular-nums">{stats.publishedToday}</span> 人
             </p>
           </div>
 
@@ -167,7 +167,7 @@ export function FulfillmentStatsOverview({
           <div className="mt-1">
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-[20px] font-medium tracking-tight tabular-nums ${
+                className={`text-[20px]  tracking-tight tabular-nums ${
                   hasMissing ? "text-status-danger" : "text-[#141413]"
                 }`}
               >
@@ -235,7 +235,7 @@ export function FulfillmentStatsOverview({
           <div className="mt-1">
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-[20px] font-medium tracking-tight tabular-nums ${
+                className={`text-[20px]  tracking-tight tabular-nums ${
                   hasPending ? "text-[#D97757]" : "text-[#141413]"
                 }`}
               >

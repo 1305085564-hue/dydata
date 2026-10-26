@@ -342,7 +342,7 @@ export function AddKeyDialog({
         )}
       >
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[20px] font-medium text-[#141413]">
+          <DialogTitle className="text-[20px] text-[#141413]">
             {step === "input" ? "接入渠道" : `同步并选择模型 · ${label}`}
           </DialogTitle>
           <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">
@@ -409,7 +409,7 @@ export function AddKeyDialog({
                     <div className="my-1 h-px bg-[#E2E2DF]" />
                     <SelectItem
                       value="__CREATE_NEW_PROVIDER__"
-                      className="py-1.5 font-medium text-[#D97757] focus:text-[#D97757]"
+                      className="py-1.5 text-[#D97757] focus:text-[#D97757]"
                     >
                       ＋ 新增接入点
                     </SelectItem>
@@ -420,7 +420,7 @@ export function AddKeyDialog({
                 {isCreatingProvider && (
                   <div className="mt-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 space-y-2.5">
                     <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[12px] font-medium text-[#141413]">新增上游接入点</span>
+                      <span className="text-[12px] text-[#141413]">新增上游接入点</span>
                       <button
                         type="button"
                         onClick={() => setIsCreatingProvider(false)}

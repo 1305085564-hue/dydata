@@ -479,7 +479,7 @@ function DataHighlightSubmenu({
               if (!rule) return null;
               return (
                 <div key={key} className="flex items-center gap-1 px-2 py-0.5">
-                  <span className="inline-flex items-center rounded bg-status-warning/[0.12] px-1.5 py-0.5 text-[12px] font-medium text-status-warning">
+                  <span className="inline-flex items-center rounded bg-status-warning/[0.12] px-1.5 py-0.5 text-[12px] text-status-warning">
                     {formatHighlightRuleLabel(key, rule)}
                   </span>
                   <button

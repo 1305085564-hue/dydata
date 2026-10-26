@@ -510,7 +510,7 @@ export function ContentDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#1F1E1D]" />
-                    <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+                    <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
                       视频文案内容库
                     </h3>
                     <span className="text-[12px] text-[#78716C] font-normal">
@@ -544,7 +544,7 @@ export function ContentDetailDialog({
               {onToggleTopicLibrary && <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[14px] font-medium text-[#141413]">选题库</h3>
+                    <h3 className="font-normal text-[14px] text-[#141413]">选题库</h3>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"

@@ -136,7 +136,7 @@ function ChannelRedundancyCell({
         />
         <TooltipContent side="top" className="text-[12px] p-2.5 max-w-sm">
           <div className="space-y-1.5 min-w-[200px]">
-            <div className="text-[12px] font-medium text-[#A8A29E] border-b border-white/10 pb-1">
+            <div className="text-[12px] text-[#A8A29E] border-b border-white/10 pb-1">
               渠道检测明细（{totalCount} 个渠道）
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -196,7 +196,7 @@ function MobileFeatureCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[14px] font-medium text-[#1F1E1D]">{label}</h3>
+            <h3 className="font-normal text-[14px] text-[#1F1E1D]">{label}</h3>
             {isGlobalDefault && <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">兜底</span>}
           </div>
           <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">{description}</p>

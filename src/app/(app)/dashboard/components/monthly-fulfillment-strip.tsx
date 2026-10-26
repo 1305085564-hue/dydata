@@ -179,7 +179,7 @@ export function MonthlyFulfillmentStrip({
         {/* 左侧：当月履约统计概览与今日状态指示 */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-serif text-[14px] font-medium text-[#141413] tracking-tight">
+            <span className="font-serif text-[14px] text-[#141413] tracking-tight">
               {monthLabel}履约账本
             </span>
             <span className="text-[12px] tabular-nums text-[#78716C] font-sans">
@@ -189,16 +189,16 @@ export function MonthlyFulfillmentStrip({
 
           {/* 今日入账指示胶囊 */}
           {isTodaySubmitted ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#2E7D32]/10 px-2 py-0.5 text-[12px] font-medium text-[#2E7D32] border border-[#2E7D32]/20">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#2E7D32]/10 px-2 py-0.5 text-[12px] text-[#2E7D32] border border-[#2E7D32]/20">
               <Check className="size-3 stroke-[2.5]" />
               今日已达标
             </span>
           ) : !isTodayWorkday ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#78716C] border border-[#E2E2DF]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] border border-[#E2E2DF]">
               今日休息
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-2 py-0.5 text-[12px] font-medium text-[#D97757] border border-[#D97757]/20">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-2 py-0.5 text-[12px] text-[#D97757] border border-[#D97757]/20">
               <Sparkles className="size-2.5 fill-[#D97757]" />
               今日待履约
             </span>
@@ -222,11 +222,11 @@ export function MonthlyFulfillmentStrip({
               let cellStyle = "bg-[#FCFCFB] text-[#78716C] border-[#E2E2DF]/60 hover:border-[#78716C]/40";
 
               if (state === "submitted") {
-                cellStyle = "bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/25 font-medium hover:bg-[#2E7D32]/15";
+                cellStyle = "bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/25 hover:bg-[#2E7D32]/15";
               } else if (state === "today-pending") {
-                cellStyle = "bg-white text-[#D97757] border-2 border-[#D97757] font-medium shadow-xs animate-fulfillment-breath";
+                cellStyle = "bg-white text-[#D97757] border-2 border-[#D97757] shadow-xs animate-fulfillment-breath";
               } else if (state === "waive") {
-                cellStyle = "bg-[#1D4ED8]/[0.08] text-[#1D4ED8] border-[#1D4ED8]/25 font-medium hover:bg-[#1D4ED8]/15";
+                cellStyle = "bg-[#1D4ED8]/[0.08] text-[#1D4ED8] border-[#1D4ED8]/25 hover:bg-[#1D4ED8]/15";
               } else if (state === "leave") {
                 cellStyle = "bg-[#1D4ED8]/[0.06] text-[#1D4ED8]/80 border-[#1D4ED8]/20 hover:bg-[#1D4ED8]/10";
               } else if (state === "pending") {

@@ -142,10 +142,10 @@ export function FulfillmentActionDock({
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-medium text-[#141413]">
+              <span className="text-[14px] text-[#141413]">
                 待处理事项
               </span>
-              <span className="inline-flex items-center rounded-full bg-[#D97757]/15 px-2 py-0.5 text-[12px] font-medium text-[#D97757] tabular-nums">
+              <span className="inline-flex items-center rounded-full bg-[#D97757]/15 px-2 py-0.5 text-[12px] text-[#D97757] tabular-nums">
                 {totalActionCount} 项
               </span>
             </div>
@@ -198,7 +198,7 @@ export function FulfillmentActionDock({
                   aria-label="全选当前列表"
                 />
                 <span className="text-[#78716C]">
-                  已选 <span className="font-medium text-[#141413]">{selectedIds.size}</span> 人
+                  已选 <span className=" text-[#141413]">{selectedIds.size}</span> 人
                 </span>
               </div>
 
@@ -291,7 +291,7 @@ export function FulfillmentActionDock({
                         </td>
                         <td className="py-2.5 px-3 tabular-nums">
                           {member.consecutiveMissing > 0 ? (
-                            <span className="text-status-danger font-medium">
+                            <span className="text-status-danger ">
                               {member.consecutiveMissing} 天
                             </span>
                           ) : (
@@ -361,7 +361,7 @@ export function FulfillmentActionDock({
           {/* 待审补交展示 */}
           {pendingAppeals.length > 0 && (
             <div className="pt-2 border-t border-[#E2E2DF]/60 space-y-2">
-              <span className="text-[12px] font-medium text-[#141413]">
+              <span className="text-[12px] text-[#141413]">
                 待审补交列表（{pendingAppeals.length} 条）
               </span>
               <div className="divide-y divide-[#E2E2DF]/50 rounded-xl border border-[#E2E2DF]/60 bg-white">
@@ -371,7 +371,7 @@ export function FulfillmentActionDock({
                     className="flex flex-wrap items-center justify-between gap-2 p-2.5 text-[12px]"
                   >
                     <div>
-                      <span className="font-medium text-[#141413]">
+                      <span className=" text-[#141413]">
                         {appeal.user_name || "未知成员"}
                       </span>
                       <span className="ml-2 text-[#78716C] tabular-nums">
@@ -449,7 +449,7 @@ export function FulfillmentActionDock({
         <Dialog open={true} onOpenChange={(open) => !open && setBatchAction(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-[20px] font-medium text-[#141413]">
+              <DialogTitle className="text-[20px] text-[#141413]">
                 批量标记为「{ACTION_LABELS[batchAction]}」
               </DialogTitle>
               <DialogDescription className="text-[14px] text-[#78716C]">

@@ -92,7 +92,7 @@ export function ShelfModelsPicker({
       {/* 区一：全站现役模型 · 自动继承上架 */}
       <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 p-3 shadow-card">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] font-medium text-[#141413]">
+          <span className="text-[14px] text-[#141413]">
             全站现役模型 · 自动继承上架 ({activeInheritedModels.length})
           </span>
           <span className="text-[12px] text-[#6FAA7D] font-mono">
@@ -145,7 +145,7 @@ export function ShelfModelsPicker({
       {/* 区二：该渠道支持的其他模型 / 回退候选 */}
       <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-card">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] font-medium text-[#141413]">
+          <span className="text-[14px] text-[#141413]">
             {isProbeSuccess
               ? `该渠道支持的其他可用模型 (${otherDiscoveredModels.length})`
               : `未直接探得上游 · 历史已知模型候选 (${otherDiscoveredModels.length})`}
@@ -275,7 +275,7 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
             key={idx}
             className="flex items-start justify-between gap-2 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-1.5 text-[12px]"
           >
-            <span className="text-[#141413] shrink-0 max-w-[140px] truncate font-medium" title={item.keyName}>
+            <span className="text-[#141413] shrink-0 max-w-[140px] truncate " title={item.keyName}>
               {item.keyName}
             </span>
             <span className="text-[#C0685C] text-right truncate text-[12px]" title={item.error}>

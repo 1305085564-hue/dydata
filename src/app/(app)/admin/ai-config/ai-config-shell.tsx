@@ -11,7 +11,7 @@ export function AIConfigShell() {
 
   if (error && !bundle) {
     return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
-      <h2 className="text-[14px] font-medium text-[#141413]">配置加载失败</h2>
+      <h2 className="font-normal text-[14px] text-[#141413]">配置加载失败</h2>
       <p className="text-[14px] text-[#78716C]">{error}</p>
       <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">重试</Button>
     </div>;
@@ -37,7 +37,7 @@ export function AIConfigShell() {
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="font-serif text-[20px] font-medium text-[#141413] tracking-tight">
+          <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
             业务功能调度
           </h2>
         </div>
@@ -48,7 +48,7 @@ export function AIConfigShell() {
       {/* 算力储备与渠道底座 */}
       <section className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
-          <h2 className="font-serif text-[20px] font-medium text-[#141413] tracking-tight">
+          <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
             算力储备与渠道底座
           </h2>
         </div>

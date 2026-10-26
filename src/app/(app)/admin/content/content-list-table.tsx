@@ -579,7 +579,7 @@ export function ContentListTable({
                                 sideOffset={4}
                                 className="max-w-md p-2 bg-[#1F1E1D] text-white border border-[#333] shadow-claude-float rounded-lg text-left pointer-events-none z-50 text-[12px] leading-relaxed"
                               >
-                                <div className="font-medium text-white">{video.video_title || video.content || "未命名视频"}</div>
+                                <div className=" text-white">{video.video_title || video.content || "未命名视频"}</div>
                                 {video.accounts?.name ? (
                                   <div className="text-[12px] text-[#A8A29E] mt-0.5">账号：@{video.accounts.name}</div>
                                 ) : null}

@@ -48,7 +48,7 @@ function Metric({
       <div
         data-slot="metric-value"
         className={cn(
-          "text-[20px] leading-[1.20] font-medium tabular-nums",
+          "text-[20px] leading-[1.20] tabular-nums",
           toneClass[tone]
         )}
       >

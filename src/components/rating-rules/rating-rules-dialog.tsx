@@ -53,7 +53,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       <header className="pb-4 shrink-0 border-b border-[#E2E2DF]/60 text-left">
-        <h2 className="text-[20px] font-medium text-[#141413] tracking-tight">
+        <h2 className="font-normal text-[20px] text-[#141413] tracking-tight">
           作品评级怎么看
         </h2>
         <p className="text-[14px] text-[#78716C] mt-1.5 font-normal leading-[1.6]">
@@ -64,7 +64,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
       <div className="min-h-0 flex-1 overflow-y-auto space-y-6 pt-5 pb-2 text-[14px] leading-[1.6] text-[#1F1E1D] pr-1">
         {/* 一、先认识三把尺子 */}
         <section className="space-y-3">
-          <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
             一、先认识三把尺子
           </h3>
           <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
@@ -108,7 +108,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
 
         {/* 二、单项标签：看你离达标线有多远 */}
         <section className="space-y-3">
-          <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
             二、单项标签：看你离达标线有多远
           </h3>
           <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
@@ -157,7 +157,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
 
         {/* 三、总评：整篇只有一个，只看互动率 + 点赞率/收藏率 */}
         <section className="space-y-3">
-          <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
             三、总评：整篇只有一个，只看互动率 + 点赞率/收藏率
           </h3>
           <ol className="list-decimal list-outside pl-5 space-y-2 text-[14px] text-[#1F1E1D]">
@@ -185,7 +185,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
 
         {/* 四、看几个例子（播放都在 1.5 万以上） */}
         <section className="space-y-3">
-          <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
             四、看几个例子（播放都在 {formatPlayWan(KPI_PLAY_EXCELLENT)}以上）
           </h3>
           <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
@@ -246,7 +246,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
 
         {/* 五、想拿优，记住三条 */}
         <section className="space-y-3 pb-2">
-          <h3 className="text-[14px] font-medium text-[#141413] tracking-tight">
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
             五、想拿优，记住三条
           </h3>
           <ol className="list-decimal list-outside pl-5 space-y-1.5 text-[14px] text-[#1F1E1D]">

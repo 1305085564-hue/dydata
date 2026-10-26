@@ -101,7 +101,7 @@ export function ContentListFiltersView({
               </PopoverTrigger>
               <PopoverContent className="w-56">
                 <div className="flex flex-col gap-1">
-                  <div className="px-1 pb-0.5 text-[12px] font-medium text-[#78716C]">时间范围</div>
+                  <div className="px-1 pb-0.5 text-[12px] text-[#78716C]">时间范围</div>
                   {[
                     { value: "all", label: "最近一天" },
                     { value: "7d", label: "近7天" },
@@ -118,7 +118,7 @@ export function ContentListFiltersView({
                     </button>
                   ))}
                   <div className="my-1 h-px bg-[#E2E2DF]" />
-                  <div className="px-1 pb-0.5 text-[12px] font-medium text-[#1F1E1D]">自定义日期</div>
+                  <div className="px-1 pb-0.5 text-[12px] text-[#1F1E1D]">自定义日期</div>
                   <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
                     开始
                     <Input

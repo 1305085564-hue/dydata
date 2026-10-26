@@ -62,7 +62,7 @@ export function ModuleDialogsLifecycle({
       >
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-medium text-[#141413]">确认归档成员账号</DialogTitle>
+            <DialogTitle className=" text-[#141413]">确认归档成员账号</DialogTitle>
             <DialogDescription>
               即将归档「{archiveTarget?.name}」的账号。归档将立即封禁登录并移出团队，历史日报不受影响。
             </DialogDescription>
@@ -112,7 +112,7 @@ export function ModuleDialogsLifecycle({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-medium text-[#141413]">批量归档成员账号</DialogTitle>
+            <DialogTitle className=" text-[#141413]">批量归档成员账号</DialogTitle>
             <DialogDescription>
               即将批量归档选中的 {selectedMemberIds.length} 位成员账号，归档后将封禁登录并移出各自团队。
             </DialogDescription>

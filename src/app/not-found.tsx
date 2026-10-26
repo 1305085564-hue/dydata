@@ -7,7 +7,7 @@ export default function NotFound() {
     <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12 bg-[#FCFCFB]">
       <Card className="flex max-w-md flex-col items-center gap-3  px-8 py-10 text-center">
         <DraftRecalibrateIllustration size={96} />
-        <h1 className="font-serif text-[20px] leading-[1.25] font-medium tracking-tight text-[#141413]">未找到对应卷册</h1>
+        <h1 className="font-normal font-serif text-[20px] leading-[1.25] tracking-tight text-[#141413]">未找到对应卷册</h1>
         <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
           此处的篇章可能已被归档收卷，或链接有微小出入。
         </p>

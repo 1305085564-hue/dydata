@@ -25,7 +25,7 @@ function SectionHeading({
     <Tag
       data-slot="section-heading"
       className={cn(
-        "text-[20px] leading-[1.30] font-medium text-[#141413]",
+        "text-[20px] leading-[1.30] text-[#141413]",
         className
       )}
       {...props}

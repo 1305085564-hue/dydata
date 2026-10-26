@@ -220,7 +220,7 @@ export function VideoSubmitPanelBody({
                   return (
                     <div className="mt-4 sm:mt-5 pt-4 border-t border-[#E2E2DF]/60 space-y-2.5">
                       <div className="flex items-center justify-between text-[12px]">
-                        <span className="font-medium text-[#141413]">今日已入账作品回执</span>
+                        <span className=" text-[#141413]">今日已入账作品回执</span>
                         <span className="text-[#78716C]">
                           共 {displayReports.length} 篇 · 凭证与数据已核验
                         </span>
@@ -277,10 +277,10 @@ export function VideoSubmitPanelBody({
                                 )}
                                 <div className="min-w-0 space-y-0.5">
                                   <div className="flex items-center gap-2">
-                                    <p className="text-[14px] sm:text-[14px] font-medium text-[#141413] truncate max-w-[240px] sm:max-w-md">
+                                    <p className="text-[14px] sm:text-[14px] text-[#141413] truncate max-w-[240px] sm:max-w-md">
                                       {reportTitle}
                                     </p>
-                                    <span className="inline-flex items-center gap-1 text-[12px] text-status-success shrink-0 font-medium">
+                                    <span className="inline-flex items-center gap-1 text-[12px] text-status-success shrink-0 ">
                                       <span className="size-1.5 rounded-full bg-status-success" />
                                       履约核验通过
                                     </span>
@@ -312,7 +312,7 @@ export function VideoSubmitPanelBody({
                                     if (report.id) setSelectedReportId(report.id);
                                     setRequestedMode("editToday");
                                   }}
-                                  className="inline-flex items-center gap-1 text-[12px] font-medium text-[#9A4D32] hover:text-[#D97757] px-2 py-1 rounded-md hover:bg-[#FFF7F2] transition-colors cursor-pointer"
+                                  className="inline-flex items-center gap-1 text-[12px] text-[#9A4D32] hover:text-[#D97757] px-2 py-1 rounded-md hover:bg-[#FFF7F2] transition-colors cursor-pointer"
                                   title="修改该条作品数据"
                                 >
                                   <PencilLine className="size-3" />
@@ -407,7 +407,7 @@ export function VideoSubmitPanelBody({
                       <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
                       <span className="text-[14px] font-normal text-[#1F1E1D]">已立卷手稿 · 发布日 {getPublishedDateKey(activeDateReport) ?? "未知"}</span>
                     </div>
-                    <p className="text-[14px] font-medium text-[#141413]">
+                    <p className="text-[14px] text-[#141413]">
                       {activeDateReport.title || "未命名手稿"}
                     </p>
                     {activeDateReports.length > 1 ? (
