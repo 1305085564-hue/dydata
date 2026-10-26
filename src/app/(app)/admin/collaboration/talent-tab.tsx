@@ -206,7 +206,7 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
           {row.accounts.slice(0, 3).map((account) => (
             <span
               key={account.accountId}
-              className="inline-block px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[12px] text-[#1F1E1D] truncate max-w-[120px]"
+              className="inline-block px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[12px] text-[#78716C] truncate max-w-[120px]"
               title={account.accountName}
             >
               {account.accountName}
