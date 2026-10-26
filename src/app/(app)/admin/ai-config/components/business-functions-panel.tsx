@@ -350,7 +350,7 @@ export function BusinessFunctionsPanel() {
         <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-[#D97757]" />
-            <span className="text-[14px] font-medium text-[#141413]">
+            <span className="text-[14px] text-[#141413]">
               业务模块调度列表
             </span>
           </div>
