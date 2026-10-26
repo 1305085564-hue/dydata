@@ -183,7 +183,7 @@ export function MonthlyFulfillmentStrip({
               {monthLabel}履约账本
             </span>
             <span className="text-[12px] tabular-nums text-[#78716C] font-sans">
-              已履约 <strong className="font-medium text-[#1F1E1D]">{submittedCount}</strong> / {requiredCount} 天
+              已履约 <strong className="font-normal text-[#1F1E1D]">{submittedCount}</strong> / {requiredCount} 天
             </span>
           </div>
 
