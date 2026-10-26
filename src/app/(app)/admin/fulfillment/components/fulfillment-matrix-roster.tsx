@@ -490,7 +490,7 @@ export function FulfillmentMatrixRoster({
                           <div className="flex items-center justify-between gap-1 w-full">
                             <div className="flex items-baseline gap-1 text-[14px] tabular-nums shrink-0">
                               <span
-                                className={`font-medium ${
+                                className={`${
                                   member.requiredCount > 0 &&
                                   member.publishedCount >= member.requiredCount
                                     ? "text-status-success"
