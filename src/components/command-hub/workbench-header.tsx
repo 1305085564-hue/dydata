@@ -40,12 +40,12 @@ export function WorkbenchHeader({
             {getCommandHubTitle(isAdmin)}
           </SectionHeading>
           {isAdmin && approvalPendingCount > 0 && (
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[11px] font-mono tabular-nums whitespace-nowrap">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[12px] font-mono tabular-nums whitespace-nowrap">
               待审批 {approvalPendingCount > 99 ? "99+" : approvalPendingCount}
             </span>
           )}
           {todoPendingCount > 0 && (
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[11px] font-mono tabular-nums whitespace-nowrap">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[12px] font-mono tabular-nums whitespace-nowrap">
               待办 {todoPendingCount > 99 ? "99+" : todoPendingCount}
             </span>
           )}
@@ -70,7 +70,7 @@ export function WorkbenchHeader({
               {historyApprovals.length > 0 && (
                 <span
                   className={cn(
-                    "text-[11px] tabular-nums font-mono ml-0.5",
+                    "text-[12px] tabular-nums font-mono ml-0.5",
                     activeTab === "history" ? "text-white/80" : "text-[#A8A29E]",
                   )}
                 >

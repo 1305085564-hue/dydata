@@ -85,7 +85,7 @@ export function FulfillmentAppealCard({
                 </>
               )}
               {executionLabel && (
-                <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${appeal.resumePending ? "bg-[#D97757]/15 text-[#D97757]" : "bg-[#F1F1F0] text-[#78716C]"}`}>
+                <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[12px] font-medium whitespace-nowrap ${appeal.resumePending ? "bg-[#D97757]/15 text-[#D97757]" : "bg-[#F1F1F0] text-[#78716C]"}`}>
                   {executionLabel}
                 </span>
               )}

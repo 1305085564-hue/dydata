@@ -632,7 +632,7 @@ export function FulfillmentMatrixRoster({
                             >
                               {/* 发布2篇及以上时，右上角显示数字 */}
                               {record?.publishedCount != null && record.publishedCount >= 2 && (
-                                <span className="absolute top-[1px] right-[1px] text-[9px] font-semibold text-white leading-none opacity-90 pointer-events-none">
+                                <span className="absolute top-[1px] right-[1px] text-[12px] font-semibold text-white leading-none opacity-90 pointer-events-none">
                                   {record.publishedCount}
                                 </span>
                               )}

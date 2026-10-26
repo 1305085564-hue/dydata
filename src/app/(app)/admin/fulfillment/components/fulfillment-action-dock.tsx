@@ -449,7 +449,7 @@ export function FulfillmentActionDock({
         <Dialog open={true} onOpenChange={(open) => !open && setBatchAction(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-[18px] font-medium text-[#141413]">
+              <DialogTitle className="text-[20px] font-medium text-[#141413]">
                 批量标记为「{ACTION_LABELS[batchAction]}」
               </DialogTitle>
               <DialogDescription className="text-[13px] text-[#78716C]">

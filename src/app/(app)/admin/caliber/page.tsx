@@ -81,7 +81,7 @@ export default async function CaliberPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[12px] uppercase tracking-[0.18em] text-[#A8A29E]">规则 {index + 1}</p>
-                <h2 className="mt-1.5 text-[17px] font-medium text-[#141413]">{item.title}</h2>
+                <h2 className="mt-1.5 text-[20px] font-medium text-[#141413]">{item.title}</h2>
               </div>
               {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-[#57534E]">{item.value}</span> : null}
             </div>

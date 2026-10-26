@@ -68,7 +68,7 @@ export function BindingDialog({
         <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
           <div className="flex items-center justify-between pr-6">
             <div className="flex items-center gap-2">
-              <DialogTitle className="text-[17px] font-medium text-[#141413]">
+              <DialogTitle className="text-[20px] font-medium text-[#141413]">
                 业务模型路由 · {isOcr ? "截图识别" : (control?.label ?? "业务功能")}
               </DialogTitle>
               {isOcr && (

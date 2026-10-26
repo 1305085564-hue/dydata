@@ -170,7 +170,7 @@ export function AdaptiveSheetTitle({
     <DialogPrimitive.Title
       data-slot="adaptive-sheet-title"
       className={cn(
-        "text-[18px] font-medium text-[#141413] tracking-tight",
+        "text-[20px] font-medium text-[#141413] tracking-tight",
         className,
       )}
       {...props}

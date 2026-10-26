@@ -22,11 +22,11 @@ test("Card 保持业务卡片主容器规格：白底 + 发丝环 + 12px 圆角"
   assert.match(card, /rounded-xl/);
 });
 
-test("SectionHeading 保持章节定名规格：18px / 500 / #141413", () => {
+test("SectionHeading 保持章节定名规格：20px / 500 / #141413", () => {
   const section = readComponent("section-heading");
   assert.match(
     section,
-    /"text-\[18px\] leading-\[1\.30\] font-medium text-\[#141413\]"/,
+    /"text-\[20px\] leading-\[1\.30\] font-medium text-\[#141413\]"/,
   );
 });
 

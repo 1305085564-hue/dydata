@@ -342,7 +342,7 @@ export function AddKeyDialog({
         )}
       >
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[18px] font-medium text-[#141413]">
+          <DialogTitle className="text-[20px] font-medium text-[#141413]">
             {step === "input" ? "接入渠道" : `同步并选择模型 · ${label}`}
           </DialogTitle>
           <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">

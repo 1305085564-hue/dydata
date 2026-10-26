@@ -14,7 +14,7 @@ interface SectionHeadingProps
 
 /**
  * 章节定名：一个区域、一个抽屉、一个弹窗在讲什么。
- * 18px / 500 / #141413 / Sans（设计规范 §1.1）。
+ * 20px / 500 / #141413 / Sans（设计规范 §1.1）。
  */
 function SectionHeading({
   as: Tag = "h3",
@@ -25,7 +25,7 @@ function SectionHeading({
     <Tag
       data-slot="section-heading"
       className={cn(
-        "text-[18px] leading-[1.30] font-medium text-[#141413]",
+        "text-[20px] leading-[1.30] font-medium text-[#141413]",
         className
       )}
       {...props}

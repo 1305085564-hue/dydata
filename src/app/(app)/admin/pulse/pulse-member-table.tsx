@@ -93,7 +93,7 @@ export function PulseMemberTable({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[18px] font-medium text-[#141413] leading-[1.30]">
+      <div className="text-[20px] font-medium text-[#141413] leading-[1.30]">
         人员日战报
       </div>
 

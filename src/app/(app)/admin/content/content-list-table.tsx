@@ -390,7 +390,7 @@ export function ContentListTable({
                   {/* 第 1 层：状态徽标 + 评级 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                      <Badge variant={dot.variant} className="shrink-0 text-[11px] px-1.5 py-0.5">
+                      <Badge variant={dot.variant} className="shrink-0 text-[12px] px-1.5 py-0.5">
                         {dot.label}
                       </Badge>
 
@@ -406,7 +406,7 @@ export function ContentListTable({
                         </span>
                       ) : (
                         <span
-                          className="text-[11px] text-[#A8A29E] shrink-0"
+                          className="text-[12px] text-[#A8A29E] shrink-0"
                           title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
                         >
                           {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
@@ -451,27 +451,27 @@ export function ContentListTable({
                   {/* 第 4 层：高密度指标矩阵（播放量、涨粉、完播率、互动率、点赞） */}
                   <div className="grid grid-cols-5 gap-1 pt-1.5 mt-0.5 border-t border-[#E2E2DF]/50 text-center">
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] text-[#78716C] leading-none mb-1">播放</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">播放</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
                         <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] text-[#78716C] leading-none mb-1">涨粉</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">涨粉</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
                         <Highlightable hit={cellHit(item, "followerGain")}>{formatCount(item.followerGain)}</Highlightable>
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] text-[#78716C] leading-none mb-1">完播</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">完播</span>
                       <RatioCell value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] text-[#78716C] leading-none mb-1">互动率</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">互动率</span>
                       <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "interactionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] text-[#78716C] leading-none mb-1">点赞</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">点赞</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#78716C] truncate">
                         <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                       </span>
@@ -581,7 +581,7 @@ export function ContentListTable({
                               >
                                 <div className="font-medium text-white">{video.video_title || video.content || "未命名视频"}</div>
                                 {video.accounts?.name ? (
-                                  <div className="text-[11px] text-[#A8A29E] mt-0.5">账号：@{video.accounts.name}</div>
+                                  <div className="text-[12px] text-[#A8A29E] mt-0.5">账号：@{video.accounts.name}</div>
                                 ) : null}
                               </TooltipContent>
                             </Tooltip>

@@ -112,7 +112,7 @@ export function ModelManagerDialog({
           <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-[18px] font-medium text-[#141413]">模型管理与上下架</DialogTitle>
+                <DialogTitle className="text-[20px] font-medium text-[#141413]">模型管理与上下架</DialogTitle>
                 <p className="mt-0.5 text-[12px] text-[#78716C]">
                   控制全站模型现役在册状态。现役模型可被业务路由调度，储备模型保留渠道配置暂不上架。
                 </p>
@@ -316,7 +316,7 @@ export function ModelManagerDialog({
       <Dialog open={Boolean(confirmGroup)} onOpenChange={(open) => !open && setConfirmGroup(null)}>
         <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-            <DialogTitle className="text-[18px] font-medium text-[#141413]">彻底删除模型确认</DialogTitle>
+            <DialogTitle className="text-[20px] font-medium text-[#141413]">彻底删除模型确认</DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-3 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>

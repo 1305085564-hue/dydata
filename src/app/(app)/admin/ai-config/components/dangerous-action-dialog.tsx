@@ -101,7 +101,7 @@ export function DangerousActionDialog({
             <div className="flex size-7 items-center justify-center rounded-lg bg-[#C0685C]/10 text-[#C0685C]">
               <ShieldAlert className="size-4" />
             </div>
-            <DialogTitle className="text-[18px] font-medium text-[#141413]">{title}</DialogTitle>
+            <DialogTitle className="text-[20px] font-medium text-[#141413]">{title}</DialogTitle>
           </div>
           <p className="text-[12px] text-[#78716C] leading-relaxed">{desc}</p>
         </DialogHeader>

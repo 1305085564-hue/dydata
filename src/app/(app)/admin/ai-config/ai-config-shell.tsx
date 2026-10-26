@@ -37,7 +37,7 @@ export function AIConfigShell() {
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="font-serif text-[18px] font-medium text-[#141413] tracking-tight">
+          <h2 className="font-serif text-[20px] font-medium text-[#141413] tracking-tight">
             业务功能调度
           </h2>
         </div>
@@ -48,7 +48,7 @@ export function AIConfigShell() {
       {/* 算力储备与渠道底座 */}
       <section className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
-          <h2 className="font-serif text-[18px] font-medium text-[#141413] tracking-tight">
+          <h2 className="font-serif text-[20px] font-medium text-[#141413] tracking-tight">
             算力储备与渠道底座
           </h2>
         </div>

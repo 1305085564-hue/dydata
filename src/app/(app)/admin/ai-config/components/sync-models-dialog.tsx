@@ -411,7 +411,7 @@ export function SyncModelsDialog({
         {/* 弹窗 Header：去掉接入点名，只显示渠道名称 */}
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-[18px] font-medium text-[#141413]">
+            <DialogTitle className="text-[20px] font-medium text-[#141413]">
               {keyLabel}
             </DialogTitle>
             {isRefreshing && (
@@ -562,7 +562,7 @@ export function SyncModelsDialog({
                             size="s"
                             disabled={removingModelId !== null || isBatchRemoving}
                             onClick={handleRemoveAllVerifiedUnavailable}
-                            className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                            className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
                           >
                             {isBatchRemoving ? <Loader2 className="size-3 animate-spin mr-1" /> : <Trash2 className="size-3 mr-1" />}
                             一键收走全部已确认失效模型 ({reconciliation.verifiedUnavailableModelIds.length})
@@ -580,10 +580,10 @@ export function SyncModelsDialog({
                             <div key={mId} className="flex items-center justify-between gap-2 px-3 py-2 text-[12px]">
                               <div className="min-w-0">
                                 <div className="font-medium text-[#141413] truncate">{displayName}</div>
-                                <div className="font-mono text-[11px] text-[#78716C] truncate">{mId}</div>
+                                <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[11px] text-[#C0685C] bg-[#C0685C]/10 px-1.5 py-0.5 rounded">
+                                <span className="text-[12px] text-[#C0685C] bg-[#C0685C]/10 px-1.5 py-0.5 rounded">
                                   {checkInfo?.reason || "上游未提供 (HTTP 404)"}
                                 </span>
                                 {onRemoveModel && (
@@ -593,7 +593,7 @@ export function SyncModelsDialog({
                                     size="s"
                                     disabled={removingModelId === mId || isBatchRemoving}
                                     onClick={() => handleRemoveSingleModel(mId)}
-                                    className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                                    className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
                                   >
                                     {removingModelId === mId ? <Loader2 className="size-3 animate-spin" /> : "收走"}
                                   </Button>
@@ -623,9 +623,9 @@ export function SyncModelsDialog({
                             <div key={mId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[12px]">
                               <div className="min-w-0">
                                 <div className="font-medium text-[#141413] truncate">{displayName}</div>
-                                <div className="font-mono text-[11px] text-[#78716C] truncate">{mId}</div>
+                                <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
-                              <span className="text-[11px] text-[#B98A54] bg-[#B98A54]/10 px-1.5 py-0.5 rounded shrink-0">
+                              <span className="text-[12px] text-[#B98A54] bg-[#B98A54]/10 px-1.5 py-0.5 rounded shrink-0">
                                 疑似，未验证
                               </span>
                             </div>

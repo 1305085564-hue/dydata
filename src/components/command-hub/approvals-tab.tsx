@@ -208,7 +208,7 @@ export function ApprovalsTab({
           >
             <Check className="size-3 stroke-[2.2]" />
           <span>一键同意当前 {approvalCounts.canApprove} 条</span>
-          <span className="ml-1 text-[11px] font-normal text-[#78716C]">（仅审批类，不含待办）</span>
+          <span className="ml-1 text-[12px] font-normal text-[#78716C]">（仅审批类，不含待办）</span>
           </button>
         )}
         <div className="text-[12px] text-[#78716C] tabular-nums">

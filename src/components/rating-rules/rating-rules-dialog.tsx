@@ -53,7 +53,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       <header className="pb-4 shrink-0 border-b border-[#E2E2DF]/60 text-left">
-        <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
+        <h2 className="text-[20px] font-medium text-[#141413] tracking-tight">
           作品评级怎么看
         </h2>
         <p className="text-[13px] text-[#78716C] mt-1.5 font-normal leading-[1.6]">

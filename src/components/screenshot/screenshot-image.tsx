@@ -72,7 +72,7 @@ export function ScreenshotPlaceholder({
       {compact ? null : (
         <span className="flex flex-col items-start gap-0.5 text-left">
           <span className="text-[12px] leading-tight">{PLACEHOLDER_LABEL}</span>
-          <span className="inline-flex items-center gap-1 text-[11px] leading-tight opacity-80">
+          <span className="inline-flex items-center gap-1 text-[12px] leading-tight opacity-80">
             <RefreshCw className="size-3 stroke-[1.8]" aria-hidden />
             点击重试
           </span>

@@ -1178,7 +1178,7 @@ export function UnifiedCommandHub({
                       onMouseLeave={handleShortcutMouseLeave}
                       onFocus={() => setShortcutPopoverOpen(true)}
                       onBlur={() => setShortcutPopoverOpen(false)}
-                      className="inline-flex size-5 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F7F7F5] text-[11px] font-mono text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413] cursor-pointer"
+                      className="inline-flex size-5 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F7F7F5] text-[12px] font-mono text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413] cursor-pointer"
                       aria-label="查看快捷键帮助"
                       title="快捷键帮助"
                     >

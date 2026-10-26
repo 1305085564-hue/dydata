@@ -80,7 +80,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/40 px-4 py-3">
       <div className="text-[12px] text-[#78716C]">{label}</div>
-      <div className="mt-1 text-[16px] font-normal tabular-nums text-[#141413]">{value}</div>
+      <div className="mt-1 text-[20px] font-normal tabular-nums text-[#141413]">{value}</div>
     </div>
   );
 }

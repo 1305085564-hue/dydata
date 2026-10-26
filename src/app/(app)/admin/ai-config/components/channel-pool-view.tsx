@@ -456,7 +456,7 @@ export function ChannelPoolView({
                     <Button
                       variant="ghost"
                       size="s"
-                      className="h-6 px-2 text-[11px] text-[#78716C] hover:text-[#141413]"
+                      className="h-6 px-2 text-[12px] text-[#78716C] hover:text-[#141413]"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       同步模型
@@ -475,7 +475,7 @@ export function ChannelPoolView({
                     <Button
                       variant="outline"
                       size="s"
-                      className="h-6 px-2 text-[11px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      className="h-6 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       同步核验
@@ -494,7 +494,7 @@ export function ChannelPoolView({
                     <Button
                       variant="outline"
                       size="s"
-                      className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15 shrink-0"
+                      className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15 shrink-0"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       去同步并收走
@@ -516,7 +516,7 @@ export function ChannelPoolView({
                     <Button
                       variant="outline"
                       size="s"
-                      className="h-6 px-2 text-[11px] text-[#B98A54] border-[#B98A54]/30 hover:bg-[#B98A54]/15 shrink-0"
+                      className="h-6 px-2 text-[12px] text-[#B98A54] border-[#B98A54]/30 hover:bg-[#B98A54]/15 shrink-0"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       查看明细

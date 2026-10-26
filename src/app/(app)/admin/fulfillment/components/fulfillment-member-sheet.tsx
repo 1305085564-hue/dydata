@@ -254,7 +254,7 @@ export function FulfillmentMemberSheet({
         aria-label="成员履约月历与考勤档案"
       >
         <SheetHeader className="border-b border-[#E2E2DF]/60 pb-3">
-          <SheetTitle className="text-[18px] font-medium text-[#141413]">
+          <SheetTitle className="text-[20px] font-medium text-[#141413]">
             {member?.userName || "成员"} · 履约档案
           </SheetTitle>
           <SheetDescription className="text-[12px] text-[#78716C]">
@@ -490,7 +490,7 @@ export function FulfillmentMemberSheet({
           <Dialog open={true} onOpenChange={(open) => !open && setActiveAction(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-[18px] font-medium text-[#141413]">
+                <DialogTitle className="text-[20px] font-medium text-[#141413]">
                   确认改判为「{ACTION_CONFIG[activeAction].label}」
                 </DialogTitle>
                 <DialogDescription className="text-[13px] text-[#78716C]">
