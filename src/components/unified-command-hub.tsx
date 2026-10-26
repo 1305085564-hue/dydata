@@ -1193,21 +1193,21 @@ export function UnifiedCommandHub({
                       className="p-3 text-[12px] shadow-lg border border-[#E2E2DF] bg-white rounded-xl min-w-[200px]"
                     >
                       <div className="flex flex-col gap-2">
-                        <div className="font-medium text-[#1F1E1D] pb-1 border-b border-[#F0F0ED]">
+                        <div className="text-[#1F1E1D] pb-1 border-b border-[#F0F0ED]">
                           键盘快捷键
                         </div>
                         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-[#78716C]">
-                          <span className="font-mono text-[#1F1E1D] font-medium">J / K</span>
+                          <span className="font-mono text-[#1F1E1D]">J / K</span>
                           <span>上下选卡</span>
-                          <span className="font-mono text-[#1F1E1D] font-medium">A</span>
+                          <span className="font-mono text-[#1F1E1D]">A</span>
                           <span>同意当前审批</span>
-                          <span className="font-mono text-[#1F1E1D] font-medium">R</span>
+                          <span className="font-mono text-[#1F1E1D]">R</span>
                           <span>拒绝当前审批</span>
-                          <span className="font-mono text-[#1F1E1D] font-medium">Z</span>
+                          <span className="font-mono text-[#1F1E1D]">Z</span>
                           <span>撤回上一次操作</span>
-                          <span className="font-mono text-[#1F1E1D] font-medium">1 - 3</span>
+                          <span className="font-mono text-[#1F1E1D]">1 - 3</span>
                           <span>切换视图</span>
-                          <span className="font-mono text-[#1F1E1D] font-medium">Esc</span>
+                          <span className="font-mono text-[#1F1E1D]">Esc</span>
                           <span>关闭工作台</span>
                         </div>
                       </div>
