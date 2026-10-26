@@ -433,7 +433,7 @@ export function PublishedAtPicker({
                   className={cn(
                     "size-7 rounded-md text-[12px] tabular-nums flex items-center justify-center transition-colors cursor-pointer",
                     isSelected
-                      ? "bg-status-info/[0.12] text-status-info font-medium shadow-input"
+                      ? "bg-status-info/[0.12] text-status-info shadow-input"
                       : "text-[#1F1E1D] hover:bg-[#EBEBE9]"
                   )}
                 >

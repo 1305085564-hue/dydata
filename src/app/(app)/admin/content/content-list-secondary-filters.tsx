@@ -75,8 +75,8 @@ export function ContentListSecondaryFilters({
         className={cn(
           "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[14px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
           secondarySummary.isActive
-            ? "text-[#141413] font-medium shadow-input"
-            : "text-[#1F1E1D] font-normal"
+            ? "bg-[#F1F1F0] text-[#141413] shadow-input"
+            : "text-[#1F1E1D]"
         )}
         title={secondarySummary.fullDescription}
       >
@@ -100,7 +100,7 @@ export function ContentListSecondaryFilters({
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1 truncate max-w-24",
-                  filters.accountId ? "text-[#141413] font-medium" : "text-[#78716C]"
+                  filters.accountId ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C]"
                 )}
               >
                 {accountLabel}
@@ -155,7 +155,7 @@ export function ContentListSecondaryFilters({
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1 truncate max-w-20",
-                  filters.playBucket ? "text-[#141413] font-medium" : "text-[#78716C]"
+                  filters.playBucket ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C]"
                 )}
               >
                 {playLabel}
@@ -228,7 +228,7 @@ export function ContentListSecondaryFilters({
                 className={cn(
                   "ml-auto text-[12px] mr-1",
                   filters.qualityGrade && filters.qualityGrade !== "all"
-                    ? "text-[#141413] font-medium"
+                    ? "bg-[#F1F1F0] text-[#141413]"
                     : "text-[#78716C]"
                 )}
               >
@@ -363,7 +363,7 @@ function DataHighlightSubmenu({
         <span
           className={cn(
             "ml-auto text-[12px] mr-1",
-            activeRuleKeys.length > 0 ? "text-[#141413] font-medium" : "text-[#78716C]"
+            activeRuleKeys.length > 0 ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C]"
           )}
         >
           {activeRuleKeys.length > 0 ? `${activeRuleKeys.length} 条` : "未设置"}
@@ -377,7 +377,7 @@ function DataHighlightSubmenu({
             <span
               className={cn(
                 "ml-auto text-[12px] mr-1",
-                pendingField ? "text-[#141413] font-medium" : "text-[#78716C]"
+                pendingField ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C]"
               )}
             >
               {meta ? meta.label : "未选"}

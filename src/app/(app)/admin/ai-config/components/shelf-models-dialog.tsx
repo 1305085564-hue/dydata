@@ -166,7 +166,10 @@ export function ShelfModelsPicker({
               return (
                 <label
                   key={item.modelId}
-                  className="flex items-center justify-between px-3 py-2 hover:bg-[#F7F7F6]/60 cursor-pointer select-none transition-colors"
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 hover:bg-[#F7F7F6]/60 cursor-pointer select-none transition-colors",
+                    isChecked && "bg-[#F1F1F0]",
+                  )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Checkbox
@@ -176,7 +179,7 @@ export function ShelfModelsPicker({
                     <span
                       className={cn(
                         "text-[14px] font-normal truncate",
-                        isChecked ? "text-[#141413] font-medium" : "text-[#78716C]"
+                        isChecked ? "text-[#141413]" : "text-[#78716C]"
                       )}
                     >
                       {item.displayName}

@@ -277,7 +277,7 @@ export function ChannelPoolView({
                     <span
                       className={cn(
                         "text-[14px] truncate",
-                        isSelected ? "font-medium text-[#1F1E1D]" : "text-[#1F1E1D]"
+                        isSelected ? "text-[#141413]" : "text-[#1F1E1D]"
                       )}
                     >
                       {ch.label || "未命名渠道"}

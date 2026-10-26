@@ -197,7 +197,7 @@ export function DatePagination({
                   className={cn(
                     "relative flex h-9 items-center justify-center rounded-md text-[14px] transition-colors cursor-pointer",
                     isSelected
-                      ? "bg-[#141413] text-white font-medium"
+                      ? "bg-[#141413] text-white"
                       : count
                         ? "text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         : "text-[#A8A29E] hover:bg-[#EBEBE9]",

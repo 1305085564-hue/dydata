@@ -21,8 +21,8 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-colors cursor-pointer",
           viewMode === "model"
-            ? "bg-[#EBEBE9] text-[#141413] font-medium"
-            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
+            ? "bg-[#EBEBE9] text-[#141413]"
+            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0]"
         )}
       >
         模型视角
@@ -36,8 +36,8 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-colors cursor-pointer",
           viewMode === "channel"
-            ? "bg-[#EBEBE9] text-[#141413] font-medium"
-            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
+            ? "bg-[#EBEBE9] text-[#141413]"
+            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0]"
         )}
       >
         渠道视角

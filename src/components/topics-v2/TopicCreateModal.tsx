@@ -379,7 +379,7 @@ export function TopicCreateModal({
                   onClick={() => setCreateMode("single")}
                   className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
                     createMode === "single"
-                      ? "bg-white text-[#141413] font-medium shadow-input"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
                   }`}
                 >
@@ -390,7 +390,7 @@ export function TopicCreateModal({
                   onClick={() => setCreateMode("batch")}
                   className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
                     createMode === "batch"
-                      ? "bg-white text-[#141413] font-medium shadow-input"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
                   }`}
                 >
@@ -735,7 +735,7 @@ export function TopicCreateModal({
                             onClick={() => setActiveFilterTab("all")}
                             className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                               activeFilterTab === "all"
-                                ? "bg-white text-[#141413] shadow-input font-medium"
+                                ? "bg-white text-[#141413] shadow-input"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
                             }`}
                           >
@@ -746,7 +746,7 @@ export function TopicCreateModal({
                             onClick={() => setActiveFilterTab("valid")}
                             className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                               activeFilterTab === "valid"
-                                ? "bg-white text-status-success shadow-input font-medium"
+                                ? "bg-white text-status-success shadow-input"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
                             }`}
                           >
@@ -758,7 +758,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("warning")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "warning"
-                                  ? "bg-white text-status-warning shadow-input font-medium"
+                                  ? "bg-white text-status-warning shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >
@@ -771,7 +771,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("error")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "error"
-                                  ? "bg-white text-status-danger shadow-input font-medium"
+                                  ? "bg-white text-status-danger shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >

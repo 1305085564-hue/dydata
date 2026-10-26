@@ -159,7 +159,7 @@ export function UserWorkspacePopover({
         className={cn(
           "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium",
+          isOpen && "text-[#141413] bg-[#F1F1F0]/80",
         )}
       >
         {/* User Avatar */}
@@ -228,7 +228,7 @@ export function UserWorkspacePopover({
                           className={cn(
                             "truncate text-[12px] font-normal tracking-tight",
                             isSelected
-                              ? "text-status-info font-medium"
+                              ? "text-status-info"
                               : "text-[#1F1E1D]",
                           )}
                         >

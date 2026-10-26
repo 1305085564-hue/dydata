@@ -217,7 +217,7 @@ export function PulseVideoList({
         onClick={() => handleSort(field)}
         className={cn(
           "inline-flex items-center gap-1 text-[12px] transition-colors cursor-pointer",
-          isActive ? "font-medium text-[#141413]" : "font-normal text-[#78716C] hover:text-[#141413]"
+          isActive ? "text-[#141413]" : "text-[#78716C] hover:text-[#141413]"
         )}
       >
         <span>{label}</span>
@@ -252,7 +252,7 @@ export function PulseVideoList({
               className={cn(
                 "rounded-md px-3 py-2 text-[14px] transition-colors duration-150 shadow-input border cursor-pointer select-none",
                 isSelected
-                  ? "bg-[#EBEBE9] border-[#E2E2DF] text-[#141413] font-medium"
+                  ? "bg-[#EBEBE9] border-[#E2E2DF] text-[#141413]"
                   : "bg-white border-[#E2E2DF] text-[#1F1E1D] font-normal hover:bg-[#F7F7F6]"
               )}
             >

@@ -78,7 +78,7 @@ export function PulseMemberTable({
         onClick={() => handleSort(field)}
         className={cn(
           "inline-flex items-center gap-1 text-[12px] transition-colors cursor-pointer",
-          isActive ? "font-medium text-[#141413]" : "font-normal text-[#78716C] hover:text-[#141413]"
+          isActive ? "text-[#141413]" : "text-[#78716C] hover:text-[#141413]"
         )}
       >
         <span>{label}</span>

@@ -301,7 +301,7 @@ export function FulfillmentMatrixRoster({
                 onClick={() => setSortMode("rate_asc")}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
                   sortMode === "rate_asc"
-                    ? "bg-white text-[#141413] shadow-input font-medium"
+                    ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                 }`}
               >
@@ -312,7 +312,7 @@ export function FulfillmentMatrixRoster({
                 onClick={() => setSortMode("rate_desc")}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
                   sortMode === "rate_desc"
-                    ? "bg-white text-[#141413] shadow-input font-medium"
+                    ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                 }`}
               >
@@ -323,7 +323,7 @@ export function FulfillmentMatrixRoster({
                 onClick={() => setSortMode("missing_desc")}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
                   sortMode === "missing_desc"
-                    ? "bg-white text-[#141413] shadow-input font-medium"
+                    ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                 }`}
               >
@@ -398,15 +398,15 @@ export function FulfillmentMatrixRoster({
                     return (
                       <th
                         key={day}
-                        className={`min-w-[26px] py-2.5 text-center text-[12px] tabular-nums transition-colors duration-150 ${
+                        className={`min-w-[26px] py-2.5 text-center text-[12px] font-normal tabular-nums transition-colors duration-150 ${
                           isFirstDay ? "pl-2.5 pr-0.5" : isLastDay ? "pl-0.5 pr-2.5" : "px-0.5"
                         } ${
                           isColHovered
                             ? "text-[#D97757] font-normal bg-[#F1F1F0]"
                             : isFocused && range === "today"
-                              ? "text-[#D97757] font-medium bg-[#D97757]/10 rounded-t-md"
+                              ? "text-[#D97757] bg-[#D97757]/10 rounded-t-md"
                               : isToday
-                                ? "text-[#D97757] font-medium"
+                                ? "text-[#D97757] bg-[#F1F1F0]"
                                 : isFocused && range === "last7days"
                                   ? "text-[#141413] font-normal bg-[#F1F1F0]/80"
                                   : "text-[#78716C] font-normal"

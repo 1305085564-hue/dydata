@@ -73,7 +73,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
             className={cn(
               "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-left transition-colors",
               isAll
-                ? "bg-[#E4E4E1] text-[#141413] font-medium"
+                ? "bg-[#E4E4E1] text-[#141413]"
                 : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
             )}
           >
@@ -96,7 +96,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-left transition-colors",
                     selected
-                      ? "bg-[#E4E4E1] text-[#141413] font-medium"
+                      ? "bg-[#E4E4E1] text-[#141413]"
                       : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
                   )}
                 >

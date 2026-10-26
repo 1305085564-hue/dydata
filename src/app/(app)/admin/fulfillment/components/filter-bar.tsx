@@ -146,7 +146,7 @@ export function FilterBar({
                   onClick={() => handlePresetChange(opt.value)}
                   className={`rounded-md px-2.5 sm:px-3 py-1.5 text-[12px] whitespace-nowrap font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     isActive
-                      ? "bg-white text-[#141413] shadow-input font-medium"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                   }`}
                 >

@@ -395,7 +395,7 @@ export function ExemptionDialogV2({
                   className={cn(
                     "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition-all duration-150 cursor-pointer",
                     calendar.exemptionType === "leave"
-                      ? "bg-white text-[#141413] shadow-input font-medium"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#1F1E1D]",
                   )}
                 >
@@ -407,7 +407,7 @@ export function ExemptionDialogV2({
                   className={cn(
                     "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition-all duration-150 cursor-pointer",
                     calendar.exemptionType === "waive"
-                      ? "bg-white text-[#141413] shadow-input font-medium"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#1F1E1D]",
                   )}
                 >

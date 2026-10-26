@@ -132,7 +132,7 @@ export function ModelManagerDialog({
                   className={cn(
                     "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "all"
-                      ? "bg-white font-medium text-[#141413] shadow-input"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
                   )}
                 >
@@ -145,7 +145,7 @@ export function ModelManagerDialog({
                   className={cn(
                     "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "active"
-                      ? "bg-white font-medium text-[#141413] shadow-input"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
                   )}
                 >
@@ -158,7 +158,7 @@ export function ModelManagerDialog({
                   className={cn(
                     "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "inactive"
-                      ? "bg-white font-medium text-[#141413] shadow-input"
+                      ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
                   )}
                 >

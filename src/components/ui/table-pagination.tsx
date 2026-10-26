@@ -162,9 +162,9 @@ export function TablePagination({
                   key={p}
                   type="button"
                   onClick={() => onPageChange(p)}
-                  className={`inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-7 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-medium transition-all cursor-pointer ${
+                  className={`inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-7 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums transition-all cursor-pointer ${
                     isCurrent
-                      ? "bg-[#D97757]/10 text-[#D97757] font-medium pointer-events-none"
+                      ? "bg-[#F1F1F0] text-[#141413] pointer-events-none"
                       : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120"
                   }`}
                   aria-current={isCurrent ? "page" : undefined}

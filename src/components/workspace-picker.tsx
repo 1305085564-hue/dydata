@@ -82,7 +82,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         className={cn(
           "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium"
+          isOpen && "text-[#141413] bg-[#F1F1F0]/80"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -142,7 +142,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     )}
                   >
                     <div className="flex flex-col min-w-0">
-                      <span className={cn("truncate text-[12px] font-normal tracking-tight", isSelected ? "text-status-info font-medium" : "text-[#1F1E1D]")}>
+                      <span className={cn("truncate text-[12px] font-normal tracking-tight", isSelected ? "text-status-info" : "text-[#1F1E1D]")}>
                         {account.display_name}
                       </span>
                       <div className="flex items-center gap-1 mt-0.5 text-[12px] text-[#78716C] font-normal min-w-0">

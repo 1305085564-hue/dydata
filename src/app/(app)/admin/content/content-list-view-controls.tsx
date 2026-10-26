@@ -37,8 +37,8 @@ export function ContentListViewControls({
                 "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
                 isViewLoading && "cursor-wait",
                 view === "all"
-                  ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
-                  : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                  ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
+                  : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
               )}
             >
               全部
@@ -53,8 +53,8 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
                   isViewLoading && "cursor-wait",
                   view === "trash"
-                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >
                 归档
@@ -84,7 +84,7 @@ export function ContentListViewControls({
                 className={cn(
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer select-none",
                   filters.onlyAnomaly
-                    ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
+                    ? "bg-status-danger/10 border border-status-danger/30 text-status-danger shadow-input"
                     : anomalyCountForTime > 0
                       ? "border border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input"
                       : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413] shadow-input"
@@ -125,8 +125,8 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
                   isViewLoading && "cursor-wait",
                   metricViewMode === "full"
-                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >完整</button>
               <button
@@ -138,8 +138,8 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
                   isViewLoading && "cursor-wait",
                   metricViewMode === "spacious"
-                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >宽松</button>
             </div>
