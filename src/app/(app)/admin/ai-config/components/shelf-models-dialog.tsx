@@ -219,7 +219,7 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
     <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-[14px] text-[#141413]">
-          <span className="font-medium">渠道连通测试结果</span>
+          <span>渠道连通测试结果</span>
           <span className="text-[12px] text-[#78716C]">
             （测了 {testResults.results.length} 个模型 · 通过 {onlineCount} 个 · 未通过 {failureCount} 个）
           </span>
@@ -257,7 +257,7 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
     <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-[14px] text-[#C0685C]">
-          <span className="font-medium">未连通渠道手记</span>
+          <span>未连通渠道手记</span>
           <span className="text-[12px]">({failedChannels.length} 个渠道探测异常)</span>
         </div>
         <button
