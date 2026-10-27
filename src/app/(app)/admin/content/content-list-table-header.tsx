@@ -42,45 +42,6 @@ export function ContentListTableHeader({
     {/* 2. 视频标题 / 账号 */}
     <th data-col-key="title" className={cn("font-normal py-2 px-3 text-left w-[339px] whitespace-nowrap transition-colors", hoveredColKey === "title" && "bg-[#EFEFEC]")}>视频标题 / 账号</th>
 
-    {/* 3. 评级（1 字档位，列宽收拢，释放的横向空间归标题与核心指标） */}
-    <th data-col-key="overall_grade" className={cn("font-normal py-2 px-2 text-center w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("overall_grade")}>
-      <button
-        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("overall_grade")}
-        className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-      >
-        <span>评级</span>
-        {renderSortIndicator("overall_grade")}
-      </button>
-    </th>
-
-    {/* 4. 核心指标（放在互动率前面） */}
-    <th data-col-key="core_metric" className={cn("font-normal py-2 px-2 text-right w-[80px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
-      <button
-        aria-label={`按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("core_metric")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("core_metric")}
-        <span>核心指标</span>
-      </button>
-    </th>
-
-    {/* 5. 互动率（放在核心指标后面，宽度 58px 不变） */}
-    <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[66px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("interaction_rate")}>
-      <button
-        aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("interaction_rate")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("interaction_rate")}
-        <span>互动率</span>
-      </button>
-    </th>
-
     {/* 6. 播放量 */}
     <th data-col-key="play_count" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("play_count")}>
       <button
@@ -110,7 +71,7 @@ export function ContentListTableHeader({
     {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（统一 48px，px-2 标准边距） */}
     {!isSpacious && (
       <>
-        <th data-col-key="likes" className={cn("font-normal py-2 px-2 text-right w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
+        <th data-col-key="likes" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
           <button
         aria-label={`按点赞排序${sortField === "likes" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -158,7 +119,7 @@ export function ContentListTableHeader({
     )}
 
     {/* 完播指标 (2s跳出、5s完播、均播、完播) - 统一 px-2 标准间距，完播列微调至 58px 消除断层空白 */}
-    <th data-col-key="bounce_rate_2s" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("bounce_rate_2s")}>
+    <th data-col-key="bounce_rate_2s" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[77px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("bounce_rate_2s")}>
       <button
         aria-label={`按2s跳出排序${sortField === "bounce_rate_2s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
@@ -200,6 +161,45 @@ export function ContentListTableHeader({
       >
         {renderSortIndicator("completion_rate")}
         <span>完播</span>
+      </button>
+    </th>
+
+    {/* 4. 核心指标（放在互动率前面） */}
+    <th data-col-key="core_metric" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[88px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
+      <button
+        aria-label={`按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("core_metric")}
+        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        {renderSortIndicator("core_metric")}
+        <span>核心指标</span>
+      </button>
+    </th>
+
+    {/* 5. 互动率（放在核心指标后面，宽度 58px 不变） */}
+    <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[66px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("interaction_rate")}>
+      <button
+        aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("interaction_rate")}
+        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        {renderSortIndicator("interaction_rate")}
+        <span>互动率</span>
+      </button>
+    </th>
+
+    {/* 3. 评级（1 字档位，列宽收拢，释放的横向空间归标题与核心指标） */}
+    <th data-col-key="overall_grade" className={cn("font-normal py-2 px-2 text-center w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("overall_grade")}>
+      <button
+        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("overall_grade")}
+        className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        <span>评级</span>
+        {renderSortIndicator("overall_grade")}
       </button>
     </th>
 
