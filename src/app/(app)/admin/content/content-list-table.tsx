@@ -596,7 +596,7 @@ export function ContentListTable({
                           {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                           {!isSpacious && (
                             <>
-                              <td data-col-key="likes" className={cn("py-2.5 pl-4 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#F7F7F5]/60")}>
+                              <td data-col-key="likes" className={cn("py-2.5 pl-3 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                               </td>
                               <td data-col-key="comments" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#F7F7F5]/60")}>

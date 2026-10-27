@@ -71,7 +71,7 @@ export function ContentListTableHeader({
     {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（统一 48px，px-2 标准边距） */}
     {!isSpacious && (
       <>
-        <th data-col-key="likes" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
+        <th data-col-key="likes" className={cn("font-normal py-2 pl-3 pr-2 text-right w-[58px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
           <button
         aria-label={`按点赞排序${sortField === "likes" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -118,7 +118,7 @@ export function ContentListTableHeader({
       </>
     )}
 
-    {/* 完播指标 (2s跳出、5s完播、均播、完播) - 统一 px-2 标准间距，完播列微调至 58px 消除断层空白 */}
+    {/* 完播指标：为百分比和时长数据留出列间空间 */}
     <th data-col-key="bounce_rate_2s" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[77px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("bounce_rate_2s")}>
       <button
         aria-label={`按2s跳出排序${sortField === "bounce_rate_2s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
@@ -130,7 +130,7 @@ export function ContentListTableHeader({
         <span>2s跳出</span>
       </button>
     </th>
-    <th data-col-key="completion_rate_5s" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate_5s")}>
+    <th data-col-key="completion_rate_5s" className={cn("font-normal py-2 px-2 text-right w-[73px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate_5s")}>
       <button
         aria-label={`按5s完播排序${sortField === "completion_rate_5s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
@@ -141,7 +141,7 @@ export function ContentListTableHeader({
         <span>5s完播</span>
       </button>
     </th>
-    <th data-col-key="avg_play_duration" className={cn("font-normal py-2 px-2 text-right w-[55px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("avg_play_duration")}>
+    <th data-col-key="avg_play_duration" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("avg_play_duration")}>
       <button
         aria-label={`按均播排序${sortField === "avg_play_duration" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
@@ -152,7 +152,7 @@ export function ContentListTableHeader({
         <span>均播</span>
       </button>
     </th>
-    <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[61px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate")}>
+    <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate")}>
       <button
         aria-label={`按完播排序${sortField === "completion_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
