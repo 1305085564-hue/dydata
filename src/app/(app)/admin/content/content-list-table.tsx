@@ -635,7 +635,7 @@ export function ContentListTable({
                               >
                                 <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
                                 {item.coreMetricTopicText === "复盘" && item.coreMetricRate != null && (
-                                  <span aria-hidden="true" className="absolute -right-1.5 -top-1 text-[12px] leading-none text-[#A8A29E]">*</span>
+                                  <span aria-hidden="true" className="absolute -right-1.5 -top-1 text-[12px] leading-none text-[#A8A29E] opacity-70">*</span>
                                 )}
                               </span>
                             ) : (

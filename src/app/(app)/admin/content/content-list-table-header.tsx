@@ -179,7 +179,7 @@ export function ContentListTableHeader({
     </th>
 
     {/* 5. 互动率（放在核心指标后面，宽度 58px 不变） */}
-    <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[66px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("interaction_rate")}>
+    <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("interaction_rate")}>
       <button
         aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
