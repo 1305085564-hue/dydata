@@ -18,19 +18,18 @@ export const VIDEO_REVIEW_RULE_THRESHOLDS = {
   /** 异常提醒使用的播放量门槛。
    *  2026-10-24 阿禅调整：1,000 → 5,000；指标显示的样本下限另行维护。 */
   play_count: 5000,
-  /** 优质线（2026-10-24 定稿）：命中时标绿强调 */
+  /** 列表和详情的表现区间；优质红、较差绿。 */
   excellent: {
-    bounce_rate_2s: 25,      // ≤25% 绿（约 19% 作品达到）
-    completion_rate_5s: 55,  // ≥55% 绿（约 15%）
-    completion_rate: 8,      // ≥8% 绿（约 22%）
-    avg_play_duration: 40,   // ≥40s 绿（约 33%）
+    bounce_rate_2s: 25,
+    completion_rate_5s: 60,
+    completion_rate: 10,
+    avg_play_duration: 40,
   },
-  /** 预警线（2026-10-24 定稿）：命中时标红警示 */
   poor: {
-    bounce_rate_2s: 36,      // ≥36% 红
-    completion_rate_5s: 32,  // ≤32% 红
-    completion_rate: 2.2,    // ≤2.2% 红
-    avg_play_duration: 16,   // ≤16s 红
+    bounce_rate_2s: 35,
+    completion_rate_5s: 50,
+    completion_rate: 5,
+    avg_play_duration: 20,
   },
 } as const;
 

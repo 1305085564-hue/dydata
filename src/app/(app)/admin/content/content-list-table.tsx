@@ -1,3 +1,4 @@
+import { getCoreAchievementClass } from "@/lib/content/domain/detail";
 import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
-import { getContentQualityStatusShortText, getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
 import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
@@ -44,7 +44,7 @@ function formatPercent(val: number | null | undefined): string {
 /**
  * 比率单元格：脏值（越界）标红 + 虚线下划线 + tooltip 说明；
  * 样本不足（播放量低于复盘达标线）时整格降灰，提示该比率是噪音而非信号；
- * 样本充足时按优质线/预警线着色（优质=绿，预警=红+浅红底，正常=默认色零着色）。
+ * 样本充足时按优质线/预警线着色（优质=红，预警=绿，正常=默认色零着色）。
  */
 function RatioCell({
   value,
@@ -107,7 +107,7 @@ function RatioCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
+                <span className={`text-status-danger cursor-help ${className}`}>
                   {text}
                 </span>
               } />
@@ -118,17 +118,17 @@ function RatioCell({
           </TooltipProvider>
         );
       }
-      if (value >= poor.bounce_rate_2s) {
+      if (value > poor.bounce_rate_2s) {
         return (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
               } />
               <TooltipContent>
-                2秒跳出率 ≥{poor.bounce_rate_2s}% 需要关注
+                2秒跳出率 &gt;{poor.bounce_rate_2s}% 需要关注
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -143,7 +143,7 @@ function RatioCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
+                <span className={`text-status-danger cursor-help ${className}`}>
                   {text}
                 </span>
               } />
@@ -159,7 +159,7 @@ function RatioCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
               } />
@@ -178,7 +178,7 @@ function RatioCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
+                <span className={`text-status-danger cursor-help ${className}`}>
                   {text}
                 </span>
               } />
@@ -194,7 +194,7 @@ function RatioCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger render={
-                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
               } />
@@ -257,7 +257,7 @@ function DurationCell({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger render={
-              <span className={`text-status-success cursor-help ${className}`}>
+              <span className={`text-status-danger cursor-help ${className}`}>
                 {text}
               </span>
             } />
@@ -273,7 +273,7 @@ function DurationCell({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger render={
-              <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+              <span className={`text-status-success cursor-help ${className}`}>
                 {text}
               </span>
             } />
@@ -357,7 +357,7 @@ export function ContentListTable({
   highlightRules,
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
-  const dynamicColSpan = isSpacious ? 12 : 16;
+  const dynamicColSpan = isSpacious ? 11 : 15;
   const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
     isCellHighlighted(item, key, highlightRules);
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
@@ -386,28 +386,14 @@ export function ContentListTable({
                   onClick={() => onSelectVideoId(video.id)}
                   className="group relative flex flex-col gap-1.5 p-3 hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer select-none"
                 >
-                  {/* 第 1 层：状态徽标 + 评级 + 发布日期 */}
+                  {/* 第 1 层：状态徽标 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <Badge variant={dot.variant} className="shrink-0 text-[12px] px-1.5 py-0.5">
                         {dot.label}
                       </Badge>
 
-                      {item.quality?.overallGrade ? (
-                        <span
-                          className="text-[12px] tabular-nums font-normal shrink-0 text-[#78716C]"
-                          title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
-                        >
-                          {item.quality.overallGrade}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-[12px] text-[#A8A29E] shrink-0"
-                          title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
-                        >
-                          {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
-                        </span>
-                      )}
+
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -629,7 +615,7 @@ export function ContentListTable({
                           <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span
-                                className="relative text-[14px] font-normal text-[#1F1E1D]"
+                                className={cn("relative text-[14px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount) || "text-[#1F1E1D]")}
                                 title={`${item.coreMetricTopicText}核心指标`}
                                 aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
                               >
@@ -646,25 +632,6 @@ export function ContentListTable({
                           {/* 互动率（排在核心指标后面） */}
                           <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#F7F7F5]/60")}>
                             <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
-                          </td>
-
-                          {/* 评级 */}
-                          <td data-col-key="overall_grade" className={cn("py-2.5 px-2 text-center whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-[#F7F7F5]/60")}>
-                            {item.quality?.overallGrade ? (
-                              <span
-                                className="tabular-nums font-normal text-[#78716C]"
-                                title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
-                              >
-                                {item.quality.overallGrade}
-                              </span>
-                            ) : (
-                              <span
-                                className="text-[12px] text-[#A8A29E]"
-                                title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
-                              >
-                                {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
-                              </span>
-                            )}
                           </td>
 
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}

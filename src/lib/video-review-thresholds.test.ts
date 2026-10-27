@@ -18,15 +18,15 @@ test("视频复盘异常判定规则固定为代码内常量", () => {
     play_count: 5000,
     excellent: {
       bounce_rate_2s: 25,
-      completion_rate_5s: 55,
-      completion_rate: 8,
+      completion_rate_5s: 60,
+      completion_rate: 10,
       avg_play_duration: 40,
     },
     poor: {
-      bounce_rate_2s: 36,
-      completion_rate_5s: 32,
-      completion_rate: 2.2,
-      avg_play_duration: 16,
+      bounce_rate_2s: 35,
+      completion_rate_5s: 50,
+      completion_rate: 5,
+      avg_play_duration: 20,
     },
   });
 });

@@ -102,41 +102,49 @@ export function formatTarget(target: number) {
   return `${Number((target * 100).toFixed(2))}%`;
 }
 
-/** 2s 跳出率动态颜色：低样本降灰；≤优质线绿、≥预警线红。 */
+/** 2s 跳出率动态颜色：低样本降灰；≤优质线红、超过预警线绿。 */
 export function getBounceRate2sClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
   if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
-  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.bounce_rate_2s) return "text-status-success";
-  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.poor.bounce_rate_2s) return "text-status-danger";
+  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.bounce_rate_2s) return "text-status-danger";
+  if (value > VIDEO_REVIEW_RULE_THRESHOLDS.poor.bounce_rate_2s) return "text-status-success";
   return "text-[#141413]";
 }
 
-/** 5s 完播率动态颜色：低样本降灰；≥优质线绿、≤预警线红。 */
+/** 5s 完播率动态颜色：低样本降灰；≥优质线红、≤预警线绿。 */
 export function getCompletionRate5sClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
   if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
-  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate_5s) return "text-status-success";
-  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate_5s) return "text-status-danger";
+  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate_5s) return "text-status-danger";
+  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate_5s) return "text-status-success";
   return "text-[#141413]";
 }
 
-/** 完播率动态颜色：低样本降灰；≥优质线绿、≤预警线红。 */
+/** 完播率动态颜色：低样本降灰；≥优质线红、≤预警线绿。 */
 export function getCompletionRateClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
   if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
-  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate) return "text-status-success";
-  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate) return "text-status-danger";
+  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate) return "text-status-danger";
+  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate) return "text-status-success";
   return "text-[#141413]";
 }
 
-/** 平均播放时长动态颜色：低样本降灰；≥优质线绿、≤预警线红。 */
+/** 平均播放时长动态颜色：低样本降灰；≥优质线红、≤预警线绿。 */
 export function getAvgPlayDurationClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
-  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_duration) return "text-status-success";
-  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_duration) return "text-status-danger";
+  if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_duration) return "text-status-danger";
+  if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_duration) return "text-status-success";
   return "text-[#141413]";
+}
+
+/** 核心指标按自身达成率着色；缺值及样本不足不做优劣判断。 */
+export function getCoreAchievementClass(achievement: number | null | undefined, playCount?: number | null): string {
+  if (achievement == null || !Number.isFinite(achievement) || (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY)) return "";
+  if (achievement >= 100) return "text-status-danger";
+  if (achievement <= 60) return "text-status-success";
+  return "";
 }

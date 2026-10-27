@@ -191,19 +191,6 @@ export function ContentListTableHeader({
       </button>
     </th>
 
-    {/* 3. 评级（1 字档位，列宽收拢，释放的横向空间归标题与核心指标） */}
-    <th data-col-key="overall_grade" className={cn("font-normal py-2 px-2 text-center w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("overall_grade")}>
-      <button
-        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("overall_grade")}
-        className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        <span>评级</span>
-        {renderSortIndicator("overall_grade")}
-      </button>
-    </th>
-
     {/* 发布时间 */}
     <th data-col-key="published_at" className={cn("font-normal py-2 px-1 text-right w-[67px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
       <button
