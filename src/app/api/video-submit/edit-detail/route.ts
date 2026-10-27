@@ -7,9 +7,7 @@ import {
   EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT,
   EDIT_DETAIL_REPORT_SELECT,
   EDIT_DETAIL_SNAPSHOT_SELECT,
-  EDIT_DETAIL_USAGE_RECORD_SELECT,
   EDIT_DETAIL_VIDEO_SELECT,
-  decodeEditDetailUsageRecordRows,
   loadVideoSubmissionEditDetailPage,
   type EditDetailPageDbAdapter,
 } from "./route-core";
@@ -72,16 +70,6 @@ export async function GET(request: NextRequest) {
         .select("tag_dimension, tag_value")
         .eq("video_id", videoId);
       return { data, error };
-    },
-    listUsageRecordsByReportAndUser: async (reportId, userId) => {
-      const { data, error } = await supabase
-        .from("script_usage_records")
-        .select(EDIT_DETAIL_USAGE_RECORD_SELECT)
-        .eq("daily_report_id", reportId)
-        .eq("recorded_by", userId)
-        .limit(2);
-      if (error) return { data: null, error };
-      return decodeEditDetailUsageRecordRows(data);
     },
     // 历史责任人档案可能包含已归档成员，RLS 下普通成员读不到，走 service role；
     // 此时用户、账号、原视频归属校验已在 route-core 中完成，且只按精确的三个 ID 查询。

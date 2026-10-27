@@ -102,10 +102,8 @@ export function buildVideoSubmitPayload(input: {
     screenshots_refreshed: input.screenshotsRefreshed,
     content_keywords: input.contentKeywords,
     assets: input.assets,
-    // 导粉话术已并入文案（2026-10-27 产品决定）：日报不再单独收集话术，
-    // 因此不再产生话术使用记录。字段保留以便接口兼容，恒为 null。
-    script_text: null,
-    script_format: "oral",
+    // 导粉话术并入文案（2026-10-27 产品决定）：不再单独收集、也不再提交话术字段，
+    // “导粉文案”直接用日报的文案 + 导粉数表达，不需要额外表。
     metrics: input.metrics,
   };
 }

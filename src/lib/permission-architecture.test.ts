@@ -78,7 +78,6 @@ test("旧 hasPermission 入口从生产代码中完全删除", () => {
     "src/lib/analytics-access.ts",
     "src/components/nav-bar.tsx",
     "src/lib/exemption-permissions.ts",
-    "src/lib/conversion-hub/service.ts",
     "src/app/(app)/admin/actions.ts",
     "src/app/(app)/admin/join-request-actions.ts",
     "src/app/api/export/route.ts",

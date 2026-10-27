@@ -29,8 +29,6 @@ function normalized(overrides: Partial<Normalized> = {}): Normalized {
     operator_user_id: null,
     video_form: "出镜",
     content_keywords: [],
-    script_text: null,
-    script_format: "oral",
     manual_edit: false,
     screenshots_refreshed: false,
     assets: [],

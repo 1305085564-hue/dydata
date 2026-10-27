@@ -67,7 +67,6 @@ const detail: VideoSubmissionEditDetail = {
       screenshotType: "retention",
     },
   ],
-  conversionScript: null,
   uploadedAt: "2026-08-25T10:00:00+08:00",
 };
 

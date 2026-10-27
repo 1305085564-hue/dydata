@@ -1,5 +1,4 @@
 import type { SubmissionAssetMeta } from "@/types";
-import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import {
   deriveVideoPunishType,
   findRetiredVideoAnomalyInput,
@@ -67,8 +66,6 @@ export interface VideoSubmitValidationResult {
     operator_user_id: string | null;
     video_form: string | null;
     content_keywords: string[];
-    script_text: string | null;
-    script_format: ScriptFormat;
     manual_edit: boolean;
     screenshots_refreshed: boolean;
     assets: SubmissionAssetMeta[];
@@ -140,12 +137,6 @@ function normalizeMetrics(value: unknown): VideoSubmitValidationMetrics {
 function normalizeIntegerOrNull(value: unknown) {
   const normalized = normalizeNumberOrNull(value);
   return normalized === null ? null : Math.round(normalized);
-}
-
-function normalizeScriptFormat(value: unknown): ScriptFormat {
-  return typeof value === "string" && SCRIPT_FORMATS.includes(value as ScriptFormat)
-    ? (value as ScriptFormat)
-    : "oral";
 }
 
 function normalizeSubmissionMode(
@@ -230,7 +221,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const videoId = normalizeVideoIdLike(payload.video_id);
   const anomalyStatus = normalizeVideoAnomalyStatus(payload.anomaly_status);
   const mode = normalizeSubmissionMode(payload.mode, anomalyStatus, videoId);
-  const scriptText = normalizeOptionalText(payload.script_text);
   const metrics = normalizeMetrics(payload.metrics);
   const topicTag = normalizeOptionalText(payload.topic_tag);
   const topicId = normalizeVideoIdLike(payload.topic_id);
@@ -301,12 +291,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     maxLength: REPORT_TEXT_MAX_LENGTH,
   });
   if (!contentBoundary.ok) return { ok: false, error: contentBoundary.error };
-  const scriptTextBoundary = validateTextBoundary({
-    label: "导粉话术",
-    value: payload.script_text,
-    maxLength: REPORT_TEXT_MAX_LENGTH,
-  });
-  if (!scriptTextBoundary.ok) return { ok: false, error: scriptTextBoundary.error };
   const platformNoticeBoundary = validateTextBoundary({
     label: "平台提示",
     value: payload.platform_notice,
@@ -384,8 +368,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       operator_user_id: operatorUserId,
       video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,
-      script_text: scriptText,
-      script_format: normalizeScriptFormat(payload.script_format),
       manual_edit: manualEdit,
       screenshots_refreshed: screenshotsRefreshed,
       assets,

@@ -176,16 +176,18 @@ test("提交接口拒绝非法子题关联 ID，避免把数据库错误伪装�
   );
 });
 
-test("导粉大于 0 但没填独立话术时不再拦截提交", () => {
-  // 导粉话术并入文案（2026-10-27）：话术不再单独收集，不得因此卡住提交。
+test("导粉大于 0 且没有独立话术字段时照常放行", () => {
+  // 导粉话术并入文案（2026-10-27）：接口不再接收话术字段，导粉>0 也不得因此卡住提交。
   const result = validateVideoSubmitPayload({
     ...normalPayload,
     metrics: { ...completeMetrics, follower_convert: 3 },
-    script_text: " ",
   });
 
   assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.normalized.script_text, null);
+  if (result.ok) {
+    assert.equal("script_text" in result.normalized, false);
+    assert.equal("script_format" in result.normalized, false);
+  }
 });
 
 test("显式提供非法导粉指标时不会静默归零", () => {
@@ -359,8 +361,6 @@ test("提交校验会返回规范化后的写入数据", () => {
     script_author_user_id: "123e4567-e89b-12d3-a456-426614174002",
     video_editor_user_id: "123e4567-e89b-12d3-a456-426614174003",
     operator_user_id: "123e4567-e89b-12d3-a456-426614174004",
-    script_text: "  关注公众号领取复盘表  ",
-    script_format: "mixed",
     assets: [],
     metrics: {
       play_count: 10,
@@ -392,8 +392,6 @@ test("提交校验会返回规范化后的写入数据", () => {
   assert.equal(result.normalized.topic_tag, "干货");
   assert.equal(result.normalized.topic_id, "123e4567-e89b-12d3-a456-426614174001");
   assert.equal(result.normalized.video_form, "出镜");
-  assert.equal(result.normalized.script_text, "关注公众号领取复盘表");
-  assert.equal(result.normalized.script_format, "mixed");
   assert.equal(result.normalized.metrics.play_count, 10);
 });
 
@@ -475,7 +473,7 @@ test("新写请求拒绝已下线的投流/活动干预，不静默归一化历�
   }
 });
 
-test("导粉为 0 时话术保持可选，不阻断旧填报链路", () => {
+test("旧客户端仍带话术字段时被忽略，不影响提交", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,
     content_keywords: ["复盘"],
@@ -490,8 +488,8 @@ test("导粉为 0 时话术保持可选，不阻断旧填报链路", () => {
   assert.equal(result.ok, true);
   if (!result.ok) return;
 
-  assert.equal(result.normalized.script_text, null);
-  assert.equal(result.normalized.script_format, "oral");
+  assert.equal("script_text" in result.normalized, false);
+  assert.equal("script_format" in result.normalized, false);
 });
 
 
@@ -598,8 +596,6 @@ test("edit 模式必填指标为 null 时允许进入写入层，并由服务端
     video_editor_user_id: null,
     operator_user_id: null,
     assets: [],
-    script_text: null,
-    script_format: null,
     metrics: result.normalized.metrics,
   });
   assert.equal(editContract.ok, true);

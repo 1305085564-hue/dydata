@@ -34,8 +34,6 @@ const EDIT_DTO = {
   video_editor_user_id: USER_ID,
   operator_user_id: USER_ID,
   assets: [],
-  script_text: null,
-  script_format: "oral",
   metrics: {
     play_count: 1200,
     likes: 12,
@@ -93,11 +91,6 @@ test("今日编辑完整 DTO 组装出视频、24h 快照、日报、标签、�
     script_author_user_id: USER_ID,
     video_editor_user_id: USER_ID,
     operator_user_id: USER_ID,
-  });
-  assert.deepEqual(result.dto.usageRecord, {
-    script_text: null,
-    script_format: "oral",
-    follower_convert: 0,
   });
 });
 
@@ -195,7 +188,7 @@ test("编辑表单未提供选题关联时保留原 topic_id，避免空值覆�
   assert.equal(resolveEditTopicId("create", null, "old-topic"), null);
 });
 
-test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任人与导粉话术，不填默认值", () => {
+test("完整编辑详情保留旧视频、指标、OCR 截图、标签与责任人，不填默认值", () => {
   const result = buildVideoSubmissionEditDetail({
     video: {
       id: VIDEO_ID,
@@ -265,11 +258,6 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
       { tag_dimension: "关键词", tag_value: "复盘" },
       { tag_dimension: "关键词", tag_value: "涨粉" },
     ],
-    usageRecord: {
-      id: "123e4567-e89b-12d3-a456-426614174006",
-      script_text: "关注公众号领取复盘表",
-      script_format: "mixed",
-    },
     assigneeProfiles: [
       { userId: USER_ID, name: "用户-4001", displayName: "昵称-4001", membershipStatus: "active" },
       { userId: "123e4567-e89b-12d3-a456-426614174003", displayName: "昵称-4003", membershipStatus: "archived" },
@@ -336,7 +324,6 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
         screenshotType: "retention",
       },
     ],
-    conversionScript: { text: "关注公众号领取复盘表", format: "mixed" },
     uploadedAt: "2026-08-25T03:00:00.000Z",
     assigneeProfiles: [
       { userId: USER_ID, name: "用户-4001", displayName: "昵称-4001", membershipStatus: "active" },

@@ -225,7 +225,7 @@ test("今日编辑缺少完整 DTO 时返回缺失字段，不能用空值覆盖
   );
 });
 
-test("完整编辑详情必须逐项回填旧视频、指标、截图、标签、责任人和导粉话术", () => {
+test("完整编辑详情必须逐项回填旧视频、指标、截图、标签和责任人", () => {
   const detail = {
     videoId: "123e4567-e89b-12d3-a456-426614174000",
     accountId: "account-1",
@@ -280,7 +280,6 @@ test("完整编辑详情必须逐项回填旧视频、指标、截图、标签�
         screenshotType: "retention" as const,
       },
     ],
-    conversionScript: { text: "点击主页领取", format: "oral" },
     uploadedAt: "2026-08-25T10:00:00+08:00",
   };
 
@@ -311,7 +310,6 @@ test("完整编辑详情必须逐项回填旧视频、指标、截图、标签�
       ?.completion_rate,
     12.5,
   );
-  assert.deepEqual(refill.conversionScript, detail.conversionScript);
   assert.equal(refill.uploadedAt, detail.uploadedAt);
   assert.equal(refill.dataSource, "manual");
 });
@@ -354,7 +352,6 @@ test("编辑详情缺字段、与当前账号日期不一致或正常视频少�
       completionRate: 1,
     },
     assets: [],
-    conversionScript: null,
     uploadedAt: null,
   };
 
@@ -419,7 +416,6 @@ test("导粉数留空的历史记录仍可进入编辑，其余指标仍按必�
       completionRate: null,
     },
     assets: [],
-    conversionScript: null,
     uploadedAt: null,
   };
 

@@ -1,4 +1,3 @@
-import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import type { SubmissionAssetMeta } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
@@ -35,8 +34,6 @@ const EDIT_REQUIRED_FIELDS = [
   "video_editor_user_id",
   "operator_user_id",
   "assets",
-  "script_text",
-  "script_format",
   "metrics",
 ] as const;
 
@@ -95,11 +92,6 @@ export interface EditSubmissionContract {
     script_author_user_id: string | null;
     video_editor_user_id: string | null;
     operator_user_id: string | null;
-  };
-  usageRecord: {
-    script_text: string | null;
-    script_format: ScriptFormat | null;
-    follower_convert: number | null;
   };
 }
 
@@ -172,7 +164,6 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
     "appeal",
     "topic_tag",
     "video_form",
-    "script_text",
   ] as const;
   const invalidNullableField = nullableFields.find((field) => !isNullableString(payload[field]));
   if (invalidNullableField) {
@@ -223,18 +214,6 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
     return { ok: false, error: `编辑提交的 24h 指标格式不正确：${invalidMetric}` };
   }
 
-  const scriptFormat = payload.script_format === null
-    ? null
-    : SCRIPT_FORMATS.includes(payload.script_format as ScriptFormat)
-      ? payload.script_format as ScriptFormat
-      : null;
-  if (payload.script_format !== null && !scriptFormat) {
-    return { ok: false, error: "编辑提交的导粉话术格式不正确" };
-  }
-  if (typeof payload.script_text === "string" && payload.script_text.trim() && !scriptFormat) {
-    return { ok: false, error: "编辑提交的导粉话术格式不正确" };
-  }
-
   const metrics = payload.metrics as unknown as VideoSubmitValidationMetrics;
   const dto: EditSubmissionContract = {
     video_id: payload.video_id.trim(),
@@ -274,11 +253,6 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
       script_author_user_id: payload.script_author_user_id as string | null,
       video_editor_user_id: payload.video_editor_user_id as string | null,
       operator_user_id: payload.operator_user_id as string | null,
-    },
-    usageRecord: {
-      script_text: nullableString(payload.script_text),
-      script_format: scriptFormat,
-      follower_convert: metrics.follower_convert,
     },
   };
 
@@ -338,7 +312,6 @@ export interface VideoSubmissionEditDetail {
     displayName: string | null;
     membershipStatus: string | null;
   }>;
-  conversionScript: { text: string | null; format: string | null } | null;
   uploadedAt: string | null;
 }
 
@@ -388,7 +361,6 @@ export interface VideoSubmissionEditDetailSource {
     data_source?: unknown;
   };
   tags: Array<{ tag_dimension: string | null; tag_value: string | null }>;
-  usageRecord: { id: string; script_text: string | null; script_format: string | null } | null;
   assigneeProfiles?: unknown;
   bizDate: string;
 }
@@ -541,7 +513,6 @@ export function buildVideoSubmissionEditDetail(
     hasCompleteAttachments: assetsResult.assets.length === 2,
     hasOcrDetails: assetsResult.assets.length === 2,
     hasContent: true,
-    hasUniqueUsageRecord: true,
     hasConsistentRelations: true,
   }).capability;
 
@@ -586,9 +557,6 @@ export function buildVideoSubmissionEditDetail(
       },
       assets: assetsResult.assets,
       assigneeProfiles: normalizeAssigneeProfiles(source.assigneeProfiles),
-      conversionScript: source.usageRecord
-        ? { text: source.usageRecord.script_text, format: source.usageRecord.script_format }
-        : null,
       uploadedAt: source.video.uploaded_at,
     },
   };

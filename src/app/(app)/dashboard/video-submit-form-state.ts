@@ -192,7 +192,6 @@ export type VideoSubmissionEditRefill = {
   meta: VideoSubmissionEditDetail["meta"];
   metrics: Record<EditableMetricName, string>;
   assets: Record<ScreenshotUploadSlotRole, VideoSubmissionEditAsset | null>;
-  conversionScript: VideoSubmissionEditDetail["conversionScript"];
   uploadedAt: string | null;
 };
 
@@ -301,18 +300,8 @@ export function getVideoSubmissionEditDetailError(
     return "原正常视频缺少互动截图或完播截图，不能安全保存";
   }
 
-  const conversionScript = value.conversionScript;
-  if (conversionScript !== null) {
-    if (
-      !isRecord(conversionScript) ||
-      !isNullableString(conversionScript.text) ||
-      !isNullableString(conversionScript.format)
-    ) {
-      return "编辑详情的导粉话术不完整，不能安全保存";
-    }
-  }
-  // 导粉话术已并入文案（2026-10-27）：历史记录里没有独立话术不再阻断编辑，
-  // 否则凡是导粉>0 的老作品会永久锁死编辑入口。
+  // 导粉话术已并入文案（2026-10-27）：不再有独立话术字段，编辑详情也不再读话术表，
+  // 因此这里不再有任何话术相关的阻断条件。
   return null;
 }
 
@@ -347,9 +336,6 @@ export function buildVideoSubmissionEditRefill(
     },
     metrics,
     assets,
-    conversionScript: detail.conversionScript
-      ? { ...detail.conversionScript }
-      : null,
     uploadedAt: detail.uploadedAt,
   };
 }

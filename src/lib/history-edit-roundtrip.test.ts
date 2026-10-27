@@ -78,7 +78,6 @@ test("历史分层结果可作为行为测试前置条件，而不是用完整�
     hasCompleteAttachments: false,
     hasOcrDetails: false,
     hasContent: true,
-    hasUniqueUsageRecord: true,
     hasConsistentRelations: true,
   });
   assert.equal(result.editable, true);

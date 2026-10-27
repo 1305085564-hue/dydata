@@ -93,7 +93,7 @@ test("buildVideoSubmitPayload exposes one canonical request shape", () => {
   assert.equal(payload.account_id, "account-1");
   assert.equal(payload.metrics.play_count, 1);
   assert.equal(payload.mode, "create");
-  // 导粉话术并入文案后不再单独收集：接口字段保留，但恒为空。
-  assert.equal(payload.script_text, null);
-  assert.equal(payload.script_format, "oral");
+  // 导粉话术并入文案后不再单独收集：提交里不应再出现话术字段。
+  assert.equal("script_text" in payload, false);
+  assert.equal("script_format" in payload, false);
 });

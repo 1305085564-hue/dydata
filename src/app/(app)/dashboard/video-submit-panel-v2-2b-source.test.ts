@@ -46,7 +46,6 @@ const editDetailWithNullRetentionMetrics = {
     completionRate: null,
   },
   assets: [],
-  conversionScript: null,
   uploadedAt: null,
 } satisfies VideoSubmissionEditDetail;
 

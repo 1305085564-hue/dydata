@@ -13,7 +13,6 @@ export type HistoryDataShape = {
   hasCompleteAttachments: boolean;
   hasOcrDetails: boolean;
   hasContent: boolean;
-  hasUniqueUsageRecord: boolean;
   hasConsistentRelations: boolean;
 };
 
@@ -45,14 +44,6 @@ export function classifyHistoryData(shape: HistoryDataShape): HistoryDataClassif
       capability: "read_only_missing_required_data",
       editable: false,
       reason: "缺少编辑后会覆盖原记录的关键字段",
-    };
-  }
-
-  if (!shape.hasUniqueUsageRecord) {
-    return {
-      capability: "needs_manual_repair",
-      editable: false,
-      reason: "导粉话术使用记录不唯一，无法安全保存",
     };
   }
 

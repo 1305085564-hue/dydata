@@ -22,7 +22,6 @@ export type CompleteEditPayload = {
     video_editor_user_id: string | null;
     operator_user_id: string | null;
   };
-  script_format: string | null;
 };
 
 export function resolveCompleteEditPayload(
@@ -42,7 +41,6 @@ export function resolveCompleteEditPayload(
       video_editor_user_id: detail.meta.videoEditorUserId,
       operator_user_id: detail.meta.operatorUserId,
     },
-    script_format: detail.conversionScript?.format ?? "oral",
   };
 }
 

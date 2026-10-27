@@ -10,7 +10,6 @@ const complete: HistoryDataShape = {
   hasCompleteAttachments: true,
   hasOcrDetails: true,
   hasContent: true,
-  hasUniqueUsageRecord: true,
   hasConsistentRelations: true,
 };
 
