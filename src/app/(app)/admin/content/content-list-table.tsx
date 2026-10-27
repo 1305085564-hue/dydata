@@ -626,10 +626,13 @@ export function ContentListTable({
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}
-                          <td data-col-key="core_metric" className={cn("py-2.5 pl-4 pr-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
+                          <td data-col-key="core_metric" className={cn("py-2.5 pl-3 pr-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
-                              <span className="text-[14px] font-normal text-[#1F1E1D]">
-                                <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
+                              <span
+                                className={cn("text-[14px] font-normal text-[#1F1E1D]", item.coreMetricTopicText === "复盘" && item.coreMetricRate != null && "underline decoration-[#78716C] underline-offset-4")}
+                                title={`${item.coreMetricTopicText}核心指标`}
+                                aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
+                              >
                                 <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
                               </span>
                             ) : (

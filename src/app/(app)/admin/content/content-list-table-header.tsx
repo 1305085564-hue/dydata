@@ -165,9 +165,10 @@ export function ContentListTableHeader({
     </th>
 
     {/* 4. 核心指标（放在互动率前面） */}
-    <th data-col-key="core_metric" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[88px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
+    <th data-col-key="core_metric" className={cn("font-normal py-2 pl-3 pr-2 text-right w-[84px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
       <button
-        aria-label={`按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        title="有下划线为复盘，无下划线为干货"
+        aria-label={`核心指标：有下划线为复盘，无下划线为干货。按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
         onClick={() => handleSort("core_metric")}
         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
