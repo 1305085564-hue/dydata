@@ -10,11 +10,11 @@ import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
 import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
-import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_COLOR_MIN_PLAY } from "@/lib/video-review-thresholds";
 
 function getLowSampleTitle(playCount: number | null | undefined) {
-  if (playCount == null || playCount >= VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return undefined;
-  return `播放量不足 ${VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考`;
+  if (playCount == null || playCount >= VIDEO_REVIEW_COLOR_MIN_PLAY) return undefined;
+  return `播放量不足 ${VIDEO_REVIEW_COLOR_MIN_PLAY.toLocaleString("zh-CN")}，样本不足，仅供参考`;
 }
 
 /** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */

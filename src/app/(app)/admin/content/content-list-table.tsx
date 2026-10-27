@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
 import { getContentQualityStatusShortText, getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
-import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
   HIGHLIGHT_CELL_CLASS,
@@ -89,7 +89,7 @@ function RatioCell({
             </span>
           } />
           <TooltipContent>
-            播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
+            播放量不足 {VIDEO_REVIEW_COLOR_MIN_PLAY.toLocaleString("zh-CN")}，样本不足，仅供参考
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -241,7 +241,7 @@ function DurationCell({
             </span>
           } />
           <TooltipContent>
-            播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
+            播放量不足 {VIDEO_REVIEW_COLOR_MIN_PLAY.toLocaleString("zh-CN")}，样本不足，仅供参考
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
-import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { buildReviewQueue, buildSnapshotMap, type VideoRow } from "@/lib/review-queue";
 import { filterContentVideos, type ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
 import { isHighlightRuleMapEmpty, rowMatchesAllHighlightRules } from "@/lib/content/domain/content-list-highlight";
@@ -45,8 +45,8 @@ export function buildProcessedContentRows({
           ? (totalInteraction / playCount) * 100
           : null;
       const publishedTime = video.published_at ? new Date(video.published_at).getTime() || 0 : 0;
-      // 样本不足：播放量低于复盘达标线（与异常判定规则的 play_count 同源）时，比率类指标是噪音
-      const lowSample = playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count;
+      // 样本不足：播放量低于指标颜色显示门槛时，比率类指标是噪音
+      const lowSample = playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY;
 
       const quality = contentQualityByVideoId?.[video.id] ?? null;
       const isDryGoods = quality?.topicKind === "dry_goods" || quality?.coreMetric === "favoriteRate";

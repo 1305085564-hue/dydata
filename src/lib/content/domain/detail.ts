@@ -1,6 +1,6 @@
 import type { Video } from "@/types";
 import { isImpossibleRatio } from "@/lib/metric-bounds";
-import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 
 export type VideoRow = Video & {
   accounts: { name: string };
@@ -106,7 +106,7 @@ export function formatTarget(target: number) {
 export function getBounceRate2sClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
-  if (playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return "text-[#A8A29E]";
+  if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
   if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.bounce_rate_2s) return "text-status-success";
   if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.poor.bounce_rate_2s) return "text-status-danger";
   return "text-[#141413]";
@@ -116,7 +116,7 @@ export function getBounceRate2sClass(value: number | null | undefined, playCount
 export function getCompletionRate5sClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
-  if (playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return "text-[#A8A29E]";
+  if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
   if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate_5s) return "text-status-success";
   if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate_5s) return "text-status-danger";
   return "text-[#141413]";
@@ -126,7 +126,7 @@ export function getCompletionRate5sClass(value: number | null | undefined, playC
 export function getCompletionRateClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
   if (isImpossibleRatio(value)) return "text-status-danger";
-  if (playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return "text-[#A8A29E]";
+  if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
   if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate) return "text-status-success";
   if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate) return "text-status-danger";
   return "text-[#141413]";
@@ -135,7 +135,7 @@ export function getCompletionRateClass(value: number | null | undefined, playCou
 /** 平均播放时长动态颜色：低样本降灰；≥优质线绿、≤预警线红。 */
 export function getAvgPlayDurationClass(value: number | null | undefined, playCount?: number | null): string {
   if (value == null) return "text-[#141413]";
-  if (playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return "text-[#A8A29E]";
+  if (playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY) return "text-[#A8A29E]";
   if (value >= VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_duration) return "text-status-success";
   if (value <= VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_duration) return "text-status-danger";
   return "text-[#141413]";

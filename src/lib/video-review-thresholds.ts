@@ -7,13 +7,16 @@
  * 线上 system_settings 从未写入过该 key，取值即此处的值。
  * 改这里等于改视频复盘的异常判定口径，需走代码发布。
  */
+/** 指标表现颜色的样本下限，与异常提醒和综合评级的播放门槛分别维护。 */
+export const VIDEO_REVIEW_COLOR_MIN_PLAY = 3000;
+
 export const VIDEO_REVIEW_RULE_THRESHOLDS = {
   bounce_rate_2s: 30,
   completion_rate_5s: 50,
   avg_play_duration: 30,
   completion_rate: 5,
-  /** 样本下限：播放量低于此值的稿子比率是噪音，列表按样本不足降灰。
-   *  2026-10-24 阿禅调整：1,000 → 5,000——5,000 以下的作品不套这套阈值判定。 */
+  /** 异常提醒使用的播放量门槛。
+   *  2026-10-24 阿禅调整：1,000 → 5,000；指标显示的样本下限另行维护。 */
   play_count: 5000,
   /** 优质线（2026-10-24 定稿）：命中时标绿强调 */
   excellent: {
