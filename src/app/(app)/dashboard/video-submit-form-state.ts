@@ -311,19 +311,8 @@ export function getVideoSubmissionEditDetailError(
       return "编辑详情的导粉话术不完整，不能安全保存";
     }
   }
-  const followerConvert = metrics.followerConvert;
-  if (
-    typeof followerConvert === "number" &&
-    followerConvert > 0 &&
-    (!isRecord(conversionScript) ||
-      typeof conversionScript.text !== "string" ||
-      !conversionScript.text.trim() ||
-      typeof conversionScript.format !== "string" ||
-      !conversionScript.format.trim())
-  ) {
-    return "原导粉数据缺少导粉话术，不能安全保存";
-  }
-
+  // 导粉话术已并入文案（2026-10-27）：历史记录里没有独立话术不再阻断编辑，
+  // 否则凡是导粉>0 的老作品会永久锁死编辑入口。
   return null;
 }
 

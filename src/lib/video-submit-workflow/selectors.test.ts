@@ -52,7 +52,6 @@ test("serializeVideoSubmitDraft strips transient file and preview state", () => 
     meta: createInitialMeta("2026-10-01", "user-1"),
     fields: createEditableFields(),
     slots,
-    scriptText: "话术",
     keywordInput: "关键词",
     hasManualEdit: false,
     hasManualScriptAuthorSelection: false,
@@ -60,7 +59,8 @@ test("serializeVideoSubmitDraft strips transient file and preview state", () => 
   });
   assert.equal(draft.slots.screenshot_1.file, null);
   assert.equal(draft.slots.screenshot_1.previewUrl, null);
-  assert.equal(draft.scriptText, "话术");
+  assert.equal(draft.keywordInput, "关键词");
+  assert.equal("scriptText" in draft, false);
 });
 
 test("buildVideoSubmitPayload exposes one canonical request shape", () => {
@@ -88,11 +88,12 @@ test("buildVideoSubmitPayload exposes one canonical request shape", () => {
     screenshotsRefreshed: false,
     contentKeywords: [],
     assets: [],
-    scriptText: null,
-    scriptFormat: "oral",
     metrics: { play_count: 1 },
   });
   assert.equal(payload.account_id, "account-1");
   assert.equal(payload.metrics.play_count, 1);
   assert.equal(payload.mode, "create");
+  // 导粉话术并入文案后不再单独收集：接口字段保留，但恒为空。
+  assert.equal(payload.script_text, null);
+  assert.equal(payload.script_format, "oral");
 });

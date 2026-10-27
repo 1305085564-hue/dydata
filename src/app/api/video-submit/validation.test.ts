@@ -176,17 +176,16 @@ test("提交接口拒绝非法子题关联 ID，避免把数据库错误伪装�
   );
 });
 
-test("导粉大于 0 且话术为空时后端拒绝", () => {
+test("导粉大于 0 但没填独立话术时不再拦截提交", () => {
+  // 导粉话术并入文案（2026-10-27）：话术不再单独收集，不得因此卡住提交。
   const result = validateVideoSubmitPayload({
     ...normalPayload,
     metrics: { ...completeMetrics, follower_convert: 3 },
     script_text: " ",
   });
 
-  assert.deepEqual(result, {
-    ok: false,
-    error: "导粉大于 0 时导粉话术为必填项",
-  });
+  assert.equal(result.ok, true);
+  if (result.ok) assert.equal(result.normalized.script_text, null);
 });
 
 test("显式提供非法导粉指标时不会静默归零", () => {

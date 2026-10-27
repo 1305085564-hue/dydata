@@ -5,9 +5,7 @@ import { AlertTriangle, Check, ClipboardPaste } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 指标分组区, type MetricGroupHandle } from "@/components/submission/指标分组区";
-import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { TopicSelectDropdown, type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
-import { parseMetric } from "@/lib/video-submit/domain/form-rules";
 import { cn } from "@/lib/utils";
 import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填报表单状态";
 import type { EditableMetricKey } from "@/components/submission/提交状态机";
@@ -26,9 +24,6 @@ export interface FormV2RightColumnProps {
   handleFieldFocus: (key: EditableMetricKey) => void;
   handleFieldBlur: (key: EditableMetricKey) => void;
   meta: FormMetaState;
-  scriptCaptureRef: RefObject<HTMLDivElement | null>;
-  scriptText: string;
-  updateScriptText: (value: string) => void;
   hasAttemptedSubmit: boolean;
   hasSlotIssues: boolean;
   handlePasteContent: () => void;
@@ -55,9 +50,6 @@ export function FormV2RightColumn({
   handleFieldFocus,
   handleFieldBlur,
   meta,
-  scriptCaptureRef,
-  scriptText,
-  updateScriptText,
   hasAttemptedSubmit,
   hasSlotIssues,
   handlePasteContent,
@@ -90,14 +82,6 @@ export function FormV2RightColumn({
           anomalyStatus={meta.anomalyStatus}
           onCompleteMetrics={() => document.getElementById("video_title")?.focus()}
         />
-        <div ref={scriptCaptureRef}>
-          <导粉话术采集区
-            visible={parseMetric(fields.follower_convert.value) > 0}
-            value={scriptText}
-            onChange={updateScriptText}
-            hasAttemptedSubmit={hasAttemptedSubmit}
-          />
-        </div>
       </div>
 
       {/* 右栏下半：内容组（视频标题 + 文案）。lg 起与左栏设置组同处第三行，共用一条通栏发丝线 */}

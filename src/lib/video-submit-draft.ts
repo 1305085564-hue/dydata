@@ -24,6 +24,7 @@ type VideoSubmitDraft = {
   } | null;
   fields?: Record<string, DraftField | undefined> | null;
   slots?: Record<string, DraftSlot | undefined> | null;
+  /** 已下线：导粉话术并入文案，旧草稿里的该字段读取时直接忽略。 */
   scriptText?: string | null;
   keywordInput?: string | null;
 };
@@ -101,7 +102,7 @@ export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
     return false;
   }
 
-  if (hasText(draft.scriptText) || hasText(draft.keywordInput)) {
+  if (hasText(draft.keywordInput)) {
     return false;
   }
 

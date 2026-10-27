@@ -76,8 +76,6 @@ export function buildVideoSubmitPayload(input: {
   screenshotsRefreshed: boolean;
   contentKeywords: string[];
   assets: ReturnType<typeof buildSubmissionAssets>;
-  scriptText: string | null;
-  scriptFormat: string | null;
   metrics: Record<string, number | null>;
 }) {
   return {
@@ -104,8 +102,10 @@ export function buildVideoSubmitPayload(input: {
     screenshots_refreshed: input.screenshotsRefreshed,
     content_keywords: input.contentKeywords,
     assets: input.assets,
-    script_text: input.scriptText,
-    script_format: input.scriptFormat,
+    // 导粉话术已并入文案（2026-10-27 产品决定）：日报不再单独收集话术，
+    // 因此不再产生话术使用记录。字段保留以便接口兼容，恒为 null。
+    script_text: null,
+    script_format: "oral",
     metrics: input.metrics,
   };
 }

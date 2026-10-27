@@ -340,10 +340,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     return { ok: false, error: "正常提交时话题标签为必填项" };
   }
 
-  if ((metrics.follower_convert ?? 0) > 0 && !scriptText) {
-    return { ok: false, error: "导粉大于 0 时导粉话术为必填项" };
-  }
-
   const assets = normalizeSubmissionAssets(payload.assets);
   // 已下线处罚类型（投流/活动干预）只能读旧行，不能再写入：静默归一化会把历史值改头换面，必须明确拒绝。
   const retiredAnomalyInput = findRetiredVideoAnomalyInput({

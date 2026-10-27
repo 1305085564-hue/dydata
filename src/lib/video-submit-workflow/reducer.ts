@@ -22,7 +22,6 @@ export function createWorkflowState({
     meta,
     fields,
     slots,
-    scriptText: draft?.scriptText ?? "",
     keywordInput: draft?.keywordInput ?? "",
     hasManualEdit: draft?.hasManualEdit ?? false,
     hasManualScriptAuthorSelection:
@@ -33,7 +32,6 @@ export function createWorkflowState({
 
 function readDraftState(state: SubmissionWorkflowState): WorkflowDraftState {
   return {
-    scriptText: state.scriptText,
     keywordInput: state.keywordInput,
     hasManualEdit: state.hasManualEdit,
     hasManualScriptAuthorSelection: state.hasManualScriptAuthorSelection,

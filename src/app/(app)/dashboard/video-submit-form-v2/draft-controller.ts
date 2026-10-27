@@ -108,7 +108,6 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
         },
       },
       draft: {
-        scriptText: draft.scriptText ?? "",
         keywordInput: draft.keywordInput ?? "",
         hasManualScriptAuthorSelection:
           draft.hasManualScriptAuthorSelection ?? false,

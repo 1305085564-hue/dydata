@@ -9,7 +9,6 @@ export type SubmissionWorkflowState = {
   meta: FormMetaState;
   fields: Record<EditableMetricKey, EditableMetricField>;
   slots: Record<SubmissionSlotRole, SlotViewState>;
-  scriptText: string;
   keywordInput: string;
   hasManualEdit: boolean;
   hasManualScriptAuthorSelection: boolean;
@@ -18,7 +17,6 @@ export type SubmissionWorkflowState = {
 
 export type WorkflowDraftState = Pick<
   SubmissionWorkflowState,
-  | "scriptText"
   | "keywordInput"
   | "hasManualEdit"
   | "hasManualScriptAuthorSelection"
@@ -31,7 +29,6 @@ export type VideoSubmitDraftData = Omit<
   keyof WorkflowDraftState
 > &
   Partial<WorkflowDraftState> & {
-    scriptText: string;
     keywordInput: string;
   };
 

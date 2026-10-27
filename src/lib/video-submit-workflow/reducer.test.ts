@@ -98,13 +98,12 @@ test("workflow reducer commits OCR publishedAt and publishedAtText faithfully", 
   assert.equal(next.meta.publishedAtText, "昨天 19:00");
 });
 
-test("workflow reducer keeps script fields and manual provenance in the canonical state", () => {
+test("workflow reducer keeps keyword fields and manual provenance in the canonical state", () => {
   const state = createWorkflowState({
     meta: createInitialMeta("2026-10-01", "user-1"),
     fields: createEditableFields(),
     slots: createEditableSlots(),
     draft: {
-      scriptText: "初始话术",
       keywordInput: "初始关键词",
       hasManualEdit: false,
       hasManualScriptAuthorSelection: false,
@@ -116,18 +115,17 @@ test("workflow reducer keeps script fields and manual provenance in the canonica
     type: "draft/update",
     updater: (current) => ({
       ...current,
-      scriptText: "修改后的话术",
+      keywordInput: "修改后的关键词",
       hasManualEdit: true,
     }),
   });
 
-  assert.equal(next.scriptText, "修改后的话术");
-  assert.equal(next.keywordInput, "初始关键词");
+  assert.equal(next.keywordInput, "修改后的关键词");
   assert.equal(next.hasManualEdit, true);
-  assert.equal(state.scriptText, "初始话术");
+  assert.equal(state.keywordInput, "初始关键词");
 });
 
-test("workflow draft restore restores script fields and manual provenance with form data", () => {
+test("workflow draft restore restores keyword fields and manual provenance with form data", () => {
   const state = makeState();
   const next = workflowReducer(state, {
     type: "draft/restore",
@@ -135,7 +133,6 @@ test("workflow draft restore restores script fields and manual provenance with f
     fields: state.fields,
     slots: state.slots,
     draft: {
-      scriptText: "草稿话术",
       keywordInput: "草稿关键词",
       hasManualEdit: true,
       hasManualScriptAuthorSelection: true,
@@ -143,7 +140,6 @@ test("workflow draft restore restores script fields and manual provenance with f
     },
   });
 
-  assert.equal(next.scriptText, "草稿话术");
   assert.equal(next.keywordInput, "草稿关键词");
   assert.equal(next.hasManualEdit, true);
   assert.equal(next.hasManualScriptAuthorSelection, true);

@@ -27,7 +27,7 @@ export type SubmitControllerOptions = {
 
 export function createSubmitController(options: SubmitControllerOptions) {
   const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
-  const { meta, fields, slots, scriptText, hasManualEdit } = workflow;
+  const { meta, fields, slots, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
 
@@ -94,11 +94,6 @@ export function createSubmitController(options: SubmitControllerOptions) {
         screenshotsRefreshed,
         contentKeywords: meta.contentKeywords,
         assets: currentAssets,
-        scriptText:
-          parseMetric(fields.follower_convert.value) > 0
-            ? scriptText.trim() || null
-            : null,
-        scriptFormat: editPayload?.script_format ?? "oral",
         metrics: {
           play_count: parseMetricFieldOrNull("play_count", fields.play_count.value),
           likes: parseMetricFieldOrNull("likes", fields.likes.value),

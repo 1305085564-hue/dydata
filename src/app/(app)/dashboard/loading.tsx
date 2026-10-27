@@ -45,7 +45,7 @@ export default function DashboardLoading() {
               </div>
             </div>
 
-            {/* 右栏：核心指标 + 基础信息 + 导粉话术 + 提交（对齐终态纯排版平铺） */}
+            {/* 右栏：核心指标 + 标题文案 + 提交（对齐终态纯排版平铺） */}
             <div className="flex min-w-0 flex-col gap-6">
               {/* 核心指标 */}
               <div className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
@@ -65,12 +65,6 @@ export default function DashboardLoading() {
                   <div className="h-9 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
                 </div>
                 <div className="h-9 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
-              </div>
-
-              {/* 导粉话术 */}
-              <div className="space-y-2">
-                <div className="h-4 w-24 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-                <div className="h-14 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
               </div>
 
               {/* 提交按钮 */}

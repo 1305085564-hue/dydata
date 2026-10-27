@@ -191,7 +191,6 @@ export function VideoSubmitFormV2({
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
       slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
       draft: {
-        scriptText: editDetail?.conversionScript?.text ?? "",
         hasManualEdit: editDetail?.dataSource === "manual",
       },
     });
@@ -200,7 +199,6 @@ export function VideoSubmitFormV2({
     meta,
     fields,
     slots,
-    scriptText,
     hasManualEdit,
   } = workflow;
   const setMeta = useCallback(
@@ -243,16 +241,6 @@ export function VideoSubmitFormV2({
       dispatchWorkflow({ type: "draft/update", updater });
     },
     [],
-  );
-  const setScriptText = useCallback(
-    (next: string | ((current: string) => string)) => {
-      updateWorkflowDraft((current) => ({
-        ...current,
-        scriptText:
-          typeof next === "function" ? next(current.scriptText) : next,
-      }));
-    },
-    [updateWorkflowDraft],
   );
   const setHasManualEdit = useCallback(
     (next: boolean | ((current: boolean) => boolean)) => {
@@ -477,7 +465,6 @@ export function VideoSubmitFormV2({
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const publishedAtSectionRef = useRef<HTMLDivElement | null>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const scriptCaptureRef = useRef<HTMLDivElement | null>(null);
 
   const [interactionConfirm, setInteractionConfirm] = useState<{
     open: boolean;
@@ -724,7 +711,6 @@ export function VideoSubmitFormV2({
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
       slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
       draft: {
-        scriptText: editDetail?.conversionScript?.text ?? "",
         keywordInput: "",
         hasManualScriptAuthorSelection: false,
         hasManualOperatorSelection: false,
@@ -823,10 +809,6 @@ export function VideoSubmitFormV2({
       }),
     }));
 
-  }
-
-  function updateScriptText(value: string) {
-    setScriptText(value);
   }
 
   function updatePublishedAt(nextPublishedAt: string) {
@@ -1025,18 +1007,6 @@ export function VideoSubmitFormV2({
       if (topicBtn) {
         focusWithHighlight(topicBtn);
       }
-      return;
-    }
-
-    if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
-      triggerFormShake();
-      const scriptEl = scriptCaptureRef.current?.querySelector("textarea");
-      if (scriptEl) {
-        focusWithHighlight(scriptEl);
-      }
-      // focus() 只会把输入框贴到视口边缘，长表单里下方那行「话术为必填」的提示会被裁掉，
-      // 看着像「点了提交没反应」；这里补一次居中滚动，让输入框和错误提示一起进视口。
-      scriptCaptureRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -1323,9 +1293,6 @@ export function VideoSubmitFormV2({
                   restoreOcrValue={restoreOcrValue}
                   handleFieldFocus={handleFieldFocus}
                   handleFieldBlur={handleFieldBlur}
-                  scriptCaptureRef={scriptCaptureRef}
-                  scriptText={scriptText}
-                  updateScriptText={updateScriptText}
                   hasAttemptedSubmit={hasAttemptedSubmit}
                   hasSlotIssues={hasSlotIssues}
                   metaSectionRef={metaSectionRef}

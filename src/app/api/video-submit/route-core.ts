@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
-import { replaceDailyReportUsageRecord } from "@/lib/conversion-hub/service";
 import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
@@ -840,72 +839,9 @@ async function handleVideoSubmit(
   }
   const aiTags = tagResult.aiTags;
 
-  const followerConvert = normalized.metrics.follower_convert;
-  const hasFollowerConversionScript =
-    followerConvert !== null &&
-    followerConvert > 0 &&
-    Boolean(normalized.script_text);
-  const usageWillChange = hasFollowerConversionScript || normalized.mode === "edit";
-  if (usageWillChange) {
-    const previousUsageResult = await adminSupabase
-      .from("script_usage_records")
-      .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, result_flag, created_at, updated_at")
-      .eq("daily_report_id", persistedReport.id)
-      .eq("recorded_by", userId);
-    if (previousUsageResult.error) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: "保存前读取原导粉话术失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
-    }
-    const previousUsageRecords = previousUsageResult.data ?? [];
-    rollbackActions.push(async () => {
-      const { error: deleteError } = await adminSupabase
-        .from("script_usage_records")
-        .delete()
-        .eq("daily_report_id", persistedReport.id)
-        .eq("recorded_by", userId);
-      if (deleteError) throw deleteError;
-      if (!previousUsageRecords.length) return;
-      const { error: restoreError } = await adminSupabase
-        .from("script_usage_records")
-        .insert(previousUsageRecords);
-      if (restoreError) throw restoreError;
-    });
-  }
-
-  if (
-    hasFollowerConversionScript &&
-    normalized.script_text
-  ) {
-    const usageRecordResult = await replaceDailyReportUsageRecord(deps.createAdminClient(), userId, {
-      case_id: null,
-      script_text: normalized.script_text,
-      script_format: normalized.script_format,
-      account_id: normalized.account_id,
-      used_at: normalized.biz_date,
-      views: normalized.metrics.play_count as number,
-      follows: followerConvert,
-      source: "daily_report",
-      daily_report_id: persistedReport.id,
-      note: null,
-      // 日报提交不判定话术效果，显式给 null；漏传会让 RPC 参数缺失、整单回滚。
-      result_flag: null,
-    });
-
-    if (!usageRecordResult.ok) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
-    }
-  } else if (normalized.mode === "edit") {
-    const { error: clearUsageError } = await deps.createAdminClient()
-      .from("script_usage_records")
-      .delete()
-      .eq("daily_report_id", persistedReport.id)
-      .eq("recorded_by", userId);
-    if (clearUsageError) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: "清除原导粉话术使用记录失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
-    }
-  }
+  // 导粉话术自 2026-10-27 起并入文案（产品决定）：日报不再单独收集话术，
+  // 因此不再写 script_usage_records，也不再在编辑时清空历史使用记录——
+  // 老记录的话术使用数据保持原样，不随编辑被删改。
 
   // 来源是核心提交的最后一个阻塞写入：失败时回滚此前的整条提交，避免
   // 日报已标为手工后又因后续失败尝试把来源回退成历史值。
