@@ -82,7 +82,7 @@ export function ContentListTableHeader({
             <span>点赞</span>
           </button>
         </th>
-        <th data-col-key="comments" className={cn("font-normal py-2 px-2 text-right w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("comments")}>
+        <th data-col-key="comments" className={cn("font-normal py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("comments")}>
           <button
         aria-label={`按评论排序${sortField === "comments" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -93,7 +93,7 @@ export function ContentListTableHeader({
             <span>评论</span>
           </button>
         </th>
-        <th data-col-key="shares" className={cn("font-normal py-2 px-2 text-right w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "shares" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("shares")}>
+        <th data-col-key="shares" className={cn("font-normal py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "shares" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("shares")}>
           <button
         aria-label={`按分享排序${sortField === "shares" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -104,7 +104,7 @@ export function ContentListTableHeader({
             <span>分享</span>
           </button>
         </th>
-        <th data-col-key="favorites" className={cn("font-normal py-2 px-2 text-right w-[54px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "favorites" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("favorites")}>
+        <th data-col-key="favorites" className={cn("font-normal py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "favorites" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("favorites")}>
           <button
         aria-label={`按收藏排序${sortField === "favorites" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
