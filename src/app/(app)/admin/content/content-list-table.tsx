@@ -629,11 +629,14 @@ export function ContentListTable({
                           <td data-col-key="core_metric" className={cn("py-2.5 pl-3 pr-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span
-                                className={cn("text-[14px] font-normal text-[#1F1E1D]", item.coreMetricTopicText === "复盘" && item.coreMetricRate != null && "underline decoration-[#78716C] underline-offset-4")}
+                                className="relative text-[14px] font-normal text-[#1F1E1D]"
                                 title={`${item.coreMetricTopicText}核心指标`}
                                 aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
                               >
                                 <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
+                                {item.coreMetricTopicText === "复盘" && item.coreMetricRate != null && (
+                                  <span aria-hidden="true" className="absolute -right-1.5 -top-1 text-[12px] leading-none text-[#A8A29E]">*</span>
+                                )}
                               </span>
                             ) : (
                               <span className="text-[12px] text-[#A8A29E]">—</span>
