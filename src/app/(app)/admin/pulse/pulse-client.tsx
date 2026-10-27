@@ -25,7 +25,6 @@ interface PulseClientProps {
   dayVideos: PulseVideoRow[];
   snapshots: VideoMetricsSnapshot[];
   contentQualityByVideoId: Record<string, WorkContentQuality>;
-  pendingTicketsByVideoId: Record<string, { id: string; createdAt: string }>;
 }
 
 export function PulseClient({
@@ -37,7 +36,6 @@ export function PulseClient({
   dayVideos,
   snapshots,
   contentQualityByVideoId,
-  pendingTicketsByVideoId,
 }: PulseClientProps) {
   const router = useRouter();
   const [cap, setCap] = useState<PulseCap>(initialCap);
@@ -111,7 +109,6 @@ export function PulseClient({
         dayVideos={dayVideos}
         snapshotByVideoId={snapshotByVideoId}
         contentQualityByVideoId={contentQualityByVideoId}
-        pendingTicketsByVideoId={pendingTicketsByVideoId}
       />
     </div>
   );

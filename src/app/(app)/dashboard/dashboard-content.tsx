@@ -5,7 +5,6 @@ import { ProductionControlSystem } from "./production-control-system";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
-import type { VideoReviewTicket } from "@/lib/video-review-tickets";
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
@@ -31,8 +30,6 @@ interface DashboardContentProps {
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  reviewTickets?: VideoReviewTicket[];
-  reviewTicketsError?: string | null;
 }
 
 export function DashboardContent(props: DashboardContentProps) {

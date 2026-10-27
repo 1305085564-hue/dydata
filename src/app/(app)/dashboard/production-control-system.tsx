@@ -24,7 +24,6 @@ import {
 } from "@/lib/fulfillment-sync";
 
 import { VideoSubmitPanelV2 } from "./video-submit-panel-v2";
-import { ReviewTodoPanel } from "./review-todo-panel";
 
 interface ProductionControlSystemProps {
   today: string;
@@ -53,8 +52,6 @@ interface ProductionControlSystemProps {
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  reviewTickets?: import("@/lib/video-review-tickets").VideoReviewTicket[];
-  reviewTicketsError?: string | null;
 }
 
 export function ProductionControlSystem({
@@ -75,8 +72,6 @@ export function ProductionControlSystem({
   userExemptionGrants,
   absentDates,
   absentReasons,
-  reviewTickets = [],
-  reviewTicketsError = null,
 }: ProductionControlSystemProps) {
   const searchParams = useSearchParams();
   const initialTopicId = normalizeDashboardTopicId(searchParams.get("topic_id"));
@@ -143,7 +138,6 @@ export function ProductionControlSystem({
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-5">
-      <ReviewTodoPanel initialTickets={reviewTickets} loadError={reviewTicketsError} />
       <VideoSubmitPanelV2
         accounts={accounts}
         selectedAccountId={selectedAccountId}
