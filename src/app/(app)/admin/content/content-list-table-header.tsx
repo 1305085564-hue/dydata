@@ -71,7 +71,7 @@ export function ContentListTableHeader({
     {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（统一 48px，px-2 标准边距） */}
     {!isSpacious && (
       <>
-        <th data-col-key="likes" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
+        <th data-col-key="likes" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[64px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
           <button
         aria-label={`按点赞排序${sortField === "likes" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -82,7 +82,7 @@ export function ContentListTableHeader({
             <span>点赞</span>
           </button>
         </th>
-        <th data-col-key="comments" className={cn("font-normal py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("comments")}>
+        <th data-col-key="comments" className={cn("font-normal py-2 px-2 text-right w-[50px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("comments")}>
           <button
         aria-label={`按评论排序${sortField === "comments" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -93,7 +93,7 @@ export function ContentListTableHeader({
             <span>评论</span>
           </button>
         </th>
-        <th data-col-key="shares" className={cn("font-normal py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "shares" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("shares")}>
+        <th data-col-key="shares" className={cn("font-normal py-2 px-2 text-right w-[50px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "shares" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("shares")}>
           <button
         aria-label={`按分享排序${sortField === "shares" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -104,7 +104,7 @@ export function ContentListTableHeader({
             <span>分享</span>
           </button>
         </th>
-        <th data-col-key="favorites" className={cn("font-normal py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "favorites" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("favorites")}>
+        <th data-col-key="favorites" className={cn("font-normal py-2 px-2 text-right w-[50px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "favorites" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("favorites")}>
           <button
         aria-label={`按收藏排序${sortField === "favorites" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -205,7 +205,7 @@ export function ContentListTableHeader({
     </th>
 
     {/* 发布时间 */}
-    <th data-col-key="published_at" className={cn("font-normal py-2 pl-2 pr-3 text-right w-[75px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
+    <th data-col-key="published_at" className={cn("font-normal py-2 px-2 text-right w-[71px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
       <button
         aria-label={`按发布时间排序${sortField === "published_at" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
