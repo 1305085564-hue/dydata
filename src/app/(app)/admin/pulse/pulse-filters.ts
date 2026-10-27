@@ -1,5 +1,6 @@
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { VideoMetricsSnapshot } from "@/types";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import {
   DEFAULT_CONTENT_LIST_FILTERS,
   type ContentListFilterValue,
@@ -45,9 +46,9 @@ export type PulseMemberSortField =
   | "avgCompletion5s";
 export type SortDirection = "asc" | "desc";
 
-/** 与 filterContentVideos 第 157 行同一实现：published_at 取日期段。无发布日的作品不进任何日视图（与复盘页日期筛选行为一致）。 */
+/** 与作品列表统一按上海发布日归属；无有效发布日的作品不进入日视图。 */
 export function attributionDate(video: { published_at: string | null }): string | null {
-  return video.published_at?.slice(0, 10) || null;
+  return getPublishedDateKey(video);
 }
 
 export function getShanghaiDateString(date: Date = new Date()): string {

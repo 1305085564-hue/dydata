@@ -19,6 +19,8 @@ interface DatePaginationProps {
   rangeEnd?: string;
   /** 是否正在切日取数 */
   isLoading?: boolean;
+  /** 可选日期上限；每日大盘仅允许查看昨日及以前。 */
+  maxDate?: string;
   /** 切换到某一天 */
   onDateChange: (date: string) => void;
   /** 区间模式下按窗口长度整体前后平移 */
@@ -70,6 +72,7 @@ export function DatePagination({
   rangeStart,
   rangeEnd,
   isLoading = false,
+  maxDate,
   onDateChange,
   onShiftRange,
 }: DatePaginationProps) {
@@ -80,6 +83,10 @@ export function DatePagination({
   const today = getShanghaiDateString();
   const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const hasCounts = (availableCounts?.length ?? 0) > 0;
+  const navigableDates = useMemo(
+    () => maxDate ? availableDates.filter((date) => date <= maxDate) : availableDates,
+    [availableDates, maxDate],
+  );
 
   const countByDate = useMemo(() => {
     // gate:transient-map temporary call-local projection
@@ -90,15 +97,15 @@ export function DatePagination({
 
   // 箭头兜底：不依赖 currentDate 是否在名单里，按名单里「早于 / 晚于」它的最近一天取
   const earlierDate = useMemo(
-    () => availableDates.find((date) => date < currentDate) ?? null,
-    [availableDates, currentDate],
+    () => navigableDates.find((date) => date < currentDate) ?? null,
+    [navigableDates, currentDate],
   );
   const laterDate = useMemo(() => {
-    for (let i = availableDates.length - 1; i >= 0; i -= 1) {
-      if (availableDates[i] > currentDate) return availableDates[i];
+    for (let i = navigableDates.length - 1; i >= 0; i -= 1) {
+      if (navigableDates[i] > currentDate) return navigableDates[i];
     }
     return null;
-  }, [availableDates, currentDate]);
+  }, [navigableDates, currentDate]);
 
   const baseLabel = isRange
     ? `${formatShortDate(rangeStart ?? "")} - ${formatShortDate(rangeEnd ?? "")}`
@@ -106,7 +113,7 @@ export function DatePagination({
   const loadingLabel = isLoading && pendingDate ? `正在加载 ${formatShortDate(pendingDate)}…` : baseLabel;
 
   const pickDate = (date: string) => {
-    if (!date) return;
+    if (!date || (maxDate && date > maxDate)) return;
     setPendingDate(date);
     onDateChange(date);
     setOpen(false);
@@ -149,7 +156,7 @@ export function DatePagination({
           if (next) setViewMonth(toYearMonth(currentDate || today));
         }}
       >
-        <PopoverTrigger className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
+        <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
           <Calendar className="size-3.5 text-[#78716C]" />
           <span>{loadingLabel}</span>
         </PopoverTrigger>
@@ -169,6 +176,7 @@ export function DatePagination({
             <button
               type="button"
               onClick={() => setViewMonth(shiftMonth(viewMonth, 1))}
+              disabled={Boolean(maxDate && toDateString(year, month + 1, 1) > maxDate)}
               className={NAV_BUTTON_CLASS}
               aria-label="下个月"
             >
@@ -194,8 +202,9 @@ export function DatePagination({
                   key={date}
                   type="button"
                   onClick={() => pickDate(date)}
+                  disabled={Boolean(maxDate && date > maxDate)}
                   className={cn(
-                    "relative flex h-9 items-center justify-center rounded-md text-[14px] transition-colors cursor-pointer",
+                    "relative flex h-9 items-center justify-center rounded-md text-[14px] transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed",
                     isSelected
                       ? "bg-[#141413] text-white"
                       : count
@@ -221,17 +230,17 @@ export function DatePagination({
           </div>
 
           <div className="mt-2 border-t border-[#E2E2DF] pt-2 space-y-1">
-            <button
+            {(!maxDate || today <= maxDate) && <button
               type="button"
               onClick={() => pickDate(today)}
               className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
             >
               跳到今天
-            </button>
+            </button>}
             <button
               type="button"
-              onClick={() => availableDates[0] && pickDate(availableDates[0])}
-              disabled={availableDates.length === 0}
+              onClick={() => navigableDates[0] && pickDate(navigableDates[0])}
+              disabled={navigableDates.length === 0}
               className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               跳到最新

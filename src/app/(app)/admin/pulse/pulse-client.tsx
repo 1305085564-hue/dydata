@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DatePagination } from "../content/date-pagination";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import {
@@ -23,6 +23,7 @@ interface PulseClientProps {
   summary: PulseSummary;
   members: PulseMemberRow[];
   dayVideos: PulseVideoRow[];
+  availableDates: string[];
   snapshots: VideoMetricsSnapshot[];
   contentQualityByVideoId: Record<string, WorkContentQuality>;
 }
@@ -34,6 +35,7 @@ export function PulseClient({
   summary,
   members,
   dayVideos,
+  availableDates,
   snapshots,
   contentQualityByVideoId,
 }: PulseClientProps) {
@@ -81,13 +83,11 @@ export function PulseClient({
         >
           昨日
         </Button>
-        <Input
-          type="date"
-          value={date}
-          max={yesterday}
-          aria-label="选择日期"
-          onChange={(e) => handleDateChange(e.target.value)}
-          className="min-h-[44px] sm:min-h-0 sm:h-7 w-36 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+        <DatePagination
+          currentDate={date}
+          availableDates={availableDates}
+          maxDate={yesterday}
+          onDateChange={handleDateChange}
         />
       </div>
 

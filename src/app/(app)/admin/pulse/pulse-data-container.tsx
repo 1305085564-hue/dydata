@@ -73,6 +73,7 @@ export async function PulseDataContainer({
       summary={summary}
       members={members}
       dayVideos={dayVideos}
+      availableDates={[...new Set(data.videos.map(attributionDate).filter((date): date is string => Boolean(date)))].sort((a, b) => b.localeCompare(a))}
       snapshots={data.snapshots}
       contentQualityByVideoId={data.contentQualityByVideoId}
     />

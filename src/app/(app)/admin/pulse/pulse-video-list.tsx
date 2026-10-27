@@ -21,6 +21,7 @@ import type { WorkContentQuality } from "@/lib/collaboration/content-quality-con
 import { cn } from "@/lib/utils";
 import {
   buildCapsuleFilters,
+  attributionDate,
   compareWithNullsLast,
   formatCount,
   formatPercent,
@@ -233,7 +234,7 @@ export function PulseVideoList({
                       )}
                     </div>
                     <span className="text-[12px] tabular-nums text-[#78716C] font-normal">
-                      {video.published_at?.slice(0, 10) ?? "—"}
+                      {attributionDate(video) ?? "—"}
                     </span>
                   </div>
 
