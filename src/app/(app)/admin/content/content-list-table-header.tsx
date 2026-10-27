@@ -40,7 +40,7 @@ export function ContentListTableHeader({
     <th data-col-key="status" className={cn("font-normal py-2 px-1 text-center w-[61px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "status" && "bg-[#EFEFEC]")}>状态</th>
 
     {/* 2. 视频标题 / 账号 */}
-    <th data-col-key="title" className={cn("font-normal py-2 px-3 text-left w-[339px] whitespace-nowrap transition-colors", hoveredColKey === "title" && "bg-[#EFEFEC]")}>视频标题 / 账号</th>
+    <th data-col-key="title" className={cn("font-normal py-2 px-3 text-left w-[347px] whitespace-nowrap transition-colors", hoveredColKey === "title" && "bg-[#EFEFEC]")}>视频标题 / 账号</th>
 
     {/* 6. 播放量 */}
     <th data-col-key="play_count" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("play_count")}>
@@ -71,7 +71,7 @@ export function ContentListTableHeader({
     {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（统一 48px，px-2 标准边距） */}
     {!isSpacious && (
       <>
-        <th data-col-key="likes" className={cn("font-normal py-2 pl-3 pr-2 text-right w-[58px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
+        <th data-col-key="likes" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("likes")}>
           <button
         aria-label={`按点赞排序${sortField === "likes" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
             type="button"
@@ -165,7 +165,7 @@ export function ContentListTableHeader({
     </th>
 
     {/* 4. 核心指标（放在互动率前面） */}
-    <th data-col-key="core_metric" className={cn("font-normal py-2 pl-3 pr-2 text-right w-[84px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
+    <th data-col-key="core_metric" className={cn("font-normal py-2 px-2 text-right w-[80px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("core_metric")}>
       <button
         title="右上角有星号为复盘，无星号为干货"
         aria-label={`核心指标：右上角有星号为复盘，无星号为干货。按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
@@ -205,7 +205,7 @@ export function ContentListTableHeader({
     </th>
 
     {/* 发布时间 */}
-    <th data-col-key="published_at" className={cn("font-normal py-2 pl-2 pr-4 text-right w-[79px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
+    <th data-col-key="published_at" className={cn("font-normal py-2 pl-2 pr-3 text-right w-[75px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
       <button
         aria-label={`按发布时间排序${sortField === "published_at" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"

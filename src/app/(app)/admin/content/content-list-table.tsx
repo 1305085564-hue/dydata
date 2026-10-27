@@ -489,7 +489,7 @@ export function ContentListTable({
               )}>
                 <colgroup>
                   <col className="w-[61px]" />
-                  <col className="w-[339px]" />
+                  <col className="w-[347px]" />
                 </colgroup>
                 {/* 吸顶表头 */}
                 <ContentListTableHeader
@@ -596,7 +596,7 @@ export function ContentListTable({
                           {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                           {!isSpacious && (
                             <>
-                              <td data-col-key="likes" className={cn("py-2.5 pl-3 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#F7F7F5]/60")}>
+                              <td data-col-key="likes" className={cn("py-2.5 pl-4 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                               </td>
                               <td data-col-key="comments" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#F7F7F5]/60")}>
@@ -626,7 +626,7 @@ export function ContentListTable({
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}
-                          <td data-col-key="core_metric" className={cn("py-2.5 pl-3 pr-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
+                          <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span
                                 className="relative text-[14px] font-normal text-[#1F1E1D]"
@@ -670,7 +670,7 @@ export function ContentListTable({
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}
                           <td
                             data-col-key="published_at"
-                            className={cn("py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
+                            className={cn("py-2.5 pl-2 pr-3 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
                             title={video.published_at ?? "发布日期未知"}
                           >
                             {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
