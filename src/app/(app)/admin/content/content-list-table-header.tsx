@@ -205,7 +205,7 @@ export function ContentListTableHeader({
     </th>
 
     {/* 发布时间 */}
-    <th data-col-key="published_at" className={cn("font-normal py-2 px-2 text-right w-[71px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
+    <th data-col-key="published_at" className={cn("font-normal py-2 px-1 text-right w-[67px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
       <button
         aria-label={`按发布时间排序${sortField === "published_at" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"

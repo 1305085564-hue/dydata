@@ -670,7 +670,7 @@ export function ContentListTable({
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}
                           <td
                             data-col-key="published_at"
-                            className={cn("py-2.5 px-2 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
+                            className={cn("py-2.5 px-1 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
                             title={video.published_at ?? "发布日期未知"}
                           >
                             {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
