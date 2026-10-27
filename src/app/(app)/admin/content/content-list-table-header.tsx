@@ -152,7 +152,7 @@ export function ContentListTableHeader({
         <span>均播</span>
       </button>
     </th>
-    <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate")}>
+    <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("completion_rate")}>
       <button
         aria-label={`按完播排序${sortField === "completion_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
@@ -203,8 +203,8 @@ export function ContentListTableHeader({
       </button>
     </th>
 
-    {/* 发布时间（84px 严整留白，彻底防止与完播重合） */}
-    <th data-col-key="published_at" className={cn("font-normal py-2 pl-2 pr-4 text-right w-[87px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
+    {/* 发布时间 */}
+    <th data-col-key="published_at" className={cn("font-normal py-2 pl-2 pr-4 text-right w-[79px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#EFEFEC]")} aria-sort={ariaSortFor("published_at")}>
       <button
         aria-label={`按发布时间排序${sortField === "published_at" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
