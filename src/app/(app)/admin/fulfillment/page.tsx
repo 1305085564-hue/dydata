@@ -56,10 +56,8 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="发布管理"
       title="发布与履约总览"
       description="随时了解每位成员的发布节奏，断更与补交都有去处。"
-      indexItems={[]}
       width="wide"
     >
       <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>

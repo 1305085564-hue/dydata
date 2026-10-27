@@ -21,11 +21,6 @@
     content: none;
   }
 
-  .app-shell-frame {
-    position: relative;
-    isolation: isolate;
-  }
-
   /* 移动端 Toast 默认 bottom-right 会压在悬浮底栏上，统一抬到底栏 pill 上方 */
   @media (max-width: 767.98px) {
     [data-sonner-toaster][data-y-position="bottom"] {

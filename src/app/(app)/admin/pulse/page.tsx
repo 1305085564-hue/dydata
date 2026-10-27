@@ -40,10 +40,8 @@ export default async function AdminPulsePage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="管理大盘"
       title="每日大盘"
       description="晨间 3 分钟：大盘涨跌、人员战报、红黑两头。"
-      indexItems={[]}
       width="wide"
       hideHeaderOnMobile={true}
     >

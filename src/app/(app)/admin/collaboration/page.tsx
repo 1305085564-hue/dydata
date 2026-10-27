@@ -56,7 +56,6 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="数据管理"
       title="数据管理"
       description={
         <span>
@@ -73,7 +72,6 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
           />
         </span>
       }
-      indexItems={[]}
       width="wide"
     >
       {/* Suspense key 只随年月变化：首屏已备齐全部页签/视图/小队数据，

@@ -16,10 +16,6 @@ const source = [
 ]
   .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
   .join("\n");
-const shellSource = readFileSync(
-  resolve(process.cwd(), "src/components/app-shell/app-shell.tsx"),
-  "utf8",
-);
 const exemptionSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/redesign/exemption-dialog-v2.tsx"),
   "utf8",
@@ -47,7 +43,7 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
   }
   assert.match(
     source,
-    new RegExp(`${serifClass} text-\\[1\\.75rem\\] leading-\\[1\\.20\\]`),
+    new RegExp(`${serifClass} text-\\[20px\\] sm:text-\\[28px\\] leading-\\[1\\.20\\]`),
   );
   assert.match(source, /停笔调养/);
   assert.match(source, /历史手稿/);
@@ -77,8 +73,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   // 1. Page Hero 郑重立标 (Serif 衬线律，由控制栏与操作区同轴呈现)
   assert.match(
     source,
-    /font-serif text-\[1\.75rem\] leading-\[1\.20\] text-\[#141413\] tracking-tight/,
-    "页面大标题必须使用 font-serif tracking-tight text-[1.75rem] leading-[1.20] text-[#141413]",
+    /font-serif text-\[20px\] sm:text-\[28px\] leading-\[1\.20\] text-\[#141413\] tracking-tight/,
+    "页面大标题必须使用 font-serif tracking-tight text-[20px] sm:text-[28px] leading-[1.20] text-[#141413]",
   );
   assert.match(
     source,

@@ -1,6 +1,6 @@
 export function TeamV2Skeleton() {
   return (
-    <div className="mt-4 w-full space-y-5">
+    <div className="w-full space-y-5">
       {/* 满宽成员面板骨架（与 modules-content-v3 1:1 对齐） */}
       <div className="rounded-xl border border-[#E2E2DF] bg-transparent p-5">
         {/* 工具栏骨架 */}

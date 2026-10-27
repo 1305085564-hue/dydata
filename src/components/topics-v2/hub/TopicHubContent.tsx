@@ -76,7 +76,7 @@ export function TopicHubContent({
   setInspectTopicId: (topicId: string) => void;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* 顶部大盘动态看板 */}
       <TeamActivitySection
         data={activeTopics}

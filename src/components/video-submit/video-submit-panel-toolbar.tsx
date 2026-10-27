@@ -44,16 +44,13 @@ export function VideoSubmitPanelToolbar({
   return (
     <>
         {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
-        <div className="px-0.5 py-1 sm:py-1.5">
+        <div className="px-0.5">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-normal font-serif text-[1.75rem] leading-[1.20] text-[#141413] tracking-tight">
-                  创作立卷 · 表达纪事
-                </h1>
-              </div>
+              <h1 className="font-normal font-serif text-[20px] sm:text-[28px] leading-[1.20] text-[#141413] tracking-tight">
+                创作立卷 · 表达纪事
+              </h1>
               <p className="text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
                 从容记录每一次真实表达 · 数据沉淀与运营复盘
               </p>

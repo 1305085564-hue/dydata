@@ -28,18 +28,15 @@ export function AIConfigShell() {
 
   return (
     <div className="w-full space-y-5">
-      <div className="flex items-center justify-end">
-        <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C] hover:text-[#141413]">
-          <RefreshCw className="size-3.5" />
-        </Button>
-      </div>
-
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
             业务功能调度
           </h2>
+          <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C] hover:text-[#141413]">
+            <RefreshCw className="size-3.5" />
+          </Button>
         </div>
 
         <BusinessFunctionsPanel />

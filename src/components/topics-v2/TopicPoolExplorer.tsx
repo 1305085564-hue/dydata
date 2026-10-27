@@ -68,7 +68,7 @@ export function TopicPoolExplorer({
   return (
     <section
       id="topic-pool-explorer"
-      className="space-y-4"
+      className="space-y-3"
       aria-label="干货选题大盘"
     >
       <PoolToolbar

@@ -69,23 +69,21 @@ export default async function CaliberPage() {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="管理中心"
       title="数据口径"
       description="下面写的就是这个平台里每个数字的算法。数字变了，这里会跟着变。"
-      indexItems={[]}
       width="wide"
     >
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         {rules.map((item, index) => (
           <article key={item.title} className="rounded-2xl border border-[#E2E2DF] bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[12px] uppercase tracking-[0.18em] text-[#A8A29E]">规则 {index + 1}</p>
-                <h2 className="font-normal mt-1.5 text-[20px] text-[#141413]">{item.title}</h2>
+                <h2 className="font-normal mt-1 text-[20px] text-[#141413]">{item.title}</h2>
               </div>
               {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-[#57534E]">{item.value}</span> : null}
             </div>
-            <div className="mt-4 space-y-3 text-[14px] leading-7 text-[#1F1E1D]">
+            <div className="mt-3 space-y-3 text-[14px] leading-7 text-[#1F1E1D]">
               <div>
                 <p className="text-[12px] text-[#78716C]">规则是什么</p>
                 <p className="mt-0.5">{item.rule}</p>

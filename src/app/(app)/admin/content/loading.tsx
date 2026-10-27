@@ -4,8 +4,13 @@ import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function ContentLoading() {
   return (
-    <AdminWorkspaceLayout indexItems={[]} width="wide" hideHeaderOnMobile={true}>
-      <div className="flex flex-1 flex-col scroll-mt-8 space-y-6">
+    <AdminWorkspaceLayout
+      width="wide"
+      hideHeaderOnMobile={true}
+      title="视频复盘"
+      description="查看异常视频证据，定位内容问题与可能原因。"
+    >
+      <div className="space-y-5">
         {/* 单排顶栏控制舱骨架 */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-card-ring">
           <div className="flex flex-wrap items-center gap-3">

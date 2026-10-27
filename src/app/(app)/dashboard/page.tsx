@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AppShell } from "@/components/app-shell";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { DashboardDataContainer } from "./dashboard-data-container";
 import DashboardLoading from "./loading";
 
@@ -20,10 +20,10 @@ export const dynamic = "force-dynamic";
  */
 export default function DashboardPage() {
   return (
-    <AppShell width="normal">
+    <AdminWorkspaceLayout width="normal">
       <Suspense fallback={<DashboardLoading />}>
         <DashboardDataContainer />
       </Suspense>
-    </AppShell>
+    </AdminWorkspaceLayout>
   );
 }

@@ -79,7 +79,7 @@ export function FulfillmentWorkbenchView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* 单行工具栏：时间预设 + 团队筛选 + 飞书开关 */}
       <FilterBar
         year={calendarData.year}

@@ -101,12 +101,7 @@ export function DouyinAccountsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 py-8">
-      <header className="space-y-2">
-        <p className="text-sm text-stone-500">账号资产与自动归集</p>
-        <h1 className="text-2xl font-semibold text-stone-900">抖音账号</h1>
-        <p className="max-w-2xl text-sm leading-6 text-stone-600">绑定一次后，系统会定时同步公开作品和账号趋势。无法确认的作品会留在待确认状态，不会直接替你判定履约。</p>
-      </header>
+    <div className="space-y-5">
       {message ? <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">{message}</div> : null}
       {loading ? <p className="text-sm text-stone-500">正在加载账号…</p> : null}
       {!loading && accounts.length === 0 ? <div className="rounded-xl border border-dashed border-stone-300 px-6 py-10 text-center text-sm text-stone-500">当前没有可绑定的业务账号。</div> : null}
@@ -142,6 +137,6 @@ export function DouyinAccountsPage() {
           );
         })}
       </div>
-    </main>
+    </div>
   );
 }

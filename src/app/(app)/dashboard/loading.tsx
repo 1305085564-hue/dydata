@@ -1,8 +1,12 @@
 export default function DashboardLoading() {
   return (
-    <div className="w-full space-y-4 sm:space-y-5.5">
-      {/* 顶部控制栏骨架：控制区按键 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-0.5 py-1 sm:py-1.5">
+    <div className="space-y-5">
+      {/* 顶部页头骨架：标题与描述 + 右侧控制区 */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between px-0.5">
+        <div className="space-y-1">
+          <div className="h-7 w-44 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
+          <div className="h-5 w-64 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="h-7 w-28 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
           <div className="h-7 w-20 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
@@ -12,7 +16,7 @@ export default function DashboardLoading() {
 
       {/* 主工作台骨架：对齐终态 w-full */}
       <div className="w-full">
-        <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 py-0">
+        <div className="space-y-5">
           {/* 头部：标题与状态 */}
           <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]/60">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">

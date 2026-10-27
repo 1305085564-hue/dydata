@@ -51,18 +51,15 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="内容管理"
       title="视频复盘"
       description="查看异常视频证据，定位内容问题与可能原因。"
-      indexItems={[]}
       width="wide"
       hideHeaderOnMobile={true}
-      className="sm:space-y-6"
     >
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}
         fallback={
-          <div className="mt-4">
+          <div>
             <TableSkeleton columnCount={10} rowCount={8} showHeader={true} />
           </div>
         }

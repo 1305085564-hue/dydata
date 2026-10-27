@@ -3,7 +3,7 @@
 import React, { useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { AppShell } from "@/components/app-shell";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import type { V2TopicLibraryBootstrap } from "@/lib/topics/v2-client-contract";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { useTopicHubState, useTopicHubNavigation } from "@/lib/topics/domain/hub-state";
@@ -114,8 +114,7 @@ export function TopicHubV2({
   }
 
   return (
-    <AppShell
-      eyebrow="选题库"
+    <AdminWorkspaceLayout
       title="灵感手稿 · 选题库"
       description="选定后在飞书创作，数据为内容立卷"
       actions={
@@ -193,6 +192,6 @@ export function TopicHubV2({
         refreshAll={refreshAll}
         showToast={showToast}
       />
-    </AppShell>
+    </AdminWorkspaceLayout>
   );
 }

@@ -839,7 +839,7 @@ export function AdminModulesContentV3({
   };
 
   return (
-    <div className="mt-4 w-full space-y-5 relative">
+    <div className="w-full space-y-5 relative">
       <div className="space-y-5">
       <MemberAlerts
         pendingRequests={pendingRequests}

@@ -87,7 +87,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 
 function Section({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-3">
       <div className="flex items-center justify-between">
         <ItemHeading as="h2">{title}</ItemHeading>
         {extra}
@@ -194,10 +194,10 @@ export default async function PersonProfilePage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 py-4">
+    <div className="mx-auto w-full max-w-5xl space-y-5">
       {/* 1. 人物头部 */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-[#E2E2DF]/60 pb-5">
-        <div className="space-y-2">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-[#E2E2DF]/60">
+        <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-normal text-[20px] text-[#1F1E1D]">{person.name}</h1>
             {person.membershipStatus !== "active" && (

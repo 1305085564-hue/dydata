@@ -471,7 +471,7 @@ export function VideoSubmitPanelV2({
 
   return (
     <>
-      <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-5.5">
+      <div className="space-y-5">
         <VideoSubmitPanelToolbar
           primaryMode={primaryMode}
           isCalendarOpen={isCalendarOpen}

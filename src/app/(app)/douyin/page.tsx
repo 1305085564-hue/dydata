@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AppShell } from "@/components/app-shell";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { DouyinAccountsPage } from "./douyin-accounts-page";
 
 export const metadata: Metadata = {
@@ -12,8 +12,12 @@ export const dynamic = "force-dynamic";
 
 export default function DouyinPage() {
   return (
-    <AppShell width="normal">
+    <AdminWorkspaceLayout
+      width="normal"
+      title="抖音账号"
+      description="绑定一次后，系统会定时同步公开作品和账号趋势。无法确认的作品会留在待确认状态，不会直接替你判定履约。"
+    >
       <DouyinAccountsPage />
-    </AppShell>
+    </AdminWorkspaceLayout>
   );
 }

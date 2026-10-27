@@ -41,7 +41,7 @@ export function CollaborationWorkbenchToolbar({
     return writerStaff.length + supplemental;
   }, [writerStaff, writerCandidates]);
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
         {/* 整合型流线控制舱：精炼双层架构 */}
         <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
