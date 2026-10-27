@@ -47,10 +47,10 @@ export function ScriptCaptureSection({
 
             <div
               className={cn(
-                "rounded-2xl border shadow-input transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "rounded-md border shadow-input transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
-                  ? "border-status-danger/40 bg-[#FCFCFB]"
-                  : "border-[#E2E2DF] bg-white/50 focus-within:bg-white focus-within:border-[#78716C]",
+                  ? "border-status-danger/40 bg-white"
+                  : "border-[#E2E2DF] bg-white hover:border-[#78716C]/40 focus-within:border-[#78716C]",
               )}
             >
               <textarea
@@ -61,8 +61,8 @@ export function ScriptCaptureSection({
                 aria-invalid={showError ? "true" : "false"}
                 aria-describedby={showError ? "script_capture_error" : undefined}
                 className={cn(
-                  "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[14px] leading-[1.7] tracking-[0.005em] text-[#141413] placeholder:text-[#78716C]/70",
+                  "w-full resize-none rounded-md border-0 bg-transparent px-4 py-3",
+                  "text-[14px] leading-[1.7] tracking-[0.005em] text-[#1F1E1D] placeholder:text-[#78716C]/60",
                   "outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10",
                 )}
               />

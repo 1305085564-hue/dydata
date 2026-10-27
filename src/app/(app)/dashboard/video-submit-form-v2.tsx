@@ -1034,6 +1034,9 @@ export function VideoSubmitFormV2({
       if (scriptEl) {
         focusWithHighlight(scriptEl);
       }
+      // focus() 只会把输入框贴到视口边缘，长表单里下方那行「话术为必填」的提示会被裁掉，
+      // 看着像「点了提交没反应」；这里补一次居中滚动，让输入框和错误提示一起进视口。
+      scriptCaptureRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
