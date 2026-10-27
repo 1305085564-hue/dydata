@@ -255,7 +255,7 @@ export function PulseVideoList({
                     </div>
                   )}
 
-                  {/* 第 3 层：播放 · 2s留存 · 5s完播 */}
+                  {/* 第 3 层：播放 · 2s跳出 · 5s完播 */}
                   <div className="grid grid-cols-3 gap-2 border-t border-[#E2E2DF]/50 pt-2 mt-1 text-center">
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] text-[#78716C] leading-none mb-1">播放</span>
@@ -268,7 +268,7 @@ export function PulseVideoList({
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[12px] text-[#78716C] leading-none mb-1">2s留存</span>
+                      <span className="text-[12px] text-[#78716C] leading-none mb-1">2s跳出</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
                         {snap?.bounce_rate_2s != null ? (
                           formatPercent(snap.bounce_rate_2s)
@@ -306,7 +306,7 @@ export function PulseVideoList({
                       {renderSortHeader("playCount", "播放")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {renderSortHeader("bounceRate2s", "2s留存")}
+                      {renderSortHeader("bounceRate2s", "2s跳出")}
                     </TableHead>
                     <TableHead className="text-right">
                       {renderSortHeader("completionRate5s", "5s完播")}
@@ -384,7 +384,7 @@ export function PulseVideoList({
                           )}
                         </TableCell>
 
-                        {/* 2s留存 */}
+                        {/* 2s跳出 */}
                         <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
                           {snap?.bounce_rate_2s != null ? (
                             formatPercent(snap.bounce_rate_2s)

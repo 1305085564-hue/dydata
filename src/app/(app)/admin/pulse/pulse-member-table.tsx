@@ -152,7 +152,7 @@ export function PulseMemberTable({
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[12px] text-[#78716C]">2s留存</span>
+                      <span className="text-[12px] text-[#78716C]">2s跳出</span>
                       <span className="text-[12px] tabular-nums text-[#1F1E1D]">
                         {member.avgBounce2s != null ? (
                           formatPercent(member.avgBounce2s)
@@ -238,7 +238,7 @@ export function PulseMemberTable({
                       {renderSortHeader("totalPlay", "合计播放")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {renderSortHeader("avgBounce2s", "平均2s留存")}
+                      {renderSortHeader("avgBounce2s", "平均2s跳出")}
                     </TableHead>
                     <TableHead className="text-right">
                       {renderSortHeader("avgCompletion5s", "平均5s完播")}

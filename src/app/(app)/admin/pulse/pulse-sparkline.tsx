@@ -13,19 +13,28 @@ export function PulseSparkline({ series }: PulseSparklineProps) {
   }
 
   const count = series.length;
-  const plays = series.map((p) => p.totalPlay ?? 0);
-  const min = Math.min(...plays);
-  const max = Math.max(...plays);
+  const plays = series.flatMap((p) => p.totalPlay === null ? [] : [p.totalPlay]);
+  const min = plays.length ? Math.min(...plays) : 0;
+  const max = plays.length ? Math.max(...plays) : 0;
   const isFlat = max === min;
 
   const pointsData = series.map((p, i) => {
+    if (p.totalPlay === null) return null;
     const x = count > 1 ? (i / (count - 1)) * 296 + 2 : 150;
-    const playVal = p.totalPlay ?? 0;
-    const y = isFlat ? 32 : 60 - ((playVal - min) / (max - min || 1)) * 52 + 6;
-    return { x, y, point: p };
+    const y = isFlat ? 32 : 60 - ((p.totalPlay - min) / (max - min)) * 52;
+    return { x, y };
   });
 
-  const pointsString = pointsData.map((d) => `${d.x.toFixed(2)},${d.y.toFixed(2)}`).join(" ");
+  const segments: Array<Array<{ x: number; y: number }>> = [];
+  let current: Array<{ x: number; y: number }> = [];
+  for (const point of pointsData) {
+    if (point) current.push(point);
+    else if (current.length) {
+      segments.push(current);
+      current = [];
+    }
+  }
+  if (current.length) segments.push(current);
   const lastPoint = pointsData[pointsData.length - 1];
   const rectWidth = 300 / count;
 
@@ -36,14 +45,19 @@ export function PulseSparkline({ series }: PulseSparklineProps) {
         className="h-full w-full"
         preserveAspectRatio="none"
       >
-        <polyline
-          points={pointsString}
-          fill="none"
-          stroke="#43718E"
-          strokeWidth="1.5"
-          vectorEffect="non-scaling-stroke"
-        />
-        {lastPoint && (
+        {segments.map((segment) => segment.length === 1 ? (
+          <circle key={segment[0].x} cx={segment[0].x} cy={segment[0].y} r="2.5" fill="#43718E" />
+        ) : (
+          <polyline
+            key={segment[0].x}
+            points={segment.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ")}
+            fill="none"
+            stroke="#43718E"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+        {lastPoint && segments.at(-1)!.length > 1 && (
           <circle
             cx={lastPoint.x}
             cy={lastPoint.y}
