@@ -11,6 +11,7 @@ import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
 import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
 import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
+import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { measureAsync } from "@/lib/perf";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type {
@@ -103,6 +104,9 @@ export async function CollaborationDataContainer({
       includeWriterCertifications: true,
       workGroupTeamIds,
     }));
+  // 评价标准不放进 60 秒原始数据缓存；当前请求按可信公司范围读取后再计算。
+  const evaluationStandardsPromise = readEvaluationStandards(context.scope.teamId);
+  const evaluationStandards = await evaluationStandardsPromise;
   const writerCandidatesPromise = isOwnerOrTeamAdmin
     ? loadWriterCandidates({
         supabase,
@@ -128,6 +132,7 @@ export async function CollaborationDataContainer({
       dataset.writerCertifications,
       dataset.videoSnapshots,
       dataset.videoTopicTags,
+      evaluationStandards,
     ) as StaffRow[];
     const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts, [], dataset.videoSnapshots) as StaffRow[];
     writerStaff = restrictUserId ? writerList.filter((r) => r.userId === restrictUserId) : writerList;
@@ -146,13 +151,13 @@ export async function CollaborationDataContainer({
         writerQuality: {
           state: qualityTopics.state,
           summary: qualityTopics.state === "ready"
-            ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics)
+            ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics, evaluationStandards)
             : null,
         },
       };
     });
 
-    workGroupViews = buildWorkGroupViews(dataset);
+    workGroupViews = buildWorkGroupViews(dataset, evaluationStandards);
     workGroupRawGroups = dataset.workGroups?.groups ?? [];
     workGroupRoster = dataset.workGroups?.roster ?? [];
   } catch {
@@ -172,6 +177,7 @@ export async function CollaborationDataContainer({
       workGroupRoster={workGroupRoster}
       canManageWorkGroups={canManageWorkGroups}
       actorTeamId={context.scope.teamId}
+      evaluationStandards={evaluationStandards}
       summary={summary}
       operators={operators}
       talents={talents}

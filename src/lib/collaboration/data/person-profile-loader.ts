@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isWorkGroupSchemaMissing, loadWorkGroupDirectory } from "@/lib/work-groups";
@@ -148,6 +149,7 @@ export async function loadPersonProfileData(input: {
   visibleUserIds: string[];
   targetUserId: string;
   today: string;
+  evaluationStandards?: EvaluationStandards;
 }): Promise<PersonProfileData | null> {
   const { supabase, visibleUserIds, targetUserId, today } = input;
   const [profile, ownAccountsResult] = await Promise.all([
@@ -226,6 +228,7 @@ export async function loadPersonProfileData(input: {
     topics,
     subjects,
     anomalies,
+    evaluationStandards: input.evaluationStandards,
   });
   const monthWorks = works.filter(
     (work) => work.workDate >= currentRange.start && work.workDate <= currentRange.end,

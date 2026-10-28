@@ -1,6 +1,7 @@
 import { favoriteRate, followerConversionRate, interactionRate, likeRate } from "@/lib/video-metrics";
-import { BREAKOUT_TARGETS, breakoutRating, overallBreakoutGrade } from "@/lib/breakout-rating";
+import { breakoutRating, breakoutTargetsFor, overallBreakoutGrade } from "@/lib/breakout-rating";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type {
   CollaborationAccount,
   CollaborationProfile,
@@ -34,7 +35,7 @@ import {
 
 function mapGrowthWorks(
   rows: CollaborationReport[],
-  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots" | "qualityTopics">,
+  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots" | "qualityTopics" | "evaluationStandards">,
 ): PersonGrowthWorkItem[] {
   const accountsById = accountMap(input.accounts);
 
@@ -64,7 +65,7 @@ function mapGrowthWorks(
         likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
         favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
         contentQuality: input.qualityTopics
-          ? buildWorkContentQuality(row, snapshot, input.qualityTopics)
+          ? buildWorkContentQuality(row, snapshot, input.qualityTopics, input.evaluationStandards)
           : undefined,
       };
     })
@@ -187,6 +188,7 @@ export function buildPersonPayload(input: {
    */
   recordRows?: CollaborationReport[];
   qualityTopics?: ContentQualityTopicContext;
+  evaluationStandards?: EvaluationStandards;
   today?: string;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
@@ -216,6 +218,7 @@ export function buildPersonPayload(input: {
           snapshots: input.growthSnapshots,
           today: growthToday,
           qualityTopics: input.growthRole === "writers" ? input.qualityTopics : undefined,
+          evaluationStandards: input.evaluationStandards,
         })
       : { works: [] as PersonGrowthWorkItem[], summary: null };
 
@@ -244,6 +247,7 @@ export function buildPersonPayload(input: {
         accounts: input.accounts,
         snapshots: input.currentSnapshots ?? input.growthSnapshots ?? new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
         topics: input.qualityTopics,
+        evaluationStandards: input.evaluationStandards,
       })
     : undefined;
 
@@ -281,8 +285,11 @@ export function buildPersonPayload(input: {
               follower_gain: snapshot.followerGain,
             })
           : null;
-        // 转粉率标准线与全站同源（BREAKOUT_TARGETS 里两套话题通用），禁止在明细里另写数值。
-        const followerRating = breakoutRating(followerRate, BREAKOUT_TARGETS.review.follower);
+        // 转粉率标准线与内容评级同源，禁止在明细里另写数值。
+        const followerRating = breakoutRating(
+          followerRate,
+          breakoutTargetsFor("review", input.evaluationStandards).follower,
+        );
         // 综合评级与文案同构：转粉 + 涨粉两项取综合。涨粉率算法未接入，第二项暂传 null，
         // 故播放达标时综合为 null（页面显示「待接入」），播放达标线以下直接判劣。
         // 播放前置只认平台快照播放量：为空/非法一律不出评级（与内容质量 invalid_play 同义），

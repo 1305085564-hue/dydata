@@ -22,6 +22,7 @@ import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatShanghaiDateOnly, isUuidLike } from "@/lib/loaders/shared";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
+import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { CopyProfileLinkButton } from "./copy-profile-link-button";
 
 export const dynamic = "force-dynamic";
@@ -165,7 +166,10 @@ export default async function PersonProfilePage({
   // 数据管理只读模块同款内部管理通道：登录身份受数据库"只能看自己"的行级权限限制，
   // 跨成员读数必须走管理通道（个人档案抽屉同款）；可见范围仍由 resolveCollaborationScope + visibleUserIds 门禁唯一判定。
   const supabase = createAdminClient();
-  const { visibleUserIds } = await resolveCollaborationScope(supabase, context.scope);
+  const [{ visibleUserIds }, evaluationStandards] = await Promise.all([
+    resolveCollaborationScope(supabase, context.scope),
+    readEvaluationStandards(context.scope.teamId),
+  ]);
   if (!visibleUserIds.includes(userId)) {
     return (
       <NoticeCard
@@ -180,6 +184,7 @@ export default async function PersonProfilePage({
     visibleUserIds,
     targetUserId: userId,
     today: formatShanghaiDateOnly(),
+    evaluationStandards,
   });
   if (!data) {
     return <NoticeCard title="成员不存在" description="找不到这位成员的成长档案。" />;

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  BREAKOUT_TARGETS,
+  breakoutTargetsFor,
   BREAKOUT_GRADE_THRESHOLDS,
   KPI_PLAY_FLOOR,
   KPI_PLAY_GOOD,
@@ -16,6 +16,7 @@ import {
   MAX_PULL_GRADES,
   BREAKOUT_GRADE_TEXT_CLASS,
 } from "@/lib/breakout-rating";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import { cn } from "@/lib/utils";
 
 function formatPercentRate(rate: number): string {
@@ -30,17 +31,25 @@ function formatPlayWan(count: number): string {
 
 export interface RatingRulesContentProps {
   className?: string;
+  evaluationStandards?: EvaluationStandards;
 }
 
-export function RatingRulesContent({ className }: RatingRulesContentProps) {
-  // 从单一真源动态派生，杜绝硬编码
-  const dryTargets = BREAKOUT_TARGETS.dry_goods;
-  const interactionTargetStr = formatPercentRate(dryTargets.interaction);
-  const fourthTargetStr = formatPercentRate(dryTargets.fourth);
-  const followerTargetStr = formatPercentRate(dryTargets.follower);
+export function RatingRulesContent({
+  className,
+  evaluationStandards,
+}: RatingRulesContentProps) {
+  const dryTargets = breakoutTargetsFor("dry_goods", evaluationStandards);
+  const reviewTargets = breakoutTargetsFor("review", evaluationStandards);
+  const interactionTargetStr = formatPercentRate(reviewTargets.interaction);
+  const dryFourthTargetStr = formatPercentRate(dryTargets.fourth);
+  const reviewFourthTargetStr = formatPercentRate(reviewTargets.fourth);
+  const followerTargetStr = formatPercentRate(reviewTargets.follower);
 
-  const goodTargetFourthStr = formatPercentRate(
+  const goodTargetDryFourthStr = formatPercentRate(
     dryTargets.fourth * (BREAKOUT_GRADE_THRESHOLDS.good / 100)
+  );
+  const goodTargetReviewFourthStr = formatPercentRate(
+    reviewTargets.fourth * (BREAKOUT_GRADE_THRESHOLDS.good / 100)
   );
 
   const pullGradeText = MAX_PULL_GRADES === 1 ? "一档" : `${MAX_PULL_GRADES} 档`;
@@ -73,7 +82,8 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
                 <tr className="border-b border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]">
                   <th className="py-2 px-3 font-normal w-[120px]">看什么</th>
                   <th className="py-2 px-3 font-normal">怎么算</th>
-                  <th className="py-2 px-3 font-normal text-right w-[80px]">达标线</th>
+                  <th className="py-2 px-3 font-normal text-right">复盘达标线</th>
+                  <th className="py-2 px-3 font-normal text-right">干货达标线</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E2DF]/60 text-[#1F1E1D]">
@@ -83,17 +93,26 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
                   <td className="py-2.5 px-3 text-right font-normal tabular-nums">
                     {interactionTargetStr}
                   </td>
+                  <td className="py-2.5 px-3 text-right font-normal tabular-nums">
+                    {interactionTargetStr}
+                  </td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-3 font-normal">点赞率 / 收藏率</td>
                   <td className="py-2.5 px-3">复盘看点赞率，干货看收藏率，都是 ÷ 播放量</td>
                   <td className="py-2.5 px-3 text-right font-normal tabular-nums">
-                    {fourthTargetStr}
+                    {reviewFourthTargetStr}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-normal tabular-nums">
+                    {dryFourthTargetStr}
                   </td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-3 font-normal">转粉率</td>
                   <td className="py-2.5 px-3">涨粉 ÷ 播放量</td>
+                  <td className="py-2.5 px-3 text-right font-normal tabular-nums">
+                    {followerTargetStr}
+                  </td>
                   <td className="py-2.5 px-3 text-right font-normal tabular-nums">
                     {followerTargetStr}
                   </td>
@@ -148,7 +167,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
             </table>
           </div>
           <p className="text-[14px] text-[#1F1E1D] leading-[1.6]">
-            达标线 {fourthTargetStr}，你做到 {fourthTargetStr} 是优；做到 {goodTargetFourthStr}（正好 {BREAKOUT_GRADE_THRESHOLDS.good}%）是良。三个指标各给一个标签，互不影响。
+            复盘点赞率达标线 {reviewFourthTargetStr}，干货收藏率达标线 {dryFourthTargetStr}。达到各自标准为优，达到各自标准的 {BREAKOUT_GRADE_THRESHOLDS.good}% 为良（复盘 {goodTargetReviewFourthStr}，干货 {goodTargetDryFourthStr}）。互动率和转粉率也按各自标准线计算。三个指标各给一个标签，互不影响。
           </p>
           <p className="text-[12px] text-[#78716C]">
             话题还没识别的作品，暂时不出评级。
@@ -252,7 +271,7 @@ export function RatingRulesContent({ className }: RatingRulesContentProps) {
           <ol className="list-decimal list-outside pl-5 space-y-1.5 text-[14px] text-[#1F1E1D]">
             <li>播放量 ≥ {formatPlayWan(KPI_PLAY_EXCELLENT)}</li>
             <li>互动率 ≥ {interactionTargetStr}</li>
-            <li>点赞率或收藏率 ≥ {fourthTargetStr}</li>
+            <li>复盘点赞率 ≥ {reviewFourthTargetStr}；干货收藏率 ≥ {dryFourthTargetStr}</li>
           </ol>
           <p className="text-[12px] text-[#78716C] pt-1">
             三条全中才是优，任何一条差一点就往下掉一档。
@@ -267,19 +286,21 @@ export interface RatingRulesDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactElement;
+  evaluationStandards?: EvaluationStandards;
 }
 
 export function RatingRulesDialog({
   open,
   onOpenChange,
   trigger,
+  evaluationStandards,
 }: RatingRulesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <DialogTrigger render={trigger} /> : null}
       <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[88vh] flex flex-col p-5 sm:p-7 gap-0">
         <DialogTitle className="sr-only">作品评级怎么看</DialogTitle>
-        <RatingRulesContent />
+        <RatingRulesContent evaluationStandards={evaluationStandards} />
       </DialogContent>
     </Dialog>
   );

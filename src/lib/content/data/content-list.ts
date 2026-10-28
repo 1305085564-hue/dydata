@@ -1,6 +1,7 @@
+import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { useMemo } from "react";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
-import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { buildReviewQueue, buildSnapshotMap, type VideoRow } from "@/lib/review-queue";
 import { filterContentVideos, type ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
 import { isHighlightRuleMapEmpty, rowMatchesAllHighlightRules } from "@/lib/content/domain/content-list-highlight";
@@ -15,6 +16,7 @@ export function buildProcessedContentRows({
   playCountById,
   snapshotMap,
   contentQualityByVideoId,
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   sortField,
   sortDir,
   serverPaginated = false,
@@ -24,6 +26,7 @@ export function buildProcessedContentRows({
   playCountById: Map<string, number | null>;
   snapshotMap: Map<string, VideoMetricsSnapshot>;
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
+  evaluationStandards?: EvaluationStandards;
   sortField: SortField;
   sortDir: "asc" | "desc";
   serverPaginated?: boolean;
@@ -46,7 +49,7 @@ export function buildProcessedContentRows({
           : null;
       const publishedTime = video.published_at ? new Date(video.published_at).getTime() || 0 : 0;
       // 样本不足：播放量低于指标颜色显示门槛时，比率类指标是噪音
-      const lowSample = playCount != null && playCount < VIDEO_REVIEW_COLOR_MIN_PLAY;
+      const lowSample = playCount != null && playCount < evaluationStandards.minPlayCount;
 
       const quality = contentQualityByVideoId?.[video.id] ?? null;
       const isDryGoods = quality?.topicKind === "dry_goods" || quality?.coreMetric === "favoriteRate";
@@ -202,6 +205,7 @@ export function useContentListData({
   snapshots,
   reviewReadiness,
   contentQualityByVideoId,
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   filters,
   sortField,
   sortDir,
@@ -212,6 +216,7 @@ export function useContentListData({
   snapshots: VideoMetricsSnapshot[];
   reviewReadiness: Record<string, ContentReviewReadiness>;
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
+  evaluationStandards?: EvaluationStandards;
   filters: ContentListFilterValue;
   sortField: SortField;
   sortDir: "asc" | "desc";
@@ -247,13 +252,14 @@ export function useContentListData({
       playCountById,
       snapshotMap,
       contentQualityByVideoId,
+      evaluationStandards,
       sortField,
       sortDir,
       serverPaginated,
     });
     // 单日：整页数据都在手上，服务端排序键不来自 URL 时由前端补一次真实排序
     return clientSort ? [...rows].sort((a, b) => compareContentRows(a, b, sortField, sortDir)) : rows;
-  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir, serverPaginated, clientSort]);
+  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir, serverPaginated, clientSort, evaluationStandards]);
 
   return { processedRows };
 }

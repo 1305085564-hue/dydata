@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, Flame, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -33,6 +35,7 @@ import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
 
 export interface ContentDetailDialogProps {
+  evaluationStandards?: EvaluationStandards;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   video: VideoRow | null;
@@ -87,6 +90,7 @@ export function ContentDetailDialog({
   currentIndex = -1,
   totalCount = 0,
   onStepVideo,
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentDetailDialogProps) {
   const {
     isOperating,
@@ -237,7 +241,7 @@ export function ContentDetailDialog({
 
   // 爆款评级：三项各自独立，实际值 ÷ 该话题标准线（干货看收藏率，复盘及其他看点赞率）
   // 话题未识别时标准线无从选择（第四格指标本身不同：收藏率 vs 点赞率），整体不出评级
-  const breakoutTargets = hasTopicKind ? breakoutTargetsFor(topicKind) : null;
+  const breakoutTargets = hasTopicKind ? breakoutTargetsFor(topicKind, evaluationStandards) : null;
   const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
   const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
   const fourthRating = breakoutTargets ? breakoutRating(fourthSlotValue, breakoutTargets.fourth) : null;
@@ -477,6 +481,7 @@ export function ContentDetailDialog({
           {video ? (
             <>
               <ContentDetailMetrics
+                evaluationStandards={evaluationStandards}
                 video={video}
                 snapshot={snapshot}
                 canPurge={canPurge}

@@ -1,9 +1,11 @@
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContentListCursor, ContentListQuery } from "@/lib/content/domain/content-list-query";
 
 /** One read operation: the list RPC and independent member options share a rejection boundary. */
-export async function queryAdminContentRpcPage({ supabase, query, scope, cursor }: {
+export async function queryAdminContentRpcPage({ supabase, query, scope, cursor, evaluationStandards }: {
   supabase: SupabaseClient;
+  evaluationStandards?: EvaluationStandards;
   query: ContentListQuery;
   scope: { visibleUserIds: string[]; activeVisibleUserIds?: string[] };
   cursor: ContentListCursor | null;
@@ -20,6 +22,7 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor 
       p_sort_dir: query.sortDir,
       p_visible_user_ids: scope.visibleUserIds,
       p_filters: {
+        evaluationTargets: evaluationStandards?.targets,
         userId: query.filters.userId,
         accountId: query.filters.accountId,
         keyword: query.filters.keyword,

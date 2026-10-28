@@ -308,6 +308,7 @@ export function ContentPageClient({
           ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
         topicKind={selectedTopicKind}
+        evaluationStandards={selectedLoadedDetail?.evaluationStandards ?? data.evaluationStandards}
         currentIndex={videoPosition.currentIndex}
         totalCount={videoPosition.totalCount}
         onStepVideo={handleStepVideo}
@@ -336,6 +337,7 @@ export function ContentPageClient({
             accountOptions={data.accountOptions}
             reviewReadiness={data.reviewReadiness}
             contentQualityByVideoId={data.contentQualityByVideoId}
+            evaluationStandards={data.evaluationStandards}
             view={view}
             onViewChange={(nextView) => void loadData(nextView, perspective, teamId, { resetPage: true })}
             isViewLoading={isLoading}

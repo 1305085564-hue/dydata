@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
-import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+import { DEFAULT_EVALUATION_STANDARDS, EVALUATION_METRICS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
   HIGHLIGHT_CELL_CLASS,
@@ -41,253 +41,43 @@ function formatPercent(val: number | null | undefined): string {
  *  越界说明上游采集或入库有脏数据：显示时照原值打出并打脏值标记（不掩盖问题），
  *  但排序时必须按无效值处理，否则「点表头找最差」会被一条不可能的 4773% 顶到榜首。 */
 
-/**
- * 比率单元格：脏值（越界）标红 + 虚线下划线 + tooltip 说明；
- * 样本不足（播放量低于复盘达标线）时整格降灰，提示该比率是噪音而非信号；
- * 样本充足时按优质线/预警线着色（优质=红，预警=绿，正常=默认色零着色）。
- */
-function RatioCell({
-  value,
-  lowSample = false,
-  metricType,
-  className = "",
-}: {
+/** 颜色与提示共用公司标准；越界比率优先显示数据异常。 */
+function RatioCell({ value, lowSample = false, metricType, achievement, className = "", standards = DEFAULT_EVALUATION_STANDARDS }: {
   value: number | null | undefined;
   lowSample?: boolean;
-  metricType?: "bounce_rate_2s" | "completion_rate_5s" | "completion_rate";
+  metricType?: "bounce_rate_2s" | "completion_rate_5s" | "completion_rate" | "avg_play_duration";
+  achievement?: number | null;
   className?: string;
+  standards?: EvaluationStandards;
 }) {
-  const dirty = isImpossibleRatio(value);
-  const text = formatPercent(value);
-
-  // 优先级 1：脏值标红
+  const duration = metricType === "avg_play_duration";
+  const dirty = !duration && isImpossibleRatio(value);
+  const metric: EvaluationMetric | undefined = metricType === "bounce_rate_2s" ? "bounceRate2s"
+    : metricType === "completion_rate_5s" ? "completionRate5s"
+    : metricType === "completion_rate" ? "completionRate"
+    : duration ? "avgPlayDuration" : achievement != null ? "interactionAchievement" : undefined;
+  const tone = metric ? evaluationTone(metric, metric === "interactionAchievement" ? achievement : value, undefined, standards) : "normal";
+  const text = duration ? (value == null ? "—" : `${value.toFixed(1)}s`) : formatPercent(value);
+  let title: string | undefined;
+  let color = "";
   if (dirty) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger render={
-            <span
-              className={`text-status-danger font-normal underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
-            >
-              {text}
-            </span>
-          } />
-          <TooltipContent>{describeImpossibleRatio()}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
+    color = "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2";
+    title = describeImpossibleRatio();
+  } else if (lowSample) {
+    color = "text-[#A8A29E]";
+    title = `播放量不足 ${standards.minPlayCount.toLocaleString("zh-CN")}，样本不足，仅供参考`;
+  } else if (metric && tone !== "normal") {
+    color = tone === "good" ? "text-status-danger" : "text-status-success";
+    const meta = EVALUATION_METRICS.find(({ key }) => key === metric)!;
+    const operator = metric === "bounceRate2s" ? (tone === "good" ? "≤" : ">") : (tone === "good" ? "≥" : "≤");
+    title = `${meta.label} ${operator}${standards[metric][tone]}${meta.unit} ${tone === "good" ? "表现优质" : "需要关注"}`;
   }
-
-  // 优先级 2：样本不足降灰
-  if (lowSample) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger render={
-            <span className={`text-[#A8A29E] cursor-help ${className}`}>
-              {text}
-            </span>
-          } />
-          <TooltipContent>
-            播放量不足 {VIDEO_REVIEW_COLOR_MIN_PLAY.toLocaleString("zh-CN")}，样本不足，仅供参考
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  // 优先级 3：样本充足时按优质线/预警线着色
-  if (metricType && value !== null && value !== undefined) {
-    const { excellent, poor } = VIDEO_REVIEW_RULE_THRESHOLDS;
-
-    // 2秒跳出率方向相反：越低越好
-    if (metricType === "bounce_rate_2s") {
-      if (value <= excellent.bounce_rate_2s) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-danger cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                2秒跳出率 ≤{excellent.bounce_rate_2s}% 表现优质
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      if (value > poor.bounce_rate_2s) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                2秒跳出率 &gt;{poor.bounce_rate_2s}% 需要关注
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-    }
-
-    // 5秒完播率、完播率：越高越好
-    if (metricType === "completion_rate_5s") {
-      if (value >= excellent.completion_rate_5s) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-danger cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                5秒完播率 ≥{excellent.completion_rate_5s}% 表现优质
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      if (value <= poor.completion_rate_5s) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                5秒完播率 ≤{poor.completion_rate_5s}% 需要关注
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-    }
-
-    if (metricType === "completion_rate") {
-      if (value >= excellent.completion_rate) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-danger cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                完播率 ≥{excellent.completion_rate}% 表现优质
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      if (value <= poor.completion_rate) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={
-                <span className={`text-status-success cursor-help ${className}`}>
-                  {text}
-                </span>
-              } />
-              <TooltipContent>
-                完播率 ≤{poor.completion_rate}% 需要关注
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-    }
-  }
-
-  // 默认：正常范围，零着色
-  return <span className={className}>{text}</span>;
-}
-function formatDuration(val: number | null | undefined): string {
-  if (val === null || val === undefined || isNaN(val)) return "—";
-  return `${val.toFixed(1)}s`;
+  const number = <span className={cn(className, color, title && "cursor-help")}>{text}</span>;
+  return title ? <Tooltip><TooltipTrigger render={number} /><TooltipContent>{title}</TooltipContent></Tooltip> : number;
 }
 
-/**
- * 时长单元格（均播时长）：样本不足时降灰，样本充足时按优质线/预警线着色。
- */
-function DurationCell({
-  value,
-  lowSample = false,
-  className = "",
-}: {
-  value: number | null | undefined;
-  lowSample?: boolean;
-  className?: string;
-}) {
-  const text = formatDuration(value);
-
-  // 优先级 1：样本不足降灰
-  if (lowSample) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger render={
-            <span className={`text-[#A8A29E] cursor-help ${className}`}>
-              {text}
-            </span>
-          } />
-          <TooltipContent>
-            播放量不足 {VIDEO_REVIEW_COLOR_MIN_PLAY.toLocaleString("zh-CN")}，样本不足，仅供参考
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  // 优先级 2：样本充足时按优质线/预警线着色
-  if (value !== null && value !== undefined) {
-    const { excellent, poor } = VIDEO_REVIEW_RULE_THRESHOLDS;
-
-    if (value >= excellent.avg_play_duration) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger render={
-              <span className={`text-status-danger cursor-help ${className}`}>
-                {text}
-              </span>
-            } />
-            <TooltipContent>
-              平均播放时长 ≥{excellent.avg_play_duration}s 表现优质
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-    if (value <= poor.avg_play_duration) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger render={
-              <span className={`text-status-success cursor-help ${className}`}>
-                {text}
-              </span>
-            } />
-            <TooltipContent>
-              平均播放时长 ≤{poor.avg_play_duration}s 需要关注
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-  }
-
-  // 默认：正常范围，零着色
-  return <span className={className}>{text}</span>;
+function DurationCell(props: Omit<React.ComponentProps<typeof RatioCell>, "metricType">) {
+  return <RatioCell {...props} metricType="avg_play_duration" />;
 }
 
 /** 命中高亮的数值包一层淡琥珀 span；未命中保持原样，不改变既有配色冲突面 */
@@ -341,6 +131,7 @@ type ContentListTableProps = {
   isSingleDay: boolean;
   onSelectVideoId: (id: string | null) => void;
   highlightRules: HighlightRuleMap;
+  evaluationStandards?: EvaluationStandards;
 };
 
 export function ContentListTable({
@@ -355,6 +146,7 @@ export function ContentListTable({
   isSingleDay,
   onSelectVideoId,
   highlightRules,
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
   const dynamicColSpan = isSpacious ? 11 : 15;
@@ -446,11 +238,11 @@ export function ContentListTable({
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] text-[#78716C] leading-none mb-1">完播</span>
-                      <RatioCell value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
+                      <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] text-[#78716C] leading-none mb-1">互动率</span>
-                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "interactionRate") && HIGHLIGHT_CELL_CLASS)} />
+                      <RatioCell standards={evaluationStandards} value={item.interactionRate} achievement={item.quality?.interactionAchievement} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "interactionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] text-[#78716C] leading-none mb-1">点赞</span>
@@ -599,23 +391,23 @@ export function ContentListTable({
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
                           <td data-col-key="bounce_rate_2s" className={cn("py-2.5 pl-4 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-surface-row-hover/60")}>
-                            <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell standards={evaluationStandards} value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td data-col-key="completion_rate_5s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-surface-row-hover/60")}>
-                            <RatioCell value={item.completionRate5s} lowSample={item.lowSample} metricType="completion_rate_5s" className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell standards={evaluationStandards} value={item.completionRate5s} lowSample={item.lowSample} metricType="completion_rate_5s" className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
-                            <DurationCell value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <DurationCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}
                           <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-surface-row-hover/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span
-                                className={cn("relative text-[14px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount) || "text-[#1F1E1D]")}
+                                className={cn("relative text-[14px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount, evaluationStandards) || "text-[#1F1E1D]")}
                                 title={`${item.coreMetricTopicText}核心指标`}
                                 aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
                               >
@@ -631,7 +423,7 @@ export function ContentListTable({
 
                           {/* 互动率（排在核心指标后面） */}
                           <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell standards={evaluationStandards} value={item.interactionRate} achievement={item.quality?.interactionAchievement} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}

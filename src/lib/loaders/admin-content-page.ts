@@ -1,3 +1,5 @@
+import { DEFAULT_EVALUATION_STANDARDS, hasCustomEvaluationTargets, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { queryAdminContentRpcPage } from "./admin-content-rpc";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
@@ -51,6 +53,7 @@ const QUERY_CONCURRENCY_LIMIT = 6;
 const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
 
 export interface AdminContentPageData {
+  evaluationStandards?: EvaluationStandards;
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
@@ -77,6 +80,7 @@ export interface AdminContentPageData {
     snapshotRowsRead: number;
     returnedRows: number;
     rpcDurationMs?: number;
+    evaluationStandardsVersion?: number;
   };
   cursors?: { previous: string | null; next: string | null };
 }
@@ -108,6 +112,7 @@ async function loadContentQualityTopicTags(
 }
 
 export interface AdminContentVideoDetail {
+  evaluationStandards?: EvaluationStandards;
   video: VideoRow;
   snapshot: VideoMetricsSnapshot | null;
   reviewReadiness: Record<string, ContentReviewReadiness>;
@@ -421,6 +426,7 @@ async function loadPlayChangeSignals({
 }
 
 export async function loadAdminContentPageData({
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   supabase,
   view = "all",
   perspective = "company",
@@ -429,6 +435,7 @@ export async function loadAdminContentPageData({
   scope,
 }: {
   supabase: LoaderSupabase;
+  evaluationStandards?: EvaluationStandards;
   view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
@@ -513,6 +520,7 @@ export async function loadAdminContentPageData({
       }]),
     ),
     topicTags,
+    evaluationStandards,
   );
   const reviewReadiness = buildReviewReadinessMap({
     videos,
@@ -532,6 +540,7 @@ export async function loadAdminContentPageData({
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
     reviewReadiness,
     contentQualityByVideoId,
+    evaluationStandards,
     availableDates: [...new Set(videosWithSignals.map((v) => getPublishedDateKey(v)).filter((d): d is string => Boolean(d)))].sort((a, b) => b.localeCompare(a)),
     availableCounts: Object.entries(videosWithSignals.reduce<Record<string, number>>((acc, v) => { const d = getPublishedDateKey(v); if (d) acc[d] = (acc[d] ?? 0) + 1; return acc; }, {})).map(([d, c]) => ({ d, c })).sort((a, b) => b.d.localeCompare(a.d)),
     summary: {
@@ -545,11 +554,14 @@ export async function loadAdminContentVideoDetail({
   scope,
   videoId,
   lifecycleState = "active",
+  includeEvaluationStandards = true,
 }: {
   supabase: LoaderSupabase;
   scope: NonNullable<ScopeInput>;
   videoId: string;
   lifecycleState?: "active" | "trashed";
+  /** 截图授权只核对关联证据，不依赖评价标准配置。 */
+  includeEvaluationStandards?: boolean;
 }): Promise<AdminContentVideoDetail | null> {
   const normalizedVideoId = videoId.trim();
   if (!normalizedVideoId) return null;
@@ -606,6 +618,7 @@ export async function loadAdminContentVideoDetail({
     previousCandidateVideos: [video], currentSnapshots: (snapshot ? [snapshot] : []) as PreviousSnapshotRow[] });
 
   return {
+    evaluationStandards: includeEvaluationStandards && scope.teamId ? (await loadEvaluationSettings(supabase, scope.teamId)).standards : DEFAULT_EVALUATION_STANDARDS,
     video: videoWithSignal,
     snapshot,
     topicKind: classifyVideoTopicKind(topicTag),
@@ -642,11 +655,13 @@ type AdminContentRpcPage = {
 };
 
 async function loadAdminContentRpcPageData({
+  evaluationStandards,
   supabase,
   query,
   scope,
 }: {
   supabase: LoaderSupabase;
+  evaluationStandards: EvaluationStandards;
   query: ContentListQuery;
   scope: NonNullable<ScopeInput>;
 }): Promise<AdminContentPageData> {
@@ -656,15 +671,18 @@ async function loadAdminContentRpcPageData({
 
   const effectiveQuery = bindContentListQueryToEffectiveScope(query, scope.teamId);
   const cursor = decodeContentCursor(effectiveQuery.cursor);
-  const queryFingerprint = buildContentQueryFingerprint(effectiveQuery);
+  const queryFingerprint = JSON.stringify([buildContentQueryFingerprint(effectiveQuery), evaluationStandards.targets]);
   if (effectiveQuery.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
     throw new Error("CONTENT_LIST_CURSOR_STALE");
   }
   const { result, profilesResult, rpcDurationMs } = await queryAdminContentRpcPage({
-    supabase, query: effectiveQuery, scope, cursor,
+    supabase, query: effectiveQuery, scope, cursor, evaluationStandards,
   });
   assertSupabaseQuerySucceeded(result.error, "加载内容分页失败");
   const payload = (result.data ?? {}) as AdminContentRpcPage;
+  if (hasCustomEvaluationTargets(evaluationStandards) && payload.diagnostics?.evaluationStandardsVersion !== 1) {
+    throw new Error("评价标准与列表筛选版本不一致，请联系负责人");
+  }
   if (effectiveQuery.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
   const rawVideos = (payload.videos ?? []) as Array<RawVideoRow & { has_content?: boolean }>;
   const videos = normalizeVideoRows(rawVideos);
@@ -690,6 +708,7 @@ async function loadAdminContentRpcPageData({
       favorites: snapshot.favorites,
     }])),
     { state: "ready", tags: topicTags },
+    evaluationStandards,
   );
   const reviewReadiness = buildReviewReadinessMap({
     videos,
@@ -716,6 +735,7 @@ async function loadAdminContentRpcPageData({
     accountOptions: payload.accountOptions ?? [],
     reviewReadiness,
     contentQualityByVideoId,
+    evaluationStandards,
     summary,
     availableDates: payload.availableDates ?? [],
     availableCounts: payload.availableCounts ?? [],
@@ -754,11 +774,14 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
         })
       : null);
 
+  const evaluationStandards = resolvedScope?.teamId
+    ? (await loadEvaluationSettings(args.supabase, resolvedScope.teamId)).standards
+    : DEFAULT_EVALUATION_STANDARDS;
   const effectiveQuery = args.query && resolvedScope
     ? bindContentListQueryToEffectiveScope(args.query, resolvedScope.teamId)
     : args.query;
   const payload = resolvedScope && effectiveQuery
-    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: effectiveQuery, scope: resolvedScope })
+    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: effectiveQuery, scope: resolvedScope, evaluationStandards })
     : await loadAdminContentPageData({
         supabase: args.supabase,
         view: args.view,
@@ -766,6 +789,7 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
         teamId: args.teamId,
         permissionInfo: args.permissionInfo,
         scope: resolvedScope,
+        evaluationStandards,
       });
   return payload;
 }

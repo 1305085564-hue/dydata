@@ -1,3 +1,4 @@
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
@@ -6,6 +7,7 @@ import type { VideoRow } from "@/lib/review-queue";
 import { isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
 
 export interface ContentListProps {
+  evaluationStandards?: EvaluationStandards;
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: Array<{ id: string; name: string }>;

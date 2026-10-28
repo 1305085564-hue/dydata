@@ -1,4 +1,6 @@
 import type { DataAccessScope } from "@/lib/data-access-scope";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { buildWorkContentQualityFromMetrics, type ContentQualityTopicContext } from "@/lib/content-quality";
 import { fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { computeInternalMetrics } from "../metrics";
@@ -15,7 +17,7 @@ export async function loadSubTopicWorks(
   scope: DataAccessScope,
   options: { sort: TopicWorkSort; page: number; pageSize: number },
   preloadedSubTopic?: { topic_id: string | null; group_id: string | null; library_status: string | null },
-  options2?: { includeSimilar?: boolean },
+  options2?: { includeSimilar?: boolean; evaluationStandards?: EvaluationStandards },
 ): Promise<ApiResult<unknown>> {
   const includeSimilar = options2?.includeSimilar ?? true;
   const from = (options.page - 1) * options.pageSize;
@@ -126,6 +128,9 @@ export async function loadSubTopicWorks(
   const qualityTopics: ContentQualityTopicContext = qualityTagError
     ? { state: "error", tags: new Map() } // gate:transient-map 函数内临时结果，随调用栈释放
     : { state: "ready", tags: qualityTags };
+  const evaluationStandards = workIds.length
+    ? options2?.evaluationStandards ?? await readEvaluationStandards(scope.teamId)
+    : undefined;
 
   const withAuthorName = (row: Record<string, unknown>) => {
     const profileName = (row.profiles as { name?: unknown } | null)?.name;
@@ -138,6 +143,7 @@ export async function loadSubTopicWorks(
       contentQuality: buildWorkContentQualityFromMetrics(
         { videoId, snapshot },
         qualityTopics,
+        evaluationStandards,
       ),
     };
   };

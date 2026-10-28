@@ -10,7 +10,8 @@ export function prefetchPerson(
   year: number,
   month: number,
   role?: TabKey,
+  evaluationStandardsKey?: string,
 ) {
   preloadPersonalCardChunk();
-  prefetchPersonData(id, year, month, role);
+  prefetchPersonData(id, year, month, role, evaluationStandardsKey);
 }

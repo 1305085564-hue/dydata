@@ -16,6 +16,7 @@ import {
   hasKnownTopicKind,
   overallBreakoutGrade,
 } from "./breakout-rating";
+import { DEFAULT_EVALUATION_STANDARDS } from "./evaluation-standards";
 
 test("标准线：干货与复盘阈值数值一致（互动率 3.5%、第四格 2%、转粉率 1%）", () => {
   assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.035);
@@ -32,6 +33,34 @@ test("标准线选取：干货走干货，复盘与无标签同走复盘", () =>
   assert.equal(breakoutTargetsFor("other").interaction, 0.035);
   assert.equal(breakoutTargetsFor(null).interaction, 0.035);
   assert.equal(breakoutTargetsFor(undefined).interaction, 0.035);
+});
+
+test("公司标准覆盖话题达标基准，其他播放与评级档位维持原口径", () => {
+  const standards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    targets: {
+      reviewLikeRate: 4,
+      dryFavoriteRate: 6,
+      interactionRate: 5,
+      followerRate: 2,
+    },
+  };
+
+  assert.deepEqual(breakoutTargetsFor("dry_goods", standards), {
+    interaction: 0.05,
+    fourth: 0.06,
+    follower: 0.02,
+  });
+  assert.deepEqual(breakoutTargetsFor("other", standards), {
+    interaction: 0.05,
+    fourth: 0.04,
+    follower: 0.02,
+  });
+  assert.equal(KPI_PLAY_FLOOR, 5000);
+  assert.equal(KPI_PLAY_GOOD, 15000);
+  assert.equal(KPI_PLAY_EXCELLENT, 15000);
+  assert.equal(breakoutGrade(100), "优");
+  assert.equal(breakoutGrade(80), "良");
 });
 
 test("话题是否已识别：三种已知分类为真，null/undefined 为假（不得静默按复盘出数）", () => {
