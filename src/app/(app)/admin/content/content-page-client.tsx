@@ -267,10 +267,11 @@ export function ContentPageClient({
     const selectedDetail = selectedLoadedDetail ?? null;
     const selectedVideo = selectedDetail?.video ?? (directVideoDetail?.video.id === selectedVideoId ? directVideoDetail.video : null);
     const selectedSnapshot = selectedDetail?.snapshot ?? null;
-    // 话题分类优先取当前视频的入库状态；深链详情只对「同一个视频」有效，
-    // 否则从 URL 打开 A 后再点 B，B 会继承 A 的话题分类（第四格与评级口径都会错）
+    // 详情已返回当前作品的真实分类，优先使用，避免入库状态未加载时丢失第四格与评级。
+    // 深链回退仍限定同一个视频，避免切换作品时串用分类。
     const selectedTopicKind = selectedVideo
-      ? topicLibraryStatuses[selectedVideo.id]?.topicKind
+      ? selectedDetail?.topicKind
+        ?? topicLibraryStatuses[selectedVideo.id]?.topicKind
         ?? (directVideoDetail?.video.id === selectedVideo.id ? directVideoDetail.topicKind : null)
       : null;
     diagnosisDrawerNode = detailError?.videoId === selectedVideoId ? (

@@ -28,6 +28,19 @@ test("详情读取失败时明确报错并提供重试，不以列表行代替�
   assert.doesNotMatch(source, /selectedVideo\s*\?\?\s*reviewVideos/);
 });
 
+test("从列表打开详情时使用已加载详情的话题分类，不依赖选题库状态权限", () => {
+  const source = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
+    "utf8",
+  );
+
+  // 详情接口已返回真实分类；漏接这个字段会使普通列表点击丢失第四格和三个评级。
+  assert.match(source, /const selectedTopicKind = selectedVideo\s*\? selectedDetail\?\.topicKind\s*\?\?/);
+  assert.match(source, /topicKind=\{selectedTopicKind\}/);
+  // URL 直达的旧详情必须继续限定同一作品，防止切换作品后串用分类。
+  assert.match(source, /directVideoDetail\?\.video\.id === selectedVideo\.id/);
+});
+
 test("服务端范围中的负责人团队参与内容页团队视角解析", () => {
   const source = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/content/content-data-container.tsx"),
