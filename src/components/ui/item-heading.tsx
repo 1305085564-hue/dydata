@@ -13,7 +13,7 @@ interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
   as?: HeadingTag
   /**
    * 墨度降级：零产出、已失效等条目改用辅助墨（#78716C）。
-   * 字号/字重不变——降级只降墨度，不降身份（设计规范 §2.2）。
+   * 字号/字重不变——降级只降墨度，不降身份（《视觉与数值手册》§2.2）。
    */
   muted?: boolean
   /** 仅 as="button" 时生效，默认 "button"，避免落入表单内误提交。 */
@@ -22,7 +22,7 @@ interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
 
 /**
  * 条目定名：列表行名、卡片名、表单段落标题。它统领的只有自己。
- * 14px / #141413 定名墨 / Sans（设计规范 §1.1）。
+ * 14px / #141413 定名墨 / Sans（《视觉与数值手册》§1.1）。
  */
 function ItemHeading({
   as: Tag = "h4",

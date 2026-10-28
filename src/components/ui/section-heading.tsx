@@ -14,7 +14,8 @@ interface SectionHeadingProps
 
 /**
  * 章节定名：一个区域、一个抽屉、一个弹窗在讲什么。
- * 20px / 500 / #141413 / Sans（设计规范 §1.1）。
+ * 20px / 400 / #141413 / Sans（《视觉与数值手册》§1.1）。
+ * 注意：全站字重仅 400，中档字重在基线环境不存在（《Claude设计哲学》定律3）。
  */
 function SectionHeading({
   as: Tag = "h3",

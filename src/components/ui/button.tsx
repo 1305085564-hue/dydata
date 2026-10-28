@@ -107,5 +107,5 @@ function Button({
 
 export { Button, buttonVariants }
 
-/* [Claude 设计规范] S(24px) / M(28px) / L(40px) 三档高度体系，双星行动（陶土橙主 + 浅砂副），微压感 active:scale-[0.99]，原生防跳宽 loading 支持 */
+/* [Claude 设计契约] S(24px) / M(28px) / L(40px) 三档高度体系，双星行动（陶土橙主 + 浅砂副），微压感 active:scale-[0.99]，原生防跳宽 loading 支持 */
 

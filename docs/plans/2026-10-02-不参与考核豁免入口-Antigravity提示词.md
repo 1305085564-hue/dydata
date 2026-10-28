@@ -4,7 +4,7 @@
 
 - AGENTS.md
 - docs/系统架构与设计/Claude设计哲学.md
-- docs/系统架构与设计/Claude设计规范.md
+- docs/系统架构与设计/视觉与数值手册.md
 - docs/plans/2026-10-02-不参与考核豁免入口-执行计划.md
 
 ## 目标
