@@ -289,7 +289,7 @@ export function TalentTab({
               tabIndex={0}
               role="button"
               aria-label={`查看${row.name}的个人档案`}
-              className="group border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
+              className="group border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer"
               onClick={() => onSelectPerson(row.userId)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

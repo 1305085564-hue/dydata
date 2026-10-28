@@ -194,15 +194,20 @@ export function MobileTabBar({
               className={cn(
                 "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
                 active
-                  ? "text-[#D97757]"
+                  ? "text-[#141413]"
                   : "text-[#78716C] hover:text-[#141413]",
               )}
             >
-              <div className="relative">
+              <div
+                className={cn(
+                  "relative -m-1 rounded-md p-1 transition-colors duration-150",
+                  active && "bg-[#F1F1F0]",
+                )}
+              >
                 <Icon
                   className={cn(
                     "transition-colors duration-150",
-                    active ? "text-[#D97757]" : "text-[#78716C]",
+                    active ? "text-[#141413]" : "text-[#78716C]",
                   )}
                 />
               </div>
@@ -210,7 +215,7 @@ export function MobileTabBar({
                 className={cn(
                   "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
                   active
-                    ? "font-normal text-[#D97757]"
+                    ? "font-normal text-[#141413]"
                     : "font-normal text-[#78716C]",
                 )}
               >
@@ -231,16 +236,21 @@ export function MobileTabBar({
           className={cn(
             "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
             isMoreActive || isMoreOpen
-              ? "text-[#D97757]"
+              ? "text-[#141413]"
               : "text-[#78716C] hover:text-[#141413]",
           )}
         >
-          <div className="relative">
+          <div
+            className={cn(
+              "relative -m-1 rounded-md p-1 transition-colors duration-150",
+              (isMoreActive || isMoreOpen) && "bg-[#F1F1F0]",
+            )}
+          >
             <MeIcon
               className={cn(
                 "transition-colors duration-150",
                 isMoreActive || isMoreOpen
-                  ? "text-[#D97757]"
+                  ? "text-[#141413]"
                   : "text-[#78716C]",
               )}
             />
@@ -255,7 +265,7 @@ export function MobileTabBar({
             className={cn(
               "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
               isMoreActive || isMoreOpen
-                ? "font-normal text-[#D97757]"
+                ? "font-normal text-[#141413]"
                 : "font-normal text-[#78716C]",
             )}
           >

@@ -18,7 +18,7 @@ test("达人表支持键盘聚焦与焦点环", () => {
   assert.match(talentSource, /tabIndex=\{0\}/);
   assert.match(talentSource, /role="button"/);
   assert.match(talentSource, /aria-label=\{`查看\$\{row\.name\}的个人档案`\}/);
-  assert.match(talentSource, /focus-visible:ring-\[#D97757\]/);
+  assert.match(talentSource, /focus-visible:ring-\[#141413\]/);
 });
 
 test("文案绩效条数展示核算明细，未认证时不显示明细", () => {

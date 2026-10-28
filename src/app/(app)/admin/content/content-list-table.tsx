@@ -207,7 +207,7 @@ export function ContentListTable({
                       onSelectVideoId(video.id);
                     }}
                     aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
-                    className="w-full min-h-[44px] flex items-center text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer line-clamp-2 leading-snug py-1"
+                    className="w-full min-h-[44px] flex items-center text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer line-clamp-2 leading-snug py-1"
                   >
                     {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                   </button>
@@ -337,7 +337,7 @@ export function ContentListTable({
                                     onSelectVideoId(video.id);
                                   }}
                                   aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
-                                  className="truncate text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
+                                  className="truncate text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
                                 >
                                   {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                                 </button>

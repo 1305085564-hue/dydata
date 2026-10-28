@@ -125,7 +125,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                   className={cn(
                     "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105",
                     isGroupActive
-                      ? "text-[#D97757]"
+                      ? "text-[#141413]"
                       : "text-[#78716C] group-hover:text-[#1F1E1D]",
                   )}
                 />
@@ -205,7 +205,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                                 className={cn(
                                   "size-4 stroke-[1.8] shrink-0 transition-transform duration-150 group-hover/item:scale-105",
                                   active
-                                    ? "text-[#D97757]"
+                                    ? "text-[#141413]"
                                     : "text-[#78716C] group-hover/item:text-[#141413]",
                                 )}
                               />
