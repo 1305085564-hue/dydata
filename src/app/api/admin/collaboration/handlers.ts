@@ -15,6 +15,7 @@ import {
 import { buildUnattributedReports, parseMonthParams } from "@/lib/collaboration/domain/report-rules";
 import { loadPersonData } from "@/lib/collaboration/data/person-loader";
 import { loadCollaborationMonthDataset } from "@/lib/collaboration/data/dataset";
+import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import {
   parseAttributionPayload,
   loadAttributionReport,
@@ -24,7 +25,7 @@ import {
 
 export async function buildPersonResponse(
   request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, resolveCollaborationScope, loadPersonData },
+  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, resolveCollaborationScope, loadPersonData, readEvaluationStandards },
 ) {
   const parsed = parseMonthParams(request.nextUrl.searchParams);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -52,6 +53,7 @@ export async function buildPersonResponse(
     if (!resolution.visibleUserIds.includes(targetUserId)) {
       return NextResponse.json({ error: "不能查看当前权限范围外的成员" }, { status: 403 });
     }
+    const evaluationStandards = await deps.readEvaluationStandards(context.scope.teamId);
     return NextResponse.json(await deps.loadPersonData({
       supabase,
       visibleUserIds: resolution.visibleUserIds,
@@ -59,6 +61,7 @@ export async function buildPersonResponse(
       year: parsed.range.year,
       month: parsed.range.month,
       role,
+      evaluationStandards,
     }));
   } catch (error) {
     if (error instanceof CollaborationNotFoundError) {

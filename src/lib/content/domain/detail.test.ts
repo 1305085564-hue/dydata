@@ -66,3 +66,14 @@ test("5 秒完播 50% 及以下显示较差", () => {
   assert.equal(detail.getCompletionRate5sClass(50, 3000), "text-status-success");
   assert.equal(detail.getCompletionRate5sClass(50.01, 3000), "text-[#141413]");
 });
+
+test("详情按传入公司标准判断，与固定默认线不同", async () => {
+  const { DEFAULT_EVALUATION_STANDARDS } = await import("@/lib/evaluation-standards");
+  const standards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
+  standards.completionRate5s = { good: 75, poor: 40 };
+  standards.minPlayCount = 1000;
+  standards.coreAchievement = { good: 120, poor: 50 };
+  assert.equal(detail.getCompletionRate5sClass(65, 1500, standards), "text-[#141413]");
+  assert.equal(detail.getCompletionRate5sClass(75, 1500, standards), "text-status-danger");
+  assert.equal(detail.getCoreAchievementClass(100, 1500, standards), "");
+});

@@ -35,8 +35,9 @@ export function getPersonDataCacheKey(
   month: number,
   role?: CollaborationRoleTab,
   today = shanghaiToday(),
+  evaluationStandardsKey = "default",
 ) {
-  return `${userId}:${year}-${month}:${role ?? "legacy"}:${today}`;
+  return `${userId}:${year}-${month}:${role ?? "legacy"}:${today}:${evaluationStandardsKey}`;
 }
 
 function requestPersonData(
@@ -61,8 +62,9 @@ export function loadPersonData(
   year: number,
   month: number,
   role?: CollaborationRoleTab,
+  evaluationStandardsKey = "default",
 ): Promise<PersonDetailData> {
-  const cacheKey = getPersonDataCacheKey(userId, year, month, role);
+  const cacheKey = getPersonDataCacheKey(userId, year, month, role, undefined, evaluationStandardsKey);
   const hit = personDataCache.get(cacheKey);
   if (hit) return Promise.resolve(hit);
 
@@ -93,8 +95,9 @@ export function prefetchPersonData(
   year: number,
   month: number,
   role?: CollaborationRoleTab,
+  evaluationStandardsKey = "default",
 ) {
-  void loadPersonData(userId, year, month, role).catch(() => {
+  void loadPersonData(userId, year, month, role, evaluationStandardsKey).catch(() => {
     // Ignore background prefetch errors; opening the card will retry.
   });
 }

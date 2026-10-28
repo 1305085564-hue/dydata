@@ -6,6 +6,7 @@ import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
@@ -45,6 +46,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   if (!canAccessAdminPath("/admin/collaboration", permissionInfo.role, permissionInfo.permissions)) {
     redirect("/dashboard");
   }
+  const evaluationStandards = await readEvaluationStandards(context.scope.teamId);
 
   const { year, month } = resolveYearMonth(params.year, params.month);
   const tab = ["talents", "operators", "writers", "editors"].includes(params.tab ?? "")
@@ -61,6 +63,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
         <span>
           按月查看岗位与小组的作品产量、负责账号与数据表现。查看
           <RatingRulesDialog
+            evaluationStandards={evaluationStandards}
             trigger={
               <button
                 type="button"

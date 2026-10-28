@@ -21,6 +21,7 @@ import {
   unique,
 } from "../domain/report-rules";
 import { buildPersonPayload } from "../domain/person-rules";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import {
   loadVideoSnapshotMetrics,
   loadVideoTopicTags,
@@ -63,6 +64,7 @@ export async function loadPersonData(input: {
   year: number;
   month: number;
   role?: CollaborationRoleTab;
+  evaluationStandards?: EvaluationStandards;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
   const today = formatShanghaiDateOnly();
@@ -151,6 +153,7 @@ export async function loadPersonData(input: {
     currentSnapshots: growthSnapshots,
     recordRows: talentRecordRows,
     qualityTopics,
+    evaluationStandards: input.evaluationStandards,
     today,
   });
 }

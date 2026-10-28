@@ -1,6 +1,5 @@
 import {
   BREAKOUT_GRADE_THRESHOLDS,
-  BREAKOUT_TARGETS,
   KPI_PLAY_EXCELLENT,
   KPI_PLAY_FLOOR,
   KPI_PLAY_GOOD,
@@ -19,6 +18,7 @@ import type {
   ContentQualitySummary,
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export type ContentQualityTopicContext = {
   state: "ready" | "error";
@@ -39,15 +39,17 @@ export type ContentQualityWorkInput = {
   snapshot?: ContentQualitySnapshot;
 };
 
-export function contentQualityRules(): ContentQualityRules {
+export function contentQualityRules(standards?: EvaluationStandards): ContentQualityRules {
+  const dryGoods = breakoutTargetsFor("dry_goods", standards);
+  const review = breakoutTargetsFor("review", standards);
   return {
     dryGoods: {
-      interaction: BREAKOUT_TARGETS.dry_goods.interaction,
-      core: BREAKOUT_TARGETS.dry_goods.fourth,
+      interaction: dryGoods.interaction,
+      core: dryGoods.fourth,
     },
     review: {
-      interaction: BREAKOUT_TARGETS.review.interaction,
-      core: BREAKOUT_TARGETS.review.fourth,
+      interaction: review.interaction,
+      core: review.fourth,
     },
     gradeThresholds: { ...BREAKOUT_GRADE_THRESHOLDS },
     playFloors: {
@@ -75,6 +77,7 @@ export function emptyWorkContentQuality(status: ContentQualityStatus): WorkConte
 export function buildWorkContentQualityFromMetrics(
   input: ContentQualityWorkInput,
   topics: ContentQualityTopicContext,
+  standards?: EvaluationStandards,
 ): WorkContentQuality {
   if (!input.videoId) return emptyWorkContentQuality("unlinked");
   if (topics.state === "error" || !topics.tags.has(input.videoId)) {
@@ -82,7 +85,7 @@ export function buildWorkContentQualityFromMetrics(
   }
 
   const topicKind = classifyVideoTopicKind(topics.tags.get(input.videoId));
-  const targets = breakoutTargetsFor(topicKind);
+  const targets = breakoutTargetsFor(topicKind, standards);
   const coreMetric = topicKind === "dry_goods" ? "favoriteRate" : "likeRate";
   const base: WorkContentQuality = {
     ...emptyWorkContentQuality("pending_snapshot"),
@@ -182,10 +185,11 @@ export function buildContentQualityMap(
   videoIds: string[],
   snapshots: Map<string, ContentQualitySnapshot>,
   topics: ContentQualityTopicContext,
+  standards?: EvaluationStandards,
 ): Map<string, WorkContentQuality> {
   return new Map(videoIds.map((videoId) => [
     videoId,
-    buildWorkContentQualityFromMetrics({ videoId, snapshot: snapshots.get(videoId) }, topics),
+    buildWorkContentQualityFromMetrics({ videoId, snapshot: snapshots.get(videoId) }, topics, standards),
   ]));
 }
 
@@ -194,8 +198,9 @@ export function buildContentQualityRecord(
   videoIds: string[],
   snapshots: Map<string, ContentQualitySnapshot>,
   topics: ContentQualityTopicContext,
+  standards?: EvaluationStandards,
 ): Record<string, WorkContentQuality> {
-  return Object.fromEntries(buildContentQualityMap(videoIds, snapshots, topics));
+  return Object.fromEntries(buildContentQualityMap(videoIds, snapshots, topics, standards));
 }
 
 export type { VideoTopicKind };

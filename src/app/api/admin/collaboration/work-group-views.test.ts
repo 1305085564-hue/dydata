@@ -15,6 +15,7 @@ import {
 } from "@/lib/collaboration/domain/types";
 import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
 import { loadCollaborationMonthDataset } from "@/lib/collaboration/data/dataset";
+import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 
 const TEAM = "team-1";
 const MONTH = { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" };
@@ -180,6 +181,30 @@ test("文案小队质量汇总按全部作品重算，达人与运营保持空�
   assert.equal(writer.summary.contentQuality?.overallGradeCounts.poor, 0);
   assert.equal(viewOf(views, "wg-talent").summary.contentQuality, null);
   assert.equal(viewOf(views, "wg-operator").summary.contentQuality, null);
+});
+
+test("小队质量按显式公司标准重算，不被 60 秒原始数据缓存固化", () => {
+  const qualityDataset = {
+    ...dataset,
+    videoTopicTags: {
+      state: "ready" as const,
+      tags: new Map([["v-1", "干货"], ["v-2", "干货"], ["v-3", "复盘"]]),
+    },
+  };
+  const stricterStandards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    targets: {
+      reviewLikeRate: 10,
+      dryFavoriteRate: 10,
+      interactionRate: 20,
+      followerRate: 2,
+    },
+  };
+
+  const defaults = buildWorkGroupViews(qualityDataset);
+  const configured = buildWorkGroupViews(qualityDataset, stricterStandards);
+  assert.equal(viewOf(defaults, "wg-writer").summary.contentQuality?.overallGradeCounts.poor, 0);
+  assert.equal(viewOf(configured, "wg-writer").summary.contentQuality?.overallGradeCounts.poor, 2);
 });
 
 test("署名归属与按岗位口径一致：文案含达人账号作品、达人按账号归属、运营只算他人账号", () => {

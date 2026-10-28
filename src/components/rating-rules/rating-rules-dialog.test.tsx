@@ -7,7 +7,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { RatingRulesContent, RatingRulesDialog } from "./rating-rules-dialog";
 import {
   BREAKOUT_GRADE_TEXT_CLASS,
+  breakoutTargetsFor,
 } from "@/lib/breakout-rating";
+import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 
 const dialogSource = readFileSync(
   resolve(process.cwd(), "src/components/rating-rules/rating-rules-dialog.tsx"),
@@ -42,9 +44,10 @@ test("作品评级说明内容渲染结果严禁包含四个内部叫法", () =>
   }
 });
 
-test("作品评级说明严格读取并动态渲染单一真源常量", () => {
-  // 必须引入常量
-  assert.match(dialogSource, /BREAKOUT_TARGETS/);
+test("作品评级说明读取评级标准并动态渲染固定评级规则", () => {
+  assert.match(dialogSource, /breakoutTargetsFor/);
+  assert.equal(breakoutTargetsFor("review").fourth, 0.02);
+  assert.equal(breakoutTargetsFor("dry_goods").fourth, 0.02);
   assert.match(dialogSource, /BREAKOUT_GRADE_THRESHOLDS/);
   assert.match(dialogSource, /KPI_PLAY_FLOOR/);
   assert.match(dialogSource, /KPI_PLAY_GOOD/);
@@ -74,6 +77,35 @@ test("作品评级说明严格读取并动态渲染单一真源常量", () => {
 test("数据管理页面挂载了作品评级规则入口", () => {
   assert.match(collaborationPageSource, /RatingRulesDialog/);
   assert.match(collaborationPageSource, /作品评级规则/);
+});
+
+test("作品评级说明展示服务端传入的团队达标基准", () => {
+  const evaluationStandards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    targets: {
+      reviewLikeRate: 4.5,
+      dryFavoriteRate: 7.25,
+      interactionRate: 6.5,
+      followerRate: 1.75,
+    },
+  };
+  const rendered = renderToStaticMarkup(
+    <RatingRulesContent evaluationStandards={evaluationStandards} />,
+  );
+
+  assert.match(rendered, /6\.5%/);
+  assert.match(rendered, /7\.25%/);
+  assert.match(rendered, /1\.75%/);
+  assert.match(rendered, /复盘达标线/);
+  assert.match(rendered, /干货达标线/);
+  assert.match(collaborationPageSource, /evaluationStandards/);
+});
+
+test("评级规则弹窗把服务端团队基准传给说明内容", () => {
+  assert.match(
+    dialogSource,
+    /<RatingRulesContent evaluationStandards=\{evaluationStandards\} \/>/
+  );
 });
 
 test("RatingRulesDialog 正常渲染触发器元素", () => {

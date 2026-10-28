@@ -8,7 +8,6 @@ import { useContentListData } from "@/lib/content/data/content-list";
 import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
-import { DatePagination } from "./date-pagination";
 import { resolveEffectiveDates } from "./content-list-filters";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
@@ -38,6 +37,7 @@ export function ContentList(props: ContentListProps) {
     snapshots: props.snapshots,
     reviewReadiness: props.reviewReadiness,
     contentQualityByVideoId: props.contentQualityByVideoId,
+    evaluationStandards: props.evaluationStandards,
     filters: state.filters,
     sortField: state.sortField,
     sortDir: state.sortDir,
@@ -140,6 +140,7 @@ export function ContentList(props: ContentListProps) {
         isSingleDay={isSingleDay}
         onSelectVideoId={props.onSelectVideoId}
         highlightRules={state.filters.highlightRules}
+        evaluationStandards={props.evaluationStandards}
       />
 
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}

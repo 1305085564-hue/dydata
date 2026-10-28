@@ -51,6 +51,7 @@ export async function canReadContentVideoScreenshot(
     scope,
     videoId: input.videoId,
     lifecycleState: "active",
+    includeEvaluationStandards: false,
   });
   if (!detail || detail.video.id !== input.videoId) return false;
 

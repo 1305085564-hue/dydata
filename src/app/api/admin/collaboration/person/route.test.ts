@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 
 import { buildPersonResponse } from "../handlers";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
+import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 
 test("access_level=1 的成员不能查看他人的个人卡", async () => {
   let loadCalled = false;
@@ -30,6 +31,7 @@ test("access_level=1 的成员不能查看他人的个人卡", async () => {
       }),
       createAdminClient: () => ({}) as never,
       resolveCollaborationScope,
+      readEvaluationStandards: async () => DEFAULT_EVALUATION_STANDARDS,
       loadPersonData: async () => {
         loadCalled = true;
         return {} as never;
@@ -43,6 +45,9 @@ test("access_level=1 的成员不能查看他人的个人卡", async () => {
 
 test("个人卡接口校验岗位参数并将有效岗位传给数据加载器", async () => {
   let receivedRole: string | undefined;
+  let receivedTeamId: string | null | undefined;
+  let receivedStandards: unknown;
+  const evaluationStandards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
   const deps = {
     requireAdminActor: async () => ({
       supabase: {} as never,
@@ -54,11 +59,16 @@ test("个人卡接口校验岗位参数并将有效岗位传给数据加载器",
         dataScope: "team" as const,
       },
     }),
-    buildPermissionContextForActor: async () => ({ permissionInfo: {} as never, scope: { visibleUserIds: ["123e4567-e89b-42d3-a456-426614174002"] } as never }),
+    buildPermissionContextForActor: async () => ({ permissionInfo: {} as never, scope: { teamId: "trusted-team", visibleUserIds: ["123e4567-e89b-42d3-a456-426614174002"] } as never }),
     createAdminClient: () => ({}) as never,
     resolveCollaborationScope: async () => ({ visibleUserIds: ["123e4567-e89b-42d3-a456-426614174002"] }),
-    loadPersonData: async (input: { role?: string }) => {
+    readEvaluationStandards: async (teamId: string | null | undefined) => {
+      receivedTeamId = teamId;
+      return evaluationStandards;
+    },
+    loadPersonData: async (input: { role?: string; evaluationStandards?: unknown }) => {
       receivedRole = input.role;
+      receivedStandards = input.evaluationStandards;
       return { growthWorks: [] } as never;
     },
   };
@@ -70,4 +80,6 @@ test("个人卡接口校验岗位参数并将有效岗位传给数据加载器",
   const valid = await buildPersonResponse(new NextRequest(`${url}&role=operators`), deps as never);
   assert.equal(valid.status, 200);
   assert.equal(receivedRole, "operators");
+  assert.equal(receivedTeamId, "trusted-team");
+  assert.strictEqual(receivedStandards, evaluationStandards);
 });

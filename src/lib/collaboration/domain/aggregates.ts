@@ -20,11 +20,13 @@ import {
 } from "./report-rules";
 import { averagePlayOf } from "@/lib/metrics/caliber";
 import { buildOperators, buildStaff, pickRateMetrics } from "./role-metrics";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export function buildCollaborationPageData(
   dataset: CollaborationMonthDataset,
   staffRole: "writer" | "editor" | null = null,
   onlyUserId?: string,
+  evaluationStandards?: EvaluationStandards,
 ) {
   const operators = buildOperators(
     dataset.currentRows,
@@ -45,6 +47,7 @@ export function buildCollaborationPageData(
         dataset.writerCertifications,
         dataset.videoSnapshots,
         dataset.videoTopicTags,
+        evaluationStandards,
       )
     : [];
 

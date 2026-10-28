@@ -17,6 +17,7 @@ import {
   isOtherAccount,
 } from "./report-rules";
 import { buildContentQualitySummary } from "./quality-rules";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 /**
  * 「按团队」的组列表与组详情：指标与视频复盘抽屉同源（每作品最新 24h 快照），先加总再相除。
@@ -28,7 +29,10 @@ import { buildContentQualitySummary } from "./quality-rules";
  * - 组综合 = 组内全部署名作品一次聚合（比率按合计重算，不是成员比率的平均）。
  * - 历史月份按当前编制回看（本轮不做编制考古）。
  */
-export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGroupViews {
+export function buildWorkGroupViews(
+  dataset: CollaborationMonthDataset,
+  evaluationStandards?: EvaluationStandards,
+): WorkGroupViews {
   const directory = dataset.workGroups;
   if (!directory || directory.groups.length === 0) {
     return { ready: directory?.ready ?? true, groups: [], details: [] };
@@ -91,6 +95,7 @@ export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGro
                 memberRows,
                 snapshots,
                 dataset.videoTopicTags,
+                evaluationStandards,
               )
             : null,
         };
@@ -107,7 +112,7 @@ export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGro
       members,
       buildPerformanceMetrics(groupRows, snapshots),
       group.kind === "writer" && dataset.videoTopicTags
-        ? buildContentQualitySummary(groupRows, snapshots, dataset.videoTopicTags)
+        ? buildContentQualitySummary(groupRows, snapshots, dataset.videoTopicTags, evaluationStandards)
         : null,
     );
   }

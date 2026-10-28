@@ -3,8 +3,12 @@ import { redirect } from "next/navigation";
 
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { canAccessAdminPath } from "@/lib/analytics-access";
+import { canEditEvaluationStandards } from "@/lib/evaluation-standards";
+import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { CALIBER } from "@/lib/metrics/caliber";
-import { getUserPermissions } from "@/lib/permissions";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { EvaluationStandardsTabs } from "./evaluation-standards-tabs";
 
 export const metadata: Metadata = {
   title: "数据口径 - DYData",
@@ -63,9 +67,18 @@ const rules = [
 ] as const;
 
 export default async function CaliberPage() {
-  const permission = await getUserPermissions();
-  if (!permission) redirect("/login");
-  if (!canAccessAdminPath("/admin/caliber", permission.role, permission.permissions)) redirect("/admin");
+  const context = await getCurrentPermissionContext();
+  if (!context) redirect("/login");
+  const { permissionInfo, scope } = context;
+  if (!canAccessAdminPath("/admin/caliber", permissionInfo.role, permissionInfo.permissions)) redirect("/admin");
+
+  let initialSettings: Awaited<ReturnType<typeof loadEvaluationSettings>> | null = null;
+  let loadError: string | null = null;
+  try {
+    initialSettings = await loadEvaluationSettings(createAdminClient(), scope.teamId);
+  } catch {
+    loadError = "评价标准暂时无法读取，请稍后重试。";
+  }
 
   return (
     <AdminWorkspaceLayout
@@ -73,29 +86,36 @@ export default async function CaliberPage() {
       description="下面写的就是这个平台里每个数字的算法。数字变了，这里会跟着变。"
       width="wide"
     >
-      <div className="grid gap-5 lg:grid-cols-2">
-        {rules.map((item, index) => (
-          <article key={item.title} className="rounded-xl border border-[#E2E2DF]/60 bg-white p-5 shadow-card-ring">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[12px] uppercase tracking-[0.18em] text-[#A8A29E]">规则 {index + 1}</p>
-                <h2 className="font-normal mt-1 text-[14px] text-[#141413]">{item.title}</h2>
-              </div>
-              {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-ink-body">{item.value}</span> : null}
-            </div>
-            <div className="mt-3 space-y-3 text-[14px] leading-7 text-[#1F1E1D] [&_strong]:font-normal [&_strong]:text-[#141413]">
-              <div>
-                <p className="text-[12px] text-[#78716C]">规则是什么</p>
-                <p className="mt-0.5">{item.rule}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-[#78716C]">为什么这么定</p>
-                <p className="mt-0.5">{item.reason}</p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+      <EvaluationStandardsTabs
+        calculationContent={
+          <div className="grid gap-5 lg:grid-cols-2">
+            {rules.map((item, index) => (
+              <article key={item.title} className="rounded-xl border border-[#E2E2DF]/60 bg-white p-5 shadow-card-ring">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[12px] uppercase tracking-[0.18em] text-[#A8A29E]">规则 {index + 1}</p>
+                    <h2 className="font-normal mt-1 text-[14px] text-[#141413]">{item.title}</h2>
+                  </div>
+                  {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-ink-body">{item.value}</span> : null}
+                </div>
+                <div className="mt-3 space-y-3 text-[14px] leading-7 text-[#1F1E1D] [&_strong]:font-normal [&_strong]:text-[#141413]">
+                  <div>
+                    <p className="text-[12px] text-[#78716C]">规则是什么</p>
+                    <p className="mt-0.5">{item.rule}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#78716C]">为什么这么定</p>
+                    <p className="mt-0.5">{item.reason}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        }
+        initialSettings={initialSettings}
+        canEdit={canEditEvaluationStandards(permissionInfo)}
+        loadError={loadError}
+      />
     </AdminWorkspaceLayout>
   );
 }

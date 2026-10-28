@@ -15,6 +15,7 @@ import {
   getSixMonthRanges,
 } from "./report-rules";
 import { buildWorkContentQuality } from "./quality-rules";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 /** 成员主页的岗位口径（一人可多岗，作品按并集归属）。 */
 export type PersonProfileRole = "talent" | "writer" | "editor" | "operator";
@@ -74,6 +75,7 @@ export type PersonProfileWorkInput = {
   subjects: Map<string, string | null>;
   /** videos.anomaly_status，按 video_id 精确匹配。 */
   anomalies: Map<string, string | null>;
+  evaluationStandards?: EvaluationStandards;
 };
 
 /**
@@ -119,7 +121,7 @@ export function buildPersonProfileWorks(input: PersonProfileWorkInput): PersonPr
       interactionRate: metricSnapshot ? interactionRate(metricSnapshot) : null,
       likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
       favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
-      overallGrade: buildWorkContentQuality(row, snapshot, input.topics).overallGrade,
+      overallGrade: buildWorkContentQuality(row, snapshot, input.topics, input.evaluationStandards).overallGrade,
       subject: (row.video_id ? input.subjects.get(row.video_id) : null) ?? null,
       anomaly: anomaly && anomaly !== "正常" && anomaly !== "normal" ? anomaly : null,
       roles: personWorkRoles(row, input.targetUserId, accountsById),

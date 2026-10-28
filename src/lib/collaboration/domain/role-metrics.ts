@@ -24,6 +24,7 @@ import {
 } from "./report-rules";
 import { buildContentQualitySummary } from "./quality-rules";
 import { averagePlayOf } from "@/lib/metrics/caliber";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export function buildOperators(
   currentRows: CollaborationReport[],
@@ -113,6 +114,7 @@ export function buildStaff(
   certifications: WriterEligibility[] = [],
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
   qualityTopics: ContentQualityTopicContext = { state: "error", tags: new Map() }, // gate:transient-map 函数内临时聚合，随调用栈释放
+  evaluationStandards?: EvaluationStandards,
 ) {
   const scopedRows = fromStatsStart(rows).filter((row) => roleUserId(row, role));
   const names = profileNameMap(profiles);
@@ -175,7 +177,7 @@ export function buildStaff(
           ? {
               state: qualityTopics.state,
               summary: qualityTopics.state === "ready"
-                ? buildContentQualitySummary(staffRows, snapshots, qualityTopics)
+                ? buildContentQualitySummary(staffRows, snapshots, qualityTopics, evaluationStandards)
                 : null,
             }
           : undefined,

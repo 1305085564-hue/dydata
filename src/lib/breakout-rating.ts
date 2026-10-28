@@ -1,4 +1,5 @@
 import type { VideoTopicKind } from "@/lib/topics/library";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 /**
  * 爆款标准线（按视频「话题」分类，阈值为小数）。
@@ -60,7 +61,17 @@ export function hasKnownTopicKind(
 /** 该话题对应的标准线；无标签（other）与复盘同口径，与大盘第四格一致 */
 export function breakoutTargetsFor(
   topicKind: VideoTopicKind | null | undefined,
+  standards?: EvaluationStandards,
 ): BreakoutTargets {
+  if (standards) {
+    return {
+      interaction: standards.targets.interactionRate / 100,
+      fourth: (topicKind === "dry_goods"
+        ? standards.targets.dryFavoriteRate
+        : standards.targets.reviewLikeRate) / 100,
+      follower: standards.targets.followerRate / 100,
+    };
+  }
   return topicKind === "dry_goods"
     ? BREAKOUT_TARGETS.dry_goods
     : BREAKOUT_TARGETS.review;

@@ -17,6 +17,7 @@ const CONTRACT_ROUTES = [
   "admin/content/[videoId]/review-status/route.ts",
   "admin/content/topic-library-status/route.ts",
   "admin/content-analysis/route.ts",
+  "admin/evaluation-standards/route.ts",
   "admin/execute-tool/route.ts",
   "admin/fulfillment/appeal/reopen/route.ts",
   "admin/fulfillment/appeals/resume/route.ts",

@@ -35,6 +35,7 @@ import {
   type CollaborationDiagnosisDetail,
 } from "@/components/admin/collaboration-work-review-link";
 import { ContentDetailDialog } from "@/app/(app)/admin/content/content-detail-dialog";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 interface PersonalCardProps {
   userId: string | null;
@@ -45,6 +46,7 @@ interface PersonalCardProps {
   refreshTrigger?: number;
   onPersonNameLoaded?: (name: string) => void;
   diagnosisDetail?: CollaborationDiagnosisDetail | null;
+  evaluationStandards: EvaluationStandards;
   onCloseDiagnosis?: () => void;
   canManageVideos?: boolean;
   onLifecycleChanged?: () => void;
@@ -59,12 +61,16 @@ export function PersonalCard({
   refreshTrigger = 0,
   onPersonNameLoaded,
   diagnosisDetail = null,
+  evaluationStandards,
   onCloseDiagnosis,
   canManageVideos = false,
   onLifecycleChanged,
 }: PersonalCardProps) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
-  const cacheKey = userId ? getPersonDataCacheKey(userId, year, month, activeTab) : "";
+  const evaluationStandardsKey = JSON.stringify(evaluationStandards);
+  const cacheKey = userId
+    ? getPersonDataCacheKey(userId, year, month, activeTab, undefined, evaluationStandardsKey)
+    : "";
   const cachedData = userId ? readPersonDataCache(cacheKey) : null;
 
   const [data, setData] = useState<PersonDetailData | null>(cachedData);
@@ -120,7 +126,7 @@ export function PersonalCard({
   useEffect(() => {
     if (!userId) return;
 
-    const key = `${userId}-${year}-${month}-${activeTab ?? "legacy"}`;
+    const key = getPersonDataCacheKey(userId, year, month, activeTab, undefined, evaluationStandardsKey);
     const hit = readPersonDataCache(key);
     if (hit) {
       return;
@@ -131,7 +137,7 @@ export function PersonalCard({
     setLoading(true);
     setError(null);
 
-    loadPersonData(userId, year, month, activeTab)
+    loadPersonData(userId, year, month, activeTab, evaluationStandardsKey)
       .then((resData) => {
         if (isMounted) {
           writePersonDataCache(key, resData);
@@ -149,7 +155,7 @@ export function PersonalCard({
     return () => {
       isMounted = false;
     };
-  }, [userId, year, month, activeTab]);
+  }, [userId, year, month, activeTab, evaluationStandardsKey]);
 
   // 向外部总控报告当前人员姓名（用于诊断抽屉返回面包屑），避免子组件错传账号名
   useEffect(() => {
@@ -161,10 +167,10 @@ export function PersonalCard({
   // 诊断抽屉内发生生命周期变动（删稿/恢复）时触发刷新，防脏数据
   useEffect(() => {
     if (!userId || !refreshTrigger) return;
-    const key = `${userId}-${year}-${month}-${activeTab ?? "legacy"}`;
+    const key = getPersonDataCacheKey(userId, year, month, activeTab, undefined, evaluationStandardsKey);
     clearPersonDataCache(userId);
     let isMounted = true;
-    loadPersonData(userId, year, month, activeTab)
+    loadPersonData(userId, year, month, activeTab, evaluationStandardsKey)
       .then((resData) => {
         if (isMounted) {
           writePersonDataCache(key, resData);
@@ -179,7 +185,7 @@ export function PersonalCard({
     return () => {
       isMounted = false;
     };
-  }, [refreshTrigger, userId, year, month, activeTab]);
+  }, [refreshTrigger, userId, year, month, activeTab, evaluationStandardsKey]);
 
   const isOpen = Boolean(userId);
 
@@ -365,6 +371,7 @@ export function PersonalCard({
               video={diagnosisDetail.video}
               snapshot={diagnosisDetail.snapshot}
               topicKind={diagnosisDetail.topicKind ?? null}
+              evaluationStandards={evaluationStandards}
               canOperateLifecycle={canManageVideos}
               canPurge={false}
               titlePrefix="个人档案"

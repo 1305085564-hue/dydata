@@ -114,8 +114,8 @@ test("P3.4b: 档案卡的岗位视角只有一个来源，预取与打开必须�
   assert.match(workbenchSource, /const personRole: TabKey =/);
   assert.match(workbenchSource, /WORK_GROUP_ROLE_TAB/);
   assert.match(workbenchSource, /activeTab=\{personRole\}/);
-  // 五处预取（四个岗位 Tab + 小队详情）全部走同一个 personRole，不允许再写岗位字面量
-  assert.equal(workbenchSource.match(/prefetchPerson\(id, year, month, personRole\)/g)?.length, 5);
+  // 五处预取沿用同一personRole，并使用当前标准版本缓存键，不能预取旧评级。
+  assert.equal(workbenchSource.match(/prefetchPerson\(id, year, month, personRole, evaluationStandardsKey\)/g)?.length, 5);
   assert.doesNotMatch(workbenchSource, /prefetchPerson\(id, year, month, "/);
   assert.doesNotMatch(workbenchSource, /activeTab=\{tab\}/);
 });

@@ -12,6 +12,7 @@ import { WorkGroupListTab } from "./work-group-list-tab";
 import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import type { CollaborationDiagnosisDetail } from "@/components/admin/collaboration-work-review-link";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "./types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 import { prefetchPerson } from "@/lib/collaboration/data/workbench";
@@ -46,7 +47,7 @@ const ContentDetailDialog = dynamic(
 interface CollaborationWorkbenchContentProps {
   year: number; month: number; view: "roles" | "teams"; tab: TabKey;
   activeGroupDetail: WorkGroupViews["details"][number] | null | undefined; groupIdNotFound: boolean; resolvedWorkGroupViews?: WorkGroupViews;
-  canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null;
+  canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null; evaluationStandards: EvaluationStandards;
   manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number;
   diagnosisDetail: CollaborationDiagnosisDetail | null; openingReportId: string | null; leaderboardDialogOpen: boolean; summary: SummaryData | null;
   talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; editorStaff: StaffRow[]; writerCandidates: WriterCandidateRow[]; isOwnerOrTeamAdmin: boolean; loadFailed: boolean;
@@ -56,8 +57,9 @@ interface CollaborationWorkbenchContentProps {
 }
 
 export function CollaborationWorkbenchContent({
-  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
+  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
 }: CollaborationWorkbenchContentProps) {
+  const evaluationStandardsKey = JSON.stringify(evaluationStandards);
   return (
     <>
         {/* Tab / View Content 区域 */}
@@ -71,7 +73,7 @@ export function CollaborationWorkbenchContent({
                 onOpenManageDrawer(groupId);
               }}
               onSelectPerson={onSelectPerson}
-              onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
+              onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
             />
           ) : (
             <>
@@ -96,13 +98,13 @@ export function CollaborationWorkbenchContent({
           <TalentTab
             talents={talents}
             onSelectPerson={onSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         ) : tab === "operators" ? (
           <OperatorTab
             operators={operators}
             onSelectPerson={onSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         ) : tab === "writers" ? (
           <WriterTab
@@ -110,7 +112,7 @@ export function CollaborationWorkbenchContent({
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
             onSelectPerson={onSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         ) : (
           <StaffTab
@@ -118,7 +120,7 @@ export function CollaborationWorkbenchContent({
             role="editor"
             isLoading={false}
             onSelectPerson={onSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         )}
 
@@ -136,6 +138,7 @@ export function CollaborationWorkbenchContent({
           activeTab={personRole}
           refreshTrigger={personCardRefreshKey}
           diagnosisDetail={selectedPersonId ? diagnosisDetail : null}
+          evaluationStandards={evaluationStandards}
           onCloseDiagnosis={() => onCloseDiagnosis()}
           canManageVideos={canManageVideos}
           onLifecycleChanged={onLifecycleChanged}
@@ -155,6 +158,7 @@ export function CollaborationWorkbenchContent({
             video={diagnosisDetail.video}
             snapshot={diagnosisDetail.snapshot}
             topicKind={diagnosisDetail.topicKind ?? null}
+            evaluationStandards={evaluationStandards}
             canOperateLifecycle={canManageVideos}
             canPurge={false}
             titlePrefix="数据管理"

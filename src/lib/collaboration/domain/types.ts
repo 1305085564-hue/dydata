@@ -3,6 +3,7 @@ import type {
   ContentQualitySummary,
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export type WriterEligibility = { userId: string; certified: boolean; certifiedByName: string | null };
 
@@ -76,6 +77,7 @@ export type PersonGrowthInput = {
   snapshots: Map<string, VideoSnapshotMetrics>;
   today: string;
   qualityTopics?: ContentQualityTopicContext;
+  evaluationStandards?: EvaluationStandards;
 };
 
 export type CollaborationMonthDataset = {

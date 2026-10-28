@@ -8,6 +8,7 @@ import { CollaborationWorkbenchContent } from "./collaboration-workbench-content
 import type { WriterCandidateRow } from "./writer-tab";
 import { generateMonthOptions, WORK_GROUP_ROLE_TAB, type TabKey } from "@/lib/collaboration/domain/workbench-state";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 import {
   type OperatorRow,
@@ -42,6 +43,7 @@ interface CollaborationWorkbenchProps {
   workGroupRoster?: WorkGroupRosterMember[];
   canManageWorkGroups?: boolean;
   actorTeamId?: string | null;
+  evaluationStandards: EvaluationStandards;
   summary: SummaryData | null;
   operators: OperatorRow[];
   talents: TalentRow[];
@@ -66,6 +68,7 @@ export function CollaborationWorkbench({
   workGroupRoster = [],
   canManageWorkGroups = false,
   actorTeamId = null,
+  evaluationStandards,
   summary,
   operators,
   talents,
@@ -416,6 +419,7 @@ export function CollaborationWorkbench({
         currentRawGroups={currentRawGroups}
         currentRoster={currentRoster}
         actorTeamId={actorTeamId}
+        evaluationStandards={evaluationStandards}
         manageDrawerOpen={manageDrawerOpen}
         manageDrawerFocusGroupId={manageDrawerFocusGroupId}
         selectedPersonId={selectedPersonId}

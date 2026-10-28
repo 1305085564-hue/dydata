@@ -27,6 +27,7 @@ import type {
   VideoSnapshotMetrics,
 } from "@/lib/collaboration/domain/types";
 import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
+import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 
 function report(overrides: Partial<CollaborationReport> = {}): CollaborationReport {
   return {
@@ -93,6 +94,46 @@ test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计�
   assert.equal(review.coreMetric, "likeRate");
   assert.equal(review.contentGrade, "优");
   assert.equal(review.overallGrade, "普");
+});
+
+test("公司达标基准贯通协作作品计算和报表规则，综合档位与播放门槛仍固定", () => {
+  const standards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    targets: {
+      reviewLikeRate: 4,
+      dryFavoriteRate: 6,
+      interactionRate: 10,
+      followerRate: 2,
+    },
+  };
+  const highPlaySnapshot = snapshot({ playCount: 15000, likes: 450, comments: 0, shares: 0, favorites: 600 });
+  const custom = buildWorkContentQuality(
+    report(),
+    highPlaySnapshot,
+    topics([["video-1", "干货"]]),
+    standards,
+  );
+  const customRules = contentQualityRules(standards);
+
+  assert.equal(custom.interactionAchievement, 70);
+  assert.ok(Math.abs((custom.coreAchievement ?? Number.NaN) - (200 / 3)) < 1e-9);
+  assert.equal(custom.contentGrade, "普", "100/80/60 综合达成率档位不由公司编辑");
+  assert.equal(custom.overallGrade, "普", "播放门槛仍由 5,000/15,000 规则决定");
+  assert.deepEqual(customRules.dryGoods, { interaction: 0.1, core: 0.06 });
+  assert.deepEqual(customRules.gradeThresholds, BREAKOUT_GRADE_THRESHOLDS);
+  assert.deepEqual(customRules.playFloors, {
+    floor: KPI_PLAY_FLOOR,
+    good: KPI_PLAY_GOOD,
+    excellent: KPI_PLAY_EXCELLENT,
+  });
+
+  const summary = buildContentQualitySummary(
+    [report()],
+    new Map([["video-1", highPlaySnapshot]]),
+    topics([["video-1", "干货"]]),
+    standards,
+  );
+  assert.equal(summary.overallGradeCounts.fair, 1);
 });
 
 test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被排除", () => {
@@ -223,4 +264,47 @@ test("个人 payload 同时补月度文案明细、近30日作品质量和规则
   assert.equal(payload.writerQuality?.monthSummary?.totalCount, 1);
   assert.equal(payload.growthWorks[0]?.contentQuality?.topicKind, "dry_goods");
   assert.equal(payload.growthWorks[0]?.contentQuality?.coreMetric, "favoriteRate");
+});
+
+test("个人协作明细的转粉目标和作品质量都使用同一份公司标准", () => {
+  const standards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    targets: {
+      reviewLikeRate: 10,
+      dryFavoriteRate: 10,
+      interactionRate: 20,
+      followerRate: 2,
+    },
+  };
+  const writerRow = report({ id: "configured-writer", video_id: "configured-video" });
+  const configuredSnapshot = snapshot({
+    videoId: "configured-video",
+    playCount: 15000,
+    likes: 450,
+    comments: 0,
+    shares: 0,
+    favorites: 600,
+    followerGain: 150,
+  });
+  const payload = buildPersonPayload({
+    targetUserId: "writer-1",
+    year: 2026,
+    month: 9,
+    reports: [writerRow],
+    profile: { id: "writer-1", name: "文案", team_id: "team-1" },
+    profiles: [{ id: "writer-1", name: "文案", team_id: "team-1" }],
+    accounts: [{ id: "account-1", name: "账号", profile_id: "owner-1" }],
+    videos: [],
+    growthRole: "writers",
+    growthReports: [writerRow],
+    growthSnapshots: new Map([["configured-video", configuredSnapshot]]),
+    currentSnapshots: new Map([["configured-video", configuredSnapshot]]),
+    qualityTopics: topics([["configured-video", "干货"]]),
+    evaluationStandards: standards,
+    today: "2026-09-30",
+  });
+
+  assert.equal(payload.records[0]?.followerAchievement, 50);
+  assert.equal(payload.writerQuality?.monthWorks[0]?.contentQuality?.interactionAchievement, 35);
+  assert.equal(payload.writerQuality?.monthWorks[0]?.contentQuality?.coreAchievement, 40);
 });
