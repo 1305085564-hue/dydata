@@ -263,7 +263,7 @@ export function ModelManagerDialog({
 
                         <div className="flex items-center gap-1 shrink-0 mt-0.5">
                           {group.isShelved ? (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#4B6B4E]/10 text-[#4B6B4E] border border-[#4B6B4E]/20">
                               现役中
                             </span>
                           ) : (
@@ -275,7 +275,7 @@ export function ModelManagerDialog({
                                 <Button
                                   size="icon-s"
                                   variant="ghost"
-                                  className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 transition-opacity size-6"
+                                  className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10] transition-opacity size-6"
                                   title="彻底删除模型记录"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -320,7 +320,7 @@ export function ModelManagerDialog({
           </DialogHeader>
           <DialogBody className="space-y-3 py-2">
             <p className="text-[14px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
-            <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
+            <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.08] p-3 text-[12px] text-status-danger-text leading-relaxed">
               此操作将清除其在 {confirmGroup?.items.length} 个渠道中的全部关联记录，此操作不可撤销。
             </div>
           </DialogBody>
@@ -336,7 +336,7 @@ export function ModelManagerDialog({
             <Button
               size="s"
               onClick={handleConfirmDelete}
-              className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal"
+              className="h-7 text-[12px] bg-status-danger hover:bg-status-danger/90 text-white font-normal"
             >
               确认彻底删除
             </Button>

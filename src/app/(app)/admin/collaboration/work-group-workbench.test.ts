@@ -196,9 +196,10 @@ test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除
   assert.doesNotMatch(listTabSource, />\s*文案小队\s*</);
   assert.doesNotMatch(listTabSource, />\s*达人小队\s*</);
   assert.doesNotMatch(listTabSource, />\s*运营小队\s*</);
-  assert.match(listTabSource, />\s*文案\s*</);
-  assert.match(listTabSource, />\s*达人\s*</);
-  assert.match(listTabSource, />\s*运营\s*</);
+  assert.match(
+    listTabSource,
+    /const label = kind === "writer" \? "文案" : kind === "talent" \? "达人" : "运营"/,
+  );
 });
 
 test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新（零 router.refresh 白屏刷新）", () => {

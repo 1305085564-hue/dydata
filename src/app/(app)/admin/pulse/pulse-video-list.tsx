@@ -127,8 +127,8 @@ export function PulseVideoList({
 
   const capsules: Array<{ key: PulseCap; label: string; count: number }> = [
     { key: "all", label: "全部", count: capsuleVideos.all.length },
-    { key: "hot", label: "🔥 昨日爆款", count: capsuleVideos.hot.length },
-    { key: "anomaly", label: "⚠️ 昨日异常", count: capsuleVideos.anomaly.length },
+    { key: "hot", label: "昨日爆款", count: capsuleVideos.hot.length },
+    { key: "anomaly", label: "昨日异常", count: capsuleVideos.anomaly.length },
     { key: "unrated", label: "未评级", count: capsuleVideos.unrated.length },
   ];
 
@@ -213,7 +213,13 @@ export function PulseVideoList({
                   {/* 第 1 层：徽标 + 评级 + 日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1 flex-wrap min-w-0">
-                      <Badge variant={dot.variant} className="shrink-0 text-[12px] px-1.5 py-0.5">
+                      <Badge
+                        variant={dot.variant}
+                        className={cn(
+                          "shrink-0 text-[12px] px-1.5 py-0.5",
+                          dot.variant === "danger" && "text-[#78716C] before:bg-status-danger"
+                        )}
+                      >
                         {dot.label}
                       </Badge>
                       {grade ? (
@@ -329,7 +335,13 @@ export function PulseVideoList({
                       >
                         {/* 状态徽标 */}
                         <TableCell>
-                          <Badge variant={dot.variant} className="shrink-0">
+                          <Badge
+                            variant={dot.variant}
+                            className={cn(
+                              "shrink-0",
+                              dot.variant === "danger" && "text-[#78716C] before:bg-status-danger"
+                            )}
+                          >
                             {dot.label}
                           </Badge>
                         </TableCell>
@@ -377,7 +389,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 播放 */}
-                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#1F1E1D]">
                           {snap?.play_count != null ? (
                             formatCount(snap.play_count)
                           ) : (
@@ -386,7 +398,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 2s跳出 */}
-                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#1F1E1D]">
                           {snap?.bounce_rate_2s != null ? (
                             formatPercent(snap.bounce_rate_2s)
                           ) : (
@@ -395,7 +407,7 @@ export function PulseVideoList({
                         </TableCell>
 
                         {/* 5s完播 */}
-                        <TableCell className="text-right text-[14px] tabular-nums text-[#78716C]">
+                        <TableCell className="text-right text-[14px] tabular-nums text-[#1F1E1D]">
                           {snap?.completion_rate_5s != null ? (
                             formatPercent(snap.completion_rate_5s)
                           ) : (

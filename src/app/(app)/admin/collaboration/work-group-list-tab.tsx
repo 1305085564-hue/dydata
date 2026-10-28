@@ -48,23 +48,10 @@ export function formatRate(value: number | null | undefined) {
 }
 
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
-  if (kind === "writer") {
-    return (
-      <Badge variant="secondary">
-        文案
-      </Badge>
-    );
-  }
-  if (kind === "talent") {
-    return (
-      <Badge variant="warning">
-        达人
-      </Badge>
-    );
-  }
+  const label = kind === "writer" ? "文案" : kind === "talent" ? "达人" : "运营";
   return (
-    <Badge variant="accent">
-      运营
+    <Badge className="border-transparent bg-[#F1F1F0] text-[#78716C]">
+      {label}
     </Badge>
   );
 }

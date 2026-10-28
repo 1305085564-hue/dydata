@@ -516,11 +516,11 @@ export function AddKeyDialog({
                   }}
                   className={cn(
                     "h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                    labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+                    labelError && "ring-1 ring-status-danger/40 border-status-danger/60"
                   )}
                 />
                 <p className="text-[12px] text-[#A8A29E]">建议名称：{bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "接入点"}{label.trim() ? ` ${label.trim()}` : " 渠道"}</p>
-                {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
+                {labelError && <p className="text-status-danger-text text-[12px] mt-1">{labelError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -539,10 +539,10 @@ export function AddKeyDialog({
                   onBlur={() => setApiKey((value) => value.trim())}
                   className={cn(
                     "h-8 text-[14px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                    keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+                    keyError && "ring-1 ring-status-danger/40 border-status-danger/60"
                   )}
                 />
-                {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
+                {keyError && <p className="text-status-danger-text text-[12px] mt-1">{keyError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -565,7 +565,7 @@ export function AddKeyDialog({
                   }}
                   className="h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D]"
                 />
-                {priorityError && <p className="text-[#C0685C] text-[12px] mt-1">{priorityError}</p>}
+                {priorityError && <p className="text-status-danger-text text-[12px] mt-1">{priorityError}</p>}
               </div>
             </DialogBody>
 

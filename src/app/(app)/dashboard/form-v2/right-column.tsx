@@ -63,7 +63,7 @@ export function FormV2RightColumn({
   contentTextareaRef,
 }: FormV2RightColumnProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-6 lg:contents">
+    <div className="flex min-w-0 flex-col gap-4 lg:contents">
       {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
       <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5 lg:col-start-2 lg:row-start-1">
         {issueSummary.unconfirmedSlots.length > 0 && (
@@ -85,7 +85,7 @@ export function FormV2RightColumn({
       </div>
 
       {/* 右栏下半：内容组（视频标题 + 文案）。lg 起与左栏设置组同处第三行，共用一条通栏发丝线 */}
-      <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3">
+      <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-2 lg:row-start-3">
         {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐；lg 起分隔线交给通栏线 */}
         <div
           ref={metaSectionRef}

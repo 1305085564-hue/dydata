@@ -95,7 +95,7 @@ export function ShelfModelsPicker({
           <span className="text-[14px] text-[#141413]">
             全站现役模型 · 自动继承上架 ({activeInheritedModels.length})
           </span>
-          <span className="text-[12px] text-[#6FAA7D] font-mono">
+          <span className="text-[12px] text-[#4B6B4E] font-mono">
             {activeInheritedModels.filter((m) => selectedModelIds.has(m.modelId)).length} / {activeInheritedModels.length} 已选
           </span>
         </div>
@@ -132,7 +132,7 @@ export function ShelfModelsPicker({
                       </span>
                     )}
                   </div>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20 shrink-0">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#4B6B4E]/10 text-[#4B6B4E] border border-[#4B6B4E]/20 shrink-0">
                     全站使用中
                   </span>
                 </label>
@@ -254,16 +254,16 @@ interface SyncFailedResultsBarProps {
 
 export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResultsBarProps) {
   return (
-    <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
+    <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[14px] text-[#C0685C]">
+        <div className="flex items-center gap-2 text-[14px] text-status-danger-text">
           <span>未连通渠道手记</span>
           <span className="text-[12px]">({failedChannels.length} 个渠道探测异常)</span>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="text-[#C0685C] hover:bg-[#C0685C]/10 p-1 rounded-md"
+          className="text-status-danger hover:bg-status-danger/[0.10] p-1 rounded-md"
           title="关闭"
         >
           <X className="size-3.5" />
@@ -273,12 +273,12 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
         {failedChannels.map((item, idx) => (
           <div
             key={idx}
-            className="flex items-start justify-between gap-2 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-1.5 text-[12px]"
+            className="flex items-start justify-between gap-2 rounded-lg border border-status-danger/20 bg-white px-2.5 py-1.5 text-[12px]"
           >
             <span className="text-[#141413] shrink-0 max-w-[140px] truncate " title={item.keyName}>
               {item.keyName}
             </span>
-            <span className="text-[#C0685C] text-right truncate text-[12px]" title={item.error}>
+            <span className="text-status-danger-text text-right truncate text-[12px]" title={item.error}>
               {item.error && item.error.trim() ? item.error.trim() : "未返回原因"}
             </span>
           </div>

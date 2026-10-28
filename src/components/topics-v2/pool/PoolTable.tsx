@@ -81,8 +81,9 @@ export function PoolTable({
                     <td className="py-3 px-3 whitespace-nowrap text-[#78716C]">
                       <span className="tabular-nums">近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
                       {(currentWritingCount ?? 0) > 0 && (
-                        <span className="text-status-info ml-1 tabular-nums">
-                          ({currentWritingCount}人在写)
+                        <span className="text-[#78716C] ml-1 tabular-nums inline-flex items-center gap-1">
+                          (<i className="size-1.5 rounded-full bg-status-info shrink-0" />
+                          {currentWritingCount}人在写)
                         </span>
                       )}
                     </td>
@@ -93,11 +94,7 @@ export function PoolTable({
                           e.stopPropagation();
                           onGoToFeishu(item);
                         }}
-                        className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-                          isWriting
-                            ? "bg-status-success/[0.08] text-status-success hover:bg-status-success/[0.15]"
-                            : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                        }`}
+                        className="px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         aria-label={isWriting ? "继续创作" : "去飞书创作"}
                       >
                         {isWriting ? "继续创作" : "去飞书创作"}

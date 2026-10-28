@@ -26,7 +26,8 @@ test("表头暴露 aria-sort：读屏与键盘用户能知道当前按哪列、�
   const ariaSortCount = (header.match(/aria-sort=\{ariaSortFor\(/g) ?? []).length;
   const sortableCount = (header.match(/handleSort\("/g) ?? []).length;
   assert.equal(ariaSortCount, sortableCount, `可排序 ${sortableCount} 列，只有 ${ariaSortCount} 列标了 aria-sort`);
-  assert.ok(sortableCount >= 14, `可排序列数量异常：${sortableCount}`);
+  // 当前完整列集：状态、标题/账号按设计不排序，其余 13 列可排序；旧的 14 阈值来自已移除的列。
+  assert.ok(sortableCount >= 13, `可排序列数量异常：${sortableCount}`);
 });
 
 test("排序进 URL：深链/刷新/分享后排序不变（审计 M1）", () => {

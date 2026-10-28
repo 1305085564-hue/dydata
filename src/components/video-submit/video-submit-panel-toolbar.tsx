@@ -59,8 +59,8 @@ export function VideoSubmitPanelToolbar({
             {/* 右侧：控制区 */}
             <FilterBar>
               {primaryMode === "backfill" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/20 bg-status-warning-bg px-2.5 py-0.5 text-[12px] font-normal text-status-warning-text">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
                   正在补交历史数据
                 </span>
               )}

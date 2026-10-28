@@ -193,7 +193,7 @@ export function SubmittedView({
                 <>AI 分析中…</>
               ) : (
                 <>
-                  <Sparkles className="mr-1 size-3.5 text-[#D97757]" />
+                  <Sparkles className="mr-1 size-3.5 text-[#78716C]" />
                   AI 检查样本质量
                 </>
               )}

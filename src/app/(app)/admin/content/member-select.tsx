@@ -42,7 +42,8 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          "inline-flex h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 text-[14px] text-[#1F1E1D] shadow-input cursor-pointer select-none transition-colors hover:bg-[#EBEBE9] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-[state=open]:border-[#78716C]",
+          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md px-3 sm:px-2.5 text-[14px] cursor-pointer select-none transition-colors outline-none",
+          "text-[#1F1E1D] hover:bg-[#EBEBE9] data-[state=open]:bg-[#EBEBE9]",
         )}
       >
         <span className={cn("whitespace-nowrap", isAll && "text-[#78716C]")}>

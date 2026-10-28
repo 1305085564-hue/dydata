@@ -217,7 +217,7 @@ export function ChannelPoolView({
       <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#E2E2DF]/70 bg-[#FCFCFB] flex flex-col shrink-0">
         <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Server className="size-3.5 text-[#D97757]" />
+            <Server className="size-3.5 text-[#78716C]" />
             <span className="text-[14px] text-[#1F1E1D]">渠道</span>
             <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
           </div>
@@ -265,7 +265,7 @@ export function ChannelPoolView({
                 className={cn(
                   "w-full text-left px-3 py-2.5 rounded-lg transition-all cursor-pointer flex flex-col gap-1",
                   isSelected
-                    ? "bg-[#FAF9F6] shadow-xs border border-[#E2E2DF]"
+                    ? "bg-surface-sand shadow-xs border border-[#E2E2DF]"
                     : "hover:bg-[#F7F7F6] border border-transparent"
                 )}
               >
@@ -319,13 +319,13 @@ export function ChannelPoolView({
                         if (e.key === "Enter") void handleSaveEdit();
                         if (e.key === "Escape") handleCancelEdit();
                       }}
-                      className="h-7 rounded border border-[#D97757] bg-white px-2 text-[14px] text-[#1F1E1D] focus:outline-none"
+                      className="h-7 rounded border border-[#78716C] bg-white px-2 text-[14px] text-[#1F1E1D] focus:outline-none"
                     />
                     <Button
                       variant="ghost"
                       size="s"
                       aria-label="保存渠道名称"
-                      className="size-7 p-0 text-[#2E7D32]"
+                      className="size-7 p-0 text-[#4B6B4E]"
                       onClick={handleSaveEdit}
                       disabled={savingField}
                     >
@@ -377,9 +377,9 @@ export function ChannelPoolView({
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-md",
-                    selectedHealth === "healthy" && "bg-[#6FAA7D]/10 text-[#2E7D32]",
-                    selectedHealth === "untested" && "bg-[#B98A54]/10 text-[#B98A54]",
-                    selectedHealth === "unhealthy" && "bg-[#C75D5D]/10 text-[#C75D5D]",
+                    selectedHealth === "healthy" && "bg-[#4B6B4E]/10 text-[#4B6B4E]",
+                    selectedHealth === "untested" && "bg-[#8A6A2F]/10 text-[#8A6A2F]",
+                    selectedHealth === "unhealthy" && "bg-status-danger/[0.10] text-status-danger-text",
                     selectedHealth === "disabled" && "bg-[#F1F1F0] text-[#78716C]"
                   )}
                 >
@@ -427,7 +427,7 @@ export function ChannelPoolView({
                         variant="ghost"
                         size="s"
                         aria-label="删除该渠道"
-                        className="size-7 p-0 text-[#78716C] hover:text-[#C75D5D] hover:bg-[#C75D5D]/10"
+                        className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
                         onClick={() => onDeleteKeyWithCheck(selectedChannel.id)}
                       >
                         <Trash2 className="size-3.5" />
@@ -448,7 +448,7 @@ export function ChannelPoolView({
               const selectedReconciliation = selectedChannel ? channelReconciliations?.get(selectedChannel.id) ?? null : null;
               if (!selectedReconciliation) {
                 return (
-                  <div className="rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F8] px-3 py-2 text-[12px] flex items-center justify-between gap-2 text-[#78716C]">
+                  <div className="rounded-lg border border-[#E2E2DF]/60 bg-surface-row-hover px-3 py-2 text-[12px] flex items-center justify-between gap-2 text-[#78716C]">
                     <div className="flex items-center gap-2">
                       <AlertCircle className="size-3.5 text-[#A8A29E] shrink-0" />
                       <span>上游模型比对：<span className="text-[#A8A29E]">未知 · 尚未成功同步</span></span>
@@ -467,7 +467,7 @@ export function ChannelPoolView({
 
               if (selectedReconciliation.status === "unknown") {
                 return (
-                  <div className="rounded-lg border border-[#A8A29E]/30 bg-[#FAF9F8] p-2.5 text-[12px] flex items-center justify-between gap-2">
+                  <div className="rounded-lg border border-[#A8A29E]/30 bg-surface-row-hover p-2.5 text-[12px] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-[#78716C]">
                       <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
                       <span>上游模型比对状态：<span className=" text-[#141413]">未知 · 尚未成功同步</span>（不展示猜测数字）</span>
@@ -486,15 +486,15 @@ export function ChannelPoolView({
 
               if (selectedReconciliation.verifiedUnavailableModelIds.length > 0) {
                 return (
-                  <div className="rounded-lg border border-[#C0685C]/25 bg-[#C0685C]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[#C0685C]">
-                      <AlertCircle className="size-4 shrink-0" />
+                  <div className="rounded-lg border border-status-danger/25 bg-status-danger/[0.05] p-2.5 text-[12px] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-status-danger-text">
+                      <AlertCircle className="size-4 shrink-0 text-status-danger" />
                       <span>上游比对发现 <span className="tabular-nums">{selectedReconciliation.verifiedUnavailableModelIds.length}</span> 个模型上游已不再提供（待收走）</span>
                     </div>
                     <Button
                       variant="outline"
                       size="s"
-                      className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15 shrink-0"
+                      className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15] shrink-0"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       去同步并收走
@@ -508,15 +508,15 @@ export function ChannelPoolView({
               );
               if (unverified.length > 0) {
                 return (
-                  <div className="rounded-lg border border-[#B98A54]/25 bg-[#B98A54]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[#B98A54]">
+                  <div className="rounded-lg border border-[#8A6A2F]/25 bg-[#8A6A2F]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[#8A6A2F]">
                       <AlertCircle className="size-4 shrink-0" />
                       <span>上游比对发现 <span className="tabular-nums">{unverified.length}</span> 个模型仅清单中未列出（疑似，未验证）</span>
                     </div>
                     <Button
                       variant="outline"
                       size="s"
-                      className="h-6 px-2 text-[12px] text-[#B98A54] border-[#B98A54]/30 hover:bg-[#B98A54]/15 shrink-0"
+                      className="h-6 px-2 text-[12px] text-[#8A6A2F] border-[#8A6A2F]/30 hover:bg-[#8A6A2F]/15 shrink-0"
                       onClick={() => onSyncKeyModels(selectedChannel)}
                     >
                       查看明细
@@ -526,7 +526,7 @@ export function ChannelPoolView({
               }
 
               return (
-                <div className="rounded-lg border border-[#6FAA7D]/25 bg-[#6FAA7D]/5 px-3 py-2 text-[12px] flex items-center gap-2 text-[#467352]">
+                <div className="rounded-lg border border-[#4B6B4E]/25 bg-[#4B6B4E]/5 px-3 py-2 text-[12px] flex items-center gap-2 text-[#4B6B4E]">
                   <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
                 </div>
               );
@@ -551,13 +551,13 @@ export function ChannelPoolView({
                           if (e.key === "Enter") void handleSaveEdit();
                           if (e.key === "Escape") handleCancelEdit();
                         }}
-                        className="h-7 w-full rounded border border-[#D97757] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
+                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
                       />
                       <Button
                         variant="ghost"
                         size="s"
                         aria-label="保存 API Key"
-                        className="size-7 p-0 text-[#2E7D32]"
+                        className="size-7 p-0 text-[#4B6B4E]"
                         onClick={handleSaveEdit}
                         disabled={savingField}
                       >
@@ -608,13 +608,13 @@ export function ChannelPoolView({
                           if (e.key === "Enter") void handleSaveEdit();
                           if (e.key === "Escape") handleCancelEdit();
                         }}
-                        className="h-7 w-full rounded border border-[#D97757] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
+                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
                       />
                       <Button
                         variant="ghost"
                         size="s"
                         aria-label="保存 API 地址"
-                        className="size-7 p-0 text-[#2E7D32]"
+                        className="size-7 p-0 text-[#4B6B4E]"
                         onClick={handleSaveEdit}
                         disabled={savingField}
                       >
@@ -666,13 +666,13 @@ export function ChannelPoolView({
                           if (e.key === "Enter") void handleSaveEdit();
                           if (e.key === "Escape") handleCancelEdit();
                         }}
-                        className="h-7 w-full rounded border border-[#D97757] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
+                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
                       />
                       <Button
                         variant="ghost"
                         size="s"
                         aria-label="保存优先级"
-                        className="size-7 p-0 text-[#2E7D32]"
+                        className="size-7 p-0 text-[#4B6B4E]"
                         onClick={handleSaveEdit}
                         disabled={savingField}
                       >
@@ -787,7 +787,7 @@ export function ChannelPoolView({
                               {displayName}
                             </span>
                             {m.is_enabled && m.global_is_enabled === false && (
-                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#A16207]/10 text-[#A16207] border border-[#A16207]/20 shrink-0">
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#8A6A2F]/10 text-[#8A6A2F] border border-[#8A6A2F]/20 shrink-0">
                                 已就绪，但全站未启用
                               </span>
                             )}
@@ -795,7 +795,7 @@ export function ChannelPoolView({
                               <span
                                 className={cn(
                                   "text-[12px] font-mono",
-                                  testInfo.ok ? "text-[#2E7D32]" : "text-[#C75D5D]"
+                                  testInfo.ok ? "text-[#4B6B4E]" : "text-status-danger-text"
                                 )}
                               >
                                 {testInfo.ok

@@ -7,7 +7,7 @@ import type { ProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 export const HEALTH_PRESENTATION: Record<ProviderKeyHealthStatus, { label: string; dot: string }> = {
   healthy: { label: "健康", dot: "bg-[#6FAA7D]" },
   untested: { label: "待命中", dot: "bg-[#B98A54]" },
-  unhealthy: { label: "故障", dot: "bg-[#C75D5D]" },
+  unhealthy: { label: "故障", dot: "bg-status-danger" },
   disabled: { label: "已停用", dot: "bg-[#A8A29E]" },
 };
 

@@ -415,7 +415,7 @@ export function SyncModelsDialog({
               {keyLabel}
             </DialogTitle>
             {isRefreshing && (
-              <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] bg-[#F4F4F2] px-2 py-0.5 rounded-md">
+              <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] bg-surface-sand px-2 py-0.5 rounded-md">
                 <Loader2 className="size-3 animate-spin text-[#78716C]" />
                 <span>正在刷新...</span>
               </div>
@@ -429,7 +429,7 @@ export function SyncModelsDialog({
         <DialogBody className="flex min-h-0 flex-1 flex-col overflow-hidden py-1">
           {isFirstLoading ? (
             <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
-              <Loader2 className="size-6 animate-spin text-[#D97757]" />
+              <Loader2 className="size-6 animate-spin text-[#78716C]" />
               <div className="space-y-1">
                 <p className="text-[14px] text-[#141413]">正在拉取该渠道全部模型列表...</p>
                 <p className="text-[12px] text-[#78716C]">连接上游接入点中，请稍候</p>
@@ -437,7 +437,7 @@ export function SyncModelsDialog({
             </div>
           ) : loadError && inventory === null ? (
             <div className="flex flex-col items-center justify-center p-10 text-center space-y-3">
-              <div className="size-8 rounded-full bg-[#C0685C]/10 flex items-center justify-center text-[#C0685C]">
+              <div className="size-8 rounded-full bg-status-danger/[0.10] flex items-center justify-center text-status-danger">
                 <AlertCircle className="size-4" />
               </div>
               <div className="space-y-1">
@@ -456,12 +456,12 @@ export function SyncModelsDialog({
           ) : (
             <>
               {loadError && (
-                <div className="shrink-0 mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/20 bg-[#C0685C]/5 px-3 py-2 text-[12px] text-[#C0685C]">
+                <div className="shrink-0 mb-2 flex items-center justify-between gap-2 rounded-lg border border-status-danger/20 bg-status-danger/[0.05] px-3 py-2 text-[12px] text-status-danger-text">
                   <span>刷新失败：{loadError}</span>
                   <button
                     type="button"
                     onClick={() => keyId && void loadData(keyId)}
-                    className=" underline hover:text-[#A55246] cursor-pointer"
+                    className=" underline hover:text-ink-strong cursor-pointer"
                   >
                     重试
                   </button>
@@ -474,19 +474,19 @@ export function SyncModelsDialog({
                   className={cn(
                     "shrink-0 mb-2 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
                     testSummary.failureCount > 0
-                      ? "border-[#C0685C]/25 bg-[#C0685C]/5"
+                      ? "border-status-danger/25 bg-status-danger/[0.05]"
                       : testSummary.results.length === 0
-                        ? "border-[#A16207]/25 bg-[#A16207]/5"
-                        : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
+                        ? "border-[#8A6A2F]/25 bg-[#8A6A2F]/5"
+                        : "border-[#4B6B4E]/25 bg-[#4B6B4E]/5"
                   )}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     {testSummary.failureCount > 0 ? (
-                      <AlertCircle className="size-4 text-[#C0685C] shrink-0" />
+                      <AlertCircle className="size-4 text-status-danger shrink-0" />
                     ) : testSummary.results.length === 0 ? (
-                      <AlertCircle className="size-4 text-[#A16207] shrink-0" />
+                      <AlertCircle className="size-4 text-[#8A6A2F] shrink-0" />
                     ) : (
-                      <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
+                      <CheckCircle2 className="size-4 text-[#4B6B4E] shrink-0" />
                     )}
                     <div className="text-[14px] text-[#141413]">
                       <span>
@@ -495,8 +495,8 @@ export function SyncModelsDialog({
                       <span className="mx-1.5 text-[#78716C]/60">·</span>
                       <span className="text-[12px] text-[#78716C]">
                         测了 <span className=" text-[#141413] tabular-nums">{testSummary.results.length}</span> 个模型
-                        {" "}· 通过 <span className="text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
-                        {" "}· 未通过 <span className={cn("tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
+                        {" "}· 通过 <span className="text-[#4B6B4E] tabular-nums">{testSummary.successCount}</span> 个
+                        {" "}· 未通过 <span className={cn("tabular-nums", testSummary.failureCount > 0 ? "text-status-danger-text" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
                       </span>
                     </div>
                   </div>
@@ -522,9 +522,9 @@ export function SyncModelsDialog({
               {testingChannel && (
                 <div
                   role="status"
-                  className="shrink-0 mb-2 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C]"
+                  className="shrink-0 mb-2 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-surface-row-hover px-3.5 py-2.5 text-[12px] text-[#78716C]"
                 >
-                  <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+                  <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
                   <span className="text-[#141413] ">
                     正在检测 {currentInventory.length} 个模型…
                   </span>
@@ -536,7 +536,7 @@ export function SyncModelsDialog({
                 <div className="shrink-0 mb-2 space-y-2 select-text">
                   {/* 情况 A: 无法判定 / 未成功同步（禁止显示 0） */}
                   {reconciliation.status === "unknown" && (
-                    <div className="rounded-xl border border-[#A8A29E]/30 bg-[#FAF9F8] p-3 text-[12px] space-y-1">
+                    <div className="rounded-xl border border-[#A8A29E]/30 bg-surface-row-hover p-3 text-[12px] space-y-1">
                       <div className="flex items-center gap-2 text-[#78716C]">
                         <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
                         <span className=" text-[#141413]">上游模型比对状态：未知 · 尚未成功同步</span>
@@ -549,10 +549,10 @@ export function SyncModelsDialog({
 
                   {/* 情况 B: 确认不可用：显示「N 个模型上游已不再提供」并逐条列出模型名，给收走入口 */}
                   {reconciliation.verifiedUnavailableModelIds.length > 0 && (
-                    <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/5 p-3 text-[12px] space-y-2">
+                    <div className="rounded-xl border border-status-danger/25 bg-status-danger/[0.05] p-3 text-[12px] space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-[#C0685C] text-[14px]">
-                          <AlertCircle className="size-4 shrink-0" />
+                        <div className="flex items-center gap-2 text-status-danger-text text-[14px]">
+                          <AlertCircle className="size-4 shrink-0 text-status-danger" />
                           <span>{reconciliation.verifiedUnavailableModelIds.length} 个模型上游已不再提供</span>
                         </div>
                         {onRemoveModel && (
@@ -562,9 +562,9 @@ export function SyncModelsDialog({
                             size="s"
                             disabled={removingModelId !== null || isBatchRemoving}
                             onClick={handleRemoveAllVerifiedUnavailable}
-                            className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                            className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15]"
                           >
-                            {isBatchRemoving ? <Loader2 className="size-3 animate-spin mr-1" /> : <Trash2 className="size-3 mr-1" />}
+                            {isBatchRemoving ? <Loader2 className="size-3 animate-spin mr-1 text-status-danger" /> : <Trash2 className="size-3 mr-1 text-status-danger" />}
                             一键收走全部已确认失效模型 ({reconciliation.verifiedUnavailableModelIds.length})
                           </Button>
                         )}
@@ -572,7 +572,7 @@ export function SyncModelsDialog({
                       <p className="text-[#78716C] text-[12px]">
                         上游清单中已无此模型且实测探测已确认不可用（如 HTTP 404）。建议收走以防业务调度失效：
                       </p>
-                      <div className="divide-y divide-[#C0685C]/15 border border-[#C0685C]/20 rounded-lg bg-white/70 overflow-hidden">
+                      <div className="divide-y divide-status-danger/15 border border-status-danger/20 rounded-lg bg-white/70 overflow-hidden">
                         {reconciliation.verifiedUnavailableModelIds.map((mId) => {
                           const checkInfo = reconciliation.checks?.find((c) => c.modelId === mId);
                           const displayName = resolveModelDisplayName(undefined, mId);
@@ -583,7 +583,7 @@ export function SyncModelsDialog({
                                 <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[12px] text-[#C0685C] bg-[#C0685C]/10 px-1.5 py-0.5 rounded">
+                                <span className="text-[12px] text-status-danger-text bg-status-danger/[0.10] px-1.5 py-0.5 rounded">
                                   {checkInfo?.reason || "上游未提供 (HTTP 404)"}
                                 </span>
                                 {onRemoveModel && (
@@ -593,9 +593,9 @@ export function SyncModelsDialog({
                                     size="s"
                                     disabled={removingModelId === mId || isBatchRemoving}
                                     onClick={() => handleRemoveSingleModel(mId)}
-                                    className="h-6 px-2 text-[12px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                                    className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15]"
                                   >
-                                    {removingModelId === mId ? <Loader2 className="size-3 animate-spin" /> : "收走"}
+                                    {removingModelId === mId ? <Loader2 className="size-3 animate-spin text-status-danger" /> : "收走"}
                                   </Button>
                                 )}
                               </div>
@@ -608,15 +608,15 @@ export function SyncModelsDialog({
 
                   {/* 情况 C: 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走 */}
                   {unverifiedCandidates.length > 0 && (
-                    <div className="rounded-xl border border-[#B98A54]/25 bg-[#B98A54]/5 p-3 text-[12px] space-y-2">
-                      <div className="flex items-center gap-2 text-[#B98A54] text-[14px]">
+                    <div className="rounded-xl border border-[#8A6A2F]/25 bg-[#8A6A2F]/5 p-3 text-[12px] space-y-2">
+                      <div className="flex items-center gap-2 text-[#8A6A2F] text-[14px]">
                         <AlertCircle className="size-4 shrink-0" />
                         <span>{unverifiedCandidates.length} 个模型仅清单中未列出（疑似，未验证）</span>
                       </div>
                       <p className="text-[#78716C] text-[12px]">
                         上游清单未显式列出，但实测能通或未完成探活验证。当前保持挂载，不提供一键收走。
                       </p>
-                      <div className="divide-y divide-[#B98A54]/15 border border-[#B98A54]/20 rounded-lg bg-white/70 overflow-hidden">
+                      <div className="divide-y divide-[#8A6A2F]/15 border border-[#8A6A2F]/20 rounded-lg bg-white/70 overflow-hidden">
                         {unverifiedCandidates.map((mId) => {
                           const displayName = resolveModelDisplayName(undefined, mId);
                           return (
@@ -625,7 +625,7 @@ export function SyncModelsDialog({
                                 <div className=" text-[#141413] truncate">{displayName}</div>
                                 <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
                               </div>
-                              <span className="text-[12px] text-[#B98A54] bg-[#B98A54]/10 px-1.5 py-0.5 rounded shrink-0">
+                              <span className="text-[12px] text-[#8A6A2F] bg-[#8A6A2F]/10 px-1.5 py-0.5 rounded shrink-0">
                                 疑似，未验证
                               </span>
                             </div>
@@ -639,8 +639,8 @@ export function SyncModelsDialog({
                   {reconciliation.status === "verified" &&
                     reconciliation.verifiedUnavailableModelIds.length === 0 &&
                     reconciliation.candidateModelIds.length === 0 && (
-                      <div className="rounded-xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/5 px-3 py-2 text-[12px] text-[#467352] flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
+                      <div className="rounded-xl border border-[#4B6B4E]/25 bg-[#4B6B4E]/5 px-3 py-2 text-[12px] text-[#4B6B4E] flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-[#4B6B4E] shrink-0" />
                         <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
                       </div>
                     )}
@@ -685,7 +685,7 @@ export function SyncModelsDialog({
                       disabled={isAllFilteredSelected || filteredModels.length === 0}
                       className="h-7 gap-1 px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
                     >
-                      <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
+                      <CheckCheck className="size-3 text-[#78716C]" /> 全选过滤结果
                     </Button>
                     <Button
                       variant="ghost"
@@ -721,13 +721,13 @@ export function SyncModelsDialog({
 
                 if (item.isGlobalActive) {
                   categoryLabel = "现役";
-                  categoryClass = "bg-[#6FAA7D]/10 text-[#6FAA7D]";
+                  categoryClass = "bg-[#4B6B4E]/10 text-[#4B6B4E]";
                 } else if (item.isEnabled) {
                   categoryLabel = "本渠道启用";
                   categoryClass = "bg-[#43718E]/10 text-[#43718E]";
                 } else if (item.isNewlyDiscovered) {
                   categoryLabel = "新增";
-                  categoryClass = "bg-[#B98A54]/10 text-[#B98A54]";
+                  categoryClass = "bg-[#8A6A2F]/10 text-[#8A6A2F]";
                 }
 
                 return (

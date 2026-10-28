@@ -339,7 +339,7 @@ export function SubmissionSlotsSection({
                           读取中
                         </Badge>
                       ) : isSuccess ? (
-                        <Badge variant="success" className="gap-0.5">
+                        <Badge variant="neutral" className="gap-0.5 text-[#78716C] before:bg-[#4B6B4E]">
                           已识别
                         </Badge>
                       ) : isWarning ? (
@@ -347,7 +347,7 @@ export function SubmissionSlotsSection({
                           待核对
                         </Badge>
                       ) : (
-                        <Badge variant="danger" className="gap-0.5">
+                        <Badge variant="neutral" className="gap-0.5 bg-status-danger-bg text-status-danger-text before:bg-status-danger">
                           失败
                         </Badge>
                       )}
@@ -447,14 +447,14 @@ export function SubmissionSlotsSection({
                               className={cn(
                                 "inline-flex items-baseline gap-1 text-[12px] rounded px-1.5 py-0.5 transition-colors leading-tight min-w-0 max-w-full",
                                 isHighlighted
-                                  ? "bg-[#D97757]/15 ring-1 ring-[#D97757]/30 text-[#D97757]"
+                                  ? "bg-[#F1F1F0] ring-1 ring-[#E2E2DF] text-[#141413]"
                                   : "bg-[#F1F1F0]/70 text-[#1F1E1D]"
                               )}
                             >
                               <span
                                 className={cn(
                                   "text-[12px] font-normal shrink-0",
-                                  isHighlighted ? "text-[#D97757]" : "text-[#78716C]"
+                                  isHighlighted ? "text-[#1F1E1D]" : "text-[#78716C]"
                                 )}
                               >
                                 {label}

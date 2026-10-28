@@ -85,11 +85,11 @@ export function MemberAlerts({
         {orphanExemptionCount > 0 && (
           <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[14px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/10 text-status-danger">
-                <span className="size-1.5 rounded-full bg-current text-status-danger" />
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning-bg text-status-warning-text">
+                <span className="size-1.5 rounded-full bg-current" />
               </span>
               <AlertTitle className="text-[14px] leading-[1.40] font-normal text-[#141413] mb-0">待归属申请</AlertTitle>
-              <Badge variant="danger" className="tabular-nums">
+              <Badge variant="warning" className="tabular-nums">
                 {orphanExemptionCount} 条
               </Badge>
             </div>
@@ -108,7 +108,7 @@ export function MemberAlerts({
                           <span className="text-[14px] font-normal text-[#141413]">
                             {request.applicant_name}
                           </span>
-                          <span className="text-[12px] text-status-danger">
+                          <span className="text-[12px] text-[#8A6A2F]">
                             {isArchivedOrDeleted
                               ? request.applicant_membership_status === "archived" ? "已归档" : "已注销或资料缺失"
                               : "当前未分配团队"}

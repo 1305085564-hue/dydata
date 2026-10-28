@@ -75,7 +75,7 @@ export function VideoSubmitPanelBody({
   return (
     <>
         {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
-        <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
+        <Card className="p-4 sm:p-6 space-y-4 sm:space-y-5" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
@@ -112,7 +112,6 @@ export function VideoSubmitPanelBody({
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 sm:mb-6"
                 >
               <Card className="bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -123,7 +122,7 @@ export function VideoSubmitPanelBody({
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="success">今日已归档</Badge>
+                        <Badge variant="neutral" className="text-[#78716C] before:bg-[#4B6B4E]">今日已归档</Badge>
                         <span className="text-[12px] sm:text-[14px] font-normal text-[#78716C]">
                           已完成今日记录 · {activeDateReports.length || 1} 条作品
                         </span>
@@ -246,7 +245,7 @@ export function VideoSubmitPanelBody({
                               className={cn(
                                 "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left",
                                 isSelected
-                                  ? "bg-[#FFF7F2]/60 border-[#D97757]/40 ring-1 ring-[#D97757]/15 shadow-xs"
+                                  ? "bg-[#F1F1F0] border-[#E2E2DF]"
                                   : "bg-white/70 border-[#E2E2DF] hover:border-[#D97757]/30 hover:bg-white",
                               )}
                             >
@@ -283,8 +282,8 @@ export function VideoSubmitPanelBody({
                                     <p className="text-[14px] sm:text-[14px] text-[#141413] truncate max-w-[240px] sm:max-w-md">
                                       {reportTitle}
                                     </p>
-                                    <span className="inline-flex items-center gap-1 text-[12px] text-status-success shrink-0 ">
-                                      <span className="size-1.5 rounded-full bg-status-success" />
+                                    <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] shrink-0 ">
+                                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
                                       履约核验通过
                                     </span>
                                   </div>
@@ -315,7 +314,7 @@ export function VideoSubmitPanelBody({
                                     if (report.id) setSelectedReportId(report.id);
                                     setRequestedMode("editToday");
                                   }}
-                                  className="inline-flex items-center gap-1 text-[12px] text-[#9A4D32] hover:text-[#D97757] px-2 py-1 rounded-md hover:bg-[#FFF7F2] transition-colors cursor-pointer"
+                                  className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] px-2 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer"
                                   title="修改该条作品数据"
                                 >
                                   <PencilLine className="size-3" />
@@ -421,9 +420,9 @@ export function VideoSubmitPanelBody({
                             type="button"
                             onClick={() => setSelectedReportId(report.id)}
                             className={cn(
-                              "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
+                              "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#78716C]/40",
                               report.id === activeDateReport.id
-                                ? "border-[#D97757]/60 bg-[#FFF7F2] text-[#9A4D32]"
+                                ? "border-[#E2E2DF] bg-[#F1F1F0] text-[#141413]"
                                 : "border-[#E2E2DF] bg-white text-[#1F1E1D]",
                             )}
                           >
@@ -461,8 +460,8 @@ export function VideoSubmitPanelBody({
             {shouldShowEditDetailLoading ? (
               <div className="py-14 flex flex-col items-center justify-center text-center space-y-3">
                 <div className="relative flex h-10 w-10 items-center justify-center">
-                  <span className="size-2 rounded-full bg-current text-[#D97757] motion-safe:animate-ping" />
-                  <span className="absolute size-2 rounded-full bg-current text-[#D97757]" />
+                  <span className="size-2 rounded-full bg-current text-[#78716C] motion-safe:animate-ping" />
+                  <span className="absolute size-2 rounded-full bg-current text-[#78716C]" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[14px] font-normal text-[#1F1E1D]">正在调阅作品原稿档案</p>

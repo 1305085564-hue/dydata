@@ -35,7 +35,7 @@ export function ChannelModelTestList({ rows }: { rows: ChannelModelTestRow[] }) 
               </div>
               {row.ok ? (
                 <span className="inline-flex items-center gap-1.5 shrink-0">
-                  <span className="px-1.5 py-0.5 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                  <span className="px-1.5 py-0.5 rounded-md border border-[#4B6B4E]/20 bg-[#4B6B4E]/10 text-[#4B6B4E]">
                     已通过
                   </span>
                   <span className="font-mono text-[#78716C] tabular-nums">
@@ -43,7 +43,7 @@ export function ChannelModelTestList({ rows }: { rows: ChannelModelTestRow[] }) 
                   </span>
                 </span>
               ) : (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md border border-[#C0685C]/20 bg-[#C0685C]/10 text-[#C0685C] shrink-0">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md border border-status-danger/20 bg-status-danger/[0.10] text-status-danger-text shrink-0">
                   未通过
                 </span>
               )}

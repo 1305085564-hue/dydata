@@ -156,7 +156,7 @@ export function TopicMoreFiltersDrawer({
                     <Icon
                       className={`size-3.5 shrink-0 ${
                         isSelected
-                          ? "text-[#D97757]"
+                          ? "text-[#1F1E1D]"
                           : "text-[#78716C] group-hover:text-[#1F1E1D]"
                       }`}
                     />
@@ -164,7 +164,7 @@ export function TopicMoreFiltersDrawer({
                   </span>
                   {hasValue && (
                     <span
-                      className="ml-1 size-1.5 shrink-0 rounded-full bg-current text-[#D97757]"
+                      className="ml-1 size-1.5 shrink-0 rounded-full bg-current text-[#1F1E1D]"
                       aria-label={`${category.label}已选择`}
                     />
                   )}
@@ -193,7 +193,7 @@ export function TopicMoreFiltersDrawer({
                     onClick={() => handleSelect(option.value)}
                     className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-colors ${
                       isSelected
-                        ? "border-[#D97757]/50 bg-[#D97757]/5"
+                        ? "border-[#1F1E1D]/20 bg-[#F1F1F0]"
                         : "border-[#E2E2DF] bg-white hover:bg-[#EBEBE9]"
                     }`}
                   >
@@ -209,7 +209,7 @@ export function TopicMoreFiltersDrawer({
                       aria-hidden="true"
                       className={`mt-0.5 size-3.5 shrink-0 rounded-full border ${
                         isSelected
-                          ? "border-[4px] border-[#D97757]"
+                          ? "border-[4px] border-[#1F1E1D]"
                           : "border-[#E2E2DF]"
                       }`}
                     />

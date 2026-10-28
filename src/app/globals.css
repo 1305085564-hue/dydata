@@ -14,6 +14,53 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
   --font-serif: "Iowan Old Style", Charter, Georgia, "Songti SC", SimSun, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* === 28色系统（2026-10-28定案）=== */
+  /* 决策树见《设计哲学》原则2"状态色决策树" */
+
+  /* 墨度四阶 */
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-body: var(--ink-body);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-signal: var(--ink-signal);
+
+  /* 背景三层 */
+  --color-surface-canvas: var(--surface-canvas);
+  --color-surface-sand: var(--surface-sand);
+  --color-surface-card: var(--surface-card);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-row-hover: var(--surface-row-hover);
+  --color-surface-selected: var(--surface-selected);
+
+  /* 边框与装饰 */
+  --color-border: var(--border);
+  --color-dot-muted: var(--dot-muted);
+
+  /* 主色（主行动） */
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+
+  /* 状态色：成功 */
+  --color-status-success: var(--status-success);
+  --color-status-success-text: var(--status-success-text);
+  --color-status-success-bg: var(--status-success-bg);
+
+  /* 状态色：异常 */
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-text: var(--status-danger-text);
+  --color-status-danger-bg: var(--status-danger-bg);
+
+  /* 状态色：待处理 */
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-text: var(--status-warning-text);
+  --color-status-warning-bg: var(--status-warning-bg);
+
+  /* 状态色：进行中 */
+  --color-status-info: var(--status-info);
+  --color-status-info-text: var(--status-info-text);
+  --color-status-info-bg: var(--status-info-bg);
+
+  /* === 历史兼容层（待逐步替换）=== */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -29,7 +76,6 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
-  --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -49,12 +95,6 @@
   --color-mac-success: var(--color-success);
   --color-mac-danger: var(--color-danger);
   --color-mac-warning: var(--color-warning);
-  /* 语义状态色（规范 §3.4）：只上文字与淡底，实底只属 #D97757。
-     以 Token 承载，禁止再写 bg-[#hex] 饱和实底（§4 自检 #5）。 */
-  --color-status-success: var(--color-success);
-  --color-status-danger: var(--color-danger);
-  --color-status-warning: var(--color-warning);
-  --color-status-info: var(--color-location);
   --color-claude-canvas: #FCFCFB;
   --color-claude-surface: #F1F1F0;
   --color-claude-action: #D97757;
@@ -65,6 +105,8 @@
   --color-claude-ink-600: #78716C;
   --color-claude-border: #E2E2DF;
   --color-claude-border-light: #E2E2DF;
+
+  /* === 阴影与圆角 === */
   --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
   --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-claude-float: 0 1px 2px rgba(28, 25, 23, 0.04), 0 10px 28px -4px rgba(28, 25, 23, 0.12), 0 3px 8px -2px rgba(28, 25, 23, 0.06);
@@ -75,9 +117,9 @@
   --radius-2xl: 16px;
   --radius-3xl: 24px;
   --radius-4xl: 32px;
-  /* 圆角阶梯（规范 §3.2）：控件 rounded-md(6px)、容器 rounded-xl(12px)、大容器 rounded-2xl(16px)、头像与状态点 rounded-full。 */
   --animate-float-y: float-y 4s ease-in-out infinite;
-  /* Layer / Z-Index 契约体系 */
+
+  /* === Layer / Z-Index 契约体系 === */
   --z-sticky-table: 10;
   --z-sticky-nav: 20;
   --z-floating-action: 30;
@@ -188,20 +230,4 @@
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
-}
-
-/* 今日待履约微格的呼吸焦点（规格书 2.2B：暖陶土橙呼吸） */
-@keyframes fulfillment-breath {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0); }
-  50% { box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.35); }
-}
-
-.animate-fulfillment-breath {
-  animation: fulfillment-breath 2.2s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-fulfillment-breath {
-    animation: none;
-  }
 }

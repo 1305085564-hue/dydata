@@ -248,7 +248,7 @@ export function PoolToolbar({
 
       {/* 标签栏：恢复线上标准色深与清晰度，与上方筛选栏紧密协同 */}
       {topics.length > 0 && (
-        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-[12px] -mx-0.5 px-0.5 -mt-2 sm:-mt-2.5 mb-2 sm:mb-2.5">
+        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-[12px] -mx-0.5 px-0.5 -mt-2 mb-2">
           <button
             type="button"
             onClick={() => onTopicIdsChange([])}

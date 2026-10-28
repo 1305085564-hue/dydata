@@ -15,6 +15,16 @@ const baselinePath = "scripts/design-token-baseline.json";
 
 const VALID_FONT_PX = new Set(["12", "14", "20", "28"]);
 
+// 28 色封闭系统：生产代码只允许这 28 个十六进制色（测试夹具除外）。
+const VALID_HEX = new Set([
+  "#141413", "#1F1E1D", "#78716C", "#A8A29E", "#FFFFFF", "#FCFCFB",
+  "#F1F1F0", "#F7F7F6", "#EBEBE9", "#E4E4E1", "#E2E2DF", "#D6D3D1",
+  "#D97757", "#C46A4D",
+  "#6FAA7D", "#4B6B4E", "#F0F6F2", "#C0685C", "#F7EAEA", "#B98A54",
+  "#8A6A2F", "#F7F3ED", "#43718E", "#EEF2F5",
+  "#7E5C99", "#A85A6B", "#6F6B2F", "#2F6F66",
+].map((h) => h.toUpperCase()));
+
 const rules = [
   {
     id: "font-size",
@@ -102,6 +112,35 @@ async function runRule(rule) {
   return counts;
 }
 
+async function checkPalette() {
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(
+      "rg",
+      ["-n", "-o", "#[0-9a-fA-F]{6}", "src/", "-g", "!**/*.test.*"],
+      { cwd: root, maxBuffer: 32 * 1024 * 1024 },
+    ));
+  } catch (error) {
+    if (String(error.stdout ?? "").trim() === "" && error.code === 1) return [];
+    throw new Error(`rg failed for palette: ${error.message}`);
+  }
+  const counts = new Map();
+  for (const line of stdout.split("\n")) {
+    if (!line.trim()) continue;
+    const first = line.indexOf(":");
+    const second = line.indexOf(":", first + 1);
+    if (first < 0 || second < 0) continue;
+    const file = path.relative(root, line.slice(0, first)).split(path.sep).join("/");
+    const hex = line.slice(second + 1).trim().toUpperCase();
+    if (VALID_HEX.has(hex)) continue;
+    const key = `${file} ${hex}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(
+    ([key, n]) => `[palette] ${key}: 散色 ${n} 处 —— 调色板封闭系统（只允许 28 色）`,
+  );
+}
+
 async function main() {
   const update = process.argv.includes("--update-baseline");
   let baseline = { _note: "设计令牌存量违规基线（棘轮下界）。新增/上升即红灯；下调须走定律2。", rules: {} };
@@ -129,6 +168,10 @@ async function main() {
     }
   }
 
+  if (!update) {
+    problems.push(...(await checkPalette()));
+  }
+
   if (update) {
     baseline.rules = current;
     await fs.writeFile(path.join(root, baselinePath), JSON.stringify(baseline, null, 2) + "\n");
@@ -143,7 +186,7 @@ async function main() {
     console.error("修法：改用规范档位；确属例外走定律2（阿禅确认+纠错索引留档）后 --update-baseline。");
     process.exit(1);
   }
-  console.log("设计令牌门禁绿灯：无新增违规（字号/墨度/间距/字重/衬线/圆角/阴影 7 项，基线棘轮）。");
+  console.log("设计令牌门禁绿灯：无新增违规（字号/墨度/间距/字重/衬线/圆角/阴影/调色板 8 项，基线棘轮）。");
 }
 
 main().catch((error) => {

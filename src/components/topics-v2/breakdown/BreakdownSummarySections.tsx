@@ -45,7 +45,7 @@ export function BreakdownSummarySections({
               {(subTopicInfo?.hook || subTopicInfo?.outline) && (
                 <section className="space-y-3">
                   {subTopicInfo?.hook && (
-                    <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-gradient-to-r from-[#F1F1F0]/70 to-transparent rounded-r-xl space-y-1">
+                    <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-[#F1F1F0]/70 rounded-r-xl space-y-1">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center gap-1">
                         <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
@@ -131,8 +131,8 @@ export function BreakdownSummarySections({
 
                 {/* 外部干货收集基准 (若有外部数据独立展示，绝不混合伪装) */}
                 {subTopicInfo?.source_type === "external" && (
-                  <div className="rounded-xl border border-status-info/20 bg-status-info/[0.08] p-3.5 space-y-2">
-                    <div className="flex items-center justify-between text-[12px] font-normal text-status-info">
+                  <div className="rounded-xl bg-status-info/[0.08] p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-[12px] font-normal text-[#78716C]">
                       <span className="flex items-center gap-1">
                         <Globe2 className="size-3.5" />
                         <span>外部干货收集基准</span>

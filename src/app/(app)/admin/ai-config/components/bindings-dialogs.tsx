@@ -117,7 +117,7 @@ export function BindingDialog({
                   className={cn(
                     "relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer select-none",
                     ocrChannel === "baidu"
-                      ? "border-[#D97757] bg-[#D97757]/[0.03] ring-1 ring-[#D97757]/30 shadow-input"
+                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
                       : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
                   )}
                 >
@@ -133,7 +133,7 @@ export function BindingDialog({
                       </div>
                       <div className={cn(
                         "size-4 rounded-full border flex items-center justify-center transition-colors",
-                        ocrChannel === "baidu" ? "border-[#D97757] bg-[#D97757] text-white" : "border-[#E2E2DF] bg-white"
+                        ocrChannel === "baidu" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
                       )}>
                         {ocrChannel === "baidu" && <Check className="size-2.5 stroke-[3]" />}
                       </div>
@@ -156,7 +156,7 @@ export function BindingDialog({
                   className={cn(
                     "relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer select-none",
                     ocrChannel === "vision"
-                      ? "border-[#D97757] bg-[#D97757]/[0.03] ring-1 ring-[#D97757]/30 shadow-input"
+                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
                       : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
                   )}
                 >
@@ -167,7 +167,7 @@ export function BindingDialog({
                       </span>
                       <div className={cn(
                         "size-4 rounded-full border flex items-center justify-center transition-colors",
-                        ocrChannel === "vision" ? "border-[#D97757] bg-[#D97757] text-white" : "border-[#E2E2DF] bg-white"
+                        ocrChannel === "vision" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
                       )}>
                         {ocrChannel === "vision" && <Check className="size-2.5 stroke-[3]" />}
                       </div>
@@ -176,7 +176,7 @@ export function BindingDialog({
                       单视觉大模型端到端直接看图识别
                     </p>
                   </div>
-                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[12px] text-[#B98A54]">
+                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[12px] text-[#8A6A2F]">
                     链路极简，调度模型必须具备看图能力
                   </div>
                 </div>

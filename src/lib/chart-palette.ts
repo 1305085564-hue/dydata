@@ -6,8 +6,8 @@ export const CATEGORICAL_COLORS = [
   "#43718E", // 深青墨
   "#7E5C99", // 藕紫
   "#A85A6B", // 陈玫
-  "#3E8479", // 青瓷
-  "#7A7A3E", // 苔橄榄
+  "#2F6F66", // 深青瓷
+  "#6F6B2F", // 深苔橄榄
 ] as const;
 
 export const CATEGORICAL_LABEL_ALPHA = 0.12;

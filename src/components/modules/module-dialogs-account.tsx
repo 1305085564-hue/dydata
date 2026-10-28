@@ -120,7 +120,7 @@ export function ModuleDialogsAccount({
                 <DialogDescription className="text-[14px] text-[#78716C] leading-relaxed">
                   开启后「{setPermanentTarget?.name ?? "该成员"}」将不再进入履约、日报应发、催交等应交统计。历史日报与作品记录仍可查。
                   {setPermanentTarget?.exempt_type === "temporary" && (
-                    <span className="block mt-1 text-[#B98A54]">
+                    <span className="block mt-1 text-[#8A6A2F]">
                       该成员当前处于临时豁免期，设置后将转为永久生效并优先。
                     </span>
                   )}
@@ -130,7 +130,7 @@ export function ModuleDialogsAccount({
               <DialogBody className="space-y-4 py-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="permanent-exemption-reason">
-                    设置原因 <span className="text-[#C0685C]">*</span>
+                    设置原因 <span className="text-status-danger">*</span>
                   </Label>
                   <Textarea
                     id="permanent-exemption-reason"
@@ -147,7 +147,7 @@ export function ModuleDialogsAccount({
                   />
                   <div className="flex items-center justify-between text-[12px]">
                     {permanentReasonError ? (
-                      <span className="text-[#C0685C]">{permanentReasonError}</span>
+                      <span className="text-status-danger-text">{permanentReasonError}</span>
                     ) : (
                       <span className="text-[#78716C]">请如实填写原因以供审计留痕</span>
                     )}

@@ -426,7 +426,7 @@ export function StaffRowCells({
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+                <Badge variant="warning" title="质量数据读取异常">异常</Badge>
               ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
                 <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
@@ -441,7 +441,7 @@ export function StaffRowCells({
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+                <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
               ) : row.writerQuality.summary?.avgCoreAchievement != null ? (
                 <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
@@ -456,7 +456,7 @@ export function StaffRowCells({
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2 px-1.5">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+                <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
               ) : row.writerQuality.summary && row.writerQuality.summary.ratedCount > 0 && row.writerQuality.summary.goodExcellentRate != null ? (
                 <span title={`综合已评级 ${row.writerQuality.summary.ratedCount} 篇 / 署名作品 ${row.writerQuality.summary.totalCount} 篇`}>
                   {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
@@ -550,11 +550,14 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                               无数据·不计
                             </span>
                           ) : quality.isExcellent ? (
-                            <Badge variant="success">
+                            <Badge
+                              variant="success"
+                              className="text-[#78716C] before:bg-status-success"
+                            >
                               <span>✓</span> 优秀爆款 (+3条)
                             </Badge>
                           ) : quality.billingCount > 0 ? (
-                            <Badge variant="success">
+                            <Badge variant="neutral">
                               <span>✓</span> 达标 (+1条)
                             </Badge>
                           ) : (

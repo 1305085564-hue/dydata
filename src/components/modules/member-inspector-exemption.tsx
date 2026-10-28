@@ -81,7 +81,7 @@ export function MemberInspectorExemption({
                                   size="xs"
                                   disabled={isPermanentSubmitting}
                                   onClick={() => setClearPermanentTarget(activeMember)}
-                                  className="h-7 px-2.5 text-[12px] font-normal text-[#C0685C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 hover:border-[#C0685C]/30 rounded-md"
+                                  className="h-7 px-2.5 text-[12px] font-normal text-status-danger-text hover:bg-status-danger/[0.10] hover:border-status-danger/30 rounded-md"
                                 >
                                   撤销
                                 </Button>

@@ -41,7 +41,7 @@ export function FulfillmentStatsOverview({
       aria-label="发布与考勤总览大盘"
       className="rounded-xl border border-[#E2E2DF]/60 bg-white p-4 sm:p-5 shadow-card-ring transition-all duration-150"
     >
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
         {/* 1. 全月履约进度卡片 */}
         <div className="flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ export function FulfillmentStatsOverview({
               : ""
           } ${
             activeFilter === "missing"
-              ? "bg-[#D97757]/10 ring-1 ring-[#D97757]/30 shadow-input"
+              ? "bg-[#F1F1F0] ring-1 ring-[#141413]/20"
               : ""
           }`}
         >
@@ -212,7 +212,7 @@ export function FulfillmentStatsOverview({
               : ""
           } ${
             activeFilter === "pending"
-              ? "bg-[#D97757]/10 ring-1 ring-[#D97757]/30 shadow-input"
+              ? "bg-[#F1F1F0] ring-1 ring-[#141413]/20"
               : ""
           }`}
         >

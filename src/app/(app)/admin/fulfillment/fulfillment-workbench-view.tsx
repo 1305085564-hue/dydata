@@ -123,7 +123,7 @@ export function FulfillmentWorkbenchView({
       />}
 
       {/* 月度矩阵全景大盘 */}
-      <section className="space-y-4">
+      <section className="space-y-5">
         {isLoadingCalendar ? (
           <Card className="flex items-center justify-center py-16 gap-0">
             <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />

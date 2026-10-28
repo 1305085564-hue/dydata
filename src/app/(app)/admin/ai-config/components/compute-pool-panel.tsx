@@ -731,9 +731,9 @@ export function ComputePoolPanel() {
       {modelTestingState && (
         <div
           role="status"
-          className="flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C] shadow-input"
+          className="flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-surface-row-hover px-3.5 py-2.5 text-[12px] text-[#78716C] shadow-input"
         >
-          <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+          <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
           <span className="text-[#141413] ">
             正在检测 {modelTestingState.total} 个模型…
           </span>
@@ -755,9 +755,9 @@ export function ComputePoolPanel() {
 
       {/* 全部模型检测结果条 */}
       {allModelsTestFailures && (
-        <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
+        <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3.5 shadow-card space-y-2.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[14px] text-[#C0685C]">
+            <div className="flex items-center gap-2 text-[14px] text-status-danger-text">
               <span>
                 {allModelsTestFailures.failureCount > 0 ? "全池模型深度检测异常" : "全池模型深度检测结果"}
               </span>
@@ -768,7 +768,7 @@ export function ComputePoolPanel() {
             <button
               type="button"
               onClick={() => setAllModelsTestFailures(null)}
-              className="text-[#C0685C] hover:bg-[#C0685C]/10 p-1 rounded-md cursor-pointer"
+              className="text-status-danger hover:bg-status-danger/[0.10] p-1 rounded-md cursor-pointer"
               title="关闭明细"
               aria-label="关闭明细"
             >
@@ -780,29 +780,29 @@ export function ComputePoolPanel() {
               {allModelsTestFailures.failures.map((f, idx) => (
               <div
                 key={`${f.keyId}-${f.modelId}-${idx}`}
-                className="flex flex-col gap-1 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-2 text-[12px]"
+                className="flex flex-col gap-1 rounded-lg border border-status-danger/20 bg-white px-2.5 py-2 text-[12px]"
               >
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[#141413] truncate" title={f.keyLabel}>
                     {f.keyLabel}
                   </span>
-                  <span className="text-[12px] px-1.5 py-0.2 rounded bg-[#C0685C]/10 text-[#C0685C] shrink-0 font-normal">
+                  <span className="text-[12px] px-1.5 py-0.2 rounded bg-status-danger/[0.10] text-status-danger-text shrink-0 font-normal">
                     失败
                   </span>
                 </div>
                 <div className="text-[12px] font-mono text-[#78716C] truncate">
                   {getModelDisplayName(f.modelId)}
                 </div>
-                <div className="text-[12px] text-[#C0685C] line-clamp-2" title={f.error}>
+                <div className="text-[12px] text-status-danger-text line-clamp-2" title={f.error}>
                   {f.error && f.error.trim() ? f.error.trim() : "未返回原因"}
                 </div>
               </div>
               ))}
             </div>
           ) : allModelsTestFailures.totalModels > 0 ? (
-            <div className="text-[12px] text-[#6FAA7D]">全部模型检测通过</div>
+            <div className="text-[12px] text-[#4B6B4E]">全部模型检测通过</div>
           ) : (
-            <div className="text-[12px] text-[#A16207]">没有可检测的上架模型，未形成通过结论</div>
+            <div className="text-[12px] text-[#8A6A2F]">没有可检测的上架模型，未形成通过结论</div>
           )}
         </div>
       )}

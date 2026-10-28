@@ -94,9 +94,9 @@ export function MemberInspector({
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[14px] font-normal text-[#1F1E1D] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                      className="h-7 px-2.5 text-[14px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:border-[#78716C]/40 gap-1 rounded-md"
                     >
-                      <Sparkles className="size-3.5 text-[#D97757]" />
+                      <Sparkles className="size-3.5 text-[#78716C]" />
                       AI 诊断
                     </Button>
                   )}

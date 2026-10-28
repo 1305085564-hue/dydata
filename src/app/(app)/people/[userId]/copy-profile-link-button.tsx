@@ -27,8 +27,8 @@ export function CopyProfileLinkButton({ userId }: { userId: string }) {
     >
       {copied ? (
         <>
-          <Check className="size-3.5 text-[#D97757]" />
-          <span className="text-[#D97757]">已复制链接</span>
+          <Check className="size-3.5 text-[#1F1E1D]" />
+          <span className="text-[#1F1E1D]">已复制链接</span>
         </>
       ) : (
         <>

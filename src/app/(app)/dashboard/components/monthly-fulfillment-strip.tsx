@@ -189,8 +189,8 @@ export function MonthlyFulfillmentStrip({
 
           {/* 今日入账指示胶囊 */}
           {isTodaySubmitted ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#2E7D32]/10 px-2 py-0.5 text-[12px] text-[#2E7D32] border border-[#2E7D32]/20">
-              <Check className="size-3 stroke-[2.5]" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] border border-[#E2E2DF]">
+              <Check className="size-3 stroke-[2] text-[#4B6B4E]" />
               今日已达标
             </span>
           ) : !isTodayWorkday ? (
@@ -198,8 +198,8 @@ export function MonthlyFulfillmentStrip({
               今日休息
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-2 py-0.5 text-[12px] text-[#D97757] border border-[#D97757]/20">
-              <Sparkles className="size-2.5 fill-[#D97757]" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-action/[0.06] px-2 py-0.5 text-[12px] text-ink-body border border-action/20">
+              <Sparkles className="size-2.5" />
               今日待履约
             </span>
           )}
@@ -222,17 +222,17 @@ export function MonthlyFulfillmentStrip({
               let cellStyle = "bg-[#FCFCFB] text-[#78716C] border-[#E2E2DF]/60 hover:border-[#78716C]/40";
 
               if (state === "submitted") {
-                cellStyle = "bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/25 hover:bg-[#2E7D32]/15";
+                cellStyle = "bg-status-success-bg text-status-success-text border-transparent hover:bg-status-success/[0.10]";
               } else if (state === "today-pending") {
-                cellStyle = "bg-white text-[#D97757] border-2 border-[#D97757] shadow-xs animate-fulfillment-breath";
+                cellStyle = "bg-white text-ink-body border-action hover:bg-action/[0.04]";
               } else if (state === "waive") {
-                cellStyle = "bg-[#1D4ED8]/[0.08] text-[#1D4ED8] border-[#1D4ED8]/25 hover:bg-[#1D4ED8]/15";
+                cellStyle = "bg-[#43718E]/[0.08] text-[#43718E] border-transparent hover:bg-[#43718E]/[0.14]";
               } else if (state === "leave") {
-                cellStyle = "bg-[#1D4ED8]/[0.06] text-[#1D4ED8]/80 border-[#1D4ED8]/20 hover:bg-[#1D4ED8]/10";
+                cellStyle = "bg-[#43718E]/[0.05] text-[#43718E]/80 border-transparent hover:bg-[#43718E]/10";
               } else if (state === "pending") {
-                cellStyle = "bg-[#B45309]/[0.08] text-[#B45309] border-[#B45309]/25 hover:bg-[#B45309]/15";
+                cellStyle = "bg-status-warning-bg text-status-warning-text border-transparent hover:bg-status-warning/[0.10]";
               } else if (state === "absent") {
-                cellStyle = "bg-status-danger/[0.10] text-status-danger border-status-danger/30 hover:bg-status-danger/[0.15]";
+                cellStyle = "bg-status-danger-bg text-status-danger-text border-transparent hover:bg-status-danger/[0.10]";
               } else if (state === "missing") {
                 cellStyle = "bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] hover:border-[#78716C]/60 hover:text-[#1F1E1D]";
               } else if (state === "rest") {

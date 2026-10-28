@@ -60,7 +60,12 @@ export function PoolGrid({
 
                     {/* 在写状态微标记 */}
                     {isWriting && (
-                      <Badge variant="success">已在写</Badge>
+                      <Badge
+                        variant="neutral"
+                        className="text-[#78716C] before:bg-status-info"
+                      >
+                        已在写
+                      </Badge>
                     )}
                   </div>
 
@@ -72,9 +77,9 @@ export function PoolGrid({
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
                     <p className="text-[14px] font-sans text-[#1F1E1D] line-clamp-2 leading-relaxed mb-2.5">
-                      <span className="text-[#D97757] mr-0.5 select-none font-normal">“</span>
+                      <span className="text-[#D6D3D1] mr-0.5 select-none font-normal">“</span>
                       {item.hook}
-                      <span className="text-[#D97757] ml-0.5 select-none font-normal">”</span>
+                      <span className="text-[#D6D3D1] ml-0.5 select-none font-normal">”</span>
                     </p>
                   )}
                 </div>
@@ -116,7 +121,7 @@ export function PoolGrid({
                     {(inProgressCount ?? 0) > 0 && (
                       <>
                         <span className="text-[#E2E2DF] select-none shrink-0 hidden xl:inline">·</span>
-                        <span className="text-status-info font-normal tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
+                        <span className="text-[#78716C] font-normal tabular-nums truncate hidden xl:inline-flex items-center gap-1"><i className="size-1.5 rounded-full bg-status-info shrink-0" />{inProgressCount}人在写</span>
                       </>
                     )}
 
@@ -133,11 +138,7 @@ export function PoolGrid({
                         e.stopPropagation();
                         onGoToFeishu(item);
                       }}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-                        isWriting
-                          ? "bg-status-success/[0.08] text-status-success hover:bg-status-success/[0.15]"
-                          : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                      }`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       aria-label={isWriting ? "继续创作此题" : "去飞书创作此题"}
                     >
                       <span>{isWriting ? "继续创作" : "去飞书创作"}</span>

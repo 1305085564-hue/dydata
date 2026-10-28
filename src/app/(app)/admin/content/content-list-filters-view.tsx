@@ -6,6 +6,7 @@ import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 import { MemberSelect } from "./member-select";
 import { ContentListSecondaryFilters } from "./content-list-secondary-filters";
+import { ExpandableSearch } from "./expandable-search";
 
 type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles"> &
   Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
@@ -54,7 +55,7 @@ export function ContentListFiltersView({
                 }
               }}
             >
-              <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
+              <SelectTrigger size="sm" variant="borderless" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
@@ -76,7 +77,7 @@ export function ContentListFiltersView({
               value={filters.timeRange}
               onValueChange={handleTimeRangeChange}
             >
-              <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
+              <SelectTrigger size="sm" variant="borderless" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -170,13 +171,11 @@ export function ContentListFiltersView({
             handleToggleHighlightOnly={handleToggleHighlightOnly}
           />
 
-          {/* 5. 搜索框 */}
-          <Input
+          {/* 5. 可展开搜索框 */}
+          <ExpandableSearch
             value={filters.keyword}
-            onChange={(e) => updateFilter("keyword", e.target.value)}
+            onChange={(val) => updateFilter("keyword", val)}
             placeholder="搜索标题/文案…"
-            aria-label="搜索标题或文案"
-            className="min-h-[44px] sm:min-h-0 sm:h-7 w-32 md:w-40 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
           />
 
           {/* 6. 重置按钮 */}

@@ -34,11 +34,11 @@ export function ContentListViewControls({
               disabled={isViewLoading}
               aria-pressed={view === "all"}
               className={cn(
-                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
+                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-colors cursor-pointer",
                 isViewLoading && "cursor-wait",
                 view === "all"
-                  ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
-                  : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                  ? "bg-[#F1F1F0] text-[#141413]"
+                  : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
               )}
             >
               全部
@@ -50,11 +50,11 @@ export function ContentListViewControls({
                 disabled={isViewLoading}
                 aria-pressed={view === "trash"}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer border shadow-input",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-colors cursor-pointer",
                   isViewLoading && "cursor-wait",
                   view === "trash"
-                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
+                    ? "bg-[#F1F1F0] text-[#141413]"
+                    : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 )}
               >
                 归档
@@ -72,10 +72,42 @@ export function ContentListViewControls({
             )}
           </div>
 
-          {/* 2. 分隔线 (当在正常全量视图时) */}
+          {/* 2. 指标视图切换（完整 / 宽松） - 仅在桌面及平板展示，手机卡片自适应 */}
+          {view === "all" && (
+            <div className="hidden md:flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setMetricViewMode("full")}
+                disabled={isViewLoading}
+                aria-pressed={metricViewMode === "full"}
+                className={cn(
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-colors cursor-pointer",
+                  isViewLoading && "cursor-wait",
+                  metricViewMode === "full"
+                    ? "bg-[#F1F1F0] text-[#141413]"
+                    : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                )}
+              >完整</button>
+              <button
+                type="button"
+                onClick={() => setMetricViewMode("spacious")}
+                disabled={isViewLoading}
+                aria-pressed={metricViewMode === "spacious"}
+                className={cn(
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-colors cursor-pointer",
+                  isViewLoading && "cursor-wait",
+                  metricViewMode === "spacious"
+                    ? "bg-[#F1F1F0] text-[#141413]"
+                    : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                )}
+              >宽松</button>
+            </div>
+          )}
+
+          {/* 3. 分隔线 (当在正常全量视图时) */}
           {view === "all" && <div className="hidden sm:block h-4 w-px bg-[#E2E2DF] mx-0.5" />}
 
-          {/* 3. 异常快捷开关 (仅在正常全部视图下呈现) */}
+          {/* 4. 异常快捷开关 (仅在正常全部视图下呈现) */}
           {view === "all" && (
             <div className="inline-flex items-center gap-1">
               <button
@@ -103,45 +135,13 @@ export function ContentListViewControls({
                   className={cn(
                     "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-normal transition-colors cursor-pointer",
                     filters.onlyAnomaly
-                      ? "bg-status-danger/15 text-status-danger hover:bg-status-danger/20"
-                      : "bg-status-danger/10 text-status-danger hover:bg-status-danger/15"
+                      ? "bg-[#EBEBE9] text-ink-body hover:bg-[#E2E2DF]"
+                      : "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9]"
                   )}
                 >
                   {anomalyCountForTime}
                 </button>
               )}
-            </div>
-          )}
-
-          {/* 4. 指标视图切换（完整 / 宽松） - 仅在桌面及平板展示，手机卡片自适应 */}
-          {view === "all" && (
-            <div className="hidden md:flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setMetricViewMode("full")}
-                disabled={isViewLoading}
-                aria-pressed={metricViewMode === "full"}
-                className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
-                  isViewLoading && "cursor-wait",
-                  metricViewMode === "full"
-                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
-                )}
-              >完整</button>
-              <button
-                type="button"
-                onClick={() => setMetricViewMode("spacious")}
-                disabled={isViewLoading}
-                aria-pressed={metricViewMode === "spacious"}
-                className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
-                  isViewLoading && "cursor-wait",
-                  metricViewMode === "spacious"
-                    ? "bg-[#F1F1F0] text-[#141413] border-[#E2E2DF]"
-                    : "bg-white text-[#78716C] border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
-                )}
-              >宽松</button>
             </div>
           )}
         </div>

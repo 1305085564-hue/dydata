@@ -57,7 +57,7 @@ function ChannelRedundancyCell({
   const totalCount = channels.length;
 
   if (totalCount === 0) {
-    return <span className="text-[12px] text-[#B98A54]">共 0 渠道（未接入渠道）</span>;
+    return <span className="text-[12px] text-[#8A6A2F]">共 0 渠道（未接入渠道）</span>;
   }
 
   // 展示口径同时保留调度结果和检测明细，避免“可用”与“未就绪”互相打架。
@@ -71,15 +71,15 @@ function ChannelRedundancyCell({
   // ① 调度态是首要结论，健康明细在其后展开。
   if (schedulableCount > 0) {
     summaryItems.push(
-      <span key="schedulable" className="inline-flex items-center gap-1 text-[#2E7D32]">
-        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+      <span key="schedulable" className="inline-flex items-center gap-1 text-[#4B6B4E]">
+        <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
         {schedulableCount} 可调度
       </span>
     );
   } else {
     summaryItems.push(
-      <span key="schedulable-zero" className="inline-flex items-center gap-1 text-[#C75D5D]">
-        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+      <span key="schedulable-zero" className="inline-flex items-center gap-1 text-status-danger-text">
+        <span className="size-1.5 rounded-full bg-status-danger" />
         0 可调度
       </span>
     );
@@ -88,8 +88,8 @@ function ChannelRedundancyCell({
   // ② 故障（仅在 > 0 时追加）
   if (faultCount > 0) {
     summaryItems.push(
-      <span key="fault" className="inline-flex items-center gap-1 text-[#C75D5D]">
-        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+      <span key="fault" className="inline-flex items-center gap-1 text-status-danger-text">
+        <span className="size-1.5 rounded-full bg-status-danger" />
         {faultCount} 故障
       </span>
     );
@@ -142,8 +142,8 @@ function ChannelRedundancyCell({
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {channels.map((c, idx) => {
                 const stateCfg = {
-                  healthy: { text: "健康", dot: "bg-[#6FAA7D]", color: "text-[#6FAA7D]" },
-                  fault: { text: "故障", dot: "bg-[#C0685C]", color: "text-[#C0685C]" },
+                  healthy: { text: "健康", dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
+                  fault: { text: "故障", dot: "bg-status-danger", color: "text-status-danger-text" },
                   untested: { text: "待命中", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
                   disabled: { text: "已停用", dot: "bg-[#78716C]", color: "text-[#78716C]" },
                 }[c.health];
@@ -210,7 +210,7 @@ function MobileFeatureCard({
       {(onAdvanced || onArchive) && (
         <div className="flex justify-end gap-1 border-t border-[#E2E2DF]/60 pt-2">
           {onAdvanced && <Button variant="ghost" size="s" onClick={onAdvanced} className="h-7 text-[12px]">调整高级参数</Button>}
-          {onArchive && <Button variant="ghost" size="s" onClick={onArchive} className="h-7 text-[12px] text-status-danger">停用</Button>}
+          {onArchive && <Button variant="ghost" size="s" onClick={onArchive} className="h-7 text-[12px] text-status-danger-text hover:text-status-danger">停用</Button>}
         </div>
       )}
     </article>
@@ -349,7 +349,7 @@ export function BusinessFunctionsPanel() {
       <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input">
         <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-[#D97757]" />
+            <Sparkles className="size-3.5 text-[#78716C]" />
             <span className="text-[14px] text-[#141413]">
               业务模块调度列表
             </span>
@@ -410,7 +410,7 @@ export function BusinessFunctionsPanel() {
           </TableHeader>
           <TableBody>
             {/* 1. 全局默认兜底行 */}
-            <TableRow className="bg-[#FAF9F6]/60 hover:bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
+            <TableRow className="bg-surface-row-hover/60 hover:bg-surface-row-hover border-b border-[#E2E2DF]/60">
               <TableCell className="py-2.5 px-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px] font-normal text-[#1F1E1D]">全局默认</span>
@@ -444,16 +444,16 @@ export function BusinessFunctionsPanel() {
               <TableCell className="py-2.5 px-3">
                 {globalDefaultModelId && globalDefaultAvailable ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                    <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                    <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
                     运行中
                   </span>
                 ) : globalDefaultModelId ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
-                    <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                  <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
+                    <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
                     按渠道顺位兜底
                   </span>
                 ) : (
-                  <span className="text-[12px] text-[#B98A54]">未配置</span>
+                  <span className="text-[12px] text-[#8A6A2F]">未配置</span>
                 )}
               </TableCell>
               <TableCell className="text-right py-2.5 px-3">
@@ -504,12 +504,12 @@ export function BusinessFunctionsPanel() {
                 <TableCell className="py-2.5 px-3">
                   {getStatusForFeature(ocrControl) === "running" ? (
                     <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
                       运行中
                     </span>
                   ) : getStatusForFeature(ocrControl) === "fallback" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
-                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
+                      <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
                       按渠道顺位兜底
                     </span>
                   ) : (
@@ -533,7 +533,7 @@ export function BusinessFunctionsPanel() {
                               onClick={handleOcrTrialRun}
                               aria-label="试跑视觉通道"
                             >
-                              <Play className={cn("size-3 text-[#D97757]", testingOcr && "animate-pulse")} />
+                              <Play className={cn("size-3 text-[#78716C]", testingOcr && "animate-pulse")} />
                             </Button>
                           }
                         />
@@ -567,7 +567,7 @@ export function BusinessFunctionsPanel() {
                             <Button
                               variant="ghost"
                               size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
+                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
                               onClick={() => setArchiveModal(ocrControl)}
                               aria-label="停用该功能"
                             >
@@ -624,12 +624,12 @@ export function BusinessFunctionsPanel() {
                 <TableCell className="py-2.5 px-3">
                   {getStatusForFeature(feature) === "running" ? (
                     <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
                       运行中
                     </span>
                   ) : getStatusForFeature(feature) === "fallback" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
-                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
+                      <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
                       按渠道顺位兜底
                     </span>
                   ) : (
@@ -667,7 +667,7 @@ export function BusinessFunctionsPanel() {
                             <Button
                               variant="ghost"
                               size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
+                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
                               onClick={() => setArchiveModal(feature)}
                               aria-label="停用该功能"
                             >
@@ -691,7 +691,7 @@ export function BusinessFunctionsPanel() {
 
       {/* 已停用/归档功能折叠区（若有） */}
       {archivedFeatures.length > 0 && (
-        <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#FAF9F8]/60 p-4 space-y-2">
+        <div className="rounded-xl border border-[#E2E2DF]/60 bg-surface-row-hover/60 p-4 space-y-2">
           <div className="flex items-center gap-2 text-[14px] text-[#78716C]">
             <Archive className="size-3.5" />
             <span>已停用的功能 ({archivedFeatures.length})</span>

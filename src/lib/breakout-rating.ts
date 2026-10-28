@@ -28,15 +28,16 @@ export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> =
 
 export type BreakoutGrade = "优" | "良" | "普" | "劣";
 /**
- * 纯文字状态色（加深色阶：优深紫、良深红、普深褐黄、劣深松绿，小字下清晰扎实）
+ * 纯文字状态色（优藕紫、良陈玫、普深苔橄榄、劣深青瓷，小字下清晰扎实）
+ * 评级文字与图表四色共用，普/劣已加深到 12px 白底与卡片底均 ≥4.5:1
  * 注：2026-09-22 删除已无消费方的胶囊底色版 `BREAKOUT_GRADE_CLASS`
  * （其注释写「优=成功绿 / 劣=异常红」，与实际配色语义相反，留着会读错）
  */
 export const BREAKOUT_GRADE_TEXT_CLASS: Record<BreakoutGrade, string> = {
-  优: "text-[#5E3A8C]", // 深紫墨
-  良: "text-[#9E2A2B]", // 深朱红
-  普: "text-[#875317]", // 深琥珀金黄
-  劣: "text-[#28663D]", // 深松柏绿
+  优: "text-[#7E5C99]", // 藕紫
+  良: "text-[#A85A6B]", // 陈玫
+  普: "text-[#6F6B2F]", // 深苔橄榄
+  劣: "text-[#2F6F66]", // 深青瓷
 };
 
 export interface BreakoutRating {

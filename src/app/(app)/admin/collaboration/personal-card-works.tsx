@@ -352,8 +352,8 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   <span className="text-[#A8A29E]">—</span>
                                 ) : (
                                   <Badge
-                                    variant="secondary"
-                                    className="text-[12px] bg-[#F1F1F0] text-[#1F1E1D] px-1.5 py-0"
+                                    variant="danger"
+                                    className="px-1.5 py-0 text-[#78716C] before:bg-status-danger"
                                   >
                                     {formatAnomalyStatusText(rec.anomaly)}
                                   </Badge>

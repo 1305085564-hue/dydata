@@ -61,7 +61,7 @@ export function MemberAiDialogs({
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-[#D97757]" />
+                <Sparkles className="size-4 text-[#78716C]" />
                 <DialogTitle>AI 成员管理诊断</DialogTitle>
               </div>
               <Button
@@ -69,7 +69,7 @@ export function MemberAiDialogs({
                 size="xs"
                 disabled={suggestion?.loading}
                 onClick={onRefresh}
-                className="text-[12px] text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#C46A4D] gap-1"
+                className="text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] gap-1"
               >
                 <RefreshCw className={cn("size-3", suggestion?.loading && "animate-spin")} />
                 刷新分析
@@ -83,14 +83,14 @@ export function MemberAiDialogs({
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {suggestion?.loading && (
               <div className="py-8 text-center text-[14px] text-[#1F1E1D] space-y-2 bg-[#FCFCFB] rounded-xl">
-                <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
+                <RefreshCw className="size-5 text-[#78716C] animate-spin mx-auto" />
                 <p>正在结合近期日报、播放量与异常数据生成诊断...</p>
               </div>
             )}
 
             {suggestion?.error && (
-              <div className="p-3 bg-status-danger/10 text-status-danger rounded-xl text-[14px] flex items-center gap-2">
-                <AlertCircle className="size-4 shrink-0" />
+              <div className="p-3 bg-status-danger-bg text-status-danger-text rounded-xl text-[14px] flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0 text-status-danger" />
                 <span>{suggestion.error}</span>
               </div>
             )}
@@ -135,7 +135,7 @@ export function MemberAiDialogs({
                                 onClick={() => {
                                   if ("href" in s.action) onNavigate(s.action.href);
                                 }}
-                                className="text-[#D97757] text-[12px]"
+                                className="text-[#78716C] hover:text-[#141413] text-[12px]"
                               >
                                 前往 <ArrowRight className="size-3 ml-0.5" />
                               </Button>
@@ -170,7 +170,7 @@ export function MemberAiDialogs({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className=" text-[#141413] flex items-center gap-2">
-              <AlertCircle className="size-5 text-[#D97757]" />
+              <AlertCircle className="size-5 text-[#8A6A2F]" />
               确认执行 AI 管理建议动作
             </DialogTitle>
             <DialogDescription>

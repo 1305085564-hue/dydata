@@ -98,7 +98,7 @@ export function DangerousActionDialog({
       <DialogContent className="flex max-h-[88vh] w-[94vw] max-w-xl flex-col rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
         <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[#C0685C]/10 text-[#C0685C]">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-status-danger/[0.10] text-status-danger">
               <ShieldAlert className="size-4" />
             </div>
             <DialogTitle className="text-[20px] text-[#141413]">{title}</DialogTitle>
@@ -109,20 +109,20 @@ export function DangerousActionDialog({
         <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#78716C]">
-              <Loader2 className="size-5 animate-spin text-[#D97757]" />
+              <Loader2 className="size-5 animate-spin text-[#78716C]" />
               <span className="text-[14px]">正在深度核查关联业务依赖与渠道资源…</span>
             </div>
           ) : isBlocked ? (
             /* 无法确认完整依赖：一律阻断（冻结裁决③） */
-            <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/8 p-4 space-y-2.5 text-[12px] text-[#C0685C]">
+            <div className="rounded-xl border border-status-danger/25 bg-status-danger/[0.08] p-4 space-y-2.5 text-[12px] text-status-danger-text">
               <div className="flex items-center gap-1.5 text-[14px]">
-                <AlertCircle className="size-4 shrink-0" />
+                <AlertCircle className="size-4 shrink-0 text-status-danger" />
                 <span>无法确定影响范围（系统已默认拦截执行）</span>
               </div>
               <p className="text-[12px] text-[#1F1E1D] leading-relaxed">
                 系统检测到以下渠道尚未成功同步模型或上游数据缺失，在确认全部供给关系前，禁止执行该操作，以防线上业务静默断供：
               </p>
-              <ul className="space-y-1.5 pl-4 list-disc text-[12px] text-[#C0685C]">
+              <ul className="space-y-1.5 pl-4 list-disc text-[12px] text-status-danger-text">
                 {preview?.unknownReasons && preview.unknownReasons.length > 0 ? (
                   preview.unknownReasons.map((reason, index) => (
                     <li key={index} className="leading-relaxed">{reason}</li>
@@ -140,22 +140,22 @@ export function DangerousActionDialog({
             <div className="space-y-3.5">
               {/* 独占/严重断供警告 */}
               {hasCriticalBindings && (
-                <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/10 p-3.5 space-y-2 text-[12px]">
-                  <div className="flex items-center gap-1.5 text-[#C0685C] text-[14px]">
-                    <AlertTriangle className="size-4 shrink-0" />
+                <div className="rounded-xl border border-status-danger/30 bg-status-danger/[0.10] p-3.5 space-y-2 text-[12px]">
+                  <div className="flex items-center gap-1.5 text-status-danger-text text-[14px]">
+                    <AlertTriangle className="size-4 shrink-0 text-status-danger" />
                     <span>严重断供风险：以下业务将失去唯一可用模型供给</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {criticalBindings.map((cb) => (
                       <span
                         key={cb.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-[#C0685C]/30 text-[#C0685C] text-[12px]"
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-status-danger/30 text-status-danger-text text-[12px]"
                       >
                         {cb.label}
                       </span>
                     ))}
                   </div>
-                  <p className="text-[#C0685C]/90 text-[12px]">
+                  <p className="text-status-danger-text/90 text-[12px]">
                     此操作将使上述业务完全无可用算力，后端将直接拦截（409 冲突）。请先为这些业务配置备用模型。
                   </p>
                 </div>
@@ -239,9 +239,9 @@ export function DangerousActionDialog({
 
               {/* 更窄的替代方案（冻结裁决③：必须提供，不能只给确定/取消） */}
               {onNarrowerAction && narrowerActionLabel && (
-                <div className="rounded-xl border border-[#D97757]/20 bg-[#D97757]/5 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[14px] text-[#D97757]">
-                    <span>💡 更窄的替代操作（推荐）：</span>
+                <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0] p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[14px] text-[#141413]">
+                    <span>更窄的替代操作（推荐）：</span>
                   </div>
                   <p className="text-[12px] text-[#78716C] leading-relaxed">
                     {narrowerActionDescription || "如果你只需要调整单条渠道或保留配置数据，建议使用更小影响范围的操作："}
@@ -253,7 +253,7 @@ export function DangerousActionDialog({
                       size="s"
                       onClick={() => void onNarrowerAction()}
                       disabled={isExecuting}
-                      className="h-7 text-[12px] border-[#D97757]/40 text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                      className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
                     >
                       {narrowerActionLabel}
                     </Button>
@@ -284,7 +284,7 @@ export function DangerousActionDialog({
             className={cn(
               "h-7.5 px-3.5 text-[12px] font-normal text-white shadow-input",
               actionType.startsWith("delete") || actionType.startsWith("unmount")
-                ? "bg-[#C0685C] hover:bg-[#C0685C]/90"
+                ? "bg-status-danger hover:bg-status-danger/90"
                 : "bg-[#D97757] hover:bg-[#D97757]/90",
               (isBlocked || hasCriticalBindings) && "opacity-50 cursor-not-allowed bg-[#A8A29E] hover:bg-[#A8A29E]"
             )}

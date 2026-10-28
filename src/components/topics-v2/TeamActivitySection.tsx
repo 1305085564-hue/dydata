@@ -213,7 +213,7 @@ export function TeamActivitySection({
           <div className="space-y-1">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF]/60 text-[12px]">
               <span className="font-normal text-[#141413] flex items-center gap-1">
-                <Video className="w-3.5 h-3.5 text-[#D97757]" />
+                <Video className="w-3.5 h-3.5 text-[#78716C]" />
                 往期成片产出
               </span>
               <span className="text-[12px] text-[#78716C] tabular-nums">

@@ -123,7 +123,7 @@ export function ModelFamilySelect({
         </SelectContent>
       </Select>
       {currentUnavailable && (
-        <p className="text-[12px] leading-[1.5] text-[#B98A54]">
+        <p className="text-[12px] leading-[1.5] text-[#8A6A2F]">
           当前不可用 · 将按渠道顺位兜底
         </p>
       )}

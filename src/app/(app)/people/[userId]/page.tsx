@@ -110,7 +110,7 @@ function MiniBar({ value, max }: { value: number | null; max: number }) {
   if (value == null || value <= 0 || max <= 0) return <div className="mt-1 h-1" />;
   return (
     <div
-      className="mt-1 h-1 rounded-full bg-[#D97757]/30"
+      className="mt-1 h-1 rounded-full bg-[#D6D3D1]"
       style={{ width: `${Math.max(8, (value / max) * 100)}%` }}
     />
   );
@@ -214,7 +214,7 @@ export default async function PersonProfilePage({
               roleTags.map((role) => (
                 <span
                   key={role}
-                  className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#1F1E1D]"
+                  className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C]"
                 >
                   {ROLE_LABELS[role]}
                 </span>
@@ -357,7 +357,7 @@ export default async function PersonProfilePage({
                       {work.workDate}
                     </td>
                     <td className="min-w-0 px-3 py-2">
-                      <div className="truncate font-normal text-[#1F1E1D]" title={work.accountName}>
+                      <div className="truncate font-normal text-[#78716C]" title={work.accountName}>
                         {work.accountName}
                       </div>
                       <CollaborationWorkReviewLink
@@ -368,7 +368,7 @@ export default async function PersonProfilePage({
                           playCount: work.playCount,
                           reportDate: work.workDate,
                         }}
-                        className="block min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#141413] group-hover:underline"
+                        className="block min-w-0 truncate text-left text-[12px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline"
                       >
                         {work.title}
                       </CollaborationWorkReviewLink>
@@ -419,15 +419,15 @@ export default async function PersonProfilePage({
                             playCount: work.playCount,
                             reportDate: work.workDate,
                           }}
-                          className="block min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#141413] group-hover:underline"
+                          className="block min-w-0 truncate text-left text-[12px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline"
                         >
                           {work.title}
                         </CollaborationWorkReviewLink>
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-right">
                         <Badge
-                          variant="secondary"
-                          className="bg-[#F1F1F0] px-1.5 py-0 text-[12px] text-[#1F1E1D]"
+                          variant="danger"
+                          className="px-1.5 py-0 text-[#78716C] before:bg-status-danger"
                         >
                           {formatAnomalyStatusText(work.anomaly)}
                         </Badge>

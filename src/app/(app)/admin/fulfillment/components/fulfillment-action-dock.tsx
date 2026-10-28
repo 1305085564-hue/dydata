@@ -135,7 +135,7 @@ export function FulfillmentActionDock({
       className="overflow-hidden border border-[#E2E2DF]/60 bg-white shadow-card-ring transition-all duration-150"
     >
       {/* 顶部行动条主幅 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 bg-[#FAF9F7]/60 border-b border-[#E2E2DF]/50">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 bg-surface-row-hover/60 border-b border-[#E2E2DF]/50">
         <div className="flex items-center gap-2">
           <span className="inline-flex size-6 items-center justify-center rounded-full bg-[#D97757]/15 text-[#D97757]">
             <AlertCircle className="size-3.5" />
@@ -259,7 +259,7 @@ export function FulfillmentActionDock({
                     return (
                       <tr
                         key={member.userId}
-                        className="border-b border-[#E2E2DF]/40 last:border-b-0 hover:bg-[#FAF9F7]"
+                        className="border-b border-[#E2E2DF]/40 last:border-b-0 hover:bg-surface-row-hover"
                       >
                         <td className="py-2.5 px-2">
                           <Checkbox

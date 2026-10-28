@@ -375,14 +375,14 @@ export function FulfillmentMatrixRoster({
           <Card className="overflow-x-auto p-0 gap-0 shadow-card-ring border-[#E2E2DF]/60">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#E2E2DF]/60 bg-[#FAF9F7]/90 text-[12px]">
+                <tr className="border-b border-[#E2E2DF]/60 bg-surface-row-hover/90 text-[12px]">
                   {/* 左侧第一列：成员身份（紧凑 6 成留白，姓名部门舒展不折行） */}
-                  <th className="sticky left-0 z-20 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 bg-[#FAF9F7]/95 backdrop-blur-md px-3 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky left-0 z-20 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
 
                   {/* 左侧第二列：实发 / 应发、状态徽章与考核天数算式 */}
-                  <th className="sticky left-[104px] z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 bg-[#FAF9F7]/95 backdrop-blur-md px-3.5 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky left-[104px] z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3.5 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
                     实发 / 应发 · 算式
                   </th>
 
@@ -577,9 +577,9 @@ export function FulfillmentMatrixRoster({
                               isColHovered || isRowHovered
                                 ? "bg-[#FCFCFB]"
                                 : isFocused && range === "today"
-                                  ? "bg-[#FAF8F5]/80"
+                                  ? "bg-surface-row-hover/80"
                                   : isFocused && range === "last7days"
-                                    ? "bg-[#FAF9F7]/50"
+                                    ? "bg-surface-row-hover/50"
                                     : ""
                             }`}
                           >
@@ -632,7 +632,7 @@ export function FulfillmentMatrixRoster({
                             >
                               {/* 发布2篇及以上时，右上角显示数字 */}
                               {record?.publishedCount != null && record.publishedCount >= 2 && (
-                                <span className="absolute top-[1px] right-[1px] text-[12px] text-white leading-none opacity-90 pointer-events-none">
+                                <span className="absolute top-[1px] right-[1px] text-[12px] text-[#1F1E1D] leading-none opacity-90 pointer-events-none">
                                   {record.publishedCount}
                                 </span>
                               )}

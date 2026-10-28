@@ -1,33 +1,55 @@
 /* 美学规范 V2 Token —— Claude 设计系统全站真源 */
 :root {
-  /* 底色三层（Claude 暖纸体系 · 双向深度） */
-  --color-bg: #FCFCFB;           /* L1 页面背景 Canvas 极净温润暖白 */
-  --color-surface: #FFFFFF;      /* L2 纯白纸层、交互触点、浮层输入框 */
+  /* === 墨度四阶（性质 → 色值映射）=== */
+  --ink-strong: #141413;   /* 定名墨：页面定名、核心指标、激活态 */
+  --ink-body: #1F1E1D;     /* 正文墨：正文、数据、主键列 */
+  --ink-muted: #78716C;    /* 元数据墨：表头、字段名、辅助说明 */
+  --ink-signal: #A8A29E;   /* 信号墨：占位符、空值、禁用态 */
 
-  /* 统一光源色（饱和 25-60 / 亮度 55-60） */
-  --color-primary: #D97757;      /* 主 CTA 暖陶土橙 */
-  --color-primary-hover: #C46A4D;/* Action Hover */
-  --color-location: #43718E;     /* 暴雨灰蓝 */
-  --color-warning: #B98A54;      /* 待处理 警示琥珀（降饱和） */
-  --color-success: #6FAA7D;      /* 成功/增长 仙人掌绿/生长绿（降饱和） */
-  --color-danger: #C0685C;       /* 失败/异常 暖陶土朱砂（降饱和） */
+  /* === 背景三层（Z轴 → 色值映射）=== */
+  --surface-canvas: #FCFCFB;    /* L1 页面大背景 Canvas 极净温润暖白 */
+  --surface-sand: #F1F1F0;      /* L2 浅砂气垫：只读区下沉、分组底、选中底 */
+  --surface-card: #FFFFFF;      /* L2 纯白触点：交互触点上浮、卡片、输入框 */
+  --surface-hover: #EBEBE9;     /* 控件悬停 */
+  --surface-row-hover: #F7F7F6; /* 表格行悬停 */
+  --surface-selected: #E4E4E1;  /* 表格行选中（与悬停底不同） */
 
-  /* 文字灰阶（Claude 官方原版暖墨体系） */
-  --color-text-primary: #141413;   /* Ink 950 极致暖炭浓墨 标题 */
-  --color-text-secondary: #1F1E1D; /* Ink 800 正文极深暖墨 */
-  --color-text-tertiary: #78716C;  /* Ink 600 辅助墨/元数据/空状态/单位 */
-  --color-border: #E2E2DF;         /* 柔和中性细边 */
-  --color-border-light: #E2E2DF;   /* 极细发丝线 */
-  --color-border-warm: #E2E2DF;    /* 可交互元素边框 */
+  /* === 边框与装饰 === */
+  --border: #E2E2DF;       /* 发丝线：表格行底、输入框边框 */
+  --dot-muted: #D6D3D1;    /* 弱圆点：正常状态的视觉定位锚点 */
 
-  /* 圆角阶梯 */
+  /* === 主色（主行动）=== */
+  --action: #D97757;       /* 主 CTA 暖陶土橙 */
+  --action-hover: #C46A4D; /* 主 CTA 悬停 */
+
+  /* === 状态色：成功（涨/达标/正常增长）=== */
+  --status-success: #6FAA7D;        /* 主色：圆点/图表 */
+  --status-success-text: #4B6B4E;   /* 文字色 */
+  --status-success-bg: #F0F6F2;     /* 淡底色 */
+
+  /* === 状态色：异常（跌/错误/删稿）=== */
+  --status-danger: #C0685C;         /* 主色：圆点/图表 */
+  --status-danger-text: #1F1E1D;    /* 文字色（统一用正文墨） */
+  --status-danger-bg: #F7EAEA;      /* 淡底色 */
+
+  /* === 状态色：待处理（警告/待审）=== */
+  --status-warning: #B98A54;        /* 主色：圆点/图表 */
+  --status-warning-text: #8A6A2F;   /* 文字色 */
+  --status-warning-bg: #F7F3ED;     /* 淡底色 */
+
+  /* === 状态色：进行中（位置/信息提示）=== */
+  --status-info: #43718E;           /* 主色：圆点/图表 */
+  --status-info-text: #43718E;      /* 文字色（与主色同） */
+  --status-info-bg: #EEF2F5;        /* 淡底色 */
+
+  /* === 圆角阶梯 === */
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-xl: 16px;      /* rounded-2xl：页面级容器 / Modal */
   --radius-full: 9999px;
 
-  /* 动效 */
+  /* === 动效 === */
   --duration-micro: 150ms;
   --duration-fast: 150ms;
   --duration-normal: 150ms;
@@ -39,11 +61,11 @@
   --ease-spring: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* 阴影 */
+  /* === 阴影 === */
   --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
   --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
 
-  /* Layer / Z-Index 契约体系 */
+  /* === Layer / Z-Index 契约体系 === */
   --z-base: 0;
   --z-sticky-table: 10;     /* 表格吸顶表头 / 冻结列 */
   --z-sticky-nav: 20;       /* 页面内局部吸顶控制条、次级栏目 */
@@ -57,6 +79,22 @@
   --z-lightbox: 100;        /* 全屏图片灯箱、全屏截图预览 (Lightbox / Image Zoom) */
   --z-toast: 110;           /* 顶层全局通知轻提示 (Toast / Sonner) */
 
+  /* === 历史兼容（待逐步替换为上述语义变量）=== */
+  --color-bg: #FCFCFB;           /* 已废弃，用 --surface-canvas */
+  --color-surface: #FFFFFF;      /* 已废弃，用 --surface-card */
+  --color-primary: #D97757;      /* 已废弃，用 --action */
+  --color-primary-hover: #C46A4D;/* 已废弃，用 --action-hover */
+  --color-location: #43718E;     /* 已废弃，用 --status-info */
+  --color-warning: #B98A54;      /* 已废弃，用 --status-warning */
+  --color-success: #6FAA7D;      /* 已废弃，用 --status-success */
+  --color-danger: #C0685C;       /* 已废弃，用 --status-danger */
+  --color-text-primary: #141413;   /* 已废弃，用 --ink-strong */
+  --color-text-secondary: #1F1E1D; /* 已废弃，用 --ink-body */
+  --color-text-tertiary: #78716C;  /* 已废弃，用 --ink-muted */
+  --color-border: #E2E2DF;         /* 已废弃，用 --border */
+  --color-border-light: #E2E2DF;   /* 已废弃，用 --border */
+  --color-border-warm: #E2E2DF;    /* 已废弃，用 --border */
+
   /* glass/nav 实色 */
   --glass-bg: #FFFFFF;
   --glass-blur: none;
@@ -68,8 +106,8 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
-
 }
-/* [规范对齐] 涨红跌绿已统一 */
-/* [规范对齐] 圆角 token 已对齐：xs 4px / sm 6px / md 8px / lg 12px / xl 16px */
-/* [规范对齐] 批次四：stone → zinc 色彩体系已切换 */
+
+/* [28色定案] 2026-10-28 */
+/* 中性灰白12色 + 主色橙2色 + 状态色11色(4语义×3角色-重复) + 图表4色 = 28色 */
+/* 决策树见《设计哲学》原则2"状态色决策树" */

@@ -121,7 +121,7 @@ export function RoleItemRow({
         className={cn(
           "group flex h-6 items-center rounded-md transition-all",
           display.external
-            ? "bg-status-warning/[0.08] text-status-warning hover:bg-status-warning/[0.12] font-normal"
+            ? "bg-status-warning-bg text-ink-body hover:bg-status-warning/[0.10] font-normal"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
         )}
       >
@@ -130,9 +130,10 @@ export function RoleItemRow({
           onClick={onOpenSelector}
           className={cn(
             "flex h-full items-center gap-1 px-2 text-[12px] font-normal transition-colors cursor-pointer",
-            display.historical ? "text-[#78716C]" : display.external ? "text-status-warning" : "text-[#78716C] group-hover:text-[#141413]"
+            display.historical ? "text-[#78716C]" : display.external ? "text-ink-body" : "text-[#78716C] group-hover:text-[#141413]"
           )}
         >
+          {display.external && <span className="size-1.5 shrink-0 rounded-full bg-status-warning-text" />}
           <span>{display.text}</span>
           {!display.external && <ChevronDown className="size-3 text-[#A8A29E] transition-colors group-hover:text-[#78716C]" />}
         </button>
@@ -145,7 +146,7 @@ export function RoleItemRow({
               onResetSelf();
             }}
             title="恢复由我完成"
-            className="flex h-full items-center pr-1.5 pl-0.5 text-status-warning/70 hover:text-status-warning transition-colors cursor-pointer"
+            className="flex h-full items-center pr-1.5 pl-0.5 text-status-warning-text hover:text-ink-strong transition-colors cursor-pointer"
           >
             <X className="size-3 stroke-[2]" />
           </button>

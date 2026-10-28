@@ -69,13 +69,13 @@ test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与�
   assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:contents"/);
   assert.match(
     source,
-    /className="flex min-w-0 flex-col gap-3 lg:gap-6 lg:col-start-1 lg:row-start-3"/,
+    /className="flex min-w-0 flex-col gap-3 lg:gap-5 lg:col-start-1 lg:row-start-3"/,
   );
   assert.match(source, /space-y-2[^\"]*lg:flex-1/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-6 lg:contents"/);
+  assert.match(source, /className="flex min-w-0 flex-col gap-4 lg:contents"/);
   assert.match(
     source,
-    /className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3"/,
+    /className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-2 lg:row-start-3"/,
   );
   // 通栏线是 lg 唯一的分组线：两个分组的块自身在 lg 必须去掉边框
   assert.match(source, /hidden lg:block lg:col-span-2 lg:row-start-2[^\"]*h-px bg-\[#E2E2DF\]\/60/);

@@ -75,15 +75,15 @@ export default async function CaliberPage() {
     >
       <div className="grid gap-5 lg:grid-cols-2">
         {rules.map((item, index) => (
-          <article key={item.title} className="rounded-2xl border border-[#E2E2DF] bg-white p-5 shadow-sm">
+          <article key={item.title} className="rounded-xl border border-[#E2E2DF]/60 bg-white p-5 shadow-card-ring">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[12px] uppercase tracking-[0.18em] text-[#A8A29E]">规则 {index + 1}</p>
-                <h2 className="font-normal mt-1 text-[20px] text-[#141413]">{item.title}</h2>
+                <h2 className="font-normal mt-1 text-[14px] text-[#141413]">{item.title}</h2>
               </div>
-              {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-[#57534E]">{item.value}</span> : null}
+              {"value" in item ? <span className="shrink-0 rounded-full bg-[#F1F1F0] px-2.5 py-1 text-[12px] tabular-nums text-ink-body">{item.value}</span> : null}
             </div>
-            <div className="mt-3 space-y-3 text-[14px] leading-7 text-[#1F1E1D]">
+            <div className="mt-3 space-y-3 text-[14px] leading-7 text-[#1F1E1D] [&_strong]:font-normal [&_strong]:text-[#141413]">
               <div>
                 <p className="text-[12px] text-[#78716C]">规则是什么</p>
                 <p className="mt-0.5">{item.rule}</p>

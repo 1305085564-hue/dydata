@@ -10,7 +10,7 @@ export function AIConfigShell() {
   const { bundle, isLoading, error, loadData } = useAiConfig();
 
   if (error && !bundle) {
-    return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
+    return <div className="rounded-xl border border-status-danger/30 bg-white p-6 space-y-3">
       <h2 className="font-normal text-[14px] text-[#141413]">配置加载失败</h2>
       <p className="text-[14px] text-[#78716C]">{error}</p>
       <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">重试</Button>
@@ -18,7 +18,7 @@ export function AIConfigShell() {
   }
   if (isLoading || !bundle) {
     return (
-      <div className="space-y-6 py-6">
+      <div className="space-y-5 py-6">
         <div className="h-14 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
         <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
         <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
@@ -55,9 +55,9 @@ export function AIConfigShell() {
 
       {/* 完卷微符装帧 */}
       <div className="flex items-center justify-center gap-2 pt-4 pb-2 text-[12px] text-[#A8A29E] select-none">
-        <span aria-hidden="true" className="text-[#D97757] font-serif">✦</span>
+        <span aria-hidden="true" className="text-[#A8A29E] font-serif">✦</span>
         <span>算力底座静候调度 · 智能容灾与高可用</span>
-        <span aria-hidden="true" className="text-[#D97757] font-serif">✦</span>
+        <span aria-hidden="true" className="text-[#A8A29E] font-serif">✦</span>
       </div>
     </div>
   );

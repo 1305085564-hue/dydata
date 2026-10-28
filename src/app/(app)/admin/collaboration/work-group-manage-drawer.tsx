@@ -110,7 +110,7 @@ function MemberMultiSelect({
           <span className="text-[#78716C] truncate">选择公司成员...</span>
         ) : (
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-            <span className="font-normal shrink-0 text-[12px] bg-status-warning/[0.08] text-status-warning border border-status-warning/20 px-1.5 py-0.5 rounded-md">
+            <span className="font-normal shrink-0 text-[12px] bg-[#F1F1F0] text-[#78716C] px-1.5 py-0.5 rounded-md">
               已选 {selectedUserIds.length} 人
             </span>
             <span className="text-[12px] text-[#78716C] truncate">

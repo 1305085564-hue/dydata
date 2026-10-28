@@ -330,9 +330,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                 top: magnifier.position.top,
                 left: magnifier.position.left,
               }}
-              className="pointer-events-none z-30 flex size-[220px] flex-col overflow-hidden rounded-lg border border-[#E5E5E0] bg-white p-1.5 shadow-lg"
+              className="pointer-events-none z-30 flex size-[220px] flex-col overflow-hidden rounded-lg border border-border bg-white p-1.5 shadow-lg"
             >
-              <div className="relative flex-1 w-full overflow-hidden rounded bg-[#F7F7F5] flex items-center justify-center">
+              <div className="relative flex-1 w-full overflow-hidden rounded bg-surface-row-hover flex items-center justify-center">
                 <ScreenshotImage
                   src={magnifier.imgUrl}
                   alt="截图核对参考"

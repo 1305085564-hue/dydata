@@ -73,10 +73,11 @@ export function ContentListSecondaryFilters({
       <DropdownMenuTrigger
         type="button"
         className={cn(
-          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[14px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
+          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md px-2.5 text-[14px] transition-colors cursor-pointer select-none outline-none",
           secondarySummary.isActive
-            ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-            : "text-[#1F1E1D]"
+            ? "bg-[#F1F1F0] text-[#141413]"
+            : "text-[#1F1E1D] hover:bg-[#EBEBE9]",
+          "data-popup-open:bg-[#EBEBE9]"
         )}
         title={secondarySummary.fullDescription}
       >

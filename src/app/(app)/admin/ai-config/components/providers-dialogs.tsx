@@ -114,11 +114,11 @@ export function ProviderQuickActionsDialog({
               }}
               className={cn(
                 "h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                nameError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+                nameError && "ring-1 ring-status-danger/40 border-status-danger/60"
               )}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
-            {nameError && <p className="text-[#C0685C] text-[12px] mt-1">{nameError}</p>}
+            {nameError && <p className="text-status-danger-text text-[12px] mt-1">{nameError}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -135,13 +135,13 @@ export function ProviderQuickActionsDialog({
               onBlur={() => setDomainMismatchWarning(getProviderDomainMismatch(formData.name || "", formData.base_url || ""))}
               className={cn(
                 "h-8 text-[14px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                urlError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+                urlError && "ring-1 ring-status-danger/40 border-status-danger/60"
               )}
               placeholder="例如: https://api.openai.com/v1"
             />
-            {urlError && <p className="text-[#C0685C] text-[12px] mt-1">{urlError}</p>}
+            {urlError && <p className="text-status-danger-text text-[12px] mt-1">{urlError}</p>}
             {domainMismatchWarning && (
-              <div className="mt-1 rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2 text-[12px] text-[#B98A54] leading-relaxed">
+              <div className="mt-1 rounded-md border border-[#8A6A2F]/20 bg-[#8A6A2F]/8 p-2 text-[12px] text-[#8A6A2F] leading-relaxed">
                 {domainMismatchWarning}
               </div>
             )}
@@ -415,7 +415,7 @@ export function ProvidersManagerDialog({
                             {!p.is_enabled ? (
                               <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>
                             ) : (
-                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">已启用</span>
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#4B6B4E]/10 text-[#4B6B4E] border border-[#4B6B4E]/20">已启用</span>
                             )}
                           </div>
                           <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
@@ -454,7 +454,7 @@ export function ProvidersManagerDialog({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleClickDelete(p)}
-                            className="size-7 text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10"
+                            className="size-7 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
                             title="删除接入点"
                           >
                             <Trash2 className="size-3.5" />
@@ -462,8 +462,8 @@ export function ProvidersManagerDialog({
                         </div>
                       </div>
                       {err409 && (
-                        <div className="mt-2.5 flex items-center gap-1.5 p-2 rounded-md bg-[#C0685C]/8 border border-[#C0685C]/20 text-[12px] text-[#C0685C]">
-                          <AlertCircle className="size-3.5 shrink-0" />
+                        <div className="mt-2.5 flex items-center gap-1.5 p-2 rounded-md bg-status-danger/[0.08] border border-status-danger/20 text-[12px] text-status-danger-text">
+                          <AlertCircle className="size-3.5 shrink-0 text-status-danger" />
                           <span>{err409}</span>
                         </div>
                       )}

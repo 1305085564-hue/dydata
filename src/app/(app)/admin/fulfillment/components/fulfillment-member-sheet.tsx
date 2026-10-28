@@ -269,7 +269,7 @@ export function FulfillmentMemberSheet({
         ) : (
           <SheetBody className="space-y-4 pt-3">
             {/* 全月考勤核心总览 */}
-            <Card className="p-4 bg-[#FAF9F7]/60 border border-[#E2E2DF]/60 shadow-card-ring">
+            <Card className="p-4 bg-surface-row-hover/60 border border-[#E2E2DF]/60 shadow-card-ring">
               <div className="flex items-center justify-between pb-2 border-b border-[#E2E2DF]/60">
                 <span className="text-[12px] uppercase font-normal text-[#78716C]">
                   全月考勤考核明细
@@ -355,7 +355,7 @@ export function FulfillmentMemberSheet({
                           type="button"
                           onClick={() => handleDateSelect(d)}
                           className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition-all ${
-                            isSelected ? "bg-[#F1F1F0] ring-1.5 ring-inset ring-[#D97757]/60" : "hover:bg-[#F7F7F6]"
+                            isSelected ? "bg-[#F1F1F0] ring-1 ring-inset ring-[#78716C]/50" : "hover:bg-[#F7F7F6]"
                           }`}
                         >
                           <div className="flex items-center gap-2">

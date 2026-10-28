@@ -188,7 +188,7 @@ export function FormV2LeftColumn({
       </div>
 
       {/* 左栏下半：设置组。lg 起与右栏「标题文案」同处第三行，共用一条通栏发丝线 */}
-      <div className="flex min-w-0 flex-col gap-3 lg:gap-6 lg:col-start-1 lg:row-start-3">
+      <div className="flex min-w-0 flex-col gap-3 lg:gap-5 lg:col-start-1 lg:row-start-3">
         {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界（lg 起交给通栏线） */}
         <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:border-t-0 lg:flex-1">
           <div className="flex items-center justify-between">
@@ -322,7 +322,7 @@ export function FormV2LeftColumn({
             <div className="pt-2 space-y-2 border-t border-[#E2E2DF]/60">
               {/* 计入月度产量定心丸提示 */}
               <div className="rounded-xl bg-[#F1F1F0] p-2.5 text-[12px] leading-relaxed text-[#78716C] shadow-card-ring">
-                <span className="font-normal text-[#141413]">💡 计入月度产量：</span>限流与删稿依然算作今日创作成果，请如实录入已产生的数据或平台处罚通知。
+                <span className="font-normal text-[#141413]">计入月度产量：</span>限流与删稿依然算作今日创作成果，请如实录入已产生的数据或平台处罚通知。
               </div>
               <div className="space-y-1">
                 <Label htmlFor="platform_notice">

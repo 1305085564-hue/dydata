@@ -394,7 +394,7 @@ export function TopicCreateModal({
                       : "text-[#78716C] hover:text-[#141413] font-normal"
                   }`}
                 >
-                  <FileSpreadsheet className="size-3 text-[#D97757]" />
+                  <FileSpreadsheet className="size-3 text-[#78716C]" />
                   <span>批量导入</span>
                 </button>
               </div>
@@ -680,7 +680,7 @@ export function TopicCreateModal({
                   {/* 文件信息 */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[12px]">
                     <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="size-4 text-[#D97757]" />
+                      <FileSpreadsheet className="size-4 text-[#78716C]" />
                       <span className="font-normal text-[#1F1E1D]">
                         {fileInfo?.name}
                       </span>
@@ -746,7 +746,7 @@ export function TopicCreateModal({
                             onClick={() => setActiveFilterTab("valid")}
                             className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                               activeFilterTab === "valid"
-                                ? "bg-white text-status-success shadow-input"
+                                ? "bg-white text-[#141413] shadow-input"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
                             }`}
                           >
@@ -758,7 +758,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("warning")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "warning"
-                                  ? "bg-white text-status-warning shadow-input"
+                                  ? "bg-white text-[#141413] shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >
@@ -771,7 +771,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("error")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "error"
-                                  ? "bg-white text-status-danger shadow-input"
+                                  ? "bg-white text-[#141413] shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >

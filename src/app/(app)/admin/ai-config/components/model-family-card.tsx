@@ -186,8 +186,8 @@ export function ModelFamilyCard({
       data-model-id={modelId}
       className={cn(
         "rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all duration-300",
-        !isShelved && "opacity-75 bg-[#FAFAFA]",
-        isHighlighted && "ring-2 ring-[#D97757]/30"
+        !isShelved && "opacity-75 bg-surface-row-hover",
+        isHighlighted && "ring-1 ring-[#141413]/20"
       )}
     >
       {/* 父级：模型定名标题行（展示下沉气垫） */}
@@ -222,7 +222,7 @@ export function ModelFamilyCard({
                   if (e.key === "Escape") handleCancelModelName();
                 }}
                 autoFocus
-                className="h-6 px-1.5 text-[14px] border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                className="h-6 px-1.5 text-[14px] border border-[#78716C] rounded-md bg-white text-[#141413] focus:outline-none"
               />
               <Button
                 variant="ghost"
@@ -268,18 +268,14 @@ export function ModelFamilyCard({
           )}
 
           <span
-            className={cn(
-              "inline-flex items-center px-2 py-0.5 rounded-full text-[12px] shrink-0",
-              isShelved
-                ? "bg-[#F1F1F0] text-[#78716C]"
-                : "bg-[#C0685C]/10 text-[#C0685C]"
-            )}
+            className="inline-flex items-center rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] shrink-0"
           >
             {isShelved ? `${healthyChannelCount}/${items.length} 渠道健康` : "已下架"}
           </span>
           {isShelved && healthyChannelCount === 0 && (
-            <span className="inline-flex items-center rounded-full bg-[#C0685C]/10 px-2 py-0.5 text-[12px] text-[#C0685C]">
-              ⚠️ 无健康渠道
+            <span className="inline-flex items-center gap-1 rounded-full bg-status-danger-bg px-2 py-0.5 text-[12px] text-ink-body">
+              <span className="size-1.5 rounded-full bg-status-danger" />
+              无健康渠道
             </span>
           )}
         </div>
@@ -347,7 +343,7 @@ export function ModelFamilyCard({
                     "group flex flex-col sm:flex-row sm:items-center justify-between gap-2 pl-4 sm:pl-6 pr-3.5 py-2.5 transition-colors",
                     key.is_enabled
                       ? "hover:bg-[#FCFCFB]"
-                      : "bg-[#FAFAFA] text-[#A8A29E]"
+                      : "bg-surface-row-hover text-[#A8A29E]"
                   )}
                 >
                   {/* 左侧：优先级、开关、渠道名（就地改名）、状态与时间戳 */}
@@ -378,7 +374,7 @@ export function ModelFamilyCard({
                           }}
                           autoFocus
                           disabled={savingKeyId === key.id}
-                          className="h-6 px-1.5 text-[14px] border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
+                          className="h-6 px-1.5 text-[14px] border border-[#78716C] rounded-md bg-white text-[#141413] focus:outline-none"
                         />
                         <Button
                           variant="ghost"
@@ -422,13 +418,13 @@ export function ModelFamilyCard({
 
                     {/* 健康状态印记 */}
                     {health === "healthy" ? (
-                      <span className="inline-flex items-center gap-1 text-[12px] text-[#6FAA7D]">
-                        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#4B6B4E]">
+                        <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
                         健康
                       </span>
                     ) : health === "unhealthy" ? (
-                      <span className="inline-flex items-center gap-1 text-[12px] text-[#C0685C]">
-                        <span className="size-1.5 rounded-full bg-[#C0685C]" />
+                      <span className="inline-flex items-center gap-1 text-[12px] text-status-danger-text">
+                        <span className="size-1.5 rounded-full bg-status-danger" />
                         故障
                       </span>
                     ) : (
@@ -440,7 +436,7 @@ export function ModelFamilyCard({
 
                     {/* B-8: 已就绪，但全站未启用 */}
                     {key.is_enabled && !isShelved && (
-                      <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#A16207]/10 text-[#A16207] border border-[#A16207]/20">
+                      <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#8A6A2F]/10 text-[#8A6A2F] border border-[#8A6A2F]/20">
                         已就绪，但全站未启用
                       </span>
                     )}
@@ -452,7 +448,7 @@ export function ModelFamilyCard({
                       </span>
                     )}
                     {health === "unhealthy" && failureRelative && (
-                      <span className="text-[12px] text-[#C0685C] font-mono">
+                      <span className="text-[12px] text-status-danger-text font-mono">
                         失败 {failureRelative}
                       </span>
                     )}
@@ -509,7 +505,7 @@ export function ModelFamilyCard({
                             variant="ghost"
                             size="icon"
                             onClick={() => onDeleteKeyWithCheck(key.id)}
-                            className="size-6 text-[#78716C] hover:text-[#C0685C]"
+                            className="size-6 text-[#78716C] hover:text-status-danger"
                             title="删除此渠道"
                           >
                             <Trash2 className="size-3" />
@@ -527,9 +523,9 @@ export function ModelFamilyCard({
                           aria-label="测此渠道此模型"
                         >
                           {isTesting ? (
-                            <Loader2 className="size-3 animate-spin mr-1 text-[#D97757]" />
+                            <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
                           ) : (
-                            <Play className="size-3 text-[#D97757] mr-1" />
+                            <Play className="size-3 text-[#78716C] mr-1" />
                           )}
                           测此渠道此模型
                         </Button>
