@@ -11,6 +11,7 @@ import type {
 } from "@/components/submission/提交状态机";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import type { Video } from "@/types";
+import { normalizePublishedAtInputValue } from "@/lib/日报";
 
 export type CompleteEditPayload = {
   video_id: string;
@@ -47,8 +48,8 @@ export function resolveCompleteEditPayload(
 export function toDateTimeLocalValue(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  // OCR 返回带时区时间；表单与保存端都使用上海时间，不随设备时区变化。
+  return normalizePublishedAtInputValue(date.toISOString());
 }
 
 // 保留所有辅助函数

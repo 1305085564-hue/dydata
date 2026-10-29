@@ -198,7 +198,11 @@ export function ModelFamilyCard({
         aria-controls={`model-family-${modelId}`}
         className="flex items-center justify-between px-3.5 py-2.5 bg-[#FCFCFB] border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] cursor-pointer select-none transition-colors"
         onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); }
+        }}
       >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           {expanded ? (
@@ -218,6 +222,8 @@ export function ModelFamilyCard({
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
                 onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
                   if (e.key === "Enter") handleSaveModelName();
                   if (e.key === "Escape") handleCancelModelName();
                 }}
@@ -369,6 +375,7 @@ export function ModelFamilyCard({
                           value={keyLabelInput}
                           onChange={(e) => setKeyLabelInput(e.target.value)}
                           onKeyDown={(e) => {
+                            if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
                             if (e.key === "Enter") void handleSaveKeyName(key.id);
                             if (e.key === "Escape") handleCancelKeyName();
                           }}

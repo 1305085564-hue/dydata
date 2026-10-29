@@ -4,7 +4,7 @@
 
 ## 1. 结论与证据边界
 
-- 未发现可据本轮证据定为 P0 的问题。优先建议处理：发布时间的设备时区偏移、主按钮小字对比度；先验证中文输入法回车风险。
+- 未发现可据本轮证据定为 P0 的问题。后续已按阿禅授权本地修复发布时间的设备时区偏移及中文输入法回车保护（见§8）；主按钮配色为已确认设计取舍，不列待修复项。
 - 字体已有处理：当前采用系统字体、UI 字重 400、中文衬线不小于 20px。按用户要求有限回归，不重跑完整 400/500/600/700 实验。
 - **Windows Edge 实机验收：BLOCKED。** 当前工具连接的是 macOS 15.4.1；应用/浏览器清单没有提供可控的 Windows 会话，未发现本地虚拟机应用。ToDesk 等远程工具的安装不证明有可用 Windows 主机。本轮没有把 Mac 调整窗口、DPR 或媒体偏好当作 Windows 验收。
 - Mac Chrome 完成工作台、视频复盘、每日大盘的代表状态抽查；Mac Edge 只验证登录页可加载，业务页因无登录态未验。Safari 虽存在于应用清单，本轮未验。
@@ -30,10 +30,10 @@
 
 本轮没有足够证据支持 P0；这不等于全站、所有系统均无严重问题。
 
-### P1-01：设备时区可能改变作品发布时间（函数链已复现，完整上传待验）
+### P1-01：设备时区可能改变作品发布时间（已本地修复，完整上传待验）
 
 - 位置：`src/app/api/ocr-screenshot/ocr-contract.ts:117-126` 将 OCR 时间规范为带时区的 ISO；`src/app/(app)/dashboard/video-submit-form-v2/upload-controller.ts:157-179` 调用转换并写入表单；`src/lib/video-submit/domain/form-rules.ts:47-51` 使用设备本地年月日时分；提交字段见 `src/app/(app)/dashboard/video-submit-form-v2.tsx:893`；服务端 `src/app/api/video-submit/stability.ts:46-51` → `src/lib/日报.ts:48-61` 又把无时区字符串按 +08:00 保存。
-- 技术原因：第一次转换受设备时区影响，第二次解释固定为上海时间，时间含义在两端发生变化。
+- 修复前技术原因：第一次转换受设备时区影响，第二次解释固定为上海时间，时间含义在两端发生变化；当前修复见§8。
 - 实测：同一输入 `2026-10-28T00:30:00+08:00`，用现有函数串联执行：
 
 | 进程 TZ | 表单值 | 归一化存储值 |
@@ -44,18 +44,18 @@
 - 用户影响：设备设为非上海时区时，可能错到前一天，影响发布时间显示、日期归属和补交判断。Mac 与 Windows 均可触发，**不是 Windows 专属错误**。本轮未上传、未保存真实业务数据，未证明线上已有受影响记录。
 - 推荐：复用现有上海时间格式化能力，让 OCR → 表单 → 保存始终表达同一时间；补上海、UTC、洛杉矶及跨日样本。修复后在隔离数据环境完成真实上传/识别/保存/回读核对。
 
-### P1-02：通用主按钮的小字对比度不足（代码与数值已确认）
+### 原 P1-02：主按钮配色——已确认设计取舍，不修复
 
-- 位置：`src/components/ui/button.tsx:14-15,27-36` 白字配 `#D97757`；实际调用例为 `src/app/(auth)/login/login-form.tsx:36-49` 登录按钮，文字 14px。
-- 技术原因与证据：按相对亮度计算，白字与该背景为 **3.12:1**，低于普通小字 4.5:1。Mac Edge 登录页已观察到该配方；并非仅凭屏幕主观判断。
-- Windows 影响：低对比显示器、低视力及小字阅读下，主操作文字更难辨认。Mac 同样存在此配色问题；不能据此宣称所有 Windows 用户看不清。
-- 推荐：由视觉负责人只调整主按钮正常态前景/背景的配对，保持现有风格，验到 ≥4.5:1；同时检查悬停和聚焦。不要用整体放大、增加字重或禁用态配方冒充解决。
-- 标准：[W3C 普通文字对比度要求](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum)。
+- 2026-10-30 阿禅明确确认：白字配现有橙底的体感是项目选定效果，保留约 **3.12:1** 的现有配方，不改颜色、字号、字重或组件。
+- **纠正初次定级**：4.5:1 来自外部 WCAG 普通文字无障碍标准，不是本项目设计哲学或规范要求，也不代表已复现 Windows 阅读故障。此前仅凭该标准列 P1 过重；撤销 P1 定级，退出待修复清单。
+- 外部标准与项目取舍分开记录：现有配色未达到该项 WCAG AA 数值要求，但不据此自动要求重设计。后续若真实用户反馈或实机验证发现阅读困难，再重新评估。
+- 代码保持 `src/components/ui/button.tsx` 与登录按钮调用原样；本轮不修改全局设计规范。
+- 标准背景：[W3C 普通文字对比度要求](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum)。
 
-### P1-03：中文输入法回车可能误触跳栏或保存（待真实 IME 验证）
+### P1-03：中文输入法回车可能误触跳栏或保存（已本地修复，系统 IME 待验）
 
 - 位置：`src/app/(app)/dashboard/form-v2/right-column.tsx:118-122` 标题 Enter 直接跳文案；`src/app/(app)/admin/ai-config/components/model-family-card.tsx:220-222` Enter 直接保存重命名。
-- 技术原因：两个处理器未判断组合输入状态；仓库检索未发现 `isComposing` / `keyCode 229` 保护。输入法确认候选字也可能发出 Enter。
+- 修复前技术原因：两个处理器未判断组合输入状态，当时仓库检索未发现 `isComposing` / `keyCode 229` 保护。输入法确认候选字也可能发出 Enter；当前保护及验证见§8。
 - 实测边界：Mac Chrome 对已完成输入的标题按 Enter，焦点确实转到 `content`；没有做真实输入法选词实验，不能把普通 Enter 测试当作误触复现。
 - Windows 影响：微软拼音选词时，可能提前跳栏、保存半成品名称。Mac 中文输入法也须回归。
 - 推荐：先在微软拼音复现；确认后在 Enter 行为前增加组合输入保护，并避免嵌套标题键盘处理冒泡。优先级来自对操作成功率的潜在影响，不表示已坐实故障。
@@ -146,5 +146,32 @@
 - `TZ=Asia/Shanghai node_modules/.bin/tsx -e 'import {toDateTimeLocalValue} from "./src/lib/video-submit/domain/form-rules"; import {normalizePublishedAtForStorage} from "./src/lib/日报"; const source="2026-10-28T00:30:00+08:00"; const form=toDateTimeLocalValue(source); console.log(JSON.stringify({zone:process.env.TZ,source,form,stored:normalizePublishedAtForStorage(form)}))'`：退出0；把TZ换为`America/Los_Angeles`再跑，退出0，输出见P1-01。未连接数据库。
 - Node 相对亮度计算：退出0，白/主橙3.12、表头墨/画布4.67、边框/白1.30；只代表这些明确色对。
 - 浏览器通过 CUA 执行真实页面操作、读取尺寸/样式/安全的导航耗时；未读取登录令牌，未保存请求正文或凭据。媒体/视口临时覆盖已清除。
-- 本轮只产出本报告与当日日志。本地提交；**尚未 push**。没有修复代码，没有“完整修复”或“止血上线”结论；本报告发现均为现有问题/风险，未引入业务改动。
-- 不运行发布门禁、不构建或发布：本次是审计，完整 Windows、角色和性能验收仍按上述待验项保留。
+- 首轮审计仅产出报告与日志；后续修复见§8。均为本地提交，**尚未 push**，不代表已上线。
+- 首轮未运行发布门禁、构建或发布；后续只运行修复相关检查。完整 Windows、角色和性能验收仍按上述待验项保留。
+
+
+## 8. 两项修复与配色确认（2026-10-30 后续）
+
+### 冻结范围
+
+阿禅授权：更新报告并保留主按钮现有配色；修复 P1-01 与 P1-03。只改时间回填、标题/模型名/同组件渠道名的回车行为及验收资料；不改接口、数据库、视觉、其他 P2 项，不 push。开工14项他人未提交修改继续保留，不夹带提交。
+
+### 修改与验证
+
+| 项目 | 实现与实测结果 | 尚未覆盖 |
+|---|---|---|
+| P1-01 | `src/lib/video-submit/domain/form-rules.ts` 复用现有上海时间回填函数，移除依赖设备时区的年月日时分拼接。新增同目录 `form-rules.test.ts`：上海/UTC/洛杉矶 × 午夜、跨年、美国夏令时切换前后，检查表单值和存储归一化一致；无效输入继续返回null。修复前测试退出1（UTC回填前一天16:30），修复后退出0。浏览器隔离页在洛杉矶时区显示 `2026-10-28T00:30`，保存归一化为正确的 `2026-10-27T16:30:00.000Z`。 | 浏览器验证调用真实函数，没有伪装完成OCR上传/保存；真实上传、数据库回读与Windows实机仍待隔离环境。未改服务器存储口径。 |
+| P1-03 | 标题、模型和渠道名称在 `nativeEvent.isComposing` 或 `keyCode===229` 时忽略快捷动作；模型名称输入阻止键盘事件冒泡，标题行只响应自身键盘事件。隔离页挂载真实 `ModelFamilyCard`、保存回调仅本地计数。修复前组合输入Enter会保存1次且折叠；修复后组合Enter/229/组合空格均保持编辑、计数0，正常Enter只保存1次且不折叠；渠道名同样通过，Escape取消不保存。真实 `/dashboard` 页的组合Enter/229均保持 `video_title` 焦点，正常Enter转 `content`，随后清空测试标题。 | 组合事件是明确标志的浏览器合成事件，不是操作系统输入法候选窗口；微软拼音和Mac真实输入法选词仍待实机。未修改真实模型或渠道名称。 |
+| 原 P1-02 | 按用户明确决定撤销P1，标为项目已确认设计取舍；通用按钮和登录页面零改动。 | 不将外部标准自动提升为本项目设计要求。 |
+
+验收命令与结果：
+
+- `node_modules/.bin/tsx --test src/lib/video-submit/domain/form-rules.test.ts src/lib/日报.test.ts 'src/app/(app)/dashboard/video-submit-form-v2/upload-controller.test.ts'`：退出0，10/10通过；新时间测试先红后绿。
+- 定向 ESLint：`form-rules.ts`、`form-rules.test.ts`、`right-column.tsx`、`model-family-card.tsx`、`tests/compatibility/输入法回车.fixture.tsx`；退出0，0报错。
+- `node_modules/.bin/tsc --noEmit --pretty false`：退出0；`git diff --check`：退出0。
+- 浏览器隔离验收：`tests/compatibility/输入法回车.fixture.tsx`，编译到 `/tmp/dydata-ime/app.js`，配静态HTML并用 `python3 -m http.server 3238 --bind 127.0.0.1 --directory /tmp/dydata-ime` 服务；不依赖登录，不接业务接口。编译命令见文件头。初次误用Node执行esbuild二进制失败，改为直接执行二进制后构建通过。
+- 代表截图：`output/跨平台审计-2026-10-30/时区与输入法修复验收.jpg`。隔离页控制台error/warn为空；测试后的时区覆盖已恢复，真实工作台临时标题已清空。未运行发布门禁或生产写验收。
+
+同类扫描：时间回填旧实现仅一个调用方，已原位替换，无废弃函数残留；同一模型组件的渠道重命名同步补保护。全仓还发现其他范围外的Enter快捷键候选（`premium-settings-modal.tsx`名称编辑、`inline-feedback-tray.tsx`以及工作台全局Ctrl/Cmd+Enter）；本次不扩大修改，需按各自交互另验，不能据静态扫描定为已发生故障。数字指标输入的Enter用于数字跳栏，不混同中文名称选词。
+
+交付分层：两项代码修复及上述本地验证已完成；完整上传与系统输入法/Windows实机为未覆盖证据边界；其他P2风险保留。没有发布或历史数据修正，**尚未 push**。
