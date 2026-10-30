@@ -36,6 +36,11 @@ const ContentDetailDialog = dynamic(
   },
 );
 
+const AuthorWorksDrawer = dynamic(
+  () => import("./author-works-drawer").then((module) => module.AuthorWorksDrawer),
+  { ssr: false },
+);
+
 import type { UserPermissionInfo } from "@/lib/permissions";
 
 interface ContentPageClientProps {
@@ -109,6 +114,20 @@ export function ContentPageClient({
   const [detailError, setDetailError] = useState<{ videoId: string; message: string } | null>(null);
   const [detailRequestAttempt, setDetailRequestAttempt] = useState(0);
   const selectedLoadedDetail = selectedVideoId ? loadedDetails[selectedVideoId] : undefined;
+  const [selectedAuthor, setSelectedAuthor] = useState<{ id: string; name: string } | null>(null);
+
+  const handleSelectAuthor = useCallback((id: string, name: string) => {
+    setSelectedAuthor({ id, name });
+  }, []);
+
+  const handleViewAuthorInMainList = useCallback((authorId: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("userId", authorId);
+    params.delete("page");
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+    void loadData(view, perspective, teamId, { resetPage: true });
+    setSelectedAuthor(null);
+  }, [loadData, perspective, teamId, view]);
 
   // 换作品时清掉上一条的详情错误：放在点击入口而不是 effect 里，避免 effect 内同步 setState 触发级联渲染
   const openVideo = useCallback(
@@ -313,6 +332,8 @@ export function ContentPageClient({
         currentIndex={videoPosition.currentIndex}
         totalCount={videoPosition.totalCount}
         onStepVideo={handleStepVideo}
+        onSelectAuthor={handleSelectAuthor}
+        ownerNames={data.ownerNames}
       />
     ) : (
       <div role="status" className="fixed inset-x-4 bottom-6 z-50 rounded-md border border-[#E2E2DF] bg-white p-4 text-sm text-[#78716C] shadow-lg">
@@ -364,10 +385,23 @@ export function ContentPageClient({
               if (videoId) openVideo(videoId);
               else closeVideo();
             }}
+            onSelectAuthor={handleSelectAuthor}
+            ownerNames={data.ownerNames}
           />
         </div>
       </section>
     {diagnosisDrawerNode}
+    <AuthorWorksDrawer
+      key={`${permissionInfo.userId}:${teamId}:${selectedAuthor?.id ?? ""}`}
+      author={selectedAuthor}
+      open={Boolean(selectedAuthor)}
+      onClose={() => setSelectedAuthor(null)}
+      evaluationStandards={data.evaluationStandards}
+      canManageVideos={permissionInfo.permissions.manage_videos === true}
+      onViewInMainList={handleViewAuthorInMainList}
+      canReviewContent={permissionInfo.permissions.review_content === true}
+      onWorksChanged={() => { setLoadedDetails({}); void loadData(view, perspective, teamId, { fresh: true }); }}
+    />
     {/* 首次引导弹窗：走共享 ui/dialog.tsx，与全站弹层一致地拿到 Esc 关闭、
         role=dialog + aria-labelledby、焦点陷阱与背景滚动锁定（此前是本站唯一自绘浮层）。 */}
     <Dialog

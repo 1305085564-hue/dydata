@@ -1,3 +1,4 @@
+import { getContentOwner } from "@/lib/content/content-owner";
 import { ExternalLink, Play, Bookmark, Layers, UserCheck, TrendingUp, ThumbsUp, Sparkles } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
@@ -57,9 +58,14 @@ export interface ContentDetailMetricsProps {
   interactionRating: BreakoutRating | null;
   fourthRating: BreakoutRating | null;
   overallGrade: BreakoutGrade | null;
+  ownerNames?: Record<string, string>;
+  onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
-export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade }: ContentDetailMetricsProps) {
+export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
+  const owner = onSelectAuthor || ownerNames
+    ? getContentOwner(video, ownerNames)
+    : { id: video.user_id, name: video.profiles.name };
   const anomalyReason = describeAnomalyReason(video);
   return (
     <>
@@ -134,7 +140,18 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
                         <UserCheck className="size-3.5 text-[#78716C]" />
                         <span className="text-[#78716C]">责任人:</span>{" "}
-                        {video.profiles.name}
+                        {owner.id && onSelectAuthor ? (
+                          <button
+                            type="button"
+                            onClick={() => onSelectAuthor(owner.id, owner.name)}
+                            className="font-normal text-[#1F1E1D] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
+                            title={`查看 ${owner.name} 的全部作品`}
+                          >
+                            {owner.name}
+                          </button>
+                        ) : (
+                          <span>{owner.name}</span>
+                        )}
                       </span>
                       <span className="text-[#E2E2DF]">·</span>
                       <span>

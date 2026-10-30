@@ -43,7 +43,7 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor,
     }),
     supabase.from("profiles")
       .select("id, name")
-      .in("id", scope.activeVisibleUserIds ?? scope.visibleUserIds)
+      .in("id", scope.visibleUserIds)
       .order("name", { ascending: true }),
   ]);
   return { result, profilesResult, rpcDurationMs };

@@ -139,6 +139,8 @@ export function ContentList(props: ContentListProps) {
         handleSort={state.handleSort}
         isSingleDay={isSingleDay}
         onSelectVideoId={props.onSelectVideoId}
+        onSelectAuthor={props.onSelectAuthor}
+        ownerNames={props.ownerNames}
         highlightRules={state.filters.highlightRules}
         evaluationStandards={props.evaluationStandards}
       />

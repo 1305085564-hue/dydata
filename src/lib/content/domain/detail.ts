@@ -3,7 +3,7 @@ import { isImpossibleRatio } from "@/lib/metric-bounds";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 export type VideoRow = Video & {
-  accounts: { name: string };
+  accounts: { name: string; profile_id?: string | null };
   profiles: { name: string };
   trashed_by_name?: string | null;
 };

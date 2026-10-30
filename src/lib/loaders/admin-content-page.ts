@@ -57,6 +57,7 @@ export interface AdminContentPageData {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
+  ownerNames?: Record<string, string>;
   accountOptions?: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   /** 列表范围内每条视频的统一内容质量结果；Record 可直接随 JSON 刷新传输。 */
@@ -538,6 +539,7 @@ export async function loadAdminContentPageData({
     videos: videosWithSignals,
     snapshots,
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
+    ownerNames: Object.fromEntries(profiles.filter(p => fallbackProfileIds.includes(p.id)).map(p => [p.id, p.name])),
     reviewReadiness,
     contentQualityByVideoId,
     evaluationStandards,
@@ -731,7 +733,8 @@ async function loadAdminContentRpcPageData({
   return {
     videos,
     snapshots,
-    profiles,
+    profiles: buildScopedProfileOptions(profiles, scope),
+    ownerNames: Object.fromEntries(profiles.map(p => [p.id, p.name])),
     accountOptions: payload.accountOptions ?? [],
     reviewReadiness,
     contentQualityByVideoId,
