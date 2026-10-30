@@ -87,3 +87,15 @@ test("ContentListTable 包含责任人名字时渲染查看作者作品的可点
   assert.match(html, /老罗/);
   assert.match(html, /查看 老罗 的全部作品/);
 });
+
+test("AuthorWorksView 在传入受控 selectedVideoId 时支持内嵌渲染作品详情视图", () => {
+  const htmlControlled = renderToStaticMarkup(
+    <AuthorWorksView
+      author={{ id: "author-2", name: "李四" }}
+      onClose={() => {}}
+      onViewInMainList={() => {}}
+      selectedVideoId="video-123"
+    />,
+  );
+  assert.match(htmlControlled, /李四/);
+});

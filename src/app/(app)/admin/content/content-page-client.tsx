@@ -71,9 +71,12 @@ export function ContentPageClient({
     teamId,
     isLoading,
     selectedVideoId,
+    selectedAuthorId,
     loadData,
     selectVideo,
     closeVideo,
+    selectAuthor,
+    closeAuthor,
     switchPerspective,
     switchTeam,
   } = useContentPageQuery({
@@ -115,19 +118,46 @@ export function ContentPageClient({
   const [detailRequestAttempt, setDetailRequestAttempt] = useState(0);
   const selectedLoadedDetail = selectedVideoId ? loadedDetails[selectedVideoId] : undefined;
   const [selectedAuthor, setSelectedAuthor] = useState<{ id: string; name: string } | null>(null);
+  const [lastSelectedAuthorName, setLastSelectedAuthorName] = useState<string | null>(null);
+
+  // A4: 深链或者 URL 中的 authorId
+  // 如果当前在本地有点击选择过对应的名字，以记录的名字为准；否则从 profiles / videos 中查找，兜底为“创作者”
+  const activeAuthor = useMemo(() => {
+    if (!selectedAuthorId) return null;
+    const authorName =
+      (selectedAuthorId === selectedAuthor?.id ? selectedAuthor.name : null) ||
+      lastSelectedAuthorName ||
+      data.profiles.find((p) => p.id === selectedAuthorId)?.name ||
+      data.videos.find((v) => v.user_id === selectedAuthorId)?.profiles?.name ||
+      data.ownerNames?.[selectedAuthorId] ||
+      "创作者";
+    return { id: selectedAuthorId, name: authorName };
+  }, [data.ownerNames, data.profiles, data.videos, lastSelectedAuthorName, selectedAuthor, selectedAuthorId]);
 
   const handleSelectAuthor = useCallback((id: string, name: string) => {
+    // A3: 详情内点作者名：先关详情再开作者抽屉，保证任一时刻 DOM 中 Sheet 层数 ≤ 1（缺口①）
+    closeVideo();
+    setLastSelectedAuthorName(name);
     setSelectedAuthor({ id, name });
-  }, []);
+    selectAuthor(id);
+  }, [closeVideo, selectAuthor]);
+
+  const handleCloseAuthor = useCallback(() => {
+    // A4: 关闭作者抽屉同步 URL 且后退不复活（缺口③）
+    setSelectedAuthor(null);
+    closeAuthor();
+  }, [closeAuthor]);
 
   const handleViewAuthorInMainList = useCallback((authorId: string) => {
     const params = new URLSearchParams(window.location.search);
     params.set("userId", authorId);
     params.delete("page");
+    params.delete("authorId");
     window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
     void loadData(view, perspective, teamId, { resetPage: true });
     setSelectedAuthor(null);
-  }, [loadData, perspective, teamId, view]);
+    closeAuthor();
+  }, [closeAuthor, loadData, perspective, teamId, view]);
 
   // 换作品时清掉上一条的详情错误：放在点击入口而不是 effect 里，避免 effect 内同步 setState 触发级联渲染
   const openVideo = useCallback(
@@ -392,10 +422,10 @@ export function ContentPageClient({
       </section>
     {diagnosisDrawerNode}
     <AuthorWorksDrawer
-      key={`${permissionInfo.userId}:${teamId}:${selectedAuthor?.id ?? ""}`}
-      author={selectedAuthor}
-      open={Boolean(selectedAuthor)}
-      onClose={() => setSelectedAuthor(null)}
+      key={`${permissionInfo.userId}:${teamId}:${activeAuthor?.id ?? ""}`}
+      author={activeAuthor}
+      open={Boolean(selectedAuthorId)}
+      onClose={handleCloseAuthor}
       evaluationStandards={data.evaluationStandards}
       canManageVideos={permissionInfo.permissions.manage_videos === true}
       onViewInMainList={handleViewAuthorInMainList}

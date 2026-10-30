@@ -88,6 +88,7 @@ export function useContentPageQuery({
 }: UseContentPageQueryArgs) {
   const searchParams = useSearchParams();
   const urlVideoId = searchParams.get("videoId");
+  const urlAuthorId = searchParams.get("authorId");
   const [view, setView] = useState<ContentView>(initialView);
   const [data, setData] = useState<AdminContentPageData>(initialData);
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
@@ -96,10 +97,13 @@ export function useContentPageQuery({
   const requestSeq = useRef(0);
   const [clientSelectedVideoId, setClientSelectedVideoId] = useState<string | null | undefined>(undefined);
   const selectedVideoId = clientSelectedVideoId !== undefined ? clientSelectedVideoId : urlVideoId;
+  const [clientSelectedAuthorId, setClientSelectedAuthorId] = useState<string | null | undefined>(undefined);
+  const selectedAuthorId = clientSelectedAuthorId !== undefined ? clientSelectedAuthorId : urlAuthorId;
 
   const selectVideo = useCallback(
     (videoId: string) => {
       setClientSelectedVideoId(videoId);
+      setClientSelectedAuthorId(null);
       const newUrl = buildContentPageUrl({
         view,
         perspective,
@@ -108,7 +112,11 @@ export function useContentPageQuery({
         filters: readCurrentListFilters(),
         search: window.location.search,
       });
-      window.history.pushState(null, "", newUrl);
+      // A3/A4: 打开作品详情时清除 authorId，保证任一时刻 Sheet 数量 ≤ 1
+      const urlObj = new URL(newUrl, "http://dummy");
+      urlObj.searchParams.delete("authorId");
+      const finalUrl = `${urlObj.pathname}${urlObj.search}`;
+      window.history.pushState(null, "", finalUrl);
     },
     [perspective, teamId, view],
   );
@@ -123,8 +131,27 @@ export function useContentPageQuery({
       filters: readCurrentListFilters(),
       search: window.location.search,
     });
-    window.history.pushState(null, "", newUrl);
+    // A1: 由 pushState 改为 replaceState，避免关掉详情后按后退复活抽屉（缺口⑤）
+    window.history.replaceState(null, "", newUrl);
   }, [perspective, teamId, view]);
+
+  const selectAuthor = useCallback((authorId: string) => {
+    // A3/A4: 打开作者抽屉接入 URL，同时关闭详情，保证 DOM 中 Sheet 数量 ≤ 1（缺口①/③）
+    setClientSelectedAuthorId(authorId);
+    setClientSelectedVideoId(null);
+    const params = new URLSearchParams(window.location.search);
+    params.set("authorId", authorId);
+    params.delete("videoId");
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+  }, []);
+
+  const closeAuthor = useCallback(() => {
+    // A4: 关闭作者抽屉使用 replaceState，后退不复活（缺口③）
+    setClientSelectedAuthorId(null);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("authorId");
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+  }, []);
 
   const loadData = useCallback(async (
     nextView: ContentView,
@@ -204,22 +231,29 @@ export function useContentPageQuery({
         availableTeamIds,
         fallbackTeamId,
       });
+      const popParams = new URLSearchParams(window.location.search);
+      const nextAuthorId = popParams.get("authorId") || null;
       const currentState = { view, perspective, teamId } satisfies ContentPageQueryState;
 
       if (shouldReloadContentPageList(nextState, currentState)) {
         setClientSelectedVideoId(null);
+        setClientSelectedAuthorId(null);
         void loadData(
           nextState.view,
           nextState.perspective,
           nextState.teamId,
           { background: true },
         ).then((loaded) => {
-          if (loaded) setClientSelectedVideoId(nextState.videoId);
+          if (loaded) {
+            setClientSelectedVideoId(nextState.videoId);
+            setClientSelectedAuthorId(nextAuthorId);
+          }
         });
         return;
       }
 
       setClientSelectedVideoId(nextState.videoId);
+      setClientSelectedAuthorId(nextAuthorId);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -253,9 +287,12 @@ export function useContentPageQuery({
     teamId,
     isLoading,
     selectedVideoId,
+    selectedAuthorId,
     loadData,
     selectVideo,
     closeVideo,
+    selectAuthor,
+    closeAuthor,
     switchPerspective,
     switchTeam,
   };

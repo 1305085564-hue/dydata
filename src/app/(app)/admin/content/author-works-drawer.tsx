@@ -43,6 +43,8 @@ export interface AuthorWorksViewProps {
   canManageVideos?: boolean;
   canReviewContent?: boolean;
   onWorksChanged?: () => void;
+  selectedVideoId?: string | null;
+  onSelectVideoId?: (videoId: string | null) => void;
 }
 
 type TimeRangeFilter = "30d" | "thisMonth" | "lastMonth" | "all";
@@ -77,6 +79,8 @@ export function AuthorWorksView({
   onViewInMainList,
   canReviewContent = false,
   onWorksChanged,
+  selectedVideoId: externalSelectedVideoId,
+  onSelectVideoId,
 }: AuthorWorksViewProps) {
   const [timeRange, setTimeRange] = useState<TimeRangeFilter>("30d");
   const [sortField, setSortField] = useState<SortFilter>("published_at");
@@ -85,7 +89,12 @@ export function AuthorWorksView({
   const snapshots = useMemo(() => Object.fromEntries((data?.snapshots ?? []).map(s => [s.video_id, s])), [data]);
   const qualityMap = data?.contentQualityByVideoId ?? {};
   const summary = error ? undefined : data?.summary;
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [internalSelectedVideoId, setInternalSelectedVideoId] = useState<string | null>(null);
+  const selectedVideoId = externalSelectedVideoId !== undefined ? externalSelectedVideoId : internalSelectedVideoId;
+  const setSelectedVideoId = useCallback((id: string | null) => {
+    if (onSelectVideoId) onSelectVideoId(id);
+    else setInternalSelectedVideoId(id);
+  }, [onSelectVideoId]);
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>({});
 
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -95,7 +104,7 @@ export function AuthorWorksView({
     onWorksChanged?.();
     const updated = await refresh();
     if (updated && selectedVideoId && !updated.works.some(v => v.id === selectedVideoId)) setSelectedVideoId(null);
-  }, [onWorksChanged, refresh, selectedVideoId]);
+  }, [onWorksChanged, refresh, selectedVideoId, setSelectedVideoId]);
   const {topicLibraryStatuses, toggleTopicLibrary} = useContentTopicLibrary({videos, canReviewContent, refreshList: refreshWorks});
 
   // 当在内嵌详情中切换作品时加载详情数据
@@ -145,7 +154,7 @@ export function AuthorWorksView({
         void loadMore().then(next => { if (next?.works[currentIndex + 1]) setSelectedVideoId(next.works[currentIndex + 1].id); });
       }
     },
-    [currentIndex, videos, data?.hasNextPage, loading, loadMore],
+    [currentIndex, videos, data?.hasNextPage, loading, loadMore, setSelectedVideoId],
   );
 
   return (
@@ -429,6 +438,7 @@ export function AuthorWorksView({
               <Skeleton className="h-64 w-full rounded-xl" />
             </div>
           ) : (
+            /* A3: 循环阻断——作者抽屉内嵌详情（第 2 层）不提供作者穿透入口（未传 onSelectAuthor），只保留右上角主页逃生口，严格防止嵌套 */
             <ContentDetailDialog
               open={true}
               onOpenChange={(openState) => {
@@ -466,17 +476,43 @@ export function AuthorWorksDrawer({
   onClose,
   ...rest
 }: AuthorWorksDrawerProps) {
+  const [embeddedVideoId, setEmbeddedVideoId] = useState<string | null>(null);
+
+  const handleClose = useCallback(() => {
+    setEmbeddedVideoId(null);
+    onClose();
+  }, [onClose]);
+
   if (!open || !author) return null;
 
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          // A2: 点遮罩优先退回作品列表视图；仅第一层时点遮罩才关抽屉（照抄 personal-card.tsx L206-215 模式，缺口②）
+          if (embeddedVideoId) {
+            setEmbeddedVideoId(null);
+            return;
+          }
+          handleClose();
+        }
+      }}
+    >
       <SheetContent
         showCloseButton={false}
         className={cn(
           "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog rounded-l-2xl transition-[max-width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-w-4xl sm:max-w-4xl",
         )}
       >
-        <AuthorWorksView key={author.id} author={author} onClose={onClose} {...rest} />
+        <AuthorWorksView
+          key={author.id}
+          author={author}
+          onClose={handleClose}
+          selectedVideoId={embeddedVideoId}
+          onSelectVideoId={setEmbeddedVideoId}
+          {...rest}
+        />
       </SheetContent>
     </Sheet>
   );
