@@ -109,8 +109,6 @@ export function CollaborationWorkbench({
 
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
-  const shanghaiNow = getShanghaiYearMonth();
-  const isCurrentMonth = year === shanghaiNow.year && month === shanghaiNow.month;
 
   useEffect(() => {
     setTab(defaultTab);
@@ -381,7 +379,6 @@ export function CollaborationWorkbench({
         month={month}
         monthOptions={monthOptions}
         currentMonthValue={currentMonthValue}
-        isCurrentMonth={isCurrentMonth}
         view={view}
         tab={tab}
         summary={summary}
@@ -395,8 +392,6 @@ export function CollaborationWorkbench({
         writerStaff={writerStaff}
         writerCandidates={writerCandidates}
         editorStaff={editorStaff}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
         onMonthChange={handleMonthChange}
         onViewChange={handleViewChange}
         onTabChange={handleTabChange}

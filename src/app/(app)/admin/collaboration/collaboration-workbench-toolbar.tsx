@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChevronLeft, ChevronRight, Settings, TrendingUp } from "lucide-react";
+import { Settings, TrendingUp } from "lucide-react";
 import { HealthBar } from "./health-bar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert } from "@/components/ui/alert";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews } from "./types";
 import type { WriterCandidateRow } from "./writer-tab";
@@ -13,19 +12,18 @@ import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 interface CollaborationWorkbenchToolbarProps {
   year: number; month: number;
   monthOptions: Array<{ year: number; month: number; label: string; value: string }>;
-  currentMonthValue: string; isCurrentMonth: boolean;
+  currentMonthValue: string;
   view: "roles" | "teams"; tab: TabKey; summary: SummaryData | null;
   isOwnerOrTeamAdmin: boolean; loadFailed: boolean; canManageWorkGroups: boolean; hasActiveGroupDetail: boolean;
   resolvedWorkGroupViews?: WorkGroupViews;
   talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; writerCandidates?: WriterCandidateRow[]; editorStaff: StaffRow[];
-  onPrevMonth: () => void; onNextMonth: () => void; onMonthChange: (val: string | null) => void;
+  onMonthChange: (val: string | null) => void;
   onViewChange: (view: "roles" | "teams") => void; onTabChange: (tab: TabKey) => void; onOpenManageDrawer: (groupId?: string | null) => void; onLeaderboardOpen: (open: boolean) => void;
 }
 
 export function CollaborationWorkbenchToolbar({
-  year, month, monthOptions, currentMonthValue, isCurrentMonth, view, tab, summary, isOwnerOrTeamAdmin, loadFailed, canManageWorkGroups, hasActiveGroupDetail, resolvedWorkGroupViews, talents, operators, writerStaff, writerCandidates = [], editorStaff, onPrevMonth, onNextMonth, onMonthChange, onViewChange, onTabChange, onOpenManageDrawer, onLeaderboardOpen,
+  year, month, monthOptions, currentMonthValue, view, tab, summary, isOwnerOrTeamAdmin, loadFailed, canManageWorkGroups, hasActiveGroupDetail, resolvedWorkGroupViews, talents, operators, writerStaff, writerCandidates = [], editorStaff, onMonthChange, onViewChange, onTabChange, onOpenManageDrawer, onLeaderboardOpen,
 }: CollaborationWorkbenchToolbarProps) {
-  const isStartMonth = year < 2026 || (year === 2026 && month <= 7);
 
   const writerCount = useMemo(() => {
     if (!writerCandidates || writerCandidates.length === 0) {
@@ -43,33 +41,8 @@ export function CollaborationWorkbenchToolbar({
   return (
     <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {/* 快捷翻月控制组 */}
+          {/* 月份选择 */}
           <div className="flex shrink-0 items-center gap-1">
-            {isStartMonth ? (
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  aria-disabled="true"
-                  aria-label="上一月"
-                  className="size-7 rounded-md flex items-center justify-center text-[#A8A29E] cursor-not-allowed opacity-50 select-none"
-                >
-                  <ChevronLeft className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px]">
-                  统计起点 2026-07
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <button
-                type="button"
-                onClick={onPrevMonth}
-                aria-label="上一月"
-                title="上一月 (快捷键 ←)"
-                className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-            )}
             <div className="w-fit">
               <Select value={currentMonthValue} onValueChange={onMonthChange}>
                 <SelectTrigger className="h-7 text-[14px] bg-transparent border-0 shadow-none font-normal hover:bg-[#EBEBE9] transition-colors focus-visible:ring-2 focus-visible:ring-[#1F1E1D]/10 outline-none cursor-pointer">
@@ -84,31 +57,6 @@ export function CollaborationWorkbenchToolbar({
                 </SelectContent>
               </Select>
             </div>
-            {isCurrentMonth ? (
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  aria-disabled="true"
-                  aria-label="下一月"
-                  className="size-7 rounded-md flex items-center justify-center text-[#A8A29E] cursor-not-allowed opacity-50 select-none"
-                >
-                  <ChevronRight className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px]">
-                  已是当前月份
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <button
-                type="button"
-                onClick={onNextMonth}
-                aria-label="下一月"
-                title="下一月 (快捷键 →)"
-                className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            )}
           </div>
           {/* 一级视图切换：岗位数据管理 ↔ 小组数据管理 */}
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">

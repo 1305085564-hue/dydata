@@ -36,25 +36,13 @@ test("数据管理切页签用 history.replaceState 镜像 URL，不污染历史
   assert.doesNotMatch(handleTabChangeBody, /router\.push\(`/);
 });
 
-test("当前月份右箭头呈现禁用态与已是当前月份提示", () => {
-  assert.match(source, /isCurrentMonth/);
-  assert.match(source, /已是当前月份/);
-  assert.match(source, /cursor-not-allowed/);
-});
-
-test("统计起点月份左箭头呈现禁用态与统计起点提示", () => {
+test("数据管理使用月份选择器，不再显示两侧翻月按钮", () => {
   const toolbarSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
     "utf8",
   );
-  assert.match(toolbarSource, /isStartMonth/);
-  // 必须精确匹配 isStartMonth 分支内左箭头的 aria-disabled 与 tooltip（避免右箭头 cursor-not-allowed 假绿）
-  const startMonthBranch = toolbarSource.match(/\{isStartMonth \? \([\s\S]*?\) : \(/)?.[0] ?? "";
-  assert.ok(startMonthBranch.length > 0, "必须存在 isStartMonth 三元分支");
-  assert.match(startMonthBranch, /aria-label="上一月"/);
-  assert.match(startMonthBranch, /aria-disabled="true"/);
-  assert.match(startMonthBranch, /统计起点 2026-07/);
-  assert.match(startMonthBranch, /cursor-not-allowed/);
+  assert.match(toolbarSource, /onValueChange=\{onMonthChange\}/);
+  assert.doesNotMatch(toolbarSource, /aria-label="上一月"|aria-label="下一月"/);
 });
 
 test("Toolbar 文案徽标数与 WriterTab 实际渲染行数完全对齐，候选与已有成员按 userId 去重", () => {
