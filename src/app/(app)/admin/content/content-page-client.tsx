@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
+import { canAccessAdminPath } from "@/lib/analytics-access";
 import {
   Dialog,
   DialogContent,
@@ -430,6 +431,7 @@ export function ContentPageClient({
       canManageVideos={permissionInfo.permissions.manage_videos === true}
       onViewInMainList={handleViewAuthorInMainList}
       canReviewContent={permissionInfo.permissions.review_content === true}
+      canViewCollaboration={canAccessAdminPath("/admin/collaboration", permissionInfo.role, permissionInfo.permissions)}
       onWorksChanged={() => { setLoadedDetails({}); void loadData(view, perspective, teamId, { fresh: true }); }}
     />
     {/* 首次引导弹窗：走共享 ui/dialog.tsx，与全站弹层一致地拿到 Esc 关闭、

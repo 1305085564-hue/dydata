@@ -2,6 +2,7 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -84,6 +85,29 @@ export function PersonalCard({
     favorite: true,
   });
   const [copied, setCopied] = useState(false);
+
+  // B2: 检测从复盘跳来的来源视频并做静默有效性预检
+  const searchParams = useSearchParams();
+  const fromSource = searchParams.get("from");
+  const returnVideoId = searchParams.get("videoId");
+  const [returnVideoValid, setReturnVideoValid] = useState(false);
+
+  useEffect(() => {
+    if (fromSource !== "video" || !returnVideoId) {
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/admin/content/${returnVideoId}?view=all`, { cache: "no-store" })
+      .then((res) => {
+        if (!cancelled && res.ok) setReturnVideoValid(true);
+      })
+      .catch(() => {
+        if (!cancelled) setReturnVideoValid(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fromSource, returnVideoId]);
 
   const handleCopyLink = useCallback(async () => {
     if (!userId) return;
@@ -281,6 +305,15 @@ export function PersonalCard({
                       <ExternalLink className="size-3" />
                       <span>新窗口打开</span>
                     </Link>
+                    {fromSource === "video" && returnVideoId && returnVideoValid && (
+                      <Link
+                        href={`/admin/content?videoId=${returnVideoId}`}
+                        title="返回原视频复盘详情"
+                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal text-[#D97757] hover:bg-[#D97757]/10 transition-colors"
+                      >
+                        <span>返回该视频复盘 ↩</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
                 {/* 头部单行内联信息流 */}

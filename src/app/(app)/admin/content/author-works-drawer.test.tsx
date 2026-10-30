@@ -99,3 +99,25 @@ test("AuthorWorksView 在传入受控 selectedVideoId 时支持内嵌渲染作�
   );
   assert.match(htmlControlled, /李四/);
 });
+
+test("B1: 具有数据管理权限时渲染「人效档案」直达入口，无权限时不渲染", () => {
+  const htmlWithPerm = renderToStaticMarkup(
+    <AuthorWorksView
+      author={{ id: "author-1", name: "张三" }}
+      onClose={() => {}}
+      canViewCollaboration={true}
+    />,
+  );
+  assert.match(htmlWithPerm, /人效档案/);
+  assert.match(htmlWithPerm, /\/admin\/collaboration\?/);
+  assert.match(htmlWithPerm, /personId=author-1/);
+
+  const htmlWithoutPerm = renderToStaticMarkup(
+    <AuthorWorksView
+      author={{ id: "author-1", name: "张三" }}
+      onClose={() => {}}
+      canViewCollaboration={false}
+    />,
+  );
+  assert.doesNotMatch(htmlWithoutPerm, /人效档案/);
+});
