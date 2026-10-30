@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +32,7 @@ export interface AuthorWorksDrawerProps {
   evaluationStandards?: EvaluationStandards;
   canManageVideos?: boolean;
   canReviewContent?: boolean;
+  canViewCollaboration?: boolean;
   onWorksChanged?: () => void;
   onViewInMainList?: (authorId: string) => void;
 }
@@ -42,6 +44,7 @@ export interface AuthorWorksViewProps {
   evaluationStandards?: EvaluationStandards;
   canManageVideos?: boolean;
   canReviewContent?: boolean;
+  canViewCollaboration?: boolean;
   onWorksChanged?: () => void;
   selectedVideoId?: string | null;
   onSelectVideoId?: (videoId: string | null) => void;
@@ -78,6 +81,7 @@ export function AuthorWorksView({
   canManageVideos = false,
   onViewInMainList,
   canReviewContent = false,
+  canViewCollaboration = false,
   onWorksChanged,
   selectedVideoId: externalSelectedVideoId,
   onSelectVideoId,
@@ -95,6 +99,57 @@ export function AuthorWorksView({
     if (onSelectVideoId) onSelectVideoId(id);
     else setInternalSelectedVideoId(id);
   }, [onSelectVideoId]);
+
+  // B1/B2: 直达数据管理「人效档案」URL 计算
+  // 月份取值定死：该作者在本页当前视图内最近一篇作品的发布月（发布日优先、无发布日回退 report_date），不是系统当前月；岗位 tab 取对应岗位
+  const collaborationUrl = useMemo(() => {
+    if (!author?.id) return null;
+    let latestWork = videos[0] ?? null;
+    for (const w of videos) {
+      const wTime = w.published_at ? new Date(w.published_at).getTime() : (w.created_at ? new Date(w.created_at).getTime() : 0);
+      const lTime = latestWork?.published_at ? new Date(latestWork.published_at).getTime() : (latestWork?.created_at ? new Date(latestWork.created_at).getTime() : 0);
+      if (wTime > lTime) {
+        latestWork = w;
+      }
+    }
+
+    let targetYear: number;
+    let targetMonth: number;
+    const dateStr = latestWork?.published_at || latestWork?.created_at;
+    if (dateStr) {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const shanghaiDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(d);
+        const [yStr, mStr] = shanghaiDate.split("-");
+        targetYear = parseInt(yStr, 10);
+        targetMonth = parseInt(mStr, 10);
+      } else {
+        const now = new Date();
+        const shanghaiNow = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(now);
+        const [yStr, mStr] = shanghaiNow.split("-");
+        targetYear = parseInt(yStr, 10);
+        targetMonth = parseInt(mStr, 10);
+      }
+    } else {
+      const now = new Date();
+      const shanghaiNow = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(now);
+      const [yStr, mStr] = shanghaiNow.split("-");
+      targetYear = parseInt(yStr, 10);
+      targetMonth = parseInt(mStr, 10);
+    }
+
+    const params = new URLSearchParams({
+      year: String(targetYear),
+      month: String(targetMonth),
+      tab: "talents",
+      personId: author.id,
+    });
+    if (latestWork?.id) {
+      params.set("from", "video");
+      params.set("videoId", latestWork.id);
+    }
+    return `/admin/collaboration?${params.toString()}`;
+  }, [author.id, videos]);
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>({});
 
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -188,6 +243,16 @@ export function AuthorWorksView({
           </div>
 
           <div className="flex items-center gap-2">
+            {canViewCollaboration && collaborationUrl && (
+              <Link
+                href={collaborationUrl}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors"
+                title="在数据管理中查看该作者岗位档案"
+              >
+                <TrendingUp className="size-3.5" />
+                <span>人效档案</span>
+              </Link>
+            )}
             {onViewInMainList && author?.id && (
               <button
                 type="button"
