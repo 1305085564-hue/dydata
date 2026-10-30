@@ -2,6 +2,7 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { precheckReturnVideo } from "@/lib/collaboration/video-return";
 import { useSearchParams } from "next/navigation";
 import {
   Sheet,
@@ -92,22 +93,8 @@ export function PersonalCard({
   const returnVideoId = searchParams.get("videoId");
   const [returnVideoValid, setReturnVideoValid] = useState(false);
 
-  useEffect(() => {
-    if (fromSource !== "video" || !returnVideoId) {
-      return;
-    }
-    let cancelled = false;
-    fetch(`/api/admin/content/${returnVideoId}?view=all`, { cache: "no-store" })
-      .then((res) => {
-        if (!cancelled && res.ok) setReturnVideoValid(true);
-      })
-      .catch(() => {
-        if (!cancelled) setReturnVideoValid(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fromSource, returnVideoId]);
+  useEffect(() => precheckReturnVideo(Boolean(userId), fromSource, returnVideoId, setReturnVideoValid),
+    [userId, fromSource, returnVideoId]);
 
   const handleCopyLink = useCallback(async () => {
     if (!userId) return;
@@ -307,9 +294,9 @@ export function PersonalCard({
                     </Link>
                     {fromSource === "video" && returnVideoId && returnVideoValid && (
                       <Link
-                        href={`/admin/content?videoId=${returnVideoId}`}
+                        href={`/admin/content?videoId=${encodeURIComponent(returnVideoId)}`}
                         title="返回原视频复盘详情"
-                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal text-[#D97757] hover:bg-[#D97757]/10 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal text-[#D97757] hover:bg-[#F1F1F0] transition-colors"
                       >
                         <span>返回该视频复盘 ↩</span>
                       </Link>

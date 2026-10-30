@@ -24,7 +24,11 @@ export interface AuthorProfileSummary {
 export type ContentListItem = AdminContentPageData["videos"][number];
 export interface AuthorWorksResponse {
   summary: AuthorProfileSummary;
-  works: ContentListItem[];
+  works: (ContentListItem & {
+    /** 当前作者在该作品的唯一已确认岗位；缺失或兼岗有歧义时不提供直达入口。 */
+    authorRole?: "talent" | "operator" | "writer" | "editor" | null;
+    report_date?: string | null;
+  })[];
   snapshots: AdminContentPageData["snapshots"];
   contentQualityByVideoId: AdminContentPageData["contentQualityByVideoId"];
   reviewReadiness: AdminContentPageData["reviewReadiness"];

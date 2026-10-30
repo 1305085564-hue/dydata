@@ -9,6 +9,7 @@ import { AppError, toErrorResponse } from "@/lib/errors";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
 import { withTimeout } from "@/lib/timeout";
+import { queryProfiles } from "@/lib/collaboration/data/reports";
 import type { AuthorWorksQueryParams } from "@/lib/content/author-works-domain";
 
 const dependencies = {
@@ -40,11 +41,22 @@ export async function buildAuthorWorksResponse(request: NextRequest, deps = depe
     const scope = await deps.resolveReadScope(client, permissionContext.scope);
     if (!scope.visibleUserIds.includes(userId)) throw new AppError({ message: "作者作品加载失败", code: "FORBIDDEN" });
     const result = await withTimeout(async () => {
-      const profile = await client.from("profiles").select("name").eq("id", userId).maybeSingle();
+      const profile = await queryProfiles<{ name: string | null; work_peer_group_id?: string | null; work_operator_group_id?: string | null }>(
+        fields => client.from("profiles").select(fields).eq("id", userId).maybeSingle(),
+      );
       if (profile.error) throw new AppError({ message: "作者作品加载失败", code: "DEPENDENCY_FAILED" });
       if (!profile.data) throw new AppError({ message: "作者作品加载失败", code: "NOT_FOUND" });
+      const groupIds = [profile.data.work_peer_group_id, profile.data.work_operator_group_id].filter((id): id is string => Boolean(id));
+      const roles: ("writer" | "talent" | "operator")[] = [];
+      if (groupIds.length) {
+        const groups = await client.from("work_groups").select("kind").in("id", groupIds);
+        if (groups.error) throw new AppError({ message: "作者作品加载失败", code: "DEPENDENCY_FAILED" });
+        for (const group of groups.data ?? []) {
+          if (["writer", "talent", "operator"].includes(group.kind) && !roles.includes(group.kind)) roles.push(group.kind);
+        }
+      }
       return deps.loadWorks({ supabase: client, scope, permissionInfo: permissionContext.permissionInfo,
-        perspective: "team", teamId: scope.teamId, author: { userId, name: profile.data.name ?? "未命名成员" },
+        perspective: "team", teamId: scope.teamId, author: { userId, name: profile.data.name ?? "未命名成员", roles },
         params: { userId, timeRange, sortField, sortDir, pageSize, page } as AuthorWorksQueryParams });
     }, { timeoutMs: 25000, operation: "load_author_content_works" });
     return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });

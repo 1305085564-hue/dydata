@@ -100,7 +100,7 @@ test("AuthorWorksView 在传入受控 selectedVideoId 时支持内嵌渲染作�
   assert.match(htmlControlled, /李四/);
 });
 
-test("B1: 具有数据管理权限时渲染「人效档案」直达入口，无权限时不渲染", () => {
+test("B1: 岗位尚未加载时即使有权限也不显示人效档案，避免猜岗位", () => {
   const htmlWithPerm = renderToStaticMarkup(
     <AuthorWorksView
       author={{ id: "author-1", name: "张三" }}
@@ -108,9 +108,7 @@ test("B1: 具有数据管理权限时渲染「人效档案」直达入口，无�
       canViewCollaboration={true}
     />,
   );
-  assert.match(htmlWithPerm, /人效档案/);
-  assert.match(htmlWithPerm, /\/admin\/collaboration\?/);
-  assert.match(htmlWithPerm, /personId=author-1/);
+  assert.doesNotMatch(htmlWithPerm, /人效档案/);
 
   const htmlWithoutPerm = renderToStaticMarkup(
     <AuthorWorksView
