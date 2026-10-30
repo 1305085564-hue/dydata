@@ -73,7 +73,7 @@ function pagedLoader(totalVideos: number, calls: AdminContentListArgs[] = []) {
 
 function args(params: Partial<Parameters<typeof loadAuthorContentWorks>[0]["params"]> = {}) {
   return {
-    supabase: {} as never,
+    supabase: { from: () => ({ select: () => ({ in: () => ({ eq: async () => ({ data: [], error: null }) }) }) }) } as never,
     scope: { visibleUserIds: [AUTHOR.userId], teamId: "team-1" } as never,
     author: AUTHOR,
     params: { userId: AUTHOR.userId, ...params },
@@ -202,4 +202,48 @@ test("超过 10000 条时立即报错，不继续取后续批次", async () => {
     (error: unknown) => error instanceof AppError && error.code === "INVALID_INPUT",
   );
   assert.equal(callCount, 1);
+});
+
+
+test("作者受限响应补充日报归属日及真实署名岗位，缺失/兼岗不猜岗位", async () => {
+  const input = args();
+  const reports = [
+    { video_id: "video-0", report_date: "2026-09-03", script_author_user_id: AUTHOR.userId },
+    { video_id: "video-1", report_date: "2026-09-04", video_editor_user_id: AUTHOR.userId },
+    { video_id: "video-2", report_date: "2026-09-05", operator_user_id: AUTHOR.userId },
+    { video_id: "video-3", report_date: "2026-09-06", script_author_user_id: AUTHOR.userId, operator_user_id: AUTHOR.userId },
+  ];
+  input.supabase = { from: (table: string) => {
+    assert.equal(table, "daily_reports");
+    return { select: () => ({ in: (_field: string, ids: string[]) => {
+      assert.deepEqual(ids, ["video-0", "video-1", "video-2", "video-3", "video-4"]);
+      return { eq: async (field: string, value: boolean) => {
+        assert.equal(field, "is_void"); assert.equal(value, false);
+        return { data: reports, error: null };
+      } };
+    } }) };
+  } } as never;
+  const result = await loadAuthorContentWorks(input, async () => {
+    const page = pageData([0, 1, 2, 3, 4], 5);
+    page.videos.forEach(v => { v.accounts.profile_id = null; });
+    return page;
+  }, NOW);
+  assert.deepEqual(result.works.map(w => w.authorRole), [null, "editor", null, null, null]);
+  assert.equal(result.works[0].report_date, "2026-09-03");
+  assert.equal(result.works[4].report_date, null);
+});
+
+test("小队工种确认岗位；兼岗隐藏；日报元数据读取失败不能伪装为成功", async () => {
+  const talentArgs = args();
+  talentArgs.author = { ...AUTHOR, roles: ["talent"] };
+  const result = await loadAuthorContentWorks(talentArgs, pagedLoader(1), NOW);
+  assert.equal(result.works[0].authorRole, "talent");
+  for (const roles of [["writer"], ["operator"], ["writer", "operator"], []] as ("writer" | "operator")[][]) {
+    const input = args(); input.author = { ...AUTHOR, roles };
+    const res = await loadAuthorContentWorks(input, pagedLoader(1), NOW);
+    assert.equal(res.works[0].authorRole, roles.length === 1 ? roles[0] : null);
+  }
+  const input = args();
+  input.supabase = { from: () => ({ select: () => ({ in: () => ({ eq: async () => ({ data: null, error: { message: "failed" } }) }) }) }) } as never;
+  await assert.rejects(loadAuthorContentWorks(input, pagedLoader(1), NOW), /加载作者作品归属信息失败/);
 });
