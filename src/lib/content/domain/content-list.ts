@@ -11,6 +11,7 @@ export interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: Array<{ id: string; name: string }>;
+  ownerNames?: Record<string, string>;
   accountOptions?: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
@@ -39,6 +40,7 @@ export interface ContentListProps {
    *  避免长耗时操作期间用户以为点了没反应（2026-10-11 审计 H2）。 */
   isViewLoading?: boolean;
   onSelectVideoId: (id: string | null) => void;
+  onSelectAuthor?: (authorId: string, authorName: string) => void;
   onQueryChange?: () => void;
 }
 

@@ -1,3 +1,4 @@
+import { getContentOwner } from "@/lib/content/content-owner";
 import { getCoreAchievementClass } from "@/lib/content/domain/detail";
 import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
@@ -130,6 +131,8 @@ type ContentListTableProps = {
   handleSort: (field: SortField) => void;
   isSingleDay: boolean;
   onSelectVideoId: (id: string | null) => void;
+  ownerNames?: Record<string, string>;
+  onSelectAuthor?: (authorId: string, authorName: string) => void;
   highlightRules: HighlightRuleMap;
   evaluationStandards?: EvaluationStandards;
 };
@@ -145,6 +148,8 @@ export function ContentListTable({
   handleSort,
   isSingleDay,
   onSelectVideoId,
+  onSelectAuthor,
+  ownerNames,
   highlightRules,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
@@ -170,6 +175,7 @@ export function ContentListTable({
           ) : (
             visibleRows.map((item) => {
               const { video } = item;
+              const owner = getContentOwner(video, ownerNames);
               const dot = getStatusDot(video);
 
               return (
@@ -217,8 +223,25 @@ export function ContentListTable({
                     {video.accounts?.name && (
                       <span className="truncate">@{video.accounts.name}</span>
                     )}
-                    {video.profiles?.name && (
-                      <span className="shrink-0 text-[#A8A29E]">· 责任人：<span className="text-[#78716C]">{video.profiles.name}</span></span>
+                    {owner.name && (
+                      <span className="shrink-0 text-[#A8A29E]">
+                        · 责任人：
+                        {owner.id && onSelectAuthor ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onSelectAuthor(owner.id, owner.name);
+                            }}
+                            className="text-[#78716C] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
+                            title={`查看 ${owner.name} 的全部作品`}
+                          >
+                            {owner.name}
+                          </button>
+                        ) : (
+                          <span className="text-[#78716C]">{owner.name}</span>
+                        )}
+                      </span>
                     )}
                   </div>
 
@@ -302,6 +325,7 @@ export function ContentListTable({
                   ) : (
                     visibleRows.map((item) => {
                       const { video } = item;
+              const owner = getContentOwner(video, ownerNames);
                       const dot = getStatusDot(video);
 
                       return (
@@ -346,6 +370,26 @@ export function ContentListTable({
                                     · {video.accounts.name}
                                   </span>
                                 ) : null}
+                                {owner.name ? (
+                                  <span className="shrink-0 text-[12px] text-[#A8A29E] font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
+                                    ·{" "}
+                                    {owner.id && onSelectAuthor ? (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          onSelectAuthor(owner.id, owner.name);
+                                        }}
+                                        className="text-[#78716C] hover:text-[#141413] hover:underline transition-colors cursor-pointer"
+                                        title={`查看 ${owner.name} 的全部作品`}
+                                      >
+                                        {owner.name}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[#78716C]">{owner.name}</span>
+                                    )}
+                                  </span>
+                                ) : null}
                               </TooltipTrigger>
                               <TooltipContent
                                 side="top"
@@ -354,9 +398,10 @@ export function ContentListTable({
                                 className="max-w-md p-2 bg-[#1F1E1D] text-white border border-[#333] shadow-claude-float rounded-lg text-left pointer-events-none z-50 text-[12px] leading-relaxed"
                               >
                                 <div className=" text-white">{video.video_title || video.content || "未命名视频"}</div>
-                                {video.accounts?.name ? (
-                                  <div className="text-[12px] text-[#A8A29E] mt-0.5">账号：@{video.accounts.name}</div>
-                                ) : null}
+                                <div className="text-[12px] text-[#A8A29E] mt-0.5 space-x-2">
+                                  {video.accounts?.name ? <span>账号：@{video.accounts.name}</span> : null}
+                                  {owner.name ? <span>责任人：{owner.name}</span> : null}
+                                </div>
                               </TooltipContent>
                             </Tooltip>
                           </td>

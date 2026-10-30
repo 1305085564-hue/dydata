@@ -63,6 +63,9 @@ export interface ContentDetailDialogProps {
   totalCount?: number;
   /** 相邻作品回调（支持跨分页） */
   onStepVideo?: (direction: "prev" | "next") => void;
+  /** 选择作者回调：打开创作者作品流抽屉 */
+  ownerNames?: Record<string, string>;
+  onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
 import { useContentVideoStepShortcut } from "./content-video-navigation";
@@ -90,6 +93,8 @@ export function ContentDetailDialog({
   currentIndex = -1,
   totalCount = 0,
   onStepVideo,
+  onSelectAuthor,
+  ownerNames,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentDetailDialogProps) {
   const {
@@ -484,6 +489,8 @@ export function ContentDetailDialog({
                 evaluationStandards={evaluationStandards}
                 video={video}
                 snapshot={snapshot}
+                onSelectAuthor={onSelectAuthor}
+                ownerNames={ownerNames}
                 canPurge={canPurge}
                 isPurgeEligible={isPurgeEligible}
                 hasTopicKind={hasTopicKind}

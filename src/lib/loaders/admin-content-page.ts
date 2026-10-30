@@ -1,3 +1,4 @@
+import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, hasCustomEvaluationTargets, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { queryAdminContentRpcPage } from "./admin-content-rpc";
@@ -18,10 +19,7 @@ import { bindContentListQueryToEffectiveScope, buildContentQueryFingerprint, dec
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
-type ProfileOptionScope = {
-  visibleUserIds: string[];
-  activeVisibleUserIds?: string[];
-};
+
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -57,6 +55,7 @@ export interface AdminContentPageData {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
+  ownerNames?: Record<string, string>;
   accountOptions?: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   /** 列表范围内每条视频的统一内容质量结果；Record 可直接随 JSON 刷新传输。 */
@@ -139,23 +138,6 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
     accounts: readJoinedAccount(row.accounts),
     profiles: { name: readJoinedName(row.profiles, "未命名成员") },
   }));
-}
-
-function buildScopedProfileOptions(
-  profiles: FilterOption[],
-  scope: ProfileOptionScope | null,
-  fallbackProfileIds: string[] = [],
-) {
-  const allowedProfileIds = new Set(
-    scope
-      ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
-      : fallbackProfileIds,
-  );
-  if (allowedProfileIds.size === 0) return [];
-
-  return profiles
-    .filter((profile) => allowedProfileIds.has(profile.id))
-    .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" }));
 }
 
 function buildReviewReadinessMap({
@@ -538,6 +520,7 @@ export async function loadAdminContentPageData({
     videos: videosWithSignals,
     snapshots,
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
+    ownerNames: Object.fromEntries(profiles.filter(p => fallbackProfileIds.includes(p.id)).map(p => [p.id, p.name])),
     reviewReadiness,
     contentQualityByVideoId,
     evaluationStandards,
@@ -731,7 +714,8 @@ async function loadAdminContentRpcPageData({
   return {
     videos,
     snapshots,
-    profiles,
+    profiles: buildScopedProfileOptions(profiles, scope),
+    ownerNames: Object.fromEntries(profiles.map(p => [p.id, p.name])),
     accountOptions: payload.accountOptions ?? [],
     reviewReadiness,
     contentQualityByVideoId,
