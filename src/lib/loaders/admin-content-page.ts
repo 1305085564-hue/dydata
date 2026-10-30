@@ -1,3 +1,4 @@
+import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, hasCustomEvaluationTargets, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { queryAdminContentRpcPage } from "./admin-content-rpc";
@@ -18,10 +19,7 @@ import { bindContentListQueryToEffectiveScope, buildContentQueryFingerprint, dec
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
-type ProfileOptionScope = {
-  visibleUserIds: string[];
-  activeVisibleUserIds?: string[];
-};
+
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -140,23 +138,6 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
     accounts: readJoinedAccount(row.accounts),
     profiles: { name: readJoinedName(row.profiles, "未命名成员") },
   }));
-}
-
-function buildScopedProfileOptions(
-  profiles: FilterOption[],
-  scope: ProfileOptionScope | null,
-  fallbackProfileIds: string[] = [],
-) {
-  const allowedProfileIds = new Set(
-    scope
-      ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
-      : fallbackProfileIds,
-  );
-  if (allowedProfileIds.size === 0) return [];
-
-  return profiles
-    .filter((profile) => allowedProfileIds.has(profile.id))
-    .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" }));
 }
 
 function buildReviewReadinessMap({

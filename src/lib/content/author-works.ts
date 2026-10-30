@@ -18,7 +18,7 @@ export async function fetchAuthorContentWorks(params: AuthorWorksQueryParams, re
 /** 每个已鉴权页面实例独占；不跨账号/公司/抽屉共享。10秒、20条，写后全清；错误不缓存。 */
 export function createAuthorWorksClient(request: typeof fetch = fetch) {
   const cache = new BoundedTtlCache<AuthorWorksResponse>({ scope: "request", ttlMs: 10000, maxEntries: 20, name: "author-works-view" });
-  const pending = new Map<string, Promise<AuthorWorksResponse>>();
+  const pending = new Map<string, Promise<AuthorWorksResponse>>(); // gate:transient-map 视图独占在途索引，最多20项、请求30秒超时、结束即删除、失效清空
   let generation = 0;
   return {
     fetch(params: AuthorWorksQueryParams) {

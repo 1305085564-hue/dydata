@@ -63,7 +63,7 @@ export function summarizeAuthorWorks(
   data: Pick<AdminContentPageData, "videos" | "snapshots" | "contentQualityByVideoId" | "evaluationStandards">,
   now = new Date(),
 ): AuthorProfileSummary {
-  const snapshots = new Map(data.snapshots.map(s => [s.video_id, s]));
+  const snapshots = new Map(data.snapshots.map(s => [s.video_id, s])); // gate:transient-map 单次画像计算的索引，函数返回即释放，不跨请求缓存
   const standards = data.evaluationStandards ?? DEFAULT_EVALUATION_STANDARDS;
   let measuredWorksCount = 0, totalPlays = 0, completionRatePassCount = 0, qualityWorksCount = 0;
   for (const video of data.videos) {
