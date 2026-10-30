@@ -37,3 +37,15 @@ test("浏览器后退只在列表范围改变时重新取数", () => {
     false,
   );
 });
+
+test("A1/A4 URL 参数契约：authorId 与 videoId 互斥且不触发全量列表重新取数", () => {
+  const paramsWithAuthor = new URLSearchParams("view=all&scope=company&authorId=author-1");
+  assert.equal(paramsWithAuthor.get("authorId"), "author-1");
+  assert.equal(paramsWithAuthor.get("videoId"), null);
+
+  // 抽屉参数变化时列表范围仍为 companyState，shouldReloadContentPageList 返回 false
+  assert.equal(
+    shouldReloadContentPageList(companyState, companyState),
+    false,
+  );
+});
