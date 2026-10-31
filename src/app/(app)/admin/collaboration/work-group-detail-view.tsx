@@ -165,7 +165,7 @@ export function WorkGroupDetailView({
           <Card className="overflow-hidden p-0 gap-0">
             <Table>
               <TableHeader>
-                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
+                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
                   <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[120px]">
                     <button
                       type="button"
@@ -211,7 +211,7 @@ export function WorkGroupDetailView({
                   )}
                 </TableRow>
               </TableHeader>
-              <TableBody className="text-[14px]">
+              <TableBody className="text-[13px]">
                 {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
                 <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/60">
                   <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">

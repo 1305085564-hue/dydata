@@ -193,7 +193,7 @@ export function BindingDialog({
               </Label>
               <textarea
                 id="binding-system-prompt"
-                className="w-full flex-1 min-h-0 rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[12px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] transition-colors resize-none leading-relaxed"
+                className="w-full flex-1 min-h-0 rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] transition-colors resize-none leading-relaxed"
                 placeholder="留空则使用代码内置的业务系统提示词..."
                 value={systemPrompt}
                 onChange={(e) => setSystemPrompt(e.target.value)}

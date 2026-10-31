@@ -545,7 +545,7 @@ export function ContentDetailDialog({
                   )}
                 </div>
 
-                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[14px] leading-[1.8] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
+                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.6] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}

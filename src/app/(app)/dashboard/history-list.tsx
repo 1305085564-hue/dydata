@@ -225,7 +225,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                   <TableHead className="w-[60px]" />
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="text-[13px]">
                 {visible.map((report) => {
                   const sourceLabel = getDailyReportSourceLabel(report.data_source);
                   return (
@@ -244,7 +244,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <TableCell className="max-w-[120px] truncate text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[160px] text-[#1F1E1D]">
+                    <TableCell className="max-w-[160px] text-[14px] text-[#1F1E1D]">
                       <div className="flex min-w-0 items-center gap-1">
                         {onReportOpen ? (
                           <button
@@ -265,7 +265,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-normal tabular-nums text-[#1F1E1D]">
+                    <TableCell className="text-right font-normal tabular-nums text-[14px] text-[#141413]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.completion_rate ?? "—"}</TableCell>

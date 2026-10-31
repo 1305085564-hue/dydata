@@ -95,7 +95,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
   const countLabel = "本月篇数";
 
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
       <TableHead className="text-left font-normal text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
       <TableHead className="text-left font-normal text-[#78716C] pl-4">负责账号</TableHead>
@@ -686,7 +686,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           <TableHeader>
             <StaffHeaderRow role={role} sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
           </TableHeader>
-          <TableBody className="text-[14px]">
+          <TableBody className="text-[13px]">
             {sortedRows.map((row) => {
               const isExpanded = expandedUserIds.has(row.userId);
 

@@ -165,7 +165,7 @@ export function WorkGroupListTab({
       <Card className="overflow-hidden p-0 gap-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C]">
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
               <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
                 <button
                   type="button"
@@ -192,7 +192,7 @@ export function WorkGroupListTab({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="text-[14px]">
+          <TableBody className="text-[13px]">
             {sorted.map((group) => (
               <TableRow
                 key={group.id}
