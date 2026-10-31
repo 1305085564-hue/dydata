@@ -53,6 +53,27 @@ export function buildContentApiUrl(
   return `/api/admin/content/list?${params.toString()}`;
 }
 
+/** 列表取数完成后，仅镜像列表状态；抽屉状态取响应落地时的最新地址。 */
+export function buildContentListRefreshUrl(
+  state: ContentPageQueryState,
+  currentUrl: URL,
+  resetPage = false,
+): string | null {
+  if (currentUrl.pathname !== "/admin/content") return null;
+  const params = new URLSearchParams(currentUrl.search);
+  if (resetPage) {
+    params.delete("page");
+    params.delete("cursor");
+  }
+  params.delete("fresh");
+  return buildContentPageUrl({
+    ...state,
+    videoId: params.get("videoId"),
+    filters: parseContentListFilters(params),
+    search: params.toString(),
+  });
+}
+
 export function readCurrentListFilters() {
   if (typeof window === "undefined") return undefined;
   return parseContentListFilters(new URLSearchParams(window.location.search));
@@ -192,24 +213,15 @@ export function useContentPageQuery({
         setTeamId(nextTeamId);
       });
       options.onLoaded?.(nextData);
-      if (!options.background) {
-        const nextSearchParams = new URLSearchParams(window.location.search);
-        if (resetPage) {
-          nextSearchParams.delete("page");
-          nextSearchParams.delete("cursor");
-        }
-        nextSearchParams.delete("fresh");
-        // 数据已由上面的客户端 fetch 就地换好；这里只镜像地址栏（可分享、刷新留在当前视图）。
-        // 用 history.replaceState 而非 router.replace：后者会让 page.tsx 的 Suspense key 随
-        // view/perspective/teamId 变化 → 整块重挂露 TableSkeleton，并再跑一次服务器取数（与上面重复）。
-        window.history.replaceState(null, "", buildContentPageUrl({
-          view: nextView,
-          perspective: nextPerspective,
-          teamId: nextTeamId,
-          videoId: null,
-          filters: readCurrentListFilters(),
-          search: nextSearchParams.toString(),
-        }));
+      // 筛选/初始化的地址已由调用方写好；重复镜像会取消正在进行的跨页导航。
+      const needsUrlSync = resetPage || options.page !== undefined || options.cursor !== undefined;
+      if (!options.background && needsUrlSync) {
+        const nextUrl = buildContentListRefreshUrl(
+          { view: nextView, perspective: nextPerspective, teamId: nextTeamId },
+          new URL(window.location.href),
+          resetPage,
+        );
+        if (nextUrl) window.history.replaceState(null, "", nextUrl);
       }
       return true;
     } catch {

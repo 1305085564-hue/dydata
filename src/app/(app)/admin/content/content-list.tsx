@@ -65,12 +65,12 @@ export function ContentList(props: ContentListProps) {
     });
   }, [applyFilterPatch, earliestAvailableDate, latestAvailableDate, effectiveDates.effectiveEndDate, effectiveDates.effectiveStartDate]);
   const onQueryChange = props.onQueryChange;
-  const firstQueryRender = useRef(true);
+  const queryKey = JSON.stringify([state.filters, state.sortField, state.sortDir, state.currentPage, state.pageSize]);
+  const lastQueryKey = useRef(queryKey);
   useEffect(() => {
-    if (firstQueryRender.current) {
-      firstQueryRender.current = false;
-      return;
-    }
+    // 首屏已由服务端取数；开发模式重放 effect 或相同条件重渲染都不再取一次。
+    if (lastQueryKey.current === queryKey) return;
+    lastQueryKey.current = queryKey;
     const params = new URLSearchParams(window.location.search);
     if (state.currentPage > 1) params.set("page", String(state.currentPage));
     else params.delete("page");
@@ -78,7 +78,7 @@ export function ContentList(props: ContentListProps) {
     else params.set("pageSize", String(state.pageSize));
     window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
     onQueryChange?.();
-  }, [onQueryChange, state.filters, state.sortField, state.sortDir, state.currentPage, state.pageSize]);
+  }, [onQueryChange, queryKey, state.currentPage, state.pageSize]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
