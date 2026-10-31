@@ -310,7 +310,7 @@ export function ContentListTable({
                     }
                   }}
                   onMouseLeave={() => setHoveredColKey(null)}
-                  className="divide-y divide-[#E2E2DF]/60 text-[14px] text-[#1F1E1D]"
+                  className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]"
                 >
                   {visibleRows.length === 0 ? (
                     <tr>
@@ -406,8 +406,8 @@ export function ContentListTable({
                             </Tooltip>
                           </td>
 
-                          {/* 播放量 */}
-                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
+                          {/* 播放量：核心视觉锚点，保持 14px 定名墨 */}
+                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
                             <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                           </td>
 
@@ -452,7 +452,7 @@ export function ContentListTable({
                           <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-surface-row-hover/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span
-                                className={cn("relative text-[14px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount, evaluationStandards) || "text-[#1F1E1D]")}
+                                className={cn("relative text-[13px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount, evaluationStandards) || "text-[#1F1E1D]")}
                                 title={`${item.coreMetricTopicText}核心指标`}
                                 aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
                               >

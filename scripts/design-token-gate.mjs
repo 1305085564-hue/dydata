@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile);
 const root = process.cwd();
 const baselinePath = "scripts/design-token-baseline.json";
 
-const VALID_FONT_PX = new Set(["12", "14", "20", "28"]);
+const VALID_FONT_PX = new Set(["12", "13", "14", "20", "28"]);
 
 // 28 色封闭系统：生产代码只允许这 28 个十六进制色（测试夹具除外）。
 const VALID_HEX = new Set([
@@ -28,7 +28,7 @@ const VALID_HEX = new Set([
 const rules = [
   {
     id: "font-size",
-    label: "字号封闭系统（只允许 12/14/20/28px；落地页 Hero 豁免）",
+    label: "字号封闭系统（只允许 12/13/14/20/28px；13px 专供高密度表格数据；落地页 Hero 豁免）",
     args: ["-n", "-o", "text-\\[[0-9.]+px\\]", "src/", "-g", "!**/app/page.tsx"],
     violation: (match) => {
       const px = match.match(/\[([0-9.]+)px\]/)?.[1];
