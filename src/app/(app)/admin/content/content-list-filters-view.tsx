@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
+import { getShanghaiDateString } from "./content-list-filters";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
@@ -9,7 +11,7 @@ import { ContentListSecondaryFilters } from "./content-list-secondary-filters";
 import { ExpandableSearch } from "./expandable-search";
 
 type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles"> &
-  Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
+  Pick<ContentListState, "filters" | "updateFilter" | "applyFilterPatch" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
 
 export function ContentListFiltersView({
   view,
@@ -22,6 +24,7 @@ export function ContentListFiltersView({
   profiles,
   filters,
   updateFilter,
+  applyFilterPatch,
   handleTimeRangeChange,
   profileLabel,
   secondarySummary,
@@ -41,6 +44,15 @@ export function ContentListFiltersView({
   handleRemoveHighlightRule,
   handleToggleHighlightOnly,
 }: ContentListFiltersViewProps) {
+  const today = getShanghaiDateString();
+  const [rangeDraft, setRangeDraft] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const [viewMonth, setViewMonth] = useState(() => {
+    const [year, month] = (filters.startDate || today).split("-").map(Number);
+    return { year, month };
+  });
+  const start = rangeDraft.start ?? (filters.startDate || null);
+  const end = rangeDraft.start ? rangeDraft.end : (filters.endDate || null);
+  const labelDate = (date: string) => `${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日`;
   return (
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {/* 1. 团队/公司组织范围视角 */}
@@ -100,7 +112,7 @@ export function ContentListFiltersView({
                 {timeRangeLabel}
                 <ChevronDownIcon className="size-4 text-[#78716C]" aria-hidden="true" />
               </PopoverTrigger>
-              <PopoverContent className="w-56">
+              <PopoverContent className={CALENDAR_CARD_CLASS}>
                 <div className="flex flex-col gap-1">
                   <div className="px-1 pb-0.5 text-[12px] text-[#78716C]">时间范围</div>
                   {[
@@ -120,26 +132,28 @@ export function ContentListFiltersView({
                   ))}
                   <div className="my-1.5 h-px bg-[#E2E2DF]" />
                   <div className="px-1 pb-0.5 text-[12px] text-[#78716C]">自定义日期</div>
-                  <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
-                    开始
-                    <Input
-                      type="date"
-                      value={filters.startDate}
-                      onChange={(e) => updateFilter("startDate", e.target.value)}
-                      aria-label="开始日期"
-                      className="h-8 w-32 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
-                    />
-                  </label>
-                  <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
-                    结束
-                    <Input
-                      type="date"
-                      value={filters.endDate}
-                      onChange={(e) => updateFilter("endDate", e.target.value)}
-                      aria-label="结束日期"
-                      className="h-8 w-32 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
-                    />
-                  </label>
+                  <div className="px-1 text-[12px] text-[#78716C]">
+                    {start && end ? `已选：${labelDate(start)} - ${labelDate(end)}` : "点第一天，再点最后一天"}
+                  </div>
+                  <MonthCalendar
+                    today={today}
+                    viewMonth={viewMonth}
+                    onMonthShift={(direction) => setViewMonth((previous) => {
+                      const next = new Date(previous.year, previous.month - 1 + direction, 1);
+                      return { year: next.getFullYear(), month: next.getMonth() + 1 };
+                    })}
+                    selectedDates={[start, end].filter((date): date is string => Boolean(date))}
+                    onSelectDate={(date) => {
+                      if (!rangeDraft.start) {
+                        setRangeDraft({ start: date, end: null });
+                      } else if (date !== rangeDraft.start) {
+                        const [rangeStart, rangeEnd] = [rangeDraft.start, date].sort();
+                        applyFilterPatch({ startDate: rangeStart, endDate: rangeEnd });
+                        setRangeDraft({ start: null, end: null });
+                      }
+                    }}
+                    cellClass={(date) => start && end && date > start && date < end ? "bg-status-info/[0.06]" : ""}
+                  />
                 </div>
               </PopoverContent>
             </Popover>
