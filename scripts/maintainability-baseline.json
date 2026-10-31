@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-03",
+  "generatedAt": "2026-10-31",
   "baseCommit": "30fb6bf3921aee3c39165d6b26ce4f41be1cf9aa",
   "files": {
     "src/app/(app)/admin/actions.ts": {
@@ -12,7 +12,7 @@
       "category": "source"
     },
     "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx": {
-      "maxLines": 532,
+      "maxLines": 988,
       "category": "source"
     },
     "src/app/(app)/admin/ai-config/components/models-client.tsx": {
@@ -28,11 +28,11 @@
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/collaboration-workbench.tsx": {
-      "maxLines": 415,
+      "maxLines": 453,
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/personal-card.tsx": {
-      "maxLines": 329,
+      "maxLines": 411,
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/staff-tab.tsx": {
@@ -52,7 +52,7 @@
       "category": "source"
     },
     "src/app/(app)/admin/content/content-list.tsx": {
-      "maxLines": 77,
+      "maxLines": 161,
       "category": "source"
     },
     "src/app/(app)/admin/content/content-page-client.tsx": {
@@ -80,7 +80,7 @@
       "category": "test"
     },
     "src/app/(app)/dashboard/actions.ts": {
-      "maxLines": 549,
+      "maxLines": 580,
       "category": "source"
     },
     "src/app/(app)/dashboard/history-report-edit-form.tsx": {
@@ -96,19 +96,19 @@
       "category": "source"
     },
     "src/app/(app)/dashboard/video-submit-panel-v2.tsx": {
-      "maxLines": 522,
+      "maxLines": 614,
       "category": "source"
     },
     "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
-      "maxLines": 587,
+      "maxLines": 1130,
       "category": "test"
     },
     "src/app/api/admin/ai-config/route.ts": {
-      "maxLines": 648,
+      "maxLines": 1103,
       "category": "source"
     },
     "src/app/api/admin/collaboration/_shared.test.ts": {
-      "maxLines": 864,
+      "maxLines": 970,
       "category": "test"
     },
     "src/app/api/admin/collaboration/_shared.ts": {
@@ -116,7 +116,7 @@
       "category": "source"
     },
     "src/app/api/admin/fulfillment/appeal/handle/route.ts": {
-      "maxLines": 528,
+      "maxLines": 558,
       "category": "source"
     },
     "src/app/api/dashboard/sample-quality-check/route.ts": {
@@ -124,7 +124,7 @@
       "category": "source"
     },
     "src/app/api/ocr-screenshot/route.ts": {
-      "maxLines": 574,
+      "maxLines": 609,
       "category": "source"
     },
     "src/app/api/video-submit/edit-detail.test.ts": {
@@ -160,7 +160,7 @@
       "category": "source"
     },
     "src/components/topics-v2/TopicHubV2.tsx": {
-      "maxLines": 158,
+      "maxLines": 197,
       "category": "source"
     },
     "src/components/topics-v2/TopicPoolExplorer.tsx": {
@@ -168,11 +168,11 @@
       "category": "source"
     },
     "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx": {
-      "maxLines": 330,
+      "maxLines": 358,
       "category": "source"
     },
     "src/components/unified-command-hub.tsx": {
-      "maxLines": 1051,
+      "maxLines": 1235,
       "category": "source"
     },
     "src/lib/admin-ai/presentation.ts": {
@@ -180,7 +180,7 @@
       "category": "source"
     },
     "src/lib/ai/client.ts": {
-      "maxLines": 810,
+      "maxLines": 859,
       "category": "source"
     },
     "src/lib/content-comparison-reference.test.ts": {
@@ -192,7 +192,7 @@
       "category": "test"
     },
     "src/lib/loaders/admin-content-page.ts": {
-      "maxLines": 696,
+      "maxLines": 793,
       "category": "source"
     },
     "src/lib/loaders/admin-modules.ts": {
@@ -200,7 +200,7 @@
       "category": "source"
     },
     "src/lib/loaders/dashboard-page.ts": {
-      "maxLines": 554,
+      "maxLines": 580,
       "category": "source"
     },
     "src/lib/member-lifecycle-service.ts": {
@@ -212,11 +212,11 @@
       "category": "test"
     },
     "src/lib/topics/service.test.ts": {
-      "maxLines": 939,
+      "maxLines": 991,
       "category": "test"
     },
     "src/lib/topics/v2-client-contract.ts": {
-      "maxLines": 599,
+      "maxLines": 603,
       "category": "source"
     },
     "src/lib/work-groups.test.ts": {
@@ -230,6 +230,55 @@
     "src/lib/豁免.ts": {
       "maxLines": 599,
       "category": "source"
+    },
+    "src/app/api/ocr-screenshot/ocr-contract.ts": {
+      "maxLines": 511,
+      "category": "source"
+    },
+    "src/components/submission/截图槽位区.tsx": {
+      "maxLines": 576,
+      "category": "source"
+    },
+    "src/components/video-submit/video-submit-panel-body.tsx": {
+      "maxLines": 537,
+      "category": "source"
+    },
+    "src/lib/ai/client.test.ts": {
+      "maxLines": 530,
+      "category": "test"
+    },
+    "src/app/(app)/admin/ai-config/components/add-key-dialog.tsx": {
+      "maxLines": 642,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/business-functions-panel.tsx": {
+      "maxLines": 776,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/channel-pool-view.tsx": {
+      "maxLines": 858,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/model-family-card.tsx": {
+      "maxLines": 549,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/sync-models-dialog.tsx": {
+      "maxLines": 830,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/hooks/use-ai-config.ts": {
+      "maxLines": 522,
+      "category": "source"
+    },
+    "src/app/(app)/admin/content/content-list-filters.ts": {
+      "maxLines": 526,
+      "category": "source"
+    },
+    "src/app/(app)/admin/content/content-list-secondary-filters.tsx": {
+      "maxLines": 515,
+      "category": "source"
     }
-  }
+  },
+  "note": "2026-10-31 阿禅批准重新登记：收编已上线功能（AI配置/创作者作品/指令中心等）与工作台试点的既有规模，棘轮自本值继续只降不升"
 }
