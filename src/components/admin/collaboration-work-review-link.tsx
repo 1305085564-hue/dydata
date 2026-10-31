@@ -76,14 +76,14 @@ export function CollaborationWorkReviewLink({
         error?: string;
       };
       if (!response.ok || !payload.videoId) {
-        toast.error(payload.error || "没能打开视频复盘");
+        toast.error(payload.error || "没能打开数据复盘");
         return;
       }
       router.push(`/admin/content?videoId=${encodeURIComponent(payload.videoId)}`, {
         scroll: false,
       });
     } catch {
-      toast.error("刚才没能打开视频复盘，重试一下");
+      toast.error("刚才没能打开数据复盘，重试一下");
     } finally {
       setLocalOpening(false);
     }

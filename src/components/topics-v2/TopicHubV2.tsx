@@ -115,7 +115,7 @@ export function TopicHubV2({
 
   return (
     <AdminWorkspaceLayout
-      title="灵感手稿 · 选题库"
+      title="选题库"
       description="选定后在飞书创作，数据为内容立卷"
       actions={
         <TopicHubToolbar

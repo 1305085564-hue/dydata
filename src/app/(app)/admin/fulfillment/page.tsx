@@ -56,7 +56,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   return (
     <AdminWorkspaceLayout
-      title="发布与履约总览"
+      title="发布管理"
       description="随时了解每位成员的发布节奏，断更与补交都有去处。"
       width="wide"
     >

@@ -39,7 +39,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   review_content: "数据复盘",
   view_video_review: "作品复盘只读查看",
   manage_fulfillment: "发布管理",
-  manage_videos: "素材库",
+  manage_videos: "作品管理",
   manage_members: "成员管理",
   review_violations: "违规复核",
   manage_system: "系统设置",

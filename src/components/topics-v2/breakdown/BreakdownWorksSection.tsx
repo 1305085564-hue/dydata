@@ -83,7 +83,7 @@ export function BreakdownWorksSection({
                                 <Link
                                   href={`/admin/content?videoId=${work.id}`}
                                   className="text-[14px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:underline line-clamp-1 transition-colors"
-                                  title="进入视频复盘"
+                                  title="进入数据复盘"
                                 >
                                   {work.videoTitle || work.content || "未命名作品"}
                                 </Link>
@@ -153,7 +153,7 @@ export function BreakdownWorksSection({
                                 <Link
                                   href={`/admin/content?videoId=${work.id}`}
                                   className="text-[#78716C] hover:text-[#141413] transition-colors shrink-0 inline-flex items-center gap-0.5 ml-auto text-[12px] cursor-pointer"
-                                  title="进入视频复盘"
+                                  title="进入数据复盘"
                                 >
                                   复盘 →
                                 </Link>

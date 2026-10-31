@@ -55,7 +55,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 
   return (
     <AdminWorkspaceLayout
-      title="成员管理工作台"
+      title="成员管理"
       description="团队架构、分组归属与成员权限的维护入口"
       width="wide"
     >

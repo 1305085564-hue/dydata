@@ -168,14 +168,14 @@ test("空小队展示空态文案，不出表格", () => {
   assert.ok(!html.includes("<table"), "没有成员时不出表格");
 });
 
-test("页面带口径脚注：播放与比率仅统计已同步视频复盘的作品", () => {
+test("页面带口径脚注：播放与比率仅统计已同步数据复盘的作品", () => {
   const html = renderDetail({
     summary: summary(),
     members: [member("u-1", "张文案")],
   });
 
   assert.ok(
-    html.includes("播放、条均与各比率与视频复盘抽屉同源"),
+    html.includes("播放、条均与各比率与数据复盘抽屉同源"),
     "表格下方有口径说明，避免把未同步作品读成 0 播放",
   );
 });

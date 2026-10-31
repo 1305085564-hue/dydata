@@ -158,7 +158,7 @@ export async function buildWorkVideoResponse(
         videoId: report.videoId,
       });
       if (!detail || detail.video.account_id !== report.accountId) {
-        return NextResponse.json({ error: "该作品暂未同步到视频复盘" }, { status: 404 });
+        return NextResponse.json({ error: "该作品暂未同步到数据复盘" }, { status: 404 });
       }
 
       return NextResponse.json({
@@ -182,12 +182,12 @@ export async function buildWorkVideoResponse(
     const match = matchWorkVideoByBusinessDate({ report, videos: visibleCandidates });
 
     if (match.kind === "not_found") {
-      return NextResponse.json({ error: "该作品暂未同步到视频复盘" }, { status: 404 });
+      return NextResponse.json({ error: "该作品暂未同步到数据复盘" }, { status: 404 });
     }
     if (match.kind === "ambiguous") {
       return NextResponse.json(
         {
-          error: `同一账号和日期匹配到 ${match.count} 条视频。为避免打开错作品，请到内容中心按账号和日期确认具体作品。`,
+          error: `同一账号和日期匹配到 ${match.count} 条视频。为避免打开错作品，请到数据复盘按账号和日期确认具体作品。`,
         },
         { status: 409 },
       );
@@ -207,7 +207,7 @@ export async function buildWorkVideoResponse(
       topicKind: detail?.topicKind ?? null,
     });
   } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "打开视频复盘失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "打开数据复盘失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

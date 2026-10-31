@@ -204,7 +204,7 @@ test("审批通过但自动续交失败时审批仍成功并保留重试按钮",
   assert.equal(response.status, 200);
   assert.equal((await readJson(response)).autoResumeStatus, "failed");
   assert.match(String(notification?.body), /数据写入未成功/);
-  assert.equal(notification?.actionLabel, "去上传数据");
+  assert.equal(notification?.actionLabel, "去完成填报");
   assert.match(String(notification?.actionUrl), /resumeAppeal=/);
 });
 

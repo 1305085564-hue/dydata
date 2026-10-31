@@ -308,7 +308,7 @@ export function TalentTab({
         </TableBody>
       </Table>
       </Card>
-      <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
+      <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步数据复盘的作品不参与比率。</p>
     </div>
   );
 }

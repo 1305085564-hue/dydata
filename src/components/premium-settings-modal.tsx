@@ -368,7 +368,7 @@ export function PremiumSettingsModal({
                     个人资料设置
                   </ItemHeading>
                   <p className="text-[14px] text-[#1F1E1D] mt-1">
-                    修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
+                    修改您在抖音日报平台中的显示名称。该改动将同步至数据复盘与团队日报底表。
                   </p>
                 </div>
 

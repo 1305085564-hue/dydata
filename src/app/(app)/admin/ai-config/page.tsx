@@ -7,7 +7,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import { AIConfigShell } from "./ai-config-shell";
 
 export const metadata: Metadata = {
-  title: "AI 配置中心 - DYData",
+  title: "AI 配置 - DYData",
   description: "统一管理业务模型调度与算力池资产，支持智能容灾与高可用调度。",
 };
 
@@ -18,7 +18,7 @@ export default async function AIConfigPage() {
 
   return (
     <AdminWorkspaceLayout
-      title="AI 配置中心"
+      title="AI 配置"
       description="统一管理业务模型调度与算力池资产，支持智能容灾与高可用调度。"
       width="wide"
     >

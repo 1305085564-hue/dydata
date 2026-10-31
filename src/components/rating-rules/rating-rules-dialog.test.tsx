@@ -74,7 +74,7 @@ test("作品评级说明读取评级标准并动态渲染固定评级规则", ()
   assert.ok(rendered.includes(BREAKOUT_GRADE_TEXT_CLASS["劣"]));
 });
 
-test("数据管理页面挂载了作品评级规则入口", () => {
+test("协作管理页面挂载了作品评级规则入口", () => {
   assert.match(collaborationPageSource, /RatingRulesDialog/);
   assert.match(collaborationPageSource, /作品评级规则/);
 });

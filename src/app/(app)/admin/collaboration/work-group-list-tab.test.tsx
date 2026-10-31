@@ -131,7 +131,7 @@ test("行可键盘进入详情，且不牺牲表格语义，并带口径脚注",
   assert.equal(html.includes('role="button"'), false, "不为整行 <tr> 添加 button 角色");
   assert.match(html, /<tr[^>]*cursor-pointer/, "整行仍可点击进入，鼠标体验不变");
   assert.ok(
-    html.includes("与视频复盘抽屉同源"),
+    html.includes("与数据复盘抽屉同源"),
     "表格下方有口径说明，避免把未同步作品读成 0 播放",
   );
 });

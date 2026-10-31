@@ -116,7 +116,7 @@ export function FormV2Dialogs({
           <DialogHeader>
             <DialogTitle>申请补交历史数据</DialogTitle>
             <DialogDescription className="text-[12px] text-[#78716C] leading-relaxed pt-1">
-              当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去上传数据”即可自动完成提交。
+              当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去完成填报”即可自动完成提交。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5 py-3">

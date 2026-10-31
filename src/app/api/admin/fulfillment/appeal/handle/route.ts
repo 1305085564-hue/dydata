@@ -431,9 +431,9 @@ export async function buildHandleFulfillmentAppealResponse(
     body: status === "approved"
       ? autoResumeOk
         ? `${appealOwnerResult.data.record_date} 的补交申请已通过，数据已自动提交。`
-        : `${appealOwnerResult.data.record_date} 的补交申请已通过，但数据写入未成功：${autoResume && !autoResume.success ? autoResume.error : "未知原因"}。请点击“去上传数据”重试。`
+        : `${appealOwnerResult.data.record_date} 的补交申请已通过，但数据写入未成功：${autoResume && !autoResume.success ? autoResume.error : "未知原因"}。请点击“去完成填报”重试。`
       : buildFulfillmentAppealRejectionNotification(appealOwnerResult.data.record_date, payload.data.reason ?? ""),
-    actionLabel: status === "approved" && !autoResumeOk ? "去上传数据" : null,
+    actionLabel: status === "approved" && !autoResumeOk ? "去完成填报" : null,
     actionUrl: status === "approved" && !autoResumeOk ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}` : null,
     sourceType: "fulfillment_appeal_result",
     sourceId: payload.data.appealId,

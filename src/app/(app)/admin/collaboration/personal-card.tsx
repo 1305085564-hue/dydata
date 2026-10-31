@@ -295,10 +295,10 @@ export function PersonalCard({
                     {fromSource === "video" && returnVideoId && returnVideoValid && (
                       <Link
                         href={`/admin/content?videoId=${encodeURIComponent(returnVideoId)}`}
-                        title="返回原视频复盘详情"
+                        title="返回原数据复盘详情"
                         className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal text-[#D97757] hover:bg-[#F1F1F0] transition-colors"
                       >
-                        <span>返回该视频复盘 ↩</span>
+                        <span>返回该数据复盘 ↩</span>
                       </Link>
                     )}
                   </div>
