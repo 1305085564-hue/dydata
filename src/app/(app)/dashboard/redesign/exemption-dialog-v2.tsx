@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
+import { MonthCalendar } from "@/components/calendar/month-calendar";
 import {
   Dialog,
   DialogBody,
@@ -14,9 +15,6 @@ import { Button } from "@/components/ui/button";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { cn } from "@/lib/utils";
 import {
-  formatShanghaiDateOnlyParts,
-  getShanghaiDaysInMonth,
-  getShanghaiWeekday,
   mergeSubmittedDates,
   parseShanghaiDateOnly,
   useExemptionCalendar,
@@ -99,22 +97,6 @@ export function ExemptionDialogV2({
     } else {
       setViewMonth((m) => m + 1);
     }
-  };
-
-  const daysInMonth = getShanghaiDaysInMonth(viewYear, viewMonth);
-  const firstDayOfMonth = getShanghaiWeekday(viewYear, viewMonth, 1);
-
-  // 生成日期网格
-  const days = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    days.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(i);
-  }
-
-  const formatDate = (day: number) => {
-    return formatShanghaiDateOnlyParts(viewYear, viewMonth, day);
   };
 
   // 弹窗打开时加载催交次数（业务闭环）
@@ -214,150 +196,45 @@ export function ExemptionDialogV2({
               </div>
             )}
 
-            {/* 月份导航切换：直接紧密靠拢年月 */}
-            <div className="flex items-center justify-center gap-1 py-0.5">
-              <button
-                type="button"
-                onClick={handlePrevMonth}
-                className="flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
-                title="上个月"
-                aria-label="上个月"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <div className="flex items-center gap-1 px-1">
-                <span className="text-[14px] font-normal text-[#141413] tabular-nums">
-                  {viewYear}年{viewMonth}月
-                </span>
-              </div>
-
-              <button
-                type="button"
-                disabled={!canGoNext}
-                onClick={handleNextMonth}
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-md transition-all",
-                  canGoNext
-                    ? "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120 cursor-pointer"
-                    : "text-[#A8A29E] opacity-30 cursor-not-allowed",
-                )}
-                title="下个月"
-                aria-label="下个月"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-
-            {/* 星期标题 */}
-            <div className="grid grid-cols-7 gap-1">
-              {["日", "一", "二", "三", "四", "五", "六"].map((day) => (
-                <div
-                  key={day}
-                  className="py-1 text-center text-[12px] font-normal text-[#78716C]"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* 日期网格 */}
-            <div className="grid grid-cols-7 gap-1">
-              {days.map((day, index) => {
-                if (day === null) {
-                  return <div key={`empty-${index}`} />;
+            <MonthCalendar
+              today={today}
+              viewMonth={{ year: viewYear, month: viewMonth }}
+              onMonthShift={(direction) => direction === -1 ? handlePrevMonth() : handleNextMonth()}
+              canShiftNext={canGoNext}
+              selectedDates={calendar.selectedDates}
+              onSelectDate={calendar.toggleDate}
+              isDateDisabled={(date) => !calendar.isAvailable(date)}
+              titleFor={(date) => {
+                const status = getDateStatus({ date, today, submittedDates: allSubmittedDates, waiveDates, leaveDates, pendingDates });
+                if (calendar.selectedDates.includes(date)) return "已选择此日期";
+                if (!calendar.isAvailable(date)) {
+                  return status.status === "pending" ? "申请审批中"
+                    : status.status === "submitted" ? "当天已提交数据"
+                      : status.status === "waived" ? "当天已豁免"
+                        : status.status === "on_leave" ? "当天已请假"
+                          : status.status === "future" ? "未来日期" : undefined;
                 }
-
-                const date = formatDate(day);
-                const status = getDateStatus({
-                  date,
-                  today,
-                  submittedDates: allSubmittedDates,
-                  waiveDates,
-                  leaveDates,
-                  pendingDates,
-                });
-                const isSelected = calendar.selectedDates.includes(date);
-                const isAvailable = calendar.isAvailable
-                  ? calendar.isAvailable(date)
-                  : calendar.availableDates.includes(date);
-                const isToday = date === today;
-
-                const titleText = isSelected
-                  ? "已选择此日期"
-                  : !isAvailable
-                    ? status.status === "pending"
-                      ? "申请审批中"
-                      : status.status === "submitted"
-                        ? "当天已提交数据"
-                        : status.status === "waived"
-                          ? "当天已豁免"
-                          : status.status === "on_leave"
-                            ? "当天已请假"
-                            : status.status === "future"
-                              ? "未来日期"
-                              : undefined
-                    : isToday
-                      ? "今日未提交"
-                      : "未提交，可申请豁免或请假";
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    title={titleText}
-                    onClick={() => isAvailable && calendar.toggleDate(date)}
-                    disabled={!isAvailable}
-                    className={cn(
-                      "relative flex h-10 flex-col items-center justify-center rounded-md text-[14px] font-normal tabular-nums transition-all duration-150 select-none",
-                      // 选中态：对齐全站日历灰蓝
-                      isSelected &&
-                        "bg-status-info/[0.12] text-status-info ring-2 ring-status-info/20 ring-offset-2 z-10 font-normal shadow-input active:scale-[0.98]",
-                      // 今日且可选 (未选态 - 灰蓝系，无多余橙色焦点)
-                      !isSelected &&
-                        isAvailable &&
-                        isToday &&
-                        "border border-status-info/60 bg-white text-status-info font-normal hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
-                      // 常规可选未交 (未选态)
-                      !isSelected &&
-                        isAvailable &&
-                        !isToday &&
-                        "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
-                      // 审批中 (未选态 - 浅灰虚线锁定)
-                      !isSelected &&
-                        !isAvailable &&
-                        status.status === "pending" &&
-                        "border border-dashed border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C] font-normal cursor-not-allowed",
-                      // 已交 (未选态 - 草木绿，加深色阶与边框)
-                      !isSelected &&
-                      !isAvailable &&
-                        status.status === "submitted" &&
-                        "bg-status-success/[0.22] text-status-success font-normal border border-status-success/35 cursor-not-allowed",
-                      // 已特殊豁免 (未选态 - 金石琥珀，加深色阶与边框，彻底拉开与未交的色差)
-                      !isSelected &&
-                      !isAvailable &&
-                        status.status === "waived" &&
-                        "bg-status-warning/[0.22] text-status-warning font-normal border border-status-warning/40 cursor-not-allowed",
-                      // 请假 (未选态 - 晴岚灰蓝，加深色阶与边框)
-                      !isSelected &&
-                      !isAvailable &&
-                        status.status === "on_leave" &&
-                        "bg-status-info/[0.22] text-status-info font-normal border border-status-info/35 cursor-not-allowed",
-                      // 未来 (未选态)
-                      !isSelected &&
-                        !isAvailable &&
-                        status.status === "future" &&
-                        "bg-[#F1F1F0]/60 text-[#A8A29E] opacity-50 cursor-not-allowed",
-                    )}
-                  >
-                    <span className="leading-none">{day}</span>
-                    {isToday && !isSelected && (
-                      <span className="absolute bottom-1 size-1 rounded-full bg-current text-status-info" />
-                    )}
-                  </button>
+                return date === today ? "今日未提交" : "未提交，可申请豁免或请假";
+              }}
+              cellClass={(date) => {
+                const status = getDateStatus({ date, today, submittedDates: allSubmittedDates, waiveDates, leaveDates, pendingDates });
+                const selected = calendar.selectedDates.includes(date);
+                const available = calendar.isAvailable(date);
+                return cn(
+                  selected && "ring-2 ring-status-info/20 ring-offset-2 z-10 shadow-input",
+                  !selected && available && date === today && "border border-status-info/60 bg-white text-status-info hover:bg-[#EBEBE9]",
+                  !selected && available && date !== today && "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]",
+                  !selected && !available && status.status === "pending" && "border border-dashed border-[#E2E2DF] bg-[#F1F1F0]",
+                  !selected && !available && status.status === "submitted" && "bg-status-success/[0.22] border border-status-success/35",
+                  !selected && !available && status.status === "waived" && "bg-status-warning/[0.22] border border-status-warning/40",
+                  !selected && !available && status.status === "on_leave" && "bg-status-info/[0.22] border border-status-info/35",
+                  !selected && !available && status.status === "future" && "bg-[#F1F1F0]/60",
                 );
-              })}
-            </div>
+              }}
+              cellExtra={(date) => date === today && !calendar.selectedDates.includes(date)
+                ? <span className="absolute bottom-1 size-1 rounded-full bg-current text-status-info" />
+                : null}
+            />
 
             {/* 图例 - 居中排布 */}
             <div className="mt-3.5 flex items-center justify-center gap-4 sm:gap-6 border-t border-[#E2E2DF]/60 pt-3 text-[12px] text-[#78716C]">
