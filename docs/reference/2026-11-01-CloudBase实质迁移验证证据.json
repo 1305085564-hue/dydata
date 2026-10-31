@@ -1,0 +1,5824 @@
+{
+  "environment": "dydata-d6g0gd1v37fcddf21",
+  "region": "ap-shanghai",
+  "sourceSnapshotUTC": "2026-10-31T18:10:48Z",
+  "sourceArchiveSha256": "bb797db9d9459e09dab5618ceab1f971021f1a1b21b4df54f4adbcc441819692",
+  "reconciliation": {
+    "ok": true,
+    "tables": [
+      {
+        "name": "accounts",
+        "expected": {
+          "count": "83",
+          "h1": "60614332904910484534",
+          "h2": "128570869425763636720"
+        },
+        "actual": {
+          "count": "83",
+          "h1": "60614332904910484534",
+          "h2": "128570869425763636720"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "admin_actions",
+        "expected": {
+          "count": "19",
+          "h1": "-6555185656456623945",
+          "h2": "-48587755521526029627"
+        },
+        "actual": {
+          "count": "19",
+          "h1": "-6555185656456623945",
+          "h2": "-48587755521526029627"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "admin_first_screen_perf_events",
+        "expected": {
+          "count": "19939",
+          "h1": "64442323604245964159",
+          "h2": "-520445026921988162557"
+        },
+        "actual": {
+          "count": "19939",
+          "h1": "64442323604245964159",
+          "h2": "-520445026921988162557"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "advice_actions",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_channels",
+        "expected": {
+          "count": "8",
+          "h1": "-18869291910966540052",
+          "h2": "-17509214384610340205"
+        },
+        "actual": {
+          "count": "8",
+          "h1": "-18869291910966540052",
+          "h2": "-17509214384610340205"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_feature_bindings",
+        "expected": {
+          "count": "10",
+          "h1": "-1926579592541506172",
+          "h2": "-1538661116055237123"
+        },
+        "actual": {
+          "count": "10",
+          "h1": "-1926579592541506172",
+          "h2": "-1538661116055237123"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_feature_config",
+        "expected": {
+          "count": "7",
+          "h1": "-14829712130940347611",
+          "h2": "-1476889970474694896"
+        },
+        "actual": {
+          "count": "7",
+          "h1": "-14829712130940347611",
+          "h2": "-1476889970474694896"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_feature_config_archives",
+        "expected": {
+          "count": "1",
+          "h1": "-1536363688894804160",
+          "h2": "6659476990362903187"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "-1536363688894804160",
+          "h2": "6659476990362903187"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_feedback",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_input_bundle",
+        "expected": {
+          "count": "3",
+          "h1": "-14321484078776142528",
+          "h2": "19637266068722161480"
+        },
+        "actual": {
+          "count": "3",
+          "h1": "-14321484078776142528",
+          "h2": "19637266068722161480"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_insight_result",
+        "expected": {
+          "count": "3",
+          "h1": "-8474480569935027216",
+          "h2": "12147853619690753282"
+        },
+        "actual": {
+          "count": "3",
+          "h1": "-8474480569935027216",
+          "h2": "12147853619690753282"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_provider_key_models",
+        "expected": {
+          "count": "119",
+          "h1": "-67656685849425706451",
+          "h2": "81004045168876138932"
+        },
+        "actual": {
+          "count": "119",
+          "h1": "-67656685849425706451",
+          "h2": "81004045168876138932"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_provider_keys",
+        "expected": {
+          "count": "10",
+          "h1": "18100637912360391519",
+          "h2": "-6413756602494771321"
+        },
+        "actual": {
+          "count": "10",
+          "h1": "18100637912360391519",
+          "h2": "-6413756602494771321"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_provider_priority_migration_backup_20261009",
+        "expected": {
+          "count": "5",
+          "h1": "-13847511701015250807",
+          "h2": "-10477944196379326930"
+        },
+        "actual": {
+          "count": "5",
+          "h1": "-13847511701015250807",
+          "h2": "-10477944196379326930"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_providers",
+        "expected": {
+          "count": "6",
+          "h1": "-18984933590299442418",
+          "h2": "17879124145291320388"
+        },
+        "actual": {
+          "count": "6",
+          "h1": "-18984933590299442418",
+          "h2": "17879124145291320388"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "ai_result",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "appeal_backfill_20261019_ledger",
+        "expected": {
+          "count": "3",
+          "h1": "-5954786462277118456",
+          "h2": "-10390113889386114815"
+        },
+        "actual": {
+          "count": "3",
+          "h1": "-5954786462277118456",
+          "h2": "-10390113889386114815"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "audit_logs",
+        "expected": {
+          "count": "774",
+          "h1": "-155927923102307641368",
+          "h2": "-206962942573140202527"
+        },
+        "actual": {
+          "count": "774",
+          "h1": "-155927923102307641368",
+          "h2": "-206962942573140202527"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "content_asset",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "content_history",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "content_item",
+        "expected": {
+          "count": "4",
+          "h1": "-1209026924405595668",
+          "h2": "-9713921858045779366"
+        },
+        "actual": {
+          "count": "4",
+          "h1": "-1209026924405595668",
+          "h2": "-9713921858045779366"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "content_observations",
+        "expected": {
+          "count": "1",
+          "h1": "1327436126578218072",
+          "h2": "-6004005023760486111"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "1327436126578218072",
+          "h2": "-6004005023760486111"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "content_tag_link",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "daily_reports",
+        "expected": {
+          "count": "2615",
+          "h1": "-113591851424866228146",
+          "h2": "-131917555506731301218"
+        },
+        "actual": {
+          "count": "2615",
+          "h1": "-113591851424866228146",
+          "h2": "-131917555506731301218"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "exemption_audit",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "exemption_grant",
+        "expected": {
+          "count": "505",
+          "h1": "4392618093714932793",
+          "h2": "-107797846896147628361"
+        },
+        "actual": {
+          "count": "505",
+          "h1": "4392618093714932793",
+          "h2": "-107797846896147628361"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "exemption_request",
+        "expected": {
+          "count": "680",
+          "h1": "-53385873438581067583",
+          "h2": "12568486556481911385"
+        },
+        "actual": {
+          "count": "680",
+          "h1": "-53385873438581067583",
+          "h2": "12568486556481911385"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "exemption_request_date",
+        "expected": {
+          "count": "972",
+          "h1": "153711623155590191588",
+          "h2": "-56302801315118377411"
+        },
+        "actual": {
+          "count": "972",
+          "h1": "153711623155590191588",
+          "h2": "-56302801315118377411"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "field_provenance",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "fulfillment_appeals",
+        "expected": {
+          "count": "216",
+          "h1": "104247711349875670286",
+          "h2": "110007809836972076550"
+        },
+        "actual": {
+          "count": "216",
+          "h1": "104247711349875670286",
+          "h2": "110007809836972076550"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "fulfillment_records",
+        "expected": {
+          "count": "38",
+          "h1": "-13751325168201140026",
+          "h2": "-4660619504605552303"
+        },
+        "actual": {
+          "count": "38",
+          "h1": "-13751325168201140026",
+          "h2": "-4660619504605552303"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "group_mode_sessions",
+        "expected": {
+          "count": "20",
+          "h1": "442191433944583156",
+          "h2": "10905597405786649611"
+        },
+        "actual": {
+          "count": "20",
+          "h1": "442191433944583156",
+          "h2": "10905597405786649611"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "group_permission_qualifications",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "invite_codes",
+        "expected": {
+          "count": "77",
+          "h1": "55198801543431611",
+          "h2": "9776731319702977037"
+        },
+        "actual": {
+          "count": "77",
+          "h1": "55198801543431611",
+          "h2": "9776731319702977037"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "market_context_daily",
+        "expected": {
+          "count": "1",
+          "h1": "-8241687733678517343",
+          "h2": "-8757460320533370779"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "-8241687733678517343",
+          "h2": "-8757460320533370779"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "member_change_log",
+        "expected": {
+          "count": "35",
+          "h1": "3858543930758042227",
+          "h2": "-41792224711315051603"
+        },
+        "actual": {
+          "count": "35",
+          "h1": "3858543930758042227",
+          "h2": "-41792224711315051603"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "metric_snapshot",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "notifications",
+        "expected": {
+          "count": "2648",
+          "h1": "666669755729100119588",
+          "h2": "22873821702219063775"
+        },
+        "actual": {
+          "count": "2648",
+          "h1": "666669755729100119588",
+          "h2": "22873821702219063775"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "profiles",
+        "expected": {
+          "count": "84",
+          "h1": "-28016519327736470148",
+          "h2": "101050348151704327814"
+        },
+        "actual": {
+          "count": "84",
+          "h1": "-28016519327736470148",
+          "h2": "101050348151704327814"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "profiles_group",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "profiles_team",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "provisional_tag_text",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "publish_drafts",
+        "expected": {
+          "count": "30",
+          "h1": "-26463391834702445736",
+          "h2": "3095653950079003822"
+        },
+        "actual": {
+          "count": "30",
+          "h1": "-26463391834702445736",
+          "h2": "3095653950079003822"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "remind_logs",
+        "expected": {
+          "count": "427",
+          "h1": "261366604016546466319",
+          "h2": "-12012953585424001173"
+        },
+        "actual": {
+          "count": "427",
+          "h1": "261366604016546466319",
+          "h2": "-12012953585424001173"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "report_date_fix_20261019_ledger",
+        "expected": {
+          "count": "13",
+          "h1": "-7153784121356528422",
+          "h2": "18886392934585611684"
+        },
+        "actual": {
+          "count": "13",
+          "h1": "-7153784121356528422",
+          "h2": "18886392934585611684"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_conversation_skills",
+        "expected": {
+          "count": "2",
+          "h1": "-7353654175089424809",
+          "h2": "8351412304350500644"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "-7353654175089424809",
+          "h2": "8351412304350500644"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_conversations",
+        "expected": {
+          "count": "145",
+          "h1": "3600813194486140719",
+          "h2": "31907944060606246871"
+        },
+        "actual": {
+          "count": "145",
+          "h1": "3600813194486140719",
+          "h2": "31907944060606246871"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_document_paragraphs",
+        "expected": {
+          "count": "332",
+          "h1": "115855579467323321324",
+          "h2": "31214482477816438103"
+        },
+        "actual": {
+          "count": "332",
+          "h1": "115855579467323321324",
+          "h2": "31214482477816438103"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_document_revisions",
+        "expected": {
+          "count": "41",
+          "h1": "35650989864213204023",
+          "h2": "892346368819793390"
+        },
+        "actual": {
+          "count": "41",
+          "h1": "35650989864213204023",
+          "h2": "892346368819793390"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_documents",
+        "expected": {
+          "count": "43",
+          "h1": "12532404712641087596",
+          "h2": "-35451114384469062419"
+        },
+        "actual": {
+          "count": "43",
+          "h1": "12532404712641087596",
+          "h2": "-35451114384469062419"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_generation_runs",
+        "expected": {
+          "count": "22",
+          "h1": "38898615452581600413",
+          "h2": "-24076973487578973172"
+        },
+        "actual": {
+          "count": "22",
+          "h1": "38898615452581600413",
+          "h2": "-24076973487578973172"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_messages",
+        "expected": {
+          "count": "297",
+          "h1": "-25728142359759496281",
+          "h2": "-33093567714926397535"
+        },
+        "actual": {
+          "count": "297",
+          "h1": "-25728142359759496281",
+          "h2": "-33093567714926397535"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_model_routes",
+        "expected": {
+          "count": "4",
+          "h1": "5013782920734637210",
+          "h2": "2974625195487378464"
+        },
+        "actual": {
+          "count": "4",
+          "h1": "5013782920734637210",
+          "h2": "2974625195487378464"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_model_views",
+        "expected": {
+          "count": "4",
+          "h1": "-5042951180520331778",
+          "h2": "-2718246315456633553"
+        },
+        "actual": {
+          "count": "4",
+          "h1": "-5042951180520331778",
+          "h2": "-2718246315456633553"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_modes",
+        "expected": {
+          "count": "3",
+          "h1": "12425209547555572315",
+          "h2": "9236396747233278250"
+        },
+        "actual": {
+          "count": "3",
+          "h1": "12425209547555572315",
+          "h2": "9236396747233278250"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_skill_versions",
+        "expected": {
+          "count": "2",
+          "h1": "4761545824569671244",
+          "h2": "-9306565304921233140"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "4761545824569671244",
+          "h2": "-9306565304921233140"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "rewrite_skills",
+        "expected": {
+          "count": "2",
+          "h1": "-1565328086893554837",
+          "h2": "13864759958218901558"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "-1565328086893554837",
+          "h2": "13864759958218901558"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "sample_quality_issues",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "script_document",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "script_purposes",
+        "expected": {
+          "count": "2",
+          "h1": "9854124922114471293",
+          "h2": "10475572569763810459"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "9854124922114471293",
+          "h2": "10475572569763810459"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "script_segment",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "script_usage_records",
+        "expected": {
+          "count": "53",
+          "h1": "-18221630998326198965",
+          "h2": "-57492307849932303858"
+        },
+        "actual": {
+          "count": "53",
+          "h1": "-18221630998326198965",
+          "h2": "-57492307849932303858"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "sop_checkpoint_submissions",
+        "expected": {
+          "count": "30",
+          "h1": "-31037318907353211389",
+          "h2": "-68529259387221005791"
+        },
+        "actual": {
+          "count": "30",
+          "h1": "-31037318907353211389",
+          "h2": "-68529259387221005791"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "sop_daily_status",
+        "expected": {
+          "count": "952",
+          "h1": "19740898293348873474",
+          "h2": "79134706599429365233"
+        },
+        "actual": {
+          "count": "952",
+          "h1": "19740898293348873474",
+          "h2": "79134706599429365233"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "sub_topic_claims",
+        "expected": {
+          "count": "41",
+          "h1": "226654909569299814",
+          "h2": "27545243851932361260"
+        },
+        "actual": {
+          "count": "41",
+          "h1": "226654909569299814",
+          "h2": "27545243851932361260"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "sub_topics",
+        "expected": {
+          "count": "82",
+          "h1": "32780466706847296484",
+          "h2": "66097666432303964918"
+        },
+        "actual": {
+          "count": "82",
+          "h1": "32780466706847296484",
+          "h2": "66097666432303964918"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "submission_batch",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "system_issues",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "system_settings",
+        "expected": {
+          "count": "2",
+          "h1": "14789199558777468798",
+          "h2": "-5829178281077019180"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "14789199558777468798",
+          "h2": "-5829178281077019180"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "tag_definition",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "team_join_requests",
+        "expected": {
+          "count": "36",
+          "h1": "-2892956541827388504",
+          "h2": "63477961164161941062"
+        },
+        "actual": {
+          "count": "36",
+          "h1": "-2892956541827388504",
+          "h2": "63477961164161941062"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "teams",
+        "expected": {
+          "count": "9",
+          "h1": "-2759615403545621881",
+          "h2": "9868228948022975718"
+        },
+        "actual": {
+          "count": "9",
+          "h1": "-2759615403545621881",
+          "h2": "9868228948022975718"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "topic_groups",
+        "expected": {
+          "count": "40",
+          "h1": "1208520695622071875",
+          "h2": "31555267801937329640"
+        },
+        "actual": {
+          "count": "40",
+          "h1": "1208520695622071875",
+          "h2": "31555267801937329640"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "topic_import_batches",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "topics",
+        "expected": {
+          "count": "8",
+          "h1": "6987240968321867482",
+          "h2": "-6841342702619415341"
+        },
+        "actual": {
+          "count": "8",
+          "h1": "6987240968321867482",
+          "h2": "-6841342702619415341"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "usage_events",
+        "expected": {
+          "count": "15990",
+          "h1": "-944228201831181687555",
+          "h2": "576410896913355657711"
+        },
+        "actual": {
+          "count": "15990",
+          "h1": "-944228201831181687555",
+          "h2": "576410896913355657711"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "video_content_segments",
+        "expected": {
+          "count": "9",
+          "h1": "8261062185584585756",
+          "h2": "-7358929997712666843"
+        },
+        "actual": {
+          "count": "9",
+          "h1": "8261062185584585756",
+          "h2": "-7358929997712666843"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "video_metrics_snapshots",
+        "expected": {
+          "count": "2669",
+          "h1": "90691840926998199114",
+          "h2": "209598198572336468421"
+        },
+        "actual": {
+          "count": "2669",
+          "h1": "90691840926998199114",
+          "h2": "209598198572336468421"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "video_review_tickets",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "video_screenshot_replacement_history",
+        "expected": {
+          "count": "15",
+          "h1": "28345958860766387666",
+          "h2": "3146456140937639704"
+        },
+        "actual": {
+          "count": "15",
+          "h1": "28345958860766387666",
+          "h2": "3146456140937639704"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "video_tags",
+        "expected": {
+          "count": "8209",
+          "h1": "-201246054273945988185",
+          "h2": "-492948418742989006195"
+        },
+        "actual": {
+          "count": "8209",
+          "h1": "-201246054273945988185",
+          "h2": "-492948418742989006195"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "videos",
+        "expected": {
+          "count": "2703",
+          "h1": "-184170611853663591203",
+          "h2": "491140349644046946147"
+        },
+        "actual": {
+          "count": "2703",
+          "h1": "-184170611853663591203",
+          "h2": "491140349644046946147"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "violation_case_reason_tags",
+        "expected": {
+          "count": "1",
+          "h1": "-4540388500059111726",
+          "h2": "-930301539949740727"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "-4540388500059111726",
+          "h2": "-930301539949740727"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "violation_case_visual_tags",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "violation_cases",
+        "expected": {
+          "count": "34",
+          "h1": "-15519763589385375071",
+          "h2": "7538969245836514471"
+        },
+        "actual": {
+          "count": "34",
+          "h1": "-15519763589385375071",
+          "h2": "7538969245836514471"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "violation_events",
+        "expected": {
+          "count": "3",
+          "h1": "-4568603791718120704",
+          "h2": "-13110599061139204341"
+        },
+        "actual": {
+          "count": "3",
+          "h1": "-4568603791718120704",
+          "h2": "-13110599061139204341"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "violation_reason_tags",
+        "expected": {
+          "count": "7",
+          "h1": "7676466290985484209",
+          "h2": "-8670519122757611500"
+        },
+        "actual": {
+          "count": "7",
+          "h1": "7676466290985484209",
+          "h2": "-8670519122757611500"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "visual_tags",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "weekly_decisions",
+        "expected": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "actual": {
+          "count": "0",
+          "h1": "0",
+          "h2": "0"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "work_groups",
+        "expected": {
+          "count": "6",
+          "h1": "-690417004659275088",
+          "h2": "-5504222247886287430"
+        },
+        "actual": {
+          "count": "6",
+          "h1": "-690417004659275088",
+          "h2": "-5504222247886287430"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "work_submissions",
+        "expected": {
+          "count": "1",
+          "h1": "8394567952339268494",
+          "h2": "-7340162471931840345"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "8394567952339268494",
+          "h2": "-7340162471931840345"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "writer_certifications",
+        "expected": {
+          "count": "10",
+          "h1": "2152158330640958858",
+          "h2": "16078156538363398281"
+        },
+        "actual": {
+          "count": "10",
+          "h1": "2152158330640958858",
+          "h2": "16078156538363398281"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_areas",
+        "expected": {
+          "count": "5",
+          "h1": "-70241210474061750",
+          "h2": "-4138706122081726319"
+        },
+        "actual": {
+          "count": "5",
+          "h1": "-70241210474061750",
+          "h2": "-4138706122081726319"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_execution_slots",
+        "expected": {
+          "count": "1",
+          "h1": "-1283259674348386080",
+          "h2": "1080036838106561694"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "-1283259674348386080",
+          "h2": "1080036838106561694"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_item_events",
+        "expected": {
+          "count": "106",
+          "h1": "-1486928418351699777",
+          "h2": "-27537629915560458078"
+        },
+        "actual": {
+          "count": "106",
+          "h1": "-1486928418351699777",
+          "h2": "-27537629915560458078"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_items",
+        "expected": {
+          "count": "20",
+          "h1": "3773118607806385429",
+          "h2": "25764026190574330245"
+        },
+        "actual": {
+          "count": "20",
+          "h1": "3773118607806385429",
+          "h2": "25764026190574330245"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_people",
+        "expected": {
+          "count": "1",
+          "h1": "7661943998288424573",
+          "h2": "-8730662046704373551"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "7661943998288424573",
+          "h2": "-8730662046704373551"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_projects",
+        "expected": {
+          "count": "2",
+          "h1": "-6333195851318903475",
+          "h2": "641967490800160279"
+        },
+        "actual": {
+          "count": "2",
+          "h1": "-6333195851318903475",
+          "h2": "641967490800160279"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      },
+      {
+        "name": "yike_workspaces",
+        "expected": {
+          "count": "1",
+          "h1": "2465091424127505519",
+          "h2": "1124696478952550558"
+        },
+        "actual": {
+          "count": "1",
+          "h1": "2465091424127505519",
+          "h2": "1124696478952550558"
+        },
+        "countMatches": true,
+        "hashesMatch": true,
+        "sourceRowCountMatches": true,
+        "matches": true
+      }
+    ],
+    "queriesExecuted": 239,
+    "ms": 76129
+  },
+  "requests": [
+    {
+      "time": "2026-10-31T18:14:27.345Z",
+      "stage": "bootstrap",
+      "RequestId": "a6fe650e-9aac-4709-9388-fccdee337580",
+      "bytes": 419,
+      "ms": 357,
+      "dbMs": 14,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:27.564Z",
+      "stage": "receipt",
+      "RequestId": "121b1b7f-27c7-4ac8-8859-62bddc902364",
+      "bytes": 99,
+      "ms": 160,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:28.147Z",
+      "batchId": "dydata-full-20261101-pre:1",
+      "sha256": "7745a7db7bc9cb61b120094388489ef8beaa499a1411099b339d37ab5f755304",
+      "bytes": 292539,
+      "ms": 582,
+      "success": false,
+      "sqlstate": [
+        "42704"
+      ],
+      "recovery": "对应批次回滚后修正；随后相同阶段成功"
+    },
+    {
+      "time": "2026-10-31T18:14:28.351Z",
+      "stage": "receipt",
+      "RequestId": "c3920689-5eb7-471a-bb25-1bf7916dd806",
+      "bytes": 99,
+      "ms": 203,
+      "dbMs": 11,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:55.323Z",
+      "stage": "bootstrap",
+      "RequestId": "0060a8ac-4ecb-4207-a2c5-46211a037a52",
+      "bytes": 419,
+      "ms": 351,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:55.573Z",
+      "stage": "receipt",
+      "RequestId": "81c94cd6-f61a-45df-8253-139a8b4907b3",
+      "bytes": 99,
+      "ms": 197,
+      "dbMs": 11,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:56.169Z",
+      "batchId": "dydata-full-20261101-pre:1",
+      "sha256": "ea4ef980f44110d7ff5b677bc965ee3e88ff3637b58e11c1ca92b878347c10fe",
+      "RequestId": "a18dd638-89f3-4c56-a800-0f0694b06837",
+      "bytes": 264108,
+      "ms": 595,
+      "dbMs": 100,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:14:56.321Z",
+      "stage": "receipt",
+      "RequestId": "c7331e8d-10de-4a6e-94ef-55f2486fdf78",
+      "bytes": 99,
+      "ms": 148,
+      "dbMs": 6,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:10.447Z",
+      "stage": "bootstrap",
+      "RequestId": "35d2b5e6-ac1e-4e86-b644-e7e307235425",
+      "bytes": 419,
+      "ms": 341,
+      "dbMs": 10,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:12.367Z",
+      "stage": "receipt",
+      "RequestId": "fc921710-44a2-444c-9586-03b869a984dc",
+      "bytes": 100,
+      "ms": 171,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:13.298Z",
+      "batchId": "dydata-full-20261101-data:1",
+      "sha256": "0f5d421f3d9ab9ff9e8ef3733e2565ad4b3b84061ffa4eebf970f0e88cd43fdd",
+      "RequestId": "dcb0453e-1796-437e-a7f7-979122c5b584",
+      "bytes": 524561,
+      "ms": 929,
+      "dbMs": 150,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:13.457Z",
+      "stage": "receipt",
+      "RequestId": "dff97ee5-93b2-47ee-a875-fd592b87c106",
+      "bytes": 100,
+      "ms": 159,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:13.629Z",
+      "stage": "receipt",
+      "RequestId": "6d574318-f4ed-42e1-a88a-13045e5a9c49",
+      "bytes": 100,
+      "ms": 161,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:14.482Z",
+      "batchId": "dydata-full-20261101-data:2",
+      "sha256": "14f729243f22c8393e12e9fa2e2f578fe85bdca7bb785b76e6462806b07d961a",
+      "RequestId": "bef33f86-eb89-4f91-8da9-56645807b68c",
+      "bytes": 524537,
+      "ms": 853,
+      "dbMs": 138,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:14.658Z",
+      "stage": "receipt",
+      "RequestId": "48a168c5-fbbf-4c76-b601-60672f8be3d3",
+      "bytes": 100,
+      "ms": 175,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:14.817Z",
+      "stage": "receipt",
+      "RequestId": "a92877ef-421f-42cf-a3fb-41335ab8a245",
+      "bytes": 100,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:15.407Z",
+      "batchId": "dydata-full-20261101-data:3",
+      "sha256": "838719957631ff82696f4a4333f754d94dc0c72d016f4770dbdfa2a35de0ec1b",
+      "RequestId": "4fbf5b2a-7f65-4e33-a3ac-2f4bb9c33ad5",
+      "bytes": 524379,
+      "ms": 587,
+      "dbMs": 139,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:15.563Z",
+      "stage": "receipt",
+      "RequestId": "4ec346fe-6944-450a-92d2-b7de99c6a4bc",
+      "bytes": 100,
+      "ms": 156,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:15.701Z",
+      "stage": "receipt",
+      "RequestId": "f091d445-7d28-4b5e-940d-1ef4a6f523ac",
+      "bytes": 100,
+      "ms": 133,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:16.600Z",
+      "batchId": "dydata-full-20261101-data:4",
+      "sha256": "b1d1acbf37add0836d997fc7ea20fdfde4440c53f36c6255d0a3862ffd6a9d2e",
+      "RequestId": "f823bf7f-c79c-45d7-89c9-47957308bd9d",
+      "bytes": 524553,
+      "ms": 896,
+      "dbMs": 133,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:16.738Z",
+      "stage": "receipt",
+      "RequestId": "ba2c6bb6-7f09-4f7f-81bc-b0fc2c1f516c",
+      "bytes": 100,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:16.885Z",
+      "stage": "receipt",
+      "RequestId": "5632bc6e-1095-4368-b882-4d49b700aa35",
+      "bytes": 100,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:17.505Z",
+      "batchId": "dydata-full-20261101-data:5",
+      "sha256": "54dde6137bf09278c190593a5946de24b7d4050a564e97c4ecd17f828b9042cf",
+      "RequestId": "0b7877dc-552c-484e-9b86-e64cfadb7490",
+      "bytes": 524373,
+      "ms": 619,
+      "dbMs": 131,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:17.660Z",
+      "stage": "receipt",
+      "RequestId": "00d64981-9152-4e2d-93b0-4444e6abdce0",
+      "bytes": 100,
+      "ms": 154,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:17.857Z",
+      "stage": "receipt",
+      "RequestId": "8ee28459-0f7d-4dfc-891a-6fc2532d332a",
+      "bytes": 100,
+      "ms": 188,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:18.481Z",
+      "batchId": "dydata-full-20261101-data:6",
+      "sha256": "a05c4b9ae813bc83bfa6582481d68547395176661382e713aacd0c73b8cdd107",
+      "RequestId": "ddddb3de-5737-4c85-8634-ddc806045b31",
+      "bytes": 524537,
+      "ms": 623,
+      "dbMs": 133,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:18.619Z",
+      "stage": "receipt",
+      "RequestId": "25781190-2bbc-4ed9-baef-8528f44fa5ea",
+      "bytes": 100,
+      "ms": 137,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:18.874Z",
+      "stage": "receipt",
+      "RequestId": "76ca7c12-fb07-437a-8b1b-08277592eb88",
+      "bytes": 100,
+      "ms": 252,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:19.424Z",
+      "batchId": "dydata-full-20261101-data:7",
+      "sha256": "7047fb472ef9e1e000a88f3207bd2bceb5a93218a785b7dd7771fc5338f11809",
+      "RequestId": "9982a202-fb0d-400e-a3ff-2c6355151742",
+      "bytes": 524489,
+      "ms": 550,
+      "dbMs": 132,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:19.580Z",
+      "stage": "receipt",
+      "RequestId": "01e89665-845b-48ae-99bf-93269d28e5b4",
+      "bytes": 100,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:19.737Z",
+      "stage": "receipt",
+      "RequestId": "62016ed3-203e-41ea-871a-53c121add263",
+      "bytes": 100,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:20.587Z",
+      "batchId": "dydata-full-20261101-data:8",
+      "sha256": "e657d5e8c069af13a6df0399a3fbfefc768fb47234f22839c220be7904672847",
+      "RequestId": "a02c42e8-6254-4bc7-84b6-0ab0e5af8fc8",
+      "bytes": 524228,
+      "ms": 849,
+      "dbMs": 146,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:21.040Z",
+      "stage": "receipt",
+      "RequestId": "5b7d771f-59ba-4a46-ab9e-b6b5cd04c6ae",
+      "bytes": 100,
+      "ms": 451,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:21.195Z",
+      "stage": "receipt",
+      "RequestId": "1fb2d676-9381-4d79-94b1-a1269aaa4321",
+      "bytes": 100,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:21.957Z",
+      "batchId": "dydata-full-20261101-data:9",
+      "sha256": "f5f4a2e611357f626fff0db68e4cdfa383202cb49e8d887f0d1e5ce3112213a5",
+      "RequestId": "b0968bb5-81ac-4bf7-8173-b9042d54ef6d",
+      "bytes": 524392,
+      "ms": 760,
+      "dbMs": 143,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:22.104Z",
+      "stage": "receipt",
+      "RequestId": "f11aa680-37e7-40d5-ad20-5e525e27da50",
+      "bytes": 100,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:22.248Z",
+      "stage": "receipt",
+      "RequestId": "3e738efb-515b-47f9-aced-92aa0ec46a0b",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:22.834Z",
+      "batchId": "dydata-full-20261101-data:10",
+      "sha256": "b2fcc9ac79f5a61fe5272178b13e9db1e04751ff9bc947ec312fb0cf783f8a49",
+      "RequestId": "c3c7942f-b963-403d-a5c0-9a2228cb1eec",
+      "bytes": 524171,
+      "ms": 585,
+      "dbMs": 137,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:22.978Z",
+      "stage": "receipt",
+      "RequestId": "a54dcc20-792b-4f33-89c2-1fe44eeba228",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:23.134Z",
+      "stage": "receipt",
+      "RequestId": "7867942e-89de-4dc8-8614-c25be93dc470",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:24.020Z",
+      "batchId": "dydata-full-20261101-data:11",
+      "sha256": "45e667e254e12f3fae7a4fab35d7200eca9cef5905e5898daecc363fc8592f22",
+      "RequestId": "8106c7c5-c34c-4646-8c77-3ca74acd1992",
+      "bytes": 524275,
+      "ms": 886,
+      "dbMs": 134,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:24.154Z",
+      "stage": "receipt",
+      "RequestId": "6652d77e-3ee9-493a-86ad-640efac8ad03",
+      "bytes": 101,
+      "ms": 133,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:24.287Z",
+      "stage": "receipt",
+      "RequestId": "3aaa30f8-32a9-49ad-9f62-d4803b1152d9",
+      "bytes": 101,
+      "ms": 126,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:24.906Z",
+      "batchId": "dydata-full-20261101-data:12",
+      "sha256": "9216ce612535eba297a9249a7c75f6cd8c49b516c9479c1a40bc18eb295ce122",
+      "RequestId": "19a3edae-d31d-4ae2-b04f-22a3e761f0a9",
+      "bytes": 524116,
+      "ms": 616,
+      "dbMs": 133,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:25.058Z",
+      "stage": "receipt",
+      "RequestId": "232e937f-fbeb-4a88-adca-25829f76cace",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:25.199Z",
+      "stage": "receipt",
+      "RequestId": "b510aab2-23f0-4ae9-a5f9-95412c7864a6",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:26.122Z",
+      "batchId": "dydata-full-20261101-data:13",
+      "sha256": "563b30b3e395e3f0d93035f6c0e27425e9952700881250afb6f428db406387f8",
+      "RequestId": "ef1882da-afea-4ac3-b2b6-9ba04cf9ff9b",
+      "bytes": 524453,
+      "ms": 923,
+      "dbMs": 154,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:26.263Z",
+      "stage": "receipt",
+      "RequestId": "d5fe6af9-c4f1-4f88-99bf-3fca0b789be2",
+      "bytes": 101,
+      "ms": 140,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:26.421Z",
+      "stage": "receipt",
+      "RequestId": "afa090b9-4e4b-4cf6-8ed3-5247af9e73dd",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:26.999Z",
+      "batchId": "dydata-full-20261101-data:14",
+      "sha256": "e797382285669f4983d00cad82a0fb2235c85f3d21c56d64a729bf976a59042d",
+      "RequestId": "f2ebffe2-c32f-4b43-9c93-2119cfad7144",
+      "bytes": 524224,
+      "ms": 575,
+      "dbMs": 144,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:27.148Z",
+      "stage": "receipt",
+      "RequestId": "2d0184ac-19a0-463a-895c-552dfc358efe",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:27.305Z",
+      "stage": "receipt",
+      "RequestId": "49e6f4ff-2b8c-4843-ae00-79a8031a658c",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:27.890Z",
+      "batchId": "dydata-full-20261101-data:15",
+      "sha256": "01484339bc6463d327cfa2fc9f895527319d492119c3f172aff12e61f7312e8c",
+      "RequestId": "fb32dc9e-ba1d-4e0b-a96c-6aa15050078e",
+      "bytes": 524498,
+      "ms": 585,
+      "dbMs": 132,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:28.032Z",
+      "stage": "receipt",
+      "RequestId": "d48d8dc6-d99e-475f-af29-ea51a682b3fb",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:28.171Z",
+      "stage": "receipt",
+      "RequestId": "f7d1cd4f-f0ed-4c06-b3fe-94c348953f63",
+      "bytes": 101,
+      "ms": 130,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:28.947Z",
+      "batchId": "dydata-full-20261101-data:16",
+      "sha256": "2da4e3b561419f801037aa11238aa719f38210044086a8e4435d05d63b753de4",
+      "RequestId": "787588b6-c649-4969-85d3-8a3121ddc818",
+      "bytes": 524162,
+      "ms": 776,
+      "dbMs": 132,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:29.076Z",
+      "stage": "receipt",
+      "RequestId": "1f4da2cd-2627-4328-bdb1-d830c763a28d",
+      "bytes": 101,
+      "ms": 127,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:29.230Z",
+      "stage": "receipt",
+      "RequestId": "6a100837-a5d8-4ed7-88ef-188a019b6ada",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:29.807Z",
+      "batchId": "dydata-full-20261101-data:17",
+      "sha256": "c4d7525ad3ab056896300f06092cd24a71992852e5cebe8282f675a5b6b8006e",
+      "RequestId": "e2780d2f-2c4b-4eb1-8000-3d34af1be7f0",
+      "bytes": 524412,
+      "ms": 575,
+      "dbMs": 131,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:29.964Z",
+      "stage": "receipt",
+      "RequestId": "a470c80e-5bb6-46ee-8e9b-f0bd6bd41e7e",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:30.112Z",
+      "stage": "receipt",
+      "RequestId": "fed81cf8-5ea5-4867-99d5-f7d162bae559",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:31.008Z",
+      "batchId": "dydata-full-20261101-data:18",
+      "sha256": "354215b571ca38a2054a9f4c8ce9d82bdc665811fb7f71097d7911590dabdca8",
+      "RequestId": "be0ffe3a-ba69-4a41-9230-b96bd00f70ab",
+      "bytes": 524544,
+      "ms": 894,
+      "dbMs": 128,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:31.148Z",
+      "stage": "receipt",
+      "RequestId": "03da5027-6261-4898-b3cd-fe005bba138c",
+      "bytes": 101,
+      "ms": 140,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:31.301Z",
+      "stage": "receipt",
+      "RequestId": "808290f3-b3d2-482c-87b0-a421522b6f1f",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:32.043Z",
+      "batchId": "dydata-full-20261101-data:19",
+      "sha256": "384dd133fc1c4a74ce514a32558680a023dbc99a373c7306d3392073269bd68f",
+      "RequestId": "7ae1dfae-f735-46cf-8b29-e537d896845f",
+      "bytes": 520625,
+      "ms": 741,
+      "dbMs": 110,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:32.204Z",
+      "stage": "receipt",
+      "RequestId": "4d73df39-0154-40af-87b0-38e235377434",
+      "bytes": 101,
+      "ms": 161,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:32.349Z",
+      "stage": "receipt",
+      "RequestId": "f418e9b6-1ad5-4e31-8f66-a8f717d21a02",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:32.932Z",
+      "batchId": "dydata-full-20261101-data:20",
+      "sha256": "b21104d640e6de4aa834d5e4737a465ea6a2977ea5ac43232ed2cbda210c6f38",
+      "RequestId": "e37eb2c0-a53a-4006-8143-431f9f86e801",
+      "bytes": 519269,
+      "ms": 582,
+      "dbMs": 60,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:33.080Z",
+      "stage": "receipt",
+      "RequestId": "8eed4e5a-8a7f-47cf-ba01-d41869ca2c48",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:33.214Z",
+      "stage": "receipt",
+      "RequestId": "d6264364-1286-4378-be18-d5e32e190238",
+      "bytes": 101,
+      "ms": 132,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:33.710Z",
+      "batchId": "dydata-full-20261101-data:21",
+      "sha256": "e76444e85f1bf6aff43f77ee5680090a9eca4e246612d9d49867b2164f114be8",
+      "RequestId": "45caa976-47ba-466a-b26a-ed650c2335a9",
+      "bytes": 521319,
+      "ms": 496,
+      "dbMs": 63,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:33.865Z",
+      "stage": "receipt",
+      "RequestId": "6cbe2dce-9e2b-4181-8630-44de833e7f59",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:34.006Z",
+      "stage": "receipt",
+      "RequestId": "a35d619a-80d4-4cc8-a0f4-71ddfd807575",
+      "bytes": 101,
+      "ms": 134,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:34.815Z",
+      "batchId": "dydata-full-20261101-data:22",
+      "sha256": "1462cafecc85655785038da1a70851cf3c8fa9ba6360f1ebc557b9d0ddef5cc6",
+      "RequestId": "dc34294a-ea82-46b1-b0b2-afc5b1e1f8c1",
+      "bytes": 520291,
+      "ms": 808,
+      "dbMs": 51,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:34.973Z",
+      "stage": "receipt",
+      "RequestId": "7de0ef0d-64a7-462c-915e-e698221436cc",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 9,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:35.130Z",
+      "stage": "receipt",
+      "RequestId": "608f1de8-1973-4119-89a5-4885419103c0",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:35.880Z",
+      "batchId": "dydata-full-20261101-data:23",
+      "sha256": "9b2f1f0bfcb397b55b7628fc65c0c4f4278a4bc08204f3c96d07a64a10eb2f0c",
+      "RequestId": "e62f45df-d98c-47b9-9300-6de6939a266f",
+      "bytes": 521524,
+      "ms": 749,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:36.040Z",
+      "stage": "receipt",
+      "RequestId": "abb03ecf-1d40-48b8-af11-bd0296b19bab",
+      "bytes": 101,
+      "ms": 159,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:36.187Z",
+      "stage": "receipt",
+      "RequestId": "3f430a0d-f7d3-423a-930e-f2ad9707388f",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:36.989Z",
+      "batchId": "dydata-full-20261101-data:24",
+      "sha256": "12e92cf8309355465aad62ee5ab2ceae2a4bc1aac4ec390f04f125570ee6643a",
+      "RequestId": "2fe9ea23-9468-44f4-b1ca-ef754bd3dd5f",
+      "bytes": 522126,
+      "ms": 801,
+      "dbMs": 59,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:37.154Z",
+      "stage": "receipt",
+      "RequestId": "2ffa8bd2-be8d-47be-8413-05105030fe8f",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:37.305Z",
+      "stage": "receipt",
+      "RequestId": "de42b876-7332-4a31-842f-373b87f33f87",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:38.023Z",
+      "batchId": "dydata-full-20261101-data:25",
+      "sha256": "091206753f17ea65a36d146f3bcff0d3f2968eb6b943bf2c3a566b09dcdc1853",
+      "RequestId": "f582cae5-e59f-4215-8f93-3243d9c37034",
+      "bytes": 521023,
+      "ms": 717,
+      "dbMs": 51,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:38.184Z",
+      "stage": "receipt",
+      "RequestId": "3927e29d-6696-434b-b063-f3bbe4686f76",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:38.339Z",
+      "stage": "receipt",
+      "RequestId": "63ed7582-7c0f-42d6-8ce0-f66960bc1085",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:38.849Z",
+      "batchId": "dydata-full-20261101-data:26",
+      "sha256": "4a936ac2b25b79944ec0fbf8b8710ec8b7d1a037cf52c787acafc79b35c57e40",
+      "RequestId": "b7018494-f479-451e-a9b3-fd791a1e3416",
+      "bytes": 524022,
+      "ms": 510,
+      "dbMs": 58,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:38.992Z",
+      "stage": "receipt",
+      "RequestId": "8d2c9372-4b31-4fe0-9bc2-8140b4047473",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:39.131Z",
+      "stage": "receipt",
+      "RequestId": "36a360f0-d165-4f8f-acfb-77147de70e64",
+      "bytes": 101,
+      "ms": 135,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:39.995Z",
+      "batchId": "dydata-full-20261101-data:27",
+      "sha256": "6b9d9649c17b99fc73e34a3aa656d8e46e3943848773b41aafe1e28e1f8ab4e6",
+      "RequestId": "04826539-23b0-4e33-a5a8-8245d0f4c6f0",
+      "bytes": 520566,
+      "ms": 862,
+      "dbMs": 67,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:40.141Z",
+      "stage": "receipt",
+      "RequestId": "02ca1bdf-246a-42cf-9419-9d68e6d33f40",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:40.275Z",
+      "stage": "receipt",
+      "RequestId": "7dc70caf-bcc9-47a8-b033-375b7d4653cb",
+      "bytes": 101,
+      "ms": 131,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:40.793Z",
+      "batchId": "dydata-full-20261101-data:28",
+      "sha256": "a0a6d77c474204fc25c980b82bedfa89127948a98b86e71d34c5ffdce18093c0",
+      "RequestId": "b486fb42-6eea-4691-9150-ecf84bc90674",
+      "bytes": 522521,
+      "ms": 516,
+      "dbMs": 58,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:40.949Z",
+      "stage": "receipt",
+      "RequestId": "8f257f33-bc6f-48ce-a40e-41da3d425b31",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:41.108Z",
+      "stage": "receipt",
+      "RequestId": "97febeac-0fab-4b7b-b89c-09673b14f799",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:41.637Z",
+      "batchId": "dydata-full-20261101-data:29",
+      "sha256": "730c30ebeb1e6cff8d645cdfa25eaaa21854f25a8aa2dcfa995445e0b01245f8",
+      "RequestId": "e30bc5e5-a886-484b-914e-7b238f7eaa82",
+      "bytes": 518408,
+      "ms": 530,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:41.798Z",
+      "stage": "receipt",
+      "RequestId": "36a18b8f-05a0-4471-966d-b90c2beb3c0d",
+      "bytes": 101,
+      "ms": 158,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:41.941Z",
+      "stage": "receipt",
+      "RequestId": "48b0b706-ae14-4491-9e65-c8a54669303e",
+      "bytes": 101,
+      "ms": 140,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:42.430Z",
+      "batchId": "dydata-full-20261101-data:30",
+      "sha256": "48a0add16edd11ff6719eb05f8510c3a634147931a497886f1ca9b0d36c13afa",
+      "RequestId": "2259a09f-6d5f-4086-b82f-72788ce30cce",
+      "bytes": 521301,
+      "ms": 488,
+      "dbMs": 52,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:42.572Z",
+      "stage": "receipt",
+      "RequestId": "dca13fd3-4ccd-45e6-9bce-b4f4dc736ee8",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:42.728Z",
+      "stage": "receipt",
+      "RequestId": "0adcb1e8-89d4-47c9-8c5e-6c75ab81dc59",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:43.472Z",
+      "batchId": "dydata-full-20261101-data:31",
+      "sha256": "bda0b5a88c78f332b37eb5d328bd15c1102cf2b2bd654d95669d725179e6631b",
+      "RequestId": "7943c458-ca13-4988-ac4d-67fd0d03380c",
+      "bytes": 522285,
+      "ms": 743,
+      "dbMs": 58,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:43.618Z",
+      "stage": "receipt",
+      "RequestId": "23c5bfea-0f55-4146-b06e-b59a69229ffe",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:43.772Z",
+      "stage": "receipt",
+      "RequestId": "243693eb-3b4c-4be8-bfe8-f4fdd6aef897",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:44.606Z",
+      "batchId": "dydata-full-20261101-data:32",
+      "sha256": "767d5b95f91a167abccb1f2298d478c2b3297b943ae784a273133a3c7d972ac5",
+      "RequestId": "64cecba5-d556-4463-aa74-1542f23ca5c8",
+      "bytes": 523621,
+      "ms": 834,
+      "dbMs": 59,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:44.774Z",
+      "stage": "receipt",
+      "RequestId": "2a85fe2e-0584-413f-85f2-ec363610b5a6",
+      "bytes": 101,
+      "ms": 168,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:44.933Z",
+      "stage": "receipt",
+      "RequestId": "cd7f5f55-12f9-4b51-ab6c-0589fb429179",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:45.510Z",
+      "batchId": "dydata-full-20261101-data:33",
+      "sha256": "9b0a5176170be12e1a836b27f4afb9be1e6b21a5353af0fdc79f94d74ef5ef07",
+      "RequestId": "984d1b26-f651-4b13-a930-add801808bdd",
+      "bytes": 520671,
+      "ms": 576,
+      "dbMs": 74,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:45.659Z",
+      "stage": "receipt",
+      "RequestId": "17b4545b-f7d2-4989-b781-ac5acc1c4cdd",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:45.820Z",
+      "stage": "receipt",
+      "RequestId": "c25aa848-e47e-4b16-a30e-69f9d8e36e2b",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:46.372Z",
+      "batchId": "dydata-full-20261101-data:34",
+      "sha256": "346aec9d7fdd3f0103dcdbe05caffb558eaf77219b3c8accfdce82fd9c867bf2",
+      "RequestId": "1500089f-c29f-45fe-a356-2366201b01e1",
+      "bytes": 523701,
+      "ms": 552,
+      "dbMs": 61,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:46.495Z",
+      "stage": "receipt",
+      "RequestId": "b07df9bb-50bc-4dbd-beb2-c8628e5acad4",
+      "bytes": 101,
+      "ms": 122,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:46.644Z",
+      "stage": "receipt",
+      "RequestId": "2f493061-339a-41e4-b05d-3c0d6049cbda",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:47.382Z",
+      "batchId": "dydata-full-20261101-data:35",
+      "sha256": "ea74c81c7d20966d0b57c2d7c14848dd91dadadcf31b23835c2f2e2fac11eebc",
+      "RequestId": "6b82d50e-ee8d-40df-9fae-82a616f99410",
+      "bytes": 520070,
+      "ms": 738,
+      "dbMs": 53,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:47.525Z",
+      "stage": "receipt",
+      "RequestId": "b4b8c4b4-9656-4b04-b60b-4d8f0f267775",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:47.674Z",
+      "stage": "receipt",
+      "RequestId": "3252ec5f-5bba-4c93-8484-81bb39a59cfe",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:48.517Z",
+      "batchId": "dydata-full-20261101-data:36",
+      "sha256": "9e49b5b2f6d418ef9b93b35cfa8ce8f816ae2096a0f4e71838c73e0d36d2f3d7",
+      "RequestId": "227641dc-e25d-48e1-9630-6644a114e319",
+      "bytes": 518272,
+      "ms": 842,
+      "dbMs": 58,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:48.674Z",
+      "stage": "receipt",
+      "RequestId": "444352fc-4628-423b-8877-063fe87d5cb6",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:48.814Z",
+      "stage": "receipt",
+      "RequestId": "9c19ef67-44f0-4a1b-8730-bddad91acc14",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:49.308Z",
+      "batchId": "dydata-full-20261101-data:37",
+      "sha256": "4bd53f50f7553f58b2a072374234feb886e28640d25d6a043ac92960ffc43c9b",
+      "RequestId": "5f629dc4-b5c6-424d-a852-6b45e2abfaa8",
+      "bytes": 523376,
+      "ms": 494,
+      "dbMs": 53,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:49.462Z",
+      "stage": "receipt",
+      "RequestId": "ed510dc6-8365-4624-8353-49d6835dc458",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:49.618Z",
+      "stage": "receipt",
+      "RequestId": "7351580d-5c58-4d81-af13-cfd5e4ba6210",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:50.458Z",
+      "batchId": "dydata-full-20261101-data:38",
+      "sha256": "33cf167d668f8de71a32dc6250a51a10ba4bc47ffa02264e2343262f62f3e383",
+      "RequestId": "03521e6e-3b28-4cfa-b09b-85d1df92e2e8",
+      "bytes": 524153,
+      "ms": 837,
+      "dbMs": 64,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:50.607Z",
+      "stage": "receipt",
+      "RequestId": "b5daf470-e75e-4f86-a6d0-5acc1413a0da",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:50.794Z",
+      "stage": "receipt",
+      "RequestId": "ccfaa0ec-0eb6-45f6-a155-a5d2dfaa5ba3",
+      "bytes": 101,
+      "ms": 184,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:51.372Z",
+      "batchId": "dydata-full-20261101-data:39",
+      "sha256": "6c67227714e29882bf0371ae9124fc42f51621823a4220b2e0830d0df439483b",
+      "RequestId": "740d0483-c356-4f1d-9839-f59d5aff0d4c",
+      "bytes": 524303,
+      "ms": 577,
+      "dbMs": 124,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:51.514Z",
+      "stage": "receipt",
+      "RequestId": "0819b803-bebc-4f2f-bad5-16ec134951a6",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:51.656Z",
+      "stage": "receipt",
+      "RequestId": "d5ad1e10-6c98-42b7-9556-2baed042f11a",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:52.605Z",
+      "batchId": "dydata-full-20261101-data:40",
+      "sha256": "daf4750b9e453b0b1e1344b4260d398713ae87264fb3e95381ba6637a4ab6b36",
+      "RequestId": "bbdad77a-4bae-4464-96a1-a73bd921932d",
+      "bytes": 518977,
+      "ms": 948,
+      "dbMs": 138,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:52.769Z",
+      "stage": "receipt",
+      "RequestId": "16b32067-4843-48ea-8a6b-297fd4ee905e",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:52.925Z",
+      "stage": "receipt",
+      "RequestId": "f6894287-d76c-4aac-bf3d-23d4fddc6932",
+      "bytes": 101,
+      "ms": 152,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:53.653Z",
+      "batchId": "dydata-full-20261101-data:41",
+      "sha256": "a9aaef3c6c664888bcef2b1d828c6ace3c56e4d73e26a6b0f026edd0608cf3ea",
+      "RequestId": "7c2bf9f1-4c33-465a-b08c-01a30276afbf",
+      "bytes": 520531,
+      "ms": 728,
+      "dbMs": 50,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:53.805Z",
+      "stage": "receipt",
+      "RequestId": "e1e8821c-b2b0-4960-808f-e71aa541c316",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:53.971Z",
+      "stage": "receipt",
+      "RequestId": "7373a173-5d18-4c28-b353-44bd178b8ea4",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:54.720Z",
+      "batchId": "dydata-full-20261101-data:42",
+      "sha256": "54a05dcf76034d7fe4e9835bcf46769a9b40fdf9be04b565735ad621a173c487",
+      "RequestId": "99987a73-ff5c-4791-9690-ee2265cdd18f",
+      "bytes": 524258,
+      "ms": 750,
+      "dbMs": 92,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:54.888Z",
+      "stage": "receipt",
+      "RequestId": "46e8382d-9706-4361-846f-3b12b81e44f5",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:55.049Z",
+      "stage": "receipt",
+      "RequestId": "69f1c5cb-1a3e-4c65-a873-01e209f12bc8",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:55.950Z",
+      "batchId": "dydata-full-20261101-data:43",
+      "sha256": "f74b0c2bcb51d923572d2d17a7d7d03b261887aaa85e5bff3501089b28d3011b",
+      "RequestId": "db99efa3-b842-4701-9f41-ba3c18330f5f",
+      "bytes": 523982,
+      "ms": 901,
+      "dbMs": 105,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:56.117Z",
+      "stage": "receipt",
+      "RequestId": "deaddd71-a6ff-4edf-be2f-8ebcfd905d30",
+      "bytes": 101,
+      "ms": 166,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:56.281Z",
+      "stage": "receipt",
+      "RequestId": "fdc429bf-0777-43c7-bbcd-bffd46b2b3bf",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:56.913Z",
+      "batchId": "dydata-full-20261101-data:44",
+      "sha256": "656e0e21ca14b6bc165c81bc3f1757e01d16c64891c980d1fabd24b1d403058d",
+      "RequestId": "bb8fd514-8a14-4954-8a5b-f525fd96510f",
+      "bytes": 524017,
+      "ms": 631,
+      "dbMs": 100,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:57.072Z",
+      "stage": "receipt",
+      "RequestId": "6c327520-c0a0-46ab-a3bd-f5b768ea4c8a",
+      "bytes": 101,
+      "ms": 159,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:57.205Z",
+      "stage": "receipt",
+      "RequestId": "d1b0644b-3754-42ca-83d7-be0c3b38d4bc",
+      "bytes": 101,
+      "ms": 125,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:57.758Z",
+      "batchId": "dydata-full-20261101-data:45",
+      "sha256": "2c30d58e4b5f4d550107666897824d49a14f48043b4a1ea9fe78ca30aa0ef65a",
+      "RequestId": "db6c3df4-e44d-45bf-9f22-b5f80ca6cc39",
+      "bytes": 524272,
+      "ms": 552,
+      "dbMs": 102,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:57.907Z",
+      "stage": "receipt",
+      "RequestId": "a605ee6c-c35b-49cd-869c-45a80ff97005",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:58.069Z",
+      "stage": "receipt",
+      "RequestId": "bb8bc9af-e01d-4cee-b8c0-60fd80aa2919",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:58.627Z",
+      "batchId": "dydata-full-20261101-data:46",
+      "sha256": "58570b781f9455dab47fe50b42f97fb74c2a9a69a1b31ebdb2330892541ce318",
+      "RequestId": "ff93e8b4-4080-41ca-b482-0199cb278403",
+      "bytes": 524472,
+      "ms": 557,
+      "dbMs": 98,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:58.767Z",
+      "stage": "receipt",
+      "RequestId": "ed51ecb7-d17a-464b-b0b3-2a07b5a6f7cb",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:58.933Z",
+      "stage": "receipt",
+      "RequestId": "ae35abfb-6664-4e75-8170-8d39c8b4e1d6",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:24:59.851Z",
+      "batchId": "dydata-full-20261101-data:47",
+      "sha256": "51644fee030f35f182f79c632dcd0a67d3212255ddb9495080ae0ff5a02a15c1",
+      "RequestId": "c94ed949-5b81-444d-875c-669cae005fe4",
+      "bytes": 521952,
+      "ms": 917,
+      "dbMs": 122,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:00.011Z",
+      "stage": "receipt",
+      "RequestId": "03cabbf2-636a-4c83-a46f-713da1fdc67b",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:00.140Z",
+      "stage": "receipt",
+      "RequestId": "802740b9-e1ec-4a6a-aed6-4dd02df86593",
+      "bytes": 101,
+      "ms": 126,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:00.988Z",
+      "batchId": "dydata-full-20261101-data:48",
+      "sha256": "944a395e60b951369ff6b7b87e85b47bad9d557aeb591ba08784354207818bbc",
+      "RequestId": "43ba1e8f-3d56-4a8f-848a-8457b0979931",
+      "bytes": 520990,
+      "ms": 847,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:01.142Z",
+      "stage": "receipt",
+      "RequestId": "a75242f6-2a2d-44be-8082-3e9fc1a250e9",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 10,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:01.299Z",
+      "stage": "receipt",
+      "RequestId": "fbe5f01d-438d-42aa-9514-e15047e3c67a",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:02.090Z",
+      "batchId": "dydata-full-20261101-data:49",
+      "sha256": "bc9a3510062760b83c326d8569384bda9e568d86e94744f7c335113c66806c42",
+      "RequestId": "3bebf37f-56d6-4858-8afb-27cba4e65385",
+      "bytes": 504648,
+      "ms": 790,
+      "dbMs": 37,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:02.247Z",
+      "stage": "receipt",
+      "RequestId": "795e387c-6ba1-46b5-9748-da3489dc9612",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:02.425Z",
+      "stage": "receipt",
+      "RequestId": "ae4c73ab-1ac5-4bfc-8a2c-3bb23dfe29a7",
+      "bytes": 101,
+      "ms": 174,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:02.937Z",
+      "batchId": "dydata-full-20261101-data:50",
+      "sha256": "4de0d684bbfb79ac8134982031b2638e4fdea3ef2cbc0ecda98690be0c1f3c24",
+      "RequestId": "a1f972d7-7e80-440b-993b-ccf9abfc304e",
+      "bytes": 515469,
+      "ms": 511,
+      "dbMs": 45,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:03.095Z",
+      "stage": "receipt",
+      "RequestId": "60afe756-8878-4791-8b60-db837edd1104",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:03.233Z",
+      "stage": "receipt",
+      "RequestId": "6f529b50-40f4-4315-81d3-609dffac98bf",
+      "bytes": 101,
+      "ms": 134,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:04.059Z",
+      "batchId": "dydata-full-20261101-data:51",
+      "sha256": "9b0b4e3c3b061e509005c99cf1c9f7eb2904c073fccb492645675b43adc96cf4",
+      "RequestId": "3193b630-1d9a-40a9-a987-70484cc23126",
+      "bytes": 521943,
+      "ms": 825,
+      "dbMs": 49,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:04.251Z",
+      "stage": "receipt",
+      "RequestId": "a31d4a39-fe22-4c12-be62-398037f55929",
+      "bytes": 101,
+      "ms": 192,
+      "dbMs": 19,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:04.404Z",
+      "stage": "receipt",
+      "RequestId": "84f4a928-6ed3-40e2-82cb-e05937344b5f",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:05.200Z",
+      "batchId": "dydata-full-20261101-data:52",
+      "sha256": "f3b3ccf0afb8ec80a70f3d66c5008e666ebbef337ecdcf95fad4d4a6dc451421",
+      "RequestId": "d7d7b25d-f02e-4195-a131-5bf7de8f9d1e",
+      "bytes": 524477,
+      "ms": 795,
+      "dbMs": 63,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:05.359Z",
+      "stage": "receipt",
+      "RequestId": "eec8ee43-0e35-4d1a-b5f1-3811548d38f2",
+      "bytes": 101,
+      "ms": 158,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:05.501Z",
+      "stage": "receipt",
+      "RequestId": "fd95f0a5-251c-4ddc-a0b5-09051a993d3f",
+      "bytes": 101,
+      "ms": 135,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:06.325Z",
+      "batchId": "dydata-full-20261101-data:53",
+      "sha256": "3553a5210a73dfc5ecd478ff1b2c5467b61c9483be0c35c454d2f061cb854c0d",
+      "RequestId": "26dab499-92c8-48c9-9ac9-2ddefaea8301",
+      "bytes": 524269,
+      "ms": 825,
+      "dbMs": 137,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:06.475Z",
+      "stage": "receipt",
+      "RequestId": "bdcc2402-ecfb-4f76-aa5e-2ab4bc44351f",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:06.618Z",
+      "stage": "receipt",
+      "RequestId": "3fed0a98-8879-4dc1-b16c-09b0f5b40133",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:07.259Z",
+      "batchId": "dydata-full-20261101-data:54",
+      "sha256": "f5ba0c46daf0ef541fcd085b095e8b254c73ec4dd7485e4c32256b1bab99a52a",
+      "RequestId": "5648d69e-28fa-46b3-86cc-ba233713746d",
+      "bytes": 524475,
+      "ms": 641,
+      "dbMs": 177,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:07.415Z",
+      "stage": "receipt",
+      "RequestId": "de241d2b-2d17-46ce-80e2-560a5317c458",
+      "bytes": 101,
+      "ms": 152,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:07.550Z",
+      "stage": "receipt",
+      "RequestId": "7d34523b-8252-45d3-96ff-b12e77ee3dc6",
+      "bytes": 101,
+      "ms": 129,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:08.236Z",
+      "batchId": "dydata-full-20261101-data:55",
+      "sha256": "7b1211235f1b86c1dd5ba4b778bead50659d367054db778e23c5f2595e60f626",
+      "RequestId": "04481eaf-2ef8-44c1-9115-049e499e338e",
+      "bytes": 524357,
+      "ms": 686,
+      "dbMs": 243,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:08.383Z",
+      "stage": "receipt",
+      "RequestId": "82300c40-d315-4a9c-833a-699a7af434f4",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:08.529Z",
+      "stage": "receipt",
+      "RequestId": "d41481d8-b6e2-47f8-822c-c4c5c1fcf7c8",
+      "bytes": 101,
+      "ms": 136,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:09.593Z",
+      "batchId": "dydata-full-20261101-data:56",
+      "sha256": "724b2ce1ff612172a53ea96d013b4641bbdc4a7ea448c39432509c0e9957e41f",
+      "RequestId": "86a7fad5-d468-4402-bf75-652b09a25b26",
+      "bytes": 524555,
+      "ms": 1062,
+      "dbMs": 251,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:09.746Z",
+      "stage": "receipt",
+      "RequestId": "18110df0-b790-4556-9fd7-ba36f86d083d",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:09.905Z",
+      "stage": "receipt",
+      "RequestId": "b3629719-660a-43e3-9beb-46505015ec31",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:10.872Z",
+      "batchId": "dydata-full-20261101-data:57",
+      "sha256": "c670c8fdc97e0fb3f4fa909650ed23339691a655dcb84ec38419ba094fe6bf8c",
+      "RequestId": "ced4c515-3fd3-4706-8aca-225bdaa958ac",
+      "bytes": 524350,
+      "ms": 966,
+      "dbMs": 243,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:11.032Z",
+      "stage": "receipt",
+      "RequestId": "39b3a8e2-0e83-4a26-89b2-920e86a238eb",
+      "bytes": 101,
+      "ms": 159,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:11.193Z",
+      "stage": "receipt",
+      "RequestId": "f38cf03a-b932-4e23-ae70-03dbf64ddd16",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:11.946Z",
+      "batchId": "dydata-full-20261101-data:58",
+      "sha256": "d19c9be89f74f49582053e7db5f21c050118761cb3f287f9b446fe40b1a6c523",
+      "RequestId": "688d191e-6d76-4d52-a97a-bc25233d150f",
+      "bytes": 524429,
+      "ms": 754,
+      "dbMs": 246,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:12.111Z",
+      "stage": "receipt",
+      "RequestId": "f21a3000-710d-4327-8c68-202870e032db",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:12.266Z",
+      "stage": "receipt",
+      "RequestId": "5b078b14-1122-4ee0-8c79-a34ee0e5a602",
+      "bytes": 101,
+      "ms": 152,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:13.023Z",
+      "batchId": "dydata-full-20261101-data:59",
+      "sha256": "608e8ed9797e0012033aa818df882dace2bd9bf9e892c10cabcad22922a80c5b",
+      "RequestId": "ca1cf576-0287-4f22-b901-575f80f04787",
+      "bytes": 524551,
+      "ms": 756,
+      "dbMs": 248,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:13.190Z",
+      "stage": "receipt",
+      "RequestId": "87c8ee3a-7c75-4af5-822c-295e180905df",
+      "bytes": 101,
+      "ms": 167,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:13.339Z",
+      "stage": "receipt",
+      "RequestId": "576a97cb-fdbb-4045-b7a3-199d86d2993f",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:14.076Z",
+      "batchId": "dydata-full-20261101-data:60",
+      "sha256": "9055c9e8a2904f4f90b2c0dddd078c5dc381ff32df7337b657c1c78af3189ac7",
+      "RequestId": "f1fa33e1-80d7-4efd-89ad-0ca0726fed59",
+      "bytes": 524555,
+      "ms": 736,
+      "dbMs": 240,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:14.230Z",
+      "stage": "receipt",
+      "RequestId": "8f0654b1-1aa4-46ce-809c-963cd7e2ae4c",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:14.380Z",
+      "stage": "receipt",
+      "RequestId": "c39f1d65-67ba-47ef-8866-4a590e226d5a",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:15.231Z",
+      "batchId": "dydata-full-20261101-data:61",
+      "sha256": "7f0b7ee9f028fa41991c277fa1656d98ccc28c3554015e2816b060f2542d36b0",
+      "RequestId": "c37ec775-3d28-400d-957e-680980b7c9a0",
+      "bytes": 523789,
+      "ms": 850,
+      "dbMs": 192,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:15.394Z",
+      "stage": "receipt",
+      "RequestId": "ddc9ffec-ff77-4609-a12a-afe6797f687e",
+      "bytes": 101,
+      "ms": 161,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:15.546Z",
+      "stage": "receipt",
+      "RequestId": "9cc78591-c00c-486d-a894-6ed943256dbc",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:16.416Z",
+      "batchId": "dydata-full-20261101-data:62",
+      "sha256": "83e9aedfa60393617c6f5d8dede0dc76bb3ac88939fa26800b8cf4d4fd1e7dc2",
+      "RequestId": "8508f2d2-a499-4de2-950a-129e6ac6ab89",
+      "bytes": 523850,
+      "ms": 870,
+      "dbMs": 67,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:16.556Z",
+      "stage": "receipt",
+      "RequestId": "e886c66f-c192-4068-8ec2-7f499311eccd",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:16.723Z",
+      "stage": "receipt",
+      "RequestId": "b7d4dc87-49d1-4f04-a3a1-bc2cb4dcc10d",
+      "bytes": 101,
+      "ms": 161,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:17.224Z",
+      "batchId": "dydata-full-20261101-data:63",
+      "sha256": "d28b0d6b875020fa70602f94e45507fa22c49bad497bc0ee1ad7a0f3a09f28f7",
+      "RequestId": "4db63e26-2973-42b5-aa23-164e0ccc8c86",
+      "bytes": 521779,
+      "ms": 501,
+      "dbMs": 54,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:17.379Z",
+      "stage": "receipt",
+      "RequestId": "fe186240-eb54-4da2-ac7a-1ed363a51028",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:17.532Z",
+      "stage": "receipt",
+      "RequestId": "a93f1493-a83c-4ac7-9e02-fba8bd4e6f9f",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:18.009Z",
+      "batchId": "dydata-full-20261101-data:64",
+      "sha256": "cc0d602dffcf61c9167daf20761a50968b9b9b7f909f66f10562642b1a6d9649",
+      "RequestId": "7dfb5d12-3e39-4549-aea0-21887e6e2f5f",
+      "bytes": 524159,
+      "ms": 476,
+      "dbMs": 51,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:18.129Z",
+      "stage": "receipt",
+      "RequestId": "578df4a9-e1b8-45c4-a650-2af572b186c9",
+      "bytes": 101,
+      "ms": 119,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:18.274Z",
+      "stage": "receipt",
+      "RequestId": "a24088d8-9516-49ea-89d2-79852fc1f953",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:18.842Z",
+      "batchId": "dydata-full-20261101-data:65",
+      "sha256": "325829bb3f0b4165caf715d2afa86943eef71a99663190cad5597447bcd84746",
+      "RequestId": "6307d19b-88eb-4108-8e19-19f921aa14f2",
+      "bytes": 524105,
+      "ms": 568,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:18.988Z",
+      "stage": "receipt",
+      "RequestId": "71599962-050c-4935-bd8d-ba16c8ccafcd",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:19.171Z",
+      "stage": "receipt",
+      "RequestId": "8550abf8-ea2d-4a6b-8319-6929ec69886a",
+      "bytes": 101,
+      "ms": 175,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:19.739Z",
+      "batchId": "dydata-full-20261101-data:66",
+      "sha256": "f003fd00f4b7315e7292dd6c5d1df6a3fb5f05046f68921ed5938797c7bd3a11",
+      "RequestId": "2b1f4eb8-28ef-4e43-8b79-c2d3b8d3ceed",
+      "bytes": 522739,
+      "ms": 568,
+      "dbMs": 60,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:19.884Z",
+      "stage": "receipt",
+      "RequestId": "a5fb0d23-af17-495c-b9bc-c00241584ce4",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:20.057Z",
+      "stage": "receipt",
+      "RequestId": "15fbfda6-9cd8-4788-80ea-1538d48bc507",
+      "bytes": 101,
+      "ms": 168,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:20.563Z",
+      "batchId": "dydata-full-20261101-data:67",
+      "sha256": "e69e7b71efcebe2df0df1e0a4da404ff3a47a10dd3996605d528f15e722aea6d",
+      "RequestId": "476b1780-56ed-48ff-a921-440927219b6e",
+      "bytes": 523646,
+      "ms": 505,
+      "dbMs": 58,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:20.719Z",
+      "stage": "receipt",
+      "RequestId": "de7c14f8-7cc4-4b70-96eb-ec5b71d973b8",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:20.870Z",
+      "stage": "receipt",
+      "RequestId": "b9e672d2-8ed4-40a3-b9e0-c8b5e618f111",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:21.638Z",
+      "batchId": "dydata-full-20261101-data:68",
+      "sha256": "a28c4f5602b65670a8e1b979c7da991549b40910e66bd8389ac11d8a382579ce",
+      "RequestId": "68a3dce1-75b7-407c-878d-3c073084b798",
+      "bytes": 524420,
+      "ms": 768,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:21.778Z",
+      "stage": "receipt",
+      "RequestId": "353fe227-b140-42d9-8c63-8bf409120641",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:21.927Z",
+      "stage": "receipt",
+      "RequestId": "eb232b12-da9a-4cf3-9dfa-b88e8060824f",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:22.445Z",
+      "batchId": "dydata-full-20261101-data:69",
+      "sha256": "d4bd5d4452ba166b30ac62dbac369e6805ac7e08ad21e6fe5f562fdfffe2da86",
+      "RequestId": "f51a17ad-b091-4c83-b322-ab696b1aa40f",
+      "bytes": 521912,
+      "ms": 514,
+      "dbMs": 52,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:22.573Z",
+      "stage": "receipt",
+      "RequestId": "dffc4c8e-8ade-4e6e-a1f3-573cfec48de0",
+      "bytes": 101,
+      "ms": 128,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:22.714Z",
+      "stage": "receipt",
+      "RequestId": "38d23fae-e131-4677-873e-c764f254df4e",
+      "bytes": 101,
+      "ms": 136,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:23.355Z",
+      "batchId": "dydata-full-20261101-data:70",
+      "sha256": "6ff913ca9395d24f9e6c538dbe9ffdf96696a4af9d9302db589ad9dfad841aba",
+      "RequestId": "067a2493-2743-40ad-922e-0fd1b8819461",
+      "bytes": 521970,
+      "ms": 640,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:23.502Z",
+      "stage": "receipt",
+      "RequestId": "e0e6fb1d-8cec-4ffe-af83-7148f1f7e489",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:23.647Z",
+      "stage": "receipt",
+      "RequestId": "930264c0-ef8c-43f0-b992-e929cdbce2a4",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:24.397Z",
+      "batchId": "dydata-full-20261101-data:71",
+      "sha256": "3ca97a7de8299587c7c27a7e4997f10d02eb2bd11ad872e103177427a7c48264",
+      "RequestId": "614aa756-1e3a-4131-a8e8-1916d632e13d",
+      "bytes": 523647,
+      "ms": 751,
+      "dbMs": 54,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:24.549Z",
+      "stage": "receipt",
+      "RequestId": "91e4b05b-e4b8-4305-aa27-96b6d76658cf",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:24.672Z",
+      "stage": "receipt",
+      "RequestId": "63d10f16-4415-4df2-84c1-5f07fa1dd7aa",
+      "bytes": 101,
+      "ms": 119,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:25.192Z",
+      "batchId": "dydata-full-20261101-data:72",
+      "sha256": "4e91f0299be1632801ccb76dac2df70abfdc09917feccde3386e9cbce09431c9",
+      "RequestId": "dc5b2c40-7e22-4e50-97ff-3d770be35f8e",
+      "bytes": 524284,
+      "ms": 518,
+      "dbMs": 53,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:25.357Z",
+      "stage": "receipt",
+      "RequestId": "7eb51ccb-59ea-429e-b83f-5fc6af665f5e",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:25.514Z",
+      "stage": "receipt",
+      "RequestId": "c5fa5027-cd8b-4530-b0d7-d24f3192f79b",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:26.380Z",
+      "batchId": "dydata-full-20261101-data:73",
+      "sha256": "44adc64c6ec1227c5b511db29b4d157adf0e6fc7e42620474e76dc21b5ba6596",
+      "RequestId": "2d772139-f607-43ef-8b4d-aae3936cf1b6",
+      "bytes": 524227,
+      "ms": 864,
+      "dbMs": 91,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:26.523Z",
+      "stage": "receipt",
+      "RequestId": "af46f721-2b3d-4884-a3f1-09268690d286",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:26.687Z",
+      "stage": "receipt",
+      "RequestId": "fb4c4e3c-6433-4fac-b3fb-d58317978a62",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:27.537Z",
+      "batchId": "dydata-full-20261101-data:74",
+      "sha256": "ac878bf3e54638516e257010aff9b45357f01764c25514f7dd0ddbb29b4cd3df",
+      "RequestId": "de9d8f2b-3925-43b1-8ec4-dbb1f0fb8806",
+      "bytes": 524158,
+      "ms": 849,
+      "dbMs": 163,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:27.674Z",
+      "stage": "receipt",
+      "RequestId": "68dab389-2028-492b-842d-7a8b640eed3c",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:27.819Z",
+      "stage": "receipt",
+      "RequestId": "e670ab76-68ac-4713-9a0b-e15f7db73106",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:28.506Z",
+      "batchId": "dydata-full-20261101-data:75",
+      "sha256": "3ba9e7c7c6884bcedcc7fb6a9f5e997a7a2072f9bcbb92664d64099d7fe07e9b",
+      "RequestId": "1dff253c-6474-45c6-8285-1152bb9743a2",
+      "bytes": 524258,
+      "ms": 686,
+      "dbMs": 170,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:28.644Z",
+      "stage": "receipt",
+      "RequestId": "3f989bb3-bf92-4683-a1ad-53fb162bd967",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:28.807Z",
+      "stage": "receipt",
+      "RequestId": "96979008-58df-4499-8f6f-54ddae8a0050",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:29.453Z",
+      "batchId": "dydata-full-20261101-data:76",
+      "sha256": "e5d1d8ecb307b4bcd9499491b1c12d6c8cedf972c40b404166be72cfef6cc0b2",
+      "RequestId": "d7729e77-07cd-4c91-89f9-091482d144e1",
+      "bytes": 524304,
+      "ms": 646,
+      "dbMs": 181,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:29.618Z",
+      "stage": "receipt",
+      "RequestId": "78b44c12-ac30-45fc-8b49-fd060cfae881",
+      "bytes": 101,
+      "ms": 164,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:29.770Z",
+      "stage": "receipt",
+      "RequestId": "27fe07e5-e016-4478-8b5f-81f7740b0326",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:30.750Z",
+      "batchId": "dydata-full-20261101-data:77",
+      "sha256": "7e9e471175ef58eae5ff825e395ef77404a4d2e214b0718b22a65be9e7913643",
+      "RequestId": "b8eea1cd-1817-4050-a054-4dc6ef5d53ce",
+      "bytes": 524395,
+      "ms": 980,
+      "dbMs": 180,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:30.904Z",
+      "stage": "receipt",
+      "RequestId": "1b1caeca-bf05-46fd-8f79-a6e99dbf4511",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:31.057Z",
+      "stage": "receipt",
+      "RequestId": "06684026-1c70-4cdd-a3bc-cb3d72735183",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:32.712Z",
+      "batchId": "dydata-full-20261101-data:78",
+      "sha256": "ba9ce363f6d0026240c0b342a4014bb0ef480bbad2f32a97a41586236ae9aacb",
+      "RequestId": "765837fd-672c-4abe-a3b8-d958a536deef",
+      "bytes": 524244,
+      "ms": 1653,
+      "dbMs": 186,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:32.860Z",
+      "stage": "receipt",
+      "RequestId": "27caca35-8b49-446a-8bfd-187c6ca6f40e",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:33.016Z",
+      "stage": "receipt",
+      "RequestId": "3d992f37-2e43-4112-b79a-22e51c269d02",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:33.881Z",
+      "batchId": "dydata-full-20261101-data:79",
+      "sha256": "b4db36dd0168cf186a03776177c4930c6134c7e8ead7e300626fc07de6600716",
+      "RequestId": "bbde2444-bfc8-4032-af18-97064a9c84b0",
+      "bytes": 522411,
+      "ms": 865,
+      "dbMs": 134,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:34.033Z",
+      "stage": "receipt",
+      "RequestId": "ceaf8f55-faaa-4aef-aec4-6a7d08747ba7",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:34.187Z",
+      "stage": "receipt",
+      "RequestId": "da38f313-deb3-4151-ba67-abb27c6df520",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:34.800Z",
+      "batchId": "dydata-full-20261101-data:80",
+      "sha256": "a309a8182ac94b34416c708c39b50c23ad146f9d68cd3485ee6e4573704bade2",
+      "RequestId": "96215286-58f8-400a-b152-52c937f28a0f",
+      "bytes": 524053,
+      "ms": 612,
+      "dbMs": 62,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:34.922Z",
+      "stage": "receipt",
+      "RequestId": "ea2b8bb8-9045-4118-aa86-13a7f6289c4b",
+      "bytes": 101,
+      "ms": 123,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:35.087Z",
+      "stage": "receipt",
+      "RequestId": "396ea663-517c-4014-aa61-8cd136a3b6b0",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:35.816Z",
+      "batchId": "dydata-full-20261101-data:81",
+      "sha256": "a6b674e8e591f34a241870207a81e1762b04be431144245ae2807c3e8c391325",
+      "RequestId": "0d7a1b6a-e740-4655-99b5-12763a5b5483",
+      "bytes": 521839,
+      "ms": 728,
+      "dbMs": 53,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:35.956Z",
+      "stage": "receipt",
+      "RequestId": "649e4a57-c01c-417a-b4e1-3563560b40d2",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:36.118Z",
+      "stage": "receipt",
+      "RequestId": "af43664a-b94f-481b-ac2b-951c98bb5310",
+      "bytes": 101,
+      "ms": 158,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:36.644Z",
+      "batchId": "dydata-full-20261101-data:82",
+      "sha256": "0baebe7af7be23f0f254b383d4b772374c6455af5772c944e038ad1a0dd80fa2",
+      "RequestId": "e5fab301-0e42-4912-a0b6-7f8be3d01b5a",
+      "bytes": 523133,
+      "ms": 524,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:36.791Z",
+      "stage": "receipt",
+      "RequestId": "9ef71e63-0a51-4608-9103-28e86952b238",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:36.935Z",
+      "stage": "receipt",
+      "RequestId": "f7619b13-918a-415e-8279-574bd4813904",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:37.435Z",
+      "batchId": "dydata-full-20261101-data:83",
+      "sha256": "d002fc62c9bbeb44cff8cbc94c09657d4ac76e206356f805cb71c24d4b471c9d",
+      "RequestId": "a8553022-8b79-4d24-b70a-0cd7f843e7b8",
+      "bytes": 524304,
+      "ms": 498,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:37.565Z",
+      "stage": "receipt",
+      "RequestId": "a535ba86-503d-4d43-980f-278d11707e3c",
+      "bytes": 101,
+      "ms": 129,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:37.718Z",
+      "stage": "receipt",
+      "RequestId": "26ddf733-d17a-476c-bb3f-c40c6dcbb174",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:38.200Z",
+      "batchId": "dydata-full-20261101-data:84",
+      "sha256": "4e48c65b4669d3a5f50cc7226f40fa25787be1a6a3dfd940dca667f0a653d5cc",
+      "RequestId": "af23ea57-70e0-4b09-823b-8142e75f37a5",
+      "bytes": 523520,
+      "ms": 481,
+      "dbMs": 50,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:38.350Z",
+      "stage": "receipt",
+      "RequestId": "724501b8-5c17-4b3b-843a-d22fd56e05b1",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:38.482Z",
+      "stage": "receipt",
+      "RequestId": "c191e840-d863-4b5c-80eb-0da6932560bd",
+      "bytes": 101,
+      "ms": 131,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:39.028Z",
+      "batchId": "dydata-full-20261101-data:85",
+      "sha256": "9131bdb7d9a6a4d05a97d249dde2e3453c0ebe7845d20c38881afe12b5bf64af",
+      "RequestId": "4bd80f01-fb2f-4c46-95e7-952805a88da9",
+      "bytes": 521928,
+      "ms": 546,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:39.163Z",
+      "stage": "receipt",
+      "RequestId": "91377ee3-377d-4f8d-bbab-ceb5a5258785",
+      "bytes": 101,
+      "ms": 135,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:39.328Z",
+      "stage": "receipt",
+      "RequestId": "72a818a2-c216-4b54-9f36-a08effb7c023",
+      "bytes": 101,
+      "ms": 163,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:39.901Z",
+      "batchId": "dydata-full-20261101-data:86",
+      "sha256": "6d28768ccee4286c6357cd85ffe2d526db579c4b766916f3ed33f610f8f3aaac",
+      "RequestId": "1aa73975-af24-421c-a9a5-7f68bfd04fdc",
+      "bytes": 520660,
+      "ms": 574,
+      "dbMs": 57,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:40.046Z",
+      "stage": "receipt",
+      "RequestId": "050ab09e-0c39-4b9d-b565-789269005481",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:40.226Z",
+      "stage": "receipt",
+      "RequestId": "e34f7dbf-cc3b-4c50-9b9d-ea0df0e26eb4",
+      "bytes": 101,
+      "ms": 169,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:40.728Z",
+      "batchId": "dydata-full-20261101-data:87",
+      "sha256": "efd815525d2712bf2540ae273d70a77bd36a4c27b0ad74a8d54663e42be0ab6b",
+      "RequestId": "9c045728-c4d5-4800-853a-033f0aa0a2a2",
+      "bytes": 522796,
+      "ms": 500,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:40.876Z",
+      "stage": "receipt",
+      "RequestId": "a349a3bc-25b5-4236-ae6d-ec68d0c02b8e",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:41.012Z",
+      "stage": "receipt",
+      "RequestId": "eb7f6fc3-fdf0-4c83-9983-2e5985a83987",
+      "bytes": 101,
+      "ms": 130,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:41.475Z",
+      "batchId": "dydata-full-20261101-data:88",
+      "sha256": "286082062daac3c0075c5621d337b76597697bf3438dfcd08d33092d46ab0c23",
+      "RequestId": "ce09f7cc-637f-4ee5-8ee6-2190bae7dbc4",
+      "bytes": 521760,
+      "ms": 463,
+      "dbMs": 56,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:41.618Z",
+      "stage": "receipt",
+      "RequestId": "be57f648-bbbd-4993-80dc-88d2440b264c",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:41.811Z",
+      "stage": "receipt",
+      "RequestId": "23847472-dd7e-490c-bc16-cf467447b3bc",
+      "bytes": 101,
+      "ms": 188,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:42.628Z",
+      "batchId": "dydata-full-20261101-data:89",
+      "sha256": "51245685680b545c95906c65731f1c3f5b22fb329d9a67ab90a729d3ccb229ae",
+      "RequestId": "2427bfbb-5015-43eb-bc9c-16a87315a7b3",
+      "bytes": 523030,
+      "ms": 816,
+      "dbMs": 48,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:42.757Z",
+      "stage": "receipt",
+      "RequestId": "7794d65c-c032-4e3e-85c6-508b63ff2a8a",
+      "bytes": 101,
+      "ms": 129,
+      "dbMs": 3,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:42.900Z",
+      "stage": "receipt",
+      "RequestId": "adb4e155-87f0-433f-b555-cfedd206e49c",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:43.727Z",
+      "batchId": "dydata-full-20261101-data:90",
+      "sha256": "899868c4b11b32df3549dc95334d43bb1f9aa14668e37ad5632a9ca0a990aa0e",
+      "RequestId": "86930ecc-0192-4146-beba-809c79db2d16",
+      "bytes": 522619,
+      "ms": 826,
+      "dbMs": 50,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:43.890Z",
+      "stage": "receipt",
+      "RequestId": "9ab49339-6592-4f9d-9155-3620e69c4694",
+      "bytes": 101,
+      "ms": 163,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:44.066Z",
+      "stage": "receipt",
+      "RequestId": "2c92a088-5f47-43aa-b898-bef82b659a29",
+      "bytes": 101,
+      "ms": 171,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:44.799Z",
+      "batchId": "dydata-full-20261101-data:91",
+      "sha256": "b0e5c2b53fc6e1cb98f83142f769a3436a5a1133ad4b1d4b03e190b138c1f9b9",
+      "RequestId": "8a312b9c-df8b-45f2-9427-e271be1976c0",
+      "bytes": 523200,
+      "ms": 731,
+      "dbMs": 49,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:44.950Z",
+      "stage": "receipt",
+      "RequestId": "a9167583-50f5-47a4-bad4-5e8a5d7738d5",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:45.091Z",
+      "stage": "receipt",
+      "RequestId": "b5e5cddc-f851-487a-9e67-c3b9d2be4b20",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:45.592Z",
+      "batchId": "dydata-full-20261101-data:92",
+      "sha256": "c718b51ffaf7a34ce67a2ef819c61af5c1f526587708ea035d53e1d7e6f26e41",
+      "RequestId": "41863859-e591-467a-9ada-3817d54c0620",
+      "bytes": 519191,
+      "ms": 499,
+      "dbMs": 47,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:45.746Z",
+      "stage": "receipt",
+      "RequestId": "24b38b19-12ec-4de0-8892-f026d372d3d9",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:45.888Z",
+      "stage": "receipt",
+      "RequestId": "a12eb2eb-d2cb-4be0-990e-43fe977fdd75",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:46.658Z",
+      "batchId": "dydata-full-20261101-data:93",
+      "sha256": "e4d9d506701df62fe380201c944d50c8bf0106aa94d058651d82aa0642434f2b",
+      "RequestId": "4a3c3856-af83-4b6f-8a18-53c54f7c9156",
+      "bytes": 523403,
+      "ms": 767,
+      "dbMs": 55,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:46.803Z",
+      "stage": "receipt",
+      "RequestId": "3b061fbe-8211-4e81-872d-3a7732f8ee73",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:46.945Z",
+      "stage": "receipt",
+      "RequestId": "3c770ec8-51b8-49cb-9d95-3d954f7797f9",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:47.730Z",
+      "batchId": "dydata-full-20261101-data:94",
+      "sha256": "82ea8fb3308c86fba89e89daaf493f6326906190ebcfa6264e9fd905920a03a9",
+      "RequestId": "d5d52097-2fe3-4a58-a20c-d475e62a0c05",
+      "bytes": 522549,
+      "ms": 785,
+      "dbMs": 52,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:47.870Z",
+      "stage": "receipt",
+      "RequestId": "2dc3258e-7149-49d4-ab87-e6e9e3ad69f4",
+      "bytes": 101,
+      "ms": 140,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:48.030Z",
+      "stage": "receipt",
+      "RequestId": "938b23af-9a66-4467-9be4-307eb35cae6f",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:48.500Z",
+      "batchId": "dydata-full-20261101-data:95",
+      "sha256": "da7b2d295bf246318ebcf7e3d76b83422fe79cfb8ae82e7fcb182da6741fc966",
+      "RequestId": "66102788-88e0-411f-be61-926d53550540",
+      "bytes": 521716,
+      "ms": 468,
+      "dbMs": 48,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:48.647Z",
+      "stage": "receipt",
+      "RequestId": "3dc0172a-2926-4ffe-96af-e9e48a8414f6",
+      "bytes": 101,
+      "ms": 147,
+      "dbMs": 4,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:48.776Z",
+      "stage": "receipt",
+      "RequestId": "be41ea2e-716c-4831-95a9-b88a9068b4d5",
+      "bytes": 101,
+      "ms": 126,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:49.602Z",
+      "batchId": "dydata-full-20261101-data:96",
+      "sha256": "81ad3ddfca2d382cc6a2dc0a760977d14a9e5e15752f4523760a9f12ae79cbbc",
+      "RequestId": "b23402d8-e136-4a29-8990-b118e4c07ceb",
+      "bytes": 512226,
+      "ms": 824,
+      "dbMs": 46,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:49.769Z",
+      "stage": "receipt",
+      "RequestId": "d78d0d32-3fef-467b-875b-1390c3f54c47",
+      "bytes": 101,
+      "ms": 166,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:49.914Z",
+      "stage": "receipt",
+      "RequestId": "a5b154c9-fd24-4a8a-abb4-a21829be7ebe",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:50.470Z",
+      "batchId": "dydata-full-20261101-data:97",
+      "sha256": "a62804866f7e2ed4130e5657517fbee68357d931c56ca0f0f22933004ac01c90",
+      "RequestId": "2f1524fc-32b0-4759-90ad-9dbd48ccedf0",
+      "bytes": 284682,
+      "ms": 556,
+      "dbMs": 44,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:25:50.609Z",
+      "stage": "receipt",
+      "RequestId": "8f8c211e-7546-499a-a921-44ed0b4b4c25",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:27:29.927Z",
+      "stage": "bootstrap",
+      "RequestId": "762b6d8e-e099-4b28-8f93-bae279f68cb9",
+      "bytes": 419,
+      "ms": 317,
+      "dbMs": 9,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:27:30.148Z",
+      "stage": "receipt",
+      "RequestId": "70348547-6fa4-40b7-8f65-a175391f805e",
+      "bytes": 100,
+      "ms": 160,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:27:30.858Z",
+      "batchId": "dydata-full-20261101-post:1",
+      "sha256": "39e425610ddf70603837d1e970e68fb966d5ceec5e2d6529842dbda4f1fbac71",
+      "bytes": 172967,
+      "ms": 710,
+      "success": false,
+      "sqlstate": [
+        "3F000"
+      ],
+      "recovery": "对应批次回滚后修正；随后相同阶段成功"
+    },
+    {
+      "time": "2026-10-31T18:27:31.017Z",
+      "stage": "receipt",
+      "RequestId": "a65d23ef-ca27-49fe-ab59-4fda0da8139a",
+      "bytes": 100,
+      "ms": 158,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:28:29.935Z",
+      "stage": "bootstrap",
+      "RequestId": "4db6d2ac-a7d6-42ce-bedb-e9963430a4ca",
+      "bytes": 419,
+      "ms": 304,
+      "dbMs": 9,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:28:30.143Z",
+      "stage": "receipt",
+      "RequestId": "03e6f6b2-2ced-4e49-8641-aff1c1ba07c0",
+      "bytes": 100,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:28:30.941Z",
+      "batchId": "dydata-full-20261101-post:1",
+      "sha256": "39e425610ddf70603837d1e970e68fb966d5ceec5e2d6529842dbda4f1fbac71",
+      "RequestId": "e12971c8-2093-4601-9812-6427bd76fdc7",
+      "bytes": 172967,
+      "ms": 797,
+      "dbMs": 348,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T18:28:31.079Z",
+      "stage": "receipt",
+      "RequestId": "12896876-8e55-4534-9fcb-e1c274608d2a",
+      "bytes": 100,
+      "ms": 138,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:31.979Z",
+      "stage": "bootstrap",
+      "RequestId": "29ef044b-d8e3-4857-bd7e-6d0a05bdad67",
+      "bytes": 419,
+      "ms": 351,
+      "dbMs": 10,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:33.727Z",
+      "stage": "receipt",
+      "RequestId": "8b86f7be-c053-42bb-a268-a7e349318fec",
+      "bytes": 100,
+      "ms": 186,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:33.894Z",
+      "stage": "receipt",
+      "RequestId": "de5e77e0-3ba6-4562-9478-d6fe64d6a4ba",
+      "bytes": 100,
+      "ms": 162,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.075Z",
+      "stage": "receipt",
+      "RequestId": "bc5e128e-2e78-4db5-841c-575ad565a528",
+      "bytes": 100,
+      "ms": 169,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.236Z",
+      "stage": "receipt",
+      "RequestId": "f21df622-9e61-4716-9f24-c4c14bf4ac52",
+      "bytes": 100,
+      "ms": 154,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.404Z",
+      "stage": "receipt",
+      "RequestId": "6cb96483-9a08-4ebf-a371-6edacfa5a0cb",
+      "bytes": 100,
+      "ms": 159,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.555Z",
+      "stage": "receipt",
+      "RequestId": "0ce17872-97a5-4d59-a8fc-8a170194935e",
+      "bytes": 100,
+      "ms": 143,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.714Z",
+      "stage": "receipt",
+      "RequestId": "fb842c51-7dd7-4d0e-8a3c-263ee744c606",
+      "bytes": 100,
+      "ms": 149,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:34.864Z",
+      "stage": "receipt",
+      "RequestId": "b22d8505-69b7-4ade-90bb-3caacc9457af",
+      "bytes": 100,
+      "ms": 145,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.033Z",
+      "stage": "receipt",
+      "RequestId": "cd771db9-1ca5-4ad2-b878-6a6e36ace9a3",
+      "bytes": 100,
+      "ms": 163,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.188Z",
+      "stage": "receipt",
+      "RequestId": "5bd873a0-4cf9-4c1d-b4f2-9f0b4bf50059",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.360Z",
+      "stage": "receipt",
+      "RequestId": "4915f995-2ce2-4724-b8f5-efa83f15b60a",
+      "bytes": 101,
+      "ms": 166,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.503Z",
+      "stage": "receipt",
+      "RequestId": "1668f288-65de-47f9-b90b-0f3fc195a962",
+      "bytes": 101,
+      "ms": 135,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.668Z",
+      "stage": "receipt",
+      "RequestId": "b754011a-d25f-4110-a614-d731dc57d387",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.834Z",
+      "stage": "receipt",
+      "RequestId": "0998c7b5-3311-486e-b434-ad742e826330",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:35.987Z",
+      "stage": "receipt",
+      "RequestId": "58a843fc-0468-4788-a599-d93d6d18a6d8",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.143Z",
+      "stage": "receipt",
+      "RequestId": "0db7ccc0-6070-4ecc-9c22-8008408e6cd0",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.300Z",
+      "stage": "receipt",
+      "RequestId": "6a115485-75ea-4adf-a459-96233207d1e4",
+      "bytes": 101,
+      "ms": 152,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.429Z",
+      "stage": "receipt",
+      "RequestId": "b96969bc-c6f6-4959-9a0d-b5f0051a3355",
+      "bytes": 101,
+      "ms": 126,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.611Z",
+      "stage": "receipt",
+      "RequestId": "f14b280d-1f95-4bf3-869d-d0d375e95baa",
+      "bytes": 101,
+      "ms": 176,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.740Z",
+      "stage": "receipt",
+      "RequestId": "2247fdc3-e97a-451f-8f3c-b7dcb89efc88",
+      "bytes": 101,
+      "ms": 126,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:36.903Z",
+      "stage": "receipt",
+      "RequestId": "28a11962-3831-479d-ae15-f5ed0f233bb5",
+      "bytes": 101,
+      "ms": 161,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.067Z",
+      "stage": "receipt",
+      "RequestId": "ed953827-25f8-4229-8cf4-ea07f2139a71",
+      "bytes": 101,
+      "ms": 159,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.216Z",
+      "stage": "receipt",
+      "RequestId": "f1c07b96-9216-41ba-9806-ca3913adae6c",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.366Z",
+      "stage": "receipt",
+      "RequestId": "3d22418f-84f1-4a65-8543-c905bb969031",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.516Z",
+      "stage": "receipt",
+      "RequestId": "87de232a-a0c1-4fad-b62e-e5ffcb173dff",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.662Z",
+      "stage": "receipt",
+      "RequestId": "3408457e-cab6-428e-a8f4-022467ced023",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.808Z",
+      "stage": "receipt",
+      "RequestId": "83d5be50-1bb2-4499-8adf-03c4cb789d67",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:37.955Z",
+      "stage": "receipt",
+      "RequestId": "fec92ab1-ec68-4a2c-a932-4207971b31ea",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.102Z",
+      "stage": "receipt",
+      "RequestId": "35ff6b48-da2a-441e-8d7c-38e86bd493bd",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.249Z",
+      "stage": "receipt",
+      "RequestId": "4c4ac1bc-494e-4426-bb99-189e35c9c853",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.400Z",
+      "stage": "receipt",
+      "RequestId": "79e4dde9-fc30-4ad0-930e-63241877f079",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.551Z",
+      "stage": "receipt",
+      "RequestId": "74a08b6c-559e-4cb6-b4fc-6e8dc9c77f1f",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.711Z",
+      "stage": "receipt",
+      "RequestId": "b4030ac9-9adb-4069-a552-d013bd1c5f3e",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:38.874Z",
+      "stage": "receipt",
+      "RequestId": "697c8b22-8d50-48a9-8d75-9599e18f0244",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.030Z",
+      "stage": "receipt",
+      "RequestId": "49f4354b-5178-47a3-8ac6-703ff1e3ac0c",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.196Z",
+      "stage": "receipt",
+      "RequestId": "c51036d3-9f16-4eb2-b0f4-03f657d0deaf",
+      "bytes": 101,
+      "ms": 162,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.359Z",
+      "stage": "receipt",
+      "RequestId": "0ab2a40c-0222-4e6a-88a5-a05a666faf96",
+      "bytes": 101,
+      "ms": 160,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.522Z",
+      "stage": "receipt",
+      "RequestId": "eac6b8bf-8e92-4fde-b0f1-39f805a4bef6",
+      "bytes": 101,
+      "ms": 157,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.669Z",
+      "stage": "receipt",
+      "RequestId": "c0ce1fed-258e-4fb4-a78e-2f15a6b8e088",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.828Z",
+      "stage": "receipt",
+      "RequestId": "34886e3c-b5ca-4273-a697-f9f20af1886b",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:39.974Z",
+      "stage": "receipt",
+      "RequestId": "2847a322-a76c-4c15-abdd-b5246e47a182",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.129Z",
+      "stage": "receipt",
+      "RequestId": "a4434111-f96f-4131-8f3a-045514b3aa6c",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.304Z",
+      "stage": "receipt",
+      "RequestId": "bcf1825f-0028-46ff-8762-7c6526de91f3",
+      "bytes": 101,
+      "ms": 169,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.467Z",
+      "stage": "receipt",
+      "RequestId": "4073b6ed-428e-4c59-952b-b8a7cb39e3f2",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.636Z",
+      "stage": "receipt",
+      "RequestId": "d58958dd-3d77-4dfb-abc5-d06e08525129",
+      "bytes": 101,
+      "ms": 162,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.812Z",
+      "stage": "receipt",
+      "RequestId": "297be561-bc11-4555-bbdd-ddb75442db87",
+      "bytes": 101,
+      "ms": 169,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:40.965Z",
+      "stage": "receipt",
+      "RequestId": "9773aae1-c6d2-4358-a120-346b1b587a3f",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.128Z",
+      "stage": "receipt",
+      "RequestId": "e0e9ca2c-49fb-4099-bba1-bb898b00d9ea",
+      "bytes": 101,
+      "ms": 161,
+      "dbMs": 15,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.295Z",
+      "stage": "receipt",
+      "RequestId": "e4926bed-cac3-4da0-8008-565318d44c6d",
+      "bytes": 101,
+      "ms": 163,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.453Z",
+      "stage": "receipt",
+      "RequestId": "c3ae9923-49e7-47a8-94ed-43b5cdbb1671",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.603Z",
+      "stage": "receipt",
+      "RequestId": "ab53a4e6-c04f-4b3f-b18a-65dc8c9e7581",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.760Z",
+      "stage": "receipt",
+      "RequestId": "1e4241bf-7ffd-4ca2-bb6f-8185a10a2381",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:41.907Z",
+      "stage": "receipt",
+      "RequestId": "d6db69d7-034a-4372-8e9c-959f63536299",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.050Z",
+      "stage": "receipt",
+      "RequestId": "7faf847c-c526-45fe-993a-5316b13246b0",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.202Z",
+      "stage": "receipt",
+      "RequestId": "0a9c4292-a21f-4a88-9c50-2586daaef319",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.359Z",
+      "stage": "receipt",
+      "RequestId": "458e50d8-6e36-4b8e-87d9-f78c12f719bd",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.514Z",
+      "stage": "receipt",
+      "RequestId": "596a5f14-43fe-4462-8c8d-e9a95ec85c5f",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.647Z",
+      "stage": "receipt",
+      "RequestId": "aa1c6618-0467-4713-b98e-df53b9d57f46",
+      "bytes": 101,
+      "ms": 127,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.806Z",
+      "stage": "receipt",
+      "RequestId": "cba95e30-135c-4115-8cf1-dfaaf1b4b296",
+      "bytes": 101,
+      "ms": 153,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:42.955Z",
+      "stage": "receipt",
+      "RequestId": "a469552d-953a-4540-b10c-c401471343d7",
+      "bytes": 101,
+      "ms": 142,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.100Z",
+      "stage": "receipt",
+      "RequestId": "f6fe4823-284b-4746-a3a9-dabb2d07bad9",
+      "bytes": 101,
+      "ms": 139,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.259Z",
+      "stage": "receipt",
+      "RequestId": "d89d4b9f-8d1c-4a94-a22d-a68222af53e3",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.413Z",
+      "stage": "receipt",
+      "RequestId": "41384a2f-3643-4715-9c08-826ce99bd83c",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.562Z",
+      "stage": "receipt",
+      "RequestId": "412ee0b5-87a0-4291-b6e6-af316d1582d7",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.705Z",
+      "stage": "receipt",
+      "RequestId": "7e257a28-5f08-4a08-8bb6-ebfe6fdca1f9",
+      "bytes": 101,
+      "ms": 138,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.842Z",
+      "stage": "receipt",
+      "RequestId": "2045dd65-b414-4e9b-9811-fe8b3fc0167a",
+      "bytes": 101,
+      "ms": 134,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:43.989Z",
+      "stage": "receipt",
+      "RequestId": "5eecabc2-b78e-4bce-900e-847f2644e679",
+      "bytes": 101,
+      "ms": 144,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.155Z",
+      "stage": "receipt",
+      "RequestId": "9a946d31-d3c4-4da0-b965-813e10a9717f",
+      "bytes": 101,
+      "ms": 162,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.315Z",
+      "stage": "receipt",
+      "RequestId": "3b0ff112-d9a3-4ba2-b921-0868e98c5a28",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.464Z",
+      "stage": "receipt",
+      "RequestId": "85c7b598-dc80-41c0-bd10-c2183cb332aa",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.611Z",
+      "stage": "receipt",
+      "RequestId": "e727e7d0-6559-4863-b644-590900bfc9ab",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.768Z",
+      "stage": "receipt",
+      "RequestId": "88ae2194-375d-4091-b717-71e8cc49a6ed",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:44.920Z",
+      "stage": "receipt",
+      "RequestId": "811ef21a-14a6-4b08-a138-b4a1d62a1205",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.076Z",
+      "stage": "receipt",
+      "RequestId": "473e4076-5ec2-4113-a9e2-ce3385786c65",
+      "bytes": 101,
+      "ms": 152,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.225Z",
+      "stage": "receipt",
+      "RequestId": "62b4f343-369b-4243-8727-490d98f63257",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.375Z",
+      "stage": "receipt",
+      "RequestId": "4300ce8c-6a35-439b-89fd-5f95966e5a65",
+      "bytes": 101,
+      "ms": 145,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.515Z",
+      "stage": "receipt",
+      "RequestId": "aa9e803e-7bdf-4e2e-b222-94c7e1032c7f",
+      "bytes": 101,
+      "ms": 132,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.663Z",
+      "stage": "receipt",
+      "RequestId": "4dcade9b-7bff-4518-9bb5-f78761f2e8d1",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.819Z",
+      "stage": "receipt",
+      "RequestId": "3cf23a5a-9c30-4543-b324-b169654d0aa9",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:45.972Z",
+      "stage": "receipt",
+      "RequestId": "0e322d6a-d17a-4f28-a526-43f6c993e167",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:46.126Z",
+      "stage": "receipt",
+      "RequestId": "7b697382-390e-4f12-a4fc-7f65cc7ec529",
+      "bytes": 101,
+      "ms": 149,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:46.269Z",
+      "stage": "receipt",
+      "RequestId": "1e85608e-887b-487a-8d12-eb74c34c0a8e",
+      "bytes": 101,
+      "ms": 137,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:46.428Z",
+      "stage": "receipt",
+      "RequestId": "f0e16f22-6cfa-4061-abfa-6a98d987c06d",
+      "bytes": 101,
+      "ms": 151,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:46.580Z",
+      "stage": "receipt",
+      "RequestId": "0f0d62a2-a3b7-4c10-a1d7-b853378fff56",
+      "bytes": 101,
+      "ms": 146,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:46.850Z",
+      "stage": "receipt",
+      "RequestId": "ef5bc3da-29c5-4391-89e0-bbc316eff0cd",
+      "bytes": 101,
+      "ms": 264,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.007Z",
+      "stage": "receipt",
+      "RequestId": "ca6ebd4a-1743-466d-a195-137f1935ff7d",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.164Z",
+      "stage": "receipt",
+      "RequestId": "c32814d6-049f-4861-8700-eb0278f49acb",
+      "bytes": 101,
+      "ms": 155,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.324Z",
+      "stage": "receipt",
+      "RequestId": "5a4d697b-09d9-4496-a856-3740b3b9f8b4",
+      "bytes": 101,
+      "ms": 156,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.480Z",
+      "stage": "receipt",
+      "RequestId": "1bdca9f3-2d6a-4a55-8558-94ecb1056c01",
+      "bytes": 101,
+      "ms": 154,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.626Z",
+      "stage": "receipt",
+      "RequestId": "68e150ff-4c55-4155-9f0c-a752da6abc78",
+      "bytes": 101,
+      "ms": 141,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:47.879Z",
+      "stage": "receipt",
+      "RequestId": "b3fe2d90-464f-473c-95ca-e667689b07cc",
+      "bytes": 101,
+      "ms": 248,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.032Z",
+      "stage": "receipt",
+      "RequestId": "fb811a6f-f9f8-48c7-9675-243ed65a3b76",
+      "bytes": 101,
+      "ms": 150,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.209Z",
+      "stage": "receipt",
+      "RequestId": "04d29d07-c7b3-4484-8324-63c89a6014ac",
+      "bytes": 101,
+      "ms": 171,
+      "dbMs": 9,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.361Z",
+      "stage": "receipt",
+      "RequestId": "7571b84c-b540-456e-8579-6861652a3b90",
+      "bytes": 101,
+      "ms": 148,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.506Z",
+      "stage": "receipt",
+      "RequestId": "9c34e59c-6197-49cf-9272-4cfe0e99535d",
+      "bytes": 101,
+      "ms": 143,
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.643Z",
+      "stage": "receipt",
+      "RequestId": "126f1ad4-9530-4602-8989-be0a0cab7a13",
+      "bytes": 101,
+      "ms": 134,
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "time": "2026-10-31T23:45:48.775Z",
+      "stage": "receipt",
+      "RequestId": "2560f0b3-f1b5-4754-a458-480a045b38b9",
+      "bytes": 101,
+      "ms": 130,
+      "dbMs": 7,
+      "success": true
+    }
+  ],
+  "dataReplay": {
+    "batches": 97,
+    "skipped": 97
+  },
+  "contentRPC": {
+    "matches": true,
+    "hashes": [
+      "f44b309bc49fb91f576fddc23760036a06521afc9def3da06769a1fa8437de1d",
+      "f44b309bc49fb91f576fddc23760036a06521afc9def3da06769a1fa8437de1d"
+    ],
+    "totalVideos": 584,
+    "anomalyCount": 91,
+    "pageSize": 50
+  },
+  "targetPatches": [
+    {
+      "name": "target-permissions.sql",
+      "RequestId": "72de62c6-4bc4-4eb5-903b-ad9ef9f1f3ab",
+      "dbMs": 24,
+      "success": true
+    },
+    {
+      "name": "target-function-guards.sql",
+      "RequestId": "b34d47f9-3ee7-42ef-a2cf-4c51b2921f94",
+      "dbMs": 7,
+      "success": true
+    },
+    {
+      "name": "target-auth-readers.sql",
+      "RequestId": "83c1ff39-3667-4d13-ba7d-49f807b22895",
+      "dbMs": 14,
+      "success": true
+    },
+    {
+      "name": "target-permissions.sql",
+      "RequestId": "58e3a614-fb01-48a6-ba3d-12dc541fc79a",
+      "dbMs": 21,
+      "success": true
+    },
+    {
+      "name": "target-function-guards.sql",
+      "RequestId": "fbc22e34-1b91-4dc2-a79f-953272725462",
+      "dbMs": 12,
+      "success": true
+    },
+    {
+      "name": "target-auth-readers.sql",
+      "RequestId": "b6ab86d6-11dd-4605-b775-80d7235f3d6d",
+      "dbMs": 12,
+      "success": true
+    },
+    {
+      "name": "target-permissions.sql",
+      "RequestId": "a194d404-3426-440e-bb3d-f7b6e70c3268",
+      "dbMs": 25,
+      "success": true
+    },
+    {
+      "name": "target-function-guards.sql",
+      "RequestId": "457279ad-d116-4ca9-853a-0d639a374b40",
+      "dbMs": 8,
+      "success": true
+    },
+    {
+      "name": "target-auth-readers.sql",
+      "RequestId": "1000ee47-7f7f-4d5f-8746-dcf9ab9b1b4f",
+      "dbMs": 10,
+      "success": true
+    },
+    {
+      "name": "target-permissions.sql",
+      "RequestId": "c6027c87-4867-4b6d-8ad5-7b0bd9aa5ac1",
+      "dbMs": 32,
+      "success": true
+    },
+    {
+      "name": "target-function-guards.sql",
+      "RequestId": "dd3c0bc3-456a-4718-b66a-ab481cfa9eec",
+      "dbMs": 10,
+      "success": true
+    },
+    {
+      "name": "target-auth-readers.sql",
+      "RequestId": "98223741-a4eb-4d5b-a484-4e29243a490e",
+      "dbMs": 10,
+      "success": true
+    }
+  ],
+  "browserSensitive": {
+    "collaborationAssignmentControlsAbsent": true,
+    "authorizedImage": {
+      "status": 200,
+      "bytes": 30365,
+      "sha256": "a26ca13bf3e80188d176e2609b712fa018b5f9909fdb087ebe559e18ea43841c",
+      "cacheControl": "private, max-age=2592000"
+    },
+    "employeeOtherOwnerImageDenied": true,
+    "logoutClearedScreenshotGrant": true,
+    "imageAfterLogoutStatus": 401,
+    "passed": true
+  },
+  "refresh": [
+    {
+      "subjectMatches": true,
+      "rotatedAccess": true,
+      "rotatedRefresh": true
+    },
+    {
+      "subjectMatches": true,
+      "rotatedAccess": true,
+      "rotatedRefresh": true
+    }
+  ],
+  "lifecycle": {
+    "passed": true,
+    "testOnly": true,
+    "archived": true,
+    "blockedLoginStatus": 400,
+    "restored": true,
+    "restoredLoginStatus": 200,
+    "passwordUnchanged": true
+  },
+  "browserMemberProduction": {
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalPath": "/dashboard",
+        "ms": 1599,
+        "hasApplicationError": false
+      },
+      {
+        "path": "/admin/content",
+        "status": 200,
+        "finalPath": "/admin/content",
+        "ms": 1238,
+        "hasApplicationError": false
+      },
+      {
+        "path": "/admin/collaboration",
+        "status": 200,
+        "finalPath": "/admin/collaboration",
+        "ms": 1844,
+        "hasApplicationError": false
+      }
+    ],
+    "errors": [],
+    "wrongPasswordRejected": true,
+    "loginMs": 921,
+    "cookie": {
+      "httpOnly": true,
+      "sameSite": "Lax",
+      "secure": true
+    },
+    "sessionVerified": true,
+    "reloadStayedSignedIn": true,
+    "logoutProtected": true,
+    "supabaseNetwork": [],
+    "passed": true
+  },
+  "validation": {
+    "gateStaticExit": 0,
+    "unitPassed": 2468,
+    "unitSkipped": 8,
+    "extraTestsPassed": 15,
+    "migrationToolsPassed": 46,
+    "cloudBaseProductionBuildExit": 0,
+    "npmAuditExit": 1,
+    "npmAuditVulnerabilities": {
+      "moderate": 13,
+      "high": 36,
+      "critical": 2,
+      "total": 51
+    }
+  },
+  "finalCatalog": {
+    "probes": null,
+    "tables": [
+      "accounts",
+      "admin_actions",
+      "admin_first_screen_perf_events",
+      "advice_actions",
+      "ai_channels",
+      "ai_feature_bindings",
+      "ai_feature_config",
+      "ai_feature_config_archives",
+      "ai_feedback",
+      "ai_input_bundle",
+      "ai_insight_result",
+      "ai_provider_key_models",
+      "ai_provider_keys",
+      "ai_provider_priority_migration_backup_20261009",
+      "ai_providers",
+      "ai_result",
+      "appeal_backfill_20261019_ledger",
+      "audit_logs",
+      "content_asset",
+      "content_history",
+      "content_item",
+      "content_observations",
+      "content_tag_link",
+      "daily_reports",
+      "exemption_audit",
+      "exemption_grant",
+      "exemption_request",
+      "exemption_request_date",
+      "field_provenance",
+      "fulfillment_appeals",
+      "fulfillment_records",
+      "group_mode_sessions",
+      "group_permission_qualifications",
+      "invite_codes",
+      "market_context_daily",
+      "member_change_log",
+      "metric_snapshot",
+      "notifications",
+      "profiles",
+      "profiles_group",
+      "profiles_team",
+      "provisional_tag_text",
+      "publish_drafts",
+      "remind_logs",
+      "report_date_fix_20261019_ledger",
+      "rewrite_conversation_skills",
+      "rewrite_conversations",
+      "rewrite_document_paragraphs",
+      "rewrite_document_revisions",
+      "rewrite_documents",
+      "rewrite_generation_runs",
+      "rewrite_messages",
+      "rewrite_model_routes",
+      "rewrite_model_views",
+      "rewrite_modes",
+      "rewrite_skill_versions",
+      "rewrite_skills",
+      "sample_quality_issues",
+      "script_document",
+      "script_purposes",
+      "script_segment",
+      "script_usage_records",
+      "sop_checkpoint_submissions",
+      "sop_daily_status",
+      "sub_topic_claims",
+      "sub_topics",
+      "submission_batch",
+      "system_issues",
+      "system_settings",
+      "tag_definition",
+      "team_join_requests",
+      "teams",
+      "topic_groups",
+      "topic_import_batches",
+      "topics",
+      "usage_events",
+      "video_content_segments",
+      "video_metrics_snapshots",
+      "video_review_tickets",
+      "video_screenshot_replacement_history",
+      "video_tags",
+      "videos",
+      "violation_case_reason_tags",
+      "violation_case_visual_tags",
+      "violation_cases",
+      "violation_events",
+      "violation_reason_tags",
+      "visual_tags",
+      "weekly_decisions",
+      "work_groups",
+      "work_submissions",
+      "writer_certifications",
+      "yike_areas",
+      "yike_execution_slots",
+      "yike_item_events",
+      "yike_items",
+      "yike_people",
+      "yike_projects",
+      "yike_workspaces"
+    ],
+    "indexes": 321,
+    "policies": 240,
+    "triggers": 25,
+    "functions": 330,
+    "extensions": [
+      "btree_gist",
+      "pg_stat_statements",
+      "pgcrypto",
+      "plpgsql",
+      "uuid-ossp"
+    ],
+    "constraints": 410,
+    "anon_definer": 0
+  },
+  "browserAdminOwnerProduction": {
+    "roles": [
+      {
+        "role": "admin",
+        "roleRequestId": "6188cd59-81d6-460c-8122-4b5977cc0cd5",
+        "routes": [
+          {
+            "path": "/admin/pulse?date=2026-10-30",
+            "status": 200,
+            "finalPath": "/admin/pulse",
+            "ms": 6636,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/content",
+            "status": 200,
+            "finalPath": "/admin/content",
+            "ms": 1860,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/modules",
+            "status": 200,
+            "finalPath": "/admin/modules",
+            "ms": 2163,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/collaboration",
+            "status": 200,
+            "finalPath": "/admin/collaboration",
+            "ms": 1348,
+            "applicationError": false
+          }
+        ]
+      },
+      {
+        "role": "company_owner",
+        "roleRequestId": "94e74102-a2cd-45ff-b94f-5d424de768ee",
+        "routes": [
+          {
+            "path": "/admin/pulse?date=2026-10-30",
+            "status": 200,
+            "finalPath": "/admin/pulse",
+            "ms": 6411,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/content",
+            "status": 200,
+            "finalPath": "/admin/content",
+            "ms": 1776,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/modules",
+            "status": 200,
+            "finalPath": "/admin/modules",
+            "ms": 2059,
+            "applicationError": false
+          },
+          {
+            "path": "/admin/collaboration",
+            "status": 200,
+            "finalPath": "/admin/collaboration",
+            "ms": 1371,
+            "applicationError": false
+          }
+        ]
+      }
+    ],
+    "errors": [],
+    "passed": true,
+    "supabaseRequests": 0
+  }
+}

@@ -1,7 +1,13 @@
+import { CLOUD_BASE_SESSION_COOKIE } from "@/lib/cloudbase/core";
+
 type CookieLike = {
   name: string;
   value?: string;
 };
+
+export function hasCloudBaseAuthCookie(cookies: CookieLike[]) {
+  return cookies.some((cookie) => cookie.name === CLOUD_BASE_SESSION_COOKIE && Boolean(cookie.value));
+}
 
 const SUPABASE_AUTH_COOKIE_PATTERN = /^sb-([^-]+)-auth-token(?:\.\d+)?$/;
 

@@ -58,6 +58,10 @@ const CONTRACT_ROUTES = [
 ] as const;
 
 const EXEMPTIONS = {
+  "cloudbase/auth/signin/route.ts": "认证协议入口：响应只含核验后的用户，凭据仅写 HttpOnly Cookie，保持既定 Auth 返回结构",
+  "cloudbase/auth/refresh/route.ts": "会话续期协议入口：轮换 HttpOnly Cookie 并保持 Auth 返回结构，不混入业务写入字段",
+  "cloudbase/auth/signout/route.ts": "会话退出协议入口：清除 HttpOnly Cookie，保持固定退出响应",
+  "cloudbase/rdb/rest/[...segments]/route.ts": "PostgREST 协议代理：保留原始响应、状态码与分页头，由真实用户 JWT 和目标表/RPC 权限约束",
   "admin/fulfillment/appeal/handle/route.ts": "样板区路由：派令明确只读，不在本批改动",
   "cron/douyin-sync/route.ts": "Vercel Cron 机器入口：使用独立 CRON_SECRET 鉴权和批次结果，不走页面写入观测契约",
   "feishu/event/route.ts": "外部 webhook：请求签名与重试语义不适用统一页面写入契约",

@@ -8,6 +8,10 @@ const MAX_COS_READ_TIMEOUT_MS = 10_000;
 export type ScreenshotBackend = "cos" | "supabase";
 type Env = Record<string, string | undefined>;
 
+function allowsLegacyStorage(env: Env = process.env) {
+  return env.DYDATA_BACKEND !== "cloudbase" && env.NEXT_PUBLIC_DYDATA_BACKEND !== "cloudbase";
+}
+
 export function resolveCosReadTimeout(env: Env = process.env) {
   const parsed = Number(env.COS_READ_TIMEOUT_MS);
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_COS_READ_TIMEOUT_MS;
@@ -23,6 +27,10 @@ export interface StorageResolution {
 
 export function resolveScreenshotStorage(env: Env = process.env): StorageResolution {
   const cos = readCosConfig(env);
+  if (!allowsLegacyStorage(env)) {
+    if (!cos) throw new Error("CloudBase 模式缺少 COS 截图存储配置");
+    return { primary: "cos", cos, degraded: false, reason: null };
+  }
   const configured = env.SCREENSHOT_STORAGE?.trim().toLowerCase();
   if (configured === "cos") {
     return cos
@@ -79,6 +87,9 @@ export async function readSubmissionScreenshot(
     const cosMs = Date.now() - startedAt;
     const fallbackReason = cos.error ?? `cos_status_${cosStatus}`;
     logStorage("read_failed", { backend: "cos", status: cosStatus, reason: fallbackReason, cos_ms: cosMs, timeout_ms: cosTimeoutMs });
+    if (!allowsLegacyStorage(options.env)) {
+      return { kind: "failure", notFound: cosStatus === 404, errors, failure: cos.failure };
+    }
     const supabase = await downloadFromSupabase(path);
     if (supabase.ok) {
       logStorage("read_fallback", { backend: "supabase", status: 200, bytes: supabase.body.byteLength, supabase_ms: supabase.ms, cos_ms: cosMs, total_ms: Date.now() - startedAt, fallback_reason: fallbackReason });
@@ -165,7 +176,7 @@ export async function findReadableSubmissionScreenshots(
           return { path, ok: true };
         }
       }
-      return { path, ok: await checkSupabase(path) };
+      return { path, ok: allowsLegacyStorage(options.env) ? await checkSupabase(path) : false };
     }),
   );
 
@@ -191,6 +202,9 @@ export async function downloadSubmissionScreenshotBytes(path: string, options: {
     const cosMs = Date.now() - startedAt;
     const fallbackReason = cos.error ?? `cos_status_${cosStatus}`;
     logStorage("read_failed", { backend: "cos", status: cosStatus, reason: fallbackReason, cos_ms: cosMs, timeout_ms: cosTimeoutMs });
+    if (!allowsLegacyStorage(options.env)) {
+      return { ok: false as const, notFound: cosStatus === 404, errors };
+    }
     const supabase = await downloadFromSupabase(path);
     if (supabase.ok) {
       logStorage("read_fallback", { backend: "supabase", status: 200, bytes: supabase.body.byteLength, supabase_ms: supabase.ms, cos_ms: cosMs, total_ms: Date.now() - startedAt, fallback_reason: fallbackReason });
@@ -242,12 +256,15 @@ export async function writeSubmissionScreenshot(input: { path: string; body: Uin
 export async function deleteSubmissionScreenshots(paths: string[]) {
   if (paths.length === 0) return { failures: 0 };
   let failures = 0;
-  const supabaseResult = await createAdminClient().storage.from(SCREENSHOT_BUCKET).remove(paths);
-  if (supabaseResult.error) {
-    failures += 1;
-    logStorage("delete_failed", { backend: "supabase", reason: supabaseResult.error.message });
+  if (allowsLegacyStorage()) {
+    const supabaseResult = await createAdminClient().storage.from(SCREENSHOT_BUCKET).remove(paths);
+    if (supabaseResult.error) {
+      failures += 1;
+      logStorage("delete_failed", { backend: "supabase", reason: supabaseResult.error.message });
+    }
   }
   const cos = readCosConfig();
+  if (!cos && !allowsLegacyStorage()) return { failures: 1 };
   if (cos) {
     for (const path of paths) {
       const result = await cosDeleteObject(cos, path);

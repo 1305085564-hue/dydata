@@ -44,7 +44,7 @@ import {
 import {
   assignWorkGroupMemberAction,
   unassignWorkGroupMemberAction,
-} from "../collaboration/work-group-actions";
+} from "./work-group-member-actions";
 import { describeAssignSuccess } from "../collaboration/work-group-membership-copy";
 import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
 

@@ -136,6 +136,24 @@ test("P4.1 & P4.2: 管理小队抽屉支持建/改/删与成员互斥提示", ()
   assert.doesNotMatch(manageDrawerSource, /不能同时属于文案组和达人组/);
 });
 
+test("CloudBase 协作抽屉只读展示小队成员，禁止多选加入和移出但保留结构管理", () => {
+  assert.match(manageDrawerSource, /process\.env\.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase"/);
+  assert.match(manageDrawerSource, /成员小队调整请到成员管理/);
+
+  const batchHandler =
+    manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+  const unassignHandler =
+    manageDrawerSource.match(/const handleUnassignMember = \(userId: string, memberName: string \| null\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+  assert.match(batchHandler, /isCloudBaseBackend/);
+  assert.match(unassignHandler, /isCloudBaseBackend/);
+  assert.match(manageDrawerSource, /!isCloudBaseBackend && <div/);
+  assert.match(manageDrawerSource, /!isCloudBaseBackend && <button/);
+
+  assert.match(manageDrawerSource, /createWorkGroupAction\(/);
+  assert.match(manageDrawerSource, /renameWorkGroupAction\(/);
+  assert.match(manageDrawerSource, /deleteWorkGroupAction\(/);
+});
+
 test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属，且单人换组提示带出原小队名", () => {
   assert.match(modulesContentSource, /工种小队/);
   assert.match(modulesContentSource, /运营小队/);

@@ -11,6 +11,7 @@ import {
 } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
 type PostgrestErrorLike = { code?: string; message?: string } | null;
 
@@ -155,6 +156,8 @@ export async function syncAuthUserTeamMetadata(
     metadata?: Record<string, unknown>;
   },
 ) {
+  if (isCloudBaseBackend()) return null;
+
   let metadata = input.metadata;
   if (!metadata) {
     const snapshot = await loadAuthUserSnapshot(client, userId);
@@ -162,14 +165,11 @@ export async function syncAuthUserTeamMetadata(
     metadata = snapshot.value.metadata;
   }
 
-  const result = await client.auth.admin.updateUserById(userId, {
-    user_metadata: {
-      ...metadata,
-      team_id: input.teamId,
-      team_name: input.teamName,
-    },
+  return restoreAuthUserMetadata(client, userId, {
+    ...metadata,
+    team_id: input.teamId,
+    team_name: input.teamName,
   });
-  return result.error;
 }
 
 async function restoreAuthUserMetadata(
@@ -177,10 +177,9 @@ async function restoreAuthUserMetadata(
   userId: string,
   metadata: Record<string, unknown>,
 ) {
-  const result = await client.auth.admin.updateUserById(userId, {
-    user_metadata: metadata,
-  });
-  return result.error;
+  if (isCloudBaseBackend()) return null;
+
+  return (await client.auth.admin.updateUserById(userId, { user_metadata: metadata })).error;
 }
 
 async function loadTargetProfile(client: MemberLifecycleClient, targetId: string) {

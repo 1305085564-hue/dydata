@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
+import { hasCloudBaseAuthCookie, hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
 import { checkApiRateLimit, isApiRateLimitExempt, type ApiRateLimitResult } from "@/lib/api-rate-limit";
 import { createServerClient } from "@supabase/ssr";
@@ -11,6 +11,9 @@ import {
 } from "@/lib/supabase/session-cookie";
 import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
 import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
+import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
+import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, hasCloudBaseSessionChanged, isCloudBaseBackend, parseCloudBaseSession, serializeCloudBaseSession } from "@/lib/cloudbase/core";
+import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -92,6 +95,7 @@ function clearAuthCookies(response: NextResponse, request: NextRequest) {
     response.cookies.delete(cookieName);
   });
   response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
+  response.cookies.delete(CLOUD_BASE_SESSION_COOKIE);
 }
 
 export function buildAccountBlockedResponse(
@@ -167,6 +171,63 @@ function buildApiRateLimitResponse(result: ApiRateLimitResult) {
   );
 }
 
+async function handleCloudBaseSession(request: NextRequest, options: {
+  pathname: string;
+  isApiRoute: boolean;
+  hasAuthCookie: boolean;
+}) {
+  const { pathname, isApiRoute, hasAuthCookie } = options;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-next-pathname", pathname);
+
+  if (!hasAuthCookie || (!isApiRoute && !["/dashboard", "/admin", "/violations", "/content-tools", "/douyin"].some((root) => pathname === root || pathname.startsWith(`${root}/`)))) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  const rawCookie = request.cookies.get(CLOUD_BASE_SESSION_COOKIE)?.value;
+  const session = parseCloudBaseSession(rawCookie);
+  if (!session) return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
+
+  try {
+    const verified = await validateCloudBaseSession(session);
+    if (hasCloudBaseSessionChanged(session, verified.session)) {
+      const encoded = serializeCloudBaseSession(verified.session);
+      request.cookies.set(CLOUD_BASE_SESSION_COOKIE, encoded);
+      requestHeaders.set("cookie", request.cookies.toString());
+    }
+
+    const supabase = createCloudBaseDataClient({ role: "user", userToken: verified.session.accessToken });
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("membership_status")
+      .eq("id", verified.user.id)
+      .maybeSingle();
+    const membershipStatus = resolveMembershipStatusFromQuery({ data: profile, error: profileError });
+    if (membershipStatus === "archived") {
+      return buildAccountBlockedResponse(request, { api: isApiRoute, archived: true });
+    }
+    if (membershipStatus === "unavailable") {
+      return buildMembershipUnavailableResponse(request, { api: isApiRoute });
+    }
+
+    if (isApiRoute && !isApiRateLimitExempt(pathname)) {
+      const result = await checkApiRateLimit({ pathname, identifier: `user:${verified.user.id}` });
+      if (!result.allowed) return buildApiRateLimitResponse(result);
+    }
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    if (hasCloudBaseSessionChanged(session, verified.session)) {
+      const keepLoggedIn = isKeepLoggedInCookieValue(request.cookies.get(KEEP_LOGGED_IN_COOKIE_NAME)?.value);
+      response.cookies.set(CLOUD_BASE_SESSION_COOKIE, serializeCloudBaseSession(verified.session), cloudBaseCookieOptions(keepLoggedIn));
+    }
+    return response;
+  } catch (error) {
+    if (error instanceof CloudBaseAuthError && error.status === 401) {
+      return buildAccountBlockedResponse(request, { api: isApiRoute, archived: error.code === "user_blocked" });
+    }
+    return buildMembershipUnavailableResponse(request, { api: isApiRoute });
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");
@@ -206,10 +267,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const hasAuthCookie = hasSupabaseAuthCookie(
-    request.cookies.getAll(),
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-  );
+  const cloudBaseMode = isCloudBaseBackend();
+  const hasAuthCookie = cloudBaseMode
+    ? hasCloudBaseAuthCookie(request.cookies.getAll())
+    : hasSupabaseAuthCookie(request.cookies.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL);
   const allSupabaseAuthCookieNames = listSupabaseAuthCookieNames(request.cookies.getAll());
   const hasLegacySupabaseAuthCookie = !hasAuthCookie && allSupabaseAuthCookieNames.length > 0;
 
@@ -232,6 +293,10 @@ export async function middleware(request: NextRequest) {
     if (hasLegacySupabaseAuthCookie) clearAuthCookies(response, request);
     else response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
     return response;
+  }
+
+  if (cloudBaseMode) {
+    return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie });
   }
 
   const requestHeaders = new Headers(request.headers);

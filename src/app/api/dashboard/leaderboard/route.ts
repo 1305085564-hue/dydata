@@ -87,11 +87,14 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
     const permissionContext = await getCurrentPermissionContext("company", null);
+    if (!permissionContext) {
+      return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
+    }
+    const adminClient = createAdminClient();
     let visibleUserIds: string[] | undefined;
 
     if (permissionContext) {
       try {
-        const adminClient = createAdminClient();
         const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
         visibleUserIds = resolution.visibleUserIds;
       } catch {
@@ -100,7 +103,7 @@ export async function GET(request: Request) {
     }
 
     return buildDashboardLeaderboardResponse({
-      supabase,
+      supabase: adminClient,
       userId: user.id,
       permissionContext,
       visibleUserIds,

@@ -16,9 +16,8 @@ import {
 import { runWorkGroupAction, WORK_GROUPS_REVALIDATE_PATH, type WorkGroupWriteDeps } from "./work-group-write";
 
 /**
- * 数据管理「按团队」编制写操作的 Server Action 层（唯一写入口）。
- * 每个 action 只做参数转发：门禁、本公司限制、审计都在 work-group-write.ts / work-groups.ts。
- * 禁止在 UI 侧另写一套归属赋值逻辑。
+ * 协作管理的小队结构写入口。CloudBase 的成员归属改动统一由成员管理 RPC 承接；
+ * Supabase 回退仍使用原有门禁、公司范围与审计实现。
  */
 
 const deps: WorkGroupWriteDeps = {
@@ -26,6 +25,12 @@ const deps: WorkGroupWriteDeps = {
   createSupabase: createAdminClient,
   revalidate: () => revalidatePath(WORK_GROUPS_REVALIDATE_PATH),
 };
+
+function cloudBaseMemberManagementOnly() {
+  return process.env.DYDATA_BACKEND === "cloudbase"
+    ? { ok: false as const, status: 403 as const, message: "请在成员管理中调整小队" }
+    : null;
+}
 
 export async function createWorkGroupAction(input: { name: string; kind: string }) {
   return runWorkGroupAction(
@@ -72,6 +77,9 @@ export async function deleteWorkGroupAction(input: { groupId: string }) {
 }
 
 export async function assignWorkGroupMemberAction(input: { groupId: string; userId: string }) {
+  const blocked = cloudBaseMemberManagementOnly();
+  if (blocked) return blocked;
+
   return runWorkGroupAction(
     {
       run: (context) =>
@@ -87,6 +95,9 @@ export async function assignWorkGroupMemberAction(input: { groupId: string; user
 }
 
 export async function unassignWorkGroupMemberAction(input: { groupId: string; userId: string }) {
+  const blocked = cloudBaseMemberManagementOnly();
+  if (blocked) return blocked;
+
   return runWorkGroupAction(
     {
       run: (context) =>
@@ -102,6 +113,9 @@ export async function unassignWorkGroupMemberAction(input: { groupId: string; us
 }
 
 export async function assignWorkGroupMembersAction(input: { groupId: string; userIds: string[] }) {
+  const blocked = cloudBaseMemberManagementOnly();
+  if (blocked) return blocked;
+
   return runWorkGroupAction(
     {
       run: (context) => assignWorkGroupMembers(context.supabase, {

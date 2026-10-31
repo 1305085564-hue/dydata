@@ -254,6 +254,7 @@ export function WorkGroupManageDrawer({
   onGroupsChange,
   onRosterChange,
 }: WorkGroupManageDrawerProps) {
+  const isCloudBaseBackend = process.env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
   const [localGroups, setLocalGroups] = useState<WorkGroupRow[]>(groups);
   const [localRoster, setLocalRoster] = useState<WorkGroupRosterMember[]>(roster);
 
@@ -510,7 +511,7 @@ export function WorkGroupManageDrawer({
 
   // 4. 批量分配组员（乐观更新）
   const handleBatchAssignMembers = () => {
-    if (!activeGroup || selectedUserIdsToAdd.length === 0) return;
+    if (isCloudBaseBackend || !activeGroup || selectedUserIdsToAdd.length === 0) return;
     const { id: groupId, kind, name: groupName } = activeGroup;
     // 人数上限只在服务端判定：前端不预先拦截，超限请求必须真的打到服务端，
     // 再把它返回的上限与本次人数原样呈现（2026-10-02 确认：不补前端禁选、不在按钮上显示上限）。
@@ -567,7 +568,7 @@ export function WorkGroupManageDrawer({
 
   // 5. 移出组员（乐观更新）
   const handleUnassignMember = (userId: string, memberName: string | null) => {
-    if (!activeGroup) return;
+    if (isCloudBaseBackend || !activeGroup) return;
     const { id: groupId, kind } = activeGroup;
     const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, [userId]);
 
@@ -649,52 +650,50 @@ export function WorkGroupManageDrawer({
                 </span>
               </div>
 
-              {/* 添加组员控制条：多选批量加入 */}
-              <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/60 space-y-3">
-                <ItemHeading as="h4" className="flex items-center gap-1">
-                  <UserPlus className="size-3.5 text-[#D97757]" />
-                  分配新组员至本组
-                </ItemHeading>
-                <div className="flex items-start gap-2">
-                  <MemberMultiSelect
-                    candidates={candidateMembers}
-                    selectedUserIds={selectedUserIdsToAdd}
-                    onChange={setSelectedUserIdsToAdd}
-                    groupMap={groupMap}
-                    activeGroupKind={activeGroup.kind}
-                    disabled={isPending}
-                  />
-                  <Button
-                    size="sm"
-                    disabled={selectedUserIdsToAdd.length === 0 || isPending}
-                    onClick={handleBatchAssignMembers}
-                    className="shrink-0"
-                  >
-                    {isPending ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <>
-                        <UserPlus className="size-3.5" />
-                        {selectedUserIdsToAdd.length > 1
-                          ? `加入小队 (${selectedUserIdsToAdd.length})`
-                          : "加入小队"}
-                      </>
-                    )}
-                  </Button>
-                </div>
+              {!isCloudBaseBackend && <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/60 space-y-3">
+                  <ItemHeading as="h4" className="flex items-center gap-1">
+                    <UserPlus className="size-3.5 text-[#D97757]" />
+                    分配新组员至本组
+                  </ItemHeading>
+                  <div className="flex items-start gap-2">
+                    <MemberMultiSelect
+                      candidates={candidateMembers}
+                      selectedUserIds={selectedUserIdsToAdd}
+                      onChange={setSelectedUserIdsToAdd}
+                      groupMap={groupMap}
+                      activeGroupKind={activeGroup.kind}
+                      disabled={isPending}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={selectedUserIdsToAdd.length === 0 || isPending}
+                      onClick={handleBatchAssignMembers}
+                      className="shrink-0"
+                    >
+                      {isPending ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <UserPlus className="size-3.5" />
+                          {selectedUserIdsToAdd.length > 1
+                            ? `加入小队 (${selectedUserIdsToAdd.length})`
+                            : "加入小队"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-                {/* 互斥规则说明 */}
-                <WorkGroupRuleHint kind={activeGroup.kind} />
-              </div>
+                  <WorkGroupRuleHint kind={activeGroup.kind} />
+                </div>}
+              {isCloudBaseBackend && <p>成员小队调整请到成员管理</p>}
 
-              {/* 现有成员列表 */}
               <div className="space-y-2">
                 <ItemHeading as="h4">当前小队成员</ItemHeading>
                 {activeGroupMembers.length === 0 ? (
                   <EmptyState
                     variant="compact"
                     title="还没有组员"
-                    description="请在上方勾选成员并加入"
+                    description={isCloudBaseBackend ? "成员小队调整请到成员管理" : "请在上方勾选成员并加入"}
                     className="py-6 bg-[#F1F1F0]"
                   />
                 ) : (
@@ -714,7 +713,7 @@ export function WorkGroupManageDrawer({
                             </span>
                           )}
                         </div>
-                        <button
+                        {!isCloudBaseBackend && <button
                           type="button"
                           disabled={isPending}
                           onClick={() => handleUnassignMember(member.id, member.name)}
@@ -723,7 +722,7 @@ export function WorkGroupManageDrawer({
                         >
                           <UserMinus className="size-3.5" />
                           移出
-                        </button>
+                        </button>}
                       </ListRow>
                     ))}
                   </div>

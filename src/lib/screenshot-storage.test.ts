@@ -31,6 +31,26 @@ test("COS 配置完整时按环境变量选择 COS，缺配置自动降级 Supab
   });
 });
 
+test("CloudBase 模式只使用 COS，缺少配置明确失败而不访问旧存储", () => {
+  assert.throws(() => resolveScreenshotStorage({ DYDATA_BACKEND: "cloudbase" }), /COS/);
+  const resolved = resolveScreenshotStorage({
+    DYDATA_BACKEND: "cloudbase", SCREENSHOT_STORAGE: "supabase",
+    COS_SECRET_ID: "id", COS_SECRET_KEY: "key", COS_BUCKET: "bucket", COS_REGION: "ap-singapore",
+  });
+  assert.equal(resolved.primary, "cos");
+});
+
+test("CloudBase 模式 COS 明确缺图时不回落 Supabase", async () => {
+  let oldStorageCalls = 0;
+  const result = await findReadableSubmissionScreenshots(["user/missing.jpg"], {
+    env: { DYDATA_BACKEND: "cloudbase", COS_SECRET_ID: "id", COS_SECRET_KEY: "key", COS_BUCKET: "bucket", COS_REGION: "ap-singapore" },
+    headObject: (async () => ({ ok: false, status: 404 })) as never,
+    checkSupabase: async () => { oldStorageCalls += 1; return true; },
+  });
+  assert.equal(oldStorageCalls, 0);
+  assert.deepEqual(result, { readable: [], missing: ["user/missing.jpg"] });
+});
+
 test("COS 签名包含规范化的 header 列表且不暴露密钥", () => {
   const authorization = buildCosAuthorization(
     { secretId: "secret-id", secretKey: "secret-key" },
