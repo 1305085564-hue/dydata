@@ -17,7 +17,6 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 import { buildAuthorCollaborationUrl } from "@/lib/content/author-collaboration-link";
 import { useAuthorWorks } from "./use-author-works";
@@ -26,54 +25,11 @@ import { interactionRate } from "@/lib/video-metrics";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import type { AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 
-export interface AuthorWorksDrawerProps {
-  author: { id: string; name: string } | null;
-  open: boolean;
-  onClose: () => void;
-  evaluationStandards?: EvaluationStandards;
-  canManageVideos?: boolean;
-  canReviewContent?: boolean;
-  canViewCollaboration?: boolean;
-  onWorksChanged?: () => void;
-  onViewInMainList?: (authorId: string) => void;
-}
-
-export interface AuthorWorksViewProps {
-  author: { id: string; name: string };
-  onClose: () => void;
-  onViewInMainList?: (authorId: string) => void;
-  evaluationStandards?: EvaluationStandards;
-  canManageVideos?: boolean;
-  canReviewContent?: boolean;
-  canViewCollaboration?: boolean;
-  onWorksChanged?: () => void;
-  selectedVideoId?: string | null;
-  onSelectVideoId?: (videoId: string | null) => void;
-}
+import { formatCompactNumber, formatPercent, formatDate, type AuthorWorksDrawerProps, type AuthorWorksViewProps } from "./author-works-shared";
+export type { AuthorWorksDrawerProps, AuthorWorksViewProps } from "./author-works-shared";
 
 type TimeRangeFilter = "30d" | "thisMonth" | "lastMonth" | "all";
 type SortFilter = "published_at" | "play_count";
-
-function formatCompactNumber(val: number | null | undefined): string {
-  if (val === null || val === undefined || isNaN(val)) return "—";
-  if (val >= 100000000) return `${(val / 100000000).toFixed(1).replace(/\.0$/, "")}亿`;
-  if (val >= 10000) return `${(val / 10000).toFixed(1).replace(/\.0$/, "")}万`;
-  return String(Math.round(val));
-}
-
-function formatPercent(val: number | null | undefined): string {
-  if (val === null || val === undefined || isNaN(val)) return "—";
-  return `${val.toFixed(1)}%`;
-}
-
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "—";
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${m}-${day}`;
-}
 
 export function AuthorWorksView({
   author,
