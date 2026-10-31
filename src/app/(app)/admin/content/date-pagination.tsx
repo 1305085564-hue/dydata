@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
 import { getShanghaiDateString } from "./content-list-filters";
 
 interface DatePaginationProps {
@@ -28,7 +28,6 @@ interface DatePaginationProps {
 }
 
 const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-const CALENDAR_HEADERS = ["日", "一", "二", "三", "四", "五", "六"];
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -136,12 +135,6 @@ export function DatePagination({
   };
 
   const { year, month } = viewMonth;
-  const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cellDates: Array<string | null> = [
-    ...Array.from({ length: firstWeekday }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, index) => toDateString(year, month, index + 1)),
-  ];
 
   return (
     <div className="inline-flex flex-wrap items-center gap-1 select-none">
@@ -160,75 +153,17 @@ export function DatePagination({
           <Calendar className="size-3.5 text-[#78716C]" />
           <span>{loadingLabel}</span>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-80 p-3">
-          <div className="flex items-center justify-between pb-2">
-            <button
-              type="button"
-              onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}
-              className={NAV_BUTTON_CLASS}
-              aria-label="上个月"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <span className="text-[14px] text-[#141413]">
-              {year}年{month + 1}月
-            </span>
-            <button
-              type="button"
-              onClick={() => setViewMonth(shiftMonth(viewMonth, 1))}
-              disabled={Boolean(maxDate && toDateString(year, month + 1, 1) > maxDate)}
-              className={NAV_BUTTON_CLASS}
-              aria-label="下个月"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 pb-1">
-            {CALENDAR_HEADERS.map((header) => (
-              <span key={header} className="py-1 text-center text-[12px] text-[#A8A29E]">
-                {header}
-              </span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {cellDates.map((date, index) => {
-              if (!date) return <span key={`empty-${index}`} />;
-              const count = countByDate.get(date);
-              const isSelected = date === currentDate;
-              return (
-                <button
-                  key={date}
-                  type="button"
-                  onClick={() => pickDate(date)}
-                  disabled={Boolean(maxDate && date > maxDate)}
-                  className={cn(
-                    "relative flex h-9 items-center justify-center rounded-md text-[14px] transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed",
-                    isSelected
-                      ? "bg-[#141413] text-white"
-                      : count
-                        ? "text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                        : "text-[#A8A29E] hover:bg-[#EBEBE9]",
-                  )}
-                  aria-label={`${formatDateLabel(date)}${count ? ` · ${count} 条` : ""}`}
-                >
-                  {Number(date.slice(8, 10))}
-                  {count ? (
-                    <span
-                      className={cn(
-                        "absolute right-0.5 top-0.5 text-[12px] leading-none",
-                        isSelected ? "text-white/70" : "text-[#78716C]",
-                      )}
-                    >
-                      {count}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
+        <PopoverContent align="start" className={CALENDAR_CARD_CLASS}>
+          <MonthCalendar
+            today={today}
+            viewMonth={{ year, month: month + 1 }}
+            onMonthShift={(direction) => setViewMonth(shiftMonth(viewMonth, direction))}
+            canShiftNext={!maxDate || toDateString(year, month + 1, 1) <= maxDate}
+            selectedDates={[currentDate]}
+            onSelectDate={pickDate}
+            badgeByDate={Object.fromEntries(countByDate)}
+            maxDate={maxDate}
+            footer={
           <div className="mt-2 border-t border-[#E2E2DF] pt-2 space-y-1">
             {(!maxDate || today <= maxDate) && <button
               type="button"
@@ -246,6 +181,8 @@ export function DatePagination({
               跳到最新
             </button>
           </div>
+            }
+          />
         </PopoverContent>
       </Popover>
 
