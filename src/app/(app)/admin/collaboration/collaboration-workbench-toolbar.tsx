@@ -58,7 +58,7 @@ export function CollaborationWorkbenchToolbar({
               </Select>
             </div>
           </div>
-          {/* 一级视图切换：岗位数据管理 ↔ 小组数据管理 */}
+          {/* 一级视图切换：岗位协作管理 ↔ 小组协作管理 */}
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
             <button
               type="button"
@@ -69,7 +69,7 @@ export function CollaborationWorkbenchToolbar({
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
-              岗位数据管理
+              岗位协作管理
             </button>
             <button
               type="button"
@@ -80,7 +80,7 @@ export function CollaborationWorkbenchToolbar({
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
-              小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
+              小组协作管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
             </button>
           </div>
 

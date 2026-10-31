@@ -22,8 +22,9 @@ const MODULE_TITLES: Record<string, string> = {
   "/admin/settings": "系统设置",
   "/admin/ai-config": "AI 配置",
   "/admin/caliber": "数据口径",
-  "/admin/content": "视频复盘",
-  "/admin/videos": "视频复盘",
+  "/admin/content": "数据复盘",
+  "/admin/videos": "数据复盘",
+  "/admin/collaboration": "协作管理",
   "/admin/fulfillment": "发布管理",
 };
 

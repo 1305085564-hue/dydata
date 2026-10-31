@@ -36,7 +36,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_analytics: "数据分析",
   export_data: "导出数据",
   view_conversion: "转化中心",
-  review_content: "视频复盘",
+  review_content: "数据复盘",
   view_video_review: "作品复盘只读查看",
   manage_fulfillment: "发布管理",
   manage_videos: "素材库",

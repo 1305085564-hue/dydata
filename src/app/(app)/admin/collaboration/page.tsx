@@ -12,7 +12,7 @@ import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
 
 export const metadata: Metadata = {
-  title: "数据管理 - DYData",
+  title: "协作管理 - DYData",
   description: "按月查看岗位与小组的作品产量和数据表现。",
 };
 
@@ -58,7 +58,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
 
   return (
     <AdminWorkspaceLayout
-      title="数据管理"
+      title="协作管理"
       description={
         <span>
           按月查看岗位与小组的作品产量、负责账号与数据表现。查看

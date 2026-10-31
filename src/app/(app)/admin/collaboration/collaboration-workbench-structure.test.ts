@@ -156,7 +156,7 @@ test("数据管理视频诊断与个人档案卡真·单抽屉内嵌翻页与平
 
   // 员工看板直入场景独立使用 sheet 模式
   assert.match(source, /diagnosisDetail && !selectedPersonId/);
-  assert.match(source, /titlePrefix="数据管理"/);
+  assert.match(source, /titlePrefix="协作管理"/);
 
   // 标题定名为作品诊断，不再写死视频工作舱，且支持 inline 模式
   assert.match(dialogSource, /作品诊断/);

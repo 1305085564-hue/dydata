@@ -11,7 +11,7 @@ function hrefs(role: "member" | "admin" | "company_owner") {
   }).map((item) => item.href);
 }
 
-test("member 显示抖音账号、视频复盘、数据管理和只读发布管理", () => {
+test("member 显示抖音账号、数据复盘、协作管理和只读发布管理", () => {
   assert.deepEqual(hrefs("member"), [
     "/dashboard",
     "/admin/collaboration",

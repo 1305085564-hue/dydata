@@ -10,7 +10,7 @@ import { ContentDataContainer } from "./content-data-container";
 import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 export const metadata: Metadata = {
-  title: "视频复盘 - DYData",
+  title: "数据复盘 - DYData",
   description: "查看异常视频证据，定位内容问题与可能原因。",
 };
 
@@ -51,7 +51,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      title="视频复盘"
+      title="数据复盘"
       description="查看异常视频证据，定位内容问题与可能原因。"
       width="wide"
       hideHeaderOnMobile={true}

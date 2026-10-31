@@ -70,7 +70,7 @@ function NoticeCard({ title, description }: { title: string; description: string
           href="/admin/collaboration"
           className="inline-block text-[14px] text-[#D97757] hover:underline"
         >
-          返回数据管理 ↗
+          返回协作管理 ↗
         </Link>
       </div>
     </div>
@@ -235,7 +235,7 @@ export default async function PersonProfilePage({
             href="/admin/collaboration"
             className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] font-normal text-[#1F1E1D] transition-colors hover:bg-[#F1F1F0] hover:text-[#141413]"
           >
-            返回数据管理 ↗
+            返回协作管理 ↗
           </Link>
         </div>
       </header>

@@ -158,7 +158,7 @@ export function AuthorWorksView({
               <Link
                 href={collaborationUrl}
                 className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors"
-                title="在数据管理中查看该作者岗位档案"
+                title="在协作管理中查看该作者岗位档案"
               >
                 <TrendingUp className="size-3.5" />
                 <span>人效档案</span>

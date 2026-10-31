@@ -446,7 +446,7 @@ export function ContentPageClient({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-[20px]" aria-hidden="true">👋</span>
-            欢迎使用视频复盘工作台
+            欢迎使用数据复盘工作台
           </DialogTitle>
         </DialogHeader>
         <p className="text-[14px] text-[#1F1E1D] leading-relaxed">

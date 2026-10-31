@@ -143,7 +143,7 @@ export function SubmittedView({
                 }}
                 className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
               >
-                打开视频复盘
+                打开数据复盘
               </Button>
             ) : null}
             <Button

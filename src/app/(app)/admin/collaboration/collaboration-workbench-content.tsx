@@ -161,7 +161,7 @@ export function CollaborationWorkbenchContent({
             evaluationStandards={evaluationStandards}
             canOperateLifecycle={canManageVideos}
             canPurge={false}
-            titlePrefix="数据管理"
+            titlePrefix="协作管理"
             onLifecycleChanged={onLifecycleChanged}
           />
         )}

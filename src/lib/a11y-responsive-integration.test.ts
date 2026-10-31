@@ -222,14 +222,14 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
 
   const directTabs = getMobileDirectTabs(navGroups);
 
-  // 1. 视频复盘和数据管理成为移动端直接入口。
+  // 1. 数据复盘和协作管理成为移动端直接入口。
   const videoReviewTab = directTabs.find((t) => t.href === "/admin/content");
-  assert.ok(videoReviewTab, "视频复盘应为直接快捷入口");
+  assert.ok(videoReviewTab, "数据复盘应为直接快捷入口");
   assert.equal(videoReviewTab.isActive("/admin/content"), true);
   assert.equal(isMobileMoreActive(directTabs, "/admin/content"), false);
 
   const dataManagementTab = directTabs.find((t) => t.href === "/admin/collaboration");
-  assert.ok(dataManagementTab, "数据管理应为直接快捷入口");
+  assert.ok(dataManagementTab, "协作管理应为直接快捷入口");
   assert.equal(dataManagementTab.isActive("/admin/collaboration"), true);
   assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), false);
 

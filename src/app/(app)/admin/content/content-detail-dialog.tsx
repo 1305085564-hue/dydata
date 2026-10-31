@@ -47,7 +47,7 @@ export interface ContentDetailDialogProps {
   /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率；null = 话题未识别（不出评级，不按复盘口径兜底） */
   topicKind?: VideoTopicKind | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
-  /** 抽屉标题前缀，默认为“视频复盘” */
+  /** 抽屉标题前缀，默认为“数据复盘” */
   titlePrefix?: string;
   /** 返回上一级（如返回个人档案卡） */
   onBack?: () => void;
@@ -85,7 +85,7 @@ export function ContentDetailDialog({
   topicLibraryStatus = null,
   topicKind = null,
   onToggleTopicLibrary,
-  titlePrefix = "视频复盘",
+  titlePrefix = "数据复盘",
   onBack,
   backLabel,
   renderMode = "sheet",

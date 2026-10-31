@@ -57,7 +57,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   );
 
   // 顺序即移动端底栏直接入口优先级（前 4 项为底栏快捷位）：
-  // 工作台、数据管理、视频复盘、每日大盘；选题库收进「更多」面板。
+  // 工作台、协作管理、数据复盘、每日大盘；选题库收进「更多」面板。
   const groups: NavGroup[] = [
     {
       key: "dashboard",
@@ -71,7 +71,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   if (hasNavPermission(input, "view_analytics")) {
     groups.push({
       key: "data-management",
-      label: "数据管理",
+      label: "协作管理",
       icon: UsersRound,
       href: "/admin/collaboration",
       match: (pathname) =>
@@ -82,7 +82,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos") || hasNavPermission(input, "view_video_review")) {
     groups.push({
       key: "video-review",
-      label: "视频复盘",
+      label: "数据复盘",
       icon: FileEdit,
       href: "/admin/content",
       match: (pathname) =>
