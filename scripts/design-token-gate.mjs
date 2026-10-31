@@ -28,7 +28,7 @@ const VALID_HEX = new Set([
 const rules = [
   {
     id: "font-size",
-    label: "字号封闭系统（只允许 12/13/14/20/28px；13px 专供高密度表格数据；落地页 Hero 豁免）",
+    label: "字号封闭系统（只允许 12/13/14/20/28px；13px 专供高密度内容[数据表格/长文案]；落地页 Hero 豁免）",
     args: ["-n", "-o", "text-\\[[0-9.]+px\\]", "src/", "-g", "!**/app/page.tsx"],
     violation: (match) => {
       const px = match.match(/\[([0-9.]+)px\]/)?.[1];
