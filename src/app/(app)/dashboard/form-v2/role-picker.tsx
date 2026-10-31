@@ -116,7 +116,7 @@ export function FormV2RolePicker({
                   </span>
                 </div>
                 {(selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId) && (
-                  <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />
+                  <Check className="size-3.5 stroke-[2.5] text-[#141413]" />
                 )}
               </button>
             )}
@@ -149,7 +149,7 @@ export function FormV2RolePicker({
                     )}
                   >
                     <span>{member.display_name || member.name}</span>
-                    {isSelected && <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />}
+                    {isSelected && <Check className="size-3.5 stroke-[2.5] text-[#141413]" />}
                   </button>
                 );
               })}

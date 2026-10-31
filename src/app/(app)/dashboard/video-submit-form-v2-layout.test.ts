@@ -81,7 +81,9 @@ test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与�
   assert.match(source, /hidden lg:block lg:col-span-2 lg:row-start-2[^\"]*h-px bg-\[#E2E2DF\]\/60/);
   assert.match(source, /pt-2\.5 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
   assert.match(source, /pt-3 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
-  assert.match(source, /flex flex-col min-h-0[^\"]*bg-white/);
+  // 2026-10-31 试点裁决为"留"：文案区裸落底纸，白托盘退役（阿禅看图确认）
+  assert.match(source, /flex flex-col min-h-0 transition-colors/);
+  assert.doesNotMatch(source, /flex flex-col min-h-0[^\"]*bg-white/);
   assert.doesNotMatch(source, /lg:justify-between/);
 });
 

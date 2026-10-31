@@ -29,7 +29,6 @@ export function VideoSubmitPanelBody({
   handleDismissReviewNotice,
   dismissPendingExemption,
   isPrimarySummaryMode,
-  shouldShowBlockedStateCard,
   activeBizDate,
   today,
   submittedViewActive,
@@ -37,7 +36,6 @@ export function VideoSubmitPanelBody({
   primarySummary,
   handleGoToTopics,
   activeDateStatus,
-  activeExemptionState,
   shouldShowActivityErrorCard,
   loadActivity,
   shouldShowActivityLoadingCard,
@@ -74,8 +72,8 @@ export function VideoSubmitPanelBody({
 
   return (
     <>
-        {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
-        <Card className="p-4 sm:p-6 space-y-4 sm:space-y-5" ref={formAnchorRef}>
+        {/* 主内容区 - 试点：撤外围围合，直接落底纸，与页头/日历条共用同一条对齐轴 */}
+        <div className="space-y-4 sm:space-y-5" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
@@ -122,7 +120,7 @@ export function VideoSubmitPanelBody({
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="neutral" className="text-[#78716C] before:bg-[#4B6B4E]">今日已归档</Badge>
+                        <Badge variant="neutral" className="text-[#78716C] before:bg-status-success">今日已归档</Badge>
                         <span className="text-[12px] sm:text-[14px] font-normal text-[#78716C]">
                           已完成今日记录 · {activeDateReports.length || 1} 条作品
                         </span>
@@ -246,7 +244,7 @@ export function VideoSubmitPanelBody({
                                 "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left",
                                 isSelected
                                   ? "bg-[#F1F1F0] border-[#E2E2DF]"
-                                  : "bg-white/70 border-[#E2E2DF] hover:border-[#D97757]/30 hover:bg-white",
+                                  : "bg-white/70 border-[#E2E2DF] hover:border-[#78716C]/40 hover:bg-white",
                               )}
                             >
                               <div className="flex items-center gap-3 min-w-0">
@@ -283,7 +281,7 @@ export function VideoSubmitPanelBody({
                                       {reportTitle}
                                     </p>
                                     <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] shrink-0 ">
-                                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
+                                      <span className="size-1.5 rounded-full bg-status-success" />
                                       履约核验通过
                                     </span>
                                   </div>
@@ -341,46 +339,7 @@ export function VideoSubmitPanelBody({
             </>
           ) : null}
 
-            {/* 豁免/请假状态卡片 */}
-            {selectedAccount && shouldShowBlockedStateCard ? (
-              <Card className="mb-6 p-4 sm:p-5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "flex size-4 shrink-0 items-center justify-center rounded-full",
-                        activeDateStatus.state === "waive"
-                          ? "bg-status-success/10 text-status-success"
-                          : "bg-status-warning/10 text-status-warning",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "size-1.5 rounded-full",
-                          activeDateStatus.state === "waive" ? "bg-current text-status-success" : "bg-current text-status-warning",
-                        )}
-                      />
-                    </span>
-                    <span className="text-[14px] font-normal text-[#1F1E1D]">
-                      {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
-                    </span>
-                  </div>
-                  <div>
-                    <SectionHeading as="h3">
-                      {activeBizDate} · 豁免申请 ({activeDateStatus.label}) {/* 停笔调养 */}
-                    </SectionHeading>
-                    <p className="mt-1 text-[14px] leading-relaxed text-[#78716C]">
-                      {activeDateStatus.description}
-                    </p>
-                    {activeExemptionState.reason && (
-                      <p className="mt-1 text-[14px] text-[#78716C]">
-                        事由：{activeExemptionState.reason}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ) : null}
+            {/* 豁免/请假状态摘要 - 第二轮：已上移至履约辅助带（video-submit-panel-v2） */}
 
             {shouldShowActivityErrorCard ? (
               <div className="py-8">
@@ -561,13 +520,6 @@ export function VideoSubmitPanelBody({
                 }}
               />
             ) : null}
-        </Card>
-
-        {/* 完卷徽记 (Colophon) - 独立平铺于底层桌面画布，作为整页人文落款印章 */}
-        <div className="flex items-center justify-center gap-3 pt-3 pb-8 select-none" aria-hidden="true">
-          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-          <span className="text-[12px] text-[#78716C] tracking-widest">✦ 慎思 · 笃行 · 入卷</span>
-          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
         </div>
 
         {inspectingReceipt && (

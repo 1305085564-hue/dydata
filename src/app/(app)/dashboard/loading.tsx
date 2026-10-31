@@ -73,7 +73,7 @@ export default function DashboardLoading() {
 
               {/* 提交按钮 */}
               <div className="flex justify-end pt-1">
-                <div className="h-9 w-36 rounded-xl bg-[#D97757]/20 animate-pulse-claude" />
+                <div className="h-9 w-36 rounded-xl bg-[#E2E2DF] animate-pulse-claude" />
               </div>
             </div>
           </div>

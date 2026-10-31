@@ -489,7 +489,7 @@ export function VideoSubmitFormV2({
   const focusWithHighlight = useCallback((el: HTMLElement | null) => {
     if (!el) return;
     el.focus();
-    const highlightClasses = ["ring-2", "ring-[#D97757]/60", "ring-offset-1"];
+    const highlightClasses = ["ring-2", "ring-[#141413]/40", "ring-offset-1"];
     el.classList.add(...highlightClasses);
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
@@ -588,7 +588,7 @@ export function VideoSubmitFormV2({
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="font-normal text-[#1F1E1D] hover:text-[#D97757] transition-colors cursor-pointer"
+              className="font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors cursor-pointer"
             >
               恢复
             </button>
@@ -1211,8 +1211,8 @@ export function VideoSubmitFormV2({
             <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 py-0">
               {/* 主工作区 - Claude 设计系统 */}
               <div className="space-y-4 sm:space-y-5">
-                {/* 头部：状态 + 提示微胶囊 + 日期 */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]/60">
+                {/* 头部：状态 + 提示微胶囊 + 日期（试点：撤发丝线，靠组间距与下方上传区分界） */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <SectionHeading as="h2">
                       {mode === "editToday"
@@ -1257,6 +1257,8 @@ export function VideoSubmitFormV2({
                   </div>
                 </div>
 
+                {/* 第二轮：标题下完整表单内容统一一层轻缩进，建立标题统领而非只统领第一排 */}
+                <div className="space-y-4 sm:space-y-5 sm:pl-4">
                 <FormV2Workspace
                   slots={slots}
                   slotsSectionRef={slotsSectionRef}
@@ -1338,6 +1340,7 @@ export function VideoSubmitFormV2({
                 isSubmitting={isSubmitting}
                 submitButtonLabel={submitButtonLabel}
               />
+                </div>
             </div>
           </motion.form>
         </>

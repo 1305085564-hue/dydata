@@ -73,7 +73,7 @@ export function FormV2SubmitFooter({
   }, []);
 
   return (
-    <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t md:border-[#E2E2DF]/60 md:bg-transparent md:p-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
+    <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t-0 md:bg-transparent md:p-0 md:pt-4 md:pb-0 md:backdrop-blur-none">
       {/* 底部提交按钮：移动端吸底（避让底部导航 --app-bottom-offset） */}
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
         {!canActuallySubmit ? (
@@ -91,7 +91,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("slots")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别中
                   </button>
@@ -103,7 +103,7 @@ export function FormV2SubmitFooter({
                       scrollToIssueAnchor("slots");
                       triggerSlotsPulse();
                     }}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
                   </button>
@@ -112,7 +112,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("slots")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}需核对
                   </button>
@@ -121,7 +121,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("metrics")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
                   </button>
@@ -130,7 +130,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("meta")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     缺少视频标题
                   </button>
@@ -139,7 +139,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("meta")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     缺少视频文案
                   </button>
@@ -148,7 +148,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("topicTag")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     缺少选题标签
                   </button>
@@ -157,7 +157,7 @@ export function FormV2SubmitFooter({
                   <button
                     type="button"
                     onClick={() => scrollToIssueAnchor("publishedAt")}
-                    className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                    className="hover:text-[#141413] hover:underline transition-colors cursor-pointer"
                   >
                     未识别到发布时间
                   </button>

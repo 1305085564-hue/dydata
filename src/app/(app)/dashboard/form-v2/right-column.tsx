@@ -136,9 +136,7 @@ export function FormV2RightColumn({
         </div>
 
         {/* 视频文案 - 与视频标题同属内容组，不再单独加分隔线（底纸纯排版解套，消灭纸内卡片套娃） */}
-        <div
-          className="flex flex-col min-h-0 bg-white transition-colors"
-        >
+        <div className="flex flex-col min-h-0 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <Label htmlFor="content" className="flex items-center gap-1">
               <span>文案</span>

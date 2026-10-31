@@ -59,7 +59,7 @@ export function VideoSubmitPanelToolbar({
             {/* 右侧：控制区 */}
             <FilterBar>
               {primaryMode === "backfill" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/20 bg-status-warning-bg px-2.5 py-0.5 text-[12px] font-normal text-status-warning-text">
+                <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/15 bg-status-warning/[0.04] px-2.5 py-0.5 text-[12px] font-normal text-status-warning-text">
                   <span className="h-1.5 w-1.5 rounded-full bg-current" />
                   正在补交历史数据
                 </span>
@@ -70,8 +70,8 @@ export function VideoSubmitPanelToolbar({
                 type="button"
                 onClick={() => setIsCalendarOpen((prev) => !prev)}
                 className={cn(
-                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
-                  isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
+                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-transparent bg-transparent px-2.5 text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
+                  isCalendarOpen && "bg-[#EBEBE9] border-[#78716C]"
                 )}
                 aria-expanded={isCalendarOpen}
                 aria-label={`切换填报日期：${activeBizDate}`}
@@ -105,7 +105,7 @@ export function VideoSubmitPanelToolbar({
             {/* 停笔调养申请按钮 */}
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               size="m"
               onClick={() => setIsExemptionDialogOpen(true)}
               title="可申请停笔调养；已在审批中的日期会被锁定"
@@ -117,7 +117,7 @@ export function VideoSubmitPanelToolbar({
             {/* 历史手稿按钮 */}
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               size="m"
               onClick={() => setIsHistoryOpen(true)}
             >

@@ -757,7 +757,7 @@ export function HistoryReportEditForm({
               <button
                 type="button"
                 onClick={handleRestoreDraft}
-                className="font-normal text-[#1F1E1D] hover:text-[#D97757] transition-colors cursor-pointer"
+                className="font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors cursor-pointer"
               >
                 恢复
               </button>
@@ -779,7 +779,7 @@ export function HistoryReportEditForm({
             <button
               type="button"
               onClick={handleRetryEditDetail}
-              className="shrink-0 font-normal text-[#1F1E1D] hover:text-[#D97757] transition-colors cursor-pointer"
+              className="shrink-0 font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors cursor-pointer"
             >
               重新载入
             </button>

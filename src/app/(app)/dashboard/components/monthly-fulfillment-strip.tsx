@@ -168,6 +168,8 @@ export function MonthlyFulfillmentStrip({
   }, [today]);
 
   const isTodaySubmitted = submittedSet.has(today);
+  const isTodayWaive = waiveSet.has(today);
+  const isTodayLeave = leaveSet.has(today);
   const isTodayWorkday = isChinaWorkingDay(new Date(`${today}T12:00:00`));
 
   return (
@@ -193,13 +195,21 @@ export function MonthlyFulfillmentStrip({
               <Check className="size-3 stroke-[2] text-[#4B6B4E]" />
               今日已达标
             </span>
+          ) : isTodayWaive ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] border border-[#E2E2DF]">
+              今日免交 · 视作完成
+            </span>
+          ) : isTodayLeave ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] border border-[#E2E2DF]">
+              今日请假
+            </span>
           ) : !isTodayWorkday ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C] border border-[#E2E2DF]">
               今日休息
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-action/[0.06] px-2 py-0.5 text-[12px] text-ink-body border border-action/20">
-              <Sparkles className="size-2.5" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-ink-body border border-[#E2E2DF]">
+              <Sparkles className="size-2.5 text-action" />
               今日待履约
             </span>
           )}
@@ -224,7 +234,7 @@ export function MonthlyFulfillmentStrip({
               if (state === "submitted") {
                 cellStyle = "bg-status-success-bg text-status-success-text border-transparent hover:bg-status-success/[0.10]";
               } else if (state === "today-pending") {
-                cellStyle = "bg-white text-ink-body border-action hover:bg-action/[0.04]";
+                cellStyle = "bg-white text-ink-body border-action/50 hover:bg-action/[0.04]";
               } else if (state === "waive") {
                 cellStyle = "bg-[#43718E]/[0.08] text-[#43718E] border-transparent hover:bg-[#43718E]/[0.14]";
               } else if (state === "leave") {
@@ -234,11 +244,11 @@ export function MonthlyFulfillmentStrip({
               } else if (state === "absent") {
                 cellStyle = "bg-status-danger-bg text-status-danger-text border-transparent hover:bg-status-danger/[0.10]";
               } else if (state === "missing") {
-                cellStyle = "bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] hover:border-[#78716C]/60 hover:text-[#1F1E1D]";
+                cellStyle = "bg-[#F1F1F0] text-[#78716C] border-transparent hover:bg-[#E2E2DF] hover:text-[#1F1E1D]";
               } else if (state === "rest") {
-                cellStyle = "bg-[#F1F1F0]/50 text-[#A8A29E] border-transparent hover:border-[#E2E2DF]";
+                cellStyle = "bg-[#F1F1F0]/50 text-[#A8A29E] border-transparent hover:bg-[#F1F1F0]";
               } else if (state === "future") {
-                cellStyle = "bg-[#FCFCFB] text-[#A8A29E] border-[#E2E2DF]/40 opacity-40 cursor-not-allowed";
+                cellStyle = "bg-transparent text-[#A8A29E] border-transparent opacity-40 cursor-not-allowed";
               }
 
               return (
@@ -255,7 +265,7 @@ export function MonthlyFulfillmentStrip({
                     "flex flex-col items-center justify-center h-[26px] min-w-[24px] px-1 rounded-[4px] border text-[12px] tabular-nums font-sans select-none transition-all duration-120",
                     !isFuture && "cursor-pointer active:scale-95",
                     cellStyle,
-                    isSelected && "ring-1.5 ring-[#141413] shadow-xs scale-105 z-10",
+                    isSelected && "ring-1.5 ring-[#141413] shadow-xs z-10",
                   )}
                 >
                   <span className="leading-none">{dayNumber}</span>

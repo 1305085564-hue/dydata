@@ -1,7 +1,6 @@
 import type { RefObject } from "react";
 
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
-import type { ExemptionState } from "@/lib/豁免";
 import type {
   SubmitPanelMode,
   SubmissionDayStatus,
@@ -22,7 +21,6 @@ export type VideoSubmitPanelBodyProps = {
   handleDismissReviewNotice: () => void;
   dismissPendingExemption: () => void;
   isPrimarySummaryMode: boolean;
-  shouldShowBlockedStateCard: boolean;
   activeBizDate: string;
   today: string;
   submittedViewActive: boolean;
@@ -30,7 +28,6 @@ export type VideoSubmitPanelBodyProps = {
   primarySummary: TodaySubmissionSummary;
   handleGoToTopics: () => void;
   activeDateStatus: SubmissionDayStatus;
-  activeExemptionState: ExemptionState;
   shouldShowActivityErrorCard: boolean;
   loadActivity: () => void | Promise<void>;
   shouldShowActivityLoadingCard: boolean;

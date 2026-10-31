@@ -199,7 +199,7 @@ export function FormV2LeftColumn({
               <button
                 type="button"
                 onClick={showAllRoles}
-                className="text-[12px] font-normal text-[#D97757] hover:underline"
+                className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:underline"
               >
                 {hiddenRoleRestoreLabel}
               </button>

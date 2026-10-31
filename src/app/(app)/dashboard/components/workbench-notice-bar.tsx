@@ -30,7 +30,7 @@ function renderStatusDot(notice: WorkbenchNoticeItem) {
       return (
         <span
           className={cn(
-            "size-1.5 rounded-full bg-current text-[#D97757] shrink-0",
+            "size-1.5 rounded-full bg-current text-status-warning shrink-0",
             notice.type === "exemption_pending" && "animate-pulse",
           )}
         />

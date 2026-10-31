@@ -161,7 +161,7 @@ export function SubmissionSlotsSection({
       className={cn(
         "flex flex-col h-full rounded-xl transition-all duration-200",
         isDragOverGlobal
-          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-input p-1.5"
+          ? "border-2 border-dashed border-[#D97757]/60 bg-[#D97757]/[0.02] ring-1 ring-[#D97757]/15 shadow-input p-1.5"
           : ""
       )}
     >
@@ -238,7 +238,7 @@ export function SubmissionSlotsSection({
                 "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-300",
                 slot.status === "empty"
                   ? pulseEmptySlots
-                    ? "border-[#D97757]/70 bg-[#D97757]/[0.04] ring-2 ring-[#D97757]/20 cursor-pointer shadow-input"
+                    ? "border-[#D97757]/50 bg-[#D97757]/[0.03] ring-1 ring-[#D97757]/15 cursor-pointer shadow-input"
                     : "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-input"
                   : "border-[#E2E2DF] bg-white shadow-input",
                 isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
@@ -283,13 +283,13 @@ export function SubmissionSlotsSection({
                       <div className={cn(
                         "flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-md sm:rounded-xl transition-colors",
                         pulseEmptySlots
-                          ? "bg-[#D97757]/10 text-[#D97757]"
+                          ? "bg-[#D97757]/[0.08] text-[#C46A4D]"
                           : "bg-[#EBEBE9] text-[#78716C] group-hover:text-[#141413] group-hover:bg-[#E4E4E1]"
                       )}>
                         <UploadCloud className={cn(
                           "size-4 sm:size-4.5 lg:size-5 stroke-[1.5]",
                           pulseEmptySlots
-                            ? "stroke-[#D97757]"
+                            ? "stroke-[#C46A4D]"
                             : "stroke-[#78716C] group-hover:stroke-[#141413]"
                         )} />
                       </div>
@@ -339,7 +339,7 @@ export function SubmissionSlotsSection({
                           读取中
                         </Badge>
                       ) : isSuccess ? (
-                        <Badge variant="neutral" className="gap-0.5 text-[#78716C] before:bg-[#4B6B4E]">
+                        <Badge variant="neutral" className="gap-0.5 text-[#78716C] before:bg-status-success">
                           已识别
                         </Badge>
                       ) : isWarning ? (
