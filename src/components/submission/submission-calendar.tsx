@@ -174,22 +174,22 @@ export function SubmissionCalendar({
         </p>
       )}
 
-      {/* 底部四色图例说明 - 居中排布 */}
+      {/* 底部四色图例说明 - 居中排布；文字不折行，放不下时整项换行 */}
       {showLegend && (
-        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/60 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
-          <span className="inline-flex items-center gap-1">
+        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/60 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-[#78716C]">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="size-1.5 rounded-full bg-status-danger" /> 缺勤
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="size-1.5 rounded-full bg-current text-status-success" /> 已交
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="size-1.5 rounded-full bg-current text-status-warning" /> 特殊豁免
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="size-1.5 rounded-full bg-current text-status-info" /> 请假
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
           </span>
         </div>
