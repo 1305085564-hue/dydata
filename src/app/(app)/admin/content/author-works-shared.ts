@@ -45,4 +45,3 @@ export function formatDate(dateStr: string | null | undefined): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${m}-${day}`;
 }
-
