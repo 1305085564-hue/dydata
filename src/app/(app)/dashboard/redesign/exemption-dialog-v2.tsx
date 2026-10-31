@@ -187,7 +187,7 @@ export function ExemptionDialogV2({
 
         {/* 顶部拦截告示：引导限流删稿回工作台录入 */}
         <div className="mx-6 mt-4 rounded-xl bg-[#F1F1F0] p-3 text-[12px] leading-relaxed text-[#78716C] shadow-card-ring">
-          <span className="font-normal text-[#141413]">💡 提示：</span>若今天已发视频但被限流、违规、下架，<strong className="font-normal text-[#141413]">请勿在此申请</strong>！请返回工作台选择「作品异常」正常录入（依然计入月度总产量与工作成果）。此处仅限全天未发视频的请假或报备。
+          <span className="font-normal text-[#141413]">提示：</span>若今天已发视频但被限流、违规、下架，<strong className="font-normal text-[#141413]">请勿在此申请</strong>！请返回工作台选择「作品异常」正常录入（依然计入月度总产量与工作成果）。此处仅限全天未发视频的请假或报备。
         </div>
 
         {/* 左右分栏内容 */}
@@ -386,7 +386,7 @@ export function ExemptionDialogV2({
             <div className="space-y-2">
               <label className="flex items-center gap-1 text-[12px] font-normal text-[#78716C]">
                 申请类型
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-status-danger" />
               </label>
               <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F1F0] p-1 select-none">
                 <button
@@ -481,7 +481,7 @@ export function ExemptionDialogV2({
                             className={cn(
                               "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] transition-colors border",
                               isCurrentMonth
-                                ? "bg-white border-[#E2E2DF] text-[#D97757] font-normal shadow-input"
+                                ? "bg-white border-[#E2E2DF] text-[#141413] font-normal shadow-input"
                                 : "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C] hover:text-[#1F1E1D]",
                             )}
                           >
@@ -519,7 +519,7 @@ export function ExemptionDialogV2({
                     className="flex items-center gap-1 text-[12px] font-normal text-[#78716C]"
                   >
                     {calendar.exemptionType === "leave" ? "请假原因" : "特殊豁免原因"}
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-status-danger" />
                   </label>
                   <textarea
                     id="exemption-reason"
@@ -562,7 +562,7 @@ export function ExemptionDialogV2({
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-1 text-[12px] font-normal text-[#78716C]">
                     特殊豁免逐日原因
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-current text-status-danger" />
                     <span className="text-[12px] font-normal text-[#78716C]">
                       （共 {calendar.selectedDates.length} 天）
                     </span>
@@ -572,7 +572,7 @@ export function ExemptionDialogV2({
                       <button
                         type="button"
                         onClick={calendar.copyFirstDateReasonToAll}
-                        className="text-[12px] text-[#D97757] hover:underline cursor-pointer font-normal"
+                        className="text-[12px] text-[#78716C] hover:text-[#141413] hover:underline cursor-pointer font-normal"
                         title="将首日填写的豁免原因快速填充到所有已选天（可分别微调）"
                       >
                         一键同首日
