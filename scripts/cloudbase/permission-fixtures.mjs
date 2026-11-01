@@ -47,7 +47,7 @@ export async function setup() {
   const ids = Object.values(users).map(u=>quote(u.id)).join(',');
   const objects = [['teams',101],['accounts',201],['videos',301],['sub_topics',401],['notifications',501],['fulfillment_appeals',601],['content_observations',701],['daily_reports',801],['sample_quality_issues',901],['exemption_request',1001],['exemption_request_date',1101]];
   const occupied = objects.map(([table, first]) => `(SELECT count(*) FROM public.${table} WHERE id IN (${quote(uuid(first))},${quote(uuid(first+1))}))`).join(' + ');
-  const preflight = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids}) OR username LIKE '${PREFIX}-%') + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + ${occupied} AS conflicts`);
+  const preflight = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids}) OR username LIKE '${PREFIX}-%') + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + (SELECT count(*) FROM public.videos WHERE id=${quote(uuid(303))}) + ${occupied} AS conflicts`);
   if (Number(preflight.rows[0].conflicts)) throw new Error('Fixture identifiers occupied; refusing overwrite');
   const manifest = { environment: ENV_ID, namespace: PREFIX, users, baseline: await baseline(), phase: 'prepared', cleaned: false, requests: [] };
   save(manifest);
@@ -115,7 +115,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     else throw new Error('Expected setup or cleanup');
   } catch (error) {
     // SQL errors can include credentials: keep the diagnostic in the private recovery directory.
-    writeFileSync(resolve(dirname(manifestPath()), 'fixture-error-private.txt'), String(error?.stack ?? error), { mode: 0o600 });
+    writeFileSync(resolve(dirname(manifestPath()), `fixture-${process.argv[2]}-error-private.txt`), String(error?.stack ?? error), { mode: 0o600 });
     console.error('Fixture operation failed; inspect private diagnostic and recovery manifest.'); process.exitCode = 1;
   } })();
 }

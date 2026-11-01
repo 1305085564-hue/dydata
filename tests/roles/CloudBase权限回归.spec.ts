@@ -174,6 +174,55 @@ test('R12 obsolete exemption RPCs are not callable with employee JWT', async()=>
     expect([401,403], 'obsolete entry must not execute').toContain(r.status);
   }
 });
+for (const [table,id] of [['fulfillment_appeals',601],['content_observations',701],['sample_quality_issues',901]] as const) {
+  test(`R03 ${table} same-team management read remains available`, async()=> {
+    for (const role of ['adminA','ownerA']) {
+      const r=await rest(await token(role),`${table}?id=eq.${uuid(id)}&select=id`);
+      expect(r.status).toBe(200);
+      expect((await r.json()).map((row:{id:string})=>row.id)).toEqual([uuid(id)]);
+    }
+  });
+}
+test('R04 forged review INSERT fails while an ordinary submission succeeds', async()=> {
+  const jwt=await token('memberA'); const id=uuid(303);
+  const base={id,user_id:identities().memberA.id,account_id:uuid(201),video_title:'permission-v2-insert'};
+  try {
+    const forged=await rest(jwt,'videos','POST',{...base,review_status:'reviewed',reviewed_by:identities().adminA.id,reviewed_at:new Date().toISOString()});
+    expect(forged.status>=400).toBe(true);
+    expect((await rows(`SELECT id FROM public.videos WHERE id=${quote(id)}`)).length).toBe(0);
+    expect((await rest(jwt,'videos','POST',base)).status).toBeLessThan(300);
+    expect((await rows(`SELECT review_status FROM public.videos WHERE id=${quote(id)}`))[0].review_status).toBe('pending');
+  } finally {await execute(`DELETE FROM public.videos WHERE id=${quote(id)} AND user_id=${quote(identities().memberA.id)}`);}
+});
+test('R11 direct approval is denied; legitimate approval and reopen preserve actor and audit', async()=> {
+  const jwt=await token('adminA');const admin=identities().adminA.id;
+  try {
+    const forged=await rest(jwt,`fulfillment_appeals?id=eq.${uuid(601)}`,'PATCH',{status:'approved',handler_id:admin,handled_at:new Date().toISOString()});
+    expect(forged.status>=400).toBe(true);
+    expect((await rows(`SELECT status FROM public.fulfillment_appeals WHERE id=${quote(uuid(601))}`))[0].status).toBe('pending');
+    expect((await rest(jwt,'rpc/handle_fulfillment_appeal','POST',{p_appeal_id:uuid(601),p_decision:'approve',p_handler_id:admin,p_reason:null})).status).toBe(200);
+    const approved=(await rows(`SELECT status,handler_id FROM public.fulfillment_appeals WHERE id=${quote(uuid(601))}`))[0];
+    expect(approved.status).toBe('approved');expect(approved.handler_id).toBe(admin);
+    expect((await rest(jwt,'rpc/reopen_fulfillment_appeal_atomically','POST',{p_appeal_id:uuid(601),p_handler_id:admin})).status).toBe(200);
+    const reopened=(await rows(`SELECT status,handler_id FROM public.fulfillment_appeals WHERE id=${quote(uuid(601))}`))[0];
+    expect(reopened.status).toBe('pending');expect(reopened.handler_id).toBeNull();
+    const audit=await rows(`SELECT action FROM public.audit_logs WHERE user_id=${quote(admin)} AND detail::jsonb->>'appeal_id'=${quote(uuid(601))} AND action IN ('handle_fulfillment_appeal','reopen_fulfillment_appeal')`);
+    expect(new Set(audit.map(row=>row.action))).toEqual(new Set(['handle_fulfillment_appeal','reopen_fulfillment_appeal']));
+  } finally {await execute(`UPDATE public.fulfillment_appeals SET status='pending',handler_id=NULL,handled_at=NULL,decision_reason=NULL WHERE id=${quote(uuid(601))}`);}
+});
+test('R01 view gate preserves active access and rejects a blocked old JWT', async()=> {
+  const jwt=await token('blocked');const id=identities().blocked.id;
+  const active=await rest(jwt,'ai_unified_config_view?limit=1');expect(active.status).toBe(200);
+  const before=await active.json();expect(Array.isArray(before)&&before.length>0).toBe(true);
+  try {
+    await execute(`UPDATE auth.users SET status=3 WHERE sub=${quote(id)}`);
+    const denied=await rest(jwt,'ai_unified_config_view?limit=1');const body=await denied.json();
+    expect(denied.status>=400||(Array.isArray(body)&&body.length===0)).toBe(true);
+    for(const name of ['pg_stat_statements','pg_stat_statements_info']) {
+      const stats=await rest(jwt,`${name}?limit=1`);expect([401,403]).toContain(stats.status);
+    }
+  } finally {await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}`);}
+});
 test('@browser role pages retain access rules and never request Supabase', async({browser})=> {
   for(const role of ['memberA','adminA','ownerA']) {
     const ctx=await site(role);
