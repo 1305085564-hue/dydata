@@ -172,8 +172,8 @@ export function BreakdownWorksSection({
                 ) : (
                   <EmptyState
                     variant="compact"
-                    title="还没有关联作品"
-                    description="还没有同行带着这个选题交出成片"
+                    title="尚未有关联作品"
+                    description="同行伙伴暂未带着这个选题交出成片，静候佳作"
                   />
                 )}
               </section>

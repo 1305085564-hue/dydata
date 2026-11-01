@@ -173,8 +173,8 @@ export default async function PersonProfilePage({
   if (!visibleUserIds.includes(userId)) {
     return (
       <NoticeCard
-        title="无权查看"
-        description="这位成员的档案暂时不对你开放，你可以翻阅自己与本公司可见同行的成长档案。"
+        title="静默守候"
+        description="这位同行的成长档案目前不对当前账号开放，你可以翻阅自己与可见伙伴的创作脚印。"
       />
     );
   }
@@ -187,7 +187,7 @@ export default async function PersonProfilePage({
     evaluationStandards,
   });
   if (!data) {
-    return <NoticeCard title="成员不存在" description="没有找到这位成员的成长档案。" />;
+    return <NoticeCard title="案头暂空" description="未寻得这位同行的成长档案记录。" />;
   }
 
   const { person, monthSummary, trend, strengths, topWorks, anomalies } = data;
@@ -225,7 +225,7 @@ export default async function PersonProfilePage({
                 </span>
               ))
             ) : (
-              <span className="text-[12px] text-[#A8A29E]">近 6 个月暂无岗位署名作品</span>
+              <span className="text-[12px] text-[#A8A29E]">近 6 个月暂未署名岗位作品</span>
             )}
           </div>
         </div>
@@ -306,7 +306,7 @@ export default async function PersonProfilePage({
       {/* 4. 擅长什么 */}
       <Section title="擅长什么 · 按题材">
         {strengths.length === 0 ? (
-          <EmptyRow text="还没有作品记录" />
+          <EmptyRow text="案头尚无题材创作记录" />
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[480px] table-fixed text-[12px]">
@@ -343,7 +343,7 @@ export default async function PersonProfilePage({
         extra={<span className="text-[12px] text-[#78716C]">评级最优的 {topWorks.length} 篇</span>}
       >
         {topWorks.length === 0 ? (
-          <EmptyRow text="还没有作品记录" />
+          <EmptyRow text="案头尚无代表作收录" />
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[520px] table-fixed text-[12px]">
@@ -398,7 +398,7 @@ export default async function PersonProfilePage({
             <span className="text-[12px] tabular-nums text-[#78716C]">共 {anomalies.length} 篇</span>
           </div>
           {anomalies.length === 0 ? (
-            <EmptyRow text="暂无异常作品" />
+            <EmptyRow text="近期作品表现平稳，无异常波动" />
           ) : (
             <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
               <table className="w-full min-w-[420px] table-fixed text-[12px]">

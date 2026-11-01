@@ -206,15 +206,15 @@ export function useContentListState(props: ContentListProps) {
       return Boolean(v);
     });
   const emptyTitle = hasActiveFilters
-    ? "当前筛选条件下没有视频"
+    ? "当前筛选下案头尚无作品"
     : view === "trash"
-      ? "还没有归档视频"
-      : "还没有视频";
+      ? "箱中暂无归档作品"
+      : "当前案头尚无作品";
   const emptyDescription = hasActiveFilters
-    ? "请调整筛选条件，或点击“重置”查看全部视频"
+    ? "可放宽筛选条件，或点击“重置”寻回全部作品"
     : view === "trash"
-      ? "已归档的视频会显示在这里"
-      : "当前范围内还没有可查看的视频";
+      ? "归档后的作品会静静收录在这里"
+      : "选定时间与范围内还没有作品记录，等候新作落定";
 
   // 首项文案写明「全部」：此前是「人员」二字，语义上等同不限但没有「全部」字样，
   // 用户刚从某个成员切回来时无法确认是否已恢复全选（2026-10-11 审计 L1）

@@ -121,7 +121,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
           {/* Account List */}
           <div role="group" aria-label="工作账号列表" className="max-h-64 space-y-0.5 overflow-y-auto">
             {accounts.length === 0 ? (
-              <EmptyState variant="compact" title="没有找到匹配的账号" />
+              <EmptyState variant="compact" title="未寻得相符的工作账号" />
             ) : (
               accounts.map((account) => {
                 const isSelected = account.id === selectedAccountId;

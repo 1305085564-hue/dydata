@@ -82,7 +82,7 @@ export function ModuleDialogsTeam({
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <EmptyState variant="compact" title="还没有团队记录" />
+                <EmptyState variant="compact" title="案头暂无团队记录" />
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;

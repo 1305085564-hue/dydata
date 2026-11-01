@@ -308,8 +308,8 @@ export function AuthorWorksView({
             <div className="py-12">
               <EmptyState
                 variant="compact"
-                title="暂无该创作者的作品"
-                description="所选时间范围内没有找到该创作者发布的作品记录"
+                title="案头尚无该创作者的作品"
+                description="所选时间周期内未寻得该创作者的作品记录"
               />
             </div>
           ) : (

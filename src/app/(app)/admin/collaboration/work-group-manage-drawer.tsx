@@ -693,7 +693,7 @@ export function WorkGroupManageDrawer({
                 {activeGroupMembers.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="还没有组员"
+                    title="队伍暂无成员驻守"
                     description="在上方勾选几位同行，让小队有第一批伙伴"
                     className="py-6 bg-[#F1F1F0]"
                   />
@@ -804,7 +804,7 @@ export function WorkGroupManageDrawer({
               {localGroups.length === 0 ? (
                 <EmptyState
                   variant="compact"
-                  title="还没有小队"
+                  title="案头尚未设立小队"
                   description="点上方「新建小队」，为同行们搭个落脚处"
                   className="py-8 bg-[#F1F1F0]"
                 />

@@ -66,7 +66,7 @@ export function HistoryTab({
     ) : historyApprovals.length === 0 ? (
       <EmptyState
         variant="compact"
-        title="还没有历史审批记录"
+        title="案头尚无历史审批记录"
         description="每一份审阅过的申请都会留在这里，想回看时随时翻阅。"
       />
     ) : (

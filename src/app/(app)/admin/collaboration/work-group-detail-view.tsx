@@ -156,7 +156,7 @@ export function WorkGroupDetailView({
             description={
               canManage
                 ? "点击上方「成员管理」即可为该小队分配组员。"
-                : "当前小队尚未分配组员。"
+                : "当前小队静待伙伴加入。"
             }
           />
         </Card>
