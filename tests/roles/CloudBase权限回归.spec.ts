@@ -33,13 +33,13 @@ async function site(key: string) {
   const u = identities()[key];
   const r = await ctx.post('/api/cloudbase/auth/signin',{data:{username:u.username,password:u.password}});
   expect(r.status(), 'site synthetic login').toBe(200);
-  // APIRequest's cookie jar does not send Secure cookies over local HTTP;
-  // explicitly transmit only this synthetic login cookie to this fixed local site.
-  const cookies=(await ctx.storageState()).cookies;
-  const authCookie=cookies.find(c=>c.name==='dydata-cloudbase-session');
-  expect(Boolean(authCookie),'login issues HttpOnly session').toBe(true);
-  await ctx.setExtraHTTPHeaders({cookie:`${authCookie!.name}=${authCookie!.value}`});
-  return ctx;
+  const state=await ctx.storageState();
+  const authCookie=state.cookies.find(c=>c.name==='dydata-cloudbase-session');
+  expect(Boolean(authCookie?.httpOnly && authCookie?.secure),'server issues Secure HttpOnly cookie').toBe(true);
+  await ctx.dispose();
+  // This gate owns a plain HTTP loopback server. Only the synthetic client jar
+  // transports its Secure cookie locally; the server's actual cookie flags stay asserted.
+  return requests.newContext({baseURL:'http://127.0.0.1:3100',storageState:{...state,cookies:state.cookies.map(c=>({...c,secure:false}))}});
 }
 async function rows(sql: string) { return (await execute(sql)).rows; }
 async function resetReview() { await execute(`UPDATE public.videos SET review_status='pending',reviewed_by=NULL,reviewed_at=NULL,topic_id=NULL WHERE id=${quote(uuid(301))}`); }
@@ -75,7 +75,6 @@ test('R02 logout invalidates the old gateway token', async()=> {
     expect(Boolean(cookie)).toBe(true);
     const session=JSON.parse(decodeURIComponent(cookie!.value));
     expect((await ctx.post('/api/cloudbase/auth/signout',{data:{}})).status()).toBe(200);
-    await ctx.setExtraHTTPHeaders({});
     expect((await ctx.get('/api/cloudbase/auth/user')).status()).toBe(401);
     const r=await rest(session.accessToken,`profiles?id=eq.${identities().memberA.id}&select=id`);
     const data=await r.json();
