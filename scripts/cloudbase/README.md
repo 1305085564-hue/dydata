@@ -39,3 +39,15 @@ npm run gate:static
 ```
 
 本地测试不能替代真实 JWT 网关和角色验收；开发环境耗时不能作为生产性能结论。
+
+## 密码哈希导入计划（2026-11-01 补充）
+
+`auth-import.mjs` 是离线生成器，不连接数据库、不读取生产凭据、不自动执行 SQL。只支持当前上海隔离环境及已核实的 `$2a$10$` 格式：UUID 写 `sub`，密码按 UTF-8 转 base64（80 字符、无换行），封禁状态按明确的采样时间映射。来源必须带邮箱确认时间；未确认或缺少确认信息的选中身份会拒绝计划，避免误激活。完整模式要求 84 个唯一来源身份；指定 `sampleIds` 才生成样本计划。
+
+- `buildAuthImportPlan({sourceUsers,targetIdentities,capturedAt,project,sampleIds?})` 返回 `summary`、敏感 `batches` 和执行前置条件。只可打印 `summary`；SQL、expectedRows、原始哈希均按密码资料保存到 Git 之外的 700 目录、600 文件。
+- 计划每批最多 50 条：独立事务内锁表、再次查身份冲突、插入、`RETURNING id::text,sub`。目标没有 sub/email 唯一约束，必须另行控制所有 Auth 写入口，禁止把离线查重当成并发保障。重复直接执行会拒绝，不是静默跳过或覆盖。
+- 内部 bigint ID 必须保留十进制字符串，不能转换为 JavaScript Number。执行方须持久保存完整 RETURNING 结果、计划/批次摘要、RequestId，再继续下一批。网络结果不明时停止核对，不能盲重试。
+- `buildAuthImportRollback(plan,insertedReceipts)` 只有收到完整、与计划绑定的真实批次回执才生成回退 SQL。收据格式为 `{batchIndex,planSha256,batchSha256,rows:[{id,sub}]}`。按实际内部 ID、sub、project 及原映射字段保护，不删除外来相同行；字段已变化则保留并人工处理。此模板不等于完整的平台 Auth/Token 回退。
+- 当前未提供全量执行命令。批量导入还需确认用户配额、授权及未公开格式的支持风险。不得通过直接 SQL 新增身份绕过套餐限制，不得复制 Supabase 会话/JWT 密钥或强制重置密码。
+
+项目现有两个 Supabase 测试账号已实际验证原哈希转换后保留原密码、UUID、RLS 隔离和封禁行为；验证后 CloudBase 两个冒烟账号已恢复。详见 `docs/reference/2026-11-01-认证密码迁移独立复核.md`。该结果不构成腾讯官方长期支持承诺。
