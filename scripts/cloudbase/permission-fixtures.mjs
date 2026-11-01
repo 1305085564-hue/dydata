@@ -102,7 +102,7 @@ export async function cleanup() {
   console.log(JSON.stringify({ environment: ENV_ID, remaining: 0, identityBaselineUnchanged: true, requestId: zero.requestId }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  try {
+  void (async () => { try {
     if (process.argv[2] === 'setup') await setup();
     else if (process.argv[2] === 'cleanup') await cleanup();
     else throw new Error('Expected setup or cleanup');
@@ -110,5 +110,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     // SQL errors can include credentials: keep the diagnostic in the private recovery directory.
     writeFileSync(resolve(dirname(manifestPath()), 'fixture-error-private.txt'), String(error?.stack ?? error), { mode: 0o600 });
     console.error('Fixture operation failed; inspect private diagnostic and recovery manifest.'); process.exitCode = 1;
-  }
+  } })();
 }
