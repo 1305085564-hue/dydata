@@ -14,10 +14,16 @@ test("MonthCalendar 连续渲染包含锚点月份及其前后的连续月份长
     />
   );
 
-  // 包含置顶星期标头
-  assert.match(html, /<div[^>]*>日<\/div>/);
+  // 包含置顶星期标头（周一开头，周日结尾）
   assert.match(html, /<div[^>]*>一<\/div>/);
-  assert.match(html, /<div[^>]*>六<\/div>/);
+  assert.match(html, /<div[^>]*>二<\/div>/);
+  assert.match(html, /<div[^>]*>日<\/div>/);
+
+  // 验证 2026-11-02 对应周一
+  assert.match(html, /aria-label="11月2日 周一/);
+
+  // 默认视窗最大高度收缩至 270px
+  assert.match(html, /max-height:\s*270px/i);
 
   // 包含当前视窗的月份标签
   assert.match(html, /2026年11月/);

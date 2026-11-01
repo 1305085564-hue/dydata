@@ -27,11 +27,11 @@ export interface MonthCalendarProps {
   cellExtra?: (date: string) => ReactNode;
   titleFor?: (date: string) => string | undefined;
   footer?: ReactNode;
-  /** 滚动容器最大视窗高度，默认 310px */
+  /** 滚动容器最大视窗高度，默认 270px（展示当月 + 下月标题与首周） */
   maxScrollHeight?: number | string;
 }
 
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const NAV_CLASS =
   "flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:text-[#A8A29E] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors";
 
@@ -61,7 +61,7 @@ export function MonthCalendar({
   cellExtra,
   titleFor,
   footer,
-  maxScrollHeight = 310,
+  maxScrollHeight = 270,
 }: MonthCalendarProps) {
   const { year: anchorYear, month: anchorMonth } = viewMonth;
   const initialKey = `${anchorYear}-${String(anchorMonth).padStart(2, "0")}`;
@@ -95,7 +95,7 @@ export function MonthCalendar({
       const y = Math.floor(t / 12);
       const m = (t % 12) + 1;
       const key = `${y}-${String(m).padStart(2, "0")}`;
-      const firstWeekday = new Date(y, m - 1, 1).getDay();
+      const firstWeekday = (new Date(y, m - 1, 1).getDay() + 6) % 7;
       const daysInMonth = new Date(y, m, 0).getDate();
       const dates = Array.from(
         { length: daysInMonth },
@@ -346,7 +346,7 @@ export function MonthCalendar({
                 const disabled = Boolean((maxDate && date > maxDate) || isDateDisabled?.(date));
                 const count = badgeByDate?.[date];
                 const dayNumber = index + 1;
-                const weekdayIndex = new Date(m.year, m.month - 1, dayNumber).getDay();
+                const weekdayIndex = (new Date(m.year, m.month - 1, dayNumber).getDay() + 6) % 7;
                 const label = `${m.month}月${dayNumber}日 周${WEEKDAYS[weekdayIndex]}${
                   count ? ` · ${count} 条` : ""
                 }`;
