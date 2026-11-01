@@ -369,8 +369,8 @@ export function OperatorTab({
       <div className="py-16 text-center">
         <EmptyState
           illustration={<DeskStudyIllustration size={96} />}
-          title="本月案头尚无跨账号协同记录"
-          description="自营账号的故事在达人专栏；这里留给跨账号的并肩合作。"
+          title="本月暂无跨账号协同记录"
+          description="这里展示成员跨账号协作的作品表现；自营账号作品在达人专栏查看。"
         />
       </div>
     );

@@ -390,7 +390,7 @@ export function resolveSubmissionDayStatus({
     return {
       state: "unsubmitted",
       label: "未交",
-      description: "今日案头静候落笔与提交。",
+      description: "今日暂未提交日报。",
       tone: "pending",
       isCompleted: false,
       canBackfill: true,

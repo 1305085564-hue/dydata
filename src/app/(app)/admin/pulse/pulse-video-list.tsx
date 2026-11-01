@@ -154,11 +154,11 @@ export function PulseVideoList({
   };
 
   const getEmptyTitle = () => {
-    if (dayVideos.length === 0) return "该日案头尚无发布作品";
+    if (dayVideos.length === 0) return "该日暂无发布作品";
     if (selectedCap === "hot") return "该日暂无命中「爆款」的作品";
     if (selectedCap === "anomaly") return "该日暂无命中「异常」的作品";
     if (selectedCap === "unrated") return "该日作品均已完成评级";
-    return "该日案头尚无发布作品";
+    return "该日暂无发布作品";
   };
 
   return (
@@ -192,7 +192,7 @@ export function PulseVideoList({
         <EmptyState
           variant="compact"
           title={getEmptyTitle()}
-          description="换个日期翻阅，也许能遇见别的落笔。"
+          description="换个日期查看其他作品记录。"
         />
       ) : (
         <>

@@ -107,11 +107,11 @@ export function WorkGroupListTab({
     return (
       <EmptyState
         illustration={<DeskStudyIllustration size={96} />}
-        title="本月案头尚无工种小队"
+        title="本月暂未划分工种小队"
         description={
           canManage
             ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
-            : "当前团队尚未建立工种小队，待团队负责人设立后便会在此呈现。"
+            : "当前团队尚未建立工种小队，团队负责人创建后将在此呈现。"
         }
         action={
           canManage && onOpenManageDrawer

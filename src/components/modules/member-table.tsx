@@ -96,8 +96,8 @@ export function MemberTable({
             <EmptyState
               variant="compact"
               className="py-12"
-              title="当前视野暂无同行伙伴"
-              description="可尝试切换上方团队筛选或检索词"
+              title="当前筛选下暂无成员"
+              description="可尝试切换上方团队筛选或搜索关键词"
             />
           ) : (
             <div className="space-y-0.5">

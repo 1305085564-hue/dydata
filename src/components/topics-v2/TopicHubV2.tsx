@@ -110,7 +110,7 @@ export function TopicHubV2({
         <Card className="w-full max-w-md p-8 text-center gap-0">
           <EmptyState
             title="请先申请加入团队"
-            description="这个账号尚未加入团队，待团队接纳后便可在此研读选题与协同创作。"
+            description="账号尚未加入团队，加入团队后即可开启选题库与创作协作。"
             action={{
               label: "去工作台申请加入团队",
               href: "/dashboard",

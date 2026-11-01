@@ -812,8 +812,8 @@ export function ComputePoolPanel() {
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-              title="案头尚未收录现役模型"
-              description="接入一条渠道，模型便会陆续到来，可用的渠道会安坐在它们名下。"
+              title="暂无可用模型"
+              description="接入渠道后模型将自动同步到此，可在此管理在册模型与可用状态。"
               action={{ label: "接入渠道", onClick: () => setAddKeyModal({ open: true, providerId: null }) }}
             />
           ) : (

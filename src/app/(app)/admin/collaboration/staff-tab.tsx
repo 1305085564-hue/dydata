@@ -573,7 +573,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               ) : (
                 <tr>
                   <td colSpan={role === "writer" ? 5 : 4} className="px-3 py-2">
-                    <EmptyState variant="compact" title="案头尚无作品记录" />
+                    <EmptyState variant="compact" title="暂无作品记录" />
                   </td>
                 </tr>
               )}
@@ -668,10 +668,10 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
               <CompassConstellationIllustration size={96} />
             )
           }
-          title={`本月案头尚无${roleLabel}岗位记录`}
+          title={`本月暂无${roleLabel}岗位记录`}
           description={role === "writer"
-            ? "文案成员名录尚待确立。管理员可在本表对伙伴进行认证；认证后正常结算文案绩效。"
-            : "剪辑岗只统计帮别人账号剪辑的作品。"}
+            ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常结算文案绩效。"
+            : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
         />
       </div>
     );

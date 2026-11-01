@@ -306,7 +306,7 @@ export function HealthBar({
             ) : (
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#F1F1F0]/60 border border-[#E2E2DF] text-[12px] text-[#78716C] leading-relaxed">
-                  以下作品未录齐文案、剪辑或运营责任人。{canEdit ? "可在下方直接指派责任人，系统将实时核算各岗位月报。" : "如需指派责任人，可协调管理员协助办理。"}
+                  以下作品未录齐文案、剪辑或运营责任人。{canEdit ? "可在下方直接指派责任人，系统将实时核算各岗位月报。" : "如需指派责任人，请联系管理员处理。"}
                 </div>
 
                 <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">

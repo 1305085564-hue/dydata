@@ -242,7 +242,7 @@ export function ContentPageClient({
     if (targetVideo) {
       openVideo(targetVideo.id);
     } else {
-      toast.info("当前列表尚无可复盘的作品");
+      toast.info("当前列表暂无可复盘的作品");
     }
   }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, openVideo]);
 

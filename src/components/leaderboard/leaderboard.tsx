@@ -127,7 +127,7 @@ export function Leaderboard({
     if (boardType === "tag" && normalizedOwnDirections.size === 0) {
       return {
         items: [] as AccountLeaderboardItem[],
-        emptyMessage: "名下账号尚未打上内容标签，待标注后便会生成同标签榜。",
+        emptyMessage: "名下账号尚未打上内容标签，标注后即可生成同标签榜。",
       };
     }
 
@@ -171,8 +171,8 @@ export function Leaderboard({
       items: ranked,
       emptyMessage:
         boardType === "tag"
-          ? "当前时间周期内尚无同标签账号足迹。"
-          : "当前时间周期内尚无排行榜数据。",
+          ? "当前时间范围内暂无同标签账号数据。"
+          : "当前时间范围内暂无排行榜数据。",
     };
   }, [baseRows, boardType, normalizedOwnDirections, ownAccountIds, progressByAccount, sortKey, sortDir]);
 

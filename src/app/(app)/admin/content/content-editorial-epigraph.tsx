@@ -18,7 +18,7 @@ export function formatCompactCount(val: number): string {
 
 export function buildContentEditorialEpigraph(rows: ProcessedContentRow[]): string {
   if (rows.length === 0) {
-    return "这一刻案头尚无落笔记录——可切换上方日期或放宽筛选，寻回其他时刻的作品回响。";
+    return "当前筛选下暂无作品记录——可切换上方日期或重置筛选条件查看其他作品。";
   }
 
   let maxPlay = 0;

@@ -145,7 +145,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                       <EmptyState
                         variant="compact"
                         className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="案头暂缺流量曲线截图"
+                        title="暂未上传流量曲线截图"
                       />
                     )}
                   </div>
@@ -215,7 +215,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                       <EmptyState
                         variant="compact"
                         className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="案头暂缺留存脱落截图"
+                        title="暂未上传留存脱落截图"
                       />
                     )}
                   </div>

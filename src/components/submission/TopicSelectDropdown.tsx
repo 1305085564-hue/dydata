@@ -304,8 +304,8 @@ export function TopicSelectDropdown({
                 ) : myClaims.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="手头暂无认领中的选题"
-                    description="在上方键入字词，即可翻找团队共享的题库"
+                    title="暂无认领中的选题"
+                    description="在上方输入关键词，即可翻找团队共享题库"
                   />
                 ) : (
                   myClaims.map((item) => (

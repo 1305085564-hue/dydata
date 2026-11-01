@@ -163,8 +163,8 @@ export function DouyinAccountsPage() {
       {!loading && accounts.length === 0 ? (
         <EmptyState
           className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6"
-          title="当前案头尚无待绑定的业务账号"
-          description="业务账号还在等管理员开通，开通后就能来绑定了。"
+          title="暂无可绑定的业务账号"
+          description="业务账号由管理员创建后，即可在此进行授权绑定。"
         />
       ) : null}
       <div className="grid gap-4 md:grid-cols-2">

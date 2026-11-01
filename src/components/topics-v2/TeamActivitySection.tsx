@@ -84,8 +84,8 @@ export function TeamActivitySection({
       <section className="my-2 sm:my-3.5">
         <EmptyState
           variant="compact"
-          title="案头暂无团队写作动态"
-          description="一有人落笔写题、交出成片，动态便会在这里浮现。"
+          title="暂无团队写作动态"
+          description="成员认领或完成选题后，动态会在此显示。"
         />
       </section>
     );
@@ -221,7 +221,7 @@ export function TeamActivitySection({
               </span>
             </div>
             {pastWorks.length === 0 ? (
-              <EmptyState variant="compact" title="往期作品已尽览" />
+              <EmptyState variant="compact" title="已显示全部往期作品" />
             ) : (
               pastWorks.map((work) => (
                 <ListRow

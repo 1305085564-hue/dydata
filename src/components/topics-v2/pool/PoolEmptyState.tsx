@@ -15,8 +15,8 @@ export function PoolEmptyState({
   return (
         hasRealActiveFilters ? (
           <EmptyState
-            title="未寻得契合条件的选题"
-            description="这组筛选里暂时没有合适的选题，放宽一点条件，或许就遇见了。"
+            title="未找到符合条件的选题"
+            description="当前筛选下没有合适的选题，可尝试放宽筛选条件。"
             action={{
               label: "清空当前筛选",
               onClick: onClearAllFilters,
@@ -24,8 +24,8 @@ export function PoolEmptyState({
           />
         ) : (
           <EmptyState
-            title="干货选题库中尚无内容收录"
-            description="团队内播放过 3 万的干货作品会自动收拢在此，亦可批量导入或亲手记下一则。"
+            title="选题库中暂无内容"
+            description="团队内播放过 3 万的干货作品会自动收录，也可以批量导入或手动添加。"
           />
         )
   );

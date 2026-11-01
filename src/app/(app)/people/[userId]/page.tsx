@@ -173,8 +173,8 @@ export default async function PersonProfilePage({
   if (!visibleUserIds.includes(userId)) {
     return (
       <NoticeCard
-        title="静默守候"
-        description="这位同行的成长档案目前不对当前账号开放，你可以翻阅自己与可见伙伴的创作脚印。"
+        title="暂无查看权限"
+        description="该成员的成长档案目前不对当前账号开放，你可以查看自己与可见成员的档案。"
       />
     );
   }
@@ -187,7 +187,7 @@ export default async function PersonProfilePage({
     evaluationStandards,
   });
   if (!data) {
-    return <NoticeCard title="案头暂空" description="未寻得这位同行的成长档案记录。" />;
+    return <NoticeCard title="未找到成员档案" description="未找到该成员的档案记录。" />;
   }
 
   const { person, monthSummary, trend, strengths, topWorks, anomalies } = data;
@@ -306,7 +306,7 @@ export default async function PersonProfilePage({
       {/* 4. 擅长什么 */}
       <Section title="擅长什么 · 按题材">
         {strengths.length === 0 ? (
-          <EmptyRow text="案头尚无题材创作记录" />
+          <EmptyRow text="暂无题材创作记录" />
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[480px] table-fixed text-[12px]">
@@ -343,7 +343,7 @@ export default async function PersonProfilePage({
         extra={<span className="text-[12px] text-[#78716C]">评级最优的 {topWorks.length} 篇</span>}
       >
         {topWorks.length === 0 ? (
-          <EmptyRow text="案头尚无代表作收录" />
+          <EmptyRow text="暂无代表作记录" />
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[520px] table-fixed text-[12px]">

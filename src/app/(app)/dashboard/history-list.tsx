@@ -199,8 +199,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
         <EmptyState
           variant="compact"
           className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6"
-          title="此筛选下案头尚无作品记录"
-          description="可以尝试放宽或清空上方筛选条件，寻回更多作品"
+          title="当前筛选下暂无作品记录"
+          description="可以尝试切换或清空上方筛选条件"
           action={isFiltered ? { label: "清空筛选", onClick: clearFilter } : undefined}
         />
       ) : (

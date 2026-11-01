@@ -100,8 +100,8 @@ export function PulseMemberTable({
       {members.length === 0 ? (
         <EmptyState
           variant="compact"
-          title="该日案头尚无发片成员"
-          description="换个日期翻阅，也许能遇见别的落笔。"
+          title="该日暂无发片成员"
+          description="换个日期查看其他成员的作品记录。"
         />
       ) : (
         <>
