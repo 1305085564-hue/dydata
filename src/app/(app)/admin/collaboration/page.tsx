@@ -61,21 +61,21 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
     <AdminWorkspaceLayout
       title="协作管理"
       description={
-        <span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[#78716C]">
           <PageEpigraph pageKey="collaboration" />
-          {" 查看"}
+          <span className="text-[#A8A29E] select-none" aria-hidden="true">·</span>
           <RatingRulesDialog
             evaluationStandards={evaluationStandards}
             trigger={
               <button
                 type="button"
-                className="inline-flex items-center text-[#78716C] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal ml-0.5"
+                className="inline-flex items-center text-[#78716C] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal"
               >
                 作品评级规则
               </button>
             }
           />
-        </span>
+        </div>
       }
       width="wide"
     >
