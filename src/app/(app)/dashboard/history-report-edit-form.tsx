@@ -369,7 +369,7 @@ export function PublishedAtPicker({
             overflowY: "auto",
             zIndex: "var(--z-popover, 90)" as unknown as number,
           }}
-          className="w-[280px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
+          className="w-[280px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100 scrollbar-none"
         >
           <MonthCalendar
             today={formatShanghaiDateOnly()}

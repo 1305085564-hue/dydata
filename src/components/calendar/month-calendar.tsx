@@ -307,16 +307,17 @@ export function MonthCalendar({
         ))}
       </div>
 
-      {/* 纵向连续流动画卷容器 */}
+      {/* 纵向连续流动画卷容器（隐藏可见滑杆，保留丝滑手势与滚轮滚动，宽度自适应舒展） */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         onMouseMove={handleContainerMouseMove}
         style={{
           maxHeight: typeof maxScrollHeight === "number" ? `${maxScrollHeight}px` : maxScrollHeight,
-          scrollbarWidth: "thin",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
-        className="overflow-y-auto overscroll-contain scroll-smooth pr-0.5 select-none [-webkit-overflow-scrolling:touch]"
+        className="overflow-y-auto overscroll-contain scroll-smooth scrollbar-none select-none [-webkit-overflow-scrolling:touch]"
       >
         {months.map((m) => (
           <div

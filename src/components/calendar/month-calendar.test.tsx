@@ -29,6 +29,11 @@ test("MonthCalendar 连续渲染包含锚点月份及其前后的连续月份长
   // 10月31日与11月1日同时存在于画卷中，无需翻页即可呈现
   assert.match(html, /aria-label="10月31日/);
   assert.match(html, /aria-label="11月1日/);
+
+  // 滚动容器隐藏浏览器原生滑杆，保持界面舒展干净
+  assert.match(html, /scrollbar-none/);
+  assert.match(html, /scrollbar-width:\s*none/i);
+  assert.doesNotMatch(html, /scrollbar-thin/);
 });
 
 test("MonthCalendar 支持跨月连续区间的高亮渲染", () => {
