@@ -64,13 +64,15 @@ test("full import plan preserves UUID subjects and base64 bcrypt while returning
   const expectedRows = plan.batches.flatMap((batch) => batch.expectedRows);
   assert.equal(expectedRows.filter((row) => row.email_verified === false).length, 1);
   assert.ok(expectedRows.filter((row) => row.sub !== source[24].id).every((row) => row.email_verified === true));
+  assert.ok(expectedRows.every((row) => row.type === "external"));
   assert.match(firstSql, /"project"/);
   assert.match(firstSql, /'dydata-d6g0gd1v37fcddf21'/);
-  assert.match(firstSql, /'internal'/);
+  assert.match(firstSql, /E'external'/);
+  assert.doesNotMatch(firstSql, /E'internal'|internalUser/);
   assert.match(firstSql, /'\[\]'::jsonb/);
   assert.match(firstSql, /'2024-01-02T03:04:05\.123456Z'::timestamptz/);
-  assert.match(firstSql, /, 3, E'internal',[^\n]+, true\)/);
-  assert.match(firstSql, /, 2, E'internal',[^\n]+, false\)/);
+  assert.match(firstSql, /, 3, E'external',[^\n]+, true\)/);
+  assert.match(firstSql, /, 2, E'external',[^\n]+, false\)/);
   assert.doesNotMatch(firstSql, /"id"\s*,/);
 
   const encodedBcrypt = Buffer.from(source[0].encrypted_password, "utf8").toString("base64");
@@ -185,6 +187,8 @@ test("packs at most 50 rows per transaction and binds returned internal IDs to e
   assert.match(rollbackSql, /target\."project" = E'dydata-d6g0gd1v37fcddf21'/);
   assert.match(rollbackSql, /target\."sub" = E'00000000-0000-4000-8000-000000000001'/);
   assert.match(rollbackSql, /target\."password" = E'/);
+  assert.match(rollbackSql, /target\."type" = E'external'/);
+  assert.doesNotMatch(rollbackSql, /target\."type" = E'internal'/);
   assert.match(rollbackSql, /target\."email_verified" = true/);
   assert.doesNotMatch(rollbackSql, /ON CONFLICT|DELETE FROM auth\.users\s*;/i);
   assert.match(rollback.rollbackNotice, /另行授权/);
@@ -247,7 +251,7 @@ test("maps an explicit unconfirmed email to pending and gives a future ban prece
   const user = sourceUser(1, { email_confirmed_at: null });
   const pendingPlan = buildAuthImportPlan({ sourceUsers: [user], targetIdentities: [], sampleIds: [user.id], capturedAt: CAPTURED_AT });
   assert.deepEqual(pendingPlan.summary.statusCounts, { active: 0, pending: 1, disabled: 0 });
-  assert.match(pendingPlan.batches[0].sql, /, 2, E'internal',[^\n]+, false\)/);
+  assert.match(pendingPlan.batches[0].sql, /, 2, E'external',[^\n]+, false\)/);
   const confirmed = sourceUser(1, { email_confirmed_at: "2024-05-01T00:00:00.000Z" });
   const confirmedPlan = buildAuthImportPlan({ sourceUsers: [confirmed], targetIdentities: [], sampleIds: [confirmed.id], capturedAt: CAPTURED_AT });
   assert.notEqual(pendingPlan.summary.expectedPlanSha256, confirmedPlan.summary.expectedPlanSha256);
@@ -266,7 +270,7 @@ test("maps an explicit unconfirmed email to pending and gives a future ban prece
   const blockedPending = sourceUser(2, { email_confirmed_at: null, banned_until: "infinity" });
   const blockedPlan = buildAuthImportPlan({ sourceUsers: [blockedPending], targetIdentities: [], sampleIds: [blockedPending.id], capturedAt: CAPTURED_AT });
   assert.deepEqual(blockedPlan.summary.statusCounts, { active: 0, pending: 0, disabled: 1 });
-  assert.match(blockedPlan.batches[0].sql, /, 3, E'internal',[^\n]+, false\)/);
+  assert.match(blockedPlan.batches[0].sql, /, 3, E'external',[^\n]+, false\)/);
 
   const missing = sourceUser(1);
   delete missing.email_confirmed_at;

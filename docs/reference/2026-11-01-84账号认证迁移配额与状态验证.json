@@ -200,5 +200,7 @@
     "node --test scripts/cloudbase/*.test.mjs": "55 passed, 0 failed, exit 0",
     "npx eslint scripts/cloudbase/auth-import.mjs scripts/cloudbase/auth-import.test.mjs": "exit 0",
     "npm run gate:maintainability": "exit 0"
-  }
+  },
+  "conclusionSupersededBy": "2026-11-01-账号配额限制原因核查.md",
+  "correction": "LimitExceeded applies to internalUser organization members; externalUser registered-user creation and login passed in the same trial environment. No purchase justified by this error."
 }
