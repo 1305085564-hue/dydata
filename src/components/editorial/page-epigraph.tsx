@@ -139,7 +139,7 @@ export function PageEpigraph({ pageKey }: { pageKey: PageEpigraphKey }) {
   );
 
   return (
-    <span className="inline-flex items-center gap-1 text-[#78716C]">
+    <span className="inline-flex items-center gap-1 text-[#78716C] max-w-full">
       <svg
         width="14"
         height="14"
@@ -151,7 +151,7 @@ export function PageEpigraph({ pageKey }: { pageKey: PageEpigraphKey }) {
       >
         {MARKS[pageKey]}
       </svg>
-      <span>{live ?? PAGE_EPIGRAPH_DEFAULTS[pageKey]}</span>
+      <span className="truncate">{live ?? PAGE_EPIGRAPH_DEFAULTS[pageKey]}</span>
     </span>
   );
 }

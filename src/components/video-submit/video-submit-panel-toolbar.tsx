@@ -48,13 +48,13 @@ export function VideoSubmitPanelToolbar({
         <div className="px-0.5">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
             {/* 左侧：标题和描述 */}
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0">
               <h1 className="font-normal font-serif text-[20px] sm:text-[28px] leading-[1.20] text-[#141413] tracking-tight">
                 创作立卷 · 表达纪事
               </h1>
-              <p className="text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
+              <div className="text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
                 <PageEpigraph pageKey="workbench" />
-              </p>
+              </div>
             </div>
 
             {/* 右侧：控制区 */}

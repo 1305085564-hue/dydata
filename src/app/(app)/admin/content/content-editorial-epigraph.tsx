@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 
 export const DEFAULT_CONTENT_EPIGRAPH =
-  "每一支作品都是团队的落笔——于完播与互动的真实回响里，看清内容生长的脉络。";
+  "每一支作品都是团队的落笔——于完播与互动的真实回响里，看清生长脉络。";
 
 export function formatCompactCount(val: number): string {
   if (val >= 100_000_000) {
@@ -48,9 +48,9 @@ export function buildContentEditorialEpigraph(rows: ProcessedContentRow[]): stri
         ? healthyCompletions[mid]!
         : (healthyCompletions[mid - 1]! + healthyCompletions[mid]!) / 2;
 
-  const parts: string[] = [`当前视野收录 ${rows.length} 篇`];
+  const parts: string[] = [`收录 ${rows.length} 篇`];
   if (maxPlay > 0) {
-    parts.push(`榜首播放 ${formatCompactCount(maxPlay)}`);
+    parts.push(`榜首 ${formatCompactCount(maxPlay)}`);
   }
   if (medianCompletion !== null) {
     parts.push(`完播中位 ${medianCompletion.toFixed(1)}%`);
@@ -89,7 +89,7 @@ export function ContentEditorialEpigraph() {
   const text = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
-    <span className="inline-flex items-center gap-1 text-[#78716C]">
+    <span className="inline-flex items-center gap-1 text-[#78716C] max-w-full">
       {/* 有机人文微印记：「落笔与回响」水波柔弧（14px 有机手绘几何，非固定 ✦ 字符） */}
       <svg
         width="14"
@@ -114,7 +114,7 @@ export function ContentEditorialEpigraph() {
           strokeLinecap="round"
         />
       </svg>
-      <span>{text}</span>
+      <span className="truncate">{text}</span>
     </span>
   );
 }

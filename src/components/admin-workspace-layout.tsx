@@ -34,9 +34,9 @@ export function AdminWorkspaceLayout({
     <div className={cn("min-w-0 space-y-5", widthMap[width], className)}>
       {hasHeader ? (
         <header className={cn("flex flex-col gap-1 lg:flex-row lg:items-start lg:justify-between", hideHeaderOnMobile && "hidden md:flex")}>
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             {title ? <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413]">{title}</h1> : null}
-            {description ? <p className="max-w-3xl text-[14px] leading-[1.60] text-[#1F1E1D]">{description}</p> : null}
+            {description ? <div className="text-[14px] leading-[1.60] text-[#1F1E1D]">{description}</div> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-2 shrink-0 lg:pt-1">{actions}</div> : null}
         </header>
