@@ -71,7 +71,7 @@ export async function markRead(notificationId: string, userId: string): Promise<
     .select("id");
   if (error) {
     console.error("[notifications] markRead failed", error);
-    return false;
+    throw new Error("更新通知失败");
   }
   if (data && data.length > 0) return true;
 
@@ -85,7 +85,7 @@ export async function markRead(notificationId: string, userId: string): Promise<
     .maybeSingle();
   if (existing.error) {
     console.error("[notifications] markRead verification failed", existing.error);
-    return false;
+    throw new Error("核对通知状态失败");
   }
   return Boolean(existing.data);
 }

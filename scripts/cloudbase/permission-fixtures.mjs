@@ -84,6 +84,7 @@ export async function cleanup() {
     DELETE FROM public.sub_topic_claims WHERE user_id IN (${ids});
     DELETE FROM public.notifications WHERE user_id IN (${ids});
     DELETE FROM public.audit_logs WHERE user_id IN (${ids});
+    DELETE FROM public.admin_first_screen_perf_events WHERE actor_user_id IN (${ids});
     DELETE FROM public.exemption_grant WHERE user_id IN (${ids});
     DELETE FROM public.exemption_request_date WHERE request_id IN (SELECT id FROM public.exemption_request WHERE applicant_user_id IN (${ids}));
     DELETE FROM public.exemption_request WHERE applicant_user_id IN (${ids});
@@ -103,9 +104,10 @@ export async function cleanup() {
     COMMIT;`);
   const zero = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids})) + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + (SELECT count(*) FROM public.videos WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.accounts WHERE profile_id IN (${ids})) + (SELECT count(*) FROM public.sub_topics WHERE created_by IN (${ids})) + (SELECT count(*) FROM public.notifications WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.audit_logs WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.fulfillment_appeals WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.teams WHERE id IN (${quote(uuid(101))},${quote(uuid(102))})) AS remaining`);
   const linked = await execute(`SELECT (SELECT count(*) FROM auth.token WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.authorized WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.identity WHERE sub IN (${ids})) + (SELECT count(*) FROM auth.users_history WHERE sub IN (${ids})) + (SELECT count(*) FROM public.content_observations WHERE observer_id IN (${ids})) + (SELECT count(*) FROM public.daily_reports WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.sample_quality_issues WHERE id IN (${quote(uuid(901))},${quote(uuid(902))})) + (SELECT count(*) FROM public.exemption_request WHERE applicant_user_id IN (${ids})) + (SELECT count(*) FROM public.exemption_request_date WHERE id IN (${quote(uuid(1101))},${quote(uuid(1102))})) + (SELECT count(*) FROM public.exemption_grant WHERE user_id IN (${ids})) AS remaining`);
-  if (Number(zero.rows[0].remaining) || Number(linked.rows[0].remaining)) throw new Error('Cleanup incomplete');
+  const perf = await execute(`SELECT count(*) AS remaining FROM public.admin_first_screen_perf_events WHERE actor_user_id IN (${ids})`);
+  if (Number(zero.rows[0].remaining) || Number(linked.rows[0].remaining) || Number(perf.rows[0].remaining)) throw new Error('Cleanup incomplete');
   if (JSON.stringify(await baseline()) !== JSON.stringify(manifest.baseline)) throw new Error('Non-fixture identities changed');
-  manifest.cleaned = true; manifest.phase = 'cleaned'; manifest.requests.push(result.requestId,zero.requestId,linked.requestId); save(manifest);
+  manifest.cleaned = true; manifest.phase = 'cleaned'; manifest.requests.push(result.requestId,zero.requestId,linked.requestId,perf.requestId); save(manifest);
   console.log(JSON.stringify({ environment: ENV_ID, remaining: 0, identityBaselineUnchanged: true, requestId: zero.requestId }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

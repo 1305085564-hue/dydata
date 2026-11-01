@@ -88,3 +88,24 @@ test("markRead: 本人已读重复调用成功，但他人通知没有匹配行�
     else process.env.CLOUDBASE_SERVICE_API_KEY = previousEnv.serviceKey;
   }
 });
+
+for (const failingMethod of ["PATCH", "GET"]) {
+  test(`markRead: ${failingMethod} 数据库故障不能伪装成无匹配通知`, async () => {
+    const old = { backend: process.env.DYDATA_BACKEND, envId: process.env.CLOUDBASE_ENV_ID, serviceKey: process.env.CLOUDBASE_SERVICE_API_KEY };
+    const oldFetch = globalThis.fetch;
+    Object.assign(process.env, { DYDATA_BACKEND: "cloudbase", CLOUDBASE_ENV_ID: "notification-test", CLOUDBASE_SERVICE_API_KEY: "test-only-key" });
+    globalThis.fetch = (async (input, init) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      return request.method === failingMethod
+        ? Response.json({ code: "DATABASE_XX000", message: "database unavailable" }, { status: 500 })
+        : Response.json([]);
+    }) as typeof fetch;
+    try { await assert.rejects(() => markRead("n1", "u1"), /通知/); }
+    finally {
+      globalThis.fetch = oldFetch;
+      for (const [key, value] of Object.entries({ DYDATA_BACKEND: old.backend, CLOUDBASE_ENV_ID: old.envId, CLOUDBASE_SERVICE_API_KEY: old.serviceKey })) {
+        if (value === undefined) delete process.env[key]; else process.env[key] = value;
+      }
+    }
+  });
+}

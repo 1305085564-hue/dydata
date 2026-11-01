@@ -42,6 +42,13 @@ async function site(key: string): Promise<APIRequestContext> {
   return requests.newContext({baseURL:'http://127.0.0.1:3100',storageState:{...state,cookies:state.cookies.map(c=>({...c,secure:false}))}});
 }
 async function rows(sql: string) { return (await execute(sql)).rows; }
+async function archivedFixture(id: string, archived: boolean) {
+  expect(id.startsWith('f0cba501-2026-4111-a001-')).toBe(true);
+  // Fixture setup uses the existing trusted lifecycle role; acceptance below
+  // still uses genuine ordinary-user JWTs, never ExecutePGSql's Role option.
+  const r=await fetch(`${gateway}/v1/rdb/rest/profiles?id=eq.${id}`,{method:'PATCH',headers:{authorization:`Bearer ${process.env.CLOUDBASE_SERVICE_API_KEY}`,'content-type':'application/json',prefer:'return=representation'},body:JSON.stringify({membership_status:archived?'archived':'active'})});
+  expect(r.status).toBe(200);expect((await r.json()).length).toBe(1);
+}
 async function resetReview() { await execute(`UPDATE public.videos SET review_status='pending',reviewed_by=NULL,reviewed_at=NULL,topic_id=NULL WHERE id=${quote(uuid(301))}`); }
 
 test('environment and role identities are isolated', async()=> {
@@ -55,14 +62,17 @@ for (const [key,state] of [['blocked',3],['pending',2],['archived',1]] as const)
   test(`R01/R09 ${key} old JWT and Cookie lose access`, async()=> {
     const t=await token(key); const ctx=await site(key); const id=identities()[key].id;
     try {
-      await execute(`UPDATE auth.users SET status=${state} WHERE sub=${quote(id)}; UPDATE public.profiles SET membership_status=${quote(key==='archived'?'archived':'active')} WHERE id=${quote(id)}`);
+      await execute(`UPDATE auth.users SET status=${state} WHERE sub=${quote(id)}`);
+      if(key==='archived')await archivedFixture(id,true);
       const r=await rest(t,`profiles?id=eq.${id}&select=id`);
       const body=await r.json();
       expect(r.status >= 400 || (Array.isArray(body)&&body.length===0), 'inactive gateway read denied').toBe(true);
       const page=await ctx.get('/api/admin/content/list?page=1&pageSize=1');
       expect([401,403], 'inactive API must be a denial, not 503').toContain(page.status());
     } finally {
-      await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}; UPDATE public.profiles SET membership_status='active' WHERE id=${quote(id)}`); await ctx.dispose();
+      await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}`);
+      if(key==='archived')await archivedFixture(id,false);
+      await ctx.dispose();
     }
   });
 }
@@ -73,7 +83,9 @@ test('R02 logout invalidates the old gateway token', async()=> {
     const state=await ctx.storageState();
     const cookie=state.cookies.find(c=>c.name==='dydata-cloudbase-session');
     expect(Boolean(cookie)).toBe(true);
-    const session=JSON.parse(decodeURIComponent(cookie!.value));
+    // Next's Set-Cookie encoder wraps the session serializer's URI encoding.
+    const session=JSON.parse(decodeURIComponent(decodeURIComponent(cookie!.value))) as {accessToken:string};
+    expect(typeof session.accessToken,'valid synthetic session cookie').toBe('string');
     expect((await ctx.post('/api/cloudbase/auth/signout',{data:{}})).status()).toBe(200);
     expect((await ctx.get('/api/cloudbase/auth/user')).status()).toBe(401);
     const r=await rest(session.accessToken,`profiles?id=eq.${identities().memberA.id}&select=id`);
@@ -149,7 +161,7 @@ test('R10 employee can query readable video topic status through GET and POST', 
 test('R08 cross-team exemption approval returns permission denial and leaves dates intact', async()=> {
   const ctx=await site('adminA');
   try {
-    const r=await ctx.post('/api/exemptions/review',{data:{request_id:uuid(1002),action:'approve'}});
+    const r=await ctx.post('/api/exemptions/review',{data:{request_id:uuid(1002),action:'approved'}});
     expect(r.status()).toBe(403);
     expect((await rows(`SELECT request_status FROM public.exemption_request WHERE id=${quote(uuid(1002))}`))[0].request_status).toBe('pending');
     expect((await rows(`SELECT status FROM public.exemption_request_date WHERE id=${quote(uuid(1102))}`))[0].status).toBe('pending');
@@ -207,7 +219,7 @@ test('R11 direct approval is denied; legitimate approval and reopen preserve act
     const reopened=(await rows(`SELECT status,handler_id FROM public.fulfillment_appeals WHERE id=${quote(uuid(601))}`))[0];
     expect(reopened.status).toBe('pending');expect(reopened.handler_id).toBeNull();
     const audit=await rows(`SELECT action FROM public.audit_logs WHERE user_id=${quote(admin)} AND detail::jsonb->>'appeal_id'=${quote(uuid(601))} AND action IN ('handle_fulfillment_appeal','reopen_fulfillment_appeal')`);
-    expect(new Set(audit.map(row=>row.action))).toEqual(new Set(['handle_fulfillment_appeal','reopen_fulfillment_appeal']));
+    expect(new Set(audit.map((row:{action:string})=>row.action))).toEqual(new Set(['handle_fulfillment_appeal','reopen_fulfillment_appeal']));
   } finally {await execute(`UPDATE public.fulfillment_appeals SET status='pending',handler_id=NULL,handled_at=NULL,decision_reason=NULL WHERE id=${quote(uuid(601))}`);}
 });
 test('R01 view gate preserves active access and rejects a blocked old JWT', async()=> {
@@ -222,6 +234,31 @@ test('R01 view gate preserves active access and rejects a blocked old JWT', asyn
       const stats=await rest(jwt,`${name}?limit=1`);expect([401,403]).toContain(stats.status);
     }
   } finally {await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}`);}
+});
+test('@browser D01/B04 real private screenshot requires exact video context and an active session', async()=> {
+  // Read an existing reference and object only. No historical row or COS object is changed.
+  const candidate=await rows(`SELECT v.id, coalesce(nullif(s.curve_screenshot_url,''),s.screenshot_urls[1]) AS url FROM public.videos v JOIN public.profiles p ON p.id=v.user_id JOIN auth.users u ON u.sub=p.id::text JOIN LATERAL (SELECT * FROM public.video_metrics_snapshots s WHERE s.video_id=v.id AND s.snapshot_type='24h' ORDER BY s.captured_at DESC LIMIT 1) s ON true WHERE v.lifecycle_state='active' AND p.team_id IS NOT NULL AND p.membership_status='active' AND u.status=1 AND coalesce(nullif(s.curve_screenshot_url,''),s.screenshot_urls[1]) LIKE '%/api/submission-screenshots/file?%' ORDER BY v.id LIMIT 1`);
+  expect(candidate.length,'existing private screenshot reference required').toBe(1);
+  const stored=new URL(candidate[0].url,'https://dydata.local');const path=stored.searchParams.get('path');
+  expect(Boolean(path)).toBe(true);
+  const bare=`/api/submission-screenshots/file?path=${encodeURIComponent(path!)}`;
+  const bound=`${bare}&videoId=${candidate[0].id}`;
+  const ctx=await site('memberA');const anon=await requests.newContext({baseURL:'http://127.0.0.1:3100'});
+  try {
+    expect((await anon.get(bound)).status()).toBe(401);
+    expect((await ctx.get(bare)).status()).toBe(403);
+    expect((await ctx.get(`${bare}&videoId=${uuid(301)}`)).status()).toBe(403);
+    const image=await ctx.get(bound);
+    expect(image.status()).toBe(200);expect(image.headers()['content-type']).toMatch(/^image\//);
+    expect(image.headers()['x-screenshot-backend']).toBe('cos');expect((await image.body()).byteLength).toBeGreaterThan(0);
+    expect((await ctx.post('/api/submission-screenshots/grant',{data:{}})).status()).toBe(200);
+    expect((await ctx.get(bound)).status()).toBe(200);
+    await execute(`UPDATE auth.users SET status=3 WHERE sub=${quote(identities().memberA.id)}`);
+    expect([401,403]).toContain((await ctx.get(bound)).status());
+  } finally {
+    await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(identities().memberA.id)}`);
+    await ctx.dispose();await anon.dispose();
+  }
 });
 test('@browser role pages retain access rules and never request Supabase', async({browser})=> {
   for(const role of ['memberA','adminA','ownerA']) {
