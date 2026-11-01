@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 import { createCloudBaseDataClient, createCloudBaseFetch } from "./data-client";
 
 test("user server data client forwards only the CloudBase user JWT", async () => {
@@ -89,4 +90,35 @@ test("admin auth reads CloudBase auth projections only and rejects unsupported w
   const write = await client.auth.admin.deleteUser("stable-sub");
   assert.equal(write.error?.code, "unsupported_operation");
   delete process.env.CLOUDBASE_SERVICE_API_KEY;
+});
+
+test("database adapter unwraps known SQLSTATE codes without turning real faults into permission denials", async () => {
+  const previousEnvId = process.env.CLOUDBASE_ENV_ID;
+  process.env.CLOUDBASE_ENV_ID = "env-test";
+  const clientForError = (code: string, status: number) => createCloudBaseDataClient({
+    role: "user",
+    userToken: "test-jwt",
+    fetcher: async () => Response.json({ code, message: `database response ${code}` }, { status }),
+  });
+
+  try {
+    const denied = await clientForError("DATABASE_42501", 403).rpc("probe_permission", {});
+    assert.equal(denied.error?.code, "42501");
+
+    const duplicate = await clientForError("DATABASE_23505", 409).rpc("probe_duplicate", {});
+    assert.equal(duplicate.error?.code, "23505");
+
+    const faultyResult = await reviewExemptionRequestAtomically({
+      supabase: clientForError("DATABASE_42P01", 500) as never,
+      requestId: "request-1",
+      decision: "rejected",
+    });
+    assert.equal(faultyResult.ok, false);
+    if (faultyResult.ok) throw new Error("expected database failure");
+    assert.equal(faultyResult.status, 500, "真实数据库故障仍按系统错误处理");
+    assert.equal(faultyResult.message, "豁免操作失败");
+  } finally {
+    if (previousEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID;
+    else process.env.CLOUDBASE_ENV_ID = previousEnvId;
+  }
 });

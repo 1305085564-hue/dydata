@@ -30,6 +30,7 @@ import {
 } from "@/app/api/topics/sub-topics/[id]/start-scripting/route";
 
 const ID = "11111111-1111-4111-8111-111111111111";
+const trustedTeamScope = { kind: "team", visibleUserIds: ["user-1"] };
 const LAYERED_FIELDS = [
   "businessSucceeded",
   "permissionChecked",
@@ -56,7 +57,7 @@ function context() {
         from: () => ({ insert: async () => ({ error: null }) }),
       },
       teamId: "team-1",
-      teamScope: { kind: "team", visibleUserIds: ["user-1"] },
+      teamScope: trustedTeamScope,
       permissionContext: {
         permissionInfo: {
           companyRole: "company_owner",
@@ -167,6 +168,23 @@ test("topics 认领链：claim/return/start-scripting 均传播依赖失败和�
     assertLayered(successBody, `${item.label} success`);
     assert.equal(successBody.businessSucceeded, true);
   }
+});
+
+test("claim 与 start-scripting 都把可信团队可见范围交给共享开始写作入口", async () => {
+  const received: unknown[][] = [];
+  const deps = {
+    requireActiveTeamContext: async () => context(),
+    startWritingClaim: async (...args: unknown[]) => {
+      received.push(args);
+      return { ok: true as const, value: { status: "writing" } };
+    },
+  } as never;
+
+  await buildClaimResponse(request(), ctx, deps);
+  await buildStartScriptingResponse(request(), ctx, deps);
+
+  assert.equal(received.length, 2);
+  assert.deepEqual(received.map((args) => args[3]), [trustedTeamScope, trustedTeamScope]);
 });
 
 test("topics 认领链：一次请求只写一条结构化观测日志，且 request id 原样回传", async () => {

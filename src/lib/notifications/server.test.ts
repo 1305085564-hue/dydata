@@ -28,3 +28,47 @@ test("非空操作在缺少服务端配置时明确抛错", async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
   }
 });
+
+test("markRead: 本人已读重复调用成功，但他人通知没有匹配行时不能返回成功", async () => {
+  const previousEnv = {
+    backend: process.env.DYDATA_BACKEND,
+    envId: process.env.CLOUDBASE_ENV_ID,
+    serviceKey: process.env.CLOUDBASE_SERVICE_API_KEY,
+  };
+  const previousFetch = globalThis.fetch;
+  const requests: Array<{ method: string; id: string | null; userId: string | null; status: string | null }> = [];
+  process.env.DYDATA_BACKEND = "cloudbase";
+  process.env.CLOUDBASE_ENV_ID = "notification-test";
+  process.env.CLOUDBASE_SERVICE_API_KEY = "notification-test-key";
+  globalThis.fetch = (async (input, init) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    const url = new URL(request.url);
+    requests.push({
+      method: request.method,
+      id: url.searchParams.get("id"),
+      userId: url.searchParams.get("user_id"),
+      status: url.searchParams.get("status"),
+    });
+    if (request.method === "PATCH") return Response.json([], { status: 200 });
+    if (request.method === "GET") {
+      const row = url.searchParams.get("id") === "eq.own-read" ? [{ id: "own-read", status: "read" }] : [];
+      return Response.json(row, { status: 200 });
+    }
+    throw new Error(`Unexpected notifications request ${request.method}`);
+  }) as typeof fetch;
+
+  try {
+    assert.equal(await markRead("own-read", "user-1"), true);
+    assert.equal(await markRead("other-user-read", "user-1"), false);
+    assert.ok(requests.every((request) => request.userId === "eq.user-1"), "所有读写都按可信 user_id 限定");
+    assert.ok(requests.filter((request) => request.method === "PATCH").every((request) => request.status === "eq.unread"));
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousEnv.backend === undefined) delete process.env.DYDATA_BACKEND;
+    else process.env.DYDATA_BACKEND = previousEnv.backend;
+    if (previousEnv.envId === undefined) delete process.env.CLOUDBASE_ENV_ID;
+    else process.env.CLOUDBASE_ENV_ID = previousEnv.envId;
+    if (previousEnv.serviceKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = previousEnv.serviceKey;
+  }
+});

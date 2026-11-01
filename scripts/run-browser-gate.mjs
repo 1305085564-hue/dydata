@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertGateEnvironment } from "./assert-local-gate-env.mjs";
 import { assertGateRevisionUnchanged, lockGateRevision } from "./gate-lock.mjs";
+import { createGateCommandRunner, runCloudBaseGate } from "./cloudbase-gate-lifecycle.mjs";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -32,14 +33,21 @@ try {
 //
 // 发布管理两条外观用例读种子落盘的时间锚点（output/ 是 gitignored 的），
 // 干净检出没跑过 seed:roles 会直接硬失败，这里补齐这层隐式依赖。
-if (!existsSync(resolve(process.cwd(), "output/gate-roles-anchor.json"))) {
+if (process.env.DYDATA_GATE_BACKEND !== "cloudbase" && !existsSync(resolve(process.cwd(), "output/gate-roles-anchor.json"))) {
   const seedStatus = run(npmCommand, ["run", "seed:roles"]);
   if (seedStatus !== 0) process.exitCode = seedStatus;
 }
 
 let exitCode = process.exitCode ?? 0;
-if (exitCode === 0) exitCode = run(npmCommand, ["run", "build"]);
-if (exitCode === 0) exitCode = run(process.execPath, ["node_modules/@playwright/test/cli.js", "test"]);
+if (process.env.DYDATA_GATE_BACKEND === "cloudbase") {
+  const runner = createGateCommandRunner();
+  try { exitCode = await runCloudBaseGate({ kind: "browser", run: runner.run }); }
+  catch (error) { console.error(`[gate-browser] ${error instanceof Error ? error.message : error}`); exitCode = 1; }
+  finally { runner.dispose(); }
+} else {
+  if (exitCode === 0) exitCode = run(npmCommand, ["run", "build"]);
+  if (exitCode === 0) exitCode = run(process.execPath, ["node_modules/@playwright/test/cli.js", "test"]);
+}
 
 try {
   assertGateRevisionUnchanged(lockedRevision);

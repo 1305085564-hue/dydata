@@ -1,6 +1,7 @@
 import { createWriteStream, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { assertCloudBaseGateBuild } from "./cloudbase-gate-lifecycle.mjs";
 
 const port = process.env.PORT || "3100";
 const logPath = process.env.DYDATA_ROLE_GATE_LOG_FILE || resolve(process.cwd(), "output/审批九类/服务端.log");
@@ -25,12 +26,19 @@ function assertLocalOnly() {
     throw new Error(`角色门禁服务端只允许本地隔离库：api=${hosts.api}, db=${hosts.db}`);
   }
 }
-assertLocalOnly();
+if (process.env.DYDATA_GATE_BACKEND === "cloudbase") assertCloudBaseGateBuild();
+else {
+  if (process.env.DYDATA_BACKEND === "cloudbase" || process.env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase") {
+    throw new Error("CloudBase 门禁服务必须显式启用固定隔离模式");
+  }
+  assertLocalOnly();
+}
 
 mkdirSync(dirname(logPath), { recursive: true });
 const log = createWriteStream(logPath, { flags: "w" });
 const nextBin = resolve(process.cwd(), "node_modules/next/dist/bin/next");
-const child = spawn(process.env.NODE_BINARY || "node", [nextBin, "start", "-p", port], {
+const hostArgs = process.env.DYDATA_GATE_BACKEND === "cloudbase" ? ["-H", "127.0.0.1"] : [];
+const child = spawn(process.execPath, [nextBin, "start", ...hostArgs, "-p", port], {
   env: process.env,
   stdio: ["ignore", "pipe", "pipe"],
 });

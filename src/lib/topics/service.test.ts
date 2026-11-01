@@ -94,6 +94,44 @@ test("开始写作幂等：已有在写记录时直接返回，不新建", async
   assert.equal(db.sub_topic_claims.length, 1);
 });
 
+test("开始写作只接受当前团队可见的选题，并保留多人写作与本人幂等", async () => {
+  const startWithScope = startWritingClaim as unknown as (
+    client: Parameters<typeof startWritingClaim>[0],
+    userId: string,
+    subTopicId: string,
+    scope: { visibleUserIds: string[] },
+  ) => ReturnType<typeof startWritingClaim>;
+
+  const invisible: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-outsider", created_by: "team-b-owner", library_status: "in_library" }],
+    sub_topic_claims: [],
+  };
+  const denied = await startWithScope(
+    createWritingFake(invisible).client,
+    "user-1",
+    "sub-outsider",
+    { visibleUserIds: ["user-1", "team-a-owner"] },
+  );
+  assert.equal(denied.ok, false);
+  assert.equal(invisible.sub_topic_claims.length, 0, "不可见选题不能新增 claim");
+
+  const visible: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-team-a", created_by: "team-a-owner", library_status: "in_library" }],
+    sub_topic_claims: [],
+  };
+  const client = createWritingFake(visible).client;
+  const scope = { visibleUserIds: ["user-1", "user-2", "team-a-owner"] };
+  const first = await startWithScope(client, "user-1", "sub-team-a", scope);
+  const retry = await startWithScope(client, "user-1", "sub-team-a", scope);
+  const secondWriter = await startWithScope(client, "user-2", "sub-team-a", scope);
+
+  assert.equal(first.ok, true);
+  assert.equal(retry.ok, true);
+  assert.equal(secondWriter.ok, true, "另一位可见团队成员仍可同时写同一选题");
+  assert.equal(visible.sub_topic_claims.length, 2);
+  assert.deepEqual(visible.sub_topic_claims.map((row) => row.user_id).sort(), ["user-1", "user-2"]);
+});
+
 test("选题关联作品只取最新 24h 快照，不回退历史最大播放或 72h", () => {
   const latest = selectLatest24hSnapshot([
     { snapshot_type: "72h", captured_at: "2026-09-30T12:00:00Z", play_count: 99999 },
