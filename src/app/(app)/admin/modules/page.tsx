@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
 import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
 import { canAccessAdminPath } from "@/lib/analytics-access";
@@ -56,7 +57,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   return (
     <AdminWorkspaceLayout
       title="成员管理"
-      description="团队架构、分组归属与成员权限的维护入口"
+      description={<PageEpigraph pageKey="modules" />}
       width="wide"
     >
       <Suspense fallback={<TeamV2Skeleton />}>

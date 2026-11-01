@@ -8,6 +8,7 @@ import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import type { TimeRangePreset } from "@/types/fulfillment";
 
@@ -57,7 +58,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   return (
     <AdminWorkspaceLayout
       title="发布管理"
-      description="随时了解每位成员的发布节奏，断更与补交都有去处。"
+      description={<PageEpigraph pageKey="fulfillment" />}
       width="wide"
     >
       <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>

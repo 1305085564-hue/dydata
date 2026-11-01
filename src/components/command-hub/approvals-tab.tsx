@@ -251,7 +251,7 @@ export function ApprovalsTab({
         }
         description={
           filterNature === "todo"
-            ? "当前没有需要跟进的权限申请或系统风险事项。"
+            ? "没有等你回应的申请，也没有悬着的风险，一切安好。"
             : filterNature !== "all"
               ? "可切换筛选条件查看其他申请与事项。"
               : "团队请假、豁免、补交申诉与待办事项均已处理完成。"
@@ -362,7 +362,7 @@ export function ApprovalsTab({
       <EmptyState
         variant="compact"
         title="待办已全部完成"
-        description="当前没有需要跟进的待办事项。"
+        description="手边的事都已安放妥当，可以歇口气。"
       />
     ) : (
       <div className="space-y-3">

@@ -98,7 +98,7 @@ export function WorkGroupListTab({
       <EmptyState
         illustration={<CompassConstellationIllustration size={96} />}
         title="工种小队功能准备就绪中"
-        description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理成员。"
+        description="小队的结构还在悄悄落地，稍后就能在这里按小队看见同行们。"
       />
     );
   }

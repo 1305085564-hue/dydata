@@ -212,7 +212,7 @@ export function ModelManagerDialog({
                   <EmptyState
                     variant="compact"
                     title="没有找到匹配的模型"
-                    description="可尝试重置搜索关键词或切换状态筛选"
+                    description="换个关键词，或放宽状态筛选，也许就找到了。"
                   />
                 </div>
               ) : (

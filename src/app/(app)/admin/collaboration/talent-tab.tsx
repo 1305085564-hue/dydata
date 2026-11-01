@@ -248,7 +248,7 @@ export function TalentTab({
         <EmptyState
           illustration={<CompassConstellationIllustration size={96} />}
           title="本月还没有达人数据"
-          description="名下拥有自营或出镜账号的成员将在此展示作品产量与数据表现。"
+          description="有自营或出镜账号的成员，会带着他们的作品与回响来到这里。"
         />
       </div>
     );

@@ -173,7 +173,7 @@ export function BreakdownWorksSection({
                   <EmptyState
                     variant="compact"
                     title="还没有关联作品"
-                    description="还没有团队成员关联此选题发布视频"
+                    description="还没有同行带着这个选题交出成片"
                   />
                 )}
               </section>

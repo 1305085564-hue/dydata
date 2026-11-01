@@ -132,7 +132,7 @@ export default async function PersonProfilePage({
 
   if (!isUuidLike(userId)) {
     return (
-      <NoticeCard title="链接不正确" description="这个成员主页链接无法识别，请从站内点人名进入。" />
+      <NoticeCard title="链接不正确" description="这个主页的地址有些走样，从站内点开成员的名字就能找到 TA。" />
     );
   }
 
@@ -174,7 +174,7 @@ export default async function PersonProfilePage({
     return (
       <NoticeCard
         title="无权查看"
-        description="你没有查看这位成员主页的权限，只能查看自己或本公司可见成员的成长档案。"
+        description="这位成员的档案暂时不对你开放，你可以翻阅自己与本公司可见同行的成长档案。"
       />
     );
   }
@@ -187,7 +187,7 @@ export default async function PersonProfilePage({
     evaluationStandards,
   });
   if (!data) {
-    return <NoticeCard title="成员不存在" description="找不到这位成员的成长档案。" />;
+    return <NoticeCard title="成员不存在" description="没有找到这位成员的成长档案。" />;
   }
 
   const { person, monthSummary, trend, strengths, topWorks, anomalies } = data;

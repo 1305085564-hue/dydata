@@ -19,7 +19,7 @@ export default function TopicsError({ error, reset }: TopicsErrorProps) {
   return (
     <RouteErrorState
       title="选题库加载失败"
-      description="刚才加载时碰到了点问题，再试一次通常就好了。"
+      description="刚才这一页没能翻开，再试一次，多半就好了。"
       reset={reset}
     />
   );

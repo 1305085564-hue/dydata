@@ -85,7 +85,7 @@ export function TeamActivitySection({
         <EmptyState
           variant="compact"
           title="还没有团队写作动态"
-          description="开始写题或产出成片后会自动出现在这里。"
+          description="一有人落笔写题、交出成片，动态便会在这里浮现。"
         />
       </section>
     );

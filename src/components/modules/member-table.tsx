@@ -97,7 +97,7 @@ export function MemberTable({
               variant="compact"
               className="py-12"
               title="没有找到成员"
-              description="调整筛选或搜索条件试试"
+              description="换个筛选或关键词，再找找看"
             />
           ) : (
             <div className="space-y-0.5">

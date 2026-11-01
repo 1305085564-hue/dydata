@@ -61,7 +61,7 @@ export function BreakdownDetailContent({
           <EmptyState
             variant="compact"
             title="请先申请加入团队"
-            description="当前账号没有有效团队归属，选题详情暂不可用。"
+            description="这个账号还没有加入团队，选题详情暂时无法打开。"
             action={{
               label: "关闭",
               onClick: handleClose,

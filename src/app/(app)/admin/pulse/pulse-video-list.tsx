@@ -192,7 +192,7 @@ export function PulseVideoList({
         <EmptyState
           variant="compact"
           title={getEmptyTitle()}
-          description="可切换上方日历查看其他日期。"
+          description="换个日期，也许能遇见别的落笔。"
         />
       ) : (
         <>

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
@@ -61,13 +62,14 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
       title="协作管理"
       description={
         <span>
-          按月查看岗位与小组的作品产量、负责账号与数据表现。查看
+          <PageEpigraph pageKey="collaboration" />
+          {" 查看"}
           <RatingRulesDialog
             evaluationStandards={evaluationStandards}
             trigger={
               <button
                 type="button"
-                className="inline-flex items-center text-[#1F1E1D] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal ml-0.5"
+                className="inline-flex items-center text-[#78716C] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal ml-0.5"
               >
                 作品评级规则
               </button>

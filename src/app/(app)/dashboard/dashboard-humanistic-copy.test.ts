@@ -24,7 +24,7 @@ const serifClass = ["font", "serif"].join("-");
 
 test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () => {
   assert.match(source, /创作立卷 · 表达纪事/);
-  assert.match(source, /从容记录每一次真实表达 · 数据沉淀与运营复盘/);
+  assert.match(source, /PageEpigraph pageKey="workbench"/);
   assert.match(source, /from "@\/components\/ui\/card"/);
   assert.match(source, /<Card\b/);
   const bannedColors = [
@@ -48,7 +48,7 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
   assert.match(source, /停笔调养/);
   assert.match(source, /历史手稿/);
   assert.match(source, /历史手稿静待立卷/);
-  assert.match(source, /完成创作立卷或补交后，这里会持续收录你的纪事手稿。/);
+  assert.match(source, /每次立卷或补交之后，你的纪事手稿都会收在这里。/);
   assert.match(exemptionSource, /停笔调养 · 申请请假或(特殊)?豁免/);
   assert.doesNotMatch(source, /今日提交工作台/);
   assert.doesNotMatch(source, /记录运营数据，提交今日内容/);
@@ -83,7 +83,7 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     source,
-    /<div className="space-y-1">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?从容记录每一次真实表达/,
+    /<div className="space-y-1">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?PageEpigraph pageKey="workbench"/,
     "大标题与副标必须保持 space-y-1 呼吸间距",
   );
 

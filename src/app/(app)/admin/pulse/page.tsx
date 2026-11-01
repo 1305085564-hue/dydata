@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -41,7 +42,7 @@ export default async function AdminPulsePage({ searchParams }: Props) {
   return (
     <AdminWorkspaceLayout
       title="每日大盘"
-      description="晨间 3 分钟：大盘涨跌、人员战报、红黑两头。"
+      description={<PageEpigraph pageKey="pulse" />}
       width="wide"
       hideHeaderOnMobile={true}
     >

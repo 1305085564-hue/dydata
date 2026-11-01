@@ -305,7 +305,7 @@ export function TopicSelectDropdown({
                   <EmptyState
                     variant="compact"
                     title="还没有认领中的选题"
-                    description="在上方输入关键字可搜索团队共享题库"
+                    description="在上方写几个字，就能翻找团队共享的题库"
                   />
                 ) : (
                   myClaims.map((item) => (

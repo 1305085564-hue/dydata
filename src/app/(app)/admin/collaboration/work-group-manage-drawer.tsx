@@ -694,7 +694,7 @@ export function WorkGroupManageDrawer({
                   <EmptyState
                     variant="compact"
                     title="还没有组员"
-                    description="请在上方勾选成员并加入"
+                    description="在上方勾选几位同行，让小队有第一批伙伴"
                     className="py-6 bg-[#F1F1F0]"
                   />
                 ) : (
@@ -805,7 +805,7 @@ export function WorkGroupManageDrawer({
                 <EmptyState
                   variant="compact"
                   title="还没有小队"
-                  description="请点击上方「新建小队」"
+                  description="点上方「新建小队」，为同行们搭个落脚处"
                   className="py-8 bg-[#F1F1F0]"
                 />
               ) : (

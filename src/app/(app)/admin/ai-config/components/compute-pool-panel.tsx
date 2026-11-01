@@ -813,7 +813,7 @@ export function ComputePoolPanel() {
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
               title="还没有现役在册模型"
-              description="接入渠道后，同步模型并在模型下查看可用渠道。"
+              description="接入一条渠道，模型便会陆续到来，可用的渠道会安坐在它们名下。"
               action={{ label: "接入渠道", onClick: () => setAddKeyModal({ open: true, providerId: null }) }}
             />
           ) : (
@@ -952,7 +952,7 @@ export function ComputePoolPanel() {
         open={confirmTestAllOpen}
         onOpenChange={setConfirmTestAllOpen}
         title="检测全部渠道模型"
-        description="系统将限流并行测试全池所有渠道挂载的模型连通性。该操作可能耗时较长，测试结果将在正下方呈现。确定继续吗？"
+        description="将逐一叩问全池渠道上的每个模型是否应答，会花上一些时间，结果会在下方慢慢铺开。现在开始吗？"
         confirmText="开始全池检测"
         cancelText="取消"
         loading={testingAllModels}

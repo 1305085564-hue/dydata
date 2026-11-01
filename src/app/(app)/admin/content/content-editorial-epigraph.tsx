@@ -6,7 +6,7 @@ import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 export const DEFAULT_CONTENT_EPIGRAPH =
   "每一支作品都是团队的落笔——于完播与互动的真实回响里，看清内容生长的脉络。";
 
-function formatCompactCount(val: number): string {
+export function formatCompactCount(val: number): string {
   if (val >= 100_000_000) {
     return `${(val / 100_000_000).toFixed(1).replace(/\.0$/, "")}亿`;
   }

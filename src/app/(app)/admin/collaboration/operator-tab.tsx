@@ -370,7 +370,7 @@ export function OperatorTab({
         <EmptyState
           illustration={<DeskStudyIllustration size={96} />}
           title="本月还没有跨账号协同记录"
-          description="个人自营账号请在达人专栏查看；此处收录跨账号分工与协同作品。"
+          description="自营账号的故事在达人专栏；这里留给跨账号的并肩合作。"
         />
       </div>
     );

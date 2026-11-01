@@ -67,7 +67,7 @@ export function HistoryTab({
       <EmptyState
         variant="compact"
         title="还没有历史审批记录"
-        description="所有审阅处理后的申请记录将在此处归档，可随时回溯。"
+        description="每一份审阅过的申请都会留在这里，想回看时随时翻阅。"
       />
     ) : (
       <div className="space-y-3">

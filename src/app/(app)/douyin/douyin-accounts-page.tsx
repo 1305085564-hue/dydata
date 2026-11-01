@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
+import { buildDouyinEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -62,13 +64,22 @@ export function DouyinAccountsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pendingRevokeId, setPendingRevokeId] = useState<string | null>(null);
+  usePublishPageEpigraph(
+    "douyin",
+    loading
+      ? null
+      : buildDouyinEpigraph(
+          accounts.length,
+          accounts.filter((a) => a.binding?.status === "active" || a.binding?.status === "expiring").length,
+        ),
+  );
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
     const response = await fetch("/api/douyin/accounts", { cache: "no-store" });
     const payload = await response.json() as { data?: AccountRow[]; error?: { message?: string } };
     if (!response.ok) {
-      setNotice({ text: payload.error?.message ?? "加载抖音账号失败", tone: "error" });
+      setNotice({ text: payload.error?.message ?? "账号这一页没能翻开，稍后再试一次", tone: "error" });
     } else {
       setAccounts(payload.data ?? []);
     }
@@ -89,7 +100,7 @@ export function DouyinAccountsPage() {
       window.location.assign(payload.data.authorizationUrl);
       return;
     }
-    setNotice({ text: payload.error?.message ?? "创建授权失败", tone: "error" });
+    setNotice({ text: payload.error?.message ?? "授权这一步没走通，可以再试一次", tone: "error" });
     setBusy(null);
   }
 
@@ -106,7 +117,7 @@ export function DouyinAccountsPage() {
       await loadAccounts();
       await loadMetrics(bindingId);
     } else {
-      setNotice({ text: payload.error?.message ?? "同步失败", tone: "error" });
+      setNotice({ text: payload.error?.message ?? "这次同步没走通，可以再试一次", tone: "error" });
     }
     setBusy(null);
   }
@@ -153,7 +164,7 @@ export function DouyinAccountsPage() {
         <EmptyState
           className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6"
           title="当前没有可绑定的业务账号"
-          description="请联系管理员开通业务账号后再绑定"
+          description="业务账号还在等管理员开通，开通后就能来绑定了。"
         />
       ) : null}
       <div className="grid gap-4 md:grid-cols-2">
@@ -225,7 +236,7 @@ export function DouyinAccountsPage() {
           if (!open) setPendingRevokeId(null);
         }}
         title="确认解除绑定？"
-        description="解除后会停止自动同步，但不会删除历史作品和数据。"
+        description="解除后便不再自动同步，已有的作品和数据都会好好留着。"
         confirmText={busy === pendingRevokeId ? "正在解除..." : "确认解除"}
         onConfirm={confirmRevoke}
         destructive

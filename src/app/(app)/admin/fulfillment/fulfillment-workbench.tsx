@@ -13,6 +13,8 @@ import {
   formatDisplayDate,
   updateMemberDayOptimistically,
 } from "@/lib/fulfillment/domain/workbench";
+import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
+import { buildFulfillmentEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { useFulfillmentWorkbenchState } from "./fulfillment-workbench-state";
 import { useFulfillmentWorkbenchActions } from "./fulfillment-workbench-actions";
 import { FulfillmentWorkbenchView } from "./fulfillment-workbench-view";
@@ -50,6 +52,7 @@ export function FulfillmentWorkbench({
     canManage,
   });
   const actions = useFulfillmentWorkbenchActions({ state });
+  usePublishPageEpigraph("fulfillment", buildFulfillmentEpigraph(state.calendarData.stats));
 
   return (
     <FulfillmentWorkbenchView

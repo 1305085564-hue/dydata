@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 
 import { CalendarDays, FilePenLine, History } from "lucide-react";
 
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { Button } from "@/components/ui/button";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
@@ -52,7 +53,7 @@ export function VideoSubmitPanelToolbar({
                 创作立卷 · 表达纪事
               </h1>
               <p className="text-[14px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
-                从容记录每一次真实表达 · 数据沉淀与运营复盘
+                <PageEpigraph pageKey="workbench" />
               </p>
             </div>
 

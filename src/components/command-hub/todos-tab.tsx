@@ -64,7 +64,7 @@ export function TodosTab({
       <EmptyState
         variant="compact"
         title="待办已全部完成"
-        description="当前没有需要跟进的权限申请或系统风险事项。"
+        description="没有等你回应的申请，也没有悬着的风险，一切安好。"
       />
     ) : (
       <div className="space-y-3">
