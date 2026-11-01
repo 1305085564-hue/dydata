@@ -9,6 +9,11 @@ import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { resolveEffectiveDates } from "./content-list-filters";
+import {
+  buildContentEditorialEpigraph,
+  DEFAULT_CONTENT_EPIGRAPH,
+  setContentEditorialEpigraph,
+} from "./content-editorial-epigraph";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
 function shiftDateString(dateStr: string, days: number): string {
@@ -107,6 +112,13 @@ export function ContentList(props: ContentListProps) {
   const totalPages = Math.max(1, props.totalPages ?? Math.ceil(processedRows.length / state.pageSize));
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
+
+  useEffect(() => {
+    setContentEditorialEpigraph(buildContentEditorialEpigraph(visibleRows));
+    return () => {
+      setContentEditorialEpigraph(DEFAULT_CONTENT_EPIGRAPH);
+    };
+  }, [visibleRows]);
 
   /** 区间模式下自选起止日期 */
   const handleRangeChange = useCallback((start: string, end: string) => {

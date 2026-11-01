@@ -7,11 +7,12 @@ import type { TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
+import { ContentEditorialEpigraph, DEFAULT_CONTENT_EPIGRAPH } from "./content-editorial-epigraph";
 import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 export const metadata: Metadata = {
   title: "数据复盘 - DYData",
-  description: "查看异常视频证据，定位内容问题与可能原因。",
+  description: DEFAULT_CONTENT_EPIGRAPH,
 };
 
 type ContentView = "all" | "trash";
@@ -52,7 +53,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   return (
     <AdminWorkspaceLayout
       title="数据复盘"
-      description="查看异常视频证据，定位内容问题与可能原因。"
+      description={<ContentEditorialEpigraph />}
       width="wide"
       hideHeaderOnMobile={true}
     >
