@@ -212,8 +212,7 @@ export function AdminModulesContentV3({
     (canManageCompany || (canEditTeamMembers && activeMemberCompanyRole === "member"));
   const canManageActiveMemberAccount = Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || (canManageMembers && activeMemberCompanyRole === "member"));
-  const canEditWorkGroups = Boolean(activeMember) && !activeMemberIsReadOnly &&
-    (canManageCompany || currentUserPermissions.manage_members === true);
+  const canEditWorkGroups = canManageActiveMemberAccount;
 
   // --- ACTIONS ---
 

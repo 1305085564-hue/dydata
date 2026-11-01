@@ -1,0 +1,320 @@
+{
+  "beforeFix": [
+    {
+      "name": "fixture_created",
+      "requestId": "8d3f0bbb-64c6-48d0-869a-d880a454a0d3"
+    },
+    {
+      "name": "after_reload",
+      "memberVisible": true,
+      "groupVisible": true
+    },
+    {
+      "name": "page_remove_assignment",
+      "unassigned": true
+    },
+    {
+      "name": "admin_other_admin_selector",
+      "comboboxCount": 1
+    },
+    {
+      "name": "admin_other_admin_click",
+      "unchanged": true,
+      "rejectedMessage": true
+    },
+    {
+      "name": "cleanup_verified",
+      "requestId": "24eef75d-aed3-46e3-9e3b-fa23f5a4796a",
+      "remaining": {
+        "group": 0,
+        "audits": 0,
+        "profiles": 0
+      }
+    },
+    {
+      "name": "fixture_created",
+      "requestId": "ac91e085-7059-43b5-a414-36d0a6eec066"
+    },
+    {
+      "name": "member_read_foreign_account",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "member_read_foreign_profile",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "member_read_foreign_request",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "admin_read_foreign_account",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "admin_read_foreign_profile",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "admin_read_foreign_request",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "member_write_foreign_account",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "admin_write_foreign_account",
+      "http": 200,
+      "rows": 0
+    },
+    {
+      "name": "member_dashboard_join_entry",
+      "showsApply": false
+    },
+    {
+      "name": "member_collaboration_entry",
+      "httpPath": "/admin/collaboration",
+      "hasManageButton": 0,
+      "hasAddMember": 0,
+      "mentionsMove": false
+    },
+    {
+      "name": "member_forced_join_server_action",
+      "http": 200,
+      "returnsFailure": true,
+      "returnsSuccess": false,
+      "errorText": true
+    },
+    {
+      "name": "member_forced_join_readback",
+      "requests": 0
+    },
+    {
+      "name": "admin_foreign_request_in_page",
+      "http": 200,
+      "visibleName": true,
+      "visibleCompany": true,
+      "transportContainsName": true,
+      "transportContainsCompany": true
+    },
+    {
+      "name": "admin_forced_foreign_assignment_action",
+      "http": 200,
+      "returnsFailure": true,
+      "returnsSuccess": false,
+      "forbiddenText": true
+    },
+    {
+      "name": "admin_forced_foreign_assignment_readback",
+      "foreignUnchanged": true
+    },
+    {
+      "name": "signout",
+      "status": 200
+    },
+    {
+      "name": "signout",
+      "status": 200
+    },
+    {
+      "name": "cleanup_verified",
+      "requestId": "13d992da-4fcb-409d-a4fd-5d8af792657a",
+      "remaining": {
+        "team": 0,
+        "audits": 0,
+        "groups": 0,
+        "accounts": 0,
+        "profiles": 0,
+        "requests": 0
+      }
+    }
+  ],
+  "afterFix": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "site": "http://localhost:3317",
+    "productionUntouched": true,
+    "requests": [
+      {
+        "name": "read actor scope and isolated counts",
+        "RequestId": "2191a2d1-8b56-47c6-81d4-6f0b6d62ed34"
+      },
+      {
+        "name": "create only owned permission fixtures",
+        "RequestId": "67283b23-a8d4-4ef3-8525-145c3c61eaa4"
+      },
+      {
+        "name": "verify admin bypass did not assign peer admin",
+        "RequestId": "8ae58936-72b3-4ebf-aa17-44645a2cb32d"
+      },
+      {
+        "name": "verify permitted page assignment admin",
+        "RequestId": "3b6cc536-addd-434a-b65d-3ed173ce39f4"
+      },
+      {
+        "name": "verify permitted page removal admin",
+        "RequestId": "011da1af-bf28-478c-ae2e-b8778513f445"
+      },
+      {
+        "name": "verify permitted page assignment company_owner",
+        "RequestId": "ae06233c-102d-4083-9e7f-91746b353187"
+      },
+      {
+        "name": "verify permitted page removal company_owner",
+        "RequestId": "eedbba1f-0075-48bd-99ea-75275a58bfe6"
+      },
+      {
+        "name": "cleanup only owned fixtures and their audits",
+        "RequestId": "6bf72ad2-0511-4762-8332-8ebbfa74dfa0"
+      },
+      {
+        "name": "independently verify cleanup and original auth count",
+        "RequestId": "efbfb2d3-9d0f-4190-87a0-7a57c6e53785"
+      }
+    ],
+    "checks": [
+      {
+        "name": "admin own pending request visible and foreign request absent in DOM and transport",
+        "passed": true
+      },
+      {
+        "name": "admin target admin selector reflects permissions",
+        "passed": true,
+        "selectorCountPerSlot": 0
+      },
+      {
+        "name": "direct action still rejects admin managing admin",
+        "passed": true
+      },
+      {
+        "name": "admin permitted assignment persists after refresh",
+        "passed": true
+      },
+      {
+        "name": "admin permitted removal still works",
+        "passed": true
+      },
+      {
+        "name": "company_owner own pending request visible and foreign request absent in DOM and transport",
+        "passed": true
+      },
+      {
+        "name": "company_owner target admin selector reflects permissions",
+        "passed": true,
+        "selectorCountPerSlot": 1
+      },
+      {
+        "name": "company_owner permitted assignment persists after refresh",
+        "passed": true
+      },
+      {
+        "name": "company_owner permitted removal still works",
+        "passed": true
+      }
+    ],
+    "supabaseBrowserRequests": 0,
+    "pageErrorCount": 0,
+    "passed": true,
+    "cleanupVerified": {
+      "teams": 0,
+      "audits": 0,
+      "groups": 0,
+      "profiles": 0,
+      "requests": 0,
+      "authCount": 87
+    }
+  },
+  "verification": {
+    "targetedTests": {
+      "passed": 36,
+      "failed": 0,
+      "exit": 0
+    },
+    "fullTests": {
+      "passed": 2470,
+      "failed": 0,
+      "skipped": 8,
+      "total": 2478,
+      "exit": 0
+    },
+    "typecheckExit": 0,
+    "targetedEslintExit": 0,
+    "cloudbaseProductionBuildExit": 0,
+    "maintainabilityExit": 0,
+    "initialRegressionTests": {
+      "passed": 10,
+      "failed": 2,
+      "expectedFailureBeforeFix": true
+    }
+  },
+  "firstBrowserRun": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "site": "http://localhost:3317",
+    "productionUntouched": true,
+    "requests": [
+      {
+        "name": "read actor scope and isolated counts",
+        "RequestId": "165d2c5f-2a18-41d8-911c-3862c6d4e0dc"
+      },
+      {
+        "name": "create only owned permission fixtures",
+        "RequestId": "7a56f4d4-c31d-41e2-9809-1f540b90d986"
+      },
+      {
+        "name": "verify admin bypass did not assign peer admin",
+        "RequestId": "b2d47a9e-fc76-4660-9a1c-de57237041c9"
+      },
+      {
+        "name": "verify permitted page assignment admin",
+        "RequestId": "5e206dbc-6ab6-4a6e-8602-c5ed73354faa"
+      },
+      {
+        "name": "cleanup only owned fixtures and their audits",
+        "RequestId": "597e79ba-c326-40b3-8166-2bb7b7bcf0bd"
+      },
+      {
+        "name": "independently verify cleanup and original auth count",
+        "RequestId": "f12ad242-ce15-4d92-a92e-25a7e4edf530"
+      }
+    ],
+    "checks": [
+      {
+        "name": "admin own pending request visible and foreign request absent in DOM and transport",
+        "passed": true
+      },
+      {
+        "name": "admin target admin selector reflects permissions",
+        "passed": true,
+        "selectorCountPerSlot": 0
+      },
+      {
+        "name": "direct action still rejects admin managing admin",
+        "passed": true
+      },
+      {
+        "name": "admin permitted assignment persists after refresh",
+        "passed": true
+      }
+    ],
+    "supabaseBrowserRequests": 0,
+    "pageErrorCount": 0,
+    "failed": true,
+    "errorType": "Error",
+    "cleanupVerified": {
+      "teams": 0,
+      "audits": 0,
+      "groups": 0,
+      "profiles": 0,
+      "requests": 0,
+      "authCount": 87
+    }
+  },
+  "firstBrowserRunNote": "Automation wait stalled and was interrupted; fixture cleanup independently verified. Cause not established. Replaced unbounded response-finished wait with bounded response wait plus independent database assertions; next run passed."
+}
