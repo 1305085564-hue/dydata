@@ -189,19 +189,23 @@ export function ContentListTable({
     return max;
   }, [visibleRows]);
 
-  // 抽屉切片联动：当前打开的作品如果不在视口内，平滑滚动至最近可视区；抽屉关闭时自动清除
+  // 抽屉切片联动：当前打开的作品如果不在视口内，平滑滚动至可视区；抽屉关闭时自动清除
   React.useEffect(() => {
     if (!selectedVideoId || !tableContainerRef?.current) return;
-    const rowEl = tableContainerRef.current.querySelector<HTMLElement>(
-      `[data-video-id="${selectedVideoId}"]`
+    // 同一作品在「移动端卡片」和「桌面表格行」各有一份 DOM，桌面端卡片是 display:none。
+    // 直接 querySelector 会先命中隐藏的卡片（几何全为 0），滚动指令落在不可见元素上等于没执行，
+    // 因此必须挑出真正有渲染盒子（getClientRects 非空）的那一份。
+    const candidates = tableContainerRef.current.querySelectorAll<HTMLElement>(
+      `[data-video-id="${CSS.escape(selectedVideoId)}"]`,
     );
+    const rowEl = Array.from(candidates).find((el) => el.getClientRects().length > 0);
     if (!rowEl) return;
     const rect = rowEl.getBoundingClientRect();
     // 顶部留出 96px（吸顶表头与工具栏防遮挡），底部留出视口高度
     const isAbove = rect.top < 96;
     const isBelow = rect.bottom > window.innerHeight;
     if (isAbove || isBelow) {
-      rowEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      rowEl.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }, [selectedVideoId, tableContainerRef]);
 
