@@ -276,3 +276,45 @@ test('@browser role pages retain access rules and never request Supabase', async
     } finally {await context.close();await ctx.dispose();}
   }
 });
+for(const role of ['memberA','adminA','ownerA']) {
+  test(`R01 ${role} blocked old JWT cannot read any of the 89 client tables`, async()=> {
+    const jwt=await token(role);const id=identities()[role].id;
+    const tables=await rows(`SELECT c.relname AS name FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND has_table_privilege('authenticated',c.oid,'SELECT') ORDER BY c.relname`);
+    expect(tables.length).toBe(89);
+    try {
+      await execute(`UPDATE auth.users SET status=3 WHERE sub=${quote(id)}`);
+      for(let i=0;i<tables.length;i+=8) await Promise.all(tables.slice(i,i+8).map(async(table:{name:string})=>{
+        const r=await rest(jwt,`${table.name}?limit=1`);
+        if(r.status===200)expect((await r.json()).length,`${table.name}: blocked identity must read zero rows`).toBe(0);
+        else expect([401,403],`${table.name}: explicit permission denial required`).toContain(r.status);
+      }));
+      const rpc=await rest(jwt,'rpc/visible_user_ids','POST',{});
+      expect([401,403]).toContain(rpc.status);
+    } finally {await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}`);}
+  });
+}
+test('@browser B01 owner archives and restores a synthetic member through member management', async({browser})=> {
+  const target=identities().archived;const oldJwt=await token('archived');const oldSite=await site('archived');
+  const ctx=await site('ownerA');const context=await browser.newContext({storageState:await ctx.storageState()});const page=await context.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:3100/admin/modules?team=${uuid(101)}&member=${target.id}`);
+    await page.getByRole('button',{name:/归档账号/}).click();
+    await page.getByPlaceholder('必填，例如：离职、转岗、实习结束').fill('permission-v2 synthetic archive acceptance');
+    await page.getByRole('button',{name:'确认归档',exact:true}).click();
+    await expect.poll(async()=> (await rows(`SELECT membership_status FROM public.profiles WHERE id=${quote(target.id)}`))[0].membership_status).toBe('archived');
+    const archived=(await rows(`SELECT p.team_id,p.archive_snapshot->>'team_id' AS previous_team,u.status FROM public.profiles p JOIN auth.users u ON u.sub=p.id::text WHERE p.id=${quote(target.id)}`))[0];
+    expect(archived.team_id).toBeNull();expect(archived.previous_team).toBe(uuid(101));expect(Number(archived.status)).toBe(3);
+    expect([401,403]).toContain((await oldSite.get('/api/admin/content/list?page=1&pageSize=1')).status());
+    const oldRead=await rest(oldJwt,`profiles?id=eq.${target.id}&select=id`);
+    expect(oldRead.status>=400||(await oldRead.json()).length===0).toBe(true);
+    await page.goto(`http://127.0.0.1:3100/admin/modules?view=archived&team=${uuid(101)}&q=${encodeURIComponent('dydata-permission-v2-'+target.username.split('@')[0])}`);
+    await page.locator('button[title="恢复账号"]').click();
+    await page.getByRole('button',{name:'确认恢复',exact:true}).click();
+    await expect.poll(async()=> (await rows(`SELECT membership_status FROM public.profiles WHERE id=${quote(target.id)}`))[0].membership_status).toBe('active');
+    const restored=(await rows(`SELECT p.team_id,p.company_role,u.status FROM public.profiles p JOIN auth.users u ON u.sub=p.id::text WHERE p.id=${quote(target.id)}`))[0];
+    expect(restored.team_id).toBeNull();expect(restored.company_role).toBe('member');expect(Number(restored.status)).toBe(1);
+    expect(typeof await token('archived')).toBe('string');
+    const logs=await rows(`SELECT action_type FROM public.member_change_log WHERE profile_id=${quote(target.id)}`);
+    expect(new Set(logs.map((row:{action_type:string})=>row.action_type))).toEqual(new Set(['archive','restore']));
+  } finally {await context.close();await ctx.dispose();await oldSite.dispose();}
+});
