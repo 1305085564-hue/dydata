@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
+import { cn } from "@/lib/utils";
 import { getShanghaiDateString } from "./content-list-filters";
 
 interface DatePaginationProps {
@@ -25,6 +26,14 @@ interface DatePaginationProps {
   onDateChange: (date: string) => void;
   /** 区间模式下按窗口长度整体前后平移 */
   onShiftRange?: (direction: -1 | 1) => void;
+  /** 当前选中的时间范围预设（如 'all' | '7d' | '30d' | 'thisMonth' | 'custom'） */
+  timeRange?: string;
+  /** 切换时间范围预设 */
+  onTimeRangeChange?: (range: string) => void;
+  /** 自定义选择区间（起点与终点） */
+  onRangeChange?: (start: string, end: string) => void;
+  /** 默认展开弹层（主要用于测试） */
+  defaultOpen?: boolean;
 }
 
 const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -74,8 +83,12 @@ export function DatePagination({
   maxDate,
   onDateChange,
   onShiftRange,
+  timeRange,
+  onTimeRangeChange,
+  onRangeChange,
+  defaultOpen = false,
 }: DatePaginationProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [viewMonth, setViewMonth] = useState(() => toYearMonth(currentDate || getShanghaiDateString()));
   const [pendingDate, setPendingDate] = useState<string | null>(null);
 
@@ -115,6 +128,16 @@ export function DatePagination({
     if (!date || (maxDate && date > maxDate)) return;
     setPendingDate(date);
     onDateChange(date);
+    setOpen(false);
+  };
+
+  const pickRange = (start: string, end: string) => {
+    if (!start || !end) return;
+    if (onRangeChange) {
+      onRangeChange(start, end);
+    } else {
+      onDateChange(start);
+    }
     setOpen(false);
   };
 
@@ -160,27 +183,83 @@ export function DatePagination({
             onMonthShift={(direction) => setViewMonth(shiftMonth(viewMonth, direction))}
             canShiftNext={!maxDate || toDateString(year, month + 1, 1) <= maxDate}
             selectedDates={[currentDate]}
+            range={isRange ? { start: rangeStart ?? null, end: rangeEnd ?? null } : undefined}
             onSelectDate={pickDate}
+            onSelectRange={onRangeChange ? pickRange : undefined}
             badgeByDate={Object.fromEntries(countByDate)}
             maxDate={maxDate}
             footer={
-          <div className="mt-2 border-t border-[#E2E2DF] pt-2 space-y-1">
-            {(!maxDate || today <= maxDate) && <button
-              type="button"
-              onClick={() => pickDate(today)}
-              className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
-            >
-              跳到今天
-            </button>}
-            <button
-              type="button"
-              onClick={() => navigableDates[0] && pickDate(navigableDates[0])}
-              disabled={navigableDates.length === 0}
-              className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              跳到最新
-            </button>
-          </div>
+              onTimeRangeChange ? (
+                <div className="mt-2 pt-2 border-t border-[#E2E2DF] flex flex-col gap-1">
+                  {/* 第一行：时间跨度快捷按钮 */}
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { label: "最近1天", value: "all" },
+                      { label: "近7天", value: "7d" },
+                      { label: "近30天", value: "30d" },
+                      { label: "本月", value: "thisMonth" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          onTimeRangeChange(opt.value);
+                          setOpen(false);
+                        }}
+                        className={cn(
+                          "h-7 rounded-md text-[12px] tabular-nums transition-colors cursor-pointer text-center",
+                          timeRange === opt.value
+                            ? "bg-status-info/[0.12] text-status-info"
+                            : "text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 第二行：今天与最新跳转 */}
+                  <div className="flex items-center justify-between gap-1 pt-1">
+                    {(!maxDate || today <= maxDate) && (
+                      <button
+                        type="button"
+                        onClick={() => pickDate(today)}
+                        className="h-6 rounded-md px-2 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+                      >
+                        今天
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => navigableDates[0] && pickDate(navigableDates[0])}
+                      disabled={navigableDates.length === 0}
+                      className="h-6 rounded-md px-2 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ml-auto"
+                    >
+                      回到最新
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 border-t border-[#E2E2DF] pt-2 space-y-1">
+                  {(!maxDate || today <= maxDate) && (
+                    <button
+                      type="button"
+                      onClick={() => pickDate(today)}
+                      className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+                    >
+                      跳到今天
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigableDates[0] && pickDate(navigableDates[0])}
+                    disabled={navigableDates.length === 0}
+                    className="w-full rounded-md py-1.5 text-[14px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    跳到最新
+                  </button>
+                </div>
+              )
             }
           />
         </PopoverContent>
