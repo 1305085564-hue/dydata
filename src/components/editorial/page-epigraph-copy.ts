@@ -21,7 +21,7 @@ export type PageEpigraphKey =
 
 export const PAGE_EPIGRAPH_DEFAULTS: Record<PageEpigraphKey, string> = {
   workbench: "把今天的表达落成一页——从容记下，数据自会沉淀成底稿。",
-  collaboration: "好作品是一场默契的接力——按月翻阅岗位与小队的协同记录",
+  collaboration: "好作品是一场默契的接力——按月翻阅每个岗位与小队的脚印。",
   pulse: "晨光先落在大盘上——看清昨日的涨落与每个人的落笔。",
   fulfillment: "创作有它自己的节拍——看见发布节奏，断更补交皆有去处。",
   topics: "好选题是一粒种子——在飞书生长，成片数据会为它立卷。",
@@ -57,11 +57,11 @@ export function buildFulfillmentEpigraph(stats: FulfillmentCalendarData["stats"]
 export function buildCollaborationEpigraph(summary: SummaryData | null): string | null {
   if (!summary) return null;
   if (summary.total === 0) {
-    return "好作品是一场默契的接力——本月尚无作品记录";
+    return "好作品是一场默契的接力——本月尚无落笔，换个月份寻回脚印。";
   }
-  const parts = [`本月 ${summary.total} 篇`, `${summary.attributed} 篇分工清晰`];
-  if (summary.unattributed > 0) parts.push(`${summary.unattributed} 篇待署名`);
-  return `好作品是一场默契的接力——${parts.join("，")}`;
+  const parts = [`本月 ${summary.total} 篇作品`, `${summary.attributed} 篇分工清晰`];
+  if (summary.unattributed > 0) parts.push(`${summary.unattributed} 篇仍在等一个署名`);
+  return `好作品是一场默契的接力——${parts.join("，")}。`;
 }
 
 export function buildTopicsEpigraph(activeCount: number, poolCount: number): string | null {
