@@ -1,8 +1,20 @@
 import { test, expect, request as requests, type APIRequestContext } from '@playwright/test';
-import { readManifest, execute, quote, uuid, ENV_ID } from '../../scripts/cloudbase/permission-fixtures.mjs';
+type PermissionFixtures = typeof import('../../scripts/cloudbase/permission-fixtures.mjs');
+let readManifest: PermissionFixtures['readManifest'];
+let execute: PermissionFixtures['execute'];
+let quote: PermissionFixtures['quote'];
+let uuid: PermissionFixtures['uuid'];
+let gateway: string;
+
+// Keep the fixture CLI in native ESM: static imports from this CommonJS-loaded
+// spec pass through Playwright's CJS hook, which cannot execute import.meta.
+test.beforeAll(async () => {
+  const fixtures = await import('../../scripts/cloudbase/permission-fixtures.mjs');
+  ({ readManifest, execute, quote, uuid } = fixtures);
+  gateway = `https://${fixtures.ENV_ID}.api.tcloudbasegateway.com`;
+});
 
 // All mutations are restricted to the synthetic namespace owned by this gate.
-const gateway = `https://${ENV_ID}.api.tcloudbasegateway.com`;
 const identities = () => readManifest().users as Record<string, { id: string; username: string; password: string }>;
 async function token(key: string) {
   const user = identities()[key];
