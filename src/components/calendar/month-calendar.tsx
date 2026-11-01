@@ -59,34 +59,28 @@ export function MonthCalendar({
     start: null,
     hover: null,
   });
-  // 两点连选暂存起点
-  const [clickDraftStart, setClickDraftStart] = useState<string | null>(null);
   const dragStateRef = useRef(dragState);
 
   useEffect(() => {
     dragStateRef.current = dragState;
   }, [dragState]);
 
-  // 全局监听鼠标抬起，防止拖拽划出组件外部后鼠标卡在拖拽中状态
+  // 全局监听鼠标抬起，防止拖拽划出组件外部后鼠标卡在拖拽中状态。
+  // 只有「跨天划过」才成段；单天由单元格自身的 click 负责，避免同一日期被提交两次。
   useEffect(() => {
     function handleGlobalMouseUp() {
-      if (dragStateRef.current.isDragging) {
-        const { start, hover } = dragStateRef.current;
-        if (start && hover && start !== hover && onSelectRange) {
-          const [rangeStart, rangeEnd] = [start, hover].sort();
-          onSelectRange(rangeStart, rangeEnd);
-          setClickDraftStart(null);
-        } else if (start && (!hover || start === hover)) {
-          onSelectDate(start);
-          setClickDraftStart(start);
-        }
-        setDragState({ isDragging: false, start: null, hover: null });
+      if (!dragStateRef.current.isDragging) return;
+      const { start, hover } = dragStateRef.current;
+      if (start && hover && start !== hover && onSelectRange) {
+        const [rangeStart, rangeEnd] = [start, hover].sort();
+        onSelectRange(rangeStart, rangeEnd);
       }
+      setDragState({ isDragging: false, start: null, hover: null });
     }
 
     window.addEventListener("mouseup", handleGlobalMouseUp);
     return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-  }, [onSelectRange, onSelectDate]);
+  }, [onSelectRange]);
 
   const handleCellMouseDown = (date: string, disabled: boolean, e: React.MouseEvent) => {
     if (disabled || e.button !== 0) return;
@@ -100,30 +94,10 @@ export function MonthCalendar({
     setDragState((prev) => ({ ...prev, hover: date }));
   };
 
+  // click 只在「按下与抬起落在同一天」时触发，跨天拖拽走全局 mouseup，两条路径互不重叠
   const handleCellClick = (date: string, disabled: boolean) => {
     if (disabled) return;
-    // 如果刚刚发生了跨天拖拽，mouseup 已处理，无需再触发 click
-    if (dragState.isDragging && dragState.start && dragState.hover && dragState.start !== dragState.hover) {
-      return;
-    }
-
-    if (onSelectRange) {
-      if (!clickDraftStart) {
-        setClickDraftStart(date);
-        onSelectDate(date);
-      } else if (clickDraftStart === date) {
-        // 连点同一天，保持单天选择
-        setClickDraftStart(null);
-        onSelectDate(date);
-      } else {
-        // 第二次点击不同日期，形成区间
-        const [rangeStart, rangeEnd] = [clickDraftStart, date].sort();
-        onSelectRange(rangeStart, rangeEnd);
-        setClickDraftStart(null);
-      }
-    } else {
-      onSelectDate(date);
-    }
+    onSelectDate(date);
   };
 
   // 计算当前有效高亮区间
@@ -159,7 +133,6 @@ export function MonthCalendar({
           // 是否在区间范围内
           const inRange = Boolean(activeRange && date >= activeRange.start && date <= activeRange.end);
           const isRangeEdge = Boolean(activeRange && (date === activeRange.start || date === activeRange.end));
-          const isDraftStart = clickDraftStart === date;
 
           return (
             <button
@@ -176,8 +149,8 @@ export function MonthCalendar({
                 "relative flex h-9 w-full items-center justify-center rounded-md text-[14px] tabular-nums transition-colors duration-150 outline-none select-none cursor-pointer",
                 count ? "text-[#1F1E1D] hover:bg-[#EBEBE9]" : "text-[#A8A29E] hover:bg-[#EBEBE9]",
                 cellClass?.(date),
-                // 单日选中或连选起点
-                (selected || isDraftStart) && !inRange && "bg-status-info/[0.12] text-status-info",
+                // 单日选中
+                selected && !inRange && "bg-status-info/[0.12] text-status-info",
                 // 区间端点
                 isRangeEdge && "bg-status-info/[0.18] text-status-info",
                 // 区间内部

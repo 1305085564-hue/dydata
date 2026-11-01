@@ -290,26 +290,6 @@ export function useContentListState(props: ContentListProps) {
     applyFilterPatch({ highlightOnly: !filters.highlightOnly });
   }, [filters.highlightOnly, applyFilterPatch]);
 
-  const timeRangeLabel = useMemo(() => {
-    switch (filters.timeRange) {
-      case "yesterday":
-        return "昨天";
-      case "7d":
-        return "近7天";
-      case "30d":
-        return "近30天";
-      case "thisMonth":
-        return "本月";
-      case "custom":
-        if (filters.startDate && filters.endDate) {
-          return `${filters.startDate.slice(5)}~${filters.endDate.slice(5)}`;
-        }
-        return "自定义日期";
-      default:
-        return "全部时间";
-    }
-  }, [filters.timeRange, filters.startDate, filters.endDate]);
-
   const selectedTeamName = useMemo(() => {
     return teams?.find((t) => t.id === teamId)?.name;
   }, [teams, teamId]);
@@ -351,7 +331,6 @@ export function useContentListState(props: ContentListProps) {
     handleAddHighlightRule,
     handleRemoveHighlightRule,
     handleToggleHighlightOnly,
-    timeRangeLabel,
     selectedTeamName,
     view,
     onViewChange,

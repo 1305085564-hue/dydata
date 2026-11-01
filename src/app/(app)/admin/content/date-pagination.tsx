@@ -88,12 +88,13 @@ export function DatePagination({
   onRangeChange,
   defaultOpen = false,
 }: DatePaginationProps) {
+  const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const [open, setOpen] = useState(defaultOpen);
-  const [viewMonth, setViewMonth] = useState(() => toYearMonth(currentDate || getShanghaiDateString()));
+  // 区间模式落到区间起点所在月份，否则落到当前锚点所在月份
+  const [viewMonth, setViewMonth] = useState(() => toYearMonth((isRange ? rangeStart : currentDate) || getShanghaiDateString()));
   const [pendingDate, setPendingDate] = useState<string | null>(null);
 
   const today = getShanghaiDateString();
-  const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const hasCounts = (availableCounts?.length ?? 0) > 0;
   const navigableDates = useMemo(
     () => maxDate ? availableDates.filter((date) => date <= maxDate) : availableDates,
@@ -169,7 +170,8 @@ export function DatePagination({
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (next) setViewMonth(toYearMonth(currentDate || today));
+          // 重开时回到当前所选区间/所选日期所在月份，不跳回最新月份
+          if (next) setViewMonth(toYearMonth((isRange ? rangeStart : currentDate) || today));
         }}
       >
         <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
@@ -182,7 +184,7 @@ export function DatePagination({
             viewMonth={{ year, month: month + 1 }}
             onMonthShift={(direction) => setViewMonth(shiftMonth(viewMonth, direction))}
             canShiftNext={!maxDate || toDateString(year, month + 1, 1) <= maxDate}
-            selectedDates={[currentDate]}
+            selectedDates={isRange ? [] : [currentDate]}
             range={isRange ? { start: rangeStart ?? null, end: rangeEnd ?? null } : undefined}
             onSelectDate={pickDate}
             onSelectRange={onRangeChange ? pickRange : undefined}
@@ -191,6 +193,10 @@ export function DatePagination({
             footer={
               onTimeRangeChange ? (
                 <div className="mt-2 pt-2 border-t border-[#E2E2DF] flex flex-col gap-1">
+                  {/* 拖拽选区间是隐藏手势，给一行轻提示；不支持区间的调用方不显示 */}
+                  {onRangeChange && (
+                    <div className="px-1 pb-0.5 text-[12px] text-[#78716C]">按住日期拖动，可直接选一段时间</div>
+                  )}
                   {/* 第一行：时间跨度快捷按钮 */}
                   <div className="grid grid-cols-4 gap-1">
                     {[

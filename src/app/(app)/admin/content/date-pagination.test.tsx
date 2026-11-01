@@ -46,7 +46,8 @@ test("MonthCalendar 渲染起止区间与快捷操作按钮", () => {
       today="2026-10-20"
       viewMonth={{ year: 2026, month: 10 }}
       onMonthShift={() => {}}
-      selectedDates={["2026-10-20"]}
+      // 区间模式只由 range 决定高亮：调用方不额外传单日选中，否则区间外的「最新一天」会被点亮
+      selectedDates={[]}
       range={{ start: "2026-10-05", end: "2026-10-10" }}
       onSelectDate={() => {}}
       onSelectRange={() => {}}
@@ -70,4 +71,6 @@ test("MonthCalendar 渲染起止区间与快捷操作按钮", () => {
   assert.match(html, /bg-status-info\/\[0\.18\]/);
   // 区间内部高亮
   assert.match(html, /bg-status-info\/\[0\.08\]/);
+  // 区间模式不得再出现「单日选中」样式，避免区间外多点亮一天
+  assert.doesNotMatch(html, /bg-status-info\/\[0\.12\]/);
 });
