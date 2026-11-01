@@ -33,6 +33,12 @@ async function site(key: string) {
   const u = identities()[key];
   const r = await ctx.post('/api/cloudbase/auth/signin',{data:{username:u.username,password:u.password}});
   expect(r.status(), 'site synthetic login').toBe(200);
+  // APIRequest's cookie jar does not send Secure cookies over local HTTP;
+  // explicitly transmit only this synthetic login cookie to this fixed local site.
+  const cookies=(await ctx.storageState()).cookies;
+  const authCookie=cookies.find(c=>c.name==='dydata-cloudbase-session');
+  expect(Boolean(authCookie),'login issues HttpOnly session').toBe(true);
+  await ctx.setExtraHTTPHeaders({cookie:`${authCookie!.name}=${authCookie!.value}`});
   return ctx;
 }
 async function rows(sql: string) { return (await execute(sql)).rows; }
@@ -69,6 +75,7 @@ test('R02 logout invalidates the old gateway token', async()=> {
     expect(Boolean(cookie)).toBe(true);
     const session=JSON.parse(decodeURIComponent(cookie!.value));
     expect((await ctx.post('/api/cloudbase/auth/signout',{data:{}})).status()).toBe(200);
+    await ctx.setExtraHTTPHeaders({});
     expect((await ctx.get('/api/cloudbase/auth/user')).status()).toBe(401);
     const r=await rest(session.accessToken,`profiles?id=eq.${identities().memberA.id}&select=id`);
     const data=await r.json();
@@ -128,9 +135,9 @@ for (const action of ['claim','start-scripting']) {
 test('R07 notification read reports ownership correctly and is idempotent', async()=> {
   const ctx=await site('memberA');
   try {
-    expect([403,404]).toContain((await ctx.post(`/api/notifications/${uuid(502)}/read`,{data:{}})).status());
+    expect([403,404]).toContain((await ctx.patch(`/api/notifications/${uuid(502)}/read`,{data:{}})).status());
     expect((await rows(`SELECT status FROM public.notifications WHERE id=${quote(uuid(502))}`))[0].status).toBe('unread');
-    for(let i=0;i<2;i++) expect((await ctx.post(`/api/notifications/${uuid(501)}/read`,{data:{}})).status()).toBe(200);
+    for(let i=0;i<2;i++) expect((await ctx.patch(`/api/notifications/${uuid(501)}/read`,{data:{}})).status()).toBe(200);
   } finally {await ctx.dispose();}
 });
 test('R10 employee can query readable video topic status through GET and POST', async()=> {
