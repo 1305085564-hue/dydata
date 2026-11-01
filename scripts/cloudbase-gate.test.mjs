@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, existsSync, rmSync, writeFileSync, statSync } from "node:fs";
+import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -40,10 +40,14 @@ test("跨角色/浏览器固定夹具互斥，清单目录私有且不自动抢�
   const env = gateEnv();
   const first = acquireCloudBaseGateLock({ env, cwd, lockRoot: cwd });
   assert.equal(statSync(first.lockPath).mode & 0o777, 0o700);
-  assert.ok(env.DYDATA_GATE_FIXTURES_FILE.startsWith(first.lockPath));
+  assert.equal(statSync(first.runPath).mode & 0o777, 0o700);
+  assert.ok(env.DYDATA_GATE_FIXTURES_FILE.startsWith(first.runPath));
+  assert.ok(!env.DYDATA_GATE_FIXTURES_FILE.startsWith(first.lockPath));
+  assert.equal(JSON.parse(readFileSync(join(first.lockPath, "owner.json"), "utf8")).runPath, first.runPath);
   assert.throws(() => acquireCloudBaseGateLock({ env: gateEnv(), cwd: "other-worktree", lockRoot: cwd }), /不自动抢锁/);
   first.release();
   const second = acquireCloudBaseGateLock({ env: gateEnv(), cwd, lockRoot: cwd });
+  assert.notEqual(first.runPath, second.runPath);
   second.release();
 });
 
@@ -56,6 +60,7 @@ for (const failure of [undefined, "setup", "build", "test", "cleanup", "throw"])
     const run = async (args) => {
       const step = args.at(-1) === "setup" ? "setup" : args.at(-1) === "cleanup" ? "cleanup" : args[1] === "build" ? "build" : "test";
       calls.push(step);
+      if (step === "setup") writeFileSync(env.DYDATA_GATE_FIXTURES_FILE, JSON.stringify({ partial: failure === "setup" }), { mode: 0o600 });
       if (failure === "throw" && step === "build") throw new Error("spawn failed");
       return step === failure ? 1 : 0;
     };
@@ -66,9 +71,29 @@ for (const failure of [undefined, "setup", "build", "test", "cleanup", "throw"])
     assert.equal(calls.filter((step) => step === "setup").length, 1);
     assert.ok(calls.filter((step) => step === "build").length <= 1);
     assert.ok(builds <= 1);
-    assert.equal(existsSync(join(env.DYDATA_GATE_FIXTURES_FILE, "..")), failure === "cleanup");
+    assert.equal(existsSync(env.DYDATA_GATE_FIXTURES_FILE), true);
+    assert.equal(existsSync(join(env.DYDATA_GATE_FIXTURES_FILE, "..", "run-receipt.json")), true);
+    assert.equal(existsSync(join(cwd, `dydata-cloudbase-permission-gate-${CLOUDBASE_GATE_ENV_ID}.lock`)), Boolean(failure));
   });
 }
+
+test("成功释放串行锁仍保留私有 manifest、错误 RequestId 与构建/运行凭据", async (t) => {
+  const cwd = sandbox(t);
+  const env = gateEnv();
+  const run = async (args) => {
+    if (args.at(-1) === "setup") {
+      writeFileSync(env.DYDATA_GATE_FIXTURES_FILE, JSON.stringify({ objects: ["unit-test-id"] }), { mode: 0o600 });
+      writeFileSync(join(env.DYDATA_GATE_FIXTURES_FILE, "..", "fixture-error-private.json"), JSON.stringify({ requestId: "unit-test-request-id" }), { mode: 0o600 });
+    }
+    return 0;
+  };
+  assert.equal(await runCloudBaseGate({ kind: "roles", env, cwd, lockRoot: cwd, run }), 0);
+  assert.equal(existsSync(join(cwd, `dydata-cloudbase-permission-gate-${CLOUDBASE_GATE_ENV_ID}.lock`)), false);
+  for (const name of ["fixtures.json", "fixture-error-private.json", "build-receipt.json", "run-receipt.json"]) {
+    assert.equal(existsSync(join(env.DYDATA_GATE_FIXTURES_FILE, "..", name)), true, `${name} 必须保留`);
+  }
+  assert.match(readFileSync(join(env.DYDATA_GATE_FIXTURES_FILE, "..", "fixture-error-private.json"), "utf8"), /unit-test-request-id/);
+});
 
 test("缺必测文件时在夹具创建之前硬失败", async (t) => {
   const cwd = sandbox(t);

@@ -63,15 +63,16 @@ test('R02 logout invalidates the old gateway token', async()=> {
     expect(r.status>=400 || (Array.isArray(data)&&data.length===0),'old gateway credential denied after logout').toBe(true);
   } finally {await ctx.dispose();}
 });
-for (const [table,id] of [['fulfillment_appeals',602],['content_observations',702]] as const) {
+for (const [table,id] of [['fulfillment_appeals',602],['content_observations',702],['sample_quality_issues',902]] as const) {
   test(`R03 ${table} cross-team reads and writes denied`, async()=> {
     const t=await token('adminA');
     const r=await rest(t,`${table}?id=eq.${uuid(id)}&select=id`);
     expect(r.status).toBe(200); expect((await r.json()).length).toBe(0);
-    const field=table==='fulfillment_appeals'?'reason':'note';
-    const w=await rest(t,`${table}?id=eq.${uuid(id)}`,'PATCH',{[field]:'forbidden-fixture-change'});
+    const field=table==='fulfillment_appeals'?'reason':table==='sample_quality_issues'?'severity':'note';
+    const next=table==='sample_quality_issues'?'critical':'forbidden-fixture-change';
+    const w=await rest(t,`${table}?id=eq.${uuid(id)}`,'PATCH',{[field]:next});
     const actual=await rows(`SELECT ${field} AS value FROM public.${table} WHERE id=${quote(uuid(id))}`);
-    expect(actual[0].value==='forbidden-fixture-change').toBe(false);
+    expect(actual[0].value===next).toBe(false);
     expect(w.status>=400 || (await w.json()).length===0).toBe(true);
   });
 }
@@ -127,10 +128,19 @@ test('R10 employee can query readable video topic status through GET and POST', 
     expect((await ctx.post('/api/admin/content/topic-library-status',{data:{videoIds:[uuid(301),uuid(302)]}})).status()).toBe(200);
   } finally {await ctx.dispose();}
 });
+test('R08 cross-team exemption approval returns permission denial and leaves dates intact', async()=> {
+  const ctx=await site('adminA');
+  try {
+    const r=await ctx.post('/api/exemptions/review',{data:{request_id:uuid(1002),action:'approve'}});
+    expect(r.status()).toBe(403);
+    expect((await rows(`SELECT request_status FROM public.exemption_request WHERE id=${quote(uuid(1002))}`))[0].request_status).toBe('pending');
+    expect((await rows(`SELECT status FROM public.exemption_request_date WHERE id=${quote(uuid(1102))}`))[0].status).toBe('pending');
+  } finally {await ctx.dispose();}
+});
 test('R11 RPC refuses a forged handler and cross-team approval', async()=> {
   const t=await token('adminA');
   for(const [id,handler] of [[602,identities().adminA.id],[601,identities().ownerA.id]] as const) {
-    const r=await rest(t,'rpc/handle_fulfillment_appeal','POST',{p_appeal_id:uuid(id),p_status:'approved',p_handler_id:handler,p_decision_reason:'fixture'});
+    const r=await rest(t,'rpc/handle_fulfillment_appeal','POST',{p_appeal_id:uuid(id),p_decision:'approve',p_handler_id:handler,p_reason:'fixture'});
     expect(r.status>=400,'approval boundary enforced').toBe(true);
     expect((await rows(`SELECT status FROM public.fulfillment_appeals WHERE id=${quote(uuid(id))}`))[0].status).toBe('pending');
   }
@@ -138,12 +148,12 @@ test('R11 RPC refuses a forged handler and cross-team approval', async()=> {
 test('R12 obsolete exemption RPCs are not callable with employee JWT', async()=> {
   const t=await token('adminA');
   for(const [name,args] of [
-    ['review_exemption_request_atomically',{p_request_id:uuid(999),p_status:'approved'}],
-    ['review_exemption_request_atomically_v2',{p_request_id:uuid(999),p_status:'approved',p_reason:'fixture'}],
-    ['re_review_exemption_request_atomically',{p_request_id:uuid(999),p_status:'approved',p_reason:'fixture'}],
+    ['review_exemption_request_atomically',{p_request_id:uuid(1002),p_decision:'approve'}],
+    ['review_exemption_request_atomically_v2',{p_request_id:uuid(1002),p_decision:'approve',p_group_mode_token_hash:null}],
+    ['re_review_exemption_request_atomically',{p_request_id:uuid(1002),p_decision:'approve',p_group_mode_token_hash:null}],
   ] as const) {
     const r=await rest(t,`rpc/${name}`,'POST',args);
-    expect([401,403,404], 'obsolete entry must not execute').toContain(r.status);
+    expect([401,403], 'obsolete entry must not execute').toContain(r.status);
   }
 });
 test('@browser role pages retain access rules and never request Supabase', async({browser})=> {
