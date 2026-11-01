@@ -82,13 +82,14 @@ function createWritingFake(db: Record<string, FakeRow[]>) {
 
 test("开始写作幂等：已有在写记录时直接返回，不新建", async () => {
   const db: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-1", library_status: "in_library" }],
+    sub_topics: [{ id: "sub-1", created_by: "user-1", library_status: "in_library" }],
     sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-1", user_id: "user-1", status: "writing" }],
   };
   const { client } = createWritingFake(db);
 
-  const first = await startWritingClaim(client, "user-1", "sub-1");
-  const second = await startWritingClaim(client, "user-1", "sub-1");
+  const scope = { visibleUserIds: ["user-1"] };
+  const first = await startWritingClaim(client, "user-1", "sub-1", scope);
+  const second = await startWritingClaim(client, "user-1", "sub-1", scope);
   assert.equal(first.ok, true);
   assert.equal(second.ok, true);
   assert.equal(db.sub_topic_claims.length, 1);
@@ -144,18 +145,19 @@ test("选题关联作品只取最新 24h 快照，不回退历史最大播放或
 
 test("已移出选题不能开始写作；新成员开始写作正常落库", async () => {
   const removed: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-1", library_status: "removed" }],
+    sub_topics: [{ id: "sub-1", created_by: "user-1", library_status: "removed" }],
     sub_topic_claims: [],
   };
-  const removedResult = await startWritingClaim(createWritingFake(removed).client, "user-1", "sub-1");
+  const scope = { visibleUserIds: ["user-1"] };
+  const removedResult = await startWritingClaim(createWritingFake(removed).client, "user-1", "sub-1", scope);
   assert.equal(removedResult.ok, false);
   if (!removedResult.ok) assert.equal(removedResult.status, 409);
 
   const fresh: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-2", library_status: "in_library" }],
+    sub_topics: [{ id: "sub-2", created_by: "user-1", library_status: "in_library" }],
     sub_topic_claims: [],
   };
-  const created = await startWritingClaim(createWritingFake(fresh).client, "user-1", "sub-2");
+  const created = await startWritingClaim(createWritingFake(fresh).client, "user-1", "sub-2", scope);
   assert.equal(created.ok, true);
   assert.equal(fresh.sub_topic_claims.length, 1);
   assert.equal((fresh.sub_topic_claims[0] as FakeRow).status, "writing");

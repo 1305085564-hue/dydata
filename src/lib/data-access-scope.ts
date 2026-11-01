@@ -103,6 +103,7 @@ type CompanyVisibleRow = {
 };
 
 type CompanyHistoricalRow = CompanyVisibleRow & {
+  team_id?: string | null;
   archive_snapshot?: { team_id?: string | null } | null;
   archived_by?: string | null;
 };
@@ -288,14 +289,24 @@ export async function resolveVideoReviewReadOnlyScope(
 ): Promise<DataAccessScope> {
   if (scope.kind !== "self" || !scope.teamId) return scope;
   // 视频复盘按 Supabase 项目划定公司边界，成员可只读查看项目内所有团队；
-  // 写操作继续使用未扩展的当前操作者范围和各自校验。
+  // 只纳入曾有公司归属的档案；写操作继续使用未扩展的当前操作者范围和各自校验。
   const rows = await loadWithMembershipFallback({
     loadWithMembership: async () =>
-      supabase.from("profiles").select("id, membership_status"),
-    loadWithoutMembership: async () => supabase.from("profiles").select("id"),
+      supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by"),
+    loadWithoutMembership: async () => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by"),
   });
   assertSupabaseQuerySucceeded(rows.error, "加载公司只读成员范围失败");
-  const visibleRows = (rows.data ?? []) as CompanyVisibleRow[];
+  const allRows = (rows.data ?? []) as CompanyHistoricalRow[];
+  const affiliatedIds = new Set(
+    allRows
+      .filter((row) => Boolean(row.team_id || row.archive_snapshot?.team_id))
+      .map((row) => row.id),
+  );
+  const visibleRows = allRows.filter((row) =>
+    row.id === scope.userId
+    || Boolean(row.team_id || row.archive_snapshot?.team_id)
+    || Boolean(row.membership_status === "archived" && row.archived_by && affiliatedIds.has(row.archived_by)),
+  );
   if (!visibleRows.some((row) => row.id === scope.userId)) {
     visibleRows.unshift({ id: scope.userId });
   }

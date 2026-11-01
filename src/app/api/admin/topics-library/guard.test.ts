@@ -11,10 +11,9 @@ const ADMIN_TOPIC_LIBRARY_ROUTES = [
   "src/app/api/admin/topics-library/import/confirm/route.ts",
   "src/app/api/admin/topics-library/toggle/route.ts",
   "src/app/api/admin/topics-library/evaluate/route.ts",
-  "src/app/api/admin/content/topic-library-status/route.ts",
 ];
 
-test("选题库管理接口必须经过 requireAdminActor 且要求 review_content 权限", () => {
+test("选题库写接口必须要求 review_content，状态只读查询不复用写权限", () => {
   for (const relativePath of ADMIN_TOPIC_LIBRARY_ROUTES) {
     const source = readFileSync(join(process.cwd(), relativePath), "utf8");
     assert.match(

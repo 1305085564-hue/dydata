@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { signInCloudBase } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError } from "@/lib/cloudbase/core";
-import { setCloudBaseCookie, rejectUntrustedCloudBaseWrite } from "@/app/api/cloudbase/_shared";
+import { inactiveCloudBaseAccountResponse, setCloudBaseCookie, rejectUntrustedCloudBaseWrite } from "@/app/api/cloudbase/_shared";
 import { KEEP_LOGGED_IN_COOKIE_NAME, KEEP_LOGGED_IN_COOKIE_VALUE, KEEP_LOGGED_IN_MAX_AGE } from "@/lib/supabase/session-cookie";
 
 export async function POST(request: NextRequest) {
@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     }
     return response;
   } catch (error) {
+    const inactive = inactiveCloudBaseAccountResponse(error);
+    if (inactive) return inactive;
     const status = error instanceof Error && "status" in error && typeof (error as { status?: unknown }).status === "number"
       ? (error as { status: number }).status
       : 503;

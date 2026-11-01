@@ -13,7 +13,6 @@ import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
 import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
 import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, hasCloudBaseSessionChanged, isCloudBaseBackend, parseCloudBaseSession, serializeCloudBaseSession } from "@/lib/cloudbase/core";
-import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -196,20 +195,6 @@ async function handleCloudBaseSession(request: NextRequest, options: {
       requestHeaders.set("cookie", request.cookies.toString());
     }
 
-    const supabase = createCloudBaseDataClient({ role: "user", userToken: verified.session.accessToken });
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("membership_status")
-      .eq("id", verified.user.id)
-      .maybeSingle();
-    const membershipStatus = resolveMembershipStatusFromQuery({ data: profile, error: profileError });
-    if (membershipStatus === "archived") {
-      return buildAccountBlockedResponse(request, { api: isApiRoute, archived: true });
-    }
-    if (membershipStatus === "unavailable") {
-      return buildMembershipUnavailableResponse(request, { api: isApiRoute });
-    }
-
     if (isApiRoute && !isApiRateLimitExempt(pathname)) {
       const result = await checkApiRateLimit({ pathname, identifier: `user:${verified.user.id}` });
       if (!result.allowed) return buildApiRateLimitResponse(result);
@@ -222,7 +207,7 @@ async function handleCloudBaseSession(request: NextRequest, options: {
     return response;
   } catch (error) {
     if (error instanceof CloudBaseAuthError && error.status === 401) {
-      return buildAccountBlockedResponse(request, { api: isApiRoute, archived: error.code === "user_blocked" });
+      return buildAccountBlockedResponse(request, { api: isApiRoute, archived: error.code === "account_archived" });
     }
     return buildMembershipUnavailableResponse(request, { api: isApiRoute });
   }

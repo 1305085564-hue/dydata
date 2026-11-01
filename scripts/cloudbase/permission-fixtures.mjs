@@ -45,7 +45,9 @@ export async function setup() {
   const roles = ['memberA','memberB','adminA','adminB','ownerA','blocked','archived','pending','unassigned'];
   const users = Object.fromEntries(roles.map((name,i) => [name, { id: uuid(i+1), username: `${PREFIX}-${name.toLowerCase()}@example.invalid`, password: `T!${randomBytes(18).toString('base64url')}8a`, role: name.startsWith('admin') ? 'admin' : name.startsWith('owner') ? 'company_owner' : 'member', team: ['memberB','adminB'].includes(name) ? uuid(102) : name === 'unassigned' ? null : uuid(101) }]));
   const ids = Object.values(users).map(u=>quote(u.id)).join(',');
-  const preflight = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids}) OR username LIKE '${PREFIX}-%') + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + (SELECT count(*) FROM public.teams WHERE id IN (${quote(uuid(101))},${quote(uuid(102))})) AS conflicts`);
+  const objects = [['teams',101],['accounts',201],['videos',301],['sub_topics',401],['notifications',501],['fulfillment_appeals',601],['content_observations',701],['daily_reports',801],['sample_quality_issues',901],['exemption_request',1001],['exemption_request_date',1101]];
+  const occupied = objects.map(([table, first]) => `(SELECT count(*) FROM public.${table} WHERE id IN (${quote(uuid(first))},${quote(uuid(first+1))}))`).join(' + ');
+  const preflight = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids}) OR username LIKE '${PREFIX}-%') + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + ${occupied} AS conflicts`);
   if (Number(preflight.rows[0].conflicts)) throw new Error('Fixture identifiers occupied; refusing overwrite');
   const manifest = { environment: ENV_ID, namespace: PREFIX, users, baseline: await baseline(), phase: 'prepared', cleaned: false, requests: [] };
   save(manifest);
@@ -92,13 +94,18 @@ export async function cleanup() {
     DELETE FROM public.accounts WHERE profile_id IN (${ids});
     DELETE FROM public.sub_topics WHERE created_by IN (${ids});
     DELETE FROM public.profiles WHERE id IN (${ids});
+    DELETE FROM auth.token WHERE user_id IN (${ids}) AND project=${quote(ENV_ID)};
+    DELETE FROM auth.authorized WHERE user_id IN (${ids}) AND project=${quote(ENV_ID)};
+    DELETE FROM auth.identity WHERE sub IN (${ids}) AND project=${quote(ENV_ID)};
+    DELETE FROM auth.users_history WHERE sub IN (${ids}) AND project=${quote(ENV_ID)};
     DELETE FROM auth.users WHERE sub IN (${ids}) AND project=${quote(ENV_ID)} AND username LIKE '${PREFIX}-%';
     DELETE FROM public.teams WHERE id IN (${quote(uuid(101))},${quote(uuid(102))}) AND name IN ('${PREFIX}-A','${PREFIX}-B');
     COMMIT;`);
   const zero = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids})) + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + (SELECT count(*) FROM public.videos WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.accounts WHERE profile_id IN (${ids})) + (SELECT count(*) FROM public.sub_topics WHERE created_by IN (${ids})) + (SELECT count(*) FROM public.notifications WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.audit_logs WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.fulfillment_appeals WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.teams WHERE id IN (${quote(uuid(101))},${quote(uuid(102))})) AS remaining`);
-  if (Number(zero.rows[0].remaining)) throw new Error('Cleanup incomplete');
+  const linked = await execute(`SELECT (SELECT count(*) FROM auth.token WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.authorized WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.identity WHERE sub IN (${ids})) + (SELECT count(*) FROM auth.users_history WHERE sub IN (${ids})) + (SELECT count(*) FROM public.content_observations WHERE observer_id IN (${ids})) + (SELECT count(*) FROM public.daily_reports WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.sample_quality_issues WHERE id IN (${quote(uuid(901))},${quote(uuid(902))})) + (SELECT count(*) FROM public.exemption_request WHERE applicant_user_id IN (${ids})) + (SELECT count(*) FROM public.exemption_request_date WHERE id IN (${quote(uuid(1101))},${quote(uuid(1102))})) + (SELECT count(*) FROM public.exemption_grant WHERE user_id IN (${ids})) AS remaining`);
+  if (Number(zero.rows[0].remaining) || Number(linked.rows[0].remaining)) throw new Error('Cleanup incomplete');
   if (JSON.stringify(await baseline()) !== JSON.stringify(manifest.baseline)) throw new Error('Non-fixture identities changed');
-  manifest.cleaned = true; manifest.phase = 'cleaned'; manifest.requests.push(result.requestId,zero.requestId); save(manifest);
+  manifest.cleaned = true; manifest.phase = 'cleaned'; manifest.requests.push(result.requestId,zero.requestId,linked.requestId); save(manifest);
   console.log(JSON.stringify({ environment: ENV_ID, remaining: 0, identityBaselineUnchanged: true, requestId: zero.requestId }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

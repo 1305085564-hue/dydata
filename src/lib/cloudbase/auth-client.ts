@@ -1,8 +1,6 @@
 import {
   CLOUD_BASE_SESSION_COOKIE,
-  cloudBaseAuthRequest,
   cloudBaseCookieOptions,
-  mapCloudBaseUser,
   parseCloudBaseSession,
   serializeCloudBaseSession,
   hasCloudBaseSessionChanged,
@@ -15,6 +13,7 @@ import {
   signInCloudBase,
   signOutCloudBase,
   validateCloudBaseSession,
+  verifyCloudBaseAccessToken,
 } from "./auth";
 
 type CookieStore = {
@@ -47,8 +46,7 @@ export function createCloudBaseServerAuth(cookieStore: CookieStore, keepLoggedIn
       if (!token) return { data: { user: null }, error: null };
       try {
         if (jwt) {
-          const profile = await cloudBaseAuthRequest<Record<string, unknown>>("/auth/v1/user/me", { token: jwt });
-          return { data: { user: mapCloudBaseUser(profile) }, error: null };
+          return { data: { user: await verifyCloudBaseAccessToken(jwt) }, error: null };
         }
         const verified = await validateCloudBaseSession({
           accessToken: token,

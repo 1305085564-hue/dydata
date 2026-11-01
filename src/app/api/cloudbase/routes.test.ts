@@ -11,6 +11,37 @@ import { isTrustedCloudBaseWrite } from "./_shared";
 
 const oldFetch = globalThis.fetch;
 
+for (const [name, handler] of [['signin', signin], ['refresh', refresh], ['user', getUser]] as const) {
+  for (const state of ['archived', 'pending', 'outage']) {
+    test(`${name} preserves trusted ${state} classification and only clears invalid cookies`, async () => {
+      process.env.CLOUDBASE_ENV_ID = 'env-test';
+      globalThis.fetch = (async input => {
+        const path = new URL(String(input)).pathname;
+        if (path.endsWith('/user/me')) return Response.json({ sub: 'subject' });
+        if (path.endsWith('/rpc/cloudbase_session_status')) return state === 'outage' ? Response.json({}, { status: 503 }) : Response.json(state);
+        return Response.json({ access_token: 'private-access', refresh_token: 'private-refresh', expires_in: 300, sub: 'subject' });
+      }) as typeof fetch;
+      try {
+        const cookie = serializeCloudBaseSession({ accessToken: 'old-access', refreshToken: 'old-refresh', expiresAt: Date.now() + 120000, subject: 'subject' });
+        const request = new NextRequest(`https://dydata.cc/api/cloudbase/auth/${name}`, {
+          method: name === 'user' ? 'GET' : 'POST',
+          headers: { origin: 'https://dydata.cc', 'content-type': 'application/json', cookie: `${CLOUD_BASE_SESSION_COOKIE}=${cookie}` },
+          ...(name === 'signin' ? { body: JSON.stringify({ username: 'synthetic@example.invalid', password: 'unused' }) } : {}),
+        });
+        const response = await handler(request);
+        assert.equal(response.status, state === 'outage' ? 503 : 401);
+        const body = await response.json();
+        if (state === 'outage') assert.equal(response.headers.get('set-cookie'), null);
+        else {
+          assert.equal(body.code, `account_${state}`);
+          assert.match(response.headers.get('set-cookie') ?? '', /Max-Age=0/);
+        }
+        assert.doesNotMatch(JSON.stringify(body), /private-access|private-refresh|old-access|old-refresh/);
+      } finally { globalThis.fetch = oldFetch; }
+    });
+  }
+}
+
 test("CloudBase API writes reject cross-site origins before contacting auth", async () => {
   let called = false;
   globalThis.fetch = (async () => { called = true; return Response.json({}); }) as typeof fetch;
@@ -56,9 +87,9 @@ test("same-origin sign-in preserves the existing archived-account message for us
 
 test("user verification preserves the archived-account message and does not refresh a blocked user", async () => {
   process.env.CLOUDBASE_ENV_ID = "env-test";
-  let calls = 0;
-  globalThis.fetch = (async () => {
-    calls += 1;
+  const paths: string[] = [];
+  globalThis.fetch = (async (input) => {
+    paths.push(new URL(String(input)).pathname);
     return Response.json({ error_code: 4013, error: "user_blocked", error_description: "User is blocked." }, { status: 400 });
   }) as typeof fetch;
   try {
@@ -71,7 +102,7 @@ test("user verification preserves the archived-account message and does not refr
     const response = await getUser(request);
     assert.equal(response.status, 401);
     assert.deepEqual(await response.json(), { error: "账号已归档，请联系 owner 恢复", code: "blocked" });
-    assert.equal(calls, 1);
+    assert.deepEqual(paths, ["/auth/v1/user/me", "/v1/rdb/rest/rpc/cloudbase_session_status"]);
   } finally { globalThis.fetch = oldFetch; }
 });
 
@@ -96,6 +127,7 @@ test("same-origin sign-in returns user only in JSON and logout clears the HttpOn
     currentPath = new URL(String(input)).pathname;
     if (currentPath === "/auth/v1/signin") return Response.json({ access_token: "private-access", refresh_token: "private-refresh", expires_in: 300, sub: "subject" });
     if (currentPath === "/auth/v1/user/me") return Response.json({ sub: "subject", email: "person@example.com" });
+    if (currentPath === "/v1/rdb/rest/rpc/cloudbase_session_status") return Response.json("active");
     if (currentPath === "/auth/v1/user/signout") {
       assert.equal(new Headers(init?.headers).get("authorization"), "Bearer private-access");
       return Response.json({});

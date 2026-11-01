@@ -162,11 +162,18 @@ export async function removeSubTopic(supabase: TopicSupabase, actor: TopicMutati
  * V3 多人写作：同一选题允许多人同时写；同一成员对同一选题只有一个有效写作状态，
  * 重复点击保持幂等；不设旧候选上限，不做撞车阻断。
  */
-export async function startWritingClaim(supabase: TopicSupabase, userId: string, subTopicId: string): Promise<ApiResult<unknown>> {
+export async function startWritingClaim(
+  supabase: TopicSupabase,
+  userId: string,
+  subTopicId: string,
+  scope: { visibleUserIds: string[] },
+): Promise<ApiResult<unknown>> {
+  if (scope.visibleUserIds.length === 0) return { ok: false, status: 404, message: "选题不存在" };
   const { data: topic, error: topicError } = await supabase
     .from("sub_topics")
-    .select("id, library_status")
+    .select("id, created_by, library_status")
     .eq("id", subTopicId)
+    .in("created_by", scope.visibleUserIds)
     .maybeSingle();
   if (topicError) return { ok: false, status: 500, message: topicError.message };
   if (!topic) return { ok: false, status: 404, message: "选题不存在" };

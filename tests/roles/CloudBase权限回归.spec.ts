@@ -28,7 +28,7 @@ async function token(key: string) {
 async function rest(jwt: string, path: string, method = 'GET', body?: unknown) {
   return fetch(`${gateway}/v1/rdb/rest/${path}`, {method, headers:{authorization:`Bearer ${jwt}`,'content-type':'application/json',prefer:'return=representation'}, ...(body === undefined ? {} : {body:JSON.stringify(body)})});
 }
-async function site(key: string) {
+async function site(key: string): Promise<APIRequestContext> {
   const ctx = await requests.newContext({baseURL:'http://127.0.0.1:3100'});
   const u = identities()[key];
   const r = await ctx.post('/api/cloudbase/auth/signin',{data:{username:u.username,password:u.password}});

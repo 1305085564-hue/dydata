@@ -7,6 +7,31 @@ type AuthShape = Record<string, unknown> & { admin?: Record<string, unknown> };
 type CloudBaseRpcResult = { data: unknown; error: { message?: string; code?: string } | null };
 type CloudBaseRpcClient = { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<CloudBaseRpcResult> };
 
+async function normalizeDatabaseErrorResponse(response: Response): Promise<Response> {
+  if (response.ok || !/json/i.test(response.headers.get("content-type") ?? "")) return response;
+
+  let payload: unknown;
+  try {
+    payload = await response.clone().json();
+  } catch {
+    return response;
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return response;
+
+  const body = payload as Record<string, unknown>;
+  const code = body.code;
+  if (typeof code !== "string" || !/^DATABASE_[0-9A-Z]{5}$/.test(code)) return response;
+
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.delete("content-encoding");
+  return new Response(JSON.stringify({ ...body, code: code.slice("DATABASE_".length) }), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export function createCloudBaseFetch(options: {
   role: CloudBaseDataRole;
   userToken?: string | null | (() => string | null);
@@ -33,7 +58,7 @@ export function createCloudBaseFetch(options: {
     }
 
     if (options.role === "browser") {
-      return (options.fetcher ?? fetch)(target, {
+      const response = await (options.fetcher ?? fetch)(target, {
         method: sourceRequest.method,
         headers,
         body: ["GET", "HEAD"].includes(sourceRequest.method) ? undefined : sourceRequest.body,
@@ -42,6 +67,7 @@ export function createCloudBaseFetch(options: {
         duplex: "half",
         signal: AbortSignal.timeout(20_000),
       } as RequestInit);
+      return normalizeDatabaseErrorResponse(response);
     }
 
     const request = new Request(target, {
@@ -54,7 +80,7 @@ export function createCloudBaseFetch(options: {
       duplex: "half",
       signal: AbortSignal.timeout(20_000),
     } as RequestInit);
-    return (options.fetcher ?? fetch)(request);
+    return normalizeDatabaseErrorResponse(await (options.fetcher ?? fetch)(request));
   };
 }
 

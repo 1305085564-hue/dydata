@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
+import { isCloudBaseInactiveAccountError, validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError } from "@/lib/cloudbase/core";
 import {
   CLOUD_BASE_SESSION_COOKIE,
@@ -42,12 +42,22 @@ export function clearCloudBaseCookies(response: NextResponse) {
   });
 }
 
+export function inactiveCloudBaseAccountResponse(error: unknown) {
+  if (!isCloudBaseInactiveAccountError(error)) return null;
+  const response = NextResponse.json({ error: error.message, code: error.code }, {
+    status: 401, headers: { "Cache-Control": "no-store" },
+  });
+  clearCloudBaseCookies(response);
+  return response;
+}
+
 export async function requireVerifiedCloudBaseSession(request: NextRequest) {
   const session = getCloudBaseCookieSession(request);
   if (!session) return { result: null, error: "missing" as const };
   try {
     return { result: await validateCloudBaseSession(session), error: null };
   } catch (error) {
+    if (isCloudBaseInactiveAccountError(error)) return { result: null, error: error.code, accountError: error };
     if (error instanceof CloudBaseAuthError && error.code === "user_blocked") return { result: null, error: "blocked" as const };
     return { result: null, error: error instanceof Error && "status" in error && (error as { status?: number }).status === 401 ? "invalid" as const : "unavailable" as const };
   }

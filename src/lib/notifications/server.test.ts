@@ -37,6 +37,11 @@ test("markRead: 本人已读重复调用成功，但他人通知没有匹配行�
   };
   const previousFetch = globalThis.fetch;
   const requests: Array<{ method: string; id: string | null; userId: string | null; status: string | null }> = [];
+  const notifications: Record<string, { userId: string; status: "unread" | "read" | "done" }> = {
+    "own-read": { userId: "user-1", status: "read" },
+    "other-user-read": { userId: "user-2", status: "unread" },
+    "own-done": { userId: "user-1", status: "done" },
+  };
   process.env.DYDATA_BACKEND = "cloudbase";
   process.env.CLOUDBASE_ENV_ID = "notification-test";
   process.env.CLOUDBASE_SERVICE_API_KEY = "notification-test-key";
@@ -49,10 +54,18 @@ test("markRead: 本人已读重复调用成功，但他人通知没有匹配行�
       userId: url.searchParams.get("user_id"),
       status: url.searchParams.get("status"),
     });
-    if (request.method === "PATCH") return Response.json([], { status: 200 });
+    const id = url.searchParams.get("id")?.replace(/^eq\./, "") ?? "";
+    const userId = url.searchParams.get("user_id")?.replace(/^eq\./, "") ?? "";
+    if (request.method === "PATCH") {
+      const row = notifications[id];
+      const body = await request.clone().json() as { status?: string };
+      const matched = Boolean(row && row.userId === userId && row.status === "unread" && body.status === "read");
+      if (matched) row!.status = "read";
+      return Response.json(matched ? [{ id }] : [], { status: 200 });
+    }
     if (request.method === "GET") {
-      const row = url.searchParams.get("id") === "eq.own-read" ? [{ id: "own-read", status: "read" }] : [];
-      return Response.json(row, { status: 200 });
+      const row = notifications[id];
+      return Response.json(row && row.userId === userId && row.status === "read" ? [{ id }] : [], { status: 200 });
     }
     throw new Error(`Unexpected notifications request ${request.method}`);
   }) as typeof fetch;
@@ -60,6 +73,9 @@ test("markRead: 本人已读重复调用成功，但他人通知没有匹配行�
   try {
     assert.equal(await markRead("own-read", "user-1"), true);
     assert.equal(await markRead("other-user-read", "user-1"), false);
+    assert.equal(await markRead("own-done", "user-1"), false);
+    assert.equal(notifications["other-user-read"].status, "unread", "不能把他人通知误标为已读");
+    assert.equal(notifications["own-done"].status, "done", "标读不能把已完成通知改回已读");
     assert.ok(requests.every((request) => request.userId === "eq.user-1"), "所有读写都按可信 user_id 限定");
     assert.ok(requests.filter((request) => request.method === "PATCH").every((request) => request.status === "eq.unread"));
   } finally {

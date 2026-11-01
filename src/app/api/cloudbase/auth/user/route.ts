@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { clearCloudBaseCookies, getCloudBaseCookieSession, requireVerifiedCloudBaseSession, setCloudBaseCookie } from "@/app/api/cloudbase/_shared";
+import { clearCloudBaseCookies, getCloudBaseCookieSession, inactiveCloudBaseAccountResponse, requireVerifiedCloudBaseSession, setCloudBaseCookie } from "@/app/api/cloudbase/_shared";
 import { hasCloudBaseSessionChanged } from "@/lib/cloudbase/core";
 
 export async function GET(request: NextRequest) {
-  const { result, error } = await requireVerifiedCloudBaseSession(request);
+  const verification = await requireVerifiedCloudBaseSession(request);
+  const { result, error } = verification;
+  if ("accountError" in verification) {
+    const inactive = inactiveCloudBaseAccountResponse(verification.accountError);
+    if (inactive) return inactive;
+  }
   if (!result) {
     const blocked = error === "blocked";
     const unavailable = error === "unavailable";

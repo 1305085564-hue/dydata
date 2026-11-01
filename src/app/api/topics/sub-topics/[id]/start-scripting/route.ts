@@ -44,7 +44,7 @@ export async function buildStartScriptingResponse(
   let response: Response;
   try {
     observation?.mark("write-request");
-    response = jsonResult(await deps.startWritingClaim(auth.context.supabase, auth.context.userId, id));
+    response = jsonResult(await deps.startWritingClaim(auth.context.supabase, auth.context.userId, id, auth.context.teamScope));
   } catch {
     response = Response.json({ error: "开始写作失败" }, { status: 500 });
   }

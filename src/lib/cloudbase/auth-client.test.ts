@@ -6,6 +6,32 @@ import { CLOUD_BASE_SESSION_COOKIE, serializeCloudBaseSession } from "./core";
 
 const oldFetch = globalThis.fetch;
 
+for (const status of ['active', 'archived', 'blocked', 'pending', 'missing', 'outage']) {
+  test(`raw JWT getUser respects trusted account status ${status}`, async () => {
+    process.env.CLOUDBASE_ENV_ID = 'env-test';
+    const calls: string[] = [];
+    globalThis.fetch = (async (input, init) => {
+      const path = new URL(String(input)).pathname;
+      calls.push(path);
+      assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer raw-jwt');
+      return path.endsWith('/user/me') ? Response.json({ sub: 'subject' }) : status === 'outage' ? Response.json({}, { status: 503 }) : Response.json(status);
+    }) as typeof fetch;
+    try {
+      const auth = createCloudBaseServerAuth({ get: () => undefined, set: () => { throw new Error('raw JWT must not write cookies'); } }, false);
+      const result = await auth.getUser('raw-jwt');
+      if (status === 'active') {
+        assert.equal(result.data.user?.id, 'subject');
+        assert.equal(result.error, null);
+      } else {
+        assert.equal(result.data.user, null);
+        assert.equal(result.error?.status, status === 'outage' ? 503 : 401);
+        assert.equal(result.error?.code, status === 'outage' ? 'cloudbase_session_status_unavailable' : `account_${status}`);
+      }
+      assert.deepEqual(calls, ['/auth/v1/user/me', '/v1/rdb/rest/rpc/cloudbase_session_status']);
+    } finally { globalThis.fetch = oldFetch; }
+  });
+}
+
 test("server logout calls the CloudBase signout endpoint and clears HttpOnly session cookie", async () => {
   process.env.CLOUDBASE_ENV_ID = "env-test";
   const values = new Map<string, string>();
@@ -48,7 +74,7 @@ test("read-only Server Component cookies do not cause false logout on getUser", 
   process.env.CLOUDBASE_ENV_ID = "env-test";
   const value = serializeCloudBaseSession({ accessToken: "access", refreshToken: "refresh", expiresAt: Date.now() + 120_000, subject: "subject" });
   let writes = 0;
-  globalThis.fetch = (async () => Response.json({ sub: "subject", password: "never exposed" })) as typeof fetch;
+  globalThis.fetch = (async (input) => String(input).endsWith("/rpc/cloudbase_session_status") ? Response.json("active") : Response.json({ sub: "subject", password: "never exposed" })) as typeof fetch;
   try {
     const auth = createCloudBaseServerAuth({
       get: () => ({ value }),
@@ -70,6 +96,7 @@ test("successful refresh remains authenticated when a read-only cookie store can
   let writes = 0;
   globalThis.fetch = (async (input) => {
     const url = new URL(String(input));
+    if (url.pathname.endsWith("/rpc/cloudbase_session_status")) return Response.json("active");
     if (url.pathname.endsWith("/user/me")) {
       userCalls += 1;
       return Response.json({ sub: "subject" });

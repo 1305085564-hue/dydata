@@ -62,17 +62,32 @@ export async function emit(input: EmitInput): Promise<EmitResult> {
 
 export async function markRead(notificationId: string, userId: string): Promise<boolean> {
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data, error } = await admin
     .from("notifications")
     .update({ status: "read", read_at: new Date().toISOString() })
     .eq("id", notificationId)
     .eq("user_id", userId)
-    .eq("status", "unread");
+    .eq("status", "unread")
+    .select("id");
   if (error) {
     console.error("[notifications] markRead failed", error);
     return false;
   }
-  return true;
+  if (data && data.length > 0) return true;
+
+  // 重复标读本人通知保持幂等；他人、不存在或已完成的通知不误报成功。
+  const existing = await admin
+    .from("notifications")
+    .select("id")
+    .eq("id", notificationId)
+    .eq("user_id", userId)
+    .eq("status", "read")
+    .maybeSingle();
+  if (existing.error) {
+    console.error("[notifications] markRead verification failed", existing.error);
+    return false;
+  }
+  return Boolean(existing.data);
 }
 
 export async function markDone(

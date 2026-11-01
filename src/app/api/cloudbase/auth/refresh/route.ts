@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { refreshCloudBaseSession } from "@/lib/cloudbase/auth";
-import { clearCloudBaseCookies, getCloudBaseCookieSession, rejectUntrustedCloudBaseWrite, setCloudBaseCookie } from "@/app/api/cloudbase/_shared";
+import { clearCloudBaseCookies, getCloudBaseCookieSession, inactiveCloudBaseAccountResponse, rejectUntrustedCloudBaseWrite, setCloudBaseCookie } from "@/app/api/cloudbase/_shared";
 
 export async function POST(request: NextRequest) {
   const rejected = rejectUntrustedCloudBaseWrite(request);
@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
     setCloudBaseCookie(response, request, result.session);
     return response;
   } catch (error) {
+    const inactive = inactiveCloudBaseAccountResponse(error);
+    if (inactive) return inactive;
     const status = error instanceof Error && "status" in error && typeof (error as { status?: unknown }).status === "number"
       ? (error as { status: number }).status
       : 503;
