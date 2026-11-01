@@ -142,6 +142,41 @@ export function resolveContentPageStateFromSearch(
   };
 }
 
+export type ContentVideoStepDirection = "prev" | "next";
+
+/**
+ * 纯函数：将键盘事件解析为详情抽屉的切片方向
+ * - J / 方向键下 / ] / Alt+Right -> 下一条视频 (next)
+ * - K / 方向键上 / [ / Alt+Left -> 上一条视频 (prev)
+ * - 拦截与忽略 Ctrl/Cmd 组合键，避免误拦截浏览器基础热键
+ */
+export function resolveContentVideoStepKey(event: {
+  key: string;
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+}): ContentVideoStepDirection | null {
+  if (event.ctrlKey || event.metaKey) return null;
+  const key = event.key.toLowerCase();
+  if (
+    key === "j" ||
+    event.key === "ArrowDown" ||
+    event.key === "]" ||
+    (Boolean(event.altKey) && event.key === "ArrowRight")
+  ) {
+    return "next";
+  }
+  if (
+    key === "k" ||
+    event.key === "ArrowUp" ||
+    event.key === "[" ||
+    (Boolean(event.altKey) && event.key === "ArrowLeft")
+  ) {
+    return "prev";
+  }
+  return null;
+}
+
 export function useContentVideoStepShortcut({
   open,
   onStepVideo,
@@ -150,7 +185,7 @@ export function useContentVideoStepShortcut({
   disabled = false,
 }: {
   open: boolean;
-  onStepVideo?: (direction: "prev" | "next") => void;
+  onStepVideo?: (direction: ContentVideoStepDirection) => void;
   hasPrev: boolean;
   hasNext: boolean;
   disabled?: boolean;
@@ -168,26 +203,15 @@ export function useContentVideoStepShortcut({
         return;
       }
 
-      const key = e.key.toLowerCase();
-      // J / 方向键下 / ] / Alt+Right: 下一条视频
-      if (
-        key === "j" ||
-        e.key === "ArrowDown" ||
-        e.key === "]" ||
-        (e.altKey && e.key === "ArrowRight")
-      ) {
+      const direction = resolveContentVideoStepKey(e);
+      if (!direction) return;
+
+      if (direction === "next" && hasNext) {
         e.preventDefault();
-        if (hasNext) onStepVideo("next");
-      }
-      // K / 方向键上 / [ / Alt+Left: 上一条视频
-      else if (
-        key === "k" ||
-        e.key === "ArrowUp" ||
-        e.key === "[" ||
-        (e.altKey && e.key === "ArrowLeft")
-      ) {
+        onStepVideo("next");
+      } else if (direction === "prev" && hasPrev) {
         e.preventDefault();
-        if (hasPrev) onStepVideo("prev");
+        onStepVideo("prev");
       }
     };
     window.addEventListener("keydown", handleKeyDown);

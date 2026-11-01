@@ -385,6 +385,7 @@ export function ContentPageClient({
         <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>
           <ContentList
             videos={videosWithLibraryStatus}
+            selectedVideoId={selectedVideoId}
             snapshots={data.snapshots}
             profiles={data.profiles}
             accountOptions={data.accountOptions}

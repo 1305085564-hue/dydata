@@ -150,6 +150,7 @@ export function ContentList(props: ContentListProps) {
         sortDir={state.sortDir}
         handleSort={state.handleSort}
         isSingleDay={isSingleDay}
+        selectedVideoId={props.selectedVideoId}
         onSelectVideoId={props.onSelectVideoId}
         onSelectAuthor={props.onSelectAuthor}
         ownerNames={props.ownerNames}
