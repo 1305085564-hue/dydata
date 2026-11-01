@@ -233,9 +233,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
         {/* 数据矩阵：核心3项 + 互动4项 + 完播4项 */}
         <div className="flex flex-1 flex-col gap-2 sm:gap-3">
           
-          {/* 1. 核心数据网格 (移动端两列，桌面端3列) */}
+          {/* 1. 核心数据网格 (移动端两列，桌面端统一4列以实现三行竖向对齐，右侧自然留空) */}
           <div>
-            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 sm:gap-2 lg:gap-3">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 sm:gap-2 lg:gap-3">
               {CORE_ITEMS.map((item, index) => (
                 <指标输入卡
                   key={item.key}
