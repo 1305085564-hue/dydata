@@ -62,7 +62,7 @@ export async function setup() {
       INSERT INTO public.notifications(id,user_id,type,category,title,source_type) VALUES (${quote(uuid(501+i))},${quote(u.id)},'system','feed','${PREFIX}','${PREFIX}');
       INSERT INTO public.fulfillment_appeals(id,user_id,account_id,record_date,reason) VALUES (${quote(uuid(601+i))},${quote(u.id)},${quote(uuid(201+i))},current_date-1,'${PREFIX}');
       INSERT INTO public.content_observations(id,video_id,observer_id,note) VALUES (${quote(uuid(701+i))},${quote(uuid(301+i))},${quote(users['admin'+(i?'B':'A')].id)},'${PREFIX}');`);
-    statements.push(`INSERT INTO public.daily_reports(id,user_id,account_id,video_id,report_date,title) VALUES (${quote(uuid(801+i))},${quote(u.id)},${quote(uuid(201+i))},${quote(uuid(301+i))},current_date-1,'${PREFIX}');
+    statements.push(`INSERT INTO public.daily_reports(id,user_id,account_id,video_id,report_date,title,submitter) VALUES (${quote(uuid(801+i))},${quote(u.id)},${quote(uuid(201+i))},${quote(uuid(301+i))},current_date-1,'${PREFIX}','${PREFIX}');
       INSERT INTO public.sample_quality_issues(id,report_id,video_id,severity) VALUES (${quote(uuid(901+i))},${quote(uuid(801+i))},${quote(uuid(301+i))},'warning');
       INSERT INTO public.exemption_request(id,profile_id,applicant_user_id,team_id,exemption_type,start_date,end_date,reason) VALUES (${quote(uuid(1001+i))},${quote(u.id)},${quote(u.id)},${quote(u.team)},'range',current_date-1,current_date-1,'${PREFIX}');
       INSERT INTO public.exemption_request_date(id,request_id,request_date) VALUES (${quote(uuid(1101+i))},${quote(uuid(1001+i))},current_date-1);`);
