@@ -168,12 +168,26 @@ export function useContentVideoStepShortcut({
         return;
       }
 
-      if (e.key === "[" || (e.altKey && e.key === "ArrowLeft")) {
-        e.preventDefault();
-        if (hasPrev) onStepVideo("prev");
-      } else if (e.key === "]" || (e.altKey && e.key === "ArrowRight")) {
+      const key = e.key.toLowerCase();
+      // J / 方向键下 / ] / Alt+Right: 下一条视频
+      if (
+        key === "j" ||
+        e.key === "ArrowDown" ||
+        e.key === "]" ||
+        (e.altKey && e.key === "ArrowRight")
+      ) {
         e.preventDefault();
         if (hasNext) onStepVideo("next");
+      }
+      // K / 方向键上 / [ / Alt+Left: 上一条视频
+      else if (
+        key === "k" ||
+        e.key === "ArrowUp" ||
+        e.key === "[" ||
+        (e.altKey && e.key === "ArrowLeft")
+      ) {
+        e.preventDefault();
+        if (hasPrev) onStepVideo("prev");
       }
     };
     window.addEventListener("keydown", handleKeyDown);

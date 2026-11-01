@@ -159,6 +159,25 @@ export function ContentListTable({
     isCellHighlighted(item, key, highlightRules);
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
 
+  // 播放量与完播率最大值（供微型数据条作为相对比例基准）
+  const maxPlayCount = React.useMemo(() => {
+    let max = 1;
+    for (const row of visibleRows) {
+      if (row.playCount && row.playCount > max) max = row.playCount;
+    }
+    return max;
+  }, [visibleRows]);
+
+  const maxCompletionRate = React.useMemo(() => {
+    let max = 1;
+    for (const row of visibleRows) {
+      if (row.completionRate && row.completionRate > max && row.completionRate <= 100) {
+        max = row.completionRate;
+      }
+    }
+    return max;
+  }, [visibleRows]);
+
   return (
     <TooltipProvider delay={100}>
       <div ref={tableContainerRef} className="flex-1 w-full min-h-0">
@@ -406,9 +425,18 @@ export function ContentListTable({
                             </Tooltip>
                           </td>
 
-                          {/* 播放量：核心视觉锚点，保持 14px 定名墨 */}
-                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
-                            <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
+                          {/* 播放量：核心视觉锚点，保持 14px 定名墨，底层带淡雅微型数据条 */}
+                          <td data-col-key="play_count" className={cn("relative py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
+                            {item.playCount && item.playCount > 0 ? (
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-y-1 right-1 rounded-md bg-status-info/[0.08] pointer-events-none transition-[width] duration-150"
+                                style={{ width: `calc(${Math.min((item.playCount / maxPlayCount) * 100, 100).toFixed(1)}% - 8px)` }}
+                              />
+                            ) : null}
+                            <span className="relative z-10">
+                              <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
+                            </span>
                           </td>
 
                           {/* 涨粉 */}
@@ -444,8 +472,18 @@ export function ContentListTable({
                           <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
                             <DurationCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          {/* 完播率：底层带淡雅微型数据条 */}
+                          <td data-col-key="completion_rate" className={cn("relative py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
+                            {item.completionRate && item.completionRate > 0 ? (
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-y-1 right-1 rounded-md bg-[#141413]/[0.04] pointer-events-none transition-[width] duration-150"
+                                style={{ width: `calc(${Math.min((item.completionRate / maxCompletionRate) * 100, 100).toFixed(1)}% - 8px)` }}
+                              />
+                            ) : null}
+                            <span className="relative z-10">
+                              <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            </span>
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}
