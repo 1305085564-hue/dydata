@@ -1,0 +1,204 @@
+{
+  "environment": "dydata-d6g0gd1v37fcddf21",
+  "productionChanges": false,
+  "purchaseExecuted": false,
+  "employeeImportExecuted": false,
+  "billing": {
+    "PackageId": "baas_trial",
+    "PackageName": "体验版",
+    "ExpireTime": "2027-05-01 23:59:59",
+    "IsAutoRenew": false,
+    "EnableOverrun": false,
+    "EnvDeductionMode": "credits"
+  },
+  "billingRequestId": "eb0c29e4-776a-4362-941e-488bcdb3e3dd",
+  "quotaProbe": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "method": "official CreateUser ACTIVE internalUser",
+    "requests": [
+      {
+        "action": "count restored",
+        "RequestId": "98a3e888-0587-47bf-b1a5-41af3fde82d7"
+      }
+    ],
+    "activeCreated": false,
+    "code": "LimitExceeded",
+    "message": "[CreateUser] 超过配额限制。授权用户数超过套餐配额上限",
+    "RequestId": "abc1060e-1c6f-4793-b7f7-4e5be91a3ff9",
+    "remainingUsers": "3"
+  },
+  "probeCleanup": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "method": "official CreateUser ACTIVE internalUser",
+    "requests": [
+      {
+        "action": "DeleteUsers only owned quota probes",
+        "RequestId": "743c1b34-9b4d-4963-9bf6-b4b312efcd96"
+      },
+      {
+        "action": "count restored",
+        "RequestId": "0539add2-b4b8-4115-b661-839b7b688324"
+      }
+    ],
+    "activeCreated": false,
+    "code": "LimitExceeded",
+    "message": "[CreateUser] 超过配额限制。授权用户数超过套餐配额上限",
+    "RequestId": "a872115e-7371-433f-8d59-856a18649527",
+    "remainingUsers": "3"
+  },
+  "pendingStateVerification": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "syntheticAccountOnly": true,
+    "requests": [
+      {
+        "name": "read original synthetic row",
+        "RequestId": "4fb6fe91-8aaa-4811-bdda-7d04e2df0db5"
+      },
+      {
+        "name": "set only synthetic test account pending",
+        "RequestId": "69fa0e1c-89df-4f97-924b-ea30a8256519"
+      },
+      {
+        "name": "restore exact original synthetic account",
+        "RequestId": "1db59f1a-de57-4c93-ac93-a04bc92295a8"
+      },
+      {
+        "name": "verify original row restored",
+        "RequestId": "891f560d-fda4-4f44-8190-3f9df365a1e3"
+      }
+    ],
+    "baselineLogin": 200,
+    "pendingLogin": {
+      "status": 400,
+      "error": "user_pending",
+      "code": 4012,
+      "tokenIssued": false
+    },
+    "originalRowRestored": true,
+    "restoredLogin": 200,
+    "passed": true
+  },
+  "fullPreparation": {
+    "sourceReadOnly": true,
+    "executed": false,
+    "blockedBy": "Current ACTIVE user quota exceeded; no package purchased",
+    "capturedAt": "2026-11-01T02:30:49.100792+00:00",
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "full",
+    "importCount": 84,
+    "batchCount": 2,
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "expectedPlanSha256": "315e1c0a83eb439595b76a963eb0d07e54cee67f30c6dc3737b4fe6ceb86de60",
+    "planSha256": "682977371977f5794a3f877aa580a5a91cf48e3941ad7a093a9d05ff64afa7fb",
+    "sensitive": true,
+    "sourceChecks": {
+      "anonymous": 0,
+      "softDeleted": 0,
+      "sourceCount": 84,
+      "unconfirmed": 1,
+      "currentlyBanned": 24
+    },
+    "verifiedMfa": 0,
+    "targetExistingUsers": 3,
+    "targetReadRequestId": "b4085371-258c-4cfe-ba0e-2fefd38e5f5e"
+  },
+  "sqlFixtureVerification": {
+    "realAuthTableUntouched": true,
+    "requests": [
+      {
+        "name": "create synthetic schema fixture",
+        "RequestId": "a712e56c-41f6-4f04-9581-3f33cd7ed7e9",
+        "ms": 10
+      },
+      {
+        "name": "synthetic import batch 1",
+        "RequestId": "3d24f677-90a2-4dcd-a5e8-a8a8d42190ee",
+        "ms": 14
+      },
+      {
+        "name": "synthetic import batch 2",
+        "RequestId": "07dc25d0-7daf-425b-96ad-b41d0d7789cc",
+        "ms": 15
+      },
+      {
+        "name": "verify pending persisted before rollback",
+        "RequestId": "756bd304-a2ee-4493-8b73-745ccdc48de2",
+        "ms": 7
+      },
+      {
+        "name": "add unowned identical synthetic clone",
+        "RequestId": "ffec2def-062c-438a-9cf8-d959cba6bace",
+        "ms": 4
+      },
+      {
+        "name": "rollback only receipt rows 1",
+        "RequestId": "efa30606-527a-408d-b668-f6073eaad4d2",
+        "ms": 14
+      },
+      {
+        "name": "rollback only receipt rows 2",
+        "RequestId": "a9f2777e-70ed-487a-b501-6c84dfcab90b",
+        "ms": 11
+      },
+      {
+        "name": "unowned clone must survive",
+        "RequestId": "09a9a575-8d8d-44a2-935f-5c603c52e231",
+        "ms": 8
+      },
+      {
+        "name": "remove only owned synthetic fixture",
+        "RequestId": "8122b023-e4d8-4e86-8da8-374677c77c41",
+        "ms": 9
+      }
+    ],
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "storedPendingStateVerified": true,
+    "syntheticUsers": 84,
+    "batchSizes": [
+      50,
+      34
+    ],
+    "runtimeDuplicateRejected": true,
+    "unownedCloneSurvived": true,
+    "internalBigintStringsPreserved": true,
+    "passed": true,
+    "fixtureRemoved": true
+  },
+  "personalCatalog": {
+    "package": "baas_personal",
+    "listUnitPriceYuan": "39.9",
+    "Auth": {
+      "UserNum": {
+        "TimeUnit": "m",
+        "Unit": "百",
+        "MaxSize": 2
+      }
+    },
+    "RequestId": "b364cc1a-8b1e-46d2-841d-fcbde2303cc7",
+    "interpretation": "Catalog only; paid-environment effective auth-user entitlement still needs verification"
+  },
+  "observedConsoleQuote": {
+    "package": "个人版",
+    "period": "1个月",
+    "priceYuan": "19.90",
+    "autoRenewChecked": false,
+    "submitted": false,
+    "note": "Live console quotation; not a paid order or a guaranteed subsequent renewal price"
+  },
+  "checks": {
+    "node --test scripts/cloudbase/*.test.mjs": "55 passed, 0 failed, exit 0",
+    "npx eslint scripts/cloudbase/auth-import.mjs scripts/cloudbase/auth-import.test.mjs": "exit 0",
+    "npm run gate:maintainability": "exit 0"
+  }
+}

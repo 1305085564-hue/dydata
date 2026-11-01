@@ -44,8 +44,14 @@ function validateSourceUsers(sourceUsers) {
       fail("source bcrypt must be exactly a $2a$10$ 60-byte hash");
     }
     validateInstant(user.created_at, "source created_at");
+    if (!Object.prototype.hasOwnProperty.call(user, "email_confirmed_at")) fail("source email_confirmed_at is required");
+    const emailVerified = user.email_confirmed_at !== null;
+    if (emailVerified) validateInstant(user.email_confirmed_at, "source email_confirmed_at");
+    if (!Object.prototype.hasOwnProperty.call(user, "banned_until") || user.banned_until === undefined) {
+      fail("source banned_until is required; unknown ban state must not activate an account");
+    }
     let bannedUntilEpoch = null;
-    if (user.banned_until !== null && user.banned_until !== undefined) {
+    if (user.banned_until !== null) {
       if (user.banned_until === "infinity") bannedUntilEpoch = Number.POSITIVE_INFINITY;
       else if (user.banned_until === "-infinity") bannedUntilEpoch = Number.NEGATIVE_INFINITY;
       else bannedUntilEpoch = validateInstant(user.banned_until, "source banned_until");
@@ -53,6 +59,7 @@ function validateSourceUsers(sourceUsers) {
 
     const row = {
       emailConfirmedAt: user.email_confirmed_at,
+      emailVerified,
       sourceId: user.id,
       email: user.email,
       emailKey: normalized(user.email),
@@ -109,6 +116,7 @@ function rowValues(row) {
     "[]",
     row.createdAt,
     row.createdAt,
+    row.emailVerified,
   ];
   return `(${[
     quoteELiteral(values[0]),
@@ -121,7 +129,7 @@ function rowValues(row) {
     `${quoteELiteral(values[7])}::jsonb`,
     `${quoteELiteral(values[8])}::timestamptz`,
     `${quoteELiteral(values[9])}::timestamptz`,
-    "true",
+    String(values[10]),
   ].join(", ")})`;
 }
 
@@ -164,7 +172,7 @@ function batchesOf(rows, statementForSlice) {
         username: row.email,
         email: row.email,
         password: row.password,
-        email_verified: true,
+        email_verified: row.emailVerified,
         status: row.status,
         type: "internal",
         providers: [],
@@ -198,7 +206,7 @@ function makeRollbackBatchSql(receiptRows) {
       ["updated_at", expected.updated_at],
     ];
     return `(${values.map(([column, value]) => {
-      const literal = column === "status" ? String(value) : quoteELiteral(value);
+      const literal = column === "status" || column === "email_verified" ? String(value) : quoteELiteral(value);
       const expression = column === "id" ? `target."id"::text` : `target."${column}"`;
       return `${expression} = ${column === "providers" ? `${literal}::jsonb` : literal}`;
     }).join(" AND ")})`;
@@ -245,28 +253,27 @@ export function buildAuthImportPlan({ sourceUsers, targetIdentities, capturedAt,
     }
   }
 
-  for (const row of selectedRows) {
-    if (!row.emailConfirmedAt) fail("unconfirmed or unknown source email confirmation requires an explicit migration decision");
-    validateInstant(row.emailConfirmedAt, "source email confirmation");
-  }
-
   const rows = selectedRows.map((row) => ({
     ...row,
     password: Buffer.from(row.encryptedPassword, "utf8").toString("base64"),
-    status: row.bannedUntilEpoch !== null && row.bannedUntilEpoch > capturedAtEpoch ? 3 : 1,
+    emailVerified: row.emailConfirmedAt !== null,
+    status: row.bannedUntilEpoch !== null && row.bannedUntilEpoch > capturedAtEpoch
+      ? 3
+      : row.emailConfirmedAt === null ? 2 : 1,
   }));
   const statusCounts = rows.reduce((counts, row) => {
     if (row.status === 3) counts.disabled += 1;
+    else if (row.status === 2) counts.pending += 1;
     else counts.active += 1;
     return counts;
-  }, { active: 0, disabled: 0 });
+  }, { active: 0, pending: 0, disabled: 0 });
   const expectedRows = rows.map((row) => ({
     sub: row.sourceId,
     project: AUTH_IMPORT_ENV_ID,
     username: row.email,
     email: row.email,
     password: row.password,
-    email_verified: true,
+    email_verified: row.emailVerified,
     status: row.status,
     type: "internal",
     providers: [],
@@ -286,6 +293,7 @@ export function buildAuthImportPlan({ sourceUsers, targetIdentities, capturedAt,
     capturedAt,
     userCount: rows.length,
     activeCount: statusCounts.active,
+    pendingCount: statusCounts.pending,
     disabledCount: statusCounts.disabled,
     sha256: expectedPlanSha256,
     bindingSha256: planSha256,

@@ -11,8 +11,8 @@ function sourceUser(index, overrides = {}) {
     id: `00000000-0000-4000-8000-${number}`,
     email: `member-${index}@example.test`,
     encrypted_password: `$2a$10$${"A".repeat(53)}`,
+    email_confirmed_at: "2024-01-02T03:04:05.123456Z",
     banned_until: null,
-    email_confirmed_at: "2024-01-02T03:04:05Z",
     created_at: "2024-01-02T03:04:05.123456Z",
     ...overrides,
   };
@@ -34,15 +34,17 @@ function buildPlan(overrides = {}) {
 
 test("full import plan preserves UUID subjects and base64 bcrypt while returning only a redacted summary", () => {
   const source = sourceUsers();
-  source[0].banned_until = "2026-10-31T12:00:01.000Z";
+  for (let index = 0; index < 24; index += 1) source[index].banned_until = "2026-10-31T12:00:01.000Z";
   source[1].banned_until = "infinity";
   source[2].banned_until = "-infinity";
+  source[25].banned_until = "2026-10-31T12:00:01.000Z";
+  source[24].email_confirmed_at = null;
   const plan = buildPlan({ sourceUsers: source });
 
   assert.equal(plan.summary.environment, AUTH_IMPORT_ENV_ID);
   assert.equal(plan.summary.importCount, 84);
   assert.equal(plan.summary.batchCount, 2);
-  assert.deepEqual(plan.summary.statusCounts, { active: 82, disabled: 2 });
+  assert.deepEqual(plan.summary.statusCounts, { active: 59, pending: 1, disabled: 24 });
   assert.equal(plan.expectedPlan.userCount, 84);
   assert.match(plan.expectedPlan.sha256, /^[a-f0-9]{64}$/);
   assert.match(plan.summary.planSha256, /^[a-f0-9]{64}$/);
@@ -59,13 +61,16 @@ test("full import plan preserves UUID subjects and base64 bcrypt while returning
   assert.match(firstSql, /"sub"/);
   assert.match(firstSql, /"password"/);
   assert.match(firstSql, /"email_verified"/);
-  assert.ok(plan.batches.every(batch=>batch.expectedRows.every(row=>row.email_verified===true)));
+  const expectedRows = plan.batches.flatMap((batch) => batch.expectedRows);
+  assert.equal(expectedRows.filter((row) => row.email_verified === false).length, 1);
+  assert.ok(expectedRows.filter((row) => row.sub !== source[24].id).every((row) => row.email_verified === true));
   assert.match(firstSql, /"project"/);
   assert.match(firstSql, /'dydata-d6g0gd1v37fcddf21'/);
   assert.match(firstSql, /'internal'/);
   assert.match(firstSql, /'\[\]'::jsonb/);
   assert.match(firstSql, /'2024-01-02T03:04:05\.123456Z'::timestamptz/);
-  assert.match(firstSql, /, 3, E'internal'/);
+  assert.match(firstSql, /, 3, E'internal',[^\n]+, true\)/);
+  assert.match(firstSql, /, 2, E'internal',[^\n]+, false\)/);
   assert.doesNotMatch(firstSql, /"id"\s*,/);
 
   const encodedBcrypt = Buffer.from(source[0].encrypted_password, "utf8").toString("base64");
@@ -86,7 +91,7 @@ test("a requested sample is planned exactly and still uses the fixed captured ti
 
   assert.equal(plan.summary.mode, "sample");
   assert.equal(plan.summary.importCount, 1);
-  assert.deepEqual(plan.summary.statusCounts, { active: 1, disabled: 0 });
+  assert.deepEqual(plan.summary.statusCounts, { active: 1, pending: 0, disabled: 0 });
   assert.ok(plan.batches[0].sql.includes(`'${users[1].id}'`));
   assert.ok(!plan.batches[0].sql.includes(`'${users[0].id}'`));
 });
@@ -117,9 +122,21 @@ test("rejects malformed bcrypt, UUID, email, timestamp, and invalid sample selec
   const invalidTimestamp = sourceUsers();
   invalidTimestamp[0].created_at = "yesterday";
   assert.throws(() => buildPlan({ sourceUsers: invalidTimestamp }), /created_at/i);
+  const missingConfirmation = sourceUsers();
+  delete missingConfirmation[0].email_confirmed_at;
+  assert.throws(() => buildPlan({ sourceUsers: missingConfirmation }), /email_confirmed_at/i);
+  const invalidConfirmation = sourceUsers();
+  invalidConfirmation[0].email_confirmed_at = "later";
+  assert.throws(() => buildPlan({ sourceUsers: invalidConfirmation }), /email_confirmed_at/i);
   const invalidBanTimestamp = sourceUsers();
   invalidBanTimestamp[0].banned_until = "sometime";
   assert.throws(() => buildPlan({ sourceUsers: invalidBanTimestamp }), /banned_until/i);
+  for (const absent of ["missing", "undefined"]) {
+    const unknownBan = sourceUsers();
+    if (absent === "missing") delete unknownBan[0].banned_until;
+    else unknownBan[0].banned_until = undefined;
+    assert.throws(() => buildPlan({ sourceUsers: unknownBan }), /banned_until/i);
+  }
 
   const sample = sourceUsers(1);
   assert.throws(() => buildAuthImportPlan({
@@ -168,12 +185,18 @@ test("packs at most 50 rows per transaction and binds returned internal IDs to e
   assert.match(rollbackSql, /target\."project" = E'dydata-d6g0gd1v37fcddf21'/);
   assert.match(rollbackSql, /target\."sub" = E'00000000-0000-4000-8000-000000000001'/);
   assert.match(rollbackSql, /target\."password" = E'/);
+  assert.match(rollbackSql, /target\."email_verified" = true/);
   assert.doesNotMatch(rollbackSql, /ON CONFLICT|DELETE FROM auth\.users\s*;/i);
   assert.match(rollback.rollbackNotice, /另行授权/);
   assert.match(rollback.rollbackNotice, /token.*联动表.*未验证/);
 
   const missing = receipts.slice(0, 1);
   assert.throws(() => buildAuthImportRollback(plan, missing), /complete|receipt/i);
+  for (const key of ["planSha256", "batchSha256"]) {
+    const wrongDigest = structuredClone(receipts);
+    wrongDigest[0][key] = "0".repeat(64);
+    assert.throws(() => buildAuthImportRollback(plan, wrongDigest), /digest|hash|sha|receipt/i);
+  }
   const numericId = structuredClone(receipts);
   numericId[0].rows[0].id = 9007199254740993;
   assert.throws(() => buildAuthImportRollback(plan, numericId), /decimal.*string|id/i);
@@ -220,9 +243,31 @@ test("requires the fixed environment and an explicit capturedAt; never logs SQL 
   }), /environment/i);
 });
 
-test("refuses to silently activate an unconfirmed or unknown email identity", () => {
+test("maps an explicit unconfirmed email to pending and gives a future ban precedence", () => {
   const user = sourceUser(1, { email_confirmed_at: null });
-  assert.throws(() => buildAuthImportPlan({ sourceUsers: [user], targetIdentities: [], sampleIds: [user.id], capturedAt: CAPTURED_AT }), /email.*confirm|unconfirmed/i);
+  const pendingPlan = buildAuthImportPlan({ sourceUsers: [user], targetIdentities: [], sampleIds: [user.id], capturedAt: CAPTURED_AT });
+  assert.deepEqual(pendingPlan.summary.statusCounts, { active: 0, pending: 1, disabled: 0 });
+  assert.match(pendingPlan.batches[0].sql, /, 2, E'internal',[^\n]+, false\)/);
+  const confirmed = sourceUser(1, { email_confirmed_at: "2024-05-01T00:00:00.000Z" });
+  const confirmedPlan = buildAuthImportPlan({ sourceUsers: [confirmed], targetIdentities: [], sampleIds: [confirmed.id], capturedAt: CAPTURED_AT });
+  assert.notEqual(pendingPlan.summary.expectedPlanSha256, confirmedPlan.summary.expectedPlanSha256);
+  assert.notEqual(pendingPlan.summary.planSha256, confirmedPlan.summary.planSha256);
+
+  const pendingBatch = pendingPlan.batches[0];
+  const rollback = buildAuthImportRollback(pendingPlan, [{
+    batchIndex: pendingBatch.index,
+    planSha256: pendingPlan.summary.planSha256,
+    batchSha256: pendingBatch.sha256,
+    rows: [{ id: "42", sub: user.id }],
+  }]);
+  assert.match(rollback.rollbackBatches[0].sql, /target\."email_verified" = false/);
+  assert.match(rollback.rollbackBatches[0].sql, /target\."status" = 2/);
+
+  const blockedPending = sourceUser(2, { email_confirmed_at: null, banned_until: "infinity" });
+  const blockedPlan = buildAuthImportPlan({ sourceUsers: [blockedPending], targetIdentities: [], sampleIds: [blockedPending.id], capturedAt: CAPTURED_AT });
+  assert.deepEqual(blockedPlan.summary.statusCounts, { active: 0, pending: 0, disabled: 1 });
+  assert.match(blockedPlan.batches[0].sql, /, 3, E'internal',[^\n]+, false\)/);
+
   const missing = sourceUser(1);
   delete missing.email_confirmed_at;
   assert.throws(() => buildAuthImportPlan({ sourceUsers: [missing], targetIdentities: [], sampleIds: [missing.id], capturedAt: CAPTURED_AT }), /email.*confirm|unknown/i);

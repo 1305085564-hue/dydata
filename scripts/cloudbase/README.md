@@ -42,7 +42,7 @@ npm run gate:static
 
 ## 密码哈希导入计划（2026-11-01 补充）
 
-`auth-import.mjs` 是离线生成器，不连接数据库、不读取生产凭据、不自动执行 SQL。只支持当前上海隔离环境及已核实的 `$2a$10$` 格式：UUID 写 `sub`，密码按 UTF-8 转 base64（80 字符、无换行），封禁状态按明确的采样时间映射。来源必须带邮箱确认时间；未确认或缺少确认信息的选中身份会拒绝计划，避免误激活。完整模式要求 84 个唯一来源身份；指定 `sampleIds` 才生成样本计划。
+`auth-import.mjs` 是离线生成器，不连接数据库、不读取生产凭据、不自动执行 SQL。只支持当前上海隔离环境及已核实的 `$2a$10$` 格式：UUID 写 `sub`，密码按 UTF-8 转 base64（80 字符、无换行），封禁状态按明确的采样时间映射。来源必须显式带邮箱确认时间：值为 null 的身份保留未激活（status=2、email_verified=false）；有效确认时间才标记邮箱已验证。未来封禁优先保留 status=3；邮箱确认或封禁字段缺失、undefined 或时间非法会拒绝计划，避免把未知封禁状态当成正常账号。完整模式要求 84 个唯一来源身份；指定 `sampleIds` 才生成样本计划。
 
 - `buildAuthImportPlan({sourceUsers,targetIdentities,capturedAt,project,sampleIds?})` 返回 `summary`、敏感 `batches` 和执行前置条件。只可打印 `summary`；SQL、expectedRows、原始哈希均按密码资料保存到 Git 之外的 700 目录、600 文件。
 - 计划每批最多 50 条：独立事务内锁表、再次查身份冲突、插入、`RETURNING id::text,sub`。目标没有 sub/email 唯一约束，必须另行控制所有 Auth 写入口，禁止把离线查重当成并发保障。重复直接执行会拒绝，不是静默跳过或覆盖。
