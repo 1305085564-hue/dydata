@@ -70,14 +70,14 @@ export function buildWriteFixtures() {
       key: { profile_id: ACTOR_ID, team_id: TEAM_ID },
       insert: { profile_id: ACTOR_ID, team_id: TEAM_ID },
       // This link table has only its two key columns in the live catalog.
-      patch: { team_id: id('teams') },
+      patch: { team_id: TEAM_ID },
     },
     {
       table: 'profiles_group',
       key: { profile_id: ACTOR_ID, group_id: uuid(21_000) },
       insert: { profile_id: ACTOR_ID, group_id: uuid(21_000) },
       // The live catalog has no non-key column or group FK for this link table.
-      patch: { group_id: uuid(21_001) },
+      patch: { group_id: uuid(21_000) },
     },
 
     // Content and video parents used by the dependent evidence rows below.

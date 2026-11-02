@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildWriteFixtures} from './write-fixtures.mjs';
-import {validateWriteFixtures,insertSql} from './write-acceptance.mjs';
+import {validateWriteFixtures,validateWriteJournal,insertSql} from './write-acceptance.mjs';
 import {uuid} from './permission-fixtures.mjs';
 
 test('B05 has 80 writable-table fixtures and explicit private/content support',()=>{
@@ -31,4 +31,13 @@ test('B05 all foreign identifiers are owned fixture keys or approved existing sy
   for(const f of fixtures)for(const [field,value]of Object.entries({...f.insert,...f.patch})){
     if(typeof value==='string' && /^[0-9a-f]{8}-/.test(value))assert.ok(ids.has(value),`${f.table}.${field} is not an owned reference`);
   }
+});
+
+test('B05 rejects moved composite keys and a changed recovery registry',()=>{
+  const fixtures=buildWriteFixtures();fixtures.find(f=>f.table==='profiles_team').patch.team_id=uuid(29990);
+  assert.throws(()=>validateWriteFixtures(fixtures),/move a composite/);
+  const journal={environment:'dydata-d6g0gd1v37fcddf21',namespace:'dydata-permission-v2-b05',fixtures:buildWriteFixtures()};
+  validateWriteJournal(journal);
+  journal.fixtures[0].insert.name='another-synthetic-run';
+  assert.throws(()=>validateWriteJournal(journal),/canonical fixture list/);
 });
