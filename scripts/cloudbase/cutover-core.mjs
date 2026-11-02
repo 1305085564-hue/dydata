@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { Client as PgClient } from 'pg';
 import { copyDumpToStatements } from './copy-data.mjs';
 import { buildActualQuery, buildExpectedQueries } from './data-reconciliation.mjs';
 
@@ -159,6 +160,97 @@ export function runPsql(connectionUrl, sql, { psql = findPostgresTool('psql'), t
     throw new Error(`Local PostgreSQL operation failed (exit ${result.status ?? 'unknown'}); SQL and row values were suppressed`);
   }
   return result.stdout.trim();
+}
+
+// Statement-at-a-time stdin transport is unusable for the freeze batch: psql
+// waits for each statement's result before sending the next, so a ~1200-statement
+// package costs one network round trip per statement (the 2026-11-02 23:17
+// source-freeze timeout). This transport sends the exact same SQL bytes as a
+// single simple-query protocol message: one round trip, one implicit round of
+// server-side execution, and BEGIN/COMMIT inside the string still bound the
+// whole batch into one transaction. Keep the SQL text identical so package
+// SHA bindings stay valid.
+export function pgClientOptions(connectionUrl, { timeoutMs = 65_000 } = {}) {
+  let url;
+  try {
+    url = new URL(connectionUrl);
+  } catch {
+    throw new Error('Database URL must use a PostgreSQL URL format');
+  }
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+    throw new Error('Database URL must use a PostgreSQL URL format');
+  }
+  const database = decodeURIComponent(url.pathname.replace(/^\//, ''));
+  if (!database || !url.hostname) throw new Error('Database URL must specify a host and database');
+  const options = {
+    host: url.hostname,
+    port: url.port || '5432',
+    database,
+    connectionTimeoutMillis: 10_000,
+    query_timeout: timeoutMs,
+  };
+  if (url.username) options.user = decodeURIComponent(url.username);
+  if (url.password) options.password = decodeURIComponent(url.password);
+  const sslMode = url.searchParams.get('sslmode');
+  if (sslMode === 'require') options.ssl = { rejectUnauthorized: false };
+  else if (sslMode && !['disable', 'prefer'].includes(sslMode)) throw new Error('Unsupported sslmode for the single-message transport');
+  return options;
+}
+
+export async function runPsqlSingleMessage(connectionUrl, sql, { timeoutMs = 65_000, createClient, onNotice } = {}) {
+  if (typeof sql !== 'string' || !sql.trim()) throw new TypeError('Single-message transport requires non-empty SQL');
+  const client = createClient
+    ? createClient(connectionUrl, { timeoutMs })
+    : new PgClient(pgClientOptions(connectionUrl, { timeoutMs }));
+  if (typeof onNotice === 'function') client.on('notice', onNotice);
+  const timing = { connectMs: null, queryMs: null };
+  const started = Date.now();
+  try {
+    await client.connect();
+  } catch {
+    await client.end().catch(() => {});
+    throw new Error('Single-message transport could not connect; connection details were suppressed');
+  }
+  timing.connectMs = Date.now() - started;
+  let failure = null;
+  let results = null;
+  const queryStarted = Date.now();
+  try {
+    results = await client.query(sql);
+  } catch (error) {
+    failure = error;
+  }
+  timing.queryMs = Date.now() - queryStarted;
+  let rolledBack = false;
+  if (failure) {
+    try {
+      await client.query('ROLLBACK;');
+      rolledBack = true;
+    } catch {
+      rolledBack = false;
+    }
+  }
+  await client.end().catch(() => {});
+  if (failure) {
+    const reason = typeof failure.message === 'string' && failure.message ? ` Last server message: ${failure.message.slice(0, 200)}` : '';
+    throw new Error(
+      `Single-message batch failed after ${timing.queryMs}ms; `
+      + (rolledBack
+        ? 'transaction rolled back on the same connection.'
+        : 'connection lost mid-batch, the server rolls back on disconnect and an independent readback must confirm it.')
+      + reason,
+    );
+  }
+  const list = Array.isArray(results) ? results : [results];
+  if (list.length < 1) throw new Error('Single-message transport returned no statement results');
+  return {
+    statementResults: list.length,
+    lastCommand: list[list.length - 1]?.command ?? null,
+    rowSets: list.map((result) => (Array.isArray(result?.rows) ? result.rows : [])),
+    timing,
+    roundTrips: 1,
+    totalMs: Date.now() - started,
+  };
 }
 
 export function runPgRestoreToFile(archivePath, outputPath, args = []) {
