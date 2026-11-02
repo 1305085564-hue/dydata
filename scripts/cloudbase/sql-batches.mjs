@@ -333,6 +333,19 @@ export class BatchExecutionError extends Error {
   }
 }
 
+/** The exact SQL sent by runBatches, also used by offline byte validation. */
+export function wrapSqlBatch({ id, sql, sha256: hash }, { searchPath = DEFAULT_SEARCH_PATH } = {}) {
+  const pathSql = searchPath.map(quoteIdentifier).join(', ');
+  return [
+    'BEGIN;',
+    'SET LOCAL check_function_bodies = false;',
+    `SET LOCAL search_path = ${pathSql};`,
+    sql,
+    `INSERT INTO dydata_migration.sql_batch_receipts (batch_id, sha256) VALUES (${quoteLiteral(id)}, ${quoteLiteral(hash)});`,
+    'COMMIT;',
+  ].join('\n');
+}
+
 /**
  * Execute transaction-wrapped batches using caller-provided CloudBase adapters.
  * lookupReceipt(batchId) must provide an authoritative null or { sha256 };
@@ -347,7 +360,7 @@ export async function runBatches({ batches, execute, lookupReceipt, searchPath =
   if (!Array.isArray(searchPath) || searchPath.length === 0) {
     throw new TypeError('searchPath must be a non-empty array of schema names');
   }
-  const pathSql = searchPath.map(quoteIdentifier).join(', ');
+  searchPath.map(quoteIdentifier); // Validate even when batches is empty.
   const seenIds = new Set();
   const results = [];
   const startTime = nowMs();
@@ -372,21 +385,18 @@ export async function runBatches({ batches, execute, lookupReceipt, searchPath =
     }
     assertBatchHasNoTransactionControl(sql);
 
-    const existingReceipt = getReceiptHash(await lookupReceipt(id));
+    let lookupResult;
+    try { lookupResult = await lookupReceipt(id); } catch(error) {
+      throw new BatchExecutionError({batchId:id,outcome:'NOT_STARTED',requestId:readRequestId(error),ms:0,completedBatches:results,reason:error.reason??'receipt-lookup-failed-before-write'});
+    }
+    const existingReceipt = getReceiptHash(lookupResult);
     if (existingReceipt !== null) {
-      if (existingReceipt !== calculatedHash) throw new ReceiptConflictError(id);
+      if (existingReceipt !== calculatedHash) throw Object.assign(new ReceiptConflictError(id), {requestId:readRequestId(lookupResult),completedBatches:results});
       results.push({ id, sha256: calculatedHash, status: 'skipped', requestId: null, ms: 0 });
       continue;
     }
 
-    const wrappedSql = [
-      'BEGIN;',
-      'SET LOCAL check_function_bodies = false;',
-      `SET LOCAL search_path = ${pathSql};`,
-      sql,
-      `INSERT INTO dydata_migration.sql_batch_receipts (batch_id, sha256) VALUES (${quoteLiteral(id)}, ${quoteLiteral(calculatedHash)});`,
-      'COMMIT;',
-    ].join('\n');
+    const wrappedSql = wrapSqlBatch({ id, sql, sha256: calculatedHash }, { searchPath });
     const batchStart = nowMs();
 
     let executionResult;

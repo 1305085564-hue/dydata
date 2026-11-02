@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { AUTH_IMPORT_ENV_ID } from './auth-import.mjs';
+import { CUTOVER_MAX_REQUEST_BYTES, CUTOVER_MIN_HEADROOM_BYTES } from './cutover-cloudbase-package.mjs';
 import { runBatches } from './sql-batches.mjs';
 import { ensurePrivateFile, ensurePrivateOutputDirectory, writePrivateFile, quoteLiteral, isAuthorizedSourceIdentity } from './cutover-core.mjs';
 
@@ -23,6 +24,23 @@ export function parseSingleJsonResult(result) {
   if(!Array.isArray(tuple)||tuple.length!==1)throw Error('Expected exactly one database field');
   return typeof tuple[0]==='string'?JSON.parse(tuple[0]):tuple[0];
 }
+export function parseReceiptLookup(result) {
+  const reject = () => { throw Object.assign(new Error('Invalid receipt lookup response'), {
+    requestId: typeof result?.RequestId === 'string' && result.RequestId.trim() ? result.RequestId : null,
+    reason: 'invalid-receipt-response',
+  }); };
+  if (!result || typeof result !== 'object' || Array.isArray(result)
+    || typeof result.RequestId !== 'string' || !result.RequestId.trim()
+    || result.Error != null || result.error != null || result.ok === false || result.success === false || result.isError === true
+    || !Object.hasOwn(result, 'Rows') || !Array.isArray(result.Columns)
+    || result.Columns.length !== 1 || result.Columns[0] !== 'sha256') return reject();
+  if (result.Rows === null || (Array.isArray(result.Rows) && result.Rows.length === 0)) return null;
+  if (!Array.isArray(result.Rows) || result.Rows.length !== 1 || typeof result.Rows[0] !== 'string') return reject();
+  let tuple;
+  try { tuple = JSON.parse(result.Rows[0]); } catch { return reject(); }
+  if (!Array.isArray(tuple) || tuple.length !== 1 || typeof tuple[0] !== 'string' || !/^[a-f0-9]{64}$/.test(tuple[0])) return reject();
+  return { sha256: tuple[0], requestId: result.RequestId };
+}
 export async function loadCloudBaseManager(modulePath) {
   if(!path.isAbsolute(modulePath??''))throw Error('Explicit installed CloudBase manager module path required');
   const manager=createRequire(import.meta.url)(modulePath);
@@ -35,15 +53,30 @@ export async function executePreparedPhase({pkg,phase,manager,readSourceLock}) {
   const assertWindow=()=>{const now=Date.now();if(!Number.isFinite(Date.parse(pkg.opensAt))||!Number.isFinite(Date.parse(pkg.closesAt))||now<Date.parse(pkg.opensAt)||now>=Date.parse(pkg.closesAt))throw Error('Outside authorized cutover window');};
   const check=()=>{assertWindow();const lock=readSourceLock();assertSnapshotLockBinding(pkg.sourceSnapshot,lock);assertPackageLockWindow(pkg,lock);};
   check();
-  const execute=async(sql)=>{check();const result=await manager.database.executePGSql({Sql:sql});if(typeof result?.RequestId!=='string'||!result.RequestId)throw Error('Execution response missing RequestId; inspect receipt');return result;};
+  const receiptRequestIds=[];
+  const assertBytes=sql=>{if(CUTOVER_MAX_REQUEST_BYTES-Buffer.byteLength(sql)<=CUTOVER_MIN_HEADROOM_BYTES)throw Error('Actual cutover request exceeds byte budget including required headroom');};
+  const execute=async(sql)=>{check();assertBytes(sql);const result=await manager.database.executePGSql({Sql:sql});if(typeof result?.RequestId!=='string'||!result.RequestId.trim())throw Error('Execution response missing RequestId; inspect receipt');return result;};
   const lookupReceipt=async(id)=>{
     // A read is still allowed after an unknown execution outcome/window end.
-    const result=await manager.database.executePGSql({Sql:`BEGIN READ ONLY; SELECT sha256 FROM dydata_migration.sql_batch_receipts WHERE batch_id=${quoteLiteral(id)}; COMMIT;`});
-    if(!Array.isArray(result?.Rows))throw Error('Invalid receipt lookup');if(result.Rows.length===0)return null;
-    const tuple=JSON.parse(result.Rows[0]);if(result.Rows.length!==1||!Array.isArray(tuple)||tuple.length!==1||!/^[a-f0-9]{64}$/.test(tuple[0]))throw Error('Invalid receipt hash');
-    return {sha256:tuple[0]};
+    const sql=`BEGIN READ ONLY; SELECT sha256 FROM dydata_migration.sql_batch_receipts WHERE batch_id=${quoteLiteral(id)}; COMMIT;`;
+    assertBytes(sql);
+    let result;
+    try { result=await manager.database.executePGSql({Sql:sql}); }
+    catch(error) {
+      const id=error?.requestId??error?.RequestId;
+      if(typeof id==='string'&&id.trim())receiptRequestIds.push(id);
+      throw error;
+    }
+    if(typeof result?.RequestId==='string'&&result.RequestId.trim())receiptRequestIds.push(result.RequestId);
+    return parseReceiptLookup(result);
   };
-  return runBatches({batches,execute,lookupReceipt});
+  try {
+    const result=await runBatches({batches,execute,lookupReceipt});
+    return {...result,receiptRequestIds};
+  } catch(error) {
+    error.receiptRequestIds=[...receiptRequestIds];
+    throw error;
+  }
 }
 async function main() {
   const argv=process.argv.slice(2);
@@ -57,6 +90,6 @@ async function main() {
   if(pkg.environmentId!==AUTH_IMPORT_ENV_ID||!['stage','promote','sequences'].includes(phase)||!Number.isFinite(Date.parse(pkg.opensAt))||!Number.isFinite(Date.parse(pkg.closesAt))||Date.now()<Date.parse(pkg.opensAt)||Date.now()>=Date.parse(pkg.closesAt))throw Error('Invalid target, phase or window');
   const manager=await loadCloudBaseManager(get('--manager-module'));
   try {const result=await executePreparedPhase({pkg,phase,manager,readSourceLock:()=>JSON.parse(readFileSync(lock))});writePrivateFile(receipt,JSON.stringify({phase,environmentId:AUTH_IMPORT_ENV_ID,...result},null,2));console.log(JSON.stringify({phase,status:result.status,batches:result.batches.length,receipt:path.basename(receipt)}));}
-  catch(error){writePrivateFile(receipt,JSON.stringify({phase,status:'STOP',outcome:error.outcome??'UNCONFIRMED',requestId:error.requestId??null,completedBatches:error.completedBatches??[],reason:error.reason??error.name},null,2));throw Error('Cutover phase stopped; inspect private receipt and database state before retrying');}
+  catch(error){writePrivateFile(receipt,JSON.stringify({phase,status:'STOP',batchId:error.batchId??null,outcome:error.outcome??'UNCONFIRMED',requestId:error.requestId??null,completedBatches:error.completedBatches??[],receiptRequestIds:error.receiptRequestIds??[],reason:error.reason??error.name},null,2));throw Error('Cutover phase stopped; inspect private receipt and database state before retrying');}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)main().catch(()=>{console.error('CloudBase cutover driver stopped; no credential or SQL body logged.');process.exitCode=1;});

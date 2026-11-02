@@ -1,10 +1,14 @@
 import { createHash } from 'node:crypto';
-import { packSqlBatches } from './sql-batches.mjs';
+import { packSqlBatches, wrapSqlBatch } from './sql-batches.mjs';
 import { buildSnapshotAssertionSql, quoteIdentifier as qi, quoteLiteral as ql } from './cutover-core.mjs';
 import { buildAuthImportPlan, AUTH_IMPORT_ENV_ID } from './auth-import.mjs';
 
 // Offline only. Small immutable staging batches followed by ONE guarded
 // promotion transaction. This module has no executor or network capability.
+export const CUTOVER_MAX_REQUEST_BYTES = 491_520;
+export const CUTOVER_MIN_HEADROOM_BYTES = 1_500;
+const BATCH_FILL_RESERVE_BYTES = 4_096;
+
 export const CUTOVER_TARGET_METADATA_SQL = `SELECT jsonb_build_object(
  'externalIncomingForeignKeys',(SELECT count(*) FROM pg_constraint k JOIN pg_class parent ON parent.oid=k.confrelid JOIN pg_class child ON child.oid=k.conrelid WHERE k.contype='f' AND parent.relnamespace='public'::regnamespace AND child.relnamespace<>'public'::regnamespace),
  'foreignKeys',coalesce((SELECT jsonb_agg(jsonb_build_object('table',c.relname,'name',k.conname,'definition',pg_get_constraintdef(k.oid)) ORDER BY c.relname,k.conname)
@@ -46,11 +50,17 @@ function authStatements({ sourceAuth, targetAuth, capturedAt }) {
 }
 
 export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMetrics, targetMetadata, sourceAuth, targetAuth,
-  capturedAt, runId, opensAt, closesAt, maxBytes = 480 * 1024 }) {
+  capturedAt, runId, opensAt, closesAt, maxBytes = CUTOVER_MAX_REQUEST_BYTES }) {
   if (!/^[a-f0-9]{16}$/.test(runId ?? '')) throw Error('Use a new immutable 16-hex run ID');
   if (parsed.tables.length !== 99 || new Set(parsed.tables.map((t) => t.name)).size !== 99) throw Error('Expected 99 source public tables');
   const opens = Date.parse(opensAt), closes = Date.parse(closesAt);
   if (!Number.isFinite(opens) || !Number.isFinite(closes) || closes <= opens || closes - opens > 4 * 3600_000) throw Error('Invalid authorized cutover window');
+  if (!Number.isSafeInteger(maxBytes) || maxBytes > CUTOVER_MAX_REQUEST_BYTES || maxBytes <= BATCH_FILL_RESERVE_BYTES) throw Error('Invalid cutover request byte budget');
+  const checkRequest = (batch, label) => {
+    const requestBytes = Buffer.byteLength(wrapSqlBatch(batch));
+    if (maxBytes - requestBytes <= CUTOVER_MIN_HEADROOM_BYTES) throw Error(`${label} exceeds batch budget including transaction wrapper and required headroom; cannot split atomic promotion`);
+    return { ...batch, requestBytes, headroomBytes: maxBytes - requestBytes };
+  };
   const schema = `dydata_cutover_${runId}`;
   const windowGuard = `DO $window$ BEGIN IF clock_timestamp()<${ql(new Date(opens).toISOString())}::timestamptz OR clock_timestamp()>${ql(new Date(closes).toISOString())}::timestamptz THEN RAISE EXCEPTION 'Outside authorized cutover window'; END IF; END $window$;`;
   const names = new Set(parsed.tables.map((t) => t.name));
@@ -69,10 +79,10 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
     if (!/^INSERT INTO public\./.test(statement)) throw Error('Expected archive COPY converter INSERT');
     return statement.replace(/^INSERT INTO public\./, `INSERT INTO ${qi(schema)}.`);
   });
-  const stage = packSqlBatches([...setup, ...stageRows], { maxBytes: maxBytes - 2048, migrationId: `cutover-stage-${runId}` })
+  const stage = packSqlBatches([...setup, ...stageRows], { maxBytes: maxBytes - BATCH_FILL_RESERVE_BYTES, migrationId: `cutover-stage-${runId}` })
     .map((batch) => {
       const sql = `SET LOCAL statement_timeout='60s';\nSET LOCAL timezone='UTC';\nSET LOCAL standard_conforming_strings=on;\n${windowGuard}\n${batch.sql}\n${windowGuard}`;
-      return { ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) };
+      return checkRequest({ ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) }, 'Cutover request');
     });
   const auth = authStatements({ sourceAuth, targetAuth, capturedAt });
   const final = [
@@ -95,9 +105,9 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
     assertJsonSql(CUTOVER_TARGET_METADATA_SQL, targetMetadata, 'Target FK/trigger restoration mismatch'),
     windowGuard,
   ].join('\n');
-  if (Buffer.byteLength(final) > maxBytes) throw Error('Atomic promotion exceeds batch budget; cannot split across requests');
+  const finalBatch = checkRequest({ id: `cutover-promote-${runId}`, sql: final, sha256: digest(final), bytes: Buffer.byteLength(final) }, 'Atomic promotion');
   return { environmentId: AUTH_IMPORT_ENV_ID, runId, schema, opensAt, closesAt, strategy: 'full final-snapshot replacement through private staging; NOT timestamp-only delta',
-    stageBatches: stage, finalBatch: { id: `cutover-promote-${runId}`, sql: final, sha256: digest(final), bytes: Buffer.byteLength(final) },
+    stageBatches: stage, finalBatch,
     // setval is NOT transactional in PostgreSQL. Keep it out of the promotion
     // so a rollback cannot falsely claim sequence changes were rolled back.
     sequenceBatches: packSqlBatches(parsed.sequenceStatements.map((statement) => {
@@ -106,9 +116,9 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
       if (!match || !name) throw Error('Unsupported sequence statement');
       const sequence = scoped(name[1].startsWith('"') ? name[1].slice(1, -1).replaceAll('""', '"') : name[1]);
       return `SELECT pg_catalog.setval(${ql(sequence)}, GREATEST(${BigInt(match[2])},(SELECT last_value FROM ${sequence})), ${match[3]} OR (SELECT is_called FROM ${sequence}));`;
-    }), { maxBytes: maxBytes - 2048, migrationId: `cutover-sequences-${runId}` }).map((batch) => {
+    }), { maxBytes: maxBytes - BATCH_FILL_RESERVE_BYTES, migrationId: `cutover-sequences-${runId}` }).map((batch) => {
       const sql = `${windowGuard}\n${batch.sql}\n${windowGuard}`;
-      return { ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) };
+      return checkRequest({ ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) }, 'Cutover request');
     }),
     authSummary: auth.summary, sourceTableCount: 99, finalAtomic: true,
     prerequisites: ['fresh exact target baseline and complete FK/trigger metadata', 'external incoming FKs absent', 'source/target maintenance and write locks', 'authorize exact replacement/deletion inventory and Auth mirror', 'runBatches ledger plus ExecutePGSql owner permissions', 'window approval; package generation is not authorization'] };

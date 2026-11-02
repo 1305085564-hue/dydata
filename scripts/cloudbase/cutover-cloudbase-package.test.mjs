@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { runBatches } from './sql-batches.mjs';
 import { buildCloudBaseCutoverPackage } from './cutover-cloudbase-package.mjs';
 function input() {
   const tables = Array.from({length:99},(_,i)=>({name:`t${i}`,columns:['id'],typeColumns:['id'],generatedColumns:[],rowCount:0}));
@@ -44,4 +45,25 @@ test('cloud package retains opaque identity fields within the unchanged atomic b
   }
   x.targetAuth[0].opaque+='x'.repeat(10000);
   assert.throws(()=>buildCloudBaseCutoverPackage(x),/Atomic promotion exceeds batch budget/);
+});
+
+test('every actual transaction-wrapped cutover request retains more than 1500 bytes', async()=>{
+  const x=input();
+  x.parsed.statements=Array.from({length:3},()=>`INSERT INTO public."t0" ("id") VALUES ('${'x'.repeat(244650)}');`);
+  const p=buildCloudBaseCutoverPackage(x);
+  const ledger=new Map();
+  const actual=[];
+  await runBatches({batches:[...p.stageBatches,p.finalBatch,...p.sequenceBatches],lookupReceipt:async id=>ledger.get(id)??null,
+    execute:async(sql,meta)=>{actual.push(Buffer.byteLength(sql));ledger.set(meta.batchId,{sha256:meta.sha256});return {RequestId:'synthetic-request'};}});
+  assert.ok(actual.length>3);
+  for(const bytes of actual) assert.ok(491520-bytes>1500, `Actual request headroom is ${491520-bytes}`);
+});
+
+test('atomic promotion must reserve its complete transaction wrapper and 1500 byte margin',()=>{
+  const x=input();
+  const base=buildCloudBaseCutoverPackage(x).finalBatch.bytes;
+  // Both Auth guards preserve this opaque field. Place raw SQL inside the old
+  // limit but leave insufficient room once the actual transaction is included.
+  x.targetAuth[0].opaque='x'.repeat(Math.floor((491520-base-1000)/2));
+  assert.throws(()=>buildCloudBaseCutoverPackage(x), /Atomic promotion exceeds/);
 });
