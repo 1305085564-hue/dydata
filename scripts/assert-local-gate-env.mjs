@@ -16,6 +16,23 @@ import { assertApplicationTreeClean } from "./gate-lock.mjs";
  */
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
+export const CLOUDBASE_GATE_ENV_ID = "dydata-d6g0gd1v37fcddf21";
+
+export function assertCloudBaseGateEnvironment(env = process.env) {
+  if (env.DYDATA_GATE_BACKEND !== "cloudbase") throw new Error("未启用 CloudBase 隔离门禁模式");
+  if (["DYDATA_E2E_BASE_URL", "DYDATA_GATE_ALLOW_EXTERNAL", "DYDATA_GATE_ALLOW_PRODUCTION_READ_ONLY", "DYDATA_GATE_REUSE"].some((name) => env[name]?.trim())) {
+    throw new Error("CloudBase 门禁必须自行启动本地服务，禁止外部地址、外部放行和复用服务开关");
+  }
+  for (const name of ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND"]) {
+    if (env[name] !== "cloudbase") throw new Error(`CloudBase 门禁要求 ${name}=cloudbase；构建与运行后端必须一致`);
+  }
+  for (const name of ["CLOUDBASE_ENV_ID", "NEXT_PUBLIC_CLOUDBASE_ENV_ID"]) {
+    if (env[name] !== CLOUDBASE_GATE_ENV_ID) throw new Error(`CloudBase 门禁要求 ${name} 为固定隔离环境，拒绝其他环境`);
+  }
+  if (!env.CLOUDBASE_SERVICE_API_KEY?.trim()) throw new Error("CloudBase 门禁缺少 CLOUDBASE_SERVICE_API_KEY");
+  if (env.PORT && env.PORT !== "3100") throw new Error("CloudBase 门禁固定使用本地 3100 端口");
+  return { mode: "cloudbase", environmentId: CLOUDBASE_GATE_ENV_ID };
+}
 
 function hostOf(url) {
   try {
@@ -26,6 +43,15 @@ function hostOf(url) {
 }
 
 export function assertGateEnvironment(env = process.env, cwd = process.cwd()) {
+  if (env.DYDATA_GATE_BACKEND === "cloudbase") {
+    const result = assertCloudBaseGateEnvironment(env);
+    assertApplicationTreeClean(cwd);
+    return result;
+  }
+  if (env.DYDATA_GATE_BACKEND && env.DYDATA_GATE_BACKEND !== "supabase") throw new Error("未知门禁后端模式");
+  if (env.DYDATA_BACKEND === "cloudbase" || env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase") {
+    throw new Error("CloudBase 后端必须显式使用 DYDATA_GATE_BACKEND=cloudbase，禁止套用 Supabase 本地检查");
+  }
   const externalBase = env.DYDATA_E2E_BASE_URL?.trim();
   if (externalBase) {
     // 允许外部地址的显式开关：本文件的 DYDATA_GATE_ALLOW_EXTERNAL，
@@ -61,7 +87,7 @@ export function assertGateEnvironment(env = process.env, cwd = process.cwd()) {
   const apiHost = hostOf(targets.api);
   const dbHost = hostOf(targets.db);
   if (!apiHost || !dbHost) {
-    throw new Error(`门禁环境缺少可解析的 NEXT_PUBLIC_SUPABASE_URL / SUPABASE_DB_URL（api=${targets.api || "空"}, db=${targets.db || "空"}）`);
+    throw new Error("门禁环境缺少可解析的 NEXT_PUBLIC_SUPABASE_URL / SUPABASE_DB_URL");
   }
   if (!LOCAL_HOSTS.has(apiHost) || !LOCAL_HOSTS.has(dbHost)) {
     throw new Error(`门禁只允许本地隔离库：api=${apiHost}, db=${dbHost}。生产库禁止作为门禁环境。`);
@@ -75,6 +101,7 @@ if (process.argv[1] && process.argv[1].endsWith("assert-local-gate-env.mjs")) {
     const result = assertGateEnvironment();
     console.log(result.mode === "local"
       ? `[gate-env] 本地隔离环境核对通过：api=${result.apiHost}, db=${result.dbHost}`
+      : result.mode === "cloudbase" ? `[gate-env] CloudBase 固定隔离环境核对通过：${result.environmentId}`
       : `[gate-env] ${result.notice}`);
   } catch (error) {
     console.error(`[gate-env] ${error instanceof Error ? error.message : error}`);

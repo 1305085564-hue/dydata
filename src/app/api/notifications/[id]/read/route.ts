@@ -21,7 +21,7 @@ export async function buildNotificationReadResponse(
   if (!id) return NextResponse.json({ error: "缺少 id" }, { status: 400 });
   try {
     const ok = await deps.markRead(id, user.id);
-    if (!ok) return NextResponse.json({ error: "更新失败" }, { status: 500 });
+    if (!ok) return NextResponse.json({ error: "通知不存在或无权操作" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "更新失败" }, { status: 500 });

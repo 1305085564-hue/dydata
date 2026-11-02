@@ -1,0 +1,388 @@
+{
+  "preparation": {
+    "sourceReadOnly": true,
+    "executed": false,
+    "registrationType": "external",
+    "capturedAt": "2026-11-01T03:08:03.862312+00:00",
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "full",
+    "importCount": 84,
+    "batchCount": 2,
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "expectedPlanSha256": "28996d8c99920fe15677db7579e62a1b1380083e4c622e4993085f3537a2cc4d",
+    "planSha256": "29eda3fce03d5af438443727273b12a1b8932246b5ca3e4267261d82b8026c18",
+    "sensitive": true,
+    "sourceChecks": {
+      "anonymous": 0,
+      "softDeleted": 0,
+      "sourceCount": 84,
+      "unconfirmed": 1,
+      "currentlyBanned": 24
+    },
+    "verifiedMfa": 0,
+    "targetExistingUsers": 3,
+    "targetReadRequestId": "0de510c9-fb51-4150-bdc1-57ef07c273cf"
+  },
+  "atomicFailureRecoveryTest": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "probe",
+    "sourceReadOnly": true,
+    "productionUntouched": true,
+    "requests": [
+      {
+        "name": "create private synthetic fixture",
+        "RequestId": "b3b600a7-7707-4a82-ac86-490dd3bba53a",
+        "ms": 19
+      },
+      {
+        "name": "fail after first 50 synthetic inserts",
+        "failed": true,
+        "code": "FailedOperation.PGExecuteSqlError",
+        "sqlstate": "22012",
+        "RequestId": "ac5f753d-4c28-4cba-99f2-da333d71b0c8"
+      },
+      {
+        "name": "verify no first-batch residue",
+        "RequestId": "e55fc2ee-ede1-4528-a045-5596aff9fad7",
+        "ms": 13
+      },
+      {
+        "name": "commit synthetic 84 with receipt",
+        "RequestId": "02e30e45-659c-44ea-be80-59806c041dc2",
+        "ms": 32
+      },
+      {
+        "name": "read atomic receipt",
+        "RequestId": "bc9b5fdb-2743-41c1-8e9d-7327bf3a564f",
+        "ms": 6
+      },
+      {
+        "name": "duplicate guarded request rejects",
+        "failed": true,
+        "code": "FailedOperation.PGExecuteSqlError",
+        "sqlstate": "P0001",
+        "RequestId": "19ada318-2bad-4f97-9676-1567a3032546"
+      },
+      {
+        "name": "read atomic receipt",
+        "RequestId": "8fd2c60c-1ff3-48e0-a1c8-fbd5413fc555",
+        "ms": 7
+      },
+      {
+        "name": "synthetic receipt-bound rollback 1",
+        "RequestId": "a54bec57-dca4-4f65-a5f1-f56a64103d2f",
+        "ms": 17
+      },
+      {
+        "name": "synthetic receipt-bound rollback 2",
+        "RequestId": "a0c1e6ca-52f9-41a0-8d9d-395210ca2986",
+        "ms": 13
+      },
+      {
+        "name": "verify rollback count",
+        "RequestId": "237707a4-34ed-4e2f-844f-2d3e07a98092",
+        "ms": 13
+      },
+      {
+        "name": "remove only owned fixture and its receipt",
+        "RequestId": "779fbc5e-3bdd-43de-b013-7c6051650ce2",
+        "ms": 11
+      }
+    ],
+    "checks": [
+      {
+        "name": "failure rolls back both batches",
+        "passed": true
+      },
+      {
+        "name": "persistent receipt recovers response and duplicate cannot reinsert",
+        "passed": true
+      },
+      {
+        "name": "actual bigint receipts produce working rollback",
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "actualImport": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "import",
+    "sourceReadOnly": true,
+    "productionUntouched": true,
+    "requests": [
+      {
+        "name": "backup exact original identities",
+        "RequestId": "05a40b74-6597-44da-8bcf-ccbc442e860a",
+        "ms": 7
+      },
+      {
+        "name": "atomic import 84 identities 50+34",
+        "RequestId": "9f68d7c1-502a-4a96-b309-bef383a94c5d",
+        "ms": 34
+      },
+      {
+        "name": "read atomic receipt",
+        "RequestId": "244e111a-474b-41fe-b99a-de850be68969",
+        "ms": 7
+      },
+      {
+        "name": "read back full target identity records",
+        "RequestId": "6764a95c-f213-47e9-b30f-4587c4e598cf",
+        "ms": 12
+      },
+      {
+        "name": "verify profiles identity linkage and receipt ACL",
+        "RequestId": "d6e2cf3c-ae6e-4da7-a0a0-6fd6447a5e33",
+        "ms": 15
+      }
+    ],
+    "checks": [
+      {
+        "name": "84 exact UUID/password/email/type/status/timestamps match",
+        "passed": true
+      },
+      {
+        "name": "original 3 identities exact unchanged",
+        "passed": true
+      },
+      {
+        "name": "84 matching business profiles",
+        "passed": true
+      },
+      {
+        "name": "receipt unavailable to API roles",
+        "passed": true
+      }
+    ],
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "importedCount": 84,
+    "totalIdentityCount": 87,
+    "atomicPlanSha256": "29eda3fce03d5af438443727273b12a1b8932246b5ca3e4267261d82b8026c18",
+    "committedAt": "2026-11-01T11:09:06.249898+08:00",
+    "passed": true,
+    "rollbackGeneratedNotExecuted": true
+  },
+  "postLoginReconciliation": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "verify",
+    "sourceReadOnly": true,
+    "productionUntouched": true,
+    "requests": [
+      {
+        "name": "read atomic receipt",
+        "RequestId": "9de7b1d8-3f9a-4289-8f07-9c6e42d085fd",
+        "ms": 12
+      },
+      {
+        "name": "read back full target identity records",
+        "RequestId": "619be2ce-d69b-439e-a152-43cc668d5dda",
+        "ms": 24
+      },
+      {
+        "name": "verify profiles identity linkage and receipt ACL",
+        "RequestId": "ccaf5af5-aeb7-48b8-9e9d-ec3226060167",
+        "ms": 14
+      }
+    ],
+    "checks": [
+      {
+        "name": "84 exact UUID/password/email/type/status/timestamps match",
+        "passed": true
+      },
+      {
+        "name": "original 3 identities exact unchanged",
+        "passed": true
+      },
+      {
+        "name": "84 matching business profiles",
+        "passed": true
+      },
+      {
+        "name": "receipt unavailable to API roles",
+        "passed": true
+      }
+    ],
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "importedCount": 84,
+    "totalIdentityCount": 87,
+    "atomicPlanSha256": "29eda3fce03d5af438443727273b12a1b8932246b5ca3e4267261d82b8026c18",
+    "committedAt": "2026-11-01T11:09:06.249898+08:00",
+    "passed": true,
+    "rollbackGeneratedNotExecuted": true
+  },
+  "gatewayLoginAndRls": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "checks": [
+      {
+        "name": "migrated existing test account 0",
+        "originalPasswordLogin": 200,
+        "uuidPreserved": true,
+        "actualJwtUidMatches": true,
+        "ownVisibleOtherHidden": true,
+        "otherUpdateAffectedRows": 0
+      },
+      {
+        "name": "migrated existing test account 1",
+        "originalPasswordLogin": 200,
+        "uuidPreserved": true,
+        "actualJwtUidMatches": true,
+        "ownVisibleOtherHidden": true,
+        "otherUpdateAffectedRows": 0
+      },
+      {
+        "name": "wrong password refused",
+        "httpStatus": 400,
+        "errorCode": 4043
+      },
+      {
+        "name": "pending account refused before password verification",
+        "httpStatus": 400,
+        "errorCode": 4012,
+        "knownOriginalPasswordUsed": false
+      },
+      {
+        "name": "blocked account refused before password verification",
+        "httpStatus": 400,
+        "errorCode": 4013,
+        "knownOriginalPasswordUsed": false
+      },
+      {
+        "name": "owned verification session signed out",
+        "status": 200
+      },
+      {
+        "name": "owned verification session signed out",
+        "status": 200
+      }
+    ],
+    "requests": [
+      {
+        "name": "create owned identity RPC and two notification probes",
+        "RequestId": "0405b0c2-a6b9-40c3-b1d0-e2bdf079acef"
+      },
+      {
+        "name": "remove owned RPC and notification probes only",
+        "RequestId": "a3df4bd6-1043-4eaa-a98d-e38d6c7f2238"
+      }
+    ],
+    "passed": true,
+    "testFixtureRemoved": true
+  },
+  "browserSmoke": {
+    "site": "http://localhost:3317",
+    "productionUntouched": true,
+    "users": [
+      {
+        "testAccountIndex": 0,
+        "routes": [
+          {
+            "path": "/dashboard",
+            "status": 200
+          },
+          {
+            "path": "/admin/content",
+            "status": 200
+          }
+        ],
+        "loginMs": 1047,
+        "originalUuidVerified": true,
+        "refreshPreservedSession": true,
+        "logoutStatus": 200,
+        "logoutProtected": true
+      },
+      {
+        "testAccountIndex": 1,
+        "routes": [
+          {
+            "path": "/dashboard",
+            "status": 200
+          },
+          {
+            "path": "/admin/content",
+            "status": 200
+          }
+        ],
+        "loginMs": 531,
+        "originalUuidVerified": true,
+        "refreshPreservedSession": true,
+        "logoutStatus": 200,
+        "logoutProtected": true
+      }
+    ],
+    "supabaseBrowserRequests": 0,
+    "pageErrorCount": 0,
+    "passed": true
+  },
+  "scope": {
+    "isolatedEnvironmentOnly": true,
+    "productionAuthRequests": false,
+    "productionDatabaseWrites": false,
+    "productionConfigurationChanges": false,
+    "purchase": false,
+    "deploy": false,
+    "push": false
+  },
+  "limits": [
+    "Full independent role and business acceptance remains pending",
+    "No login attempted for all 84 real users; hashes and state reconciled for all 84",
+    "Pending/blocked negative requests used synthetic wrong passwords; no passwords guessed or changed",
+    "Password hash storage is verified behavior, not Tencent long-term support commitment",
+    "Auth rollback SQL generated but not executed against imported real accounts"
+  ],
+  "verificationCommands": [
+    {
+      "command": "node auth-import-live-prepare.cjs",
+      "exit": 0,
+      "coverage": "Fresh production read-only snapshot; no source login or writes"
+    },
+    {
+      "command": "node auth-import-atomic.mjs probe",
+      "exit": 0,
+      "coverage": "Owned synthetic table only; atomic failure, receipt, duplicate and rollback"
+    },
+    {
+      "command": "node auth-import-atomic.mjs import",
+      "exit": 0,
+      "coverage": "Actual isolated 84-user import with receipt"
+    },
+    {
+      "command": "node auth-import-live-login.cjs",
+      "exit": 0,
+      "coverage": "Two actual migrated test accounts, original passwords, JWT, notification RLS; owned probes cleaned"
+    },
+    {
+      "command": "node auth-import-live-browser.cjs",
+      "exit": 0,
+      "coverage": "Two real Chromium sessions, dashboard/content/refresh/logout; no Supabase requests"
+    },
+    {
+      "command": "node auth-import-atomic.mjs verify",
+      "exit": 0,
+      "coverage": "Post-login exact 84 mapped fields, original 3 unchanged, profile linkage and effective receipt ACL"
+    },
+    {
+      "command": "node --test scripts/cloudbase/*.test.mjs",
+      "exit": 0,
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ]
+}

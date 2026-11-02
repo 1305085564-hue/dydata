@@ -1,0 +1,338 @@
+{
+  "date": "2026-11-01",
+  "environment": "dydata-d6g0gd1v37fcddf21",
+  "sourceAggregate": {
+    "users": 84,
+    "bcrypt2aCost10": 84,
+    "banned": 24,
+    "missingEmail": 0,
+    "casefoldDuplicateEmail": 0,
+    "emailUnconfirmed": 1,
+    "unconfirmedNotBanned": 1,
+    "unconfirmedActiveProfile": 1,
+    "verifiedMFAFactors": 0,
+    "softDeleted": 0,
+    "anonymous": 0
+  },
+  "readOnlyTarget": {
+    "columns": {
+      "RequestId": "015d7730-e6de-4242-87b3-2e79c6ccb52b",
+      "Rows": [
+        "[\"id\",\"bigint\",\"NO\",\"nextval('auth.users_id_seq'::regclass)\"]",
+        "[\"project\",\"character varying\",\"NO\",null]",
+        "[\"sub\",\"character varying\",\"YES\",null]",
+        "[\"name\",\"character varying\",\"YES\",null]",
+        "[\"picture\",\"character varying\",\"YES\",null]",
+        "[\"username\",\"character varying\",\"YES\",null]",
+        "[\"email\",\"character varying\",\"YES\",null]",
+        "[\"email_verified\",\"boolean\",\"YES\",null]",
+        "[\"phone_number\",\"character varying\",\"YES\",null]",
+        "[\"providers\",\"jsonb\",\"YES\",null]",
+        "[\"password\",\"character varying\",\"YES\",null]",
+        "[\"status\",\"smallint\",\"YES\",null]",
+        "[\"gender\",\"character varying\",\"YES\",null]",
+        "[\"birthdate\",\"character varying\",\"YES\",null]",
+        "[\"zoneinfo\",\"character varying\",\"YES\",null]",
+        "[\"locale\",\"character varying\",\"YES\",null]",
+        "[\"groups\",\"jsonb\",\"YES\",null]",
+        "[\"position\",\"character varying\",\"YES\",null]",
+        "[\"address\",\"jsonb\",\"YES\",null]",
+        "[\"raw_app_meta_data\",\"jsonb\",\"YES\",null]",
+        "[\"created_from\",\"character varying\",\"YES\",null]",
+        "[\"created_at\",\"timestamp with time zone\",\"YES\",null]",
+        "[\"updated_at\",\"timestamp with time zone\",\"YES\",null]",
+        "[\"password_updated_at\",\"timestamp with time zone\",\"YES\",null]",
+        "[\"last_login\",\"timestamp with time zone\",\"YES\",null]",
+        "[\"two_factor\",\"jsonb\",\"YES\",null]",
+        "[\"register_info\",\"jsonb\",\"YES\",null]",
+        "[\"internal_user_type\",\"character varying\",\"YES\",null]",
+        "[\"type\",\"character varying\",\"YES\",null]",
+        "[\"user_source\",\"integer\",\"YES\",null]",
+        "[\"user_desc\",\"character varying\",\"YES\",null]",
+        "[\"open_id\",\"character varying\",\"YES\",null]",
+        "[\"corp_id\",\"character varying\",\"YES\",null]",
+        "[\"parent_user_id\",\"character varying\",\"YES\",null]",
+        "[\"main_dep\",\"character varying\",\"YES\",null]"
+      ],
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 46,
+      "Columns": [
+        "column_name",
+        "data_type",
+        "is_nullable",
+        "column_default"
+      ]
+    },
+    "aggregate": {
+      "RequestId": "9b9a7442-0d9d-4f1d-802d-2d7b7c6bf85a",
+      "Columns": [
+        "total",
+        "length80",
+        "blocked",
+        "status_zero",
+        "bcrypt_2a_cost10"
+      ],
+      "Rows": [
+        "[\"3\",\"2\",\"0\",\"0\",\"2\"]"
+      ],
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 12
+    },
+    "constraints": {
+      "RequestId": "fa2b81c9-41d2-47be-b4b2-7dae02fb0460",
+      "Columns": [
+        "conname",
+        "definition"
+      ],
+      "Rows": [
+        "[\"users_pk\",\"PRIMARY KEY (id)\"]"
+      ],
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 12
+    },
+    "triggers": {
+      "RequestId": "8c74c1f6-1267-48b4-9a7a-3ae761cfabe1",
+      "Columns": [
+        "tgname"
+      ],
+      "Rows": null,
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 9
+    },
+    "uid": {
+      "RequestId": "a827aee4-f943-4b5a-9a34-00d9acf2927e",
+      "Columns": [
+        "pg_get_functiondef"
+      ],
+      "Rows": [
+        "[\"CREATE OR REPLACE FUNCTION auth.uid()\\n RETURNS text\\n LANGUAGE sql\\n STABLE\\nAS $function$\\n  select\\n  coalesce(\\n    nullif(current_setting('request.jwt.claim.sub', true), ''),\\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')\\n  )::text\\n$function$\\n\"]"
+      ],
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 10
+    },
+    "identity": {
+      "RequestId": "580c91f1-5f0c-4435-b73a-81bb715a4f43",
+      "Columns": [
+        "count"
+      ],
+      "Rows": [
+        "[\"0\"]"
+      ],
+      "AffectedRows": 0,
+      "ExecutionTimeMs": 11
+    }
+  },
+  "base64Postgres": {
+    "RequestId": "ce96b6da-cdd1-4969-a03b-da193f611ad9",
+    "Columns": [
+      "wrapped_length",
+      "newline_position",
+      "compact_length"
+    ],
+    "Rows": [
+      "[\"81\",\"77\",\"80\"]"
+    ],
+    "AffectedRows": 0,
+    "ExecutionTimeMs": 14
+  },
+  "actualSourceTestMigration": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "sourceReadOnly": true,
+    "ordinaryEmployeeAccountsChanged": 0,
+    "noNewIdentityRows": true,
+    "checks": [
+      {
+        "name": "original_password_login_0",
+        "status": 200,
+        "subjectMatches": true
+      },
+      {
+        "name": "actual_jwt_uid_0",
+        "passed": true
+      },
+      {
+        "name": "own_visible_other_hidden_and_write_rejected_0",
+        "passed": true
+      },
+      {
+        "name": "original_password_login_1",
+        "status": 200,
+        "subjectMatches": true
+      },
+      {
+        "name": "actual_jwt_uid_1",
+        "passed": true
+      },
+      {
+        "name": "own_visible_other_hidden_and_write_rejected_1",
+        "passed": true
+      },
+      {
+        "name": "status3_rejected",
+        "status": 400,
+        "code": 4013
+      },
+      {
+        "name": "reactivation_original_password_still_works",
+        "passed": true
+      },
+      {
+        "name": "test_session_signout",
+        "status": 200
+      },
+      {
+        "name": "test_session_signout",
+        "status": 200
+      },
+      {
+        "name": "test_session_signout",
+        "status": 200
+      }
+    ],
+    "requests": [
+      {
+        "name": "backup two existing synthetic slots",
+        "RequestId": "facc3e13-9a58-44a0-a255-1b72e3fff318",
+        "ms": 11
+      },
+      {
+        "name": "assert source test identities not already imported",
+        "RequestId": "112a65f8-7f60-496a-b803-a51da4e07f42",
+        "ms": 10
+      },
+      {
+        "name": "temporarily transplant only two documented source test identities",
+        "RequestId": "f6f9c31a-2463-48e0-ab0d-6314826f03ca",
+        "ms": 14
+      },
+      {
+        "name": "set compact base64 bcrypt",
+        "RequestId": "2c92874a-6408-4576-8632-9a2c44a0341f",
+        "ms": 10
+      },
+      {
+        "name": "block only transplanted test member",
+        "RequestId": "11354645-1214-4240-9b6b-a4aaad4ff4f2",
+        "ms": 5
+      },
+      {
+        "name": "reactivate only transplanted test member",
+        "RequestId": "f9cec188-31f1-48b7-819d-e81f035a1846",
+        "ms": 6
+      },
+      {
+        "name": "assert identity count not increased",
+        "RequestId": "630b7b09-8b84-4617-9f6b-84a02dde59f4",
+        "ms": 10
+      },
+      {
+        "name": "restore original two slots and remove only owned probes",
+        "RequestId": "0ee99bf9-f32d-4497-a5b1-0c944260858e",
+        "ms": 10
+      },
+      {
+        "name": "verify exact original account rows restored",
+        "RequestId": "d6d6271c-22f6-4c2d-ac13-d37aa6065762",
+        "ms": 9
+      },
+      {
+        "name": "verify transplanted identity absence and total count",
+        "RequestId": "3f803b7e-27f7-445a-84b1-d34986381bae",
+        "ms": 8
+      }
+    ],
+    "identityCountDuring": 3,
+    "experimentPassed": true,
+    "exactOriginalRowsRestored": true,
+    "identityCountAfter": 3,
+    "sourceTestIdentitiesLeftInTarget": 0
+  },
+  "originalSlotsLogin": [
+    {
+      "slot": 0,
+      "originalPasswordLoginStatus": 200,
+      "originalSubjectRestored": true,
+      "signoutStatus": 200
+    },
+    {
+      "slot": 1,
+      "originalPasswordLoginStatus": 200,
+      "originalSubjectRestored": true,
+      "signoutStatus": 200
+    }
+  ],
+  "testTokenCleanup": {
+    "RequestId": "c670b99e-39ba-4e40-95a2-33128b52bcf8",
+    "removedOnlyTransplantedTestSubjectTokens": 0,
+    "originalSyntheticUserSubjectsExcluded": true
+  },
+  "syntheticSQLExecution": {
+    "realAuthTableUntouched": true,
+    "requests": [
+      {
+        "name": "create synthetic schema fixture",
+        "RequestId": "65e9c7ee-e2c1-4f56-9df9-1523cef655e6",
+        "ms": 9
+      },
+      {
+        "name": "synthetic import batch 1",
+        "RequestId": "d27535d6-550b-4f52-aed2-3e43003d1015",
+        "ms": 20
+      },
+      {
+        "name": "synthetic import batch 2",
+        "RequestId": "19abc495-0831-4719-8f3f-e64a248f010d",
+        "ms": 17
+      },
+      {
+        "name": "add unowned identical synthetic clone",
+        "RequestId": "acf3e01d-4065-4502-8e44-e98813bd6a3e",
+        "ms": 5
+      },
+      {
+        "name": "rollback only receipt rows 1",
+        "RequestId": "a886c250-2063-4450-beaf-6f389041af39",
+        "ms": 19
+      },
+      {
+        "name": "rollback only receipt rows 2",
+        "RequestId": "3d8753fd-342d-40b7-9b5f-8c3b9113068d",
+        "ms": 19
+      },
+      {
+        "name": "unowned clone must survive",
+        "RequestId": "fb7086b2-eaf9-4a35-9777-0f9222325524",
+        "ms": 9
+      },
+      {
+        "name": "remove only owned synthetic fixture",
+        "RequestId": "1506db6c-1767-4af2-9f36-5da77b6bdc5e",
+        "ms": 11
+      }
+    ],
+    "syntheticUsers": 84,
+    "batchSizes": [
+      50,
+      34
+    ],
+    "runtimeDuplicateRejected": true,
+    "unownedCloneSurvived": true,
+    "internalBigintStringsPreserved": true,
+    "passed": true,
+    "fixtureRemoved": true
+  },
+  "validation": {
+    "migrationTestsPassed": 55,
+    "authImportTestsPassed": 9,
+    "eslintExit": 0,
+    "maintainabilityExit": 0
+  },
+  "limitations": [
+    "No bulk employee import",
+    "No plan upgrade",
+    "No production writes/deploy",
+    "Unconfirmed email selected identities blocked by default",
+    "Token-linked platform rollback not certified",
+    "Embedded base64 whitespace rejection not independently reproduced"
+  ]
+}

@@ -82,16 +82,55 @@ function createWritingFake(db: Record<string, FakeRow[]>) {
 
 test("开始写作幂等：已有在写记录时直接返回，不新建", async () => {
   const db: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-1", library_status: "in_library" }],
+    sub_topics: [{ id: "sub-1", created_by: "user-1", library_status: "in_library" }],
     sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-1", user_id: "user-1", status: "writing" }],
   };
   const { client } = createWritingFake(db);
 
-  const first = await startWritingClaim(client, "user-1", "sub-1");
-  const second = await startWritingClaim(client, "user-1", "sub-1");
+  const scope = { visibleUserIds: ["user-1"] };
+  const first = await startWritingClaim(client, "user-1", "sub-1", scope);
+  const second = await startWritingClaim(client, "user-1", "sub-1", scope);
   assert.equal(first.ok, true);
   assert.equal(second.ok, true);
   assert.equal(db.sub_topic_claims.length, 1);
+});
+
+test("开始写作只接受当前团队可见的选题，并保留多人写作与本人幂等", async () => {
+  const startWithScope = startWritingClaim as unknown as (
+    client: Parameters<typeof startWritingClaim>[0],
+    userId: string,
+    subTopicId: string,
+    scope: { visibleUserIds: string[] },
+  ) => ReturnType<typeof startWritingClaim>;
+
+  const invisible: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-outsider", created_by: "team-b-owner", library_status: "in_library" }],
+    sub_topic_claims: [],
+  };
+  const denied = await startWithScope(
+    createWritingFake(invisible).client,
+    "user-1",
+    "sub-outsider",
+    { visibleUserIds: ["user-1", "team-a-owner"] },
+  );
+  assert.equal(denied.ok, false);
+  assert.equal(invisible.sub_topic_claims.length, 0, "不可见选题不能新增 claim");
+
+  const visible: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-team-a", created_by: "team-a-owner", library_status: "in_library" }],
+    sub_topic_claims: [],
+  };
+  const client = createWritingFake(visible).client;
+  const scope = { visibleUserIds: ["user-1", "user-2", "team-a-owner"] };
+  const first = await startWithScope(client, "user-1", "sub-team-a", scope);
+  const retry = await startWithScope(client, "user-1", "sub-team-a", scope);
+  const secondWriter = await startWithScope(client, "user-2", "sub-team-a", scope);
+
+  assert.equal(first.ok, true);
+  assert.equal(retry.ok, true);
+  assert.equal(secondWriter.ok, true, "另一位可见团队成员仍可同时写同一选题");
+  assert.equal(visible.sub_topic_claims.length, 2);
+  assert.deepEqual(visible.sub_topic_claims.map((row) => row.user_id).sort(), ["user-1", "user-2"]);
 });
 
 test("选题关联作品只取最新 24h 快照，不回退历史最大播放或 72h", () => {
@@ -106,18 +145,19 @@ test("选题关联作品只取最新 24h 快照，不回退历史最大播放或
 
 test("已移出选题不能开始写作；新成员开始写作正常落库", async () => {
   const removed: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-1", library_status: "removed" }],
+    sub_topics: [{ id: "sub-1", created_by: "user-1", library_status: "removed" }],
     sub_topic_claims: [],
   };
-  const removedResult = await startWritingClaim(createWritingFake(removed).client, "user-1", "sub-1");
+  const scope = { visibleUserIds: ["user-1"] };
+  const removedResult = await startWritingClaim(createWritingFake(removed).client, "user-1", "sub-1", scope);
   assert.equal(removedResult.ok, false);
   if (!removedResult.ok) assert.equal(removedResult.status, 409);
 
   const fresh: Record<string, FakeRow[]> = {
-    sub_topics: [{ id: "sub-2", library_status: "in_library" }],
+    sub_topics: [{ id: "sub-2", created_by: "user-1", library_status: "in_library" }],
     sub_topic_claims: [],
   };
-  const created = await startWritingClaim(createWritingFake(fresh).client, "user-1", "sub-2");
+  const created = await startWritingClaim(createWritingFake(fresh).client, "user-1", "sub-2", scope);
   assert.equal(created.ok, true);
   assert.equal(fresh.sub_topic_claims.length, 1);
   assert.equal((fresh.sub_topic_claims[0] as FakeRow).status, "writing");

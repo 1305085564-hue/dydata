@@ -53,13 +53,6 @@ type PendingSelectBuilder = {
   select(columns: string): {
     eq(column: string, value: string): {
       eq(column: string, value: string): { maybeSingle(): QueryResult<TeamJoinRow> };
-    };
-  };
-};
-
-type AdminSelectBuilder = {
-  select(columns: string): {
-    eq(column: string, value: string): {
       order(column: string, options: { ascending: boolean }): QueryResult<TeamJoinRow[]>;
     };
   };
@@ -83,7 +76,6 @@ type ServerClient = RpcClient & {
 };
 
 type AdminClient = {
-  from(table: "team_join_requests"): AdminSelectBuilder;
   from(table: "profiles"): ProfileSelectBuilder;
   auth: {
     admin: {
@@ -216,8 +208,10 @@ export async function getMyPendingRequest(applicantUserId: string): Promise<Resu
 }
 
 export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequestRow[]>> {
-  const supabase = clientFactories.createServiceClient();
-  const { data, error } = await supabase
+  // Select requests with the caller's JWT so RLS applies before privileged
+  // profile/email enrichment. The page guard alone does not limit data scope.
+  const serverClient = await clientFactories.createServerClient();
+  const { data, error } = await serverClient
     .from("team_join_requests")
     .select("id, applicant_user_id, target_team_id, created_at, teams:target_team_id(name)")
     .eq("status", "pending")
@@ -227,6 +221,9 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
     return { ok: false, error: error.message ?? "SELECT_FAILED" };
   }
 
+  if (!data?.length) return { ok: true, data: [] };
+
+  const supabase = clientFactories.createServiceClient();
   const applicantUserIds = Array.from(new Set((data ?? []).map((row) => row.applicant_user_id)));
   const nameByUserId = new Map<string, string>();
   if (applicantUserIds.length > 0) {

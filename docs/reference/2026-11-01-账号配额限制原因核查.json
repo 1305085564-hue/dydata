@@ -1,0 +1,389 @@
+{
+  "conclusion": "No paid upgrade justified by this internalUser error; registered externalUser path works on current trial",
+  "productionChanges": false,
+  "purchaseExecuted": false,
+  "fullEmployeeImportExecuted": false,
+  "primarySources": [
+    "https://docs.cloudbase.net/authentication-v2/auth/manage-users",
+    "https://docs.cloudbase.net/api-reference/manager/node/user",
+    "https://docs.cloudbase.net/cli-v1/user/management",
+    "https://docs.cloudbase.net/authentication-v2/auth/auth-pg"
+  ],
+  "typeComparison": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "purchaseExecuted": false,
+    "checks": [
+      {
+        "name": "registered user persisted 0",
+        "dbType": "external",
+        "status": null,
+        "passwordLength": 80,
+        "metadataKeys": [],
+        "created": true
+      },
+      {
+        "name": "registered user persisted 1",
+        "dbType": "external",
+        "status": 1,
+        "passwordLength": 80,
+        "metadataKeys": [],
+        "created": true
+      },
+      {
+        "name": "registered password login 0",
+        "status": 200
+      },
+      {
+        "name": "registered real JWT database identity 0",
+        "meStatus": 200,
+        "rpcStatus": 200,
+        "uuidMatches": true,
+        "role": "authenticated"
+      },
+      {
+        "name": "registered password login 1",
+        "status": 200
+      },
+      {
+        "name": "registered real JWT database identity 1",
+        "meStatus": 200,
+        "rpcStatus": 200,
+        "uuidMatches": true,
+        "role": "authenticated"
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      }
+    ],
+    "requests": [
+      {
+        "name": "read existing identity types",
+        "RequestId": "19b7aa8f-5fdd-478f-9585-1d027c3d6926"
+      },
+      {
+        "name": "create registered user 0",
+        "RequestId": "60fad0e5-20c8-4030-9f6d-5f6c0c0d7d19"
+      },
+      {
+        "name": "inspect new registered user 0",
+        "RequestId": "f5883ac5-cf8c-4e21-b89a-6199bb275d42"
+      },
+      {
+        "name": "create registered user 1",
+        "RequestId": "985e6af2-4944-4a4d-9501-6d5dfd43064f"
+      },
+      {
+        "name": "inspect new registered user 1",
+        "RequestId": "72dac362-fd5e-4c93-ae77-c283c485eae2"
+      },
+      {
+        "name": "count beyond former fourth-user failure",
+        "RequestId": "b728de64-4829-4d63-af40-96631c5219c0"
+      },
+      {
+        "name": "create temporary invoker identity RPC",
+        "RequestId": "171dd496-e154-4ba6-8e2f-0911be5361db"
+      },
+      {
+        "name": "remove only temporary identity RPC",
+        "RequestId": "1864af0d-b10c-4bd2-b061-75dd12068a94"
+      },
+      {
+        "name": "delete only owned registered probes",
+        "RequestId": "4432cf22-f86f-454b-8c60-7be88fbf33b9"
+      },
+      {
+        "name": "read existing identity types",
+        "RequestId": "4dc69e27-e30e-430c-898d-8fde83a60c8e"
+      }
+    ],
+    "baselineCount": 3,
+    "internal": {
+      "created": false,
+      "code": "LimitExceeded",
+      "message": "[CreateUser] 超过配额限制。授权用户数超过套餐配额上限",
+      "RequestId": "4876cf5a-a40b-49fb-9e2b-a56507880125"
+    },
+    "peakUserCount": 5,
+    "passed": true,
+    "cleanupResult": {
+      "FailedCount": 0,
+      "SuccessCount": 2
+    },
+    "originalIdentityMetadataUnchanged": true,
+    "remainingUsers": 3
+  },
+  "registeredCompatibility": {
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "productionUntouched": true,
+    "purchaseExecuted": false,
+    "checks": [
+      {
+        "name": "registered user persisted 0",
+        "dbType": "external",
+        "status": null,
+        "passwordLength": 80,
+        "metadataKeys": [],
+        "created": true
+      },
+      {
+        "name": "registered user persisted 1",
+        "dbType": "external",
+        "status": null,
+        "passwordLength": 80,
+        "metadataKeys": [],
+        "created": true
+      },
+      {
+        "name": "registered password login 0",
+        "status": 200
+      },
+      {
+        "name": "registered real JWT database identity 0",
+        "meStatus": 200,
+        "rpcStatus": 200,
+        "uuidMatches": true,
+        "role": "authenticated"
+      },
+      {
+        "name": "registered password login 1",
+        "status": 200
+      },
+      {
+        "name": "registered real JWT database identity 1",
+        "meStatus": 200,
+        "rpcStatus": 200,
+        "uuidMatches": true,
+        "role": "authenticated"
+      },
+      {
+        "name": "source test bcrypt on registered external user",
+        "status": 200,
+        "hasToken": true
+      },
+      {
+        "name": "superseded synthetic password rejected",
+        "status": 400,
+        "code": 4043,
+        "error": "invalid_username_or_password",
+        "hasToken": false
+      },
+      {
+        "name": "registered external pending rejected",
+        "status": 400,
+        "code": 4012,
+        "error": "user_pending",
+        "hasToken": false
+      },
+      {
+        "name": "registered external blocked rejected",
+        "status": 400,
+        "code": 4013,
+        "error": "user_blocked",
+        "hasToken": false
+      },
+      {
+        "name": "registered external reactivated original test password works",
+        "status": 200,
+        "hasToken": true
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      },
+      {
+        "name": "registered probe signout",
+        "status": 200
+      }
+    ],
+    "requests": [
+      {
+        "name": "read existing identity types",
+        "RequestId": "59bcd174-d21a-42d9-b2c1-a28d0a864c1b"
+      },
+      {
+        "name": "create registered user 0",
+        "RequestId": "6924983f-8f98-4f6e-8339-c37f145b7a6f"
+      },
+      {
+        "name": "inspect new registered user 0",
+        "RequestId": "d88ba359-77bf-4746-8eda-d9b361f04f9e"
+      },
+      {
+        "name": "create registered user 1",
+        "RequestId": "49ea533a-77f5-4717-abaa-8111e4f877a1"
+      },
+      {
+        "name": "inspect new registered user 1",
+        "RequestId": "4a01b18d-4c98-43b4-8365-3b7cbe561f52"
+      },
+      {
+        "name": "count beyond former fourth-user failure",
+        "RequestId": "fce3a3c6-2005-48d3-8164-67a524675e26"
+      },
+      {
+        "name": "create temporary invoker identity RPC",
+        "RequestId": "8152ae53-3805-4fb0-97cb-3300c383825e"
+      },
+      {
+        "name": "apply existing source test hash to owned registered probe only",
+        "RequestId": "3c39e8f2-4cae-45d4-93fa-523bef86556a"
+      },
+      {
+        "name": "pending only owned registered probe",
+        "RequestId": "268ce4ba-d886-4987-8c10-4d2f1de3d1db"
+      },
+      {
+        "name": "block only owned registered probe",
+        "RequestId": "7214a2c8-b69f-4f3f-ba4b-e51b34d901d8"
+      },
+      {
+        "name": "restore active only owned registered probe",
+        "RequestId": "98927655-c3d5-4ee6-99b1-a43ad0a3d872"
+      },
+      {
+        "name": "remove only temporary identity RPC",
+        "RequestId": "d9d5024e-ab48-49a1-950c-eb84e6eee004"
+      },
+      {
+        "name": "delete only owned registered probes",
+        "RequestId": "2368864e-ef01-465c-8695-ba99bbdb5075"
+      },
+      {
+        "name": "read existing identity types",
+        "RequestId": "f76e03aa-6e33-45e6-8f96-9f3435d08eb9"
+      }
+    ],
+    "baselineCount": 3,
+    "internal": {
+      "created": false,
+      "code": "LimitExceeded",
+      "message": "[CreateUser] 超过配额限制。授权用户数超过套餐配额上限",
+      "RequestId": "5535b57e-e68d-4111-ae9f-2032cb7a42bb"
+    },
+    "peakUserCount": 5,
+    "passed": true,
+    "cleanupResult": {
+      "FailedCount": 0,
+      "SuccessCount": 2
+    },
+    "originalIdentityMetadataUnchanged": true,
+    "remainingUsers": 3
+  },
+  "externalSqlFixture": {
+    "realAuthTableUntouched": true,
+    "requests": [
+      {
+        "name": "create synthetic schema fixture",
+        "RequestId": "89d36965-b6b0-4e41-b7e7-940ca0cede4d",
+        "ms": 11
+      },
+      {
+        "name": "synthetic import batch 1",
+        "RequestId": "551c0412-53c6-42c1-9249-3e178804675b",
+        "ms": 12
+      },
+      {
+        "name": "synthetic import batch 2",
+        "RequestId": "2c755440-c32f-437c-967c-4b9616ad82de",
+        "ms": 13
+      },
+      {
+        "name": "verify pending persisted before rollback",
+        "RequestId": "9a46f6e3-2bfd-4bf0-a731-c7ba892edcce",
+        "ms": 60
+      },
+      {
+        "name": "add unowned identical synthetic clone",
+        "RequestId": "d0441020-06b9-454c-a3ac-e84d783b1ea0",
+        "ms": 7
+      },
+      {
+        "name": "rollback only receipt rows 1",
+        "RequestId": "1fcb6483-94c6-464f-8f56-83534acb26a9",
+        "ms": 18
+      },
+      {
+        "name": "rollback only receipt rows 2",
+        "RequestId": "53bed8b2-f24c-4175-ad4f-7d45f917591d",
+        "ms": 10
+      },
+      {
+        "name": "unowned clone must survive",
+        "RequestId": "65482b05-c47b-49de-b4b2-fd79e2e86c91",
+        "ms": 6
+      },
+      {
+        "name": "remove only owned synthetic fixture",
+        "RequestId": "dc44441a-d09c-4c5b-a7c1-02251029e891",
+        "ms": 7
+      }
+    ],
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "storedPendingStateVerified": true,
+    "syntheticUsers": 84,
+    "batchSizes": [
+      50,
+      34
+    ],
+    "runtimeDuplicateRejected": true,
+    "unownedCloneSurvived": true,
+    "internalBigintStringsPreserved": true,
+    "passed": true,
+    "fixtureRemoved": true
+  },
+  "offlinePlanRegenerated": {
+    "sourceReadOnly": true,
+    "usesPreviouslyCapturedSourceSnapshot": true,
+    "executed": false,
+    "purchaseRequiredForRegisteredUserCount": false,
+    "registrationType": "external",
+    "capturedAt": "2026-11-01T02:30:49.100792+00:00",
+    "environment": "dydata-d6g0gd1v37fcddf21",
+    "mode": "full",
+    "importCount": 84,
+    "batchCount": 2,
+    "statusCounts": {
+      "active": 59,
+      "pending": 1,
+      "disabled": 24
+    },
+    "expectedPlanSha256": "28996d8c99920fe15677db7579e62a1b1380083e4c622e4993085f3537a2cc4d",
+    "planSha256": "7d7fa407b6f0e9d945d23006ac149d05a3516e6f07f6dad797a0a727e7cd353d",
+    "sensitive": true,
+    "targetExistingUsers": 3,
+    "targetReadRequestId": "1dbaa35e-7d43-4862-87f9-b421412843e4",
+    "executionState": "NOT_EXECUTED: latest scope is quota investigation; refresh source snapshot and implement external Auth write gate before real batch import",
+    "supersedes": "Previous internal-user plan and payment conclusion"
+  },
+  "validation": {
+    "migrationToolTests": {
+      "command": "node --test scripts/cloudbase/*.test.mjs",
+      "passed": 55,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "eslintExitCode": 0,
+    "maintainabilityExitCode": 0,
+    "gitDiffCheckExitCode": 0
+  },
+  "correction": "Previous test explicitly requested internalUser (organization member) and could not establish registered-user quota. Type externalUser and DB external preserve existing business roles in profiles; no purchase requested."
+}

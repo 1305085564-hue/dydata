@@ -54,25 +54,22 @@ function createAdminListFactories(params: {
   users: Array<{ id: string; email?: string }>;
   requestSelects: string[];
   authLookups?: string[];
+  visibleRequests?: Array<{ id: string; applicant_user_id: string; target_team_id: string; created_at: string; teams?: { name: string | null } | null }>;
+  requestError?: { message: string };
 }): ClientFactories {
   return {
-    createServerClient: async () => createInsertClient({ data: { id: "unused" }, error: null }),
+    createServerClient: async () => ({
+      from: () => ({ select: (columns: string) => {
+        params.requestSelects.push(columns);
+        return { eq: () => ({ order: async () => ({
+          data: params.requestError ? null : params.visibleRequests ?? params.requests,
+          error: params.requestError ?? null,
+        }) }) };
+      } }),
+    }) as unknown as ServerClient,
     getTeamOptions: async () => [],
     createServiceClient: () => ({
-      from: (table: "team_join_requests" | "profiles") => {
-        if (table === "team_join_requests") {
-          return {
-            select: (columns: string) => {
-              params.requestSelects.push(columns);
-              return {
-                eq: () => ({
-                  order: async () => ({ data: params.requests, error: null }),
-                }),
-              };
-            },
-          };
-        }
-
+      from: () => {
         return {
           select: () => ({
             in: async () => ({ data: params.profiles, error: null }),
@@ -297,4 +294,31 @@ test("待审批人邮箱按去重后的申请人 ID 查询，不扫描全部 Aut
   const result = await listPendingRequestsForAdmin();
   assert.equal(result.ok, true);
   assert.deepEqual(authLookups.sort(), ["user-1", "user-2"]);
+});
+
+test("待审批列表只补全真实登录身份可见的申请，不读取另一团队申请人资料", async () => {
+  const requests = [
+    { id: "own-request", applicant_user_id: "own-user", target_team_id: "own-team", created_at: "2026-11-01", teams: { name: "本团队" } },
+    { id: "foreign-request", applicant_user_id: "foreign-user", target_team_id: "foreign-team", created_at: "2026-11-01", teams: { name: "其他团队" } },
+  ];
+  const authLookups: string[] = [];
+  setTeamJoinServiceClientsForTest(createAdminListFactories({
+    requests, visibleRequests: requests.slice(0, 1), requestSelects: [], authLookups,
+    profiles: [{ id: "own-user", name: "本团队申请人" }],
+    users: [{ id: "own-user", email: "own@example.invalid" }],
+  }));
+  const result = await listPendingRequestsForAdmin();
+  assert.equal(result.ok, true);
+  if (result.ok) assert.deepEqual(result.data.map(row => row.id), ["own-request"]);
+  assert.deepEqual(authLookups, ["own-user"]);
+});
+
+test("待审批身份查询被拒绝时直接返回错误，不能退回高权限全量查询", async () => {
+  const authLookups: string[] = [];
+  setTeamJoinServiceClientsForTest(createAdminListFactories({
+    requests: [{ id: "secret", applicant_user_id: "other", target_team_id: "other-team", created_at: "2026-11-01" }],
+    requestError: { message: "permission denied" }, requestSelects: [], profiles: [], users: [], authLookups,
+  }));
+  assert.deepEqual(await listPendingRequestsForAdmin(), { ok: false, error: "permission denied" });
+  assert.deepEqual(authLookups, []);
 });

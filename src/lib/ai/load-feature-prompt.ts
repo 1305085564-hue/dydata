@@ -1,10 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const cache = new Map<string, { expiresAt: number; prompt: string | null }>();
 
 function getServiceClient() {
+  if (isCloudBaseBackend()) {
+    try {
+      return createAdminClient();
+    } catch {
+      return null;
+    }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!supabaseUrl || !serviceRoleKey) return null;
@@ -53,3 +63,7 @@ export function clearFeaturePromptCache(featureKey?: string) {
 
   cache.clear();
 }
+
+export const __internal = {
+  getServiceClientForTests: getServiceClient,
+};

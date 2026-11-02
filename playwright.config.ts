@@ -3,22 +3,26 @@ import { assertGateEnvironment } from "./scripts/assert-local-gate-env.mjs";
 
 // 禁止用 `DYDATA_E2E_BASE_URL` 把浏览器门禁悄悄指向外部/生产环境（详见预检说明）。
 assertGateEnvironment();
+const cloudbase = process.env.DYDATA_GATE_BACKEND === "cloudbase";
 
 // 禁止失败时自动抓取页面可访问性快照，避免测试业务数据进入 error-context.md。
 process.env.PLAYWRIGHT_NO_COPY_PROMPT = "1";
 
 const configuredBaseUrl = process.env.DYDATA_E2E_BASE_URL?.trim();
-const baseURL = configuredBaseUrl || "http://localhost:3100";
+const baseURL = configuredBaseUrl || (cloudbase ? "http://127.0.0.1:3100" : "http://localhost:3100");
 
 export default defineConfig({
-  testDir: "./tests/performance",
+  testDir: cloudbase ? "./tests/roles" : "./tests/performance",
+  testMatch: cloudbase ? "CloudBase权限回归.spec.ts" : "**/*.spec.ts",
+  grep: cloudbase ? /@browser/ : undefined,
+  testIgnore: cloudbase ? [] : ["**/CloudBase*.spec.ts"],
   outputDir: "test-results/performance",
   fullyParallel: false,
   workers: 1,
   retries: 0,
   timeout: 60_000,
   expect: { timeout: 15_000 },
-  reporter: [["list"]],
+  reporter: cloudbase ? [["list"], ["./scripts/cloudbase-gate-reporter.mjs"]] : [["list"]],
   use: {
     baseURL,
     trace: "off",
@@ -28,8 +32,8 @@ export default defineConfig({
   webServer: configuredBaseUrl
     ? undefined
     : {
-        command: "npm run start -- -p 3100",
-        url: baseURL,
+        command: cloudbase ? "node scripts/run-role-gate-server.mjs" : "npm run start -- -p 3100",
+        url: cloudbase ? `${baseURL}/api/health?check=cloudbase` : baseURL,
         // 与 playwright.role.config.ts 同一条纪律：默认不复用端口上的陌生服务端，
         // 避免用错 env 构建的旧服务把门禁跑成假红/假绿；需要时用 DYDATA_GATE_REUSE=1。
         reuseExistingServer: process.env.DYDATA_GATE_REUSE === "1",

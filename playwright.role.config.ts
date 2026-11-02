@@ -16,19 +16,22 @@ process.env.PLAYWRIGHT_NO_COPY_PROMPT = "1";
 // 直接跑 `playwright test --config` 也要过环境预检：设了外部 base URL 却没显式授权时，
 // 门禁会在"指向生产的构建 + 外部地址"上照常全绿，那种绿灯不构成上线证据。
 assertGateEnvironment();
+const cloudbase = process.env.DYDATA_GATE_BACKEND === "cloudbase";
 
 const configuredBaseUrl = process.env.DYDATA_E2E_BASE_URL?.trim();
-const baseURL = configuredBaseUrl || "http://localhost:3100";
+const baseURL = configuredBaseUrl || (cloudbase ? "http://127.0.0.1:3100" : "http://localhost:3100");
 
 export default defineConfig({
   testDir: "./tests/roles",
+  testMatch: cloudbase ? "CloudBase权限回归.spec.ts" : "**/*.spec.ts",
+  testIgnore: cloudbase ? [] : ["**/CloudBase*.spec.ts"],
   outputDir: "test-results/roles",
   fullyParallel: false,
   workers: 1,
   retries: 0,
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  reporter: [["list"]],
+  reporter: cloudbase ? [["list"], ["./scripts/cloudbase-gate-reporter.mjs"]] : [["list"]],
   use: {
     baseURL,
     trace: "off",
@@ -41,8 +44,10 @@ export default defineConfig({
         // Playwright's --env-file only configures the test runner. Load the
         // same local-only fixture env in the Next server process as well.
         // Disable IP rate limiting in local role-gate testing to prevent 429 flaky timeouts across 23 fast sequential specs.
-        command: "npm run seed:roles && RATE_LIMIT_DISABLED=true node --env-file-if-exists=.env.ai-test.local scripts/run-role-gate-server.mjs",
-        url: baseURL,
+        command: cloudbase
+          ? "RATE_LIMIT_DISABLED=true node scripts/run-role-gate-server.mjs"
+          : "RATE_LIMIT_DISABLED=true node --env-file-if-exists=.env.ai-test.local scripts/run-role-gate-server.mjs",
+        url: cloudbase ? `${baseURL}/api/health?check=cloudbase` : baseURL,
         // 默认不复用：端口上先起的陌生服务端（例如在门禁之外用生产 env 构建后
         // 手工起来的 3100）会让整轮门禁在错环境里跑，出现假红/假绿。
         // 确知端口上就是本次要测的构建时，用 DYDATA_GATE_REUSE=1 显式复用。

@@ -21,6 +21,6 @@ test("read handler 成功返回业务结果", async () => {
 
 test("read handler 未登录、失败与 thrown 均明确失败", async () => {
   assert.equal((await buildNotificationReadResponse("n1", deps(null, true))).status, 401);
-  assert.equal((await buildNotificationReadResponse("n1", deps({ id: "u1" }, false))).status, 500);
+  assert.equal((await buildNotificationReadResponse("n1", deps({ id: "u1" }, false))).status, 404);
   assert.equal((await buildNotificationReadResponse("n1", deps({ id: "u1" }, new Error("db")))).status, 500);
 });

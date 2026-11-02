@@ -3,7 +3,7 @@
  * 支持环境变量单渠道模式，以及数据库多渠道 failover + 熔断
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
   getProviderKeyModelConfig,
@@ -164,13 +164,7 @@ let _serviceClient: any = null;
 
 function getServiceSupabaseClient() {
   if (_serviceClient) return _serviceClient;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!supabaseUrl || !serviceRoleKey) return null;
-  _serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  return _serviceClient;
+  try { return (_serviceClient = createAdminClient()); } catch { return null; }
 }
 
 function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
@@ -849,6 +843,7 @@ export const __internal = {
   getFeatureConfigForTests: getFeatureConfig,
   resolveFeatureChannelChainForTests: resolveFeatureChannelChain,
   parseChatCompletionSse,
+  getServiceClient: getServiceSupabaseClient,
   setServiceClientForTests(client: unknown) {
     _serviceClient = client;
     cachedFeatureConfigs = null;

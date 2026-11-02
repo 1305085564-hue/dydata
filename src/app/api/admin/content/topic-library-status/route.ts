@@ -28,7 +28,7 @@ export const defaultTopicLibraryStatusDeps: TopicLibraryStatusDeps = {
 
 export async function GET(request: NextRequest) {
   const deps = defaultTopicLibraryStatusDeps;
-  const auth = await deps.requireAdminActor({ requiredPermission: "review_content" });
+  const auth = await deps.requireAdminActor({ requiredPermission: "view_video_review" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -49,7 +49,7 @@ export async function buildTopicLibraryStatusPostResponse(request: NextRequest, 
       events: [],
     });
     const finish = (response: Response) => appendObservedMutationResult(response, observation);
-    const auth = await deps.requireAdminActor({ requiredPermission: "review_content" });
+    const auth = await deps.requireAdminActor({ requiredPermission: "view_video_review" });
     if ("error" in auth) {
       return finish(NextResponse.json({ error: auth.error }, { status: auth.status }));
     }

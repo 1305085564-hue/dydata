@@ -46,7 +46,7 @@ import {
 import {
   assignWorkGroupMemberAction,
   unassignWorkGroupMemberAction,
-} from "../collaboration/work-group-actions";
+} from "./work-group-member-actions";
 import { describeAssignSuccess } from "../collaboration/work-group-membership-copy";
 import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
 
@@ -223,8 +223,7 @@ export function AdminModulesContentV3({
     (canManageCompany || (canEditTeamMembers && activeMemberCompanyRole === "member"));
   const canManageActiveMemberAccount = Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || (canManageMembers && activeMemberCompanyRole === "member"));
-  const canEditWorkGroups = Boolean(activeMember) && !activeMemberIsReadOnly &&
-    (canManageCompany || currentUserPermissions.manage_members === true);
+  const canEditWorkGroups = canManageActiveMemberAccount;
 
   // --- ACTIONS ---
 

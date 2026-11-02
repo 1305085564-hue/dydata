@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
-import { buildTopicLibraryStatusPostResponse } from "./route";
+import { buildTopicLibraryStatusPostResponse, defaultTopicLibraryStatusDeps, GET } from "./route";
 
 test("topic-library-status 真 handler：鉴权失败返回分层字段", async () => {
   const response = await buildTopicLibraryStatusPostResponse(
@@ -71,4 +71,41 @@ test("视频复盘只读状态接口接受同一 Supabase 项目内其他团队�
   assert.equal(response.status, 200);
   assert.deepEqual(visibleRows, [{ id: videoId, topic_id: "topic-b" }]);
   assert.deepEqual((await response.json()).statuses, { [videoId]: { inLibrary: true } });
+});
+
+test("topic-library-status 的 GET 和 POST 只要求作品复盘只读权限", async () => {
+  const scope = {
+    userId: "actor-a",
+    role: "member",
+    permissions: { view_video_review: true },
+    teamId: "team-a",
+    kind: "self",
+    visibleUserIds: ["actor-a"],
+    activeVisibleUserIds: ["actor-a"],
+  };
+  const requestedPermissions: string[] = [];
+  const requireReadPermission = (async (options: { requiredPermission?: string }) => {
+    requestedPermissions.push(options.requiredPermission ?? "");
+    if (options.requiredPermission !== "view_video_review") return { error: "无权限", status: 403 };
+    return { actor: { userId: "actor-a" }, context: { scope } };
+  }) as unknown as typeof defaultTopicLibraryStatusDeps.requireAdminActor;
+  const originalRequireAdminActor = defaultTopicLibraryStatusDeps.requireAdminActor;
+  defaultTopicLibraryStatusDeps.requireAdminActor = requireReadPermission;
+
+  try {
+    const getResponse = await GET(new NextRequest("https://dydata.cc/api/admin/content/topic-library-status"));
+    const postResponse = await buildTopicLibraryStatusPostResponse(
+      new NextRequest("https://dydata.cc/api/admin/content/topic-library-status", {
+        method: "POST",
+        body: JSON.stringify({ videoIds: [] }),
+      }),
+      { ...defaultTopicLibraryStatusDeps, requireAdminActor: requireReadPermission },
+    );
+
+    assert.equal(getResponse.status, 200);
+    assert.equal(postResponse.status, 200);
+    assert.deepEqual(requestedPermissions, ["view_video_review", "view_video_review"]);
+  } finally {
+    defaultTopicLibraryStatusDeps.requireAdminActor = originalRequireAdminActor;
+  }
 });
