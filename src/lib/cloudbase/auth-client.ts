@@ -53,6 +53,7 @@ export function createCloudBaseServerAuth(cookieStore: CookieStore, keepLoggedIn
           refreshToken: jwt ? "" : session?.refreshToken ?? "",
           expiresAt: session?.expiresAt ?? 0,
           subject: session?.subject ?? "",
+          ...(session?.deviceId ? { deviceId: session.deviceId } : {}),
         });
         if (session && hasCloudBaseSessionChanged(session, verified.session)) {
           try { writeSession(verified.session); } catch { /* Middleware owns cookie refresh in read-only Server Components. */ }

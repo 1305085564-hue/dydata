@@ -72,7 +72,7 @@ test("browser login only returns verified user and never returns tokens", async 
 
 test("read-only Server Component cookies do not cause false logout on getUser", async () => {
   process.env.CLOUDBASE_ENV_ID = "env-test";
-  const value = serializeCloudBaseSession({ accessToken: "access", refreshToken: "refresh", expiresAt: Date.now() + 120_000, subject: "subject" });
+  const value = serializeCloudBaseSession({ accessToken: "access", refreshToken: "refresh", expiresAt: Date.now() + 120_000, subject: "subject", deviceId: "f0cba501-2026-4111-a001-000000000001" });
   let writes = 0;
   globalThis.fetch = (async (input) => String(input).endsWith("/rpc/cloudbase_session_status") ? Response.json("active") : Response.json({ sub: "subject", password: "never exposed" })) as typeof fetch;
   try {
