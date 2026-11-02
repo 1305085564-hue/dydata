@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cutoverMaintenanceResponse, isApplicationMiddlewarePath } from "@/lib/cutover-maintenance";
 
 import { hasCloudBaseAuthCookie, hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
@@ -215,6 +216,9 @@ async function handleCloudBaseSession(request: NextRequest, options: {
 }
 
 export async function middleware(request: NextRequest) {
+  const maintenance = cutoverMaintenanceResponse(request.nextUrl.pathname);
+  if (maintenance) return maintenance;
+  if (!isApplicationMiddlewarePath(request.nextUrl.pathname)) return NextResponse.next();
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");
   const isDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -351,5 +355,6 @@ export const config = {
     "/register",
     "/forgot-password",
     "/auth/logout",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

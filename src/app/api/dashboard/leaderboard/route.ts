@@ -10,6 +10,8 @@ import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
+import { loadCloudBaseLeaderboardRows } from "@/lib/loaders/cloudbase-leaderboard";
 
 type DashboardPermissionContext = {
   scope: {
@@ -23,17 +25,20 @@ export async function buildDashboardLeaderboardResponse({
   permissionContext,
   visibleUserIds,
   now = new Date(),
+  cloudBase = isCloudBaseBackend(),
 }: {
   supabase: Awaited<ReturnType<typeof createClient>>;
   userId: string;
   permissionContext: DashboardPermissionContext;
   visibleUserIds?: string[];
   now?: Date;
+  cloudBase?: boolean;
 }) {
   if (!permissionContext) {
     return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
   }
   const monthAgo = shiftDateOnly(now, -30);
+  const effectiveVisibleUserIds = visibleUserIds ?? permissionContext.scope.visibleUserIds;
 
   try {
     const [accountsResult, leaderboardResult] = await measureAsync("dashboard.leaderboard.queries", () => Promise.all([
@@ -42,7 +47,9 @@ export async function buildDashboardLeaderboardResponse({
         .select("id, content_direction")
         .eq("profile_id", userId)
         .order("created_at", { ascending: true }),
-      supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
+      cloudBase
+        ? loadCloudBaseLeaderboardRows(supabase, monthAgo, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
+        : supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
     ]));
 
     assertSupabaseQuerySucceeded(accountsResult.error, "读取排行榜账号失败");
@@ -56,8 +63,6 @@ export async function buildDashboardLeaderboardResponse({
           .filter((d): d is string => Boolean(d))
       )
     );
-
-    const effectiveVisibleUserIds = visibleUserIds ?? permissionContext.scope.visibleUserIds;
 
     return NextResponse.json({
       leaderboardData: filterLeaderboardByVisibleUsers(
