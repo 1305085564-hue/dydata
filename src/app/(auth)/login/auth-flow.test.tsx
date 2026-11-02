@@ -56,6 +56,8 @@ test("登录成功后优先回到安全的 next 路径", () => {
   assert.equal(getPostLoginRedirectPath("member", "/violations?date=2026-06-14"), "/violations?date=2026-06-14");
   assert.equal(getPostLoginRedirectPath("member", "https://evil.com"), "/dashboard");
   assert.equal(getPostLoginRedirectPath("member", "//evil.com"), "/dashboard");
+  assert.equal(getPostLoginRedirectPath("member", "/\\review-example.invalid"), "/dashboard");
+  assert.equal(getPostLoginRedirectPath("member", "/\t/review-example.invalid"), "/dashboard");
 });
 
 test("登录页提示文案会按 query 参数返回", () => {

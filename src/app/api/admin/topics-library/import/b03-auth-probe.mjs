@@ -52,7 +52,7 @@ function resetCounts() {
 
 function mockFile(relativePath, namedExports) {
   const url = pathToFileURL(resolve(process.cwd(), relativePath)).href;
-  mock.module(url, { exports: namedExports });
+  mock.module(url, { namedExports });
 }
 
 test.before(async () => {

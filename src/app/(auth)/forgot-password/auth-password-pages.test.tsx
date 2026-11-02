@@ -7,8 +7,8 @@ import {
   getLoginErrorMessage,
   sanitizeNextPath,
 } from "@/lib/auth-password";
-import ForgotPasswordPage from "./page";
-import ResetPasswordPage from "../reset-password/page";
+import ForgotPasswordPage, { metadata as forgotMetadata } from "./page";
+import ResetPasswordPage, { metadata as resetMetadata } from "../reset-password/page";
 
 test("sanitizeNextPath 只允许站内路径", () => {
   assert.equal(sanitizeNextPath("/reset-password"), "/reset-password");
@@ -50,5 +50,13 @@ for (const Page of [ForgotPasswordPage, ResetPasswordPage]) {
     const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: ["/dashboard", "https://evil.example"] }) }));
     assert.match(html, /href="\/login"/);
     assert.doesNotMatch(html, /evil.example/);
+  });
+}
+
+for (const [Page, metadata] of [[ForgotPasswordPage, forgotMetadata], [ResetPasswordPage, resetMetadata]] as const) {
+  test(`${Page.name} 页面标题与页签标题一致`, async () => {
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) }));
+    const heading = html.match(/<h1[^>]*>([^<]*)<\/h1>/)?.[1];
+    assert.equal(heading, metadata.title);
   });
 }
