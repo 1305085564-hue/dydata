@@ -58,6 +58,19 @@ function stripId<T extends Record<string, unknown>>(row: T) {
   return rest;
 }
 
+/**
+ * 业务键判重的发布日窗口：按上海自然日（与数据复盘页的日期分组口径一致）。
+ * 返回 [start, end) 两个 UTC ISO 边界；发布时间缺失或非法时返回 null（跳过业务键判重）。
+ */
+export function buildPublishedDayWindow(publishedAt: string | null): { start: string; end: string } | null {
+  if (!publishedAt) return null;
+  const ms = new Date(publishedAt).getTime();
+  if (Number.isNaN(ms)) return null;
+  const shanghai = new Date(ms + 8 * 60 * 60 * 1000);
+  const start = Date.UTC(shanghai.getUTCFullYear(), shanghai.getUTCMonth(), shanghai.getUTCDate()) - 8 * 60 * 60 * 1000;
+  return { start: new Date(start).toISOString(), end: new Date(start + 24 * 60 * 60 * 1000).toISOString() };
+}
+
 function buildTagPrompt(content: string) {
   return [
     "你是抖音视频标签助手。",
@@ -365,7 +378,8 @@ async function handleVideoSubmit(
   }
 
   if (normalized.mode !== "edit") {
-    const [existingReportResult, existingVideoResult] = await Promise.all([
+    const dayWindow = normalized.video_title ? buildPublishedDayWindow(normalized.published_at) : null;
+    const [existingReportResult, existingVideoResult, existingSameDayResult] = await Promise.all([
       supabase
         .from("daily_reports")
         .select("id")
@@ -378,9 +392,20 @@ async function handleVideoSubmit(
         .select("id")
         .eq("id", submissionVideoId)
         .limit(1),
+      dayWindow
+        ? deps.createAdminClient()
+            .from("videos")
+            .select("id")
+            .eq("account_id", normalized.account_id)
+            .eq("video_title", normalized.video_title)
+            .eq("lifecycle_state", "active")
+            .gte("published_at", dayWindow.start)
+            .lt("published_at", dayWindow.end)
+            .limit(1)
+        : Promise.resolve({ data: [] as { id: string }[] | null, error: null }),
     ]);
 
-    if (existingReportResult.error || existingVideoResult.error) {
+    if (existingReportResult.error || existingVideoResult.error || existingSameDayResult.error) {
       return NextResponse.json({ error: "核对重复提交状态失败" }, { status: 500 });
     }
 
@@ -388,6 +413,7 @@ async function handleVideoSubmit(
       mode: normalized.mode,
       existingReportWithSameVideo: (existingReportResult.data ?? []).length > 0,
       existingVideo: (existingVideoResult.data ?? []).length > 0,
+      existingActiveWorkSameDay: (existingSameDayResult.data ?? []).length > 0,
     });
     if (duplicateResponse) {
       return NextResponse.json({ error: duplicateResponse.error }, { status: duplicateResponse.status });

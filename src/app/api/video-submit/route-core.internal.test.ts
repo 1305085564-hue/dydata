@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
-import { buildVideoSubmitResponse, type VideoSubmitDeps } from "./route-core";
+import { buildPublishedDayWindow, buildVideoSubmitResponse, type VideoSubmitDeps } from "./route-core";
 
 const ACTOR_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -59,4 +59,17 @@ test("内部代提交入口使用 admin client 和申请人 ID，不读取当前
   assert.equal(createClientCalls, 0);
   assert.ok(adminCalls > 0);
   assert.equal(profileId, ACTOR_ID);
+});
+
+test("发布日窗口按上海自然日取 [start,end)，发布时间缺失或非法时跳过判重", () => {
+  assert.deepEqual(buildPublishedDayWindow("2026-10-29T23:30:00.000Z"), {
+    start: "2026-10-29T16:00:00.000Z",
+    end: "2026-10-30T16:00:00.000Z",
+  });
+  assert.deepEqual(buildPublishedDayWindow("2026-10-30T07:00:00+08:00"), {
+    start: "2026-10-29T16:00:00.000Z",
+    end: "2026-10-30T16:00:00.000Z",
+  });
+  assert.equal(buildPublishedDayWindow(null), null);
+  assert.equal(buildPublishedDayWindow("not-a-date"), null);
 });
