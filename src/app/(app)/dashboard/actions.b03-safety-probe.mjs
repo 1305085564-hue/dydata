@@ -63,9 +63,9 @@ function fakeSupabase() {
   };
 }
 
-function mockFile(relativePath, exports) {
+function mockFile(relativePath, namedExports) {
   const url = pathToFileURL(resolve(process.cwd(), relativePath)).href;
-  mock.module(url, { exports });
+  mock.module(url, { namedExports });
 }
 
 test.before(async () => {
@@ -88,7 +88,7 @@ test.before(async () => {
       return { ok: true };
     },
   });
-  mock.module("next/cache", { exports: { revalidatePath: () => undefined } });
+  mock.module("next/cache", { namedExports: { revalidatePath: () => undefined } });
 
   ({ submitReport } = await import("./actions.ts"));
 });

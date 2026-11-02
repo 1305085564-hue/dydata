@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Alert } from "@/components/ui/alert";
 import { getNavGroups } from "@/components/nav-bar-items";
 import { getMobileDirectTabs, isMobileMoreActive } from "@/components/mobile-tab-bar";
 
@@ -153,6 +156,10 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   assert.match(register, /barColor: "#43718E", textColor: "#43718E"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#6FAA7D"/);
   assert.match(forgot, /<Alert>\{PASSWORD_RESET_UNAVAILABLE_MESSAGE\}<\/Alert>/);
+  // Lock the real shared component's palette, not just the page's source wiring.
+  const alert = renderToStaticMarkup(createElement(Alert, null, "密码重置提示"));
+  assert.match(alert, /bg-white\/70/);
+  assert.match(alert, /text-\[#78716C\]/i);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {

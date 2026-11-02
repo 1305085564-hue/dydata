@@ -5,9 +5,9 @@ import { buildLoginPath, PASSWORD_RESET_UNAVAILABLE_MESSAGE } from "@/lib/auth-p
 
 import { AuthShell } from "./auth-shell";
 
-export function PasswordResetNotice({ next }: { next?: string }) {
+export function PasswordResetNotice({ next, title }: { next?: string; title: "找回密码" | "重置密码" }) {
   return (
-    <AuthShell title="找回密码">
+    <AuthShell title={title}>
       <div className="space-y-5">
         <Alert>{PASSWORD_RESET_UNAVAILABLE_MESSAGE}</Alert>
         <p className="text-center text-[14px] text-[#78716C]">

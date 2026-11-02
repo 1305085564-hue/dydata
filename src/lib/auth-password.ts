@@ -56,6 +56,12 @@ export function sanitizeNextPath(next: string | null | undefined, fallback = "/l
   if (!next) return fallback;
   if (!next.startsWith("/")) return fallback;
   if (next.startsWith("//")) return fallback;
+  // Browsers normalize backslashes and strip ASCII controls before resolving URLs.
+  // Reject those inputs before they can turn a relative path into an external URL.
+  if (next.includes("\\") || [...next].some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f;
+  })) return fallback;
   return next;
 }
 
