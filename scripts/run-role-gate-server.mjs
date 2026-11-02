@@ -35,7 +35,7 @@ else {
 }
 
 mkdirSync(dirname(logPath), { recursive: true });
-const log = createWriteStream(logPath, { flags: "w" });
+const log = createWriteStream(logPath, { flags: "w", mode: 0o600 });
 const nextBin = resolve(process.cwd(), "node_modules/next/dist/bin/next");
 const hostArgs = process.env.DYDATA_GATE_BACKEND === "cloudbase" ? ["-H", "127.0.0.1"] : [];
 const child = spawn(process.execPath, [nextBin, "start", ...hostArgs, "-p", port], {

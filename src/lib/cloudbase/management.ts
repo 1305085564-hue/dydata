@@ -152,6 +152,7 @@ export function createCloudBaseManagerClient(
   return {
     user: {
       async modifyUser(input) {
+        const startedAt=Date.now();
         const request = buildModifyUserRequest(config, input, Math.floor((options.now?.() ?? Date.now()) / 1_000));
         let response: Response;
         try {
@@ -179,6 +180,7 @@ export function createCloudBaseManagerClient(
         if (!isRecord(apiResponse.Data) || typeof apiResponse.Data.Success !== "boolean") {
           throw new CloudBaseManagementError("CloudBase 用户状态修改失败", "management_api_failed", 502);
         }
+        console.info("[cloudbase-management]", JSON.stringify({ operation:"ModifyUser", environmentId:config.envId, startedAt, finishedAt:Date.now(), success:apiResponse.Data.Success, requestId:typeof apiResponse.RequestId === "string" ? apiResponse.RequestId : null }));
         return {
           Data: { Success: apiResponse.Data.Success },
           ...(typeof apiResponse.RequestId === "string" ? { RequestId: apiResponse.RequestId } : {}),

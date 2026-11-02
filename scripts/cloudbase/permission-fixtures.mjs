@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertIdentityBaseline, managementActivityFromLog } from './identity-baseline.mjs';
 
 export const ENV_ID = 'dydata-d6g0gd1v37fcddf21';
 export const PREFIX = 'dydata-permission-v2';
@@ -35,10 +36,16 @@ function save(value) {
   mkdirSync(dirname(manifestPath()), { recursive: true, mode: 0o700 });
   writeFileSync(manifestPath(), JSON.stringify(value), { mode: 0o600 });
 }
-export async function baseline() {
-  const result = await execute(`SELECT count(*)::int AS identities, count(*) FILTER (WHERE status=3)::int AS blocked, count(*) FILTER (WHERE status=2)::int AS pending,
-    md5(coalesce(string_agg(md5(to_jsonb(u)::text),'' ORDER BY id),'')) AS identity_digest FROM auth.users u WHERE sub NOT LIKE 'f0cba501-2026-4111-a001-%'`);
-  return result.rows[0];
+export async function baseline({ includeFixtures = false } = {}) {
+  const capturedAt=Date.now();
+  const result = await execute(`SELECT u.id::text AS id,u.sub AS subject,
+    md5((to_jsonb(u)-'last_login')::text) AS protected_digest,
+    md5(coalesce((SELECT jsonb_build_object('role',to_jsonb(p)->'role','company_role',to_jsonb(p)->'company_role','permissions',to_jsonb(p)->'permissions','data_scope',to_jsonb(p)->'data_scope','team_id',to_jsonb(p)->'team_id','membership_status',to_jsonb(p)->'membership_status')::text FROM public.profiles p WHERE p.id::text=u.sub),'null')) AS role_digest,
+    u.last_login::text AS last_login,(u.username='administrator')::text AS builtin,
+    u.status::text AS status FROM auth.users u ${includeFixtures ? '' : "WHERE sub NOT LIKE 'f0cba501-2026-4111-a001-%'"} ORDER BY u.id`);
+  return { version:2,capturedAt,requestId:result.requestId,identities:result.rows.length,
+    blocked:result.rows.filter(r=>r.status==='3').length,pending:result.rows.filter(r=>r.status==='2').length,
+    rows:result.rows.map(r=>({id:r.id,subject:r.subject,protectedDigest:r.protected_digest,roleDigest:r.role_digest,lastLogin:r.last_login,builtin:r.builtin==='true'})) };
 }
 export async function setup() {
   if (existsSync(manifestPath()) && !readManifest().cleaned) throw new Error('Previous manifest requires recovery');
@@ -49,7 +56,7 @@ export async function setup() {
   const occupied = objects.map(([table, first]) => `(SELECT count(*) FROM public.${table} WHERE id IN (${quote(uuid(first))},${quote(uuid(first+1))}))`).join(' + ');
   const preflight = await execute(`SELECT (SELECT count(*) FROM auth.users WHERE sub IN (${ids}) OR username LIKE '${PREFIX}-%') + (SELECT count(*) FROM public.profiles WHERE id IN (${ids})) + (SELECT count(*) FROM public.videos WHERE id=${quote(uuid(303))}) + ${occupied} AS conflicts`);
   if (Number(preflight.rows[0].conflicts)) throw new Error('Fixture identifiers occupied; refusing overwrite');
-  const manifest = { environment: ENV_ID, namespace: PREFIX, users, baseline: await baseline(), phase: 'prepared', cleaned: false, requests: [] };
+  const manifest = { environment: ENV_ID, namespace: PREFIX, users, setupAt:Date.now(), baseline: await baseline(), phase: 'prepared', cleaned: false, requests: [] };
   save(manifest);
   const statements = [`INSERT INTO public.teams(id,name) VALUES (${quote(uuid(101))},'${PREFIX}-A'),(${quote(uuid(102))},'${PREFIX}-B');`];
   for (const u of Object.values(users)) {
@@ -107,9 +114,14 @@ export async function cleanup() {
   const linked = await execute(`SELECT (SELECT count(*) FROM auth.token WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.authorized WHERE user_id IN (${ids})) + (SELECT count(*) FROM auth.identity WHERE sub IN (${ids})) + (SELECT count(*) FROM auth.users_history WHERE sub IN (${ids})) + (SELECT count(*) FROM public.content_observations WHERE observer_id IN (${ids})) + (SELECT count(*) FROM public.daily_reports WHERE user_id IN (${ids})) + (SELECT count(*) FROM public.sample_quality_issues WHERE id IN (${quote(uuid(901))},${quote(uuid(902))})) + (SELECT count(*) FROM public.exemption_request WHERE applicant_user_id IN (${ids})) + (SELECT count(*) FROM public.exemption_request_date WHERE id IN (${quote(uuid(1101))},${quote(uuid(1102))})) + (SELECT count(*) FROM public.exemption_grant WHERE user_id IN (${ids})) AS remaining`);
   const perf = await execute(`SELECT (SELECT count(*) FROM public.admin_first_screen_perf_events WHERE actor_user_id IN (${ids})) + (SELECT count(*) FROM public.member_change_log WHERE profile_id IN (${ids})) AS remaining`);
   if (Number(zero.rows[0].remaining) || Number(linked.rows[0].remaining) || Number(perf.rows[0].remaining)) throw new Error('Cleanup incomplete');
-  if (JSON.stringify(await baseline()) !== JSON.stringify(manifest.baseline)) throw new Error('Non-fixture identities changed');
+  const after=await baseline();
+  const logFile=resolve(dirname(manifestPath()),'server.log');
+  const events=managementActivityFromLog(existsSync(logFile) ? readFileSync(logFile,'utf8') : '',{environmentId:ENV_ID,setupAt:manifest.setupAt,baseline:manifest.baseline});
+  manifest.baselineAfter=after;manifest.authActivityEvidence=events;
+  save(manifest);
+  manifest.identityVerification=assertIdentityBaseline(manifest.baseline,after,events);
   manifest.cleaned = true; manifest.phase = 'cleaned'; manifest.requests.push(result.requestId,zero.requestId,linked.requestId,perf.requestId); save(manifest);
-  console.log(JSON.stringify({ environment: ENV_ID, remaining: 0, identityBaselineUnchanged: true, requestId: zero.requestId }));
+  console.log(JSON.stringify({ environment: ENV_ID, remaining: 0, ...manifest.identityVerification, requestId: zero.requestId }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   void (async () => { try {

@@ -1,4 +1,9 @@
 import { test, expect, request as requests, type APIRequestContext } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
+import { dirname,join } from 'node:path';
+import { collectCloudBaseScreenshotEvidence } from './cloudbase-screenshot-evidence';
+import { collectInactiveWriteEvidence } from './cloudbase-write-evidence';
 type PermissionFixtures = typeof import('../../scripts/cloudbase/permission-fixtures.mjs');
 let readManifest: PermissionFixtures['readManifest'];
 let execute: PermissionFixtures['execute'];
@@ -57,6 +62,40 @@ test('environment and role identities are isolated', async()=> {
     const r=await rest(t,`profiles?id=eq.${identities()[role].id}&select=id`);
     expect(r.status).toBe(200); expect((await r.json()).length).toBe(1);
   }
+});
+test('baseline attributes own login activity and still rejects real protected-field changes',async()=>{
+  const {baseline}=await import('../../scripts/cloudbase/permission-fixtures.mjs');
+  const {assertIdentityBaseline}=await import('../../scripts/cloudbase/identity-baseline.mjs');
+  const before=await baseline({includeFixtures:true});
+  const actor=identities().memberA;
+  const startedAt=Date.now();
+  const response=await fetch(`${gateway}/auth/v1/signin`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:actor.username,password:actor.password})});
+  const finishedAt=Date.now();expect(response.status).toBe(200);await response.arrayBuffer();
+  const after=await baseline({includeFixtures:true});
+  const event={operation:'password-signin',subject:actor.id,startedAt,finishedAt,success:true,requestId:response.headers.get('x-request-id')??`owned-http-${randomUUID()}`};
+  const positive=assertIdentityBaseline(before,after,[event]);
+  expect(positive.protectedDifferences).toBe(0);expect(positive.activityChanges).toBe(1);
+  expect(()=>assertIdentityBaseline(before,after,[])).toThrow(/Unattributed activity/);
+  try{
+    await execute(`UPDATE auth.users SET status=3 WHERE sub=${quote(actor.id)}`);
+    const tampered=await baseline({includeFixtures:true});
+    expect(()=>assertIdentityBaseline(before,tampered,[event])).toThrow(/Protected identity/);
+  }finally{await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(actor.id)}`);}
+  writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'baseline-live-verification.json'),JSON.stringify({before,after,event,positive,unattributedRejected:true,protectedStateTamperRejected:true}),{mode:0o600});
+});
+test('B05 blocked old JWT cannot write owned fixtures or execute protected RPCs',async()=>{
+  const actorId=identities().blocked.id;
+  const jwt=await token('blocked');
+  try{
+    await execute(`UPDATE auth.users SET status=3 WHERE sub=${quote(actorId)}`);
+    const evidence=await collectInactiveWriteEvidence({gateway,jwt,actorId,rows,execute,quote,uuid});
+    writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'inactive-write-evidence.json'),JSON.stringify(evidence),{mode:0o600});
+    expect(evidence.tableDirectory.complete,'all currently writable tables must be inventoried').toBe(true);
+    expect(evidence.summary.explicitTableDenials).toBeGreaterThan(0);
+    expect(evidence.protectedRpcs.complete,'all 42 protected RPC signatures must be inventoried').toBe(true);
+    expect(evidence.summary.blockedRpcs,'parameter errors are not permission evidence').toBe(0);
+    expect(evidence.summary.explicitRpcDenials).toBe(42);
+  }finally{await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(actorId)}`);}
 });
 for (const [key,state] of [['blocked',3],['pending',2],['archived',1]] as const) {
   test(`R01/R09 ${key} old JWT and Cookie lose access`, async()=> {
@@ -245,6 +284,8 @@ test('@browser D01/B04 real private screenshot requires exact video context and 
   const bound=`${bare}&videoId=${candidate[0].id}`;
   const ctx=await site('memberA');const anon=await requests.newContext({baseURL:'http://127.0.0.1:3100'});
   try {
+    const evidence=await collectCloudBaseScreenshotEvidence({ctx,gateway,ids:{memberA:identities().memberA.id},rows});
+    writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'screenshot-byte-evidence.json'),JSON.stringify(evidence),{mode:0o600});
     expect((await anon.get(bound)).status()).toBe(401);
     expect((await ctx.get(bare)).status()).toBe(403);
     expect((await ctx.get(`${bare}&videoId=${uuid(301)}`)).status()).toBe(403);

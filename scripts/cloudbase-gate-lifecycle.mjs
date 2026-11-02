@@ -77,6 +77,7 @@ export async function runCloudBaseGate({ kind, run, env = process.env, cwd = pro
   if (!existsSync(resolve(cwd, "scripts/cloudbase/permission-fixtures.mjs"))) throw new Error("CloudBase 固定夹具生命周期脚本缺失");
   if (kind === "browser") console.log("[gate-cloudbase] 浏览器门禁仅运行 CloudBase 权限回归中 @browser 标记的受影响页面，不代表旧 performance 全套通过");
   const lock = acquireCloudBaseGateLock({ env, cwd, lockRoot });
+  env.DYDATA_ROLE_GATE_LOG_FILE=join(lock.runPath,'server.log');
   console.log(`[gate-cloudbase] 本轮私有证据目录：${lock.runPath}`);
   let exitCode = 1;
   let cleanupCode = 1;
