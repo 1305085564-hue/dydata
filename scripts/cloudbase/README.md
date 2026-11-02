@@ -32,6 +32,14 @@
 
 ## 定向验证
 
+### PG 账号冻结（2026-11-02）
+
+`target-auth-status.sql` 是独立的 CloudBase 专用增量：只新增 `cloudbase_set_auth_user_status(text, smallint, text)`，仅服务端执行，使用项目和原 sub 精确写 status 1/3；pending/未知状态拒绝恢复，不改密码、邮箱或UUID。应用接在原成员生命周期入口上，替代无效的TC3 ModifyUser路径，不新增管理权限或另一个成员管理入口。旧失败和活动归因记录保留历史。
+
+隔离库执行需沿用 `packSqlBatches/runBatches` 的持久回执，创建前要求同签名不存在；网络结果未知先查回执，不能改成盲目 `CREATE OR REPLACE`。本次已演练创建→精确删除回滚→重建，并确认原88身份不变。回滚先回退应用适配，再核对新函数的定义摘要/ACL/owner均等于应用时快照，在单批内只删除该新增函数；不恢复或修改任何用户状态。完整保护性回滚SQL和回执在本轮私有留档。原TC3实现回退后会重新暴露B01失败，不能视为恢复可用功能。
+
+这是目标端写适配，不并入 `target-auth-readers.sql`，不进入 Supabase 生产 migration，不把托管认证表写入推广到其他业务。
+
 ```sh
 node --test scripts/cloudbase/*.test.mjs
 npx tsx --test 'src/lib/cloudbase/*.test.ts' 'src/app/api/cloudbase/**/*.test.ts'
