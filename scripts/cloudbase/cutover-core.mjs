@@ -413,7 +413,9 @@ export function buildSnapshotAssertionSql(expected, tables, label) {
     const metric = expected[name];
     if (!metric) throw new Error(`Missing ${label} metrics for ${name}`);
     const actual = buildActualQuery(table).replace(/;\s*$/, '');
-    return `  IF (SELECT ROW(n::numeric, h1::numeric, h2::numeric) FROM (${actual}) AS actual) IS DISTINCT FROM ROW(${BigInt(metric.count)}::numeric, ${BigInt(metric.h1)}::numeric, ${BigInt(metric.h2)}::numeric) THEN\n    RAISE EXCEPTION 'cutover ${label} reconciliation failed for table %', ${quoteLiteral(name)};\n  END IF;`;
+    // These guards repeat three times per table in the atomic request. Keep the
+    // full comparison and diagnostic while avoiding transport-only formatting.
+    return `IF (SELECT ROW(n::numeric,h1::numeric,h2::numeric) FROM (${actual}) a) IS DISTINCT FROM ROW(${BigInt(metric.count)}::numeric,${BigInt(metric.h1)}::numeric,${BigInt(metric.h2)}::numeric) THEN RAISE EXCEPTION 'cutover ${label} reconciliation failed for table %',${quoteLiteral(name)}; END IF;`;
   }).join('\n');
   const dollarTag = label.replace(/[^a-z0-9_]/gi, '_');
   return `DO $cutover_${dollarTag}$\nBEGIN\n${body}\nEND;\n$cutover_${dollarTag}$;`;

@@ -30,3 +30,18 @@ test('cloud package refuses missing identities, extra dependencies, bad shapes, 
     const x=input();alter(x);assert.throws(()=>buildCloudBaseCutoverPackage(x));
   }
 });
+test('cloud package retains opaque identity fields within the unchanged atomic byte limit',()=>{
+  const x=input();
+  // Reproduces the real 480 KiB boundary failure without private account data.
+  const opaque='x'.repeat(123733);
+  x.targetAuth[0].opaque=opaque;
+  const p=buildCloudBaseCutoverPackage(x);
+  assert.ok(p.finalBatch.bytes<=480*1024);
+  assert.equal(p.finalAtomic,true);
+  assert.ok(p.finalBatch.sql.includes(`"opaque":"${opaque}"`));
+  for(const label of ['target_baseline','staged_latest','promoted_latest']) {
+    assert.equal((p.finalBatch.sql.match(new RegExp(`${label} reconciliation failed`,'g'))??[]).length,99);
+  }
+  x.targetAuth[0].opaque+='x'.repeat(10000);
+  assert.throws(()=>buildCloudBaseCutoverPackage(x),/Atomic promotion exceeds batch budget/);
+});
