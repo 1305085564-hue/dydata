@@ -48,11 +48,11 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                     </div>
                   ) : data.writerQuality.state === "error" ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#C0685C]">
-                      文案作品明细加载异常，请稍后重试
+                      文案作品明细暂未能载入，请稍候重试
                     </div>
                   ) : data.writerQuality.monthWorks.length === 0 ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-                      本月还没有文案作品记录
+                      本月暂无文案作品记录
                     </div>
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
@@ -174,7 +174,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
 
                   {data.records.length === 0 ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-                      本月还没有达人作品记录
+                      本月暂无达人作品记录
                     </div>
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
@@ -286,7 +286,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
 
                   {data.records.length === 0 ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-                      本月还没有协同作品记录
+                      本月暂无协同作品记录
                     </div>
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">

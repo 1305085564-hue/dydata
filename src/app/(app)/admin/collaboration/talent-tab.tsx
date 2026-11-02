@@ -247,8 +247,8 @@ export function TalentTab({
       <div className="py-16 text-center">
         <EmptyState
           illustration={<CompassConstellationIllustration size={96} />}
-          title="本月还没有达人数据"
-          description="名下拥有自营或出镜账号的成员将在此展示作品产量与数据表现。"
+          title="本月暂无达人作品记录"
+          description="有自营或出镜账号的成员，作品与数据会汇总在这里。"
         />
       </div>
     );

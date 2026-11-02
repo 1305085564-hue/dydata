@@ -692,8 +692,8 @@ export function WorkGroupManageDrawer({
                 {activeGroupMembers.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="还没有组员"
-                    description={isCloudBaseBackend ? "成员小队调整请到成员管理" : "请在上方勾选成员并加入"}
+                    title="暂无组员"
+                    description={isCloudBaseBackend ? "成员小队调整请到成员管理" : "在上方勾选成员，即可加入当前小队"}
                     className="py-6 bg-[#F1F1F0]"
                   />
                 ) : (
@@ -803,8 +803,8 @@ export function WorkGroupManageDrawer({
               {localGroups.length === 0 ? (
                 <EmptyState
                   variant="compact"
-                  title="还没有小队"
-                  description="请点击上方「新建小队」"
+                  title="暂无小队"
+                  description="点击上方「新建小队」，为团队创建工种小队"
                   className="py-8 bg-[#F1F1F0]"
                 />
               ) : (

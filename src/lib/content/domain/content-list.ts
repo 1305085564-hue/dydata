@@ -39,6 +39,8 @@ export interface ContentListProps {
   /** 视图切换（全部↔归档）等整表取数是否在进行中：用于给出「正在加载X…」反馈，
    *  避免长耗时操作期间用户以为点了没反应（2026-10-11 审计 H2）。 */
   isViewLoading?: boolean;
+  /** 当前在右侧抽屉打开的作品 ID，用于左侧表格行选中态联动与可视滚动定位 */
+  selectedVideoId?: string | null;
   onSelectVideoId: (id: string | null) => void;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
   onQueryChange?: () => void;

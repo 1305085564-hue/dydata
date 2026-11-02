@@ -206,15 +206,15 @@ export function useContentListState(props: ContentListProps) {
       return Boolean(v);
     });
   const emptyTitle = hasActiveFilters
-    ? "当前筛选条件下没有视频"
+    ? "当前筛选下暂无作品"
     : view === "trash"
-      ? "还没有归档视频"
-      : "还没有视频";
+      ? "暂无归档作品"
+      : "当前暂无作品记录";
   const emptyDescription = hasActiveFilters
-    ? "请调整筛选条件，或点击“重置”查看全部视频"
+    ? "可放宽筛选条件，或点击“重置”查看全部作品"
     : view === "trash"
-      ? "已归档的视频会显示在这里"
-      : "当前范围内还没有可查看的视频";
+      ? "归档后的作品会收录在这里"
+      : "选定时间范围内暂无作品记录";
 
   // 首项文案写明「全部」：此前是「人员」二字，语义上等同不限但没有「全部」字样，
   // 用户刚从某个成员切回来时无法确认是否已恢复全选（2026-10-11 审计 L1）
@@ -290,26 +290,6 @@ export function useContentListState(props: ContentListProps) {
     applyFilterPatch({ highlightOnly: !filters.highlightOnly });
   }, [filters.highlightOnly, applyFilterPatch]);
 
-  const timeRangeLabel = useMemo(() => {
-    switch (filters.timeRange) {
-      case "yesterday":
-        return "昨天";
-      case "7d":
-        return "近7天";
-      case "30d":
-        return "近30天";
-      case "thisMonth":
-        return "本月";
-      case "custom":
-        if (filters.startDate && filters.endDate) {
-          return `${filters.startDate.slice(5)}~${filters.endDate.slice(5)}`;
-        }
-        return "自定义日期";
-      default:
-        return "全部时间";
-    }
-  }, [filters.timeRange, filters.startDate, filters.endDate]);
-
   const selectedTeamName = useMemo(() => {
     return teams?.find((t) => t.id === teamId)?.name;
   }, [teams, teamId]);
@@ -351,7 +331,6 @@ export function useContentListState(props: ContentListProps) {
     handleAddHighlightRule,
     handleRemoveHighlightRule,
     handleToggleHighlightOnly,
-    timeRangeLabel,
     selectedTeamName,
     view,
     onViewChange,

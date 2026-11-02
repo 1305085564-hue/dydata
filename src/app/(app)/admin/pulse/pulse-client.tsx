@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
+import { buildPulseEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { Button } from "@/components/ui/button";
 import { DatePagination } from "../content/date-pagination";
 import type { VideoMetricsSnapshot } from "@/types";
@@ -41,6 +43,7 @@ export function PulseClient({
 }: PulseClientProps) {
   const router = useRouter();
   const [cap, setCap] = useState<PulseCap>(initialCap);
+  usePublishPageEpigraph("pulse", buildPulseEpigraph(summary, members.length));
 
   const snapshotByVideoId = useMemo(() => {
     return new Map(snapshots.map((s) => [s.video_id, s]));

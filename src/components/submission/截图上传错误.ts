@@ -7,7 +7,7 @@ export const OCR_ERROR_MESSAGES: Record<string, string> = {
   RATE_LIMITED: "操作有点频繁，稍后再试",
   AI_TIMEOUT: "识别超时，稍后重试",
   AI_CHANNEL_UNAVAILABLE: "截图识别暂时不可用，请手动填写或稍后重试",
-  AI_EMPTY_RESPONSE: "这次没能识别出结果，请联系管理员",
+  AI_EMPTY_RESPONSE: "这次没能识别出结果，稍候再试或手动录入",
   AI_PARSE_FAILED: "识别结果读不出来，请手动填写或稍后重试",
   STORAGE_READ_FAILED: "已上传的截图读不出来，请重新上传",
   BLURRY: "图片有点模糊，重新截一张更清晰的",

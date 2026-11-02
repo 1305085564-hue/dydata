@@ -1,6 +1,7 @@
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { ContentEditorialEpigraph } from "./content-editorial-epigraph";
 
 export default function ContentLoading() {
   return (
@@ -8,7 +9,7 @@ export default function ContentLoading() {
       width="wide"
       hideHeaderOnMobile={true}
       title="数据复盘"
-      description="查看异常视频证据，定位内容问题与可能原因。"
+      description={<ContentEditorialEpigraph />}
     >
       <div className="space-y-5">
         {/* 单排顶栏控制舱骨架 */}

@@ -95,8 +95,8 @@ export function ChannelPoolView({
     return (
       <EmptyState
         className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-        title="还没有接入渠道"
-        description="点击上方【接入渠道】绑定新接入点与 API Key，开启智能算力供给。"
+        title="暂未接入渠道"
+        description="点击上方「接入渠道」，配置上游服务商与密钥后即可启用模型。"
         action={{ label: "接入渠道", onClick: onOpenAddKey }}
       />
     );

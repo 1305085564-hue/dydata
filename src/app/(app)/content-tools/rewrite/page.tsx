@@ -31,7 +31,7 @@ export default async function RewritePage() {
     <div className="mx-auto flex min-h-[50vh] w-full max-w-[1400px] items-center justify-center font-sans">
       <EmptyState
         title="文案助手已下线"
-        description="该功能已停止服务，不再提供入口。如有疑问请联系管理员。"
+        description="这项功能已经谢幕，如有疑问，可以问问管理员。"
       />
     </div>
   );

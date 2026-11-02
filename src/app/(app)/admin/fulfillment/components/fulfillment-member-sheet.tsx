@@ -264,7 +264,7 @@ export function FulfillmentMemberSheet({
 
         {!member ? (
           <SheetBody>
-            <EmptyState title="未选择成员" />
+            <EmptyState title="请选择一位成员查看考勤记录" />
           </SheetBody>
         ) : (
           <SheetBody className="space-y-4 pt-3">
@@ -343,7 +343,7 @@ export function FulfillmentMemberSheet({
               </span>
               <Card className="max-h-[200px] overflow-y-auto p-0 gap-0 border border-[#E2E2DF]/60">
                 {historyDates.length === 0 ? (
-                  <EmptyState variant="compact" title="无打卡记录" />
+                  <EmptyState variant="compact" title="本期暂无打卡记录" />
                 ) : (
                   <div className="divide-y divide-[#E2E2DF]/50">
                     {historyDates.map((d) => {

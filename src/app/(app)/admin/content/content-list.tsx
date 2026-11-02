@@ -9,6 +9,11 @@ import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { resolveEffectiveDates } from "./content-list-filters";
+import {
+  buildContentEditorialEpigraph,
+  DEFAULT_CONTENT_EPIGRAPH,
+  setContentEditorialEpigraph,
+} from "./content-editorial-epigraph";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
 function shiftDateString(dateStr: string, days: number): string {
@@ -108,7 +113,23 @@ export function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
-  // 日期导航对象：工具栏左段用
+  useEffect(() => {
+    setContentEditorialEpigraph(buildContentEditorialEpigraph(visibleRows));
+    return () => {
+      setContentEditorialEpigraph(DEFAULT_CONTENT_EPIGRAPH);
+    };
+  }, [visibleRows]);
+
+  /** 区间模式下自选起止日期 */
+  const handleRangeChange = useCallback((start: string, end: string) => {
+    applyFilterPatch({
+      timeRange: "custom",
+      startDate: start,
+      endDate: end,
+    });
+  }, [applyFilterPatch]);
+
+  // 日期导航对象：工具栏左段用（统一时间控制器）
   const dateNav = currentDate && availableDates.length > 0
     ? {
         currentDate,
@@ -119,6 +140,9 @@ export function ContentList(props: ContentListProps) {
         isLoading: props.isViewLoading,
         onDateChange: handleDateChange,
         onShiftRange: handleShiftRange,
+        timeRange: state.filters.timeRange,
+        onTimeRangeChange: state.handleTimeRangeChange,
+        onRangeChange: handleRangeChange,
       }
     : null;
 
@@ -138,6 +162,7 @@ export function ContentList(props: ContentListProps) {
         sortDir={state.sortDir}
         handleSort={state.handleSort}
         isSingleDay={isSingleDay}
+        selectedVideoId={props.selectedVideoId}
         onSelectVideoId={props.onSelectVideoId}
         onSelectAuthor={props.onSelectAuthor}
         ownerNames={props.ownerNames}

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
+import { buildCollaborationEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { CollaborationWorkbenchToolbar } from "./collaboration-workbench-toolbar";
 import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
 import type { WriterCandidateRow } from "./writer-tab";
@@ -80,6 +82,7 @@ export function CollaborationWorkbench({
   writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
+  usePublishPageEpigraph("collaboration", buildCollaborationEpigraph(summary));
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [view, setView] = useState<"roles" | "teams">(defaultView);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);

@@ -6,6 +6,8 @@ import {
   useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
+import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
+import { buildModulesEpigraph } from "@/components/editorial/page-epigraph-copy";
 import type { AdminModulesContentProps, ProfileSummary, TeamOption } from "@/lib/modules/types";
 import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 import { resolveProfileCompanyRoleForView } from "@/lib/modules/domain/view-rules";
@@ -193,6 +195,15 @@ export function AdminModulesContentV3({
     openMemberDrawer,
     closeMemberDrawer,
   } = workspace;
+
+  usePublishPageEpigraph(
+    "modules",
+    buildModulesEpigraph({
+      memberCount: localProfiles.length,
+      teamCount: localTeams.length,
+      pendingCount: pendingRequests.length,
+    }),
+  );
 
   const aiActions = useMemberAiActions(activeMemberId);
   const {

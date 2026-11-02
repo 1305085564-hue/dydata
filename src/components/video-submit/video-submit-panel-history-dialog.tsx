@@ -121,7 +121,7 @@ export function VideoSubmitPanelHistoryDialog({
                   ) : !historyReports || historyReports.length === 0 ? (
                     <EmptyState
                       title="历史手稿静待立卷"
-                      description="完成创作立卷或补交后，这里会持续收录你的纪事手稿。"
+                      description="每次立卷或补交之后，你的纪事手稿都会收在这里。"
                     />
                   ) : (
                     <>

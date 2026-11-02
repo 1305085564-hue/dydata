@@ -211,8 +211,8 @@ export function ModelManagerDialog({
                 <div className="col-span-2 py-16 flex items-center justify-center">
                   <EmptyState
                     variant="compact"
-                    title="没有找到匹配的模型"
-                    description="可尝试重置搜索关键词或切换状态筛选"
+                    title="未找到匹配的模型"
+                    description="可以尝试更换关键词或放宽状态筛选。"
                   />
                 </div>
               ) : (

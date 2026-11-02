@@ -276,7 +276,7 @@ export function TopicSelectDropdown({
                     <span>正在检索选题...</span>
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <EmptyState variant="compact" title="未搜索到相关选题" />
+                  <EmptyState variant="compact" title="题库中暂未寻得契合选题" />
                 ) : (
                   searchResults.map((item) => (
                     <TopicItemRow
@@ -304,8 +304,8 @@ export function TopicSelectDropdown({
                 ) : myClaims.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="还没有认领中的选题"
-                    description="在上方输入关键字可搜索团队共享题库"
+                    title="暂无认领中的选题"
+                    description="在上方输入关键词，即可翻找团队共享题库"
                   />
                 ) : (
                   myClaims.map((item) => (

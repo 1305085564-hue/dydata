@@ -9,6 +9,7 @@ test("新建提交遇到同作品已存有效日报或视频时返回409冲突",
       mode: "create",
       existingReportWithSameVideo: true,
       existingVideo: false,
+      existingActiveWorkSameDay: false,
     }),
     { status: 409, error: "该作品已录入，请勿重复提交" },
   );
@@ -18,6 +19,29 @@ test("新建提交遇到同作品已存有效日报或视频时返回409冲突",
       mode: "create",
       existingReportWithSameVideo: false,
       existingVideo: true,
+      existingActiveWorkSameDay: false,
+    }),
+    { status: 409, error: "该作品已录入，请勿重复提交" },
+  );
+});
+
+test("同账号同标题同发布日已有活跃视频时返回409（指纹漂移后的业务键判重）", () => {
+  assert.deepEqual(
+    resolveCreateSubmissionConflict({
+      mode: "create",
+      existingReportWithSameVideo: false,
+      existingVideo: false,
+      existingActiveWorkSameDay: true,
+    }),
+    { status: 409, error: "该作品已录入，请勿重复提交" },
+  );
+
+  assert.deepEqual(
+    resolveCreateSubmissionConflict({
+      mode: "abnormal",
+      existingReportWithSameVideo: false,
+      existingVideo: false,
+      existingActiveWorkSameDay: true,
     }),
     { status: 409, error: "该作品已录入，请勿重复提交" },
   );
@@ -29,6 +53,7 @@ test("编辑模式允许进入既有绑定流程，新建模式无相同作品�
       mode: "edit",
       existingReportWithSameVideo: true,
       existingVideo: true,
+      existingActiveWorkSameDay: true,
     }),
     null,
   );
@@ -37,6 +62,7 @@ test("编辑模式允许进入既有绑定流程，新建模式无相同作品�
       mode: "create",
       existingReportWithSameVideo: false,
       existingVideo: false,
+      existingActiveWorkSameDay: false,
     }),
     null,
   );

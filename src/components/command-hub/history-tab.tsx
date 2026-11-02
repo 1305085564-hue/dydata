@@ -66,8 +66,8 @@ export function HistoryTab({
     ) : historyApprovals.length === 0 ? (
       <EmptyState
         variant="compact"
-        title="还没有历史审批记录"
-        description="所有审阅处理后的申请记录将在此处归档，可随时回溯。"
+        title="暂无历史审批记录"
+        description="已处理的审批申请都会留在这里，方便随时查阅。"
       />
     ) : (
       <div className="space-y-3">

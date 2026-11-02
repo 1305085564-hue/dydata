@@ -8,6 +8,7 @@ import {
   buildStepContentVideoNavigation,
   resolveContentVideoPosition,
   resolveContentPageStateFromSearch,
+  resolveContentVideoStepKey,
   type ContentVideoNavigationAction,
 } from "./content-video-navigation";
 import { parseContentListFilters } from "./content-list-filters";
@@ -239,4 +240,31 @@ test("详情位置按全局分页位置计算，页边界仍可继续且首尾�
     pageStartIndex: 0,
     totalVideos: 100,
   }).pageIndex, -1);
+});
+
+test("纯函数 resolveContentVideoStepKey 正确解析真实按键映射", () => {
+  // 下一条：j, J, ArrowDown, ], Alt+ArrowRight
+  assert.equal(resolveContentVideoStepKey({ key: "j" }), "next");
+  assert.equal(resolveContentVideoStepKey({ key: "J" }), "next");
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowDown" }), "next");
+  assert.equal(resolveContentVideoStepKey({ key: "]" }), "next");
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowRight", altKey: true }), "next");
+
+  // 上一条：k, K, ArrowUp, [, Alt+ArrowLeft
+  assert.equal(resolveContentVideoStepKey({ key: "k" }), "prev");
+  assert.equal(resolveContentVideoStepKey({ key: "K" }), "prev");
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowUp" }), "prev");
+  assert.equal(resolveContentVideoStepKey({ key: "[" }), "prev");
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowLeft", altKey: true }), "prev");
+
+  // Ctrl / Meta (Cmd) 组合键被忽略，不劫持系统快捷键
+  assert.equal(resolveContentVideoStepKey({ key: "j", ctrlKey: true }), null);
+  assert.equal(resolveContentVideoStepKey({ key: "k", metaKey: true }), null);
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowDown", metaKey: true }), null);
+
+  // 无关按键不触发切片
+  assert.equal(resolveContentVideoStepKey({ key: "a" }), null);
+  assert.equal(resolveContentVideoStepKey({ key: "Enter" }), null);
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowRight" }), null);
+  assert.equal(resolveContentVideoStepKey({ key: "ArrowLeft" }), null);
 });

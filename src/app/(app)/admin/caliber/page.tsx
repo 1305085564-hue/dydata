@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { canEditEvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
@@ -83,7 +84,7 @@ export default async function CaliberPage() {
   return (
     <AdminWorkspaceLayout
       title="数据口径"
-      description="下面写的就是这个平台里每个数字的算法。数字变了，这里会跟着变。"
+      description={<PageEpigraph pageKey="caliber" />}
       width="wide"
     >
       <EvaluationStandardsTabs

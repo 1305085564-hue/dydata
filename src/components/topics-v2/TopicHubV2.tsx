@@ -2,7 +2,9 @@
 
 import React, { useCallback } from "react";
 import { Card } from "@/components/ui/card";
+import { buildTopicsEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageEpigraph, usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import type { V2TopicLibraryBootstrap } from "@/lib/topics/v2-client-contract";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -26,6 +28,12 @@ export function TopicHubV2({
   initialTopicId?: string | null;
 }) {
   const state = useTopicHubState(initialBootstrapData, initialTopicId);
+  usePublishPageEpigraph(
+    "topics",
+    state.activeTopics
+      ? buildTopicsEpigraph(state.activeTopics.recentlyClaimed.length, state.poolTotalCount)
+      : null,
+  );
   const {
     fetchActiveData,
     fetchPoolPage,
@@ -102,7 +110,7 @@ export function TopicHubV2({
         <Card className="w-full max-w-md p-8 text-center gap-0">
           <EmptyState
             title="请先申请加入团队"
-            description="当前账号还没有有效团队归属，选题库和创作协作暂不可用。"
+            description="账号尚未加入团队，加入团队后即可开启选题库与创作协作。"
             action={{
               label: "去工作台申请加入团队",
               href: "/dashboard",
@@ -116,7 +124,7 @@ export function TopicHubV2({
   return (
     <AdminWorkspaceLayout
       title="选题库"
-      description="选定后在飞书创作，数据为内容立卷"
+      description={<PageEpigraph pageKey="topics" />}
       actions={
         <TopicHubToolbar
           activeLoading={state.activeLoading}

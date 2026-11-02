@@ -130,6 +130,7 @@ type ContentListTableProps = {
   sortDir: "asc" | "desc";
   handleSort: (field: SortField) => void;
   isSingleDay: boolean;
+  selectedVideoId?: string | null;
   onSelectVideoId: (id: string | null) => void;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
@@ -147,6 +148,7 @@ export function ContentListTable({
   sortDir,
   handleSort,
   isSingleDay,
+  selectedVideoId,
   onSelectVideoId,
   onSelectAuthor,
   ownerNames,
@@ -158,6 +160,54 @@ export function ContentListTable({
   const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
     isCellHighlighted(item, key, highlightRules);
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
+
+  // 播放量与完播率最大值（供单日视图微型数据条作为相对比例基准）
+  const maxPlayCount = React.useMemo(() => {
+    let max = 1;
+    for (const row of visibleRows) {
+      if (row.playCount && row.playCount > max) max = row.playCount;
+    }
+    return max;
+  }, [visibleRows]);
+
+  // 完播率基准排除 lowSample 行，避免个位数超低播放的高完播孤值压扁整列爆款
+  const maxCompletionRate = React.useMemo(() => {
+    let max = 1;
+    for (const row of visibleRows) {
+      if (!row.lowSample && row.completionRate && row.completionRate > max && row.completionRate <= 100) {
+        max = row.completionRate;
+      }
+    }
+    // 兜底：如果全部作品均为 lowSample，回退到全局最大值避免除以 1
+    if (max === 1) {
+      for (const row of visibleRows) {
+        if (row.completionRate && row.completionRate > max && row.completionRate <= 100) {
+          max = row.completionRate;
+        }
+      }
+    }
+    return max;
+  }, [visibleRows]);
+
+  // 抽屉切片联动：当前打开的作品如果不在视口内，平滑滚动至可视区；抽屉关闭时自动清除
+  React.useEffect(() => {
+    if (!selectedVideoId || !tableContainerRef?.current) return;
+    // 同一作品在「移动端卡片」和「桌面表格行」各有一份 DOM，桌面端卡片是 display:none。
+    // 直接 querySelector 会先命中隐藏的卡片（几何全为 0），滚动指令落在不可见元素上等于没执行，
+    // 因此必须挑出真正有渲染盒子（getClientRects 非空）的那一份。
+    const candidates = tableContainerRef.current.querySelectorAll<HTMLElement>(
+      `[data-video-id="${CSS.escape(selectedVideoId)}"]`,
+    );
+    const rowEl = Array.from(candidates).find((el) => el.getClientRects().length > 0);
+    if (!rowEl) return;
+    const rect = rowEl.getBoundingClientRect();
+    // 顶部留出 96px（吸顶表头与工具栏防遮挡），底部留出视口高度
+    const isAbove = rect.top < 96;
+    const isBelow = rect.bottom > window.innerHeight;
+    if (isAbove || isBelow) {
+      rowEl.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [selectedVideoId, tableContainerRef]);
 
   return (
     <TooltipProvider delay={100}>
@@ -177,12 +227,19 @@ export function ContentListTable({
               const { video } = item;
               const owner = getContentOwner(video, ownerNames);
               const dot = getStatusDot(video);
+              const isSelected = selectedVideoId === video.id;
 
               return (
                 <div
                   key={video.id}
+                  data-video-id={video.id}
                   onClick={() => onSelectVideoId(video.id)}
-                  className="group relative flex flex-col gap-1.5 p-3 hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer select-none"
+                  className={cn(
+                    "group relative flex flex-col gap-1.5 p-3 transition-colors cursor-pointer select-none",
+                    isSelected
+                      ? "bg-surface-selected/40 hover:bg-surface-selected/60"
+                      : "hover:bg-[#F7F7F6] active:bg-[#EBEBE9]"
+                  )}
                 >
                   {/* 第 1 层：状态徽标 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
@@ -327,12 +384,19 @@ export function ContentListTable({
                       const { video } = item;
               const owner = getContentOwner(video, ownerNames);
                       const dot = getStatusDot(video);
+                      const isSelected = selectedVideoId === video.id;
 
                       return (
                         <tr
                           key={video.id}
+                          data-video-id={video.id}
                           onClick={() => onSelectVideoId(video.id)}
-                          className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]"
+                          className={cn(
+                            "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
+                            isSelected
+                              ? "bg-surface-selected/50 hover:bg-surface-selected/70"
+                              : "hover:bg-[#F7F7F6] active:bg-[#EBEBE9]"
+                          )}
                         >
                           {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                           <td data-col-key="status" className={cn("py-2 px-1 text-center shrink-0 transition-colors", hoveredColKey === "status" && "bg-surface-row-hover/60")}>
@@ -406,9 +470,18 @@ export function ContentListTable({
                             </Tooltip>
                           </td>
 
-                          {/* 播放量：核心视觉锚点，保持 14px 定名墨 */}
-                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
-                            <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
+                          {/* 播放量：核心视觉锚点，保持 14px 定名墨，单日视图底层带淡雅微型数据条 */}
+                          <td data-col-key="play_count" className={cn("relative py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
+                            {isSingleDay && item.playCount && item.playCount > 0 ? (
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-y-1 right-1 rounded-md bg-status-info/[0.08] pointer-events-none"
+                                style={{ width: `calc(${Math.min((item.playCount / maxPlayCount) * 100, 100).toFixed(1)}% - 8px)` }}
+                              />
+                            ) : null}
+                            <span className="relative z-10">
+                              <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
+                            </span>
                           </td>
 
                           {/* 涨粉 */}
@@ -444,8 +517,18 @@ export function ContentListTable({
                           <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
                             <DurationCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          {/* 完播率：单日视图底层带淡雅微型数据条（排除低样本干扰） */}
+                          <td data-col-key="completion_rate" className={cn("relative py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
+                            {isSingleDay && item.completionRate && item.completionRate > 0 ? (
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-y-1 right-1 rounded-md bg-[#141413]/[0.06] pointer-events-none"
+                                style={{ width: `calc(${Math.min((item.completionRate / maxCompletionRate) * 100, 100).toFixed(1)}% - 8px)` }}
+                              />
+                            ) : null}
+                            <span className="relative z-10">
+                              <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            </span>
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}

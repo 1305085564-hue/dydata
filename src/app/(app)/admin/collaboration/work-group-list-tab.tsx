@@ -98,7 +98,7 @@ export function WorkGroupListTab({
       <EmptyState
         illustration={<CompassConstellationIllustration size={96} />}
         title="工种小队功能准备就绪中"
-        description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理成员。"
+        description="小队的结构还在悄悄落地，稍后就能在这里按小队看见同行们。"
       />
     );
   }
@@ -107,11 +107,11 @@ export function WorkGroupListTab({
     return (
       <EmptyState
         illustration={<DeskStudyIllustration size={96} />}
-        title="本月还没有划分工种小队"
+        title="本月暂未划分工种小队"
         description={
           canManage
             ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
-            : "当前团队尚未建立工种小队，请联系团队负责人创建。"
+            : "当前团队尚未建立工种小队，团队负责人创建后将在此呈现。"
         }
         action={
           canManage && onOpenManageDrawer

@@ -242,7 +242,7 @@ export function ContentPageClient({
     if (targetVideo) {
       openVideo(targetVideo.id);
     } else {
-      toast.info("当前列表还没有可复盘的作品");
+      toast.info("当前列表暂无可复盘的作品");
     }
   }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, openVideo]);
 
@@ -385,6 +385,7 @@ export function ContentPageClient({
         <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>
           <ContentList
             videos={videosWithLibraryStatus}
+            selectedVideoId={selectedVideoId}
             snapshots={data.snapshots}
             profiles={data.profiles}
             accountOptions={data.accountOptions}

@@ -961,6 +961,7 @@ export function VideoSubmitFormV2({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmittingRef.current) return;
     setHasAttemptedSubmit(true);
 
     if (!account) {
@@ -1042,7 +1043,13 @@ export function VideoSubmitFormV2({
       return;
     }
 
-    await executeSubmit();
+    // 同步闩锁：状态到 ref 的回写要等渲染，双击的第二下可能在同一批次进来
+    isSubmittingRef.current = true;
+    try {
+      await executeSubmit();
+    } finally {
+      isSubmittingRef.current = false;
+    }
   }
 
   // 队列多图上传

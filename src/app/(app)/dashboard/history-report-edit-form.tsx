@@ -2,7 +2,8 @@
 
 import { useCallback, useState, useEffect, useTransition, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Users, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, CalendarDays, ChevronDown } from "lucide-react";
+import { MonthCalendar } from "@/components/calendar/month-calendar";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -309,25 +310,6 @@ export function PublishedAtPicker({
     }
   };
 
-  const calendarDays = useMemo(() => {
-    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const days: Array<{ dayNumber: number; dateStr: string } | null> = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-      const monthStr = String(viewMonth + 1).padStart(2, "0");
-      const dayStr = String(d).padStart(2, "0");
-      days.push({
-        dayNumber: d,
-        dateStr: `${viewYear}-${monthStr}-${dayStr}`,
-      });
-    }
-    return days;
-  }, [viewYear, viewMonth]);
-
   const handleDateClick = (dateStr: string) => {
     onChange(`${dateStr}T${parsed.hour}:${parsed.minute}`);
   };
@@ -387,106 +369,65 @@ export function PublishedAtPicker({
             overflowY: "auto",
             zIndex: "var(--z-popover, 90)" as unknown as number,
           }}
-          className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
+          className="w-[280px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100 scrollbar-none"
         >
-          <div className="flex items-center justify-center gap-1 pb-2 mb-1.5 border-b border-[#E2E2DF]/60">
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              className="p-1 rounded-md hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer active:scale-[0.99]"
-              title="上个月"
-              aria-label="上个月"
-            >
-              <ChevronLeft className="size-3.5" />
-            </button>
-            <span className="text-[12px] font-normal text-[#141413] tabular-nums px-1">
-              {viewYear}年{viewMonth + 1}月
-            </span>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              className="p-1 rounded-md hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer active:scale-[0.99]"
-              title="下个月"
-              aria-label="下个月"
-            >
-              <ChevronRight className="size-3.5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-normal text-[#78716C] mb-1">
-            {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
-              <span key={w}>{w}</span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center text-[12px]">
-            {calendarDays.map((item, idx) => {
-              if (!item) {
-                return <span key={`empty-${idx}`} className="size-7" />;
-              }
-              const isSelected = item.dateStr === parsed.date;
-              return (
-                <button
-                  key={item.dateStr}
-                  type="button"
-                  onClick={() => handleDateClick(item.dateStr)}
-                  className={cn(
-                    "size-7 rounded-md text-[12px] tabular-nums flex items-center justify-center transition-colors cursor-pointer",
-                    isSelected
-                      ? "bg-status-info/[0.12] text-status-info shadow-input"
-                      : "text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                  )}
-                >
-                  {item.dayNumber}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-2.5 pt-2 border-t border-[#E2E2DF] flex items-center justify-between">
-            <span className="text-[12px] text-[#78716C] font-normal">发布时点</span>
-            <div className="flex items-center gap-1 rounded-xl border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
-              <button
-                type="button"
-                onClick={() => stepHour(-1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
-                title="减1小时"
-              >
-                −
-              </button>
-              <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
-                {parsed.hour}
-              </span>
-              <button
-                type="button"
-                onClick={() => stepHour(1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
-                title="加1小时"
-              >
-                +
-              </button>
-              <span className="text-[12px] text-[#78716C] font-normal">:</span>
-              <button
-                type="button"
-                onClick={() => stepMinute(-5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
-                title="减5分钟"
-              >
-                −
-              </button>
-              <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
-                {parsed.minute}
-              </span>
-              <button
-                type="button"
-                onClick={() => stepMinute(5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
-                title="加5分钟"
-              >
-                +
-              </button>
-            </div>
-          </div>
+          <MonthCalendar
+            today={formatShanghaiDateOnly()}
+            viewMonth={{ year: viewYear, month: viewMonth + 1 }}
+            onMonthShift={(d) => {
+              if (d === -1) handlePrevMonth();
+              else handleNextMonth();
+            }}
+            selectedDates={[parsed.date]}
+            onSelectDate={handleDateClick}
+            maxScrollHeight={190}
+            footer={
+              <div className="mt-2.5 pt-2 border-t border-[#E2E2DF] flex items-center justify-between">
+                <span className="text-[12px] text-[#78716C] font-normal">发布时点</span>
+                <div className="flex items-center gap-1 rounded-xl border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => stepHour(-1)}
+                    className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
+                    title="减1小时"
+                  >
+                    −
+                  </button>
+                  <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
+                    {parsed.hour}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => stepHour(1)}
+                    className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
+                    title="加1小时"
+                  >
+                    +
+                  </button>
+                  <span className="text-[12px] text-[#78716C] font-normal">:</span>
+                  <button
+                    type="button"
+                    onClick={() => stepMinute(-5)}
+                    className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
+                    title="减5分钟"
+                  >
+                    −
+                  </button>
+                  <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
+                    {parsed.minute}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => stepMinute(5)}
+                    className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
+                    title="加5分钟"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            }
+          />
         </div>,
         document.body,
       )}

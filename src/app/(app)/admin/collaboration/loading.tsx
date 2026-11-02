@@ -1,10 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { PageEpigraph } from "@/components/editorial/page-epigraph";
 
 export default function CollaborationLoading() {
   return (
-    <AdminWorkspaceLayout width="wide" title="协作管理" description="按月查看岗位与小组的作品产量、负责账号与数据表现。">
+    <AdminWorkspaceLayout width="wide" title="协作管理" description={<PageEpigraph pageKey="collaboration" />}>
       <div className="space-y-5">
         {/* 整合型流线控制舱骨架 */}
         <div className="space-y-3 pb-4 border-b border-[#E2E2DF]/60">

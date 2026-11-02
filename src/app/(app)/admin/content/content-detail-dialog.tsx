@@ -295,7 +295,7 @@ export function ContentDetailDialog({
                   disabled={!hasPrev}
                   className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
                   aria-label="上一条"
-                  title="上一条（快捷键 [）"
+                  title="上一条（快捷键 K 或 ↑）"
                 >
                   <ChevronLeft className="size-3.5" />
                 </button>
@@ -310,7 +310,7 @@ export function ContentDetailDialog({
                   disabled={!hasNext}
                   className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
                   aria-label="下一条"
-                  title={isLast ? "已是最后一条" : "下一条（快捷键 ]）"}
+                  title={isLast ? "已是最后一条" : "下一条（快捷键 J 或 ↓）"}
                 >
                   <ChevronRight className="size-3.5" />
                 </button>

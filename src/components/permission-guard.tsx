@@ -61,13 +61,13 @@ export function PermissionGuard({
             <span>需访问权限</span>
           </div>
           <SectionHeading as="h2" className="tracking-tight">
-            还没有「{moduleTitle}」权限
+            暂无「{moduleTitle}」访问权限
           </SectionHeading>
           <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
             {description ||
               (showApplyButton
-                ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`
-                : `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如需访问，请联系企业主账号管理员。`)}
+                ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有需要，可向公司负责人或组长申请开通对应权限。`
+                : `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如需访问，可向管理员申请。`)}
           </p>
         </div>
 

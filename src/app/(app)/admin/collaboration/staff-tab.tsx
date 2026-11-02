@@ -432,7 +432,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="还没有指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无指标完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -447,7 +447,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="还没有指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无指标完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -462,7 +462,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="无综合可评级作品或还没有参评样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无可评级作品或参评样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -573,7 +573,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               ) : (
                 <tr>
                   <td colSpan={role === "writer" ? 5 : 4} className="px-3 py-2">
-                    <EmptyState variant="compact" title="还没有作品记录" />
+                    <EmptyState variant="compact" title="暂无作品记录" />
                   </td>
                 </tr>
               )}
@@ -668,10 +668,10 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
               <CompassConstellationIllustration size={96} />
             )
           }
-          title={`本月还没有${roleLabel}岗位记录`}
+          title={`本月暂无${roleLabel}岗位记录`}
           description={role === "writer"
-            ? "还没有文案成员记录。管理员可在本表对成员进行认证；认证后正常结算文案绩效。"
-            : "剪辑岗只统计帮别人账号剪辑的作品。"}
+            ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常结算文案绩效。"
+            : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
         />
       </div>
     );
