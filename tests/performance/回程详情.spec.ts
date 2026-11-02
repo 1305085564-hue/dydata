@@ -33,7 +33,7 @@ test("初始化不重复取列表，回程视频详情保持打开且关闭后�
   const params = new URLSearchParams({ year, month: String(Number(month)), tab: "writers",
     personId: video.accounts?.profile_id ?? video.user_id, from: "video", videoId: video.id });
   await page.goto(`/admin/collaboration?${params}`);
-  await page.getByRole("link", { name: /返回该视频复盘/ }).click();
+  await page.getByRole("link", { name: /返回该数据复盘/ }).click();
   await expect(page.getByRole("dialog").getByRole("button", { name: "复制文案", exact: true })).toBeVisible();
   expect(new URL(page.url()).searchParams.get("videoId")).toBe(video.id);
   await expect(page.locator('[data-slot="sheet-content"]')).toHaveCount(1);

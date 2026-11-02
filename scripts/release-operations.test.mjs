@@ -11,7 +11,7 @@ function run(script, args = []) {
 test("预发布脚本 dry-run 固化全部门禁顺序", () => {
   const result = JSON.parse(run("preflight-release.mjs", ["--dry-run"]));
   assert.deepEqual(result.steps.map((step) => step.id), [
-    "migration-scope", "scripts-tests", "unit-tests", "typecheck", "lint", "build",
+    "migration-scope", "screenshot-storage-boundary", "scripts-tests", "unit-tests", "typecheck", "lint", "build",
     "roles", "browser", "architecture-baseline", "runtime-smoke",
   ]);
 });
