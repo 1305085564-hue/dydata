@@ -120,7 +120,7 @@ test('B05 定向验收复用完整生命周期，收据区分 full 与 b05', asy
     assert.equal(result,0);
     const testArgs=calls.find(args=>args[0].includes('@playwright/test/cli.js'));
     assert.equal(testArgs.includes('--grep'),scope==='b05');
-    if(scope==='b05')assert.deepEqual(testArgs.slice(-2),['--grep','^B05 ']);
+    if(scope==='b05')assert.deepEqual(testArgs.slice(-2),['--grep','B05 ']);
     const receipt=JSON.parse(readFileSync(join(env.DYDATA_GATE_FIXTURES_FILE,'..','run-receipt.json'),'utf8'));
     assert.equal(receipt.scope,scope);
     assert.equal(calls.at(-1).at(-1),'cleanup');

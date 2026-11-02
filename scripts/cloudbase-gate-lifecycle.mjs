@@ -89,7 +89,7 @@ export async function runCloudBaseGate({ kind, run, scope = "full", env = proces
     if (exitCode === 0) exitCode = await run(["node_modules/next/dist/bin/next", "build"]);
     if (exitCode === 0) {
       recordBuild(env, cwd);
-      exitCode = await run(["node_modules/@playwright/test/cli.js", "test", "--config", kind === "roles" ? "playwright.role.config.ts" : "playwright.config.ts", ...(scope === "b05" ? ["--grep", "^B05 "] : [])]);
+      exitCode = await run(["node_modules/@playwright/test/cli.js", "test", "--config", kind === "roles" ? "playwright.role.config.ts" : "playwright.config.ts", ...(scope === "b05" ? ["--grep", "B05 "] : [])]);
     }
     gateCompleted = exitCode === 0;
   } catch (error) {
