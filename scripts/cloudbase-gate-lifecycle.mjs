@@ -70,8 +70,10 @@ export function createGateCommandRunner(env = process.env) {
   };
 }
 
-export async function runCloudBaseGate({ kind, run, env = process.env, cwd = process.cwd(), lockRoot, recordBuild = recordCloudBaseGateBuild }) {
+export async function runCloudBaseGate({ kind, run, scope = "full", env = process.env, cwd = process.cwd(), lockRoot, recordBuild = recordCloudBaseGateBuild }) {
   assertCloudBaseGateEnvironment(env);
+  if (!["full", "b05"].includes(scope) || (scope === "b05" && kind !== "roles")) throw new Error("无效的门禁验收范围");
+  if (scope === "b05") console.log("[gate-cloudbase] 本轮仅 B05 写侧定向验收；整包角色/浏览器验收另计");
   const spec = "tests/roles/CloudBase权限回归.spec.ts";
   if (!existsSync(resolve(cwd, spec))) throw new Error(`CloudBase 必测文件缺失：${spec}`);
   if (!existsSync(resolve(cwd, "scripts/cloudbase/permission-fixtures.mjs"))) throw new Error("CloudBase 固定夹具生命周期脚本缺失");
@@ -87,7 +89,7 @@ export async function runCloudBaseGate({ kind, run, env = process.env, cwd = pro
     if (exitCode === 0) exitCode = await run(["node_modules/next/dist/bin/next", "build"]);
     if (exitCode === 0) {
       recordBuild(env, cwd);
-      exitCode = await run(["node_modules/@playwright/test/cli.js", "test", "--config", kind === "roles" ? "playwright.role.config.ts" : "playwright.config.ts"]);
+      exitCode = await run(["node_modules/@playwright/test/cli.js", "test", "--config", kind === "roles" ? "playwright.role.config.ts" : "playwright.config.ts", ...(scope === "b05" ? ["--grep", "^B05 "] : [])]);
     }
     gateCompleted = exitCode === 0;
   } catch (error) {
@@ -100,7 +102,7 @@ export async function runCloudBaseGate({ kind, run, env = process.env, cwd = pro
     } catch {
       cleanupCode = 2;
     }
-    writeFileSync(join(lock.runPath, "run-receipt.json"), JSON.stringify({ kind, environmentId: CLOUDBASE_GATE_ENV_ID, gateCompleted, exitCode, cleanupCode, finishedAt: new Date().toISOString() }), { mode: 0o600 });
+    writeFileSync(join(lock.runPath, "run-receipt.json"), JSON.stringify({ kind, scope, environmentId: CLOUDBASE_GATE_ENV_ID, gateCompleted, exitCode, cleanupCode, finishedAt: new Date().toISOString() }), { mode: 0o600 });
     if (cleanupCode === 0 && gateCompleted) lock.release();
     else console.error(`[gate-cloudbase] 门禁或清理失败，保留串行锁及私有恢复清单：${env.DYDATA_GATE_FIXTURES_FILE}`);
   }

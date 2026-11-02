@@ -146,6 +146,18 @@ async function prepareHelper(){
   fail(result.rows.length===1&&result.rows[0].source===source&&result.rows[0].definer==='false','Temporary helper creation receipt incomplete');
   journal.helperOwnership=result.rows[0];journal.helperCreateRequestId=result.requestId;save(journal);
 }
+async function waitForPrivateHelperSchema(jwt){
+  const notified=await execute("NOTIFY pgrst, 'reload schema'");record('schemaNotifications',{requestId:notified.requestId});
+  const deadline=Date.now()+30_000;
+  while(true){
+    const {receipt}=await http(jwt,`rpc/${HELPER}`,'POST',{p_helper:'__schema_readiness_only__'},{phase:'schema-readiness-only'});
+    // 22023 comes from this fixture's deliberate unknown-selector branch. It is
+    // only readiness evidence, never a permission denial or business PASS.
+    if(receipt.httpStatus===400&&['22023','DATABASE_22023'].includes(receipt.code)){record('schemaReadiness',{...receipt,ready:true});return;}
+    fail(receipt.httpStatus===404&&['PGRST202','DATABASE_PGRST202'].includes(receipt.code)&&Date.now()<deadline,'Temporary helper schema is not ready; no permission result inferred');
+    record('schemaReadiness',{...receipt,ready:false});await new Promise(resolve=>setTimeout(resolve,500));
+  }
+}
 async function probeHelpers(jwt,active){
   const results=[];
   for(const helper of ['can_read_team_topic','is_active_topic_member','can_read_team_actor','can_read_team_claim']){
@@ -254,7 +266,7 @@ export async function collectCompleteTableWriteEvidence({jwt,activeControl=true,
       fail(same(sorted(before.rows),sorted(after.rows)),`B05 ${operation} changed owned data`);
       record('writePhaseChecks',{operation,beforeRequestId:before.requestId,afterRequestId:after.requestId,rowUnchanged:true});
     }
-    await prepareHelper();let active=[],activeView=[];
+    await prepareHelper();await waitForPrivateHelperSchema(jwt);let active=[],activeView=[];
     if(activeControl){fail(state.membershipStatus==='active','Invalid helper positive control state');const j=readJournal();j.authStatusTouched=true;save(j);try{await setFixtureAuthStatus(1);active=await probeHelpers(jwt,true);activeView=await probeReadOnlyView(jwt,fixtures,true);}finally{await setFixtureAuthStatus(state.authStatus);}}
     const denied=await probeHelpers(jwt,false);const publicRpcs=await probePublicRpcs(jwt);const view=await probeReadOnlyView(jwt,fixtures,false);const ownStatus=await probeOwnStatus(jwt,state);
     const output={environment:ENV_ID,actor:uuid(6),state,directory,scope:'synthetic old JWT; 80 base tables x INSERT/UPDATE/DELETE; temporary invoker for 4 private helpers',tableProbes:results.sort((a,b)=>(a.table+a.operation).localeCompare(b.table+b.operation)).map(r=>({...r,rowUnchanged:true})),helpers:{active,denied},publicRpcs,view:{active:activeView,inactive:view},ownStatus,summary:{tables:80,denied:results.length,privateHelpers:denied.length,publicRpcs:publicRpcs.results.length},journalPath:privatePath()};

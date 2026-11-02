@@ -112,3 +112,23 @@ test("发现数、skip、未运行和预期失败不能让 CloudBase 门禁报�
   reporter.onBegin({}, { allTests: () => [{ results: [{ status: "passed" }], expectedStatus: "passed" }] });
   assert.equal(reporter.onEnd({ status: "passed" }).status, "passed");
 });
+
+test('B05 定向验收复用完整生命周期，收据区分 full 与 b05', async (t) => {
+  for (const scope of ['full','b05']) {
+    const cwd=sandbox(t),env=gateEnv(),calls=[];
+    const result=await runCloudBaseGate({kind:'roles',scope,env,cwd,lockRoot:cwd,recordBuild:()=>{},run:async args=>{calls.push(args);return 0;}});
+    assert.equal(result,0);
+    const testArgs=calls.find(args=>args[0].includes('@playwright/test/cli.js'));
+    assert.equal(testArgs.includes('--grep'),scope==='b05');
+    if(scope==='b05')assert.deepEqual(testArgs.slice(-2),['--grep','^B05 ']);
+    const receipt=JSON.parse(readFileSync(join(env.DYDATA_GATE_FIXTURES_FILE,'..','run-receipt.json'),'utf8'));
+    assert.equal(receipt.scope,scope);
+    assert.equal(calls.at(-1).at(-1),'cleanup');
+  }
+});
+test('B05 定向参数不能用于其他范围或浏览器门禁', async(t)=>{
+  const cwd=sandbox(t);
+  for(const [kind,scope]of [['browser','b05'],['roles','unknown']]){
+    await assert.rejects(()=>runCloudBaseGate({kind,scope,env:gateEnv(),cwd,lockRoot:cwd,run:async()=>{throw Error('must not run');}}),/无效的门禁/);
+  }
+});
