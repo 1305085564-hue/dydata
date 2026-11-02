@@ -41,7 +41,48 @@ test("member-ai-suggestion POST 真 handler：鉴权失败带完整分层字段"
   }
 });
 
+test("普通成员因真实角色门禁不能使用 AI，在资料读取和调用前拒绝", async () => {
+  let profileReads = 0;
+  let aiStubCalls = 0;
+  const response = await buildMemberAiSuggestionResponse(
+    { memberId: "member-synthetic" },
+    {
+      requireAdminActor: async (options) => {
+        assert.equal(options?.requiredPermission, "use_ai_assist");
+        return {
+          supabase: {} as never,
+          actor: {
+            userId: "member-synthetic",
+            role: "member",
+            companyRole: "member",
+            permissions: { use_ai_assist: false },
+            name: "合成成员",
+            dataScope: "self",
+          },
+        } as never;
+      },
+      createAdminClient: () => {
+        profileReads += 1;
+        return buildAdminClient({ id: "member-synthetic", name: "合成成员", role: "member", team_id: "team-local" });
+      },
+      buildDataAccessScope: async () => { throw new Error("无权限账号不应读取范围"); },
+      getUserInfo: async () => { throw new Error("无权限账号不应读取成员资料"); },
+      getAnomalousData: async () => { throw new Error("无权限账号不应查询异常"); },
+      callAiJson: async () => {
+        aiStubCalls += 1;
+        throw new Error("无权限账号不应触达外部 AI 桩");
+      },
+      now: () => new Date("2026-11-02T00:00:00.000Z"),
+    },
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal(profileReads, 0);
+  assert.equal(aiStubCalls, 0);
+});
+
 test("member-ai-suggestion 返回结构化建议", async () => {
+  let aiStubCalls = 0;
   const response = await buildMemberAiSuggestionResponse(
     { memberId: "member-1" },
     {
@@ -89,26 +130,29 @@ test("member-ai-suggestion 返回结构化建议", async () => {
               : [],
         },
       }),
-      callAiJson: async () => ({
-        content: JSON.stringify({
-          status: "critical",
-          summary: "该成员连续缺报，需要先处理填报问题。",
-          suggestions: [
-            {
-              label: "查看成员信息",
-              description: "先确认近期状态和豁免记录。",
-              action: {
-                type: "execute_tool",
-                toolName: "getUserInfo",
-                toolArgs: { userId: "member-1" },
+      callAiJson: async () => {
+        aiStubCalls += 1;
+        return {
+          content: JSON.stringify({
+            status: "critical",
+            summary: "该成员连续缺报，需要先处理填报问题。",
+            suggestions: [
+              {
+                label: "查看成员信息",
+                description: "先确认近期状态和豁免记录。",
+                action: {
+                  type: "execute_tool",
+                  toolName: "getUserInfo",
+                  toolArgs: { userId: "member-1" },
+                },
               },
-            },
-          ],
-        }),
-        model: "test-model",
-        channelName: "test-channel",
-        elapsedMs: 1,
-      }),
+            ],
+          }),
+          model: "test-model",
+          channelName: "test-channel",
+          elapsedMs: 1,
+        };
+      },
       now: () => new Date("2026-05-14T09:30:00.000Z"),
     },
   );
@@ -117,6 +161,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
   const payload = await response.json();
   assert.equal(payload.status, "critical");
   assert.equal(payload.suggestions[0].action.toolName, "getUserInfo");
+  assert.equal(aiStubCalls, 1);
 });
 
 test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", async () => {

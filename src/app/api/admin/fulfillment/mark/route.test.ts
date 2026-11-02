@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAbsenceNotification } from "../_shared";
+import { buildAbsenceNotification, requireActiveVisibleUsers, requireOwnerOrAdminRole } from "../_shared";
 import { buildFulfillmentMarkResponse } from "./route";
 
 const UID = "123e4567-e89b-42d3-a456-426614174000";
@@ -63,4 +63,37 @@ test("标记缺勤后给员工发带原因和联系人的通知", async () => {
     title: "你在 2026-10-01 被记为缺勤",
     body: "原因：当天未提交\n标记者：管理员甲。如有疑问，请联系管理员。",
   });
+});
+
+test("普通成员在通知边界前被角色门禁拦截，管理员合成正对照只命中本地桩", async () => {
+  const counts = { rpc: 0, notificationStub: 0 };
+  const runAs = async (role: "member" | "admin") => buildFulfillmentMarkResponse(
+    { ...base, status: "absent", reason: "B03 本地合成验证" },
+    {
+      requireAdminServiceClient: async () => ({
+        actor: { userId: `${role}-synthetic`, role, companyRole: role, name: "合成账号" },
+        scope: { activeVisibleUserIds: [UID], visibleUserIds: [UID], kind: "team" },
+        supabase: {
+          rpc: async () => {
+            counts.rpc += 1;
+            return { data: { ok: true }, error: null };
+          },
+        },
+      }) as never,
+      requireOwnerOrAdminRole,
+      requireActiveVisibleUsers,
+      emit: async () => {
+        counts.notificationStub += 1;
+        return { ok: true, inserted: 1 };
+      },
+    } as never,
+  );
+
+  const denied = await runAs("member");
+  assert.equal(denied.status, 403);
+  assert.deepEqual(counts, { rpc: 0, notificationStub: 0 });
+
+  const allowedSynthetic = await runAs("admin");
+  assert.equal(allowedSynthetic.status, 200);
+  assert.deepEqual(counts, { rpc: 1, notificationStub: 1 });
 });

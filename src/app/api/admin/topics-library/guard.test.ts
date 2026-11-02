@@ -6,9 +6,12 @@ import { NextRequest } from "next/server";
 import { handleTopicsLibraryToggle } from "./toggle/route";
 import { handleTopicsLibraryEvaluate } from "./evaluate/route";
 
-const ADMIN_TOPIC_LIBRARY_ROUTES = [
+const TOPIC_IMPORT_ROUTES = [
   "src/app/api/admin/topics-library/import/parse/route.ts",
   "src/app/api/admin/topics-library/import/confirm/route.ts",
+];
+const ADMIN_TOPIC_LIBRARY_ROUTES = [
+  ...TOPIC_IMPORT_ROUTES,
   "src/app/api/admin/topics-library/toggle/route.ts",
   "src/app/api/admin/topics-library/evaluate/route.ts",
   "src/app/api/admin/content/topic-library-status/route.ts",
@@ -22,6 +25,16 @@ test("选题库管理接口必须经过 requireAdminActor 且要求 review_conte
       /requiredPermission:\s*"review_content"/,
       `${relativePath} 缺少 review_content 服务端鉴权`,
     );
+  }
+});
+
+test("选题导入 parse/confirm 先检查 review_content，再触达数据库入口", () => {
+  for (const relativePath of TOPIC_IMPORT_ROUTES) {
+    const source = readFileSync(join(process.cwd(), relativePath), "utf8");
+    const authCall = source.indexOf('requireAdminActor({ requiredPermission: "review_content" })');
+    const clientCall = source.indexOf("createAdminClient()");
+    assert.ok(authCall >= 0, `${relativePath} 缺少可定位的 review_content 鉴权调用`);
+    assert.ok(clientCall > authCall, `${relativePath} 必须先鉴权，再读取或写入导入数据`);
   }
 });
 
