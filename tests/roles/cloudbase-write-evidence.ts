@@ -575,7 +575,7 @@ async function sendWrite(
 
 function explicitProbe(
   httpStatus: number,
-  denial: ProbeResult["denial"],
+  denial: ProbeResult["denial"] | null,
   requestId?: string,
 ): ProbeResult {
   if (denial) {
