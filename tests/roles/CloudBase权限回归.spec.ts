@@ -359,9 +359,12 @@ test('@browser role pages retain access rules and never request Supabase', async
     const page=await context.newPage(); const forbidden:string[]=[];
     page.on('request',r=>{if(/\.supabase\.(co|com)(\/|:)/.test(r.url()))forbidden.push('supabase');});
     try {
-      for(const path of ['/admin/content','/admin/modules','/admin/pulse']) {
+      for(const path of ['/dashboard','/admin/content','/admin/modules','/admin/pulse','/admin/collaboration']) {
         const r=await page.goto(`http://127.0.0.1:3100${path}`);
         expect(r?.status()).toBeLessThan(500);
+        expect(page.url().includes('/login')).toBe(false);
+        const refreshed=await page.reload();
+        expect(refreshed?.status()).toBeLessThan(500);
         expect(page.url().includes('/login')).toBe(false);
       }
       expect(forbidden.length).toBe(0);
@@ -407,7 +410,10 @@ test('B01 status writer denies user JWTs and cannot activate a pending synthetic
 test('@browser B01 owner archives and restores a synthetic member through member management', async({browser})=> {
   const target=identities().archived;const oldJwt=await token('archived');const oldSite=await site('archived');
   const ctx=await site('ownerA');const context=await browser.newContext({storageState:await ctx.storageState()});const page=await context.newPage();
+  const archivedContext=await browser.newContext({storageState:await oldSite.storageState()});const archivedPage=await archivedContext.newPage();
   try {
+    expect((await archivedPage.goto('http://127.0.0.1:3100/dashboard'))?.status()).toBe(200);
+    expect(new URL(archivedPage.url()).pathname).toBe('/dashboard');
     await page.goto(`http://127.0.0.1:3100/admin/modules?team=${uuid(101)}&member=${target.id}`);
     await page.getByRole('button',{name:/归档账号/}).click();
     await page.getByPlaceholder('必填，例如：离职、转岗、实习结束').fill('permission-v2 synthetic archive acceptance');
@@ -416,6 +422,9 @@ test('@browser B01 owner archives and restores a synthetic member through member
     const archived=(await rows(`SELECT p.team_id,p.archive_snapshot->>'team_id' AS previous_team,u.status FROM public.profiles p JOIN auth.users u ON u.sub=p.id::text WHERE p.id=${quote(target.id)}`))[0];
     expect(archived.team_id).toBeNull();expect(archived.previous_team).toBe(uuid(101));expect(Number(archived.status)).toBe(3);
     expect([401,403]).toContain((await oldSite.get('/api/admin/content/list?page=1&pageSize=1')).status());
+    await archivedPage.goto('http://127.0.0.1:3100/admin/modules');
+    expect(new URL(archivedPage.url()).pathname).toBe('/login');
+    expect(new URL(archivedPage.url()).searchParams.get('archived')).toBe('1');
     const oldRead=await rest(oldJwt,`profiles?id=eq.${target.id}&select=id`);
     expect(oldRead.status>=400||(await oldRead.json()).length===0).toBe(true);
     await page.goto(`http://127.0.0.1:3100/admin/modules?view=archived&team=${uuid(101)}&q=${encodeURIComponent('dydata-permission-v2-'+target.username.split('@')[0])}`);
@@ -427,5 +436,5 @@ test('@browser B01 owner archives and restores a synthetic member through member
     expect(typeof await token('archived')).toBe('string');
     const logs=await rows(`SELECT action_type FROM public.member_change_log WHERE profile_id=${quote(target.id)}`);
     expect(new Set(logs.map((row:{action_type:string})=>row.action_type))).toEqual(new Set(['archive','restore']));
-  } finally {await context.close();await ctx.dispose();await oldSite.dispose();}
+  } finally {await archivedContext.close();await context.close();await ctx.dispose();await oldSite.dispose();}
 });

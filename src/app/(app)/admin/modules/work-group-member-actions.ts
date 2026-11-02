@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 import { assignWorkGroupMember, unassignWorkGroupMember } from "@/lib/work-groups";
 
 import {
@@ -15,7 +16,7 @@ import {
 } from "./work-group-member-write";
 
 const backend: MemberWorkGroupWriteDeps["backend"] =
-  process.env.DYDATA_BACKEND === "cloudbase" ? "cloudbase" : "supabase";
+  isCloudBaseBackend() ? "cloudbase" : "supabase";
 
 const deps = {
   backend,

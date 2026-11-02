@@ -80,3 +80,17 @@ test("空 key 可单独清缓存且不抛异常", () => {
   clearFeaturePromptCache("");
   clearFeaturePromptCache("missing");
 });
+
+test("public-only CloudBase selection uses the same admin client as the central selector", async () => {
+  await withEnv({
+    DYDATA_BACKEND: undefined,
+    NEXT_PUBLIC_DYDATA_BACKEND: "cloudbase",
+    NEXT_PUBLIC_SUPABASE_URL: undefined,
+    SUPABASE_SERVICE_ROLE_KEY: undefined,
+    CLOUDBASE_ENV_ID: "prompt-test-env",
+    CLOUDBASE_SERVICE_API_KEY: "test-service-key",
+  }, () => {
+    const client = __internal.getServiceClientForTests() as { from?: unknown } | null;
+    assert.equal(typeof client?.from, "function");
+  });
+});

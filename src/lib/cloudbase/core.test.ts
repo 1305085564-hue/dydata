@@ -101,3 +101,22 @@ test("only documented expired-user and invalid-password replies normalize to aut
     }), (error: Error & { status?: number; code?: string }) => error.status === 401 && error.code === "user_blocked" && error.message === archivedMessage);
   }
 });
+
+test("server backend selector preserves both, either and disabled switch semantics", () => {
+  const keys = ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND"];
+  const previous = keys.map(key => process.env[key]);
+  try {
+    for (const [server, browser, expected] of [
+      [undefined, undefined, false], ["supabase", "supabase", false],
+      ["cloudbase", undefined, true], [undefined, "cloudbase", true],
+      ["cloudbase", "cloudbase", true], ["supabase", "cloudbase", true],
+    ] as const) {
+      for (const [index, value] of [server, browser].entries()) {
+        if (value === undefined) delete process.env[keys[index]]; else process.env[keys[index]] = value;
+      }
+      assert.equal(isCloudBaseBackend(), expected, `${server}/${browser}`);
+    }
+  } finally {
+    keys.forEach((key, i) => { if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i]; });
+  }
+});

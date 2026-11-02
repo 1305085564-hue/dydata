@@ -1,12 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const cache = new Map<string, { expiresAt: number; prompt: string | null }>();
 
 function getServiceClient() {
-  if (process.env.DYDATA_BACKEND === "cloudbase") {
+  if (isCloudBaseBackend()) {
     try {
       return createAdminClient();
     } catch {

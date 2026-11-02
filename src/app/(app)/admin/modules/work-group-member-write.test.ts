@@ -273,7 +273,7 @@ test("Supabase keeps the existing unassignment path", async () => {
 });
 
 test("member actions use the true-cookie client for CloudBase RPC and are wired only from member management", () => {
-  assert.match(actionSource, /process\.env\.DYDATA_BACKEND === "cloudbase"/);
+  assert.match(actionSource, /isCloudBaseBackend\(\) \? "cloudbase" : "supabase"/);
   assert.match(actionSource, /createAuthenticatedClient: async \(\) => \(await createClient\(\)\)/);
   assert.match(actionSource, /assignMemberWorkGroupForManagement\(input, deps\)/);
   assert.match(actionSource, /unassignMemberWorkGroupForManagement\(input, deps\)/);

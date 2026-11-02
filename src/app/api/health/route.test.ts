@@ -232,6 +232,7 @@ test("生产运行时不会接受故障注入环境变量", async () => {
 async function withCloudBaseEnvironment<T>(run: () => Promise<T>): Promise<T> {
   const keys = [
     "DYDATA_BACKEND",
+    "NEXT_PUBLIC_DYDATA_BACKEND",
     "CLOUDBASE_ENV_ID",
     "NEXT_PUBLIC_CLOUDBASE_ENV_ID",
     "CLOUDBASE_SERVICE_API_KEY",
@@ -367,5 +368,20 @@ test("CloudBase mode never reports its database as Supabase up", async () => {
     assert.equal(response.status, 503);
     assert.equal(payload.checks.supabase, "unconfigured");
     assert.equal(probed, false);
+  });
+});
+
+test("public-only backend selection probes CloudBase consistently with the central selector", async () => {
+  await withCloudBaseEnvironment(async () => {
+    delete process.env.DYDATA_BACKEND;
+    process.env.NEXT_PUBLIC_DYDATA_BACKEND = "cloudbase";
+    let calls = 0;
+    const response = await buildHealthResponse(new NextRequest("https://dydata.cc/api/health?check=database"), makeDeps({
+      probeSupabase: async () => { throw new Error("Wrong backend selected"); },
+      probeCloudBase: async () => { calls++; return { table: "profiles", rowCount: 1, checkedAt: "test" }; },
+    }));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).checks.cloudbase.status, "up");
+    assert.equal(calls, 1);
   });
 });

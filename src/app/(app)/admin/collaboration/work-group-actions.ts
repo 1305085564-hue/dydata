@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 import {
   assignWorkGroupMember,
   assignWorkGroupMembers,
@@ -27,7 +28,7 @@ const deps: WorkGroupWriteDeps = {
 };
 
 function cloudBaseMemberManagementOnly() {
-  return process.env.DYDATA_BACKEND === "cloudbase"
+  return isCloudBaseBackend()
     ? { ok: false as const, status: 403 as const, message: "请在成员管理中调整小队" }
     : null;
 }

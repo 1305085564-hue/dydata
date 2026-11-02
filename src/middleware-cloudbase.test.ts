@@ -109,3 +109,61 @@ test("CloudBase middleware validates user/me, checks membership and persists rot
     if (oldPublicEnvId === undefined) delete process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID; else process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID = oldPublicEnvId;
   }
 });
+
+test("CloudBase session handler consumes the already classified protected route", async () => {
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync(new URL("./middleware.ts", import.meta.url), "utf8");
+  const handler = source.slice(source.indexOf("async function handleCloudBaseSession"), source.indexOf("export async function middleware"));
+  assert.match(handler, /isProtectedAppRoute: boolean/);
+  assert.doesNotMatch(handler, /["']\/dashboard["']/);
+  assert.match(source, /handleCloudBaseSession\(request, \{ pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute \}\)/);
+});
+
+// Exercise the actual middleware for every statically matched app root; adding a
+// matcher without classifying it must fail this matrix instead of silently passing.
+test("all protected matcher roots share CloudBase checks for root and child paths", async () => {
+  const { config } = await import("./middleware");
+  const roots = config.matcher.filter(path => path.endsWith("/:path*") && path !== "/api/:path*").map(path => path.replace("/:path*", ""));
+  assert.equal(roots.length, 5);
+  const keys = ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND", "CLOUDBASE_ENV_ID"];
+  const previous = keys.map(key => process.env[key]);
+  process.env.DYDATA_BACKEND = "cloudbase";
+  process.env.NEXT_PUBLIC_DYDATA_BACKEND = "cloudbase";
+  process.env.CLOUDBASE_ENV_ID = "env-test";
+  try {
+    let requestIndex = 0;
+    for (const root of roots) for (const path of [root, `${root}/nested`]) {
+      for (const state of ["missing", "invalid", "active", "archived"] as const) {
+        const calls: string[] = [];
+        globalThis.fetch = (async input => {
+          const pathname = new URL(String(input)).pathname;
+          calls.push(pathname);
+          if (pathname === "/auth/v1/user/me") return Response.json({ sub: "stable-uuid" });
+          if (pathname.endsWith("/rpc/cloudbase_session_status")) return Response.json(state);
+          throw new Error("Unexpected middleware request");
+        }) as typeof fetch;
+        const cookie = state === "missing" ? undefined : `${CLOUD_BASE_SESSION_COOKIE}=${state === "invalid" ? "not-a-session" : serializeCloudBaseSession(session("access"))}`;
+        const headers: Record<string, string> = { "x-forwarded-for": `127.0.1.${++requestIndex}` };
+        if (cookie) headers.cookie = cookie;
+        const response = await middleware(new NextRequest(`https://dydata.cc${path}`, { headers }));
+        if (state === "active") assert.equal(response.headers.get("x-middleware-next"), "1", path);
+        else {
+          assert.equal(response.status, 307, `${path}/${state}`);
+          const location = new URL(response.headers.get("location")!);
+          assert.equal(location.pathname, "/login");
+          assert.equal(location.searchParams.get("next"), path);
+          if (state === "archived") assert.equal(location.searchParams.get("archived"), "1");
+        }
+        assert.equal(calls.length, ["active", "archived"].includes(state) ? 2 : 0);
+      }
+    }
+    globalThis.fetch = async () => { throw new Error("Public paths must not request authentication"); };
+    for (const path of ["/login", "/register", "/forgot-password", "/dashboard-extra", "/admin-extra", "/api/health"]) {
+      const response = await middleware(new NextRequest(`https://dydata.cc${path}`, { headers: { "x-forwarded-for": `127.0.1.${++requestIndex}` } }));
+      assert.equal(response.headers.get("x-middleware-next"), "1", path);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    keys.forEach((key, i) => { if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i]; });
+  }
+});

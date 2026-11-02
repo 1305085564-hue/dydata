@@ -174,12 +174,13 @@ async function handleCloudBaseSession(request: NextRequest, options: {
   pathname: string;
   isApiRoute: boolean;
   hasAuthCookie: boolean;
+  isProtectedAppRoute: boolean;
 }) {
-  const { pathname, isApiRoute, hasAuthCookie } = options;
+  const { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute } = options;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
 
-  if (!hasAuthCookie || (!isApiRoute && !["/dashboard", "/admin", "/violations", "/content-tools", "/douyin"].some((root) => pathname === root || pathname.startsWith(`${root}/`)))) {
+  if (!hasAuthCookie || (!isApiRoute && !isProtectedAppRoute)) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
@@ -281,7 +282,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (cloudBaseMode) {
-    return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie });
+    return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute });
   }
 
   const requestHeaders = new Headers(request.headers);

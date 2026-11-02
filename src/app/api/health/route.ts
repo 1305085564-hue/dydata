@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
 import { isFaultInjectionRequested } from "@/lib/fault-injection";
 import { runSupabaseKeepalive, type SupabaseKeepaliveResult } from "@/lib/supabase/keepalive";
+import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
 type SupabaseDependencyStatus = "up" | "down" | "unconfigured";
 
@@ -20,10 +21,6 @@ function hasSupabaseConfig() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
-}
-
-function isCloudBaseBackend() {
-  return process.env.DYDATA_BACKEND === "cloudbase";
 }
 
 function hasCloudBaseConfig() {
