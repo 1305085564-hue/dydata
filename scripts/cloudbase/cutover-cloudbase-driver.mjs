@@ -5,10 +5,10 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { AUTH_IMPORT_ENV_ID } from './auth-import.mjs';
 import { runBatches } from './sql-batches.mjs';
-import { ensurePrivateFile, ensurePrivateOutputDirectory, writePrivateFile, quoteLiteral } from './cutover-core.mjs';
+import { ensurePrivateFile, ensurePrivateOutputDirectory, writePrivateFile, quoteLiteral, isAuthorizedSourceIdentity } from './cutover-core.mjs';
 
 export function assertSourceLockReceipt(receipt, now = Date.now(), { allowRehearsal = false } = {}) {
-  if(receipt?.state!=='HELD'||(!allowRehearsal&&(receipt.source?.host!=='aws-1-ap-southeast-1.pooler.supabase.com'||receipt.source?.user!=='postgres.gcrhhxaopomtposmahsw'))||(!allowRehearsal&&receipt.rehearsal!==false)||typeof receipt.lockId!=='string'||!receipt.lockId||!Number.isFinite(Date.parse(receipt.acquiredAt))||Date.parse(receipt.acquiredAt)>now||receipt.lockCount!==100||receipt.project!=='gcrhhxaopomtposmahsw'||!Number.isInteger(receipt.pid)||!Number.isFinite(Date.parse(receipt.heartbeatAt))||!Number.isFinite(Date.parse(receipt.closesAt))||now-Date.parse(receipt.heartbeatAt)>45_000||Date.parse(receipt.heartbeatAt)-now>2000||Date.parse(receipt.closesAt)-now<120_000)throw Error('Fresh production-source lock receipt with at least two minutes remaining is required');
+  if(receipt?.state!=='HELD'||(!allowRehearsal&&!isAuthorizedSourceIdentity(receipt.source))||(!allowRehearsal&&receipt.rehearsal!==false)||typeof receipt.lockId!=='string'||!receipt.lockId||!Number.isFinite(Date.parse(receipt.acquiredAt))||Date.parse(receipt.acquiredAt)>now||receipt.lockCount!==100||receipt.project!=='gcrhhxaopomtposmahsw'||!Number.isInteger(receipt.pid)||!Number.isFinite(Date.parse(receipt.heartbeatAt))||Date.parse(receipt.closesAt)-now<120_000||!Number.isFinite(Date.parse(receipt.closesAt))||now-Date.parse(receipt.heartbeatAt)>45_000||Date.parse(receipt.heartbeatAt)-now>2000)throw Error('Fresh production-source lock receipt with at least two minutes remaining is required');
 }
 export function assertSnapshotLockBinding(snapshot, receipt, now = Date.now(), options) {
   assertSourceLockReceipt(receipt,now,options);

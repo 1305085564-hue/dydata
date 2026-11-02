@@ -4,14 +4,14 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildWriteLockSql } from './cutover-freeze.mjs';
-import { assertLoopbackRehearsalUrl, parsePostgresUrl, findPostgresTool, ensurePrivateFile, ensurePrivateOutputDirectory, quoteLiteral } from './cutover-core.mjs';
+import { assertLoopbackRehearsalUrl, parsePostgresUrl, findPostgresTool, ensurePrivateFile, ensurePrivateOutputDirectory, quoteLiteral, isAuthorizedSourceIdentity } from './cutover-core.mjs';
 
 export function lockSourceIdentity(parsed) { return {host:parsed.host,port:parsed.env.PGPORT,user:parsed.env.PGUSER,database:parsed.database}; }
 
 export function validateLockSource(connectionUrl, rehearsal) {
   if (rehearsal) return assertLoopbackRehearsalUrl(connectionUrl, { rehearsal: true });
   const source = parsePostgresUrl(connectionUrl);
-  if (source.host !== 'aws-1-ap-southeast-1.pooler.supabase.com' || source.env.PGUSER !== 'postgres.gcrhhxaopomtposmahsw') throw Error('Authorized source project mismatch');
+  if (!isAuthorizedSourceIdentity(lockSourceIdentity(source))) throw Error('Authorized source project mismatch');
   return source;
 }
 

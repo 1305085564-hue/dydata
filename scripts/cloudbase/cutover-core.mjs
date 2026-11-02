@@ -9,6 +9,13 @@ import { buildActualQuery, buildExpectedQueries } from './data-reconciliation.mj
 export const PRIVATE_MODE = 0o600;
 export const PRIVATE_DIR_MODE = 0o700;
 
+export function isAuthorizedSourceIdentity(source) {
+  return source?.port === '5432' && source.database === 'postgres' && (
+    (source.host === 'db.gcrhhxaopomtposmahsw.supabase.co' && source.user === 'postgres') ||
+    (source.host === 'aws-1-ap-southeast-1.pooler.supabase.com' && source.user === 'postgres.gcrhhxaopomtposmahsw')
+  );
+}
+
 export function quoteIdentifier(value) {
   if (typeof value !== 'string' || value.length === 0 || value.includes('\0')) {
     throw new TypeError('Invalid SQL identifier');

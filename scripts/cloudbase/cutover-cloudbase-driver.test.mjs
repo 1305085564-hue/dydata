@@ -10,6 +10,11 @@ test('native JSON result parser refuses ambiguous rows',()=>{
   assert.deepEqual(parseSingleJsonResult({Rows:[JSON.stringify([JSON.stringify({a:1})])]}),{a:1});
   for(const result of [{Rows:[]},{Rows:['[1,2]']},{Rows:['bad']},{Rows:['[1]','[2]']}])assert.throws(()=>parseSingleJsonResult(result));
 });
+test('production execution accepts the exact direct source and rejects mismatched connection identities',()=>{
+ const lock=held();lock.source={host:'db.gcrhhxaopomtposmahsw.supabase.co',user:'postgres',port:'5432',database:'postgres'};
+ assert.doesNotThrow(()=>assertSourceLockReceipt(lock));
+ for(const change of [{host:'db.other.supabase.co'},{user:'postgres.other'},{port:'6543'},{database:'other'}])assert.throws(()=>assertSourceLockReceipt({...lock,source:{...lock.source,...change}}));
+});
 test('prepared driver never initializes a write when the window or source lock fails',async()=>{
   let calls=0;const manager={database:{executePGSql(){calls++;throw Error('must not call');}}};
   const pkg={environmentId:'dydata-d6g0gd1v37fcddf21',opensAt:new Date(now-60000).toISOString(),closesAt:new Date(now+600000).toISOString(),stageBatches:[]};
