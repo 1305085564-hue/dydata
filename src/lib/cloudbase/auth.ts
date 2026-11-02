@@ -78,12 +78,15 @@ export async function signInCloudBase(
   password: string,
   fetcher: typeof fetch = fetch,
 ): Promise<VerifiedCloudBaseSession> {
+  const deviceId = globalThis.crypto.randomUUID();
   const tokenResponse = await cloudBaseAuthRequest("/auth/v1/signin", {
     method: "POST",
     body: { username, password },
+    deviceId,
     fetcher,
   });
   const session = makeCloudBaseSession(unwrapToken(tokenResponse));
+  session.deviceId = deviceId;
   const user = await verifyCloudBaseAccessToken(session.accessToken, fetcher, session.subject);
   return { session, user };
 }
@@ -97,6 +100,7 @@ export async function refreshCloudBaseSession(
     tokenResponse = await cloudBaseAuthRequest("/auth/v1/token", {
       method: "POST",
       body: { grant_type: "refresh_token", refresh_token: previous.refreshToken },
+      deviceId: previous.deviceId,
       fetcher,
     });
   } catch (error) {
@@ -106,6 +110,7 @@ export async function refreshCloudBaseSession(
     throw error;
   }
   const session = makeCloudBaseSession(unwrapToken(tokenResponse));
+  if (previous.deviceId) session.deviceId = previous.deviceId;
   if (session.subject !== previous.subject) throw new CloudBaseAuthError(401, "subject_mismatch");
   const user = await verifyCloudBaseAccessToken(session.accessToken, fetcher, session.subject);
   return { session, user };
@@ -135,6 +140,7 @@ export async function signOutCloudBase(session: CloudBaseSession | null, fetcher
   await cloudBaseAuthRequest("/auth/v1/user/signout", {
     method: "POST",
     token: session.accessToken,
+    deviceId: session.deviceId,
     body: {},
     fetcher,
   });

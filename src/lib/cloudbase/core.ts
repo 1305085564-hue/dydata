@@ -7,6 +7,7 @@ export type CloudBaseSession = {
   refreshToken: string;
   expiresAt: number;
   subject: string;
+  deviceId?: string;
 };
 
 export type CloudBaseAuthToken = {
@@ -20,7 +21,7 @@ export function hasCloudBaseSessionChanged(previous: CloudBaseSession, next: Clo
   return previous.accessToken !== next.accessToken ||
     previous.refreshToken !== next.refreshToken ||
     previous.expiresAt !== next.expiresAt ||
-    previous.subject !== next.subject;
+    previous.subject !== next.subject || previous.deviceId !== next.deviceId;
 }
 
 export function isCloudBaseBackend() {
@@ -82,6 +83,7 @@ export function parseCloudBaseSession(value?: string | null): CloudBaseSession |
       typeof parsed.subject !== "string" ||
       typeof parsed.expiresAt !== "number"
     ) return null;
+    if (parsed.deviceId !== undefined && (typeof parsed.deviceId !== "string" || !/^[a-f0-9-]{36}$/i.test(parsed.deviceId))) return null;
     return parsed as CloudBaseSession;
   } catch {
     return null;
@@ -170,12 +172,14 @@ export async function cloudBaseAuthRequest<T = Record<string, unknown>>(
     method?: string;
     body?: unknown;
     token?: string;
+    deviceId?: string;
     fetcher?: typeof fetch;
   } = {},
 ): Promise<T> {
   const headers = new Headers({ accept: "application/json" });
   if (options.body !== undefined) headers.set("content-type", "application/json");
   if (options.token) headers.set("authorization", `Bearer ${options.token}`);
+  if (options.deviceId) headers.set("x-device-id", options.deviceId);
   let response: Response;
   try {
     response = await (options.fetcher ?? fetch)(cloudBaseGatewayUrl(path), {

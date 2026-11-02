@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
-import { isCloudBaseBackend } from "@/lib/cloudbase/core";
-import { createCloudBaseManagerClient, createCloudBaseUserManagement } from "@/lib/cloudbase/management";
+import { cloudBaseEnvironmentId, isCloudBaseBackend } from "@/lib/cloudbase/core";
+import { createCloudBaseUserManagement } from "@/lib/cloudbase/management";
 
 export function createAdminClient() {
   if (isCloudBaseBackend()) {
@@ -14,7 +14,11 @@ export function createAdminClient() {
       updateUserById: (subject: string, attributes: unknown) => Promise<unknown>;
     };
     const management = createCloudBaseUserManagement({
-      createManager: createCloudBaseManagerClient,
+      async writeUserStatus(subject, status) {
+        return client.rpc("cloudbase_set_auth_user_status", {
+          p_subject: subject, p_status: status, p_project: cloudBaseEnvironmentId(),
+        });
+      },
       async getUserById(subject) {
         const { data, error } = await authAdmin.getUserById(subject);
         return { user: data.user, error };

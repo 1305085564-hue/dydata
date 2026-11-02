@@ -2,9 +2,29 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getLoginErrorMessage } from "@/lib/auth-password";
-import { refreshCloudBaseSession, signInCloudBase, validateCloudBaseSession, verifyCloudBaseAccessToken } from "./auth";
+import { refreshCloudBaseSession, signInCloudBase, signOutCloudBase, validateCloudBaseSession, verifyCloudBaseAccessToken } from "./auth";
 
 function json(value: unknown, status = 200) { return Response.json(value, { status }); }
+
+test("each login owns its device marker and refresh/signout preserve that marker", async () => {
+  process.env.CLOUDBASE_ENV_ID = "env-test";
+  const deviceCalls: Array<{ path: string; device: string | null }> = [];
+  const fetcher: typeof fetch = async (input, init) => {
+    const path = new URL(String(input)).pathname;
+    deviceCalls.push({ path, device: new Headers(init?.headers).get("x-device-id") });
+    if (path.endsWith("/user/me")) return json({ sub: "subject" });
+    if (path.endsWith("/rpc/cloudbase_session_status")) return json("active");
+    return json({ access_token: "access", refresh_token: "refresh", expires_in: 3600, sub: "subject" });
+  };
+  const a = (await signInCloudBase("synthetic", "unused", fetcher)).session;
+  const b = (await signInCloudBase("synthetic", "unused", fetcher)).session;
+  assert.match(a.deviceId!, /^[a-f0-9-]{36}$/);
+  assert.notEqual(a.deviceId, b.deviceId);
+  const refreshed = (await refreshCloudBaseSession(a, fetcher)).session;
+  assert.equal(refreshed.deviceId, a.deviceId);
+  await signOutCloudBase(refreshed, fetcher);
+  assert.deepEqual(deviceCalls.filter(c => c.path.endsWith("/signin") || c.path.endsWith("/token") || c.path.endsWith("/signout")).map(c => c.device), [a.deviceId, b.deviceId, a.deviceId, a.deviceId]);
+});
 
 for (const operation of ['signin', 'refresh', 'validate', 'raw-jwt'] as const) {
   for (const state of ['archived', 'blocked', 'active', 'outage']) {

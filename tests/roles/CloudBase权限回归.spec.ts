@@ -148,22 +148,40 @@ for (const [key,state] of [['blocked',3],['pending',2],['archived',1]] as const)
     }
   });
 }
-test('R02 logout invalidates the old gateway token', async()=> {
+// 2026-11-02 owner decision: current device, 3600s signed-token residual
+// window accepted. The previous immediate-revocation failures stay in evidence.
+test('R02 current-device logout rejects refresh and preserves the other device within the approved 3600s window', async()=> {
   const ctx=await site('memberA');
+  const other=await site('memberA');
   try {
     // Login through the same server context; the raw credential is never emitted by assertions.
     const state=await ctx.storageState();
     const cookie=state.cookies.find(c=>c.name==='dydata-cloudbase-session');
     expect(Boolean(cookie)).toBe(true);
     // Next's Set-Cookie encoder wraps the session serializer's URI encoding.
-    const session=JSON.parse(decodeURIComponent(decodeURIComponent(cookie!.value))) as {accessToken:string};
+    const session=JSON.parse(decodeURIComponent(decodeURIComponent(cookie!.value))) as {accessToken:string;refreshToken:string;deviceId:string};
     expect(typeof session.accessToken,'valid synthetic session cookie').toBe('string');
+    const claims=JSON.parse(Buffer.from(session.accessToken.split('.')[1],'base64url').toString());
+    // Decoding measures the signed credential's window; the request below is
+    // still authorized and verified by the real gateway, not this decoding.
+    expect(claims.exp-claims.iat,'actual newly issued lifetime').toBe(3600);
+    const otherCookie=(await other.storageState()).cookies.find(c=>c.name==='dydata-cloudbase-session');
+    const otherSession=JSON.parse(decodeURIComponent(decodeURIComponent(otherCookie!.value))) as {deviceId:string};
+    expect(otherSession.deviceId).not.toBe(session.deviceId);
+    expect((await ctx.get('/api/cloudbase/auth/user')).status()).toBe(200);
     expect((await ctx.post('/api/cloudbase/auth/signout',{data:{}})).status()).toBe(200);
     expect((await ctx.get('/api/cloudbase/auth/user')).status()).toBe(401);
+    const refresh=await fetch(`${gateway}/auth/v1/token`,{method:'POST',headers:{'content-type':'application/json','x-device-id':session.deviceId},body:JSON.stringify({grant_type:'refresh_token',refresh_token:session.refreshToken})});
+    expect(refresh.status).toBe(400);
+    expect((await refresh.json()).error_code).toBe(4026);
+    expect((await other.get('/api/cloudbase/auth/user')).status()).toBe(200);
+    expect((await other.post('/api/cloudbase/auth/refresh',{data:{}})).status()).toBe(200);
     const r=await rest(session.accessToken,`profiles?id=eq.${identities().memberA.id}&select=id`);
     const data=await r.json();
-    expect(r.status>=400 || (Array.isArray(data)&&data.length===0),'old gateway credential denied after logout').toBe(true);
-  } finally {await ctx.dispose();}
+    expect(r.status,'platform old-access residual window, explicitly accepted').toBe(200);
+    expect(data.map((row:{id:string})=>row.id)).toEqual([identities().memberA.id]);
+    writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'r02-current-device.json'),JSON.stringify({approvedSeconds:3600,issuedAt:claims.iat,expiresAt:claims.exp,oldRefreshStatus:refresh.status,otherDevicePreserved:true,oldGatewayStatus:r.status,naturalExpiryObserved:false}),{mode:0o600});
+  } finally {await other.dispose();await ctx.dispose();}
 });
 for (const [table,id] of [['fulfillment_appeals',602],['content_observations',702],['sample_quality_issues',902]] as const) {
   test(`R03 ${table} cross-team reads and writes denied`, async()=> {
@@ -367,6 +385,25 @@ for(const role of ['memberA','adminA','ownerA']) {
     } finally {await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(id)}`);}
   });
 }
+test('B01 status writer denies user JWTs and cannot activate a pending synthetic identity', async()=> {
+  const actor=identities().memberA;
+  const pending=identities().pending;
+  const jwt=await token('memberA');
+  const body={p_subject:actor.id,p_status:3,p_project:readManifest().environment};
+  for(const credential of ['',jwt]) {
+    const response=await rest(credential,'rpc/cloudbase_set_auth_user_status','POST',body);
+    expect([401,403]).toContain(response.status);
+  }
+  expect(Number((await rows(`SELECT status FROM auth.users WHERE sub=${quote(actor.id)}`))[0].status)).toBe(1);
+  try {
+    await execute(`UPDATE auth.users SET status=2 WHERE sub=${quote(pending.id)}`);
+    const before=await rows(`SELECT md5(to_jsonb(u)::text) AS digest FROM auth.users u WHERE sub=${quote(pending.id)}`);
+    const response=await rest(process.env.CLOUDBASE_SERVICE_API_KEY!,'rpc/cloudbase_set_auth_user_status','POST',{p_subject:pending.id,p_status:1,p_project:readManifest().environment});
+    expect(response.status).toBe(403);
+    expect((await response.json()).code).toBe('DATABASE_42501');
+    expect(await rows(`SELECT md5(to_jsonb(u)::text) AS digest FROM auth.users u WHERE sub=${quote(pending.id)}`)).toEqual(before);
+  } finally {await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(pending.id)}`);}
+});
 test('@browser B01 owner archives and restores a synthetic member through member management', async({browser})=> {
   const target=identities().archived;const oldJwt=await token('archived');const oldSite=await site('archived');
   const ctx=await site('ownerA');const context=await browser.newContext({storageState:await ctx.storageState()});const page=await context.newPage();
