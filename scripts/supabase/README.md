@@ -30,3 +30,24 @@ node --test scripts/supabase/permission-batch-a.test.mjs
 演练 SQL 绑定的是**本地**快照，不可直接投产。生产执行前必须另获仅批次 A 的正向及必要回滚授权，读取新鲜只读快照并与已审阅定义、ACL及辅助依赖核对；漂移即停止。先备份恢复点，再从新鲜快照生成绑定包，不得把更换快照当作接受漂移。不在生产执行这些清理、角色写入或故障注入脚本。回滚将重新开放原风险权限，仅为故障恢复，不是安全终态。
 
 本轮证据：[隔离演练](../../docs/reference/2026-11-02-生产Supabase批次A隔离演练.md)。
+
+## 任意日期重验时间锁
+
+`replay-window-package.mjs` 复用原纯生成器，用运行时独立窗口验证正向、回滚的未到/允许/过期三态；固定批准时间只用于复算原包，不会被测试窗口替代。必须显式传入六项参数，输出为本地项目下**新的直接子目录**，拒绝已有目录、目录别名及生产输出目录。入口和每一步均断言Auth为0、99张业务表为空；原快照与历史文件只读。
+
+```sh
+node scripts/supabase/replay-window-package.mjs --local-dir /tmp/dydata-supabase-batch-a-<独立运行名> --output-dir /tmp/dydata-supabase-batch-a-<独立运行名>/replay-<新运行名> --before <原绑定快照> --after <原预计态> --approved-start <原批准开始时间> --approved-end <原批准结束时间>
+node --test scripts/supabase/permission-batch-a.test.mjs scripts/supabase/replay-window-package.test.mjs
+```
+
+输出包含固定时间正向/回滚包、SHA256、局部演练快照和逐项结果。批准时间已过期时，固定包必须拒绝；本地允许窗口仍须通过。此脚本无远端执行模式，不读取`.env`或生产连接凭据。
+
+## 排行榜兼容方案的本地非空演练
+
+`rehearse-leaderboard-compat.mjs` 仅接受 `/tmp/dydata-supabase-batch-a-rerun-YYYYMMDD` 自有项目，校验bootstrap收据、容器、localhost网关及99表/Auth初始为空。通过真实本地登录令牌和服务令牌，比较原版与仅服务端候选的非空结果；保留日期/补录/作废口径，验证员工与匿名直接调用被拒绝，再精确恢复函数与全部业务表摘要。新建2个合成身份及5条日报，结束精确清理；不读真实数据或改动远端。
+
+```sh
+DYDATA_SUPABASE_LEADERBOARD_LAB_DIR=/tmp/dydata-supabase-batch-a-rerun-YYYYMMDD node scripts/supabase/rehearse-leaderboard-compat.mjs
+```
+
+SQL和精确回滚仅输出到本次私有证据目录，**不能直接投产或用于CloudBase**；目标平台身份语义、各角色应用与页面非空结果需另外验收。批次B继续暂缓。11-02结果见[三项修复与验证](../../docs/reference/2026-11-02-迁移适配三项修复与验证.md)。
