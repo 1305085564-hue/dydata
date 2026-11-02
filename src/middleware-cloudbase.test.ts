@@ -119,6 +119,57 @@ test("CloudBase session handler consumes the already classified protected route"
   assert.match(source, /handleCloudBaseSession\(request, \{ pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute \}\)/);
 });
 
+// The root matrix below only sees matchers shaped like "<root>/:path*". A new
+// matcher of any other shape (the global catch-all is one) would be filtered out
+// and the matrix would stay green while the real coverage silently changed. This
+// table is the contract: every matcher entry is listed, and
+// isApplicationMiddlewarePath must return true for all of them except the single
+// global entry (which exists only to reach POST/Server Actions during a freeze).
+// Public-but-processed pages such as /login stay "processed": they skip auth, not
+// the middleware.
+const MATCHER_CLASSIFICATION: Record<string, "processed" | "global-only"> = {
+  "/": "processed",
+  "/dashboard/:path*": "processed",
+  "/admin/:path*": "processed",
+  "/violations/:path*": "processed",
+  "/content-tools/:path*": "processed",
+  "/douyin/:path*": "processed",
+  "/api/:path*": "processed",
+  "/login": "processed",
+  "/register": "processed",
+  "/forgot-password": "processed",
+  "/auth/logout": "processed",
+  "/((?!_next/static|_next/image|favicon.ico).*)": "global-only",
+};
+
+test("every matcher entry is classified and isApplicationMiddlewarePath agrees", async () => {
+  const { config } = await import("./middleware");
+  const { isApplicationMiddlewarePath } = await import("@/lib/cutover-maintenance");
+
+  assert.deepEqual(
+    [...config.matcher].sort(),
+    Object.keys(MATCHER_CLASSIFICATION).sort(),
+    "a matcher was added or removed without updating MATCHER_CLASSIFICATION",
+  );
+
+  for (const [pattern, kind] of Object.entries(MATCHER_CLASSIFICATION)) {
+    if (kind === "global-only") continue;
+    // Sample the pattern with a real path; the dynamic segment must not be what
+    // decides whether the path is treated as an application route.
+    const sample = pattern.replace("/:path*", "");
+    assert.equal(isApplicationMiddlewarePath(sample), true, `${pattern} -> ${sample}`);
+    // "/" is a leaf page, not a prefix; only pattern roots have children.
+    if (pattern.endsWith("/:path*")) {
+      assert.equal(isApplicationMiddlewarePath(`${sample}/child`), true, `${pattern} -> ${sample}/child`);
+    }
+  }
+
+  // The global entry must not widen the authenticated route set beyond the roots
+  // the matrix above already covers.
+  assert.equal(isApplicationMiddlewarePath("/_next/static/chunk.js"), false);
+  assert.equal(isApplicationMiddlewarePath("/some-unclassified-page"), false);
+});
+
 // Exercise the actual middleware for every statically matched app root; adding a
 // matcher without classifying it must fail this matrix instead of silently passing.
 test("all protected matcher roots share CloudBase checks for root and child paths", async () => {
