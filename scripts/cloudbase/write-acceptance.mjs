@@ -157,8 +157,9 @@ async function probeHelpers(jwt,active){
   return results;
 }
 async function setFixtureAuthStatus(status){
-  const result=await execute(`UPDATE auth.users SET status=${status} WHERE sub=${quote(uuid(6))} AND username LIKE 'dydata-permission-v2-%' RETURNING status::text AS status`);
-  fail(result.rows.length===1&&result.rows[0].status===String(status),'Synthetic Auth status update did not affect the exact actor');
+  record('authStatusAttempts',{status,startedAt:Date.now()});
+  const result=await execute(`WITH changed AS(UPDATE auth.users SET status=${status} WHERE sub=${quote(uuid(6))} AND username LIKE 'dydata-permission-v2-%' RETURNING status)SELECT count(*)::text AS affected,min(status)::text AS status FROM changed`);
+  fail(result.rows.length===1&&result.rows[0].affected==='1'&&result.rows[0].status===String(status),'Synthetic Auth status update did not affect the exact actor');
   const readback=await execute(`SELECT status::text AS status FROM auth.users WHERE sub=${quote(uuid(6))}`);
   fail(readback.rows.length===1&&readback.rows[0].status===String(status),'Synthetic Auth status readback mismatch');
   record('authStatusReceipts',{status,writeRequestId:result.requestId,readRequestId:readback.requestId});
