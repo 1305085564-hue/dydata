@@ -255,6 +255,7 @@ test("执行导入：外部选题真实入库，来源类型与外部成绩独�
     { success: result.successCount, skipped: result.skippedCount, failed: result.failedCount },
     { success: 1, skipped: 0, failed: 0 },
   );
+  assert.equal(insertedSubTopics.length, 1, "合成授权正对照应只命中一次本地写入桩");
   const inserted = insertedSubTopics.find((row) => row.title === "外部干货一");
   assert.ok(inserted);
   assert.equal(inserted.source_type, "external");

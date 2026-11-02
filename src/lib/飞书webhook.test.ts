@@ -12,7 +12,9 @@ function okResponse() {
 
 test("发送成功返回 ok", async () => {
   let capturedTimeout: number | undefined;
+  let fetchCalls = 0;
   const stub: FetchStub = (async (_url, _options, timeoutMs) => {
+    fetchCalls += 1;
     capturedTimeout = timeoutMs;
     return okResponse();
   }) as FetchStub;
@@ -23,18 +25,25 @@ test("发送成功返回 ok", async () => {
   );
 
   assert.deepEqual(result, { ok: true });
+  assert.equal(fetchCalls, 1);
   assert.equal(capturedTimeout, 10_000);
 });
 
 test("缺 FEISHU_WEBHOOK_URL 时返回 not_configured 且不发起请求", async () => {
   const original = process.env.FEISHU_WEBHOOK_URL;
+  let fetchCalls = 0;
+  const stub: FetchStub = (async () => {
+    fetchCalls += 1;
+    return okResponse();
+  }) as FetchStub;
   delete process.env.FEISHU_WEBHOOK_URL;
   try {
-    const result = await sendFeishuWebhook({}, {});
+    const result = await sendFeishuWebhook({}, { fetchImpl: stub });
     assert.equal(result.ok, false);
     if (!result.ok) {
       assert.equal(result.reason, "not_configured");
     }
+    assert.equal(fetchCalls, 0);
   } finally {
     if (original !== undefined) process.env.FEISHU_WEBHOOK_URL = original;
   }

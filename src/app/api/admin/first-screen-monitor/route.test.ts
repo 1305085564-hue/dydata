@@ -4,6 +4,40 @@ import { NextRequest } from "next/server";
 
 import { buildFirstScreenMonitorResponse } from "./route";
 
+test("没有有效 cron 凭据时，飞书告警边界未命中", async () => {
+  const previousCronSecret = process.env.CRON_SECRET;
+  const previousRemindSecret = process.env.REMIND_SECRET;
+  process.env.CRON_SECRET = "b03-local-cron-secret";
+  process.env.REMIND_SECRET = "b03-local-cron-secret";
+
+  let adminClientCalls = 0;
+  let outboundStubCalls = 0;
+  try {
+    const response = await buildFirstScreenMonitorResponse(
+      new NextRequest("http://localhost/api/admin/first-screen-monitor?secret=wrong-secret"),
+      {
+        createAdminClient: () => {
+          adminClientCalls += 1;
+          return { rpc: async () => ({ data: [], error: null }) } as never;
+        },
+        sendFeishuAlert: async () => {
+          outboundStubCalls += 1;
+          return { ok: true } as const;
+        },
+      },
+    );
+
+    assert.equal(response.status, 401);
+    assert.equal(adminClientCalls, 0);
+    assert.equal(outboundStubCalls, 0);
+  } finally {
+    if (previousCronSecret === undefined) delete process.env.CRON_SECRET;
+    else process.env.CRON_SECRET = previousCronSecret;
+    if (previousRemindSecret === undefined) delete process.env.REMIND_SECRET;
+    else process.env.REMIND_SECRET = previousRemindSecret;
+  }
+});
+
 test("first-screen monitor 遇到连续 3 次超阈值会发告警", async () => {
   process.env.CRON_SECRET = "cron-secret";
   process.env.REMIND_SECRET = "cron-secret";

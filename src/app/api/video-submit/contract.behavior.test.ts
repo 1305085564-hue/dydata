@@ -84,3 +84,43 @@ test("video-submit 鉴权依赖抛错时不静默成功且只记录一条 thrown
   assert.equal(detail.primaryStage, "auth");
   assert.deepEqual(detail.stages, ["auth"]);
 });
+
+for (const membership of ["unauthenticated", "archived"] as const) {
+  test(`B03 作品提交 ${membership} 在外部 AI 和写入前拒绝`, async () => {
+    const counts = { admin: 0, reads: 0, writes: 0, outbound: 0 };
+    const previousFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      counts.outbound += 1;
+      throw new Error("B03 拒绝场景不得发生外部请求");
+    };
+    const deps: VideoSubmitDeps = {
+      createClient: async () => ({
+        auth: { getUser: async () => ({ data: { user: membership === "unauthenticated" ? null : { id: "b03-synthetic" } } }) },
+        from(table: string) {
+          counts.reads += 1;
+          assert.equal(table, "profiles");
+          const query = {
+            select() { return query; },
+            eq() { return query; },
+            single: async () => ({ data: { name: "合成归档成员", team_id: "team-synthetic", membership_status: "archived" }, error: null }),
+            insert() { counts.writes += 1; throw new Error("不得写入"); },
+            update() { counts.writes += 1; throw new Error("不得写入"); },
+          };
+          return query;
+        },
+      }) as never,
+      createAdminClient: () => {
+        counts.admin += 1;
+        throw new Error("拒绝场景不应创建管理客户端");
+      },
+    };
+    try {
+      const response = await buildVideoSubmitResponse(makeRequest(), deps);
+      assert.equal(response.status, membership === "unauthenticated" ? 401 : 403);
+      assert.equal((await response.json()).error, membership === "unauthenticated" ? "未登录" : "已归档账号不能提交视频");
+      assert.deepEqual(counts, { admin: 0, reads: membership === "unauthenticated" ? 0 : 1, writes: 0, outbound: 0 });
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+}

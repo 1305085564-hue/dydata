@@ -3,7 +3,7 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import { buildAiConfigResponse, defaultAiConfigDeps, POST as postAiConfig } from "./route";
-import { buildSyncModelsResponse, syncModelsForKey } from "./sync-models/route";
+import { buildSyncModelsResponse, defaultSyncModelsDeps, POST as postSyncModels, syncModelsForKey } from "./sync-models/route";
 import { buildCheckDependenciesResponse } from "./check-dependencies/route";
 import { __internal as aiClientInternal } from "@/lib/ai/client";
 import { computeAvailability } from "@/lib/ai-config/availability";
@@ -224,6 +224,30 @@ test("ai-config 真 handler：鉴权失败返回明确失败和完整分层字�
   }
 });
 
+test("sync-models 无系统权限时不触达外部模型服务", async () => {
+  const originalRequireSystemActor = defaultSyncModelsDeps.requireSystemActor;
+  const originalFetch = globalThis.fetch;
+  let outboundStubCalls = 0;
+  defaultSyncModelsDeps.requireSystemActor = async () => ({ error: "无权限", status: 403 }) as never;
+  globalThis.fetch = async () => {
+    outboundStubCalls += 1;
+    return Response.json({ data: [{ id: "must-not-be-requested" }] });
+  };
+
+  try {
+    const response = await postSyncModels(new NextRequest("http://localhost/api/admin/ai-config/sync-models", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ keyId: "synthetic-key" }),
+    }));
+    assert.equal(response.status, 403);
+    assert.equal(outboundStubCalls, 0);
+  } finally {
+    defaultSyncModelsDeps.requireSystemActor = originalRequireSystemActor;
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("ai-config build handler：依赖失败不静默成功", async () => {
   const response = await buildAiConfigResponse(
     request({ action: "delete", entity: "key", data: { id: "k" } }),
@@ -287,6 +311,33 @@ test("服务端模型探测只返回模型清单，不把临时 API Key 写入�
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).modelIds, ["model-a", "model-b"]);
     assert.equal(db.tables.ai_provider_keys[0].api_key, "secret");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("sync-models 合成授权正对照只命中本地 provider stub", async () => {
+  const db = configTables();
+  const previousFetch = globalThis.fetch;
+  let outboundStubCalls = 0;
+  globalThis.fetch = async (input) => {
+    outboundStubCalls += 1;
+    assert.equal(String(input), "https://provider.test/models");
+    return Response.json({ data: [{ id: "synthetic-model" }] });
+  };
+
+  try {
+    const response = await buildSyncModelsResponse(
+      new NextRequest("http://localhost/api/admin/ai-config/sync-models", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ keyId: "key-1" }),
+      }),
+      actor(db),
+    );
+    assert.equal(response.status, 200);
+    assert.equal(outboundStubCalls, 1);
+    assert.equal(db.tables.ai_provider_keys[0].available_models instanceof Array, true);
   } finally {
     globalThis.fetch = previousFetch;
   }
