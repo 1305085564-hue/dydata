@@ -83,6 +83,8 @@ export async function setup() {
 export async function cleanup() {
   if (!existsSync(manifestPath())) throw new Error('Missing recovery manifest');
   const manifest = readManifest();
+  const {recoverWriteFixtures}=await import('./write-acceptance.mjs');
+  await recoverWriteFixtures();
   const ids = Object.values(manifest.users).map(u=>quote(u.id)).join(',');
   const conflict = await execute(`SELECT count(*) AS conflicts FROM auth.users WHERE sub IN (${ids}) AND (project IS DISTINCT FROM ${quote(ENV_ID)} OR username NOT LIKE '${PREFIX}-%')`);
   if (Number(conflict.rows[0].conflicts)) throw new Error('Ownership changed; retain manifest');

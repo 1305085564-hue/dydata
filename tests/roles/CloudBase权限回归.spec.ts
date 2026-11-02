@@ -99,6 +99,37 @@ test('B05 blocked old JWT cannot write owned fixtures or execute protected RPCs'
     expect(evidence.summary.privateHelpersWithoutDirectGatewayEvidence).toBe(4);
   }finally{await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(actorId)}`);}
 });
+test('B05 complete table writes and private helpers reject inactive old JWTs for all three roles',async()=>{
+  test.setTimeout(1_200_000);
+  const {collectCompleteTableWriteEvidence}=await import('../../scripts/cloudbase/write-acceptance.mjs');
+  const actorId=identities().blocked.id;
+  const results=[];
+  for(const role of ['member','admin','company_owner'] as const){
+    for(const status of ['blocked','pending','archived'] as const){
+      const state={role,authStatus:status==='blocked'?3:status==='pending'?2:1,membershipStatus:status==='archived'?'archived':'active'};
+      try{
+        await execute(`UPDATE public.profiles SET role=${quote(role==='company_owner'?'owner':role)},company_role=${quote(role)} WHERE id=${quote(actorId)}`);
+        const jwt=await token('blocked');
+        await execute(`UPDATE auth.users SET status=${state.authStatus} WHERE sub=${quote(actorId)}`);
+        if(status==='archived')await archivedFixture(actorId,true);
+        const evidence=await collectCompleteTableWriteEvidence({jwt,state,activeControl:results.length===0});
+        writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),`complete-write-${role}-${status}.json`),JSON.stringify(evidence),{mode:0o600});
+        expect(evidence.summary.tables).toBe(80);
+        expect(evidence.summary.denied,'80 tables x INSERT/UPDATE/DELETE must all have real denial and unchanged data').toBe(240);
+        expect(evidence.summary.privateHelpers).toBe(4);
+        expect(evidence.summary.publicRpcs).toBe(38);
+        results.push(evidence);
+        console.log(`[B05] ${role}/${status}: 240 table denials and 4 private helper denials; exact cleanup passed`);
+      }finally{
+        await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(actorId)}`);
+        if(status==='archived')await archivedFixture(actorId,false);
+        await execute(`UPDATE public.profiles SET role='member',company_role='member' WHERE id=${quote(actorId)}`);
+      }
+    }
+  }
+  expect(results).toHaveLength(9);
+  writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'complete-write-evidence.json'),JSON.stringify({scenarios:results.map(r=>({state:r.state,summary:r.summary})),tableDenials:results.reduce((n,r)=>n+r.summary.denied,0),privateHelperDenials:results.reduce((n,r)=>n+r.summary.privateHelpers,0),publicRpcDenials:results.reduce((n,r)=>n+r.summary.publicRpcs,0)}),{mode:0o600});
+});
 for (const [key,state] of [['blocked',3],['pending',2],['archived',1]] as const) {
   test(`R01/R09 ${key} old JWT and Cookie lose access`, async()=> {
     const t=await token(key); const ctx=await site(key); const id=identities()[key].id;
