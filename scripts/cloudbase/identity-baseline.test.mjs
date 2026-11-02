@@ -27,3 +27,10 @@ test('management activity requires exact run, environment, successful request an
  assert.equal(managementActivityFromLog(log,{environmentId:'isolated',setupAt:start-1,baseline:before})[0].subject,'builtin-admin');
  for(const patch of [{success:false},{environmentId:'other'},{startedAt:start-2000},{requestId:''},{operation:'Other'}])assert.equal(managementActivityFromLog(`[cloudbase-management] ${JSON.stringify({...receipt,...patch})}`,{environmentId:'isolated',setupAt:start-1,baseline:before}).length,0);
 });
+test('platform response time attributes its own login despite measured client-clock skew',()=>{
+ const after=snapshot([row({lastLogin:'2026-11-01T20:00:01.300Z'})]);
+ const receipt=event({startedAt:start,finishedAt:start+1185,serverDate:'Sun, 01 Nov 2026 20:00:01 GMT'});
+ assert.equal(assertIdentityBaseline(snapshot(),after,[receipt]).activityChanges,1);
+ assert.throws(()=>assertIdentityBaseline(snapshot(),after,[{...receipt,serverDate:'invalid'}]),/Unattributed activity/);
+ assert.throws(()=>assertIdentityBaseline(snapshot(),after,[{...receipt,serverDate:'Sun, 01 Nov 2026 20:00:03 GMT'}]),/Unattributed activity/);
+});

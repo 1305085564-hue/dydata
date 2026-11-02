@@ -19,7 +19,14 @@ export function assertIdentityBaseline(before, after, events=[]) {
     if (!old || old.subject !== row.subject || old.builtin !== row.builtin || old.protectedDigest !== row.protectedDigest || old.roleDigest !== row.roleDigest) throw new Error('Protected identity fields changed');
     if (old.lastLogin === row.lastLogin) continue;
     const changedAt=Date.parse(row.lastLogin);
-    const matches=events.filter(event=>event.success === true && event.subject === row.subject && typeof event.requestId === 'string' && event.requestId.length>0 && ['password-signin','ModifyUser'].includes(event.operation) && Number.isFinite(event.startedAt) && Number.isFinite(event.finishedAt) && event.startedAt >= before.capturedAt && event.finishedAt >= event.startedAt && changedAt >= event.startedAt && changedAt <= event.finishedAt);
+    const matches=events.filter(event=>{
+      if(event.success !== true || event.subject !== row.subject || typeof event.requestId !== 'string' || !event.requestId || !['password-signin','ModifyUser'].includes(event.operation) || !Number.isFinite(event.startedAt) || !Number.isFinite(event.finishedAt) || event.startedAt<before.capturedAt || event.finishedAt<event.startedAt || event.finishedAt-event.startedAt>30_000)return false;
+      if(event.serverDate===undefined)return changedAt>=event.startedAt && changedAt<=event.finishedAt;
+      // HTTP Date is the platform clock, with one-second resolution. Bound its
+      // interval by the measured duration of this request, not an arbitrary skew.
+      const serverEnd=Date.parse(event.serverDate);
+      return Number.isFinite(serverEnd) && changedAt>=serverEnd-(event.finishedAt-event.startedAt) && changedAt<serverEnd+1000;
+    });
     if (!Number.isFinite(changedAt) || matches.length !== 1) throw new Error('Unattributed activity change; preserve recovery manifest');
     const event=matches[0];
     attributedActivities.push({subject:row.subject,field:'last_login',requestId:event.requestId,operation:event.operation});

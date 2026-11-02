@@ -28,6 +28,7 @@ interface RpcArgument {
 }
 
 interface RpcCatalogRow extends SqlRow {
+  schema_name?: unknown;
   function_name?: unknown;
   signature?: unknown;
   arguments?: unknown;
@@ -49,6 +50,7 @@ interface TableEvidence {
 }
 
 interface RpcEvidence {
+  schema: string;
   name: string;
   signature: string;
   argumentTypes: string[];
@@ -68,7 +70,7 @@ export interface InactiveWriteEvidence {
     complete: boolean;
     entries: TableEvidence[];
   };
-  protectedRpcs: {
+  protectedFunctions: {
     expected: 42;
     observed: number;
     complete: boolean;
@@ -79,6 +81,7 @@ export interface InactiveWriteEvidence {
     blockedTableOperations: number;
     explicitRpcDenials: number;
     blockedRpcs: number;
+    privateHelpersWithoutDirectGatewayEvidence: number;
   };
 }
 
@@ -415,7 +418,7 @@ function tableCatalogSql(): string {
 }
 
 function rpcCatalogSql(): string {
-  return `SELECT p.proname AS function_name,
+  return `SELECT n.nspname AS schema_name,p.proname AS function_name,
       p.oid::regprocedure::text AS signature,
       COALESCE((
         SELECT jsonb_agg(jsonb_build_object(
@@ -427,7 +430,7 @@ function rpcCatalogSql(): string {
       ), '[]'::jsonb) AS arguments
     FROM pg_catalog.pg_proc p
     JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
+    WHERE n.nspname IN ('public','private')
       AND p.prokind = 'f'
       AND p.prorettype <> 'pg_catalog.trigger'::regtype
       AND p.prosecdef IS TRUE
@@ -689,15 +692,17 @@ async function testRpc(
 ): Promise<RpcEvidence> {
   const name = scalarString(row.function_name);
   const signature = scalarString(row.signature);
+  const schema=scalarString(row.schema_name)??'unknown';
   if (!name || !/^[a-z][a-z0-9_]*$/.test(name) || !signature) {
-    return { name: name ?? "unknown", signature: signature ?? "unknown", argumentTypes: [], status: "BLOCKED", reason: "catalog row has no safe function name/signature" };
+    return { schema,name: name ?? "unknown", signature: signature ?? "unknown", argumentTypes: [], status: "BLOCKED", reason: "catalog row has no safe function name/signature" };
   }
 
   const argumentsList = parseArguments(row.arguments);
   if (!argumentsList || argumentsList.some((argument) => !argument.name)
     || new Set(argumentsList.map((argument) => argument.name)).size !== argumentsList.length) {
-    return { name, signature, argumentTypes: argumentsList?.map((argument) => argument.type) ?? [], status: "BLOCKED", reason: "RPC input argument names are missing or ambiguous" };
+    return { schema,name, signature, argumentTypes: argumentsList?.map((argument) => argument.type) ?? [], status: "BLOCKED", reason: "RPC input argument names are missing or ambiguous" };
   }
+  if(schema!=='public')return {schema,name,signature,argumentTypes:argumentsList.map(argument=>argument.type),status:'BLOCKED',reason:'private-schema-not-exposed-as-RPC; indirect helper execution not isolated'};
   const args = Object.fromEntries(argumentsList.map((argument) => [argument.name!, null]));
 
   let response: Response;
@@ -722,6 +727,7 @@ async function testRpc(
     throw new Error(`B05 protected RPC ${name} returned success; stop and let fixture cleanup run`);
   }
   return {
+    schema,
     name,
     signature,
     argumentTypes: argumentsList.map((argument) => argument.type),
@@ -800,7 +806,8 @@ export async function collectInactiveWriteEvidence(
   const explicitTableDenials = tableProbes.filter((probe) => probe.status === "DENIED").length;
   const blockedTableOperations = tableProbes.filter((probe) => probe.status === "BLOCKED").length;
   const explicitRpcDenials = rpcEvidence.filter((probe) => probe.status === "DENIED").length;
-  const blockedRpcs = rpcEvidence.filter((probe) => probe.status === "BLOCKED").length;
+  const blockedRpcs = rpcEvidence.filter((probe) => probe.schema==='public' && probe.status === "BLOCKED").length;
+  const privateHelpersWithoutDirectGatewayEvidence=rpcEvidence.filter(probe=>probe.schema==='private').length;
 
   return {
     source: "old-jwt-for-blocked-synthetic-user",
@@ -811,7 +818,7 @@ export async function collectInactiveWriteEvidence(
       complete: tables.length === EXPECTED_TABLE_COUNT,
       entries: tables,
     },
-    protectedRpcs: {
+    protectedFunctions: {
       expected: EXPECTED_RPC_COUNT,
       observed: rpcEvidence.length,
       complete: rpcEvidence.length === EXPECTED_RPC_COUNT,
@@ -822,6 +829,7 @@ export async function collectInactiveWriteEvidence(
       blockedTableOperations,
       explicitRpcDenials,
       blockedRpcs,
+      privateHelpersWithoutDirectGatewayEvidence,
     },
   };
 }

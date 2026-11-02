@@ -72,7 +72,8 @@ test('baseline attributes own login activity and still rejects real protected-fi
   const response=await fetch(`${gateway}/auth/v1/signin`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:actor.username,password:actor.password})});
   const finishedAt=Date.now();expect(response.status).toBe(200);await response.arrayBuffer();
   const after=await baseline({includeFixtures:true});
-  const event={operation:'password-signin',subject:actor.id,startedAt,finishedAt,success:true,requestId:response.headers.get('x-request-id')??`owned-http-${randomUUID()}`};
+  const event={operation:'password-signin',subject:actor.id,startedAt,finishedAt,serverDate:response.headers.get('date'),success:true,requestId:response.headers.get('x-request-id')??`owned-http-${randomUUID()}`};
+  writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'baseline-live-attempt.json'),JSON.stringify({before,after,event}),{mode:0o600});
   const positive=assertIdentityBaseline(before,after,[event]);
   expect(positive.protectedDifferences).toBe(0);expect(positive.activityChanges).toBe(1);
   expect(()=>assertIdentityBaseline(before,after,[])).toThrow(/Unattributed activity/);
@@ -92,9 +93,10 @@ test('B05 blocked old JWT cannot write owned fixtures or execute protected RPCs'
     writeFileSync(join(dirname(process.env.DYDATA_GATE_FIXTURES_FILE!),'inactive-write-evidence.json'),JSON.stringify(evidence),{mode:0o600});
     expect(evidence.tableDirectory.complete,'all currently writable tables must be inventoried').toBe(true);
     expect(evidence.summary.explicitTableDenials).toBeGreaterThan(0);
-    expect(evidence.protectedRpcs.complete,'all 42 protected RPC signatures must be inventoried').toBe(true);
+    expect(evidence.protectedFunctions.complete,'all 42 protected functions must be inventoried, including private helpers').toBe(true);
     expect(evidence.summary.blockedRpcs,'parameter errors are not permission evidence').toBe(0);
-    expect(evidence.summary.explicitRpcDenials).toBe(42);
+    expect(evidence.summary.explicitRpcDenials).toBe(38);
+    expect(evidence.summary.privateHelpersWithoutDirectGatewayEvidence).toBe(4);
   }finally{await execute(`UPDATE auth.users SET status=1 WHERE sub=${quote(actorId)}`);}
 });
 for (const [key,state] of [['blocked',3],['pending',2],['archived',1]] as const) {
