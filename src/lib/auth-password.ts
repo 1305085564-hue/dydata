@@ -1,4 +1,4 @@
-export const FORGOT_PASSWORD_SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送重置邮件，请去邮箱查看";
+export const PASSWORD_RESET_UNAVAILABLE_MESSAGE = "修改密码渠道暂时还没启用，请联系管理员为你重置密码。";
 
 type LoginPathOptions = {
   registered?: "1";
@@ -10,31 +10,9 @@ export function getLoginNotice(params: { registered?: string; reset?: string; fr
   if (params.archived === "1") return "账号已归档，请联系 owner 恢复";
   if (params.registered === "1") return "注册成功，请登录";
   if (params.reset === "success") return "密码已重置，请重新登录";
-  if (params.reset === "expired") return "重置链接已失效，请重新发送";
-  if (params.reset === "pkce") return "重置链接只能在发送时的设备上打开，请换回原设备或重新发送";
+  if (params.reset === "expired") return PASSWORD_RESET_UNAVAILABLE_MESSAGE;
+  if (params.reset === "pkce") return PASSWORD_RESET_UNAVAILABLE_MESSAGE;
   return null;
-}
-
-export function getResetPasswordErrorMessage(message: string | null | undefined) {
-  if (!message) return "密码重置失败，请稍后重试";
-
-  const normalized = message.toLowerCase();
-
-  if (
-    normalized.includes("session missing") ||
-    normalized.includes("invalid") ||
-    normalized.includes("expired") ||
-    normalized.includes("code verifier") ||
-    normalized.includes("auth session missing")
-  ) {
-    return "重置链接已失效，请重新发送";
-  }
-
-  if (normalized.includes("at least 6")) {
-    return "密码至少需要 6 位。";
-  }
-
-  return "密码重置失败，请稍后重试";
 }
 
 export function getLoginErrorMessage(message: string | null | undefined) {
@@ -72,20 +50,6 @@ export function getLoginErrorMessage(message: string | null | undefined) {
   }
 
   return "登录失败，请稍后重试";
-}
-
-export function getForgotPasswordErrorMessage(message: string | null | undefined) {
-  const normalized = message?.toLowerCase() ?? "";
-
-  if (normalized.includes("rate limit") || normalized.includes("too many requests")) {
-    return "发送过于频繁，请稍后再试";
-  }
-
-  if (normalized.includes("fetch") || normalized.includes("network")) {
-    return "邮件发送失败，请检查网络后重试";
-  }
-
-  return "邮件发送失败，请稍后重试";
 }
 
 export function sanitizeNextPath(next: string | null | undefined, fallback = "/login") {
@@ -127,10 +91,4 @@ export function buildLoginPath(next: string | null | undefined, options: LoginPa
 
   const query = params.toString();
   return query ? `/login?${query}` : "/login";
-}
-
-export function buildPasswordRecoveryRedirectUrl(origin: string, next: string | null | undefined) {
-  const callbackUrl = new URL("/auth/callback", origin);
-  callbackUrl.searchParams.set("next", buildAuthPathWithNext("/reset-password", next));
-  return callbackUrl.toString();
 }

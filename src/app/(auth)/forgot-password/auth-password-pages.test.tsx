@@ -4,16 +4,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   buildLoginPath,
-  buildPasswordRecoveryRedirectUrl,
-  getForgotPasswordErrorMessage,
   getLoginErrorMessage,
   sanitizeNextPath,
 } from "@/lib/auth-password";
-import { ForgotPasswordForm } from "./forgot-password-form";
-import {
-  ResetPasswordErrorNotice,
-  ResetPasswordForm,
-} from "../reset-password/reset-password-form";
+import ForgotPasswordPage from "./page";
+import ResetPasswordPage from "../reset-password/page";
 
 test("sanitizeNextPath 只允许站内路径", () => {
   assert.equal(sanitizeNextPath("/reset-password"), "/reset-password");
@@ -28,43 +23,32 @@ test("认证关联页面会保留安全的 next 回跳地址", () => {
     "/login?reset=success&next=%2Fdashboard%3Ftab%3Dweekly",
   );
   assert.equal(buildLoginPath("https://evil.example"), "/login");
-  assert.equal(
-    buildPasswordRecoveryRedirectUrl("https://dydata.cc", "/dashboard?tab=weekly"),
-    "https://dydata.cc/auth/callback?next=%2Freset-password%3Fnext%3D%252Fdashboard%253Ftab%253Dweekly",
-  );
 });
 
 test("认证服务英文错误会收敛为中文提示", () => {
   assert.equal(getLoginErrorMessage("Invalid login credentials"), "邮箱或密码不正确");
   assert.equal(getLoginErrorMessage("rate limit exceeded"), "尝试次数过多，请稍后再试");
-  assert.equal(getForgotPasswordErrorMessage("Failed to fetch"), "邮件发送失败，请检查网络后重试");
-  assert.equal(getForgotPasswordErrorMessage("other error"), "邮件发送失败，请稍后重试");
 });
 
-test("忘记密码表单包含邮箱输入与返回登录入口", () => {
-  const html = renderToStaticMarkup(<ForgotPasswordForm />);
+for (const [path, Page] of [["forgot-password", ForgotPasswordPage], ["reset-password", ResetPasswordPage]] as const) {
+  test(`${path} 仅显示管理员提示，没有邮箱或密码表单`, async () => {
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: "/dashboard?tab=weekly" }) }));
+    assert.match(html, /修改密码渠道暂时还没启用，请联系管理员为你重置密码。/);
+    assert.match(html, /role="alert"/);
+    assert.match(html, /href="\/login\?next=%2Fdashboard%3Ftab%3Dweekly"/);
+    assert.doesNotMatch(html, /<form|<input|type="submit"|发送重置邮件|正在验证/);
+  });
+  test(`${path} 不保留外部回跳地址`, async () => {
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: "https://evil.example" }) }));
+    assert.match(html, /href="\/login"/);
+    assert.doesNotMatch(html, /evil.example/);
+  });
+}
 
-  assert.match(html, /发送重置邮件/);
-  assert.match(html, /name="email"/);
-  assert.match(html, /href="\/login"/);
-});
-
-test("重置密码表单包含两次密码输入与确认按钮", () => {
-  const html = renderToStaticMarkup(<ResetPasswordForm />);
-
-  assert.match(html, /正在验证重置链接/);
-});
-
-test("重置密码失败提示包含清晰错误和重新发送入口", () => {
-  const html = renderToStaticMarkup(
-    <ResetPasswordErrorNotice
-      href="/forgot-password"
-      message="重置链接无效或已过期，请重新发送重置邮件"
-    />,
-  );
-
-  assert.match(html, /role="alert"/);
-  assert.match(html, /重置链接无效或已过期，请重新发送重置邮件/);
-  assert.match(html, /href="\/forgot-password"/);
-  assert.match(html, /重新发送重置邮件/);
-});
+for (const Page of [ForgotPasswordPage, ResetPasswordPage]) {
+  test(`${Page.name} 重复 next 参数安全回到登录`, async () => {
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: ["/dashboard", "https://evil.example"] }) }));
+    assert.match(html, /href="\/login"/);
+    assert.doesNotMatch(html, /evil.example/);
+  });
+}

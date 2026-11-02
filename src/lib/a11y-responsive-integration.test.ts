@@ -146,13 +146,13 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
 test("认证页小号状态文字使用 AA 对比色", () => {
   const login = readSource("src/app/(auth)/login/login-form.tsx");
   const register = readSource("src/app/(auth)/register/register-form.tsx");
-  const forgot = readSource("src/app/(auth)/forgot-password/forgot-password-form.tsx");
+  const forgot = readSource("src/app/(auth)/_components/password-reset-notice.tsx");
   assert.match(login, /text-status-warning/);
   assert.doesNotMatch(login, /dark:/);
   assert.match(register, /barColor: "#B98A54", textColor: "#B98A54"/);
   assert.match(register, /barColor: "#43718E", textColor: "#43718E"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#6FAA7D"/);
-  assert.match(forgot, /bg-status-success\/10[^"]*text-\[#141413\]/);
+  assert.match(forgot, /<Alert>\{PASSWORD_RESET_UNAVAILABLE_MESSAGE\}<\/Alert>/);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {

@@ -6,10 +6,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LoginForm } from "./login-form";
 import { getPostLoginRedirectPath } from "./post-login-redirect";
 import {
-  FORGOT_PASSWORD_SUCCESS_MESSAGE,
+  PASSWORD_RESET_UNAVAILABLE_MESSAGE,
   getLoginErrorMessage,
   getLoginNotice,
-  getResetPasswordErrorMessage,
 } from "@/lib/auth-password";
 
 const loginPageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
@@ -62,7 +61,7 @@ test("登录成功后优先回到安全的 next 路径", () => {
 test("登录页提示文案会按 query 参数返回", () => {
   assert.equal(getLoginNotice({ registered: "1" }), "注册成功，请登录");
   assert.equal(getLoginNotice({ reset: "success" }), "密码已重置，请重新登录");
-  assert.equal(getLoginNotice({ reset: "expired" }), "重置链接已失效，请重新发送");
+  assert.equal(getLoginNotice({ reset: "expired" }), PASSWORD_RESET_UNAVAILABLE_MESSAGE);
   assert.equal(getLoginNotice({ archived: "1" }), "账号已归档，请联系 owner 恢复");
   assert.equal(getLoginNotice({}), null);
 });
@@ -81,15 +80,13 @@ test("登录成功后仍会检查 membership_status，并登出归档账号", ()
   assert.match(loginPageSource, /supabase\.auth\.signOut\(\)/);
 });
 
-test("忘记密码成功提示统一隐藏邮箱是否存在", () => {
+test("忘记密码入口明确提示联系管理员，不承诺已发送邮件", () => {
   assert.equal(
-    FORGOT_PASSWORD_SUCCESS_MESSAGE,
-    "如果该邮箱已注册，我们已发送重置邮件，请去邮箱查看",
+    PASSWORD_RESET_UNAVAILABLE_MESSAGE,
+    "修改密码渠道暂时还没启用，请联系管理员为你重置密码。",
   );
 });
 
-test("重置密码页错误文案会收敛为用户可读提示", () => {
-  assert.equal(getResetPasswordErrorMessage("Auth session missing!"), "重置链接已失效，请重新发送");
-  assert.equal(getResetPasswordErrorMessage("Password should be at least 6 characters."), "密码至少需要 6 位。");
-  assert.equal(getResetPasswordErrorMessage("other"), "密码重置失败，请稍后重试");
+test("旧密码恢复链接的登录提示同样引导联系管理员", () => {
+  assert.equal(getLoginNotice({ reset: "pkce" }), PASSWORD_RESET_UNAVAILABLE_MESSAGE);
 });
