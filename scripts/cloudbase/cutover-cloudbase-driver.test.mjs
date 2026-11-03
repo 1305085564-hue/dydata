@@ -48,6 +48,7 @@ test('receipt lookup accepts explicit empty rows, rejects invalid responses, and
     ['lowercase SDK error with empty rows',{RequestId:'receipt-lowercase-error',error:{message:'lookup failed'},Columns:['sha256'],Rows:[]}],
     ['ok=false with empty rows',{RequestId:'receipt-not-ok',ok:false,Columns:['sha256'],Rows:[]}],
     ['success=false with empty rows',{RequestId:'receipt-not-successful',success:false,Columns:['sha256'],Rows:[]}],
+    ['isError=true with empty rows',{RequestId:'receipt-is-error',isError:true,Columns:['sha256'],Rows:[]}],
     ['missing Rows',{RequestId:'receipt-missing-rows',Columns:['sha256']}],
     ['missing Columns',{RequestId:'receipt-missing-columns',Rows:[]}],
     ['null Columns',{RequestId:'receipt-null-columns',Columns:null,Rows:[]}],
@@ -190,4 +191,48 @@ test('driver blocks an API body whose escaping exceeds budget before any write',
  const manager={database:{async executePGSql({Sql}){if(Sql.includes('SELECT sha256'))return {RequestId:'budget-lookup',Columns:['sha256'],Rows:null};writes++;return {RequestId:'must-not-write'};}}};
  await assert.rejects(executePreparedPhase({pkg,phase:'stage',manager,readSourceLock:()=>lock}),e=>e.outcome==='UNKNOWN');
  assert.equal(writes,0);
+});
+
+test('failed write responses stop before the next write even when the ledger confirms commit', async (t) => {
+  const lock = held();
+  const batches = [{ id: 'failed-write-a', sql: 'SELECT 1;' }, { id: 'failed-write-b', sql: 'SELECT 2;' }];
+  const pkg = { environmentId: 'dydata-d6g0gd1v37fcddf21', opensAt: new Date(now - 60000).toISOString(),
+    closesAt: new Date(now + 300000).toISOString(), sourceSnapshot: { capturedAt: new Date(now - 1000).toISOString(),
+      sourceLock: { source: lock.source, lockId: lock.lockId, acquiredAt: lock.acquiredAt, pid: lock.pid, rehearsal: false } },
+    stageBatches: batches };
+  const digest = createHash('sha256').update(batches[0].sql).digest('hex');
+  for (const [label, failure] of [
+    ['Error', { Error: { Code: 'InternalError' } }],
+    ['error', { error: { message: 'write failed' } }],
+    ['ok=false', { ok: false }],
+    ['success=false', { success: false }],
+    ['isError=true', { isError: true }],
+    ['thrown SDK error', null],
+  ]) {
+    await t.test(label, async () => {
+      let reads = 0, writes = 0;
+      const requestId = `failed-write-${label}`;
+      const manager = { database: { async executePGSql({ Sql }) {
+        if (Sql.startsWith('BEGIN READ ONLY; SELECT sha256')) {
+          reads++;
+          assert.ok(Sql.includes("batch_id='failed-write-a'"), 'the second batch must never start');
+          return { RequestId: `receipt-read-${reads}`, Columns: ['sha256'],
+            Rows: reads === 1 ? [] : [JSON.stringify([digest])] };
+        }
+        writes++;
+        if (failure === null) throw Object.assign(Error('SDK transport failed'), { RequestId: requestId });
+        return { RequestId: requestId, ...failure };
+      } } };
+      await assert.rejects(executePreparedPhase({ pkg, phase: 'stage', manager, readSourceLock: () => lock }), error => {
+        assert.equal(error.outcome, 'COMMITTED');
+        assert.equal(error.batchId, batches[0].id);
+        assert.equal(error.requestId, requestId);
+        assert.deepEqual(error.completedBatches, []);
+        assert.deepEqual(error.receiptRequestIds, ['receipt-read-1', 'receipt-read-2']);
+        return true;
+      });
+      assert.equal(reads, 2, 'one preflight read and one diagnostic read; no retry');
+      assert.equal(writes, 1);
+    });
+  }
 });

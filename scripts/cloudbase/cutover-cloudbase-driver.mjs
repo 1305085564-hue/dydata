@@ -56,7 +56,7 @@ export async function executePreparedPhase({pkg,phase,manager,readSourceLock}) {
   check();
   const receiptRequestIds=[];
   const assertBytes=sql=>{if(CUTOVER_MAX_REQUEST_BYTES-freezeRequestBudget(sql,'cloudbase').requestBytes<=CUTOVER_MIN_HEADROOM_BYTES)throw Error('Actual cutover request exceeds byte budget including required headroom');};
-  const execute=async(sql)=>{check();assertBytes(sql);const result=await manager.database.executePGSql({Sql:sql});if(typeof result?.RequestId!=='string'||!result.RequestId.trim())throw Error('Execution response missing RequestId; inspect receipt');return result;};
+  const execute=async(sql)=>{check();assertBytes(sql);const result=await manager.database.executePGSql({Sql:sql});if(typeof result?.RequestId!=='string'||!result.RequestId.trim()||result.Error!=null||result.error!=null||result.ok===false||result.success===false||result.isError===true)throw Object.assign(Error('Execution response not confirmed; inspect receipt'),{requestId:typeof result?.RequestId==='string'&&result.RequestId.trim()?result.RequestId:null});return result;};
   const lookupReceipt=async(id)=>{
     // A read is still allowed after an unknown execution outcome/window end.
     const sql=`BEGIN READ ONLY; SELECT sha256 FROM dydata_migration.sql_batch_receipts WHERE batch_id=${quoteLiteral(id)}; COMMIT;`;
@@ -72,7 +72,7 @@ export async function executePreparedPhase({pkg,phase,manager,readSourceLock}) {
     return parseReceiptLookup(result);
   };
   try {
-    const result=await runBatches({batches,execute,lookupReceipt});
+    const result=await runBatches({batches,execute,lookupReceipt,stopOnExecutionError:true});
     return {...result,receiptRequestIds};
   } catch(error) {
     error.receiptRequestIds=[...receiptRequestIds];

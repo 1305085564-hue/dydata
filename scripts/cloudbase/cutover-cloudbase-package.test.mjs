@@ -12,6 +12,7 @@ test('cloud package stages privately, promotes once, guards baseline and preserv
   assert.equal(p.sourceTableCount,99);assert.equal(p.finalAtomic,true);assert.equal(p.authSummary.mirrored,84);
   assert.match(p.stageBatches[0].sql,/REVOKE ALL ON SCHEMA/);
   assert.match(p.finalBatch.sql,/Outside authorized cutover window/);
+  assert.match(p.finalBatch.sql,/SET LOCAL statement_timeout='60s';[\s\S]*DO \$atomic_promote_[a-f0-9]+\$ BEGIN/);
   assert.equal((p.finalBatch.sql.match(/Outside authorized cutover window/g)??[]).length,2);
   assert.match(p.finalBatch.sql,/target_baseline reconciliation failed/);
   assert.match(p.finalBatch.sql,/staged_latest reconciliation failed/);

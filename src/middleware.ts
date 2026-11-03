@@ -216,7 +216,7 @@ async function handleCloudBaseSession(request: NextRequest, options: {
 }
 
 export async function middleware(request: NextRequest) {
-  const maintenance = cutoverMaintenanceResponse(request.nextUrl.pathname);
+  const maintenance = cutoverMaintenanceResponse(request.nextUrl.pathname, undefined, request);
   if (maintenance) return maintenance;
   if (!isApplicationMiddlewarePath(request.nextUrl.pathname)) return NextResponse.next();
   const { pathname } = request.nextUrl;

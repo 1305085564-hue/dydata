@@ -97,7 +97,7 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
       return checkRequest({ ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) }, 'Cutover request');
     });
   const auth = authStatements({ sourceAuth, targetAuth, capturedAt });
-  const final = [
+  const finalStatements = [
     "SET LOCAL lock_timeout='3s';", "SET LOCAL statement_timeout='60s';", "SET LOCAL timezone='UTC';", "SET LOCAL standard_conforming_strings=on;",
     windowGuard,
     `LOCK TABLE ${parsed.tables.map((table) => scoped(table.name)).join(', ')}, auth.users IN ACCESS EXCLUSIVE MODE;`,
@@ -116,7 +116,13 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
     buildSnapshotAssertionSql(latestMetrics, parsed.tables, 'promoted_latest'),
     assertJsonSql(CUTOVER_TARGET_METADATA_SQL, targetMetadata, 'Target FK/trigger restoration mismatch'),
     windowGuard,
-  ].join('\n');
+  ];
+  // One top-level DO makes statement_timeout bound the entire promotion, not
+  // each of the hundreds of individual DELETE/INSERT/DDL statements separately.
+  const body = finalStatements.slice(4).join('\n');
+  let atomicTag = `$atomic_promote_${digest(body).slice(0,16)}$`;
+  while (body.includes(atomicTag)) atomicTag = atomicTag.slice(0,-1) + 'x$';
+  const final = `${finalStatements.slice(0,4).join('\n')}\nDO ${atomicTag} BEGIN\n${body}\nEND ${atomicTag};`;
   const finalBatch = checkRequest({ id: `cutover-promote-${runId}`, sql: final, sha256: digest(final), bytes: Buffer.byteLength(final) }, 'Atomic promotion');
   return { environmentId: AUTH_IMPORT_ENV_ID, runId, schema, opensAt, closesAt, strategy: 'full final-snapshot replacement through private staging; NOT timestamp-only delta',
     stageBatches: stage, finalBatch,

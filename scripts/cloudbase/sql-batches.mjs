@@ -355,7 +355,7 @@ export function wrapSqlBatch({ id, sql, sha256: hash }, { searchPath = DEFAULT_S
  * an absent receipt means ROLLED_BACK only when the thrown error explicitly
  * sets transactionRolledBack === true. Neither adapter is retried here.
  */
-export async function runBatches({ batches, execute, lookupReceipt, searchPath = DEFAULT_SEARCH_PATH } = {}) {
+export async function runBatches({ batches, execute, lookupReceipt, searchPath = DEFAULT_SEARCH_PATH, stopOnExecutionError = false } = {}) {
   if (!Array.isArray(batches)) throw new TypeError('batches must be an array');
   if (typeof execute !== 'function') throw new TypeError('execute must be a function');
   if (typeof lookupReceipt !== 'function') throw new TypeError('lookupReceipt must be a function');
@@ -428,7 +428,7 @@ export async function runBatches({ batches, execute, lookupReceipt, searchPath =
         // The state remains UNKNOWN. Never retry a batch after an ambiguous failure.
       }
 
-      if (outcome === 'COMMITTED') {
+      if (outcome === 'COMMITTED' && !stopOnExecutionError) {
         if (requestId) lastRequestId = requestId;
         results.push({ id, sha256: calculatedHash, status: 'committed-after-error', requestId, ms });
         continue;

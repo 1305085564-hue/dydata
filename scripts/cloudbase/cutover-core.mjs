@@ -129,6 +129,7 @@ export function assertLoopbackRehearsalUrl(connectionUrl, { rehearsal = false } 
 
 export function findPostgresTool(name) {
   const candidates = [
+    `/opt/homebrew/opt/postgresql@17/bin/${name}`,
     `/opt/homebrew/Cellar/libpq/18.3/bin/${name}`,
     `/opt/homebrew/opt/libpq/bin/${name}`,
     `/opt/homebrew/bin/${name}`,
