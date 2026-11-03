@@ -10,20 +10,20 @@ const input = { snapshot, project: 'gcrhhxaopomtposmahsw', opensAt: '2026-11-02T
 
 test('freeze package binds exact ACL, time window, column grants and function overload', () => {
   const result = buildFreezePackage(input);
-  assert.match(result.apply, /clock_timestamp\(\)/);
-  assert.match(result.apply, /Freeze ACL baseline drift/);
-  assert.match(result.apply, /REVOKE SELECT \("review_status"\), INSERT/);
-  assert.match(result.apply, /REVOKE ALL PRIVILEGES ON FUNCTION public\."f"\(p_user uuid\)/);
-  assert.match(result.rollback, /GRANT SELECT ON TABLE public\."videos" TO "authenticated"/);
-  assert.match(result.rollback, /GRANT UPDATE \("review_status"\) ON TABLE/);
-  assert.match(result.rollback, /GRANT EXECUTE ON FUNCTION .* WITH GRANT OPTION/);
-  assert.doesNotMatch(result.apply, /\b(?:DROP|TRUNCATE TABLE|DELETE FROM|INSERT INTO|UPDATE public)\b/);
-  assert.equal(result.apply, buildFreezePackage(input).apply);
+  assert.match(result.applyBatches.map(b=>b.sql).join('\n'), /clock_timestamp\(\)/);
+  assert.match(result.applyBatches.map(b=>b.sql).join('\n'), /Freeze ACL baseline drift/);
+  assert.match(result.applyBatches.map(b=>b.sql).join('\n'), /REVOKE SELECT \("review_status"\), INSERT/);
+  assert.match(result.applyBatches.map(b=>b.sql).join('\n'), /REVOKE ALL PRIVILEGES ON FUNCTION public\."f"\(p_user uuid\)/);
+  assert.match(result.rollbackBatches.map(b=>b.sql).join('\n'), /GRANT SELECT ON TABLE public\."videos" TO "authenticated"/);
+  assert.match(result.rollbackBatches.map(b=>b.sql).join('\n'), /GRANT UPDATE \("review_status"\) ON TABLE/);
+  assert.match(result.rollbackBatches.map(b=>b.sql).join('\n'), /GRANT EXECUTE ON FUNCTION .* WITH GRANT OPTION/);
+  assert.doesNotMatch(result.applyBatches.map(b=>b.sql).join('\n'), /\b(?:DROP|TRUNCATE TABLE|DELETE FROM|INSERT INTO|UPDATE public)\b/);
+  assert.equal(result.applyBatches.map(b=>b.sql).join('\n'), buildFreezePackage(input).applyBatches.map(b=>b.sql).join('\n'));
   assert.match(FREEZE_SNAPSHOT_SQL, /a\.attnum>0/);
   assert.doesNotMatch(FREEZE_SNAPSHOT_SQL, /attacl IS NOT NULL/);
 });
 test('freeze rejects wrong project, invalid window, injected identities and unbound privileges', () => {
-  for (const change of [{ project: 'other' }, { closesAt: '2026-11-03T12:00:00Z' }, { snapshot: [] },
+  for (const change of [{ project: 'other' }, { excludeExtensionMembers: 'false' }, { closesAt: '2026-11-03T12:00:00Z' }, { snapshot: [] },
     { snapshot: [{ ...snapshot[2], args: 'uuid); DELETE FROM x;' }] },
     { snapshot: [{ ...snapshot[0], grants: [{ role: 'stranger', privilege: 'SELECT', grantable: false }] }] },
   ]) assert.throws(() => buildFreezePackage({ ...input, ...change }));

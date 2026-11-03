@@ -176,8 +176,9 @@ function sha256(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
-/** Pack complete SQL statements without exceeding a UTF-8 byte budget. */
-export function packSqlBatches(statements, { maxBytes, migrationId } = {}) {
+/** Pack complete statements using an additive payload-byte metric. `bytes`
+ * remains raw UTF-8 SQL; callers must check the final envelope separately. */
+export function packSqlBatches(statements, { maxBytes, migrationId, measureBytes = sql => Buffer.byteLength(sql, 'utf8') } = {}) {
   if (!Array.isArray(statements)) throw new TypeError('statements must be an array');
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
     throw new RangeError('maxBytes must be a positive safe integer');
@@ -197,7 +198,7 @@ export function packSqlBatches(statements, { maxBytes, migrationId } = {}) {
       id: `${migrationId}:${batches.length + 1}`,
       sql,
       sha256: sha256(sql),
-      bytes: currentBytes,
+      bytes: Buffer.byteLength(sql, 'utf8'),
     });
     currentStatements = [];
     currentBytes = 0;
@@ -217,7 +218,8 @@ export function packSqlBatches(statements, { maxBytes, migrationId } = {}) {
     if (parsedStatements.length !== 1) {
       throw new TypeError(`statement ${index + 1} must be exactly one complete statement`);
     }
-    const bytes = Buffer.byteLength(statement, 'utf8');
+    const bytes = measureBytes(statement);
+    if (!Number.isSafeInteger(bytes) || bytes <= 0) throw new TypeError('Invalid measured statement bytes');
     if (bytes > maxBytes) {
       throw new RangeError(`Single statement ${index + 1} (${bytes} bytes) exceeds the ${maxBytes}-byte budget`);
     }

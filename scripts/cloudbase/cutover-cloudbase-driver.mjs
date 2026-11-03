@@ -1,3 +1,4 @@
+import { freezeRequestBudget } from './cutover-freeze.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -54,7 +55,7 @@ export async function executePreparedPhase({pkg,phase,manager,readSourceLock}) {
   const check=()=>{assertWindow();const lock=readSourceLock();assertSnapshotLockBinding(pkg.sourceSnapshot,lock);assertPackageLockWindow(pkg,lock);};
   check();
   const receiptRequestIds=[];
-  const assertBytes=sql=>{if(CUTOVER_MAX_REQUEST_BYTES-Buffer.byteLength(sql)<=CUTOVER_MIN_HEADROOM_BYTES)throw Error('Actual cutover request exceeds byte budget including required headroom');};
+  const assertBytes=sql=>{if(CUTOVER_MAX_REQUEST_BYTES-freezeRequestBudget(sql,'cloudbase').requestBytes<=CUTOVER_MIN_HEADROOM_BYTES)throw Error('Actual cutover request exceeds byte budget including required headroom');};
   const execute=async(sql)=>{check();assertBytes(sql);const result=await manager.database.executePGSql({Sql:sql});if(typeof result?.RequestId!=='string'||!result.RequestId.trim())throw Error('Execution response missing RequestId; inspect receipt');return result;};
   const lookupReceipt=async(id)=>{
     // A read is still allowed after an unknown execution outcome/window end.

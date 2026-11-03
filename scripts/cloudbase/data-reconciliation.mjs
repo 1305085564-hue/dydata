@@ -271,15 +271,15 @@ function normalizeParsedTables(parsed) {
   return tables;
 }
 
-function buildExpectedQueryEntries(tables, maxBytes) {
+function buildExpectedQueryEntries(tables, maxBytes, measureBytes = sql => Buffer.byteLength(sql, 'utf8')) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new RangeError('maxBytes must be a positive safe integer');
   const queries = [];
   for (const table of tables) {
     if (table.rows.length === 0) continue;
     const { prefix, suffix } = expectedQueryParts(table.name, table.generatedColumns ?? []);
-    const baseBytes = Buffer.byteLength(prefix + suffix, 'utf8');
+    const baseBytes = measureBytes(prefix + suffix);
     const separator = ',\n  ';
-    const separatorBytes = Buffer.byteLength(separator, 'utf8');
+    const separatorBytes = measureBytes(separator);
     let chunk = [];
     let chunkBytes = baseBytes;
     const flush = () => {
@@ -290,7 +290,7 @@ function buildExpectedQueryEntries(tables, maxBytes) {
     };
 
     for (const row of table.rows) {
-      const rowBytes = Buffer.byteLength(row, 'utf8') + 2;
+      const rowBytes = measureBytes(`(${row})`);
       const candidateBytes = chunkBytes + (chunk.length ? separatorBytes : 0) + rowBytes;
       if (candidateBytes > maxBytes && chunk.length > 0) flush();
       const singleRowBytes = chunkBytes + (chunk.length ? separatorBytes : 0) + rowBytes;
@@ -304,9 +304,9 @@ function buildExpectedQueryEntries(tables, maxBytes) {
 }
 
 /** Build expected-row queries from the very INSERTs generated for the archive. */
-export function buildExpectedQueries({ parsed, maxBytes = DEFAULT_MAX_BYTES }) {
+export function buildExpectedQueries({ parsed, maxBytes = DEFAULT_MAX_BYTES, measureBytes }) {
   const tables = normalizeParsedTables(parsed);
-  return buildExpectedQueryEntries(tables, maxBytes).map(({ sql }) => sql);
+  return buildExpectedQueryEntries(tables, maxBytes, measureBytes).map(({ sql }) => sql);
 }
 
 /** Build a content-summary query over the actual CloudBase table. */
@@ -344,10 +344,10 @@ function metricsToObject(metrics) {
 }
 
 /** Compare archive-derived rows with the rows in the target database. */
-export async function reconcileTables({ parsed, execute, maxBytes = DEFAULT_MAX_BYTES }) {
+export async function reconcileTables({ parsed, execute, maxBytes = DEFAULT_MAX_BYTES, measureBytes }) {
   if (typeof execute !== 'function') throw new TypeError('execute must be a function');
   const tables = normalizeParsedTables(parsed);
-  const expectedQueries = buildExpectedQueryEntries(tables, maxBytes);
+  const expectedQueries = buildExpectedQueryEntries(tables, maxBytes, measureBytes);
   const results = [];
   let queriesExecuted = 0;
 

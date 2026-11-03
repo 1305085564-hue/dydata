@@ -24,3 +24,9 @@ test('source bundle rejects a corrupted archive or Auth snapshot from another in
     manifest.auth.file='../elsewhere';save();assert.throws(()=>loadVerifiedSourceBundle(directory),/filename/);
   } finally {rmSync(directory,{recursive:true,force:true});}
 });
+
+test('capture rejects excessive serialized read requests before management API access', async()=>{
+ const {buildCaptureRequest}=await import('./cutover-prepare.mjs');
+ assert.match(buildCaptureRequest('SELECT 1;'),/^BEGIN READ ONLY;/);
+ assert.throws(()=>buildCaptureRequest(`SELECT '${'"'.repeat(250000)}';`),/budget/);
+});

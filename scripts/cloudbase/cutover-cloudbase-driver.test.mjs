@@ -183,3 +183,11 @@ test('final snapshot must belong to this uninterrupted lock, never an old export
 });
 
 test('package cannot outlive the source lock or consume its recovery margin',()=>{const lock=held();assert.doesNotThrow(()=>assertPackageLockWindow({closesAt:new Date(Date.parse(lock.closesAt)-120000).toISOString()},lock));for(const dt of [0,119999,-60000])assert.throws(()=>assertPackageLockWindow({closesAt:new Date(Date.parse(lock.closesAt)-dt).toISOString()},lock));});
+
+test('driver blocks an API body whose escaping exceeds budget before any write',async()=>{
+ const lock=held();let writes=0;
+ const pkg={environmentId:'dydata-d6g0gd1v37fcddf21',opensAt:new Date(now-60000).toISOString(),closesAt:new Date(now+300000).toISOString(),sourceSnapshot:{capturedAt:new Date(now-1000).toISOString(),sourceLock:{source:lock.source,lockId:lock.lockId,acquiredAt:lock.acquiredAt,pid:lock.pid,rehearsal:false}},stageBatches:[{id:'serialized-budget-test',sql:`SELECT '${'"'.repeat(250000)}';`}]};
+ const manager={database:{async executePGSql({Sql}){if(Sql.includes('SELECT sha256'))return {RequestId:'budget-lookup',Columns:['sha256'],Rows:null};writes++;return {RequestId:'must-not-write'};}}};
+ await assert.rejects(executePreparedPhase({pkg,phase:'stage',manager,readSourceLock:()=>lock}),e=>e.outcome==='UNKNOWN');
+ assert.equal(writes,0);
+});

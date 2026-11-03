@@ -74,36 +74,90 @@ function revoke(object) {
     : `REVOKE ALL PRIVILEGES ON ${target(object)} FROM ${roles};`;
 }
 
-/** Offline only: no DB connection, no data DML, no deploy. The package cannot
- * execute unless a fresh exact ACL snapshot is supplied inside the window.
- * excludeExtensionMembers must match the variant the snapshot was read with:
- * the in-transaction guard re-reads the ACL with the same filter, so a full
- * snapshot paired with the excluded guard (or vice versa) always aborts. */
-export function buildFreezePackage({ snapshot, project, opensAt, closesAt, excludeExtensionMembers = false }) {
-  if (!['gcrhhxaopomtposmahsw', 'dydata-d6g0gd1v37fcddf21'].includes(project) || !Array.isArray(snapshot) || snapshot.length === 0) throw Error('Wrong project or empty snapshot');
-  const opens = Date.parse(opensAt), closes = Date.parse(closesAt);
-  if (!Number.isFinite(opens) || !Number.isFinite(closes) || closes <= opens || closes - opens > 4 * 3600_000) throw Error('Invalid freeze window');
-  const snapshotText = JSON.stringify(snapshot);
-  const guard = `DO $freeze$ DECLARE actual jsonb; BEGIN
- IF clock_timestamp() < ${literal(new Date(opens).toISOString())}::timestamptz OR clock_timestamp() > ${literal(new Date(closes).toISOString())}::timestamptz THEN RAISE EXCEPTION 'Outside authorized freeze window'; END IF;
- SELECT s INTO actual FROM (${buildFreezeSnapshotSql({ excludeExtensionMembers }).replace(/;\s*$/, '')}) q(s);
- IF actual IS DISTINCT FROM ${literal(snapshotText)}::jsonb THEN RAISE EXCEPTION 'Freeze ACL baseline drift'; END IF;
-END $freeze$;`;
-  const seen = new Set();
-  const restore = snapshot.flatMap((object) => {
-    const key = JSON.stringify([object.kind, object.name, object.args, object.col]);
-    if (seen.has(key) || !Array.isArray(object.grants)) throw Error('Duplicate object or invalid grants'); seen.add(key);
-    const objectTarget = target(object);
-    return object.grants.map((grant) => {
-      if (!ROLES.includes(grant.role) || !PRIVILEGES.has(grant.privilege) || typeof grant.grantable !== 'boolean') throw Error('Invalid original ACL');
-      const role = grant.role === 'PUBLIC' ? 'PUBLIC' : identifier(grant.role);
-      return `GRANT ${grant.privilege}${object.kind === 'column' ? ` (${identifier(object.col)})` : ''} ON ${objectTarget} TO ${role}${grant.grantable ? ' WITH GRANT OPTION' : ''};`;
-    });
+export const FREEZE_MAX_BYTES = 491_520;
+export const FREEZE_MIN_HEADROOM = 1_500;
+export function freezeRequestBudget(sql, channel, maxBytes = FREEZE_MAX_BYTES) {
+  if (!['postgres', 'cloudbase'].includes(channel)) throw Error('Invalid freeze channel');
+  if (!Number.isSafeInteger(maxBytes) || maxBytes > FREEZE_MAX_BYTES || maxBytes <= FREEZE_MIN_HEADROOM) throw Error('Invalid freeze budget');
+  const sqlBytes = Buffer.byteLength(sql);
+  const requestBytes = channel === 'postgres' ? sqlBytes : Buffer.byteLength(JSON.stringify({ EnvId: 'dydata-d6g0gd1v37fcddf21', Sql: sql }));
+  return { channel, sqlBytes, requestBytes, headroomBytes: maxBytes - requestBytes, maxBytes };
+}
+export function freezeStateAt(snapshot, frontier) {
+  if (!Number.isInteger(frontier) || frontier < 0 || frontier > snapshot.length) throw Error('Invalid freeze frontier');
+  return snapshot.map((o, i) => ({ ...o, grants: i < frontier ? [] : o.grants }));
+}
+function grantsSql(object) {
+  return object.grants.map(grant => {
+    if (!ROLES.includes(grant.role) || !PRIVILEGES.has(grant.privilege) || typeof grant.grantable !== 'boolean') throw Error('Invalid original ACL');
+    return `GRANT ${grant.privilege}${object.kind === 'column' ? ` (${identifier(object.col)})` : ''} ON ${target(object)} TO ${grant.role === 'PUBLIC' ? 'PUBLIC' : identifier(grant.role)}${grant.grantable ? ' WITH GRANT OPTION' : ''};`;
   });
-  const revoked = snapshot.map((object) => ({ ...object, grants: [] }));
-  const rollbackGuard = guard.replace(literal(snapshotText), literal(JSON.stringify(revoked)));
-  const envelope = (statements) => `BEGIN;\nSET LOCAL lock_timeout='3s';\nSET LOCAL statement_timeout='60s';\n${statements.join('\n')}\nCOMMIT;\n`;
-  const apply = envelope([guard, ...snapshot.map(revoke), rollbackGuard]);
-  const rollback = envelope([rollbackGuard, ...restore, guard]);
-  return { project, snapshotSha256: hash(snapshotText), apply, rollback, applySha256: hash(apply), rollbackSha256: hash(rollback), objects: snapshot.length, snapshotSqlVariant: excludeExtensionMembers ? 'excluded' : 'full' };
+}
+// Each transaction carries the FULL baseline once. Derive both exact mixed
+// states from its ordinality; no fields, object definitions or guards omitted.
+function batchSql(input, start, end, action) {
+  const before = action === 'freeze' ? start : end;
+  const after = action === 'freeze' ? end : start;
+  const window = `IF clock_timestamp()<${literal(input.opensAt)}::timestamptz OR clock_timestamp()>=${literal(input.closesAt)}::timestamptz THEN RAISE EXCEPTION 'Outside authorized freeze window'; END IF;`;
+  const state = frontier => `SELECT jsonb_agg(CASE WHEN ord<=${frontier} THEN jsonb_set(v,'{grants}','[]'::jsonb) ELSE v END ORDER BY ord) INTO expected FROM jsonb_array_elements(baseline) WITH ORDINALITY q(v,ord);`;
+  const read = `SELECT s INTO actual FROM (${buildFreezeSnapshotSql({excludeExtensionMembers:input.excludeExtensionMembers}).replace(/;\s*$/, '')}) q(s);`;
+  const operations = input.snapshot.slice(start,end).flatMap(o => action === 'freeze' ? [revoke(o)] : grantsSql(o));
+  const body = `DECLARE baseline jsonb := ${literal(JSON.stringify(input.snapshot))}::jsonb; actual jsonb; expected jsonb; BEGIN
+${window}
+${state(before)}
+${read}
+IF actual IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Freeze ACL baseline drift'; END IF;
+${operations.join('\n')}
+${state(after)}
+${read}
+IF actual IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Freeze ACL post-state drift'; END IF;
+${window}
+END`;
+  let tag = `$freeze_${hash(body).slice(0,16)}$`;
+  while (body.includes(tag)) tag = tag.slice(0,-1)+'x$';
+  return `BEGIN;\nSET LOCAL lock_timeout='3s';\nSET LOCAL statement_timeout='60s';\nSET LOCAL standard_conforming_strings=on;\nDO ${tag} ${body} ${tag};\nCOMMIT;\n`;
+}
+export function buildFreezePackage({ snapshot, project, opensAt, closesAt, excludeExtensionMembers = false, maxBytes = FREEZE_MAX_BYTES }) {
+  if (typeof excludeExtensionMembers !== 'boolean' || !['gcrhhxaopomtposmahsw', 'dydata-d6g0gd1v37fcddf21'].includes(project) || !Array.isArray(snapshot) || !snapshot.length) throw Error('Wrong project or empty snapshot');
+  const opens = Date.parse(opensAt), closes = Date.parse(closesAt);
+  if (!Number.isFinite(opens) || !Number.isFinite(closes) || closes <= opens || closes-opens > 4*3600_000) throw Error('Invalid freeze window');
+  const channel = project === 'gcrhhxaopomtposmahsw' ? 'postgres' : 'cloudbase';
+  freezeRequestBudget('',channel,maxBytes);
+  const seen = new Set();
+  for (const object of snapshot) {
+    const key = JSON.stringify([object.kind,object.name,object.args,object.col]);
+    if (seen.has(key) || !Array.isArray(object.grants) || typeof object.owner !== 'string' || !object.owner || (object.kind === 'column' && (typeof object.col !== 'string' || !object.col || object.col.includes('\0')))) throw Error('Duplicate object or invalid grants');
+    seen.add(key); target(object); grantsSql(object);
+  }
+  const input = { snapshot, opensAt:new Date(opens).toISOString(), closesAt:new Date(closes).toISOString(), excludeExtensionMembers };
+  const make = (start,end,action) => {
+    const sql = batchSql(input,start,end,action);
+    return { action, start, end, sql, sha256:hash(sql), ...freezeRequestBudget(sql,channel,maxBytes) };
+  };
+  const fits = batch => batch.headroomBytes > FREEZE_MIN_HEADROOM;
+  const applyBatches = [], rollbackBatches = [];
+  let start = 0;
+  while (start < snapshot.length) {
+    let low = start+1, high = snapshot.length, best = null;
+    while (low <= high) {
+      const end = Math.floor((low+high)/2), apply = make(start,end,'freeze'), rollback = make(start,end,'rollback');
+      if (fits(apply) && fits(rollback)) { best={apply,rollback}; low=end+1; } else high=end-1;
+    }
+    if (!best) throw Error('One freeze object with full guards exceeds request budget; do not remove fields');
+    applyBatches.push(best.apply); rollbackBatches.unshift(best.rollback); start=best.apply.end;
+  }
+  const pkg = { version:2, project, channel, ...input, maxBytes, snapshotSha256:hash(JSON.stringify(snapshot)), objects:snapshot.length,
+    snapshotSqlVariant:excludeExtensionMembers?'excluded':'full', applyBatches, rollbackBatches };
+  return { ...pkg, packageSha256:hash(JSON.stringify(pkg)) };
+}
+export function verifyFreezePackage(pkg, expectedSha256) {
+  if (pkg?.version !== 2) throw Error('Invalid freeze package');
+  if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+    throw Error('An external 64-hex SHA256 digest is required');
+  }
+  const { packageSha256, ...body } = pkg;
+  if (packageSha256 !== expectedSha256 || hash(JSON.stringify(body)) !== packageSha256) throw Error('Freeze package digest mismatch');
+  const rebuilt = buildFreezePackage(pkg);
+  if (JSON.stringify(rebuilt) !== JSON.stringify(pkg)) throw Error('Freeze package definition mismatch');
+  return pkg;
 }

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { freezeRequestBudget } from './cutover-freeze.mjs';
 import { packSqlBatches, wrapSqlBatch } from './sql-batches.mjs';
 import { buildSnapshotAssertionSql, quoteIdentifier as qi, quoteLiteral as ql } from './cutover-core.mjs';
 import { buildAuthImportPlan, AUTH_IMPORT_ENV_ID } from './auth-import.mjs';
@@ -37,16 +38,27 @@ function authStatements({ sourceAuth, targetAuth, capturedAt }) {
   const columns = ['username', 'email', 'password', 'status', 'email_verified'];
   const value = (x) => typeof x === 'boolean' || typeof x === 'number' ? String(x) : ql(x);
   if (!Array.isArray(targetAuth) || targetAuth.length < expected.length) throw Error('Missing fresh target Auth baseline');
-  const after = structuredClone(targetAuth);
-  const updates = expected.map((row) => {
-    const matches = after.filter((user) => user.sub === row.sub);
-    if (matches.length !== 1 || matches[0].project !== AUTH_IMPORT_ENV_ID) throw Error('Source UUID missing or ambiguous in target Auth');
-    const identity = matches[0];
+  const predicted = structuredClone(targetAuth);
+  const updates = expected.flatMap((row) => {
+    const indexes = predicted.flatMap((user, index) => user.sub === row.sub ? [index] : []);
+    if (indexes.length !== 1 || predicted[indexes[0]].project !== AUTH_IMPORT_ENV_ID) throw Error('Source UUID missing or ambiguous in target Auth');
+    const index = indexes[0], identity = predicted[index];
+    const changes = Object.fromEntries(columns.map(key => [key,row[key]]));
     for (const key of columns) identity[key] = row[key];
-    return `UPDATE auth.users SET ${columns.map((key) => `${qi(key)}=${value(row[key])}`).join(', ')} WHERE id=${ql(String(identity.id))}::bigint AND sub=${ql(row.sub)} AND project=${ql(AUTH_IMPORT_ENV_ID)};`;
+    return [`UPDATE auth.users SET ${columns.map((key) => `${qi(key)}=${value(row[key])}`).join(', ')} WHERE id=${ql(String(identity.id))}::bigint AND sub=${ql(row.sub)} AND project=${ql(AUTH_IMPORT_ENV_ID)};`,
+      `expected := jsonb_set(expected, ARRAY[${ql(String(index))}], (expected->${index}) || ${ql(JSON.stringify(changes))}::jsonb);`];
   });
-  return { statements: [assertJsonSql(CUTOVER_AUTH_BASELINE_SQL, targetAuth, 'Target Auth baseline drift'), ...updates,
-    assertJsonSql(CUTOVER_AUTH_BASELINE_SQL, after, 'Target Auth mirror mismatch')], summary: { mirrored: expected.length, preservedExtra: targetAuth.length - expected.length } };
+  const read = `SELECT v INTO actual FROM (${CUTOVER_AUTH_BASELINE_SQL.replace(/;\s*$/, '')}) q(v);`;
+  const body = `DECLARE expected jsonb := ${ql(JSON.stringify(targetAuth))}::jsonb; actual jsonb; BEGIN
+${read}
+IF actual IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Target Auth baseline drift'; END IF;
+${updates.join('\n')}
+${read}
+IF actual IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Target Auth mirror mismatch'; END IF;
+END`;
+  let tag = `$auth_mirror_${digest(body).slice(0,16)}$`;
+  while (body.includes(tag)) tag = tag.slice(0,-1)+'x$';
+  return { statements: [`DO ${tag} ${body} ${tag};`], summary: { mirrored: expected.length, preservedExtra: targetAuth.length - expected.length } };
 }
 
 export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMetrics, targetMetadata, sourceAuth, targetAuth,
@@ -57,12 +69,12 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
   if (!Number.isFinite(opens) || !Number.isFinite(closes) || closes <= opens || closes - opens > 4 * 3600_000) throw Error('Invalid authorized cutover window');
   if (!Number.isSafeInteger(maxBytes) || maxBytes > CUTOVER_MAX_REQUEST_BYTES || maxBytes <= BATCH_FILL_RESERVE_BYTES) throw Error('Invalid cutover request byte budget');
   const checkRequest = (batch, label) => {
-    const requestBytes = Buffer.byteLength(wrapSqlBatch(batch));
+    const {requestBytes,sqlBytes} = freezeRequestBudget(wrapSqlBatch(batch), 'cloudbase', maxBytes);
     if (maxBytes - requestBytes <= CUTOVER_MIN_HEADROOM_BYTES) throw Error(`${label} exceeds batch budget including transaction wrapper and required headroom; cannot split atomic promotion`);
-    return { ...batch, requestBytes, headroomBytes: maxBytes - requestBytes };
+    return { ...batch, requestBytes, sqlBytes, channel: 'cloudbase', headroomBytes: maxBytes - requestBytes };
   };
   const schema = `dydata_cutover_${runId}`;
-  const windowGuard = `DO $window$ BEGIN IF clock_timestamp()<${ql(new Date(opens).toISOString())}::timestamptz OR clock_timestamp()>${ql(new Date(closes).toISOString())}::timestamptz THEN RAISE EXCEPTION 'Outside authorized cutover window'; END IF; END $window$;`;
+  const windowGuard = `DO $window$ BEGIN IF clock_timestamp()<${ql(new Date(opens).toISOString())}::timestamptz OR clock_timestamp()>=${ql(new Date(closes).toISOString())}::timestamptz THEN RAISE EXCEPTION 'Outside authorized cutover window'; END IF; END $window$;`;
   const names = new Set(parsed.tables.map((t) => t.name));
   if (!Array.isArray(targetMetadata?.foreignKeys) || !Array.isArray(targetMetadata?.triggers) || targetMetadata.externalIncomingForeignKeys !== 0) throw Error('Missing metadata or external incoming foreign keys');
   for (const fk of targetMetadata.foreignKeys) {
@@ -79,7 +91,7 @@ export function buildCloudBaseCutoverPackage({ parsed, baselineMetrics, latestMe
     if (!/^INSERT INTO public\./.test(statement)) throw Error('Expected archive COPY converter INSERT');
     return statement.replace(/^INSERT INTO public\./, `INSERT INTO ${qi(schema)}.`);
   });
-  const stage = packSqlBatches([...setup, ...stageRows], { maxBytes: maxBytes - BATCH_FILL_RESERVE_BYTES, migrationId: `cutover-stage-${runId}` })
+  const stage = packSqlBatches([...setup, ...stageRows], { maxBytes: maxBytes - BATCH_FILL_RESERVE_BYTES, measureBytes: sql => Buffer.byteLength(JSON.stringify(sql))-2, migrationId: `cutover-stage-${runId}` })
     .map((batch) => {
       const sql = `SET LOCAL statement_timeout='60s';\nSET LOCAL timezone='UTC';\nSET LOCAL standard_conforming_strings=on;\n${windowGuard}\n${batch.sql}\n${windowGuard}`;
       return checkRequest({ ...batch, sql, sha256: digest(sql), bytes: Buffer.byteLength(sql) }, 'Cutover request');

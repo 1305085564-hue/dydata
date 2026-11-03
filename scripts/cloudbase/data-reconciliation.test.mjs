@@ -260,3 +260,11 @@ test('rejects malformed or multi-statement INSERT inputs and row-count drift', (
   assert.throws(() => buildExpectedQueries({ parsed: parsed({ columns: ['id', 'bad\0column'], rows: [String.raw`E'1', E'ok'`] }) }), /identifier/i);
   assert.throws(() => buildActualQuery({ name: 'bad\0name' }), /identifier/i);
 });
+
+test('expected query chunks honor escaped payload bytes without losing any rows',()=>{
+ const input=parsed({rows:Array.from({length:12},(_,i)=>`E'${i}', E'${'"'.repeat(150)}'`)});
+ const measureBytes=sql=>Buffer.byteLength(JSON.stringify(sql))-2;
+ const queries=buildExpectedQueries({parsed:input,maxBytes:1600,measureBytes});
+ assert.ok(queries.every(q=>measureBytes(q)<=1600));
+ assert.equal(queries.reduce((n,q)=>n+(q.match(/ROW\(/g)||[]).length,0),12);
+});

@@ -1,175 +1,391 @@
 #!/usr/bin/env node
 
-// Source-side freeze/rollback executor. The package SQL travels as ONE
-// simple-query protocol message (cutover-core runPsqlSingleMessage): the
-// statement-at-a-time stdin transport cost one network round trip per
-// statement and blew the local executor budget on 2026-11-02 23:17.
-// SQL bytes and their SHA binding are never rewritten here.
+// Bounded, receipt-backed freeze executor. The source and CloudBase adapters
+// live in separate modules; this file owns immutable package execution semantics.
 
-import { createHash } from 'node:crypto';
-import { chmodSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { buildFreezeSnapshotSql } from './cutover-freeze.mjs';
-import {
-  assertLoopbackRehearsalUrl,
-  ensurePrivateFile,
-  isAuthorizedSourceIdentity,
-  parsePostgresUrl,
-  runPsqlSingleMessage,
-} from './cutover-core.mjs';
+import { FREEZE_MIN_HEADROOM, freezeRequestBudget, freezeStateAt, verifyFreezePackage } from './cutover-freeze.mjs';
+import { ensurePrivateFile } from './cutover-core.mjs';
+import { runFreezeExecutorCli } from './cutover-freeze-executor-cli.mjs';
 
-const SOURCE_PROJECT = 'gcrhhxaopomtposmahsw';
+const sameJson = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+function assertExternalPackageSha(expectedSha256) {
+  if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+    throw new Error('An external 64-hex SHA256 digest is required');
+  }
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
 
 export function parseExecutorArgs(argv) {
-  const markers = argv.filter((flag) => ['--rehearsal', '--execute-authorized-source'].includes(flag));
-  if (markers.length !== 1) throw new Error('Pass exactly one execution marker: --rehearsal or --execute-authorized-source');
+  const markers = argv.filter((flag) => ['--rehearsal', '--execute-authorized-source', '--execute-authorized-cloudbase'].includes(flag));
+  if (markers.length !== 1) throw new Error('Pass exactly one execution marker: --rehearsal, --execute-authorized-source, or --execute-authorized-cloudbase');
   const options = new Map();
   for (let index = 0; index < argv.length; index += 1) {
     const key = argv[index];
     if (key === markers[0]) continue;
-    if (!['--package', '--baseline', '--action', '--snapshot-sql', '--receipt', '--timeout-ms'].includes(key)) {
+    if (!['--package', '--expected-sha256', '--action', '--source-lock-receipt', '--maintenance-proof', '--manager-module', '--receipt', '--timeout-ms'].includes(key)) {
       throw new Error(`Unknown option ${key}; use --help`);
     }
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) throw new Error(`Missing value for ${key}`);
+    if (options.has(key)) throw new Error(`Duplicate option ${key}`);
     options.set(key, value);
     index += 1;
   }
-  for (const required of ['--package', '--baseline', '--action', '--snapshot-sql', '--receipt']) {
+  for (const required of ['--package', '--expected-sha256', '--action', '--source-lock-receipt', '--receipt']) {
     if (!options.has(required)) throw new Error(`Missing ${required}`);
   }
   const action = options.get('--action');
   if (!['freeze', 'rollback'].includes(action)) throw new Error('--action must be freeze or rollback');
-  const snapshotSql = options.get('--snapshot-sql');
-  if (!['full', 'excluded'].includes(snapshotSql)) throw new Error('--snapshot-sql must be full or excluded');
+  if (!/^[a-f0-9]{64}$/.test(options.get('--expected-sha256'))) throw new Error('--expected-sha256 must be a lowercase SHA256 digest');
+  if (markers[0] !== '--rehearsal' && !options.has('--maintenance-proof')) throw new Error('Missing --maintenance-proof for authorized production execution');
+  if (markers[0] === '--execute-authorized-cloudbase' && !options.has('--manager-module')) throw new Error('Missing --manager-module for authorized CloudBase execution');
+  if (markers[0] !== '--execute-authorized-cloudbase' && options.has('--manager-module')) throw new Error('--manager-module is only valid with --execute-authorized-cloudbase');
   const timeoutMs = Number(options.get('--timeout-ms') ?? '65000');
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 1_200_000) throw new Error('--timeout-ms must be 1000..1200000');
-  return { mode: markers[0].replace(/^--/, ''), action, snapshotSql, timeoutMs, options };
+  return { mode: markers[0].replace(/^--/, ''), action, timeoutMs, options };
 }
 
-export function loadVerifiedPackage(packagePath, action) {
+export function loadVerifiedPackage(packagePath, expectedSha256) {
+  assertExternalPackageSha(expectedSha256);
   ensurePrivateFile(packagePath);
   const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
-  if (pkg?.project !== SOURCE_PROJECT) throw new Error('Executor only handles source-side packages');
-  const sql = action === 'freeze' ? pkg.apply : pkg.rollback;
-  const expectedSha = action === 'freeze' ? pkg.applySha256 : pkg.rollbackSha256;
-  if (typeof sql !== 'string' || typeof expectedSha !== 'string') throw new Error('Package is missing the requested SQL or digest');
-  const actualSha = createHash('sha256').update(sql).digest('hex');
-  if (actualSha !== expectedSha) throw new Error('Package SQL digest mismatch; refusing to connect');
-  return { sql, sha256: expectedSha, objects: pkg.objects, snapshotSqlVariant: pkg.snapshotSqlVariant };
+  if (!['gcrhhxaopomtposmahsw', 'dydata-d6g0gd1v37fcddf21'].includes(pkg?.project)) throw new Error('Freeze executor package project is not supported');
+  verifyFreezePackage(pkg, expectedSha256);
+  return pkg;
 }
 
 export function deriveExpectedState(baseline, action) {
   if (!Array.isArray(baseline) || baseline.length === 0) throw new Error('Baseline snapshot must be a non-empty array');
-  return action === 'freeze' ? baseline.map((entry) => ({ ...entry, grants: [] })) : baseline;
+  if (!['freeze', 'rollback'].includes(action)) throw new Error('Action must be freeze or rollback');
+  return freezeStateAt(baseline, action === 'freeze' ? baseline.length : 0);
 }
 
-function snapshotReadSql(snapshotSqlVariant) {
-  const snapshotSql = buildFreezeSnapshotSql({ excludeExtensionMembers: snapshotSqlVariant === 'excluded' });
-  return `BEGIN READ ONLY; SET LOCAL statement_timeout='20s'; SELECT (s)::text AS snapshot FROM (${snapshotSql.replace(/;\s*$/, '')}) q(s); COMMIT;`;
+export function assertFreezeWindow(pkg, now = Date.now()) {
+  const opens = Date.parse(pkg?.opensAt);
+  const closes = Date.parse(pkg?.closesAt);
+  if (!Number.isFinite(opens) || !Number.isFinite(closes) || now < opens || now >= closes) throw new Error('Outside authorized freeze window');
 }
 
-async function readSnapshot(connectionUrl, snapshotSqlVariant, timeoutMs) {
-  const result = await runPsqlSingleMessage(connectionUrl, snapshotReadSql(snapshotSqlVariant), { timeoutMs: Math.min(timeoutMs, 30_000) });
-  const withRows = result.rowSets.filter((rows) => rows.length > 0);
-  const text = withRows.length ? withRows[withRows.length - 1][0]?.snapshot ?? null : null;
-  return { result, text };
+function normalizeSnapshot(value) {
+  const snapshot = Array.isArray(value) ? value : value?.snapshot;
+  if (!Array.isArray(snapshot) || snapshot.length === 0) throw new Error('Snapshot reader must return a non-empty full snapshot');
+  const requestId = typeof value?.requestId === 'string' && value.requestId.trim()
+    ? value.requestId.slice(0, 200)
+    : (typeof value?.RequestId === 'string' && value.RequestId.trim() ? value.RequestId.slice(0, 200) : null);
+  return { snapshot, requestId };
 }
 
-function validateConnection(connectionUrl, mode) {
-  if (mode === 'rehearsal') return assertLoopbackRehearsalUrl(connectionUrl, { rehearsal: true });
-  const parsed = parsePostgresUrl(connectionUrl);
-  const identity = { host: parsed.host, port: parsed.env.PGPORT, user: parsed.env.PGUSER, database: parsed.database };
-  if (!isAuthorizedSourceIdentity(identity)) throw new Error('Authorized source project mismatch');
-  return parsed;
+function batchReceipt(batch) {
+  return { action: batch.action, start: batch.start, end: batch.end, sha256: batch.sha256 };
 }
 
-export async function executeFreezeAction({ connectionUrl, mode, packagePath, baselinePath, action, snapshotSql, receiptPath, timeoutMs }) {
-  validateConnection(connectionUrl, mode);
-  const { sql, sha256, objects, snapshotSqlVariant } = loadVerifiedPackage(packagePath, action);
-  if (snapshotSqlVariant !== snapshotSql) throw new Error(`Package was built with the ${snapshotSqlVariant} snapshot; refusing to run with --snapshot-sql ${snapshotSql}`);
-  ensurePrivateFile(baselinePath);
-  const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
-  const expectedPost = deriveExpectedState(baseline, action);
-  // Before a freeze the ACL must equal the baseline; before a rollback it must
-  // equal the frozen state. Each action's pre-state is the other's post-state.
-  const expectedPre = deriveExpectedState(baseline, action === 'freeze' ? 'rollback' : 'freeze');
-
-  const notices = [];
-  const collectNotice = (notice) => {
-    if (notices.length < 50) notices.push({ severity: notice?.severity ?? null, message: notice?.message ?? null });
-  };
-  const receipt = {
-    at: new Date().toISOString(), mode, action, project: SOURCE_PROJECT, objects,
-    snapshotSqlVariant, packageSha256: sha256, sqlBytes: Buffer.byteLength(sql),
-    preStateMatched: null, postStateMatched: null, executed: false, notices, failure: null,
-  };
-
-  let failure = null;
-  try {
-    const preStarted = Date.now();
-    const pre = await readSnapshot(connectionUrl, snapshotSql, timeoutMs);
-    const preMs = Date.now() - preStarted;
-    const preState = pre.text ? JSON.parse(pre.text) : null;
-    receipt.preStateMatched = JSON.stringify(preState) === JSON.stringify(expectedPre);
-    receipt.preRead = { ms: preMs, roundTrips: pre.result.roundTrips };
-    if (!receipt.preStateMatched) throw new Error(`Pre-execution ACL does not match the expected ${action === 'freeze' ? 'baseline' : 'frozen'} state; no SQL was sent`);
-
-    const execute = await runPsqlSingleMessage(connectionUrl, sql, { timeoutMs, onNotice: collectNotice });
-    receipt.executed = true;
-    receipt.execute = { ms: execute.timing.queryMs, connectMs: execute.timing.connectMs, roundTrips: execute.roundTrips, statementResults: execute.statementResults, lastCommand: execute.lastCommand };
-    if (execute.lastCommand !== 'COMMIT') throw new Error(`Batch did not commit (last command ${execute.lastCommand})`);
-
-    const postStarted = Date.now();
-    const post = await readSnapshot(connectionUrl, snapshotSql, timeoutMs);
-    const postMs = Date.now() - postStarted;
-    const postState = post.text ? JSON.parse(post.text) : null;
-    receipt.postStateMatched = JSON.stringify(postState) === JSON.stringify(expectedPost);
-    receipt.postRead = { ms: postMs, roundTrips: post.result.roundTrips };
-    if (!receipt.postStateMatched) throw new Error('Post-execution ACL state does not match the predicted state');
-  } catch (error) {
-    failure = error;
-    receipt.failure = String(error.message).slice(0, 400);
+function hasAnyRestoreGrant(snapshot, start, end, frontier) {
+  for (let index = start; index < end && index < frontier; index += 1) {
+    if (snapshot[index].grants.length > 0) return true;
   }
-  receipt.totalMs = Date.now() - Date.parse(receipt.at);
-  writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
-  chmodSync(receiptPath, 0o600);
-  if (failure) throw failure;
-  return receipt;
+  return false;
 }
 
-const HELP = `DYData source freeze executor (single-message transport)
-
-Usage:
-  DYDATA_CUTOVER_SOURCE_URL='postgresql://...' node scripts/cloudbase/cutover-freeze-executor.mjs \\
-    --rehearsal|--execute-authorized-source \\
-    --package PRIVATE_PACKAGE.json --baseline PRIVATE_BASELINE.json \\
-    --action freeze|rollback --snapshot-sql full|excluded \\
-    --receipt NEW_PRIVATE_RECEIPT.json [--timeout-ms 65000]
-
---rehearsal only accepts loopback cutover_rehearsal_* databases.
---execute-authorized-source only accepts the two exact source identities.
-The connection URL is never printed. The package SQL is sent as a single
-simple-query protocol message; its SHA is verified before connecting.`;
-
-async function main() {
-  const argv = process.argv.slice(2);
-  if (argv.includes('--help') || argv.includes('-h')) { console.log(HELP); return; }
-  if (!process.env.DYDATA_CUTOVER_SOURCE_URL) throw new Error('Set DYDATA_CUTOVER_SOURCE_URL in the environment; its value is never printed');
-  const args = parseExecutorArgs(argv);
-  const receipt = await executeFreezeAction({
-    connectionUrl: process.env.DYDATA_CUTOVER_SOURCE_URL,
-    mode: args.mode,
-    packagePath: args.options.get('--package'),
-    baselinePath: args.options.get('--baseline'),
-    action: args.action,
-    snapshotSql: args.snapshotSql,
-    receiptPath: args.options.get('--receipt'),
-    timeoutMs: args.timeoutMs,
-  });
-  console.log(JSON.stringify({ status: 'OK', action: receipt.action, objects: receipt.objects, executeMs: receipt.execute.ms, totalMs: receipt.totalMs, roundTrips: receipt.execute.roundTrips }));
+function matchingFreezeBoundaries(snapshot, actual, batchBoundaries) {
+  if (!Array.isArray(actual) || actual.length !== snapshot.length) return [];
+  const matches = [];
+  for (const frontier of batchBoundaries) {
+    if (sameJson(actual, freezeStateAt(snapshot, frontier))) matches.push(frontier);
+  }
+  return matches;
 }
+
+function confirmedTransportResult(result, channel) {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('Batch transport returned no confirmation');
+  if (channel === 'postgres') {
+    if (result.lastCommand !== 'COMMIT') throw new Error('Batch transport did not confirm COMMIT');
+    return { confirmation: 'COMMIT', requestId: null };
+  }
+  if (channel === 'cloudbase') {
+    const requestId = typeof result.RequestId === 'string' && result.RequestId.trim() ? result.RequestId : null;
+    if (!requestId || result.Error != null || result.error != null || result.ok === false || result.success === false || result.isError === true) {
+      throw Object.assign(new Error('CloudBase batch transport did not confirm RequestId'), { requestId });
+    }
+    return { confirmation: 'RequestId', requestId };
+  }
+  throw new Error('Freeze package has an unsupported transport channel');
+}
+
+function safeErrorMetadata(error) {
+  return { name: typeof error?.name === 'string' ? error.name.slice(0, 80) : 'Error' };
+}
+
+function assertBatchBudget(pkg, batch) {
+  const budget = freezeRequestBudget(batch.sql, pkg.channel, pkg.maxBytes);
+  if (budget.requestBytes !== batch.requestBytes || budget.headroomBytes <= FREEZE_MIN_HEADROOM) {
+    throw new Error('Freeze batch request no longer matches its reviewed byte budget');
+  }
+}
+
+/** A protection callback is mandatory; it must check live maintenance and the source's exact 100 held locks. */
+export async function executeFreezeBatches({ pkg, expectedSha256, action, transport, readSnapshot, assertProtection, onReceipt }) {
+  assertExternalPackageSha(expectedSha256);
+  pkg = deepFreeze(structuredClone(pkg));
+  verifyFreezePackage(pkg, expectedSha256);
+  if (action !== 'freeze' && action !== 'rollback') throw new Error('Action must be freeze or rollback');
+  if (typeof transport !== 'function') throw new TypeError('A batch transport callback is required');
+  if (typeof readSnapshot !== 'function') throw new TypeError('A full snapshot reader callback is required');
+  if (typeof assertProtection !== 'function') throw new TypeError('An assertProtection callback is required');
+  assertFreezeWindow(pkg);
+
+  const batches = action === 'freeze' ? pkg.applyBatches : pkg.rollbackBatches;
+  const boundaries = [0, ...pkg.applyBatches.map((batch) => batch.end)];
+  const overallStartedMs = Date.now();
+  const receipt = {
+    version: 1,
+    packageSha256: pkg.packageSha256,
+    project: pkg.project,
+    channel: pkg.channel,
+    action,
+    state: 'RUNNING',
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    totalMs: null,
+    objects: pkg.objects,
+    expectedSha256,
+    initialStateMatched: false,
+    finalStateMatched: false,
+    rollbackFrontier: null,
+    completedBatches: [],
+    snapshotReads: [],
+    snapshotReadFailures: [],
+    inFlightBatch: null,
+    unknownBoundary: null,
+    diagnostic: null,
+    failure: null,
+  };
+  let stage = 'initial-protection';
+  let transportStarted = false;
+  let currentExpected = null;
+  let selectedBatches = [];
+  let liveBatch = null;
+  let liveBatchStartedMs = null;
+  let transportStartedMs = null;
+
+  const notify = async () => {
+    if (typeof onReceipt === 'function') await onReceipt(structuredClone(receipt));
+  };
+  const readFullSnapshot = async (readStage) => {
+    try {
+      const result = normalizeSnapshot(await readSnapshot());
+      if (result.requestId) receipt.snapshotReads.push({ stage: readStage, requestId: result.requestId, at: new Date().toISOString() });
+      return result;
+    } catch (error) {
+      const requestId = typeof error?.requestId === 'string' ? error.requestId.slice(0, 200) : (typeof error?.RequestId === 'string' ? error.RequestId.slice(0, 200) : null);
+      receipt.snapshotReadFailures.push({ stage: readStage, requestId, name: safeErrorMetadata(error).name, at: new Date().toISOString() });
+      throw error;
+    }
+  };
+  const setUnknown = (batch, error, unknownStage, confirmation = null) => {
+    if (!batch) return;
+    receipt.unknownBoundary = {
+      ...batchReceipt(batch),
+      stage: unknownStage,
+      requestId: typeof error?.requestId === 'string' ? error.requestId.slice(0, 200) : (typeof error?.RequestId === 'string' ? error.RequestId.slice(0, 200) : null),
+      confirmation,
+      startedAt: receipt.inFlightBatch?.startedAt ?? null,
+      endedAt: new Date().toISOString(),
+      elapsedMs: liveBatchStartedMs === null ? null : Date.now() - liveBatchStartedMs,
+      transportElapsedMs: transportStartedMs === null ? null : Date.now() - transportStartedMs,
+    };
+  };
+
+  try {
+    await notify();
+    await assertProtection();
+    stage = 'initial-snapshot';
+    const initial = (await readFullSnapshot('initial-snapshot')).snapshot;
+    if (initial.length !== pkg.snapshot.length) throw new Error('Current snapshot object count differs from the verified package');
+
+    if (action === 'freeze') {
+      if (!sameJson(initial, pkg.snapshot)) throw new Error('Freeze must start from the baseline snapshot');
+      receipt.initialStateMatched = true;
+      currentExpected = pkg.snapshot;
+      selectedBatches = batches;
+    } else {
+      const matching = matchingFreezeBoundaries(pkg.snapshot, initial, boundaries);
+      if (matching.length === 0) throw new Error('Rollback state does not match the baseline or a complete freeze-batch boundary');
+      const minimumSafeFrontier = matching[0];
+      receipt.rollbackFrontier = minimumSafeFrontier;
+      receipt.initialStateMatched = true;
+      currentExpected = initial;
+      // Grantless objects can make legal package boundaries observationally
+      // identical. Restore only ranges proven frozen below the minimum match.
+      selectedBatches = batches.filter((batch) => hasAnyRestoreGrant(pkg.snapshot, batch.start, batch.end, minimumSafeFrontier));
+    }
+    await notify();
+
+    let protectionAlreadyChecked = true;
+    for (const batch of selectedBatches) {
+      if (protectionAlreadyChecked) protectionAlreadyChecked = false;
+      else {
+        stage = 'pre-batch-protection';
+        assertFreezeWindow(pkg);
+        await assertProtection();
+        stage = 'pre-batch-snapshot';
+        currentExpected = (await readFullSnapshot('pre-batch-snapshot')).snapshot;
+      }
+
+      const expectedPre = action === 'freeze'
+        ? freezeStateAt(pkg.snapshot, batch.start)
+        : freezeStateAt(pkg.snapshot, batch.end);
+      if (!sameJson(currentExpected, expectedPre)) throw new Error(`Current snapshot does not match the expected ${action} batch boundary`);
+
+      assertFreezeWindow(pkg);
+      liveBatch = batch;
+      liveBatchStartedMs = Date.now();
+      transportStarted = false;
+      receipt.inFlightBatch = { ...batchReceipt(batch), startedAt: new Date(liveBatchStartedMs).toISOString() };
+      stage = 'before-transport-receipt';
+      await notify();
+
+      receipt.inFlightBatch.preSendReceiptAt = new Date().toISOString();
+      stage = 'before-final-protection-receipt';
+      await notify();
+
+      verifyFreezePackage(pkg, expectedSha256);
+      assertBatchBudget(pkg, batch);
+      stage = 'last-batch-protection';
+      assertFreezeWindow(pkg);
+      await assertProtection();
+      assertFreezeWindow(pkg);
+      stage = 'transport';
+      transportStarted = true;
+      transportStartedMs = Date.now();
+      receipt.inFlightBatch.transportStartedAt = new Date(transportStartedMs).toISOString();
+      const result = await transport(batch.sql, batch);
+      const transportElapsedMs = Date.now() - transportStartedMs;
+      const confirmation = confirmedTransportResult(result, pkg.channel);
+      receipt.inFlightBatch.confirmation = confirmation.confirmation;
+      receipt.inFlightBatch.requestId = confirmation.requestId;
+      receipt.inFlightBatch.transportElapsedMs = transportElapsedMs;
+      stage = 'transport-confirmed-receipt';
+      await notify();
+
+      stage = 'post-batch-protection';
+      assertFreezeWindow(pkg);
+      await assertProtection();
+      stage = 'post-batch-snapshot';
+      const expectedPost = action === 'freeze'
+        ? freezeStateAt(pkg.snapshot, batch.end)
+        : freezeStateAt(pkg.snapshot, batch.start);
+      const actualPost = (await readFullSnapshot('post-batch-snapshot')).snapshot;
+      if (!sameJson(actualPost, expectedPost)) throw new Error('Post-batch snapshot does not match the predicted complete state');
+
+      const completedAt = new Date().toISOString();
+      receipt.completedBatches.push({
+        ...batchReceipt(batch),
+        confirmation: confirmation.confirmation,
+        requestId: confirmation.requestId,
+        startedAt: receipt.inFlightBatch.startedAt,
+        transportStartedAt: receipt.inFlightBatch.transportStartedAt,
+        completedAt,
+        endedAt: completedAt,
+        elapsedMs: Date.now() - liveBatchStartedMs,
+        transportElapsedMs,
+      });
+      receipt.inFlightBatch = null;
+      receipt.unknownBoundary = null;
+      currentExpected = expectedPost;
+      liveBatch = null;
+      liveBatchStartedMs = null;
+      transportStartedMs = null;
+      transportStarted = false;
+      stage = 'batch-complete-receipt';
+      await notify();
+    }
+
+    stage = 'final-protection';
+    assertFreezeWindow(pkg);
+    await assertProtection();
+    stage = 'final-snapshot';
+    const finalSnapshot = (await readFullSnapshot('final-snapshot')).snapshot;
+    const expectedFinal = action === 'freeze' ? deriveExpectedState(pkg.snapshot, 'freeze') : deriveExpectedState(pkg.snapshot, 'rollback');
+    if (!sameJson(finalSnapshot, expectedFinal)) throw new Error('Final snapshot does not match the requested complete state');
+    receipt.finalStateMatched = true;
+    receipt.state = 'COMPLETE';
+    receipt.finishedAt = new Date().toISOString();
+    receipt.totalMs = Date.now() - overallStartedMs;
+    stage = 'complete-receipt';
+    await notify();
+    return receipt;
+  } catch (error) {
+    if (transportStarted && liveBatch && !receipt.completedBatches.some((batch) => batch.start === liveBatch.start && batch.end === liveBatch.end)) {
+      setUnknown(liveBatch, error, stage, receipt.inFlightBatch?.confirmation ?? null);
+      receipt.diagnostic = { status: 'RUNNING', attemptedAt: new Date().toISOString(), matchingBoundaries: [], readRequestId: null };
+      try {
+        const diagnostic = await readFullSnapshot('unknown-boundary-diagnostic');
+        const matching = matchingFreezeBoundaries(pkg.snapshot, diagnostic.snapshot, boundaries);
+        const preFrontier = action === 'freeze' ? liveBatch.start : liveBatch.end;
+        const postFrontier = action === 'freeze' ? liveBatch.end : liveBatch.start;
+        receipt.diagnostic = {
+          status: 'READ',
+          readAt: new Date().toISOString(),
+          readRequestId: diagnostic.requestId,
+          matchingBoundaries: matching,
+          observation: matching.includes(preFrontier) && matching.includes(postFrontier)
+            ? 'AMBIGUOUS_PRE_OR_POST'
+            : matching.includes(postFrontier)
+              ? 'MATCHES_POST_BOUNDARY'
+              : matching.includes(preFrontier)
+                ? 'MATCHES_PRE_BOUNDARY'
+                : matching.length > 0 ? 'OTHER_LEGAL_BOUNDARY' : 'NO_LEGAL_BOUNDARY',
+        };
+        receipt.unknownBoundary.diagnosticReadRequestId = diagnostic.requestId;
+        receipt.unknownBoundary.matchingBoundaries = matching;
+      } catch (diagnosticError) {
+        receipt.diagnostic = {
+          status: 'FAILED',
+          readAt: new Date().toISOString(),
+          readRequestId: typeof diagnosticError?.requestId === 'string' ? diagnosticError.requestId.slice(0, 200) : (typeof diagnosticError?.RequestId === 'string' ? diagnosticError.RequestId.slice(0, 200) : null),
+          matchingBoundaries: [],
+          failure: safeErrorMetadata(diagnosticError),
+        };
+        receipt.unknownBoundary.diagnosticReadRequestId = receipt.diagnostic.readRequestId;
+      }
+    }
+    receipt.state = 'STOPPED';
+    receipt.finishedAt = new Date().toISOString();
+    receipt.totalMs = Date.now() - overallStartedMs;
+    receipt.failure = { stage, ...safeErrorMetadata(error) };
+    try {
+      await notify();
+    } catch (receiptError) {
+      receipt.receiptWriteFailure = safeErrorMetadata(receiptError);
+    }
+    if (error && typeof error === 'object') error.receipt = structuredClone(receipt);
+    throw error;
+  }
+}
+
+export {
+  assertMaintenanceLive,
+  buildSourceLockReadbackSql,
+  validateMaintenanceProof,
+  validateSourceLockReadback,
+} from './cutover-freeze-protection.mjs';
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((error) => { console.error(error.message); process.exitCode = 1; });
+  runFreezeExecutorCli({
+    argv: process.argv.slice(2),
+    parseExecutorArgs,
+    executeFreezeBatches,
+    loadVerifiedPackage,
+    assertFreezeWindow,
+  }).catch(() => {
+    console.error('Freeze executor stopped; inspect the private receipt. No input values or SQL body logged.');
+    process.exitCode = 1;
+  });
 }

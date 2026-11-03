@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runBatches } from './sql-batches.mjs';
+import { runBatches, wrapSqlBatch } from './sql-batches.mjs';
 import { buildCloudBaseCutoverPackage } from './cutover-cloudbase-package.mjs';
 function input() {
   const tables = Array.from({length:99},(_,i)=>({name:`t${i}`,columns:['id'],typeColumns:['id'],generatedColumns:[],rowCount:0}));
@@ -43,7 +43,7 @@ test('cloud package retains opaque identity fields within the unchanged atomic b
   for(const label of ['target_baseline','staged_latest','promoted_latest']) {
     assert.equal((p.finalBatch.sql.match(new RegExp(`${label} reconciliation failed`,'g'))??[]).length,99);
   }
-  x.targetAuth[0].opaque+='x'.repeat(10000);
+  x.targetAuth[0].opaque+='x'.repeat(400000);
   assert.throws(()=>buildCloudBaseCutoverPackage(x),/Atomic promotion exceeds batch budget/);
 });
 
@@ -61,9 +61,15 @@ test('every actual transaction-wrapped cutover request retains more than 1500 by
 
 test('atomic promotion must reserve its complete transaction wrapper and 1500 byte margin',()=>{
   const x=input();
-  const base=buildCloudBaseCutoverPackage(x).finalBatch.bytes;
-  // Both Auth guards preserve this opaque field. Place raw SQL inside the old
-  // limit but leave insufficient room once the actual transaction is included.
-  x.targetAuth[0].opaque='x'.repeat(Math.floor((491520-base-1000)/2));
+  const base=buildCloudBaseCutoverPackage(x).finalBatch.requestBytes;
+  // The complete baseline occurs once; the actual API body still needs headroom.
+  x.targetAuth[0].opaque='x'.repeat(491520-base-1000);
   assert.throws(()=>buildCloudBaseCutoverPackage(x), /Atomic promotion exceeds/);
+});
+
+test('budget includes serialized management API body and repeats no complete Auth baseline',()=>{
+ const x=input();x.targetAuth[0].opaque='x'.repeat(30000);
+ const p=buildCloudBaseCutoverPackage(x);
+ assert.equal(p.finalBatch.sql.split('x'.repeat(30000)).length-1,1);
+ for(const b of [...p.stageBatches,p.finalBatch,...p.sequenceBatches]) assert.equal(b.requestBytes,Buffer.byteLength(JSON.stringify({EnvId:'dydata-d6g0gd1v37fcddf21',Sql:wrapSqlBatch(b)})));
 });
