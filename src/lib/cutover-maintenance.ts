@@ -9,7 +9,7 @@ export function isApplicationMiddlewarePath(pathname: string) {
 
 export function cutoverMaintenanceResponse(pathname: string, enabled = process.env.DYDATA_WRITE_FREEZE === "1") {
   if (!enabled || pathname === "/api/health") return null;
-  return new Response("系统正在切换到新服务器，预计今天 16:00 前恢复。维护期间请勿重复提交，稍后重新打开即可正常使用；如有急事请联系管理员。", {
+  return new Response("系统正在切换到新服务器，预计明天上午前恢复。维护期间请勿重复提交，稍后重新打开即可正常使用；如有急事请联系管理员。", {
     status: 503,
     headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", "retry-after": "300", "x-dydata-maintenance": "1" },
   });
