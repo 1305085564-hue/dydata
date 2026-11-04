@@ -61,60 +61,17 @@ function ChannelRedundancyCell({
     return <span className="text-[12px] text-[#8A6A2F]">共 0 渠道（未接入渠道）</span>;
   }
 
-  // 展示口径同时保留调度结果和检测明细，避免“可用”与“未就绪”互相打架。
-  const faultCount = channels.filter((c) => c.health === "fault").length;
-  const untestedCount = channels.filter((c) => c.health === "untested").length;
-  const disabledCount = channels.filter((c) => c.health === "disabled").length;
-  const schedulableCount = family?.schedulableChannelCount ?? 0;
-
-  const summaryItems: React.ReactNode[] = [];
-
-  // ① 调度态是首要结论，健康明细在其后展开。
-  if (schedulableCount > 0) {
-    summaryItems.push(
-      <span key="schedulable" className="inline-flex items-center gap-1 text-[#4B6B4E]">
-        <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-        {schedulableCount} 可调度
-      </span>
-    );
-  } else {
-    summaryItems.push(
-      <span key="schedulable-zero" className="inline-flex items-center gap-1 text-status-danger-text">
-        <span className="size-1.5 rounded-full bg-status-danger" />
-        0 可调度
-      </span>
-    );
-  }
-
-  // ② 故障（仅在 > 0 时追加）
-  if (faultCount > 0) {
-    summaryItems.push(
-      <span key="fault" className="inline-flex items-center gap-1 text-status-danger-text">
-        <span className="size-1.5 rounded-full bg-status-danger" />
-        {faultCount} 故障
-      </span>
-    );
-  }
-
-  // ③ 待命中（仅在 > 0 时追加）
-  if (untestedCount > 0) {
-    summaryItems.push(
-      <span key="untested" className="inline-flex items-center gap-1 text-[#78716C]">
-        <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-        {untestedCount} 待命中
-      </span>
-    );
-  }
-
-  // ④ 已停用（仅在 > 0 时追加）
-  if (disabledCount > 0) {
-    summaryItems.push(
-      <span key="disabled" className="inline-flex items-center gap-1 text-[#78716C]">
-        <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-        {disabledCount} 已停用
-      </span>
-    );
-  }
+  // 统一采用互斥五态与真实冗余口径，杜绝 2+2=4 重叠矛盾
+  const identityCounts = family?.identityCounts ?? {
+    active: 0,
+    retest: 0,
+    sleeping: 0,
+    invalid: 0,
+    disabled: 0,
+  };
+  const schedulableCount = family?.schedulableChannelCount ?? (identityCounts.active + identityCounts.retest);
+  const redundancyCount = family?.redundancyCount ?? Math.max(0, schedulableCount - 1);
+  const isSinglePoint = family?.singlePointRisk ?? (schedulableCount <= 1);
 
   return (
     <TooltipProvider delay={100}>
@@ -123,42 +80,66 @@ function ChannelRedundancyCell({
           render={
             <div
               tabIndex={0}
-              className="inline-flex flex-wrap items-center gap-1 text-[12px] cursor-default focus:outline-none"
+              className="inline-flex flex-wrap items-center gap-1.5 text-[12px] cursor-default focus:outline-none"
             >
               <span className="font-mono text-[#78716C]">共 {totalCount} 渠道：</span>
-              {summaryItems.map((item, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1">
-                  {idx > 0 && <span className="text-[#A8A29E]">·</span>}
-                  {item}
+
+              {schedulableCount === 0 ? (
+                <span className="inline-flex items-center gap-1 text-status-danger-text">
+                  <span className="size-1.5 rounded-full bg-status-danger" />
+                  0 可调度（服务中断）
                 </span>
-              ))}
+              ) : isSinglePoint ? (
+                <span className="inline-flex items-center gap-1 text-[#8A6A2F]">
+                  <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
+                  1 可调度（单点风险）
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[#4B6B4E]">
+                  <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
+                  {schedulableCount} 可调度（冗余 {redundancyCount} 条）
+                </span>
+              )}
+
+              {identityCounts.sleeping > 0 && (
+                <span className="text-[#78716C]">· {identityCounts.sleeping} 休眠</span>
+              )}
+              {(identityCounts.invalid + identityCounts.disabled) > 0 && (
+                <span className="text-status-danger-text">
+                  · {identityCounts.invalid + identityCounts.disabled} 失效/停用
+                </span>
+              )}
             </div>
           }
         />
         <TooltipContent side="top" className="text-[12px] p-2.5 max-w-sm">
-          <div className="space-y-1.5 min-w-[200px]">
-            <div className="text-[12px] text-[#A8A29E] border-b border-white/10 pb-1">
-              渠道检测明细（{totalCount} 个渠道）
+          <div className="space-y-1.5 min-w-[220px]">
+            <div className="text-[12px] text-[#A8A29E] border-b border-white/10 pb-1 flex justify-between">
+              <span>渠道状态构成</span>
+              <span className="font-mono">共 {totalCount} 条</span>
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {channels.map((c, idx) => {
-                const stateCfg = {
-                  healthy: { text: "健康", dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
-                  fault: { text: "故障", dot: "bg-status-danger", color: "text-status-danger-text" },
-                  untested: { text: "待命中", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
-                  disabled: { text: "已停用", dot: "bg-[#78716C]", color: "text-[#78716C]" },
-                }[c.health];
+                const identity = c.identity ?? (c.health === "healthy" ? "active" : c.health === "fault" ? "invalid" : c.health);
+                const identityCfg = {
+                  active: { text: "正常在岗", dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
+                  retest: { text: "待复测", dot: "bg-[#8A6A2F]", color: "text-[#8A6A2F]" },
+                  sleeping: { text: "休眠中", dot: "bg-[#78716C]", color: "text-[#78716C]" },
+                  invalid: { text: "已失效", dot: "bg-status-danger", color: "text-status-danger-text" },
+                  disabled: { text: "已停用", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
+                }[identity as keyof typeof identityCounts] || { text: "未知", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" };
+
                 return (
                   <div
                     key={c.keyModelId || `${c.keyId}-${idx}`}
                     className="flex items-center justify-between gap-3 text-[12px]"
                   >
-                    <span className="truncate max-w-[180px] text-white/90">
+                    <span className="truncate max-w-[150px] text-white/90">
                       {c.label || "未命名渠道"}
                     </span>
-                    <span className={cn("inline-flex items-center gap-1 font-mono shrink-0", stateCfg.color)}>
-                      <span className={cn("size-1.5 rounded-full", stateCfg.dot)} />
-                      {stateCfg.text}
+                    <span className={cn("inline-flex items-center gap-1 font-mono shrink-0", identityCfg.color)}>
+                      <span className={cn("size-1.5 rounded-full", identityCfg.dot)} />
+                      {identityCfg.text}
                     </span>
                   </div>
                 );

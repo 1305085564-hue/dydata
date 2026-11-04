@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
 import { ScreenshotInspector } from "./截图检视器";
 import { shouldRequestScreenshotReplacement } from "@/app/(app)/dashboard/video-submit-form-state";
+import { getUploadProgress } from "@/lib/video-submit-workflow/upload-progress";
 
 interface SubmissionSlotsProps {
   slots: Record<
@@ -30,6 +31,10 @@ interface SubmissionSlotsProps {
       ocrSummary?: string[];
       errorCode?: string | null;
       ocrFallback?: boolean;
+      startedAt?: number;
+      phaseStartedAt?: number;
+      finishedAt?: number;
+      batchStartedAt?: number;
     }
   >;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
@@ -93,6 +98,18 @@ export function SubmissionSlotsSection({
     screenshot_1: null,
     screenshot_2: null,
   });
+
+  const [now, setNow] = useState(() => Date.now());
+  const hasActiveSlots = Object.values(slots).some(
+    (s) => s.status === "uploading" || s.status === "recognizing"
+  );
+  useEffect(() => {
+    if (!hasActiveSlots) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [hasActiveSlots]);
+
+  const uploadProgress = getUploadProgress(slots, now);
 
   const extractImageFiles = (fileList: FileList | null): File[] => {
     if (!fileList) return [];
@@ -182,7 +199,11 @@ export function SubmissionSlotsSection({
       <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-col lg:justify-between flex-1 min-h-0">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
-          const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
+          const slotProgress = uploadProgress[item.role];
+          const isUploading = slot.status === "uploading";
+          const isRecognizing = slot.status === "recognizing";
+          const isProcessing = isUploading || isRecognizing;
+          const isLongWaiting = Boolean(slotProgress?.isLongWaiting || (isProcessing && uploadProgress.isLongWaiting));
           // 只要有图，哪怕 OCR 解析有缺失或置信度不高，也归为待核对，绝不亮红灯误导用户重传
           const hasImage = Boolean(slot.assetUrl || slot.previewUrl);
           const isWarning =
@@ -333,10 +354,15 @@ export function SubmissionSlotsSection({
                       <span className="text-[12px] font-normal text-[#1F1E1D] truncate">
                         {item.shortTitle}
                       </span>
-                      {isProcessing ? (
+                      {isUploading ? (
                         <Badge variant="warning" className="gap-0.5">
                           <Loader2 className="size-2.5 animate-spin stroke-[2]" />
-                          读取中
+                          上传中
+                        </Badge>
+                      ) : isRecognizing ? (
+                        <Badge variant="warning" className="gap-0.5">
+                          <Loader2 className="size-2.5 animate-spin stroke-[2]" />
+                          识别中
                         </Badge>
                       ) : isSuccess ? (
                         <Badge variant="neutral" className="gap-0.5 text-[#78716C] before:bg-status-success">
@@ -468,10 +494,27 @@ export function SubmissionSlotsSection({
                       </div>
                     ) : (
                       <div className="min-w-0 flex-1">
-                        <div className="text-[12px] font-normal text-[#1F1E1D] truncate leading-tight">
-                          {isProcessing
-                            ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
-                            : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
+                        <div className="text-[12px] font-normal text-[#1F1E1D] leading-tight">
+                          {isProcessing ? (
+                            isLongWaiting ? (
+                              <div className="text-[12px] text-[#8A6A2F]">
+                                <span className="lg:hidden">
+                                  正在识别（{Math.max(1, Math.round((slotProgress?.elapsedMs ?? 0) / 1000))}s），可先填指标…
+                                </span>
+                                <span className="hidden lg:inline">
+                                  正在识别第 {item.role === "screenshot_1" ? "1" : "2"} 张（已等待 {Math.max(1, Math.round((slotProgress?.elapsedMs ?? 0) / 1000))} 秒），耗时较长，您可先填写右侧其他指标…
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="truncate">
+                                {isUploading ? "截图上传中…" : <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>}
+                              </div>
+                            )
+                          ) : (
+                            <div className="truncate">
+                              {slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
+                            </div>
+                          )}
                         </div>
                         <div className="text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
                           {item.description}

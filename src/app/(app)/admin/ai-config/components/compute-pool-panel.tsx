@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Plus, RotateCcw, Loader2, Activity, X, Settings2 } from "lucide-react";
+import { Plus, RotateCcw, Loader2, Activity, X, Settings2, AlertTriangle } from "lucide-react";
 import {
   useAiConfig,
   type AiProvider,
@@ -42,6 +42,7 @@ export function ComputePoolPanel() {
     mutate,
     mutateEntity,
     swapModelChannelOrder,
+    setKeySleep,
     testKeyModel,
     testKeyAllModels,
     testAllKeysAllModels,
@@ -736,6 +737,49 @@ export function ComputePoolPanel() {
         </TooltipProvider>
       </div>
 
+      {/* 算力底座全池五态概览条 */}
+      {bundle?.availability && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-input">
+          <div className="flex flex-wrap items-center gap-1.5 text-[#78716C]">
+            <span className="font-normal text-[#141413]">全池供给：</span>
+            <span>共 {bundle.availability.totalKeyCount} 渠道</span>
+            <span>·</span>
+            <span className="text-[#4B6B4E]">{bundle.availability.identityCounts.active} 正常在岗</span>
+            {bundle.availability.identityCounts.retest > 0 && (
+              <>
+                <span>·</span>
+                <span className="text-[#8A6A2F]">{bundle.availability.identityCounts.retest} 待复测</span>
+              </>
+            )}
+            {bundle.availability.identityCounts.sleeping > 0 && (
+              <>
+                <span>·</span>
+                <span>{bundle.availability.identityCounts.sleeping} 休眠中</span>
+              </>
+            )}
+            {(bundle.availability.identityCounts.invalid + bundle.availability.identityCounts.disabled) > 0 && (
+              <>
+                <span>·</span>
+                <span className="text-status-danger-text">
+                  {bundle.availability.identityCounts.invalid + bundle.availability.identityCounts.disabled} 已失效或停用
+                </span>
+              </>
+            )}
+            <span className="text-[#E2E2DF]">|</span>
+            <span className={bundle.availability.redundancyCount > 0 ? "text-[#4B6B4E]" : "text-[#8A6A2F]"}>
+              全池真实可用冗余 {bundle.availability.redundancyCount} 条
+            </span>
+          </div>
+
+          {bundle.availability.singlePointRisk && (
+            <div className="inline-flex items-center gap-1 text-[12px] text-[#8A6A2F] font-normal">
+              <AlertTriangle className="size-3" />
+              <span>全池处于单点风险</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {modelTestingState && (
         <div
           role="status"
@@ -832,6 +876,7 @@ export function ComputePoolPanel() {
                   modelId={group.modelId}
                   displayName={group.displayName}
                   items={group.items}
+                  availabilityFamily={bundle?.availability?.modelFamilies.find((f) => f.modelId === group.modelId)}
                   highlightedModelIds={highlightedModels}
                   isShelved={group.isShelved}
                   onRenameModel={handleRenameModel}
@@ -840,13 +885,26 @@ export function ComputePoolPanel() {
                   onToggleKeyEnable={handleToggleKeyEnable}
                   onTestKey={handleTestKeyModel}
                   modelTestResults={modelTestResults}
+                  onClearTestResult={(keyId, mId) => {
+                    setModelTestResults((prev) => {
+                      const next = { ...prev };
+                      delete next[modelTestKey(keyId, mId)];
+                      return next;
+                    });
+                  }}
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
+                  onSwapOrder={async (mId, firstRecordId, secondRecordId) => {
+                    await swapModelChannelOrder(mId, firstRecordId, secondRecordId);
+                  }}
                   onSwapPriority={async (k1, k2) => {
                     const first = group.items.find((item) => item.key.id === k1)!;
                     const second = group.items.find((item) => item.key.id === k2)!;
                     await swapModelChannelOrder(group.modelId, first.modelRecordId, second.modelRecordId);
+                  }}
+                  onSetKeySleep={async (keyId, sleep) => {
+                    await setKeySleep(keyId, sleep);
                   }}
                 />
               ))}

@@ -238,7 +238,7 @@ export function ChannelPoolView({
         </div>
 
         <div className="divide-y divide-[#E2E2DF]/40 overflow-y-auto flex-1 p-1 space-y-0.5">
-          {channels.map((ch) => {
+          {channels.map((ch, idx) => {
             const isSelected = selectedChannel?.id === ch.id;
             const prov = bundle?.providers.find((p) => p.id === ch.provider_id);
             const keyModels = bundle?.models.filter((m) => m.key_id === ch.id) ?? [];
@@ -266,7 +266,7 @@ export function ChannelPoolView({
                 <div className="flex items-center justify-between gap-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0">
-                      P{ch.priority}
+                      #{idx + 1}
                     </span>
                     <span
                       className={cn(
@@ -363,10 +363,6 @@ export function ChannelPoolView({
                     </TooltipProvider>
                   </div>
                 )}
-
-                <span className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.5 rounded bg-[#F1F1F0]">
-                  P{selectedChannel.priority} 顺位
-                </span>
 
                 <span
                   className={cn(
@@ -643,60 +639,12 @@ export function ChannelPoolView({
                   )}
                 </div>
 
-                {/* 3. 顺位权重 */}
+                {/* 3. 模型顺位说明 */}
                 <div className="space-y-1">
-                  <span className="text-[#78716C]">顺位优先级 (数字越小越优先)</span>
-                  {editingField === "priority" ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        min={1}
-                        max={999}
-                        autoFocus
-                        disabled={savingField}
-                        value={editingValue}
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void handleSaveEdit();
-                          if (e.key === "Escape") handleCancelEdit();
-                        }}
-                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="保存优先级"
-                        className="size-7 p-0 text-[#4B6B4E]"
-                        onClick={handleSaveEdit}
-                        disabled={savingField}
-                      >
-                        <Check className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="取消编辑优先级"
-                        className="size-7 p-0 text-[#78716C]"
-                        onClick={handleCancelEdit}
-                        disabled={savingField}
-                      >
-                        <X className="size-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-1 bg-white border border-[#E2E2DF]/60 rounded px-2 py-1">
-                      <span className="text-[#1F1E1D] font-mono">P{selectedChannel.priority}</span>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="修改顺位优先级"
-                        className="size-5 p-0 text-[#78716C] hover:text-[#1F1E1D]"
-                        onClick={() => handleStartEdit("priority")}
-                      >
-                        <Pencil className="size-3" />
-                      </Button>
-                    </div>
-                  )}
+                  <span className="text-[#78716C]">模型顺位排序</span>
+                  <div className="bg-white border border-[#E2E2DF]/60 rounded px-2.5 py-1.5 text-[12px] text-[#78716C]">
+                    顺位已升级为按模型独立治理，请在「模型视角」中上下移动排序。
+                  </div>
                 </div>
 
                 {/* 4. 所属接入点 */}
