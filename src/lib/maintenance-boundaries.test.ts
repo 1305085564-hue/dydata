@@ -9,7 +9,7 @@ const appRoot = resolve(repoRoot, "src/app");
 
 const boundaryFiles = [
   "src/lib/ai-config/key-patch.ts",
-  "src/lib/ai-config/swap-key-priority.ts",
+  "src/lib/ai/channel-governance.ts",
   "src/lib/content-comparison-reference.ts",
   "src/lib/loaders/dashboard-activity.ts",
   "src/lib/loaders/dashboard-page.ts",

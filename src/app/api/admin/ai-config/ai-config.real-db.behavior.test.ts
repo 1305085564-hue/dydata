@@ -27,7 +27,7 @@ function readLocalEnv() {
 }
 
 const localEnv = readLocalEnv();
-const localUrl = localEnv.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const localUrl = process.env.AI_CONFIG_REAL_DB_URL ?? localEnv.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const localServiceRoleKey = localEnv.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const localDb = localUrl && localServiceRoleKey
   ? createClient(localUrl, localServiceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })

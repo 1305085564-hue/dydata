@@ -25,6 +25,7 @@ export type ModelFamilyKeyItem = {
   key: AiProviderKey;
   providerName: string;
   modelRecordId: string;
+  sortOrder?: number;
   modelId: string;
   displayName: string;
 };

@@ -993,6 +993,7 @@ test("模型探测超时返回 15 秒判定线与可读中文原因，不泄露�
       ok: false,
       latencyMs: null,
       error: "上游 15 秒内没有返回任何响应（超时）",
+      failureDiagnostic: { category: "provider", owner: "provider", technical: { message: "上游 15 秒内没有返回任何响应（超时）", status: null, requestId: null } },
     }]);
   } finally {
     globalThis.fetch = previousFetch;

@@ -2,10 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  listRankedProviderKeyModels,
   getProviderKeyModelConfig,
-  getProviderKeyModelHealthStatus,
   getProviderKeyHealthStatus,
-  isProviderKeyHealthy,
   selectHealthyProviderKeyModel,
 } from "./provider-routing";
 
@@ -88,20 +87,6 @@ function providerRow(input: {
   };
 }
 
-test("isProviderKeyHealthy skips keys that are still in circuit breaker window", () => {
-  assert.equal(isProviderKeyHealthy({
-    isEnabled: true,
-    consecutiveFailures: 3,
-    unhealthyUntil: new Date(Date.now() + 60_000).toISOString(),
-  }), false);
-
-  assert.equal(isProviderKeyHealthy({
-    isEnabled: true,
-    consecutiveFailures: 3,
-    unhealthyUntil: new Date(Date.now() - 60_000).toISOString(),
-  }), true);
-});
-
 test("provider key health status keeps untested keys out of the healthy state", () => {
   assert.equal(getProviderKeyHealthStatus({ isEnabled: true }), "untested");
 });
@@ -179,20 +164,30 @@ test("模型级熔断只排除当前模型，不影响同一 Key 下的其他模
   assert.equal(selectedUnhealthy, null);
 });
 
-test("模型级健康状态能区分未测、健康、故障和待确认", () => {
-  assert.equal(getProviderKeyModelHealthStatus({ isEnabled: true }), "untested");
-  assert.equal(getProviderKeyModelHealthStatus({
-    isEnabled: true,
-    lastSuccessAt: "2026-10-05T10:00:00.000Z",
-  }), "healthy");
-  assert.equal(getProviderKeyModelHealthStatus({
-    isEnabled: true,
-    lastFailureAt: "2026-10-05T10:01:00.000Z",
-    lastFailureScope: "model",
-  }), "unhealthy");
-  assert.equal(getProviderKeyModelHealthStatus({
-    isEnabled: true,
-    lastFailureAt: "2026-10-05T10:01:00.000Z",
-    lastFailureScope: "unknown",
-  }), "unknown");
+test("model-local order applies to selected-model and full fallback chains", async () => {
+  const first = { ...providerRow({ id: "a", modelId: "model-a", keyPriority: 1 }), sort_order: 2 };
+  const second = { ...providerRow({ id: "b", modelId: "model-a", keyPriority: 100 }), sort_order: 1 };
+  const other = { ...providerRow({ id: "c", modelId: "model-b", keyPriority: 2 }), sort_order: 1 };
+  const service = createFakeService([first, second, other]);
+  assert.deepEqual((await listRankedProviderKeyModels(service, "model-a")).map((item) => item.providerKeyModelId), ["b", "a"]);
+  assert.deepEqual((await listRankedProviderKeyModels(service)).map((item) => item.providerKeyModelId), ["b", "c", "a"]);
+});
+
+test("manual sleep and permanent failure exclude mounted models from production candidates", async () => {
+  const manual = providerRow({ id: "manual", modelId: "model-a", keyPriority: 1 });
+  const invalid = { ...providerRow({ id: "invalid", modelId: "model-a", keyPriority: 2 }), invalidated_at: new Date().toISOString() };
+  (manual.key as Row).manual_sleep_until = new Date(Date.now() + 60_000).toISOString();
+  assert.deepEqual(await listRankedProviderKeyModels(createFakeService([manual, invalid]), "model-a"), []);
+});
+
+
+test("全量兜底保留跨模型位置并尊重每个模型的独立顺位", async () => {
+  const rows = [
+    { ...providerRow({ id: "a1", modelId: "a", keyPriority: 1 }), sort_order: 2 },
+    { ...providerRow({ id: "b1", modelId: "b", keyPriority: 2 }), sort_order: 1 },
+    { ...providerRow({ id: "a2", modelId: "a", keyPriority: 3 }), sort_order: 1 },
+    { ...providerRow({ id: "b2", modelId: "b", keyPriority: 4 }), sort_order: 2 },
+  ];
+  const ranked = await listRankedProviderKeyModels(createFakeService(rows));
+  assert.deepEqual(ranked.map((r) => r.providerKeyModelId), ["a2", "b1", "a1", "b2"]);
 });

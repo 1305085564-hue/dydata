@@ -1,3 +1,5 @@
+import { getChannelGovernance, type ProviderHealthFields } from "./channel-governance";
+
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MinimalClient = any;
@@ -11,74 +13,30 @@ export type ProviderKeyModelConfig = {
   providerKeyModelId: string;
 };
 
-export type ProviderKeyModelHealthStatus =
-  | "disabled"
-  | "untested"
-  | "healthy"
-  | "unhealthy"
-  | "unknown";
-
-type ProviderKeyModelJoinRow = {
+type ProviderKeyModelJoinRow = ProviderHealthFields & {
   id: string;
   model_id: string;
-  is_enabled: boolean;
+  sort_order?: number | null;
   global_is_enabled?: boolean | null;
-  consecutive_failures?: number | null;
-  unhealthy_until?: string | null;
-  last_failure_at?: string | null;
-  last_success_at?: string | null;
   last_error_message?: string | null;
   last_failure_scope?: "model" | "unknown" | null;
-  key:
-    | {
-        id: string;
-        api_key: string;
-        is_enabled: boolean;
-        priority: number;
-        consecutive_failures: number | null;
-        unhealthy_until: string | null;
-        provider:
-          | {
-              id: string;
-              name: string;
-              base_url: string;
-              priority: number;
-              is_enabled: boolean;
-            }
-          | Array<{
-              id: string;
-              name: string;
-              base_url: string;
-              priority: number;
-              is_enabled: boolean;
-            }>
-          | null;
-      }
-    | Array<{
-        id: string;
-        api_key: string;
-        is_enabled: boolean;
-        priority: number;
-        consecutive_failures: number | null;
-        unhealthy_until: string | null;
-        provider:
-          | {
-              id: string;
-              name: string;
-              base_url: string;
-              priority: number;
-              is_enabled: boolean;
-            }
-          | Array<{
-              id: string;
-              name: string;
-              base_url: string;
-              priority: number;
-              is_enabled: boolean;
-            }>
-          | null;
-      }>
-    | null;
+  key: ProviderKeyJoinRow | ProviderKeyJoinRow[] | null;
+};
+
+type ProviderKeyJoinRow = ProviderHealthFields & {
+  id: string;
+  api_key: string;
+  priority: number;
+  manual_sleep_until?: string | null;
+  provider: ProviderJoinRow | ProviderJoinRow[] | null;
+};
+
+type ProviderJoinRow = {
+  id: string;
+  name: string;
+  base_url: string;
+  priority: number;
+  is_enabled: boolean;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -94,6 +52,7 @@ function parseHealthTimestamp(value?: string | null) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
+/** Legacy four-state view adapter; routing and new summaries use channel-governance. */
 export function getProviderKeyHealthStatus(input: {
   isEnabled: boolean;
   lastSuccessAt?: string | null;
@@ -123,85 +82,8 @@ export function getProviderKeyHealthStatus(input: {
   return "healthy";
 }
 
-export function isProviderKeyHealthy(input: {
-  isEnabled: boolean;
-  consecutiveFailures?: number | null;
-  unhealthyUntil?: string | null;
-  now?: number;
-}) {
-  if (!input.isEnabled) return false;
-  const failures = input.consecutiveFailures ?? 0;
-  if (failures < 3) return true;
-  if (!input.unhealthyUntil) return false;
-
-  const unhealthyUntilMs = Date.parse(input.unhealthyUntil);
-  return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= (input.now ?? Date.now());
-}
-
-export function getProviderKeyModelHealthStatus(input: {
-  isEnabled: boolean;
-  lastSuccessAt?: string | null;
-  lastFailureAt?: string | null;
-  lastFailureScope?: "model" | "unknown" | null;
-  unhealthyUntil?: string | null;
-  now?: number;
-}): ProviderKeyModelHealthStatus {
-  if (!input.isEnabled) return "disabled";
-
-  const lastSuccessAt = parseHealthTimestamp(input.lastSuccessAt);
-  const lastFailureAt = parseHealthTimestamp(input.lastFailureAt);
-  const hasInvalidTimestamp =
-    (Boolean(input.lastSuccessAt?.trim()) && lastSuccessAt === null) ||
-    (Boolean(input.lastFailureAt?.trim()) && lastFailureAt === null);
-  if (hasInvalidTimestamp) return "unhealthy";
-
-  if (lastSuccessAt === null && lastFailureAt === null) return "untested";
-  if (lastFailureAt !== null && (lastSuccessAt === null || lastFailureAt > lastSuccessAt)) {
-    return input.lastFailureScope === "unknown" ? "unknown" : "unhealthy";
-  }
-
-  if (input.unhealthyUntil?.trim()) {
-    const unhealthyUntil = parseHealthTimestamp(input.unhealthyUntil);
-    if (unhealthyUntil === null || unhealthyUntil > (input.now ?? Date.now())) return "unhealthy";
-  }
-
-  return "healthy";
-}
-
-export function isProviderKeyModelHealthy(input: {
-  isEnabled: boolean;
-  consecutiveFailures?: number | null;
-  unhealthyUntil?: string | null;
-  now?: number;
-}) {
-  if (!input.isEnabled) return false;
-  const failures = input.consecutiveFailures ?? 0;
-  if (failures < 3) return true;
-  if (!input.unhealthyUntil) return false;
-
-  const unhealthyUntilMs = Date.parse(input.unhealthyUntil);
-  return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= (input.now ?? Date.now());
-}
-
-export function isProviderKeyModelSchedulable(input: {
-  model: { is_enabled: boolean; global_is_enabled?: boolean | null; consecutive_failures?: number | null; unhealthy_until?: string | null };
-  key?: { is_enabled: boolean; consecutive_failures?: number | null; unhealthy_until?: string | null } | null;
-  provider?: { is_enabled: boolean } | null;
-  now?: number;
-}) {
-  const { model, key, provider, now } = input;
-  if (!model.is_enabled || model.global_is_enabled === false || model.global_is_enabled === null || !key || !provider?.is_enabled) return false;
-  return isProviderKeyHealthy({
-    isEnabled: key.is_enabled,
-    consecutiveFailures: key.consecutive_failures,
-    unhealthyUntil: key.unhealthy_until,
-    now,
-  }) && isProviderKeyModelHealthy({
-    isEnabled: model.is_enabled,
-    consecutiveFailures: model.consecutive_failures,
-    unhealthyUntil: model.unhealthy_until,
-    now,
-  });
+export function isProviderKeyModelSchedulable(input: Parameters<typeof getChannelGovernance>[0]) {
+  return getChannelGovernance(input).isSchedulable;
 }
 
 function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
@@ -230,6 +112,9 @@ const PROVIDER_KEY_MODEL_SELECT = `
   last_success_at,
   last_error_message,
   last_failure_scope,
+  first_failure_at,
+  invalidated_at,
+  sort_order,
   key:ai_provider_keys(
     id,
     api_key,
@@ -237,27 +122,11 @@ const PROVIDER_KEY_MODEL_SELECT = `
     priority,
     consecutive_failures,
     unhealthy_until,
-    provider:ai_providers(
-      id,
-      name,
-      base_url,
-      priority,
-      is_enabled
-    )
-  )
-`;
-
-const LEGACY_PROVIDER_KEY_MODEL_SELECT = `
-  id,
-  model_id,
-  is_enabled,
-  key:ai_provider_keys(
-    id,
-    api_key,
-    is_enabled,
-    priority,
-    consecutive_failures,
-    unhealthy_until,
+    last_failure_at,
+    last_success_at,
+    first_failure_at,
+    invalidated_at,
+    manual_sleep_until,
     provider:ai_providers(
       id,
       name,
@@ -283,13 +152,9 @@ async function selectProviderKeyModelRows(
     return query;
   };
 
-  const fullResult = await buildQuery(PROVIDER_KEY_MODEL_SELECT);
-  if (!fullResult.error) return (fullResult.data ?? []) as ProviderKeyModelJoinRow[];
-
-  // 新字段尚未执行 migration 时保留旧代码窗口，旧数据仍可正常调度。
-  const legacyResult = await buildQuery(LEGACY_PROVIDER_KEY_MODEL_SELECT);
-  if (legacyResult.error) throw new Error(fullResult.error.message);
-  return (legacyResult.data ?? []) as ProviderKeyModelJoinRow[];
+  const result = await buildQuery(PROVIDER_KEY_MODEL_SELECT);
+  if (result.error) throw new Error(result.error.message);
+  return (result.data ?? []) as ProviderKeyModelJoinRow[];
 }
 
 export async function getProviderKeyModelConfig(
@@ -301,25 +166,18 @@ export async function getProviderKeyModelConfig(
     .select(PROVIDER_KEY_MODEL_SELECT)
     .eq("id", providerKeyModelId)
     .maybeSingle();
-  if (!fullResult.error) return fullResult.data ? toConfig(fullResult.data as ProviderKeyModelJoinRow) : null;
-
-  const legacyResult = await service
-    .from("ai_provider_key_models")
-    .select(LEGACY_PROVIDER_KEY_MODEL_SELECT)
-    .eq("id", providerKeyModelId)
-    .maybeSingle();
-  if (legacyResult.error) throw new Error(fullResult.error.message);
-  return legacyResult.data ? toConfig(legacyResult.data as ProviderKeyModelJoinRow) : null;
+  if (fullResult.error) throw new Error(fullResult.error.message);
+  return fullResult.data ? toConfig(fullResult.data as ProviderKeyModelJoinRow) : null;
 }
 
-/** 按优先级返回全部健康候选（Key.priority + Provider.priority 升序），供调用失败时顺位切换 */
+/** 模型内按独立顺位；兜底保留跨模型位置，同模型仍遵守独立顺位。 */
 export async function listRankedProviderKeyModels(
   service: MinimalClient,
   modelIdPreference?: string,
 ): Promise<Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>> {
   const data = await selectProviderKeyModelRows(service, modelIdPreference);
 
-  return data
+  const ranked = data
     .map((row) => ({ row, config: toConfig(row) }))
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
@@ -331,9 +189,25 @@ export async function listRankedProviderKeyModels(
       const rightProvider = firstOrNull(rightKey?.provider);
       const leftScore = (leftKey?.priority ?? 100) + (leftProvider?.priority ?? 100);
       const rightScore = (rightKey?.priority ?? 100) + (rightProvider?.priority ?? 100);
-      return leftScore - rightScore;
-    })
-    .map((item) => ({ providerKeyModelId: item.config.providerKeyModelId, config: item.config }));
+      if (modelIdPreference && left.row.sort_order != null && right.row.sort_order != null) {
+        return left.row.sort_order - right.row.sort_order || left.row.id.localeCompare(right.row.id);
+      }
+      return leftScore - rightScore || (leftKey?.id ?? "").localeCompare(rightKey?.id ?? "") || left.row.id.localeCompare(right.row.id);
+    });
+  if (!modelIdPreference) {
+    const groups = new Map<string, typeof ranked>(); // gate:transient-map 单次候选排序分组，返回后释放，不跨请求缓存
+    for (const item of ranked) {
+      const group = groups.get(item.row.model_id) ?? [];
+      group.push(item);
+      groups.set(item.row.model_id, group);
+    }
+    for (const group of groups.values()) group.sort((a, b) => (a.row.sort_order ?? 0) - (b.row.sort_order ?? 0));
+    return ranked.map((item) => {
+      const next = groups.get(item.row.model_id)!.shift()!;
+      return { providerKeyModelId: next.config.providerKeyModelId, config: next.config };
+    });
+  }
+  return ranked.map((item) => ({ providerKeyModelId: item.config.providerKeyModelId, config: item.config }));
 }
 
 export async function selectHealthyProviderKeyModel(
@@ -348,9 +222,11 @@ export async function bumpProviderKeyFailure(
   service: MinimalClient,
   providerKeyId: string,
   errorMessage?: string,
+  permanentFailure = false,
 ): Promise<void> {
   const { error } = await service.rpc("bump_provider_key_failure", {
     key_id: providerKeyId,
+    permanent_failure: permanentFailure,
     error_message: errorMessage?.slice(0, 500) ?? null,
   });
 
@@ -367,6 +243,8 @@ export async function markProviderKeySuccess(
     .from("ai_provider_keys")
     .update({
       consecutive_failures: 0,
+      first_failure_at: null,
+      invalidated_at: null,
       unhealthy_until: null,
       last_success_at: new Date().toISOString(),
       last_error_message: null,
@@ -384,9 +262,11 @@ export async function bumpProviderKeyModelFailure(
   providerKeyModelId: string,
   errorMessage: string | undefined,
   failureScope: "model" | "unknown",
+  permanentFailure = false,
 ): Promise<void> {
   const { error } = await service.rpc("bump_provider_key_model_failure", {
     key_model_id: providerKeyModelId,
+    permanent_failure: permanentFailure,
     error_message: errorMessage?.slice(0, 500) ?? null,
     failure_scope: failureScope,
   });
@@ -402,6 +282,8 @@ export async function markProviderKeyModelSuccess(
     .from("ai_provider_key_models")
     .update({
       consecutive_failures: 0,
+      first_failure_at: null,
+      invalidated_at: null,
       unhealthy_until: null,
       last_success_at: new Date().toISOString(),
       last_error_message: null,

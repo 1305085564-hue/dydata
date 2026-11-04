@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   classifyProviderFailure,
+  isPermanentProviderFailure,
   sanitizeProviderErrorMessage,
   type ProviderFailureScope,
 } from "./provider-health";
@@ -25,6 +26,7 @@ test("provider failure classification keeps model-specific errors at model scope
   assert.equal(classifyProviderFailure({ status: 404, message: "model_not_found" }), "model");
   assert.equal(classifyProviderFailure({ status: 400, message: "unsupported model: claude-haiku" }), "model");
   assert.equal(classifyProviderFailure({ status: 422, message: "invalid_model" }), "model");
+  assert.equal(classifyProviderFailure({ status: 403, message: "unsupported model: vision" }), "model");
 });
 
 test("unknown provider failures do not expand to the whole Key", () => {
@@ -40,4 +42,12 @@ test("probe error sanitization removes API keys and bearer credentials", () => {
   assert.equal(message.includes("model-secret"), false);
   assert.equal(message.includes("Bearer"), false);
   assert.match(message, /已隐藏/);
+});
+
+
+test("403 的临时拦截和额度故障不永久失效，明确凭据拒绝才失效", () => {
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "Cloudflare 1010" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "insufficient_user_quota" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid api key" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "Forbidden" }), false);
 });

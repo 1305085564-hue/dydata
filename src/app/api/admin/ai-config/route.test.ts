@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
-import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { NextRequest } from "next/server";
 import { boundedInteger, buildAiConfigResponse, buildProbeRequestBody } from "./route";
 
@@ -50,9 +49,8 @@ test("更新 AI Key 时空 api_key 不进入写入 patch", () => {
   assert.match(source, /buildAiKeyPatch\(data, action\)/);
 });
 
-test("AI Key 顺位交换由单独 action 在后端处理", () => {
-  assert.match(source, /"swap_key_priority"/);
-  assert.match(source, /swapKeyPriority/);
+test("全局顺位修改被拒绝，要求在模型内调整", () => {
+  assert.throws(() => buildAiKeyPatch({ priority: 20 }, "update"), /对应模型/);
 });
 
 test("高级参数边界拒绝越界值并保留默认值", () => {
@@ -61,100 +59,6 @@ test("高级参数边界拒绝越界值并保留默认值", () => {
   assert.throws(() => boundedInteger(1199, "最大输出 Token", 1200, 8000, 3600), /1200-8000/);
   assert.throws(() => boundedInteger(51, "上下文轮数", 1, 50, 30), /1-50/);
   assert.throws(() => boundedInteger("12abc", "上下文轮数", 1, 50, 30), /1-50/);
-});
-
-function createKeySwapClient(initial: Record<string, number>, missingIds: string[] = [], conflictBeforeFirstUpdate = false, failUpdateId?: string) {
-  const priorities = { ...initial };
-  let updateCount = 0;
-  let initialReadDone = false;
-  const client = {
-    from(table: string) {
-      assert.equal(table, "ai_provider_keys");
-      return {
-        select() {
-          const query = {
-            in() { return query; },
-            then(resolve: (value: { data: Array<{ id: string; priority: number }>; error: null }) => unknown) {
-              const data = Object.entries(priorities).filter(([id]) => !missingIds.includes(id)).map(([id, priority]) => ({ id, priority }));
-              if (conflictBeforeFirstUpdate && !initialReadDone) priorities["key-a"] = 99;
-              initialReadDone = true;
-              return Promise.resolve({ data, error: null }).then(resolve);
-            },
-          };
-          return query;
-        },
-        update(payload: { priority: number }) {
-          let targetId = "";
-          let expectedPriority: number | null = null;
-          const query = {
-            eq(column: string, value: string | number) {
-              if (column === "id") targetId = String(value);
-              if (column === "priority") expectedPriority = Number(value);
-              return query;
-            },
-            select() {
-              return { maybeSingle: async () => {
-                if (targetId === failUpdateId) return { data: null, error: { message: "写入失败" } };
-                if (!targetId || priorities[targetId] !== expectedPriority) return { data: null, error: null };
-                priorities[targetId] = payload.priority;
-                updateCount += 1;
-                return { data: { id: targetId }, error: null };
-              } };
-            },
-          };
-          return query;
-        },
-      };
-    },
-  };
-  return { client, priorities, getUpdateCount: () => updateCount };
-}
-
-test("AI Key 顺位交换成功时一次请求内交换两条记录", async () => {
-  const fake = createKeySwapClient({ "key-a": 1, "key-b": 2 });
-  await swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 1, target_priority: 2 });
-  assert.deepEqual(fake.priorities, { "key-a": 2, "key-b": 1 });
-  assert.equal(fake.getUpdateCount(), 2);
-});
-
-test("相同顺位的渠道也能交换，并保持其他渠道的先后关系", async () => {
-  const fake = createKeySwapClient({ "key-0": 1, "key-1": 1, "key-a": 55, "key-b": 55, "key-c": 55, "key-d": 56, "key-e": 100, "key-f": 100 });
-  await swapKeyPriority(fake.client as never, { key_id: "key-b", target_key_id: "key-a", key_priority: 55, target_priority: 55 });
-  const ordered = Object.entries(fake.priorities).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([id]) => id);
-  assert.deepEqual(ordered, ["key-0", "key-1", "key-b", "key-a", "key-c", "key-d", "key-e", "key-f"]);
-  assert.equal(fake.priorities["key-0"], 1);
-  assert.equal(fake.priorities["key-1"], 1);
-  assert.equal(fake.priorities["key-e"], 100);
-  assert.equal(fake.priorities["key-f"], 100);
-});
-
-test("相同顺位展开时写入失败，恢复本次已更新的渠道", async () => {
-  const initial = { "key-a": 55, "key-b": 55, "key-c": 55 };
-  const fake = createKeySwapClient(initial, [], false, "key-c");
-  await assert.rejects(swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 55, target_priority: 55 }), /写入失败/);
-  assert.deepEqual(fake.priorities, initial);
-});
-
-test("相同顺位在上限也能下移，保存的数字不超过999", async () => {
-  const fake = createKeySwapClient({ "key-a": 999, "key-b": 999, "key-c": 999 });
-  await swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 999, target_priority: 999 });
-  assert.ok(fake.priorities["key-b"] < fake.priorities["key-a"]);
-  assert.ok(fake.priorities["key-a"] < fake.priorities["key-c"]);
-  assert.ok(Math.max(...Object.values(fake.priorities)) <= 999);
-});
-
-test("AI Key 顺位交换缺少目标 Key 时不产生半更新", async () => {
-  const fake = createKeySwapClient({ "key-a": 1, "key-b": 2 }, ["key-b"]);
-  await assert.rejects(swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 1, target_priority: 2 }), /不存在/);
-  assert.deepEqual(fake.priorities, { "key-a": 1, "key-b": 2 });
-  assert.equal(fake.getUpdateCount(), 0);
-});
-
-test("AI Key 顺位在读取后发生冲突时不产生半更新", async () => {
-  const fake = createKeySwapClient({ "key-a": 1, "key-b": 2 }, [], true);
-  await assert.rejects(swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 1, target_priority: 2 }), /顺位已变化/);
-  assert.deepEqual(fake.priorities, { "key-a": 99, "key-b": 2 });
-  assert.equal(fake.getUpdateCount(), 0);
 });
 
 test("AI 功能总控只接受系统目录中的保存、归档和恢复动作", () => {
@@ -181,128 +85,27 @@ function createDeleteKeyTestClient(options: {
 
   const client = {
     from(table: string) {
-      if (table === "ai_provider_key_models") {
-        return {
-          select(_cols?: string) {
-            return {
-              eq(col: string, val: string) {
-                if (col === "key_id" && val === options.targetKeyId) {
-                  return Promise.resolve({
-                    data: [{ id: "km-exclusive", model_id: "claude-3-5-sonnet" }],
-                    error: null,
-                  });
-                }
-                return Promise.resolve({ data: [], error: null });
-              },
-              neq(col: string, val: string) {
-                return {
-                  eq(_col2: string, _val2: boolean) {
-                    return {
-                      eq(_col3: string, _val3: boolean) {
-                        if (options.hasBackup) {
-                          return Promise.resolve({
-                            data: [
-                              {
-                                id: "km-backup",
-                                model_id: "claude-3-5-sonnet",
-                                is_enabled: true,
-                                key: { id: "key-backup", is_enabled: true },
-                              },
-                            ],
-                            error: null,
-                          });
-                        }
-                        return Promise.resolve({ data: [], error: null });
-                      },
-                    };
-                  },
-                };
-              },
-              order() {
-                return Promise.resolve({ data: [], error: null });
-              },
-            };
-          },
-          delete() {
-            return {
-              eq(col: string, val: string) {
-                if (col === "key_id" && val === options.targetKeyId) {
-                  keyModelDeleted = true;
-                }
-                return Promise.resolve({ error: null });
-              },
-            };
-          },
-        };
-      }
-
-      if (table === "ai_feature_bindings") {
-        return {
-          select(_cols?: string) {
-            return {
-              eq(_col: string, _val: boolean) {
-                return {
-                  neq(_col2: string, _val2: string) {
-                    return Promise.resolve({
-                      data: [
-                        {
-                          id: "binding-1",
-                          feature_key: "next_day_review",
-                          label: "次日复盘",
-                          model_id: "claude-3-5-sonnet",
-                          provider_key_model_id: "km-exclusive",
-                          is_enabled: true,
-                          lifecycle_state: "active",
-                        },
-                      ],
-                      error: null,
-                    });
-                  },
-                };
-              },
-              order() {
-                return Promise.resolve({ data: [], error: null });
-              },
-            };
-          },
-        };
-      }
-
-      if (table === "ai_provider_keys") {
-        return {
-          select() {
-            return {
-              order() {
-                return Promise.resolve({ data: [], error: null });
-              },
-            };
-          },
-          delete() {
-            return {
-              eq(col: string, val: string) {
-                if (col === "id" && val === options.targetKeyId) {
-                  keyDeleted = true;
-                }
-                return Promise.resolve({ error: null });
-              },
-            };
-          },
-        };
-      }
-
-      if (table === "ai_providers") {
-        return {
-          select() {
-            return {
-              order() {
-                return Promise.resolve({ data: [], error: null });
-              },
-            };
-          },
-        };
-      }
-
-      throw new Error(`Unexpected table ${table}`);
+      const allRows: Record<string, Record<string, unknown>[]> = {
+        ai_providers: [{ id: "provider", is_enabled: true }],
+        ai_provider_keys: [{ id: options.targetKeyId, provider_id: "provider", is_enabled: true }, ...(options.hasBackup ? [{ id: "key-backup", provider_id: "provider", is_enabled: true }] : [])],
+        ai_provider_key_models: [{ id: "km-exclusive", key_id: options.targetKeyId, model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }, ...(options.hasBackup ? [{ id: "km-backup", key_id: "key-backup", model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }] : [])],
+        ai_feature_bindings: [{ id: "binding-1", feature_key: "next_day_review", label: "次日复盘", model_id: "claude-3-5-sonnet", provider_key_model_id: "km-exclusive", is_enabled: true, lifecycle_state: "active" }],
+      };
+      let rows = allRows[table] ?? [];
+      let removing = false;
+      const query = {
+        select() { return query; },
+        order() { return query; },
+        delete() { removing = true; return query; },
+        eq(field: string, value: unknown) { rows = rows.filter((row) => row[field] === value); return query; },
+        neq(field: string, value: unknown) { rows = rows.filter((row) => row[field] !== value); return query; },
+        then(resolve: (value: unknown) => unknown) {
+          if (removing && table === "ai_provider_keys") keyDeleted = true;
+          if (removing && table === "ai_provider_key_models") keyModelDeleted = true;
+          return Promise.resolve({ data: rows, error: null }).then(resolve);
+        },
+      };
+      return query;
     },
   };
 

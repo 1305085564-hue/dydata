@@ -34,7 +34,6 @@ import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-fam
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
 import { resolveModelGlobalEnabled } from "@/lib/ai-config/availability";
-import { compareChannelPriority } from "@/lib/ai-config/priority";
 import { modelTestKey } from "./model-test-feedback";
 
 export function ComputePoolPanel() {
@@ -42,7 +41,7 @@ export function ComputePoolPanel() {
     bundle,
     mutate,
     mutateEntity,
-    swapKeyPriority,
+    swapModelChannelOrder,
     testKeyModel,
     testKeyAllModels,
     testAllKeysAllModels,
@@ -163,11 +162,11 @@ export function ComputePoolPanel() {
         groups.get(modelId)!.isShelved = true;
       }
 
-      groups.get(modelId)!.items.push({ key, providerName: provider.name, modelRecordId: m.id, modelId, displayName });
+      groups.get(modelId)!.items.push({ key, providerName: provider.name, modelRecordId: m.id, sortOrder: m.sort_order ?? key.priority, modelId, displayName });
     }
 
     for (const group of groups.values()) {
-      group.items.sort((a, b) => compareChannelPriority(a.key, b.key));
+      group.items.sort((a, b) => (a.sortOrder ?? a.key.priority) - (b.sortOrder ?? b.key.priority) || a.key.id.localeCompare(b.key.id));
     }
     return Array.from(groups.values());
   }, [bundle]);
@@ -844,8 +843,10 @@ export function ComputePoolPanel() {
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
-                  onSwapPriority={async (k1, k2, p1, p2) => {
-                    await swapKeyPriority(k1, k2, p1, p2);
+                  onSwapPriority={async (k1, k2) => {
+                    const first = group.items.find((item) => item.key.id === k1)!;
+                    const second = group.items.find((item) => item.key.id === k2)!;
+                    await swapModelChannelOrder(group.modelId, first.modelRecordId, second.modelRecordId);
                   }}
                 />
               ))}

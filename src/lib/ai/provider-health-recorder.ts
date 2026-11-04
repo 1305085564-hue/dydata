@@ -4,7 +4,7 @@ import {
   markProviderKeyModelSuccess,
   markProviderKeySuccess,
 } from "./provider-routing";
-import { classifyProviderFailure } from "./provider-health";
+import { classifyProviderFailure, isPermanentProviderFailure } from "./provider-health";
 
 type ServiceClient = Parameters<typeof markProviderKeySuccess>[0];
 
@@ -27,9 +27,10 @@ export async function recordProviderFailure(input: {
   message: string;
 }): Promise<void> {
   const scope = classifyProviderFailure({ errorType: input.errorType, message: input.message });
+  const permanentFailure = isPermanentProviderFailure({ errorType: input.errorType, message: input.message });
   if (scope === "key") {
-    await bumpProviderKeyFailure(input.service, input.providerKeyId, input.message);
+    await bumpProviderKeyFailure(input.service, input.providerKeyId, input.message, permanentFailure);
   } else if (input.providerKeyModelId) {
-    await bumpProviderKeyModelFailure(input.service, input.providerKeyModelId, input.message, scope);
+    await bumpProviderKeyModelFailure(input.service, input.providerKeyModelId, input.message, scope, permanentFailure);
   }
 }

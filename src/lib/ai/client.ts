@@ -66,7 +66,6 @@ type ChannelConfig = {
   baseUrl: string;
   apiKey: string;
   model?: string | null;
-  priority?: number;
   providerKeyModelId?: string | null;
   providerKeyId?: string | null;
   source: "env" | "provider_key_model";
@@ -221,24 +220,22 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
   return configs.get(featureKey) ?? null;
 }
 
-/** 把顺位候选转成调用渠道 */
-function rankedCandidatesToChannels(
-  candidates: Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>,
-): ChannelConfig[] {
-  return candidates.map((candidate) => ({
-    id: candidate.config.providerKeyModelId,
-    name: candidate.config.providerName,
-    baseUrl: candidate.config.baseUrl,
-    apiKey: candidate.config.apiKey,
-    model: candidate.config.modelId,
-    providerKeyModelId: candidate.config.providerKeyModelId,
-    providerKeyId: candidate.config.providerKeyId,
-    source: "provider_key_model" as const,
-  }));
+/** 正式候选与指定渠道共用同一份调用参数映射。 */
+function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
+  return {
+    id: config.providerKeyModelId,
+    name: config.providerName,
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+    model: config.modelId,
+    providerKeyModelId: config.providerKeyModelId,
+    providerKeyId: config.providerKeyId,
+    source: "provider_key_model",
+  };
 }
 
 /** 场景路由解析调用链（模型为主，渠道为辅）：
- * 1) 场景指定了模型 → 该模型在所有渠道上的部署按 Key/供应商优先级排成顺位，同模型跨渠道自动切换；
+ * 1) 场景指定了模型 → 该模型在所有渠道上的部署按当前模型独立顺位排列，同模型跨渠道自动切换；
  *    model_id 为空时兼容从旧组合绑定推导出模型
  * 2) 场景未指定 → 走「全局默认」（feature_key=default，最低优先级）的模型，同样跨渠道顺位
  * 3) 指定/默认模型全部不健康或不存在 → 全量顺位最后兜底 */
@@ -261,12 +258,12 @@ async function resolveFeatureChannelChain(
   if (modelId) {
     const forModel = await listRankedProviderKeyModels(supabase, modelId);
     if (forModel.length > 0) {
-      return rankedCandidatesToChannels(forModel);
+      return forModel.map(({ config }) => toChannelConfig(config));
     }
   }
 
   const allRanked = await listRankedProviderKeyModels(supabase, undefined);
-  return rankedCandidatesToChannels(allRanked);
+  return allRanked.map(({ config }) => toChannelConfig(config));
 }
 
 async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
@@ -276,16 +273,7 @@ async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<C
   const config = await getProviderKeyModelConfig(supabase, providerKeyModelId);
   if (!config) return null;
 
-  return {
-    id: config.providerKeyModelId,
-    name: config.providerName,
-    baseUrl: config.baseUrl,
-    apiKey: config.apiKey,
-    model: config.modelId,
-    providerKeyModelId: config.providerKeyModelId,
-    providerKeyId: config.providerKeyId,
-    source: "provider_key_model",
-  };
+  return toChannelConfig(config);
 }
 
 function normalizeResponseContent(content: unknown): string | null {
@@ -769,8 +757,14 @@ async function sendWithFailover(
 
   let lastRetryableError: Error | null = null;
   let attemptedChannels = 0;
+  const failedProviderKeyIds = new Set<string>();
 
   for (const channel of channels) {
+    // An earlier attempt can freeze this key; do not reuse a stale candidate later in the same chain.
+    if (send === sendToChannel && channel.providerKeyModelId && channel.providerKeyId && failedProviderKeyIds.has(channel.providerKeyId)) {
+      const service = getServiceSupabaseClient();
+      if (!service || !await getProviderKeyModelConfig(service, channel.providerKeyModelId)) continue;
+    }
     const attemptBudgetMs = resolveAttemptBudgetMs(perChannelTimeoutMs, deadline - Date.now());
     if (attemptBudgetMs < MIN_CHANNEL_ATTEMPT_BUDGET_MS) break;
 
@@ -792,8 +786,11 @@ async function sendWithFailover(
               false,
             );
 
-      if (recordHealth) await markChannelFailure(channel, aiError);
-      else aiError.message = sanitizeProviderErrorMessage(aiError.message, channels.map((candidate) => candidate.apiKey));
+      aiError.message = sanitizeProviderErrorMessage(aiError.message, channels.map((candidate) => candidate.apiKey));
+      if (recordHealth) {
+        await markChannelFailure(channel, aiError);
+        if (channel.providerKeyId) failedProviderKeyIds.add(channel.providerKeyId);
+      }
 
       if (!aiError.retryable) {
         aiError.message = `[${channel.name}] ${aiError.message}`;

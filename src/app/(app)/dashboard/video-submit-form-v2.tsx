@@ -899,7 +899,7 @@ export function VideoSubmitFormV2({
 
   // OCR 上传、识别与槽位归并由独立 controller 负责。
   const handleSlotUpload = useCallback(
-    (role: SubmissionSlotRole, file: File) => createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow })(role, file),
+    (role: SubmissionSlotRole, file: File, batchStartedAt?: number) => createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow })(role, file, batchStartedAt),
     [account, userId, initialSummary, supabase, updateSlotsState, dispatchWorkflow],
   );
 
@@ -1057,6 +1057,7 @@ export function VideoSubmitFormV2({
     async (files: File[]) => {
       if (files.length === 0) return;
 
+      const batchStartedAt = Date.now();
       let uploadedCount = 0;
       for (const file of files) {
         const role = findNextScreenshotUploadRole(
@@ -1065,7 +1066,7 @@ export function VideoSubmitFormV2({
         );
         if (!role) break;
 
-        await handleSlotUpload(role, file);
+        await handleSlotUpload(role, file, batchStartedAt);
         uploadedCount++;
       }
 

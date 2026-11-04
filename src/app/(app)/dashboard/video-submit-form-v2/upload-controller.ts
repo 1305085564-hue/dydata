@@ -57,13 +57,15 @@ export type UploadControllerOptions = {
   updateSlotsState: UpdateSlotsState; dispatchWorkflow: (action: WorkflowAction) => void;
 };
 export function createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow }: UploadControllerOptions) {
-  return async (role: SubmissionSlotRole, file: File) => {
+  return async (role: SubmissionSlotRole, file: File, batchStartedAt?: number) => {
       if (!account) {
         feedbackToast.error("请先选择提交账号");
         return;
       }
 
       const ocrTask = ocrTasksRef.current!.begin(role);
+      const startedAt = Date.now();
+      const uploadBatchStartedAt = batchStartedAt ?? startedAt;
       const oldUrl = slotsRef.current[role]?.previewUrl ?? slotsRef.current[role]?.assetUrl;
       if (oldUrl && oldUrl.startsWith("blob:")) {
         URL.revokeObjectURL(oldUrl);
@@ -78,6 +80,10 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
           fileName: file.name,
           file,
           error: null,
+          startedAt,
+          phaseStartedAt: startedAt,
+          finishedAt: undefined,
+          batchStartedAt: uploadBatchStartedAt,
         },
       }));
 
@@ -121,6 +127,7 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
             status: "recognizing",
             assetUrl,
             previewUrl,
+            phaseStartedAt: Date.now(),
           },
         }));
 
@@ -231,6 +238,7 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
                 : resolvedError,
             assetUrl,
             previewUrl,
+            finishedAt: Date.now(),
             screenshotType: detectedType,
             recognizedFields: data.recognized_fields,
             ocrSummary,
@@ -334,6 +342,7 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
             requiresManualConfirmation: true,
             assetUrl: uploadedAssetUrl ?? current[role].assetUrl ?? null,
             previewUrl: uploadedPreviewUrl ?? current[role].previewUrl ?? null,
+            finishedAt: Date.now(),
             error: uploadedAssetUrl
               ? `${message}，截图已保留，可直接手动填写指标`
               : message,

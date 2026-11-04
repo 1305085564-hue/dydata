@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import type { AvailabilityReport } from "@/lib/ai-config/availability";
+import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
+import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { formatLatency, presentError } from "@/lib/ai-config/presentation";
@@ -16,7 +19,9 @@ export type AiProvider = {
   priority: number;
 };
 
-export type AiProviderKey = {
+export type AiProviderKey = ProviderHealthFields & {
+  failureDiagnostic?: ChannelFailureDiagnostic | null;
+  manual_sleep_until?: string | null;
   id: string;
   provider_id: string;
   label: string;
@@ -32,7 +37,9 @@ export type AiProviderKey = {
   updated_at: string;
 };
 
-export type AiProviderKeyModel = {
+export type AiProviderKeyModel = ProviderHealthFields & {
+  failureDiagnostic?: ChannelFailureDiagnostic | null;
+  sort_order?: number;
   id: string;
   key_id: string;
   model_id: string;
@@ -80,13 +87,14 @@ export type SyncKeyModelsResult = {
 };
 
 export type KeyModelTestResult = {
+  failureDiagnostic?: ChannelFailureDiagnostic | null;
   modelId: string;
   ok: boolean;
   latencyMs?: number | null;
   error?: string | null;
 };
 
-export type AiModelTestResult = { ok: boolean; latencyMs?: number; message?: string };
+export type AiModelTestResult = { ok: boolean; latencyMs?: number; message?: string; failureDiagnostic?: ChannelFailureDiagnostic | null };
 
 export type KeyAllModelsTestResponse = {
   keyId: string;
@@ -135,6 +143,7 @@ export type AiFeatureControl = {
 };
 
 export type AiConfigBundle = {
+  availability?: AvailabilityReport;
   providers: AiProvider[];
   keys: AiProviderKey[];
   models: AiProviderKeyModel[];
@@ -302,35 +311,17 @@ export function useAiConfig() {
     return data;
   }, []);
 
-  const swapKeyPriority = useCallback(async (
-    keyId: string,
-    targetKeyId: string,
-    keyPriority: number,
-    targetPriority: number,
-  ) => {
-    // 乐观更新本地 cachedBundle
-    if (cachedBundle) {
-      const nextKeys = cachedBundle.keys.map((k) => {
-        if (k.id === keyId) return { ...k, priority: targetPriority };
-        if (k.id === targetKeyId) return { ...k, priority: keyPriority };
-        return k;
-      });
-      mutate({ ...cachedBundle, keys: nextKeys });
-    }
-
+  const swapModelChannelOrder = useCallback(async (modelId: string, keyModelId: string, targetKeyModelId: string) => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "swap_key_priority",
-          data: { key_id: keyId, target_key_id: targetKeyId, key_priority: keyPriority, target_priority: targetPriority },
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "swap_model_channel_order", data: {
+          model_id: modelId, key_model_id: keyModelId, target_key_model_id: targetKeyModelId,
+        } }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "交换顺位失败");
       mutate(data as AiConfigBundle);
-      feedbackToast.success("已更新渠道顺位");
       return true;
     } catch (error) {
       void loadData(true);
@@ -338,6 +329,17 @@ export function useAiConfig() {
       return false;
     }
   }, [mutate, loadData]);
+
+  const setKeySleep = useCallback(async (keyId: string, sleeping: boolean) => {
+    const res = await fetchWithTimeout("/api/admin/ai-config", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: sleeping ? "sleep_key" : "resume_key", data: { key_id: keyId } }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "渠道处置失败");
+    mutate(data as AiConfigBundle);
+    return data as AiConfigBundle;
+  }, [mutate]);
 
   useEffect(() => {
     // Cached data is rendered immediately, then revalidated without a loading flash.
@@ -511,7 +513,8 @@ export function useAiConfig() {
     setGlobalDefaultModel,
     archiveFeature,
     restoreFeature,
-    swapKeyPriority,
+    swapModelChannelOrder,
+    setKeySleep,
     testKeyConnection,
     testKeyModel,
     testKeyAllModels,

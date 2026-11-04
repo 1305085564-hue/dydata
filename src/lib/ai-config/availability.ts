@@ -1,21 +1,11 @@
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
-  getProviderKeyHealthStatus,
   isProviderKeyModelSchedulable,
-  type ProviderKeyHealthStatus,
 } from "@/lib/ai/provider-routing";
 
-/**
- * AI 配置中心的统一可用性计算。
- *
- * 展示口径（健康）：复用 provider-routing.getProviderKeyHealthStatus，
- *   healthy=健康检测通过 / untested=已启用未检测 / fault=存在失败或健康冻结 / disabled=停用。
- * 调度口径（可调度）：复用运行时 isProviderKeyModelSchedulable（包含模型级健康状态），
- *   与 client.ts 的 resolveFeatureChannelChain / provider-routing.toConfig 完全同义。
- * 回退口径（受影响业务）：业务指定模型 → 该模型有可调度渠道；未指定 → 全局默认；
- *   指定/默认模型无渠道或未配置 → 运行时走全量顺位，记为"正在使用回退"。
- * 本模块只做展示统计，不参与运行时调度。
- */
+import { getChannelGovernance, getProviderKeyGovernance, type ChannelGovernance, type ChannelIdentity, type ProviderHealthFields } from "@/lib/ai/channel-governance";
+
+/** 五类身份与正式调度共用 channel-governance；旧 health 字段仅供视觉迁移兼容。 */
 
 export type KeyHealthState = "healthy" | "untested" | "fault" | "disabled";
 
@@ -25,7 +15,9 @@ export type AvailabilityProvider = {
   is_enabled: boolean;
 };
 
-export type AvailabilityKey = {
+export type AvailabilityKey = ProviderHealthFields & {
+  priority?: number;
+  manual_sleep_until?: string | null;
   id: string;
   provider_id: string;
   label?: string | null;
@@ -36,7 +28,8 @@ export type AvailabilityKey = {
   last_failure_at?: string | null;
 };
 
-export type AvailabilityModel = {
+export type AvailabilityModel = ProviderHealthFields & {
+  sort_order?: number;
   id: string;
   key_id: string;
   model_id: string;
@@ -70,7 +63,8 @@ export type AvailabilityInput = {
   defaultBinding?: AvailabilityDefaultBinding | null;
 };
 
-export type AvailabilityChannel = {
+export type AvailabilityChannel = ChannelGovernance & {
+  sortOrder: number;
   keyModelId: string;
   keyId: string;
   modelId: string;
@@ -88,13 +82,16 @@ export type AvailabilityModelFamily = {
   globalIsEnabled: boolean | null;
   channelReadyButGlobalDisabled: number;
   channels: AvailabilityChannel[];
+  identityCounts: Record<ChannelIdentity, number>;
+  redundancyCount: number;
+  singlePointRisk: boolean;
   healthyChannelCount: number;
   untestedChannelCount: number;
   schedulableChannelCount: number;
   faultChannelCount: number;
 };
 
-export type AvailabilityKeySummary = {
+export type AvailabilityKeySummary = ChannelGovernance & {
   keyId: string;
   label: string;
   providerId: string;
@@ -124,6 +121,9 @@ export type BusinessAssuranceItem = {
 export type AvailabilityReport = {
   keys: AvailabilityKeySummary[];
   totalKeyCount: number;
+  identityCounts: Record<ChannelIdentity, number>;
+  redundancyCount: number;
+  singlePointRisk: boolean;
   enabledKeyCount: number;
   healthyKeyCount: number;
   untestedKeyCount: number;
@@ -139,8 +139,14 @@ export type AvailabilityReport = {
   businessAssurances: BusinessAssuranceItem[];
 };
 
-function mapHealth(status: ProviderKeyHealthStatus): KeyHealthState {
-  return status === "unhealthy" ? "fault" : status;
+function legacyHealth(identity: ChannelIdentity, hasSuccess: boolean): KeyHealthState {
+  return identity === "active" ? (hasSuccess ? "healthy" : "untested") : identity === "disabled" ? "disabled" : "fault";
+}
+
+function countIdentities(rows: Array<{ identity: ChannelIdentity }>): Record<ChannelIdentity, number> {
+  const counts = { active: 0, retest: 0, sleeping: 0, invalid: 0, disabled: 0 };
+  for (const row of rows) counts[row.identity]++;
+  return counts;
 }
 
 /** 全局模型状态：未决策（null）时，沿用已有渠道启用状态。 */
@@ -193,17 +199,12 @@ export function computeAvailability(
       displayNameByModelId.set(m.model_id, resolved);
     }
 
-    const health: KeyHealthState = m.is_enabled && key?.is_enabled && provider?.is_enabled && key
-      ? mapHealth(getProviderKeyHealthStatus({
-          isEnabled: true,
-          lastSuccessAt: key.last_success_at,
-          lastFailureAt: key.last_failure_at,
-          unhealthyUntil: key.unhealthy_until,
-          now,
-        }))
-      : "disabled";
+    const governance = getChannelGovernance({ model: m, key, provider, now });
+    const health = legacyHealth(governance.identity, Boolean(key?.last_success_at || m.last_success_at));
 
     channels.push({
+      ...governance,
+      sortOrder: m.sort_order ?? key?.priority ?? 100,
       keyModelId: m.id,
       keyId: m.key_id,
       modelId: m.model_id,
@@ -218,18 +219,19 @@ export function computeAvailability(
   // 密钥级汇总：健康看展示口径，可调度看运行时口径
   const keySummaries: AvailabilityKeySummary[] = keys.map((k) => {
     const provider = providerById.get(k.provider_id);
-    const keyEnabled = Boolean(k.is_enabled && provider?.is_enabled);
-    const health: KeyHealthState = keyEnabled
-      ? mapHealth(getProviderKeyHealthStatus({
-          isEnabled: true,
-          lastSuccessAt: k.last_success_at,
-          lastFailureAt: k.last_failure_at,
-          unhealthyUntil: k.unhealthy_until,
-          now,
-        }))
-      : "disabled";
+    const keyGovernance = getProviderKeyGovernance({ key: k, provider, now });
+    const mounted = channels.filter((channel) => channel.keyId === k.id);
+    // A usable model keeps its key available; model-specific failures never disable its siblings.
+    const governance = mounted.length ? [...mounted].sort((a, b) =>
+      ["active", "retest", "sleeping", "invalid", "disabled"].indexOf(a.identity) -
+      ["active", "retest", "sleeping", "invalid", "disabled"].indexOf(b.identity))[0] : { ...keyGovernance, identity: keyGovernance.identity === "disabled" ? "disabled" as const : "invalid" as const, isSchedulable: false };
+    const health = legacyHealth(governance.identity, Boolean(k.last_success_at));
     const enabledModelCount = models.filter((m) => m.key_id === k.id && m.is_enabled).length;
     return {
+      identity: governance.identity,
+      sleepSource: governance.sleepSource,
+      sleepUntil: governance.sleepUntil,
+      persistentFailure: governance.persistentFailure,
       keyId: k.id,
       label: k.label ?? "",
       providerId: k.provider_id,
@@ -252,6 +254,9 @@ export function computeAvailability(
         globalIsEnabled: globalStateByModelId.get(ch.modelId) ?? null,
         channelReadyButGlobalDisabled: 0,
         channels: [],
+        identityCounts: countIdentities([]),
+        redundancyCount: 0,
+        singlePointRisk: true,
         healthyChannelCount: 0,
         untestedChannelCount: 0,
         schedulableChannelCount: 0,
@@ -263,11 +268,18 @@ export function computeAvailability(
   }
   const modelFamilies = Array.from(familyByModelId.values());
   for (const family of modelFamilies) {
+    family.channels.sort((a, b) => a.sortOrder - b.sortOrder || a.keyId.localeCompare(b.keyId));
+    family.identityCounts = countIdentities(family.channels);
+    family.redundancyCount = Math.max(0, family.channels.filter((c) => c.isSchedulable).length - 1);
+    family.singlePointRisk = family.channels.filter((c) => c.isSchedulable).length <= 1;
     family.healthyChannelCount = family.channels.filter((c) => c.health === "healthy").length;
     family.untestedChannelCount = family.channels.filter((c) => c.health === "untested").length;
     family.schedulableChannelCount = family.channels.filter((c) => c.isSchedulable).length;
     family.faultChannelCount = family.channels.filter((c) => c.health === "fault").length;
-    family.channelReadyButGlobalDisabled = family.channels.filter((c) => !c.isSchedulable && globalStateByModelId.get(family.modelId) !== true && c.health !== "disabled").length;
+    family.channelReadyButGlobalDisabled = models.filter((model) => model.model_id === family.modelId && model.global_is_enabled === false && getChannelGovernance({
+      model: { ...model, global_is_enabled: true }, key: keyById.get(model.key_id),
+      provider: providerById.get(keyById.get(model.key_id)?.provider_id ?? ""), now,
+    }).isSchedulable).length;
   }
 
   const activeFamilies = modelFamilies.filter((f) => f.isShelved);
@@ -326,6 +338,9 @@ export function computeAvailability(
   return {
     keys: keySummaries,
     totalKeyCount: keys.length,
+    identityCounts: countIdentities(keySummaries),
+    redundancyCount: Math.max(0, keySummaries.filter((s) => s.isSchedulable).length - 1),
+    singlePointRisk: keySummaries.filter((s) => s.isSchedulable).length <= 1,
     enabledKeyCount: keySummaries.filter((s) => s.health !== "disabled").length,
     healthyKeyCount: keySummaries.filter((s) => s.health === "healthy").length,
     untestedKeyCount: keySummaries.filter((s) => s.health === "untested").length,

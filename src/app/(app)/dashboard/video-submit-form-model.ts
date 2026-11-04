@@ -41,6 +41,10 @@ export type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   assetUrl?: string | null;
   previewUrl?: string | null;
   file?: File | null;
+  startedAt?: number;
+  phaseStartedAt?: number;
+  finishedAt?: number;
+  batchStartedAt?: number;
   screenshotType?: "data" | "curve" | "retention" | null;
   recognizedFields?: Record<string, unknown> | null;
   ocrSummary?: string[];

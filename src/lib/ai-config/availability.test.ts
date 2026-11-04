@@ -132,12 +132,13 @@ test("冻结密钥不可调度，冻结过期后恢复可调度", () => {
   }));
   assert.equal(thawed.schedulableKeyCount, 1);
 
-  // 三次失败但无冻结截止时间：运行时 toConfig 视为不可调度
+  // 未到冷却门槛：有失败记录的渠道待复测，仍可试调度
   const stuck = computeAvailabilityT(baseInput({
-    keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3 }],
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 2 }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
   }));
-  assert.equal(stuck.schedulableKeyCount, 0);
+  assert.equal(stuck.schedulableKeyCount, 1);
+  assert.equal(stuck.identityCounts.retest, 1);
 });
 
 test("所有渠道被冻结的现役模型计入无可用渠道，绑定它的业务受影响", () => {
@@ -303,4 +304,32 @@ test("未指定模型的业务在全局默认指向冻结模型时按默认模�
   assert.equal(report.affectedBusinessCount, 1);
   assert.deepEqual(report.affectedBusinessFeatures[0].resolvedModelId, "model-a");
   assert.equal(report.globalDefaultModelId, "model-a");
+});
+
+
+test("五类身份互斥、合计守恒，模型故障与手动休眠均与正式调度一致", () => {
+  const models = ["active", "retest", "sleeping", "invalid", "disabled"].map((identity, index) => ({
+    id: `m-${identity}`, key_id: `k-${identity}`, model_id: "governed-model", is_enabled: identity !== "disabled", global_is_enabled: true,
+    consecutive_failures: identity === "retest" ? 1 : 0,
+    invalidated_at: identity === "invalid" ? new Date(NOW - MINUTE).toISOString() : null,
+    sort_order: index + 1,
+  }));
+  const keys = ["active", "retest", "sleeping", "invalid", "disabled"].map((identity) => ({
+    id: `k-${identity}`, provider_id: "p1", is_enabled: true,
+    manual_sleep_until: identity === "sleeping" ? new Date(NOW + MINUTE).toISOString() : null,
+  }));
+  const result = computeAvailabilityT(baseInput({ keys, models }));
+  const family = result.modelFamilies[0];
+  assert.deepEqual(family.identityCounts, { active: 1, retest: 1, sleeping: 1, invalid: 1, disabled: 1 });
+  assert.equal(Object.values(family.identityCounts).reduce((sum, count) => sum + count, 0), family.channels.length);
+  assert.equal(family.schedulableChannelCount, 2); assert.equal(family.redundancyCount, 1);
+  assert.equal(family.singlePointRisk, false);
+  assert.deepEqual(result.identityCounts, family.identityCounts);
+});
+
+
+test("未挂载模型的启用渠道不能计为正常在岗或可调度", () => {
+  const report = computeAvailabilityT(baseInput({ keys: [{ id: "empty", provider_id: "p1", is_enabled: true }] }));
+  assert.equal(report.keys[0].identity, "invalid"); assert.equal(report.keys[0].isSchedulable, false);
+  assert.equal(report.identityCounts.active, 0); assert.equal(report.identityCounts.invalid, 1);
 });
