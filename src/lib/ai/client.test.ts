@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { __internal, callAi, resolveAttemptBudgetMs } from "./client";
+import { __internal, callAi, AiChannelError, resolveAttemptBudgetMs } from "./client";
 import { classifyProviderFailure } from "./provider-health";
 
 type Row = Record<string, unknown>;
@@ -54,6 +54,39 @@ test("单次渠道尝试的预算取「渠道超时」与「整链剩余预算�
   assert.equal(resolveAttemptBudgetMs(15_000, 4_000), 4_000);
   // 预算已耗尽时不出现负数超时
   assert.equal(resolveAttemptBudgetMs(15_000, -1), 0);
+});
+
+test("后台试跑沿正式顺位切换，但不改变调度健康状态", async () => {
+  let writes = 0;
+  const attempts: string[] = [];
+  __internal.setServiceClientForTests({ from() { writes++; throw new Error("不应写库"); }, rpc() { writes++; throw new Error("不应写库"); } });
+  try {
+    const result = await __internal.sendWithFailoverForTests([
+      { id: "a", name: "first", baseUrl: "https://example.com", apiKey: "private-first", source: "provider_key_model", providerKeyId: "key-a", providerKeyModelId: "model-a" },
+      { id: "b", name: "second", baseUrl: "https://example.com", apiKey: "private-second", source: "provider_key_model", providerKeyId: "key-b", providerKeyModelId: "model-b" },
+    ], { messages: [{ role: "user", content: "hi" }] }, false, async (channel) => {
+      attempts.push(channel.name);
+      if (channel.id === "a") throw new AiChannelError("HTTP 503", "http_503", true);
+      return { content: "ok", model: "actual-model", channelName: channel.name, elapsedMs: 1 };
+    });
+    assert.deepEqual(attempts, ["first", "second"]);
+    assert.equal(result.channelName, "second");
+    assert.equal(writes, 0);
+  } finally { __internal.setServiceClientForTests(null); }
+});
+
+test("试跑失败反馈隐藏渠道凭据，正式调用仍记录成功健康状态", async () => {
+  let writes = 0;
+  __internal.setServiceClientForTests({ from() { return { update() { writes++; return { eq() { return Promise.resolve({ error: null }); } }; } }; } });
+  const channel = { id: "a", name: "first", baseUrl: "https://example.com", apiKey: "private-first", source: "provider_key_model" as const, providerKeyId: "key-a", providerKeyModelId: "model-a" };
+  try {
+    await assert.rejects(__internal.sendWithFailoverForTests([channel], { messages: [] }, false, async () => {
+      throw new AiChannelError("HTTP 401 private-first", "http_401", false);
+    }), (error: unknown) => error instanceof Error && !error.message.includes("private-first"));
+    assert.equal(writes, 0);
+    await __internal.sendWithFailoverForTests([channel], { messages: [] }, true, async () => ({ content: "ok", model: "model", channelName: "first", elapsedMs: 1 }));
+    assert.ok(writes > 0);
+  } finally { __internal.setServiceClientForTests(null); }
 });
 
 test("额度和鉴权失败不会继续遍历下一个 AI 渠道", () => {

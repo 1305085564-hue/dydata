@@ -8,7 +8,8 @@ import {
   ArchiveRestore,
   Play,
 } from "lucide-react";
-import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
+import { useAiConfig, type AiFeatureControl, type AiModelTestResult } from "../hooks/use-ai-config";
+import { ModelTestFeedback } from "./model-test-feedback";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
@@ -239,6 +240,7 @@ export function BusinessFunctionsPanel() {
 
   // 截图识别专属试跑状态
   const [testingOcr, setTestingOcr] = useState(false);
+  const [ocrTrialResult, setOcrTrialResult] = useState<AiModelTestResult>();
 
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
@@ -319,20 +321,11 @@ export function BusinessFunctionsPanel() {
     if (!bundle || !ocrControl) return;
     setTestingOcr(true);
     try {
-      const selectedModelId = ocrControl.modelId;
-      const currentModelKeys = bundle.models.filter(
-        (m) => m.model_id === selectedModelId && m.is_enabled
-      );
-      const targetModel = currentModelKeys[0];
-      const targetKeyId = targetModel?.key_id || bundle.keys.find((k) => k.is_enabled)?.id;
-      if (!targetKeyId) {
-        feedbackToast.warning("当前没有可用于试跑的可用渠道");
-        return;
-      }
-      const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名渠道";
-      const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
-      const res = await testKeyConnection(targetKeyId, selectedModelId || undefined, "vision");
+      const res = await testKeyConnection({ featureKey: "ocr_screenshot" });
+      setOcrTrialResult(res);
       if (res?.ok) {
+        const modelLabel = res.model ? getModelDisplayName(res.model) : "自动调度";
+        const keyLabel = res.channelLabel || res.channelName || "未命名渠道";
         feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
       } else {
         const message = res?.message || "无响应";
@@ -484,6 +477,7 @@ export function BusinessFunctionsPanel() {
                   >
                     提取图片中短视频与运营指标
                   </div>
+                  <ModelTestFeedback result={ocrTrialResult} />
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
                   <div className="w-full max-w-[270px]">

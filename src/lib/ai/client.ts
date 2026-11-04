@@ -12,6 +12,7 @@ import {
 } from "./provider-routing";
 import { recordProviderFailure, recordProviderSuccess } from "./provider-health-recorder";
 import { resolveAiFeatureAccess } from "./feature-catalog";
+import { sanitizeProviderErrorMessage } from "./provider-health";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
 type TextContent = string;
@@ -668,6 +669,18 @@ export class AiChannelError extends Error {
 }
 
 export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
+  return runAi(options, true);
+}
+
+/** 后台试跑复用正式调用链；探测不改动业务调度使用的健康计数。 */
+export async function probeAiFeature(
+  featureKey: string,
+  options: Omit<AiRequestOptions, "featureKey" | "providerKeyModelId">,
+): Promise<AiResponse> {
+  return runAi({ ...options, featureKey, databaseOnly: true }, false);
+}
+
+async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<AiResponse> {
   const effectiveOptions: AiRequestOptions = {
     ...options,
     messages: [...options.messages],
@@ -727,7 +740,7 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     if (channels.length === 0) {
       throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）");
     }
-    return sendWithFailover(channels, effectiveOptions);
+    return sendWithFailover(channels, effectiveOptions, recordHealth);
   }
 
   if (!options.databaseOnly) {
@@ -741,12 +754,14 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或在后台配置模型顺位）");
   }
 
-  return sendWithFailover(configuredChannels, effectiveOptions);
+  return sendWithFailover(configuredChannels, effectiveOptions, recordHealth);
 }
 
 async function sendWithFailover(
   channels: ChannelConfig[],
   effectiveOptions: AiRequestOptions,
+  recordHealth = true,
+  send = sendToChannel,
 ): Promise<AiResponse> {
   const perChannelTimeoutMs = effectiveOptions.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const totalTimeoutMs = effectiveOptions.totalTimeoutMs ?? DEFAULT_TOTAL_TIMEOUT_MS;
@@ -761,11 +776,11 @@ async function sendWithFailover(
 
     attemptedChannels += 1;
     try {
-      const result = await sendToChannel(channel, {
+      const result = await send(channel, {
         ...effectiveOptions,
         timeoutMs: attemptBudgetMs,
       });
-      await markChannelSuccess(channel);
+      if (recordHealth) await markChannelSuccess(channel);
       return result;
     } catch (error) {
       const aiError =
@@ -777,7 +792,8 @@ async function sendWithFailover(
               false,
             );
 
-      await markChannelFailure(channel, aiError);
+      if (recordHealth) await markChannelFailure(channel, aiError);
+      else aiError.message = sanitizeProviderErrorMessage(aiError.message, channels.map((candidate) => candidate.apiKey));
 
       if (!aiError.retryable) {
         aiError.message = `[${channel.name}] ${aiError.message}`;
@@ -830,6 +846,7 @@ export function extractJsonString(content: string): string | null {
 }
 
 export const __internal = {
+  sendWithFailoverForTests: sendWithFailover,
   getEnvFlag,
   getChannelFromEnv,
   isDbChannelModeEnabled,

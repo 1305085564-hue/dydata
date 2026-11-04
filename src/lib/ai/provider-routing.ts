@@ -183,29 +183,31 @@ export function isProviderKeyModelHealthy(input: {
   return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= (input.now ?? Date.now());
 }
 
-function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
-  if (!row.is_enabled) return null;
-  if (row.global_is_enabled === false || row.global_is_enabled === null) return null;
-
-  const key = firstOrNull(row.key);
-  const provider = firstOrNull(key?.provider);
-  if (!key || !provider) return null;
-  if (!provider.is_enabled) return null;
-  if (!isProviderKeyHealthy({
+export function isProviderKeyModelSchedulable(input: {
+  model: { is_enabled: boolean; global_is_enabled?: boolean | null; consecutive_failures?: number | null; unhealthy_until?: string | null };
+  key?: { is_enabled: boolean; consecutive_failures?: number | null; unhealthy_until?: string | null } | null;
+  provider?: { is_enabled: boolean } | null;
+  now?: number;
+}) {
+  const { model, key, provider, now } = input;
+  if (!model.is_enabled || model.global_is_enabled === false || model.global_is_enabled === null || !key || !provider?.is_enabled) return false;
+  return isProviderKeyHealthy({
     isEnabled: key.is_enabled,
     consecutiveFailures: key.consecutive_failures,
     unhealthyUntil: key.unhealthy_until,
-  })) {
-    return null;
-  }
+    now,
+  }) && isProviderKeyModelHealthy({
+    isEnabled: model.is_enabled,
+    consecutiveFailures: model.consecutive_failures,
+    unhealthyUntil: model.unhealthy_until,
+    now,
+  });
+}
 
-  if (!isProviderKeyModelHealthy({
-    isEnabled: row.is_enabled,
-    consecutiveFailures: row.consecutive_failures,
-    unhealthyUntil: row.unhealthy_until,
-  })) {
-    return null;
-  }
+function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
+  const key = firstOrNull(row.key);
+  const provider = firstOrNull(key?.provider);
+  if (!key || !provider || !isProviderKeyModelSchedulable({ model: row, key, provider })) return null;
 
   return {
     baseUrl: provider.base_url,

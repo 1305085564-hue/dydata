@@ -228,13 +228,15 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
-  const testKeyConnection = useCallback(async (keyId: string, modelId?: string, testMode: "text" | "vision" = "text") => {
+  const testKeyConnection = useCallback(async (target: string | { featureKey: "ocr_screenshot" }, modelId?: string, testMode: "text" | "vision" = "text") => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "test_key", data: { key_id: keyId, model_id: modelId, test_mode: testMode } }),
-      });
+        body: JSON.stringify({ action: "test_key", data: typeof target === "string"
+          ? { key_id: target, model_id: modelId, test_mode: testMode }
+          : { feature_key: target.featureKey } }),
+      }, typeof target === "string" ? 30_000 : 40_000);
       const data = await res.json();
       if (!res.ok || data.error) {
         throw new Error(data.error || "连通测试失败");

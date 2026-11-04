@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { computeAvailability, resolveModelGlobalEnabled, type AvailabilityInput } from "./availability";
+import { listRankedProviderKeyModels } from "@/lib/ai/provider-routing";
 
 const NOW = Date.parse("2026-10-04T12:00:00Z");
 const MINUTE = 60_000;
@@ -33,6 +34,51 @@ test("未决策的全局模型只要有启用渠道就算现役", () => {
 
   const report = computeAvailabilityT(baseInput({ models }));
   assert.equal(report.modelFamilies.find((family) => family.modelId === "deepseek-flash")?.isShelved, true);
+});
+
+test("渠道本身正常但某模型已冻结时，该模型不计为可调度", () => {
+  const report = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW).toISOString() }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: true,
+      consecutive_failures: 3, unhealthy_until: new Date(NOW + MINUTE).toISOString() }],
+  }));
+  assert.equal(report.modelFamilies[0].schedulableChannelCount, 0);
+  assert.equal(report.schedulableKeyCount, 0);
+});
+
+test("全站状态为空时，页面不把正式调度排除的模型计入可调度", () => {
+  const report = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: null }],
+  }));
+  assert.equal(report.modelFamilies[0].schedulableChannelCount, 0);
+});
+
+test("同一份配置的页面可调度数与正式候选链逐项一致", async () => {
+  const future = new Date(Date.now() + 3600_000).toISOString();
+  const cases = [
+    { model: {}, key: {}, provider: {}, expected: 1 },
+    { model: { consecutive_failures: 3, unhealthy_until: future }, key: {}, provider: {}, expected: 0 },
+    { model: { global_is_enabled: null }, key: {}, provider: {}, expected: 0 },
+    { model: { is_enabled: false }, key: {}, provider: {}, expected: 0 },
+    { model: { global_is_enabled: false }, key: {}, provider: {}, expected: 0 },
+    { model: {}, key: { consecutive_failures: 3, unhealthy_until: future }, provider: {}, expected: 0 },
+    { model: {}, key: { is_enabled: false }, provider: {}, expected: 0 },
+    { model: {}, key: {}, provider: { is_enabled: false }, expected: 0 },
+  ];
+  for (const item of cases) {
+    const model = { id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: true, ...item.model };
+    const key = { id: "k1", provider_id: "p1", is_enabled: true, priority: 1, ...item.key };
+    const provider = { id: "p1", name: "provider", base_url: "https://example.invalid", is_enabled: true, priority: 1, ...item.provider };
+    const report = computeAvailability({ providers: [provider], keys: [key], models: [model] });
+    const query = {
+      select() { return this; }, eq() { return this; },
+      then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: [{ ...model, key: { ...key, api_key: "fixture", provider } }], error: null }).then(resolve); },
+    };
+    const ranked = await listRankedProviderKeyModels({ from: () => query }, "model-a");
+    assert.equal(ranked.length, item.expected);
+    assert.equal(report.modelFamilies[0].schedulableChannelCount, ranked.length);
+  }
 });
 
 test("健康、未测、故障、停用四态密钥混合时计数各归各位", () => {

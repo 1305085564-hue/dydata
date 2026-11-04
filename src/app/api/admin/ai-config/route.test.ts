@@ -19,6 +19,27 @@ test("视觉模型试跑发送图片消息，文本连通测试保持文本消�
   assert.equal("response_format" in text, false);
 });
 
+test("截图识别试跑复用业务调用，不接受页面指定的旧渠道", async () => {
+  const fake = createDeleteKeyTestClient({ targetKeyId: "unused", hasBackup: true });
+  let invoked = false;
+  const response = await buildAiConfigResponse(new NextRequest("http://localhost/api/admin/ai-config", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ action: "test_key", data: { feature_key: "ocr_screenshot", key_id: "old-channel" } }),
+  }), {
+    requireSystemActor: async () => ({ supabase: fake.client as never, actor: { userId: "admin-1", role: "owner" } as never }),
+    probeAiFeature: async (feature, options) => {
+      invoked = true;
+      assert.equal(feature, "ocr_screenshot");
+      assert.equal(options.jsonMode, true);
+      assert.ok(Array.isArray(options.messages[0].content));
+      return { content: '{"ok":true}', model: "actual-model", channelName: "actual-provider", elapsedMs: 12 };
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(invoked, true);
+  assert.equal((await response.json()).testResult.model, "actual-model");
+});
+
 const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
 test("更新 AI Key 时空 api_key 不进入写入 patch", () => {

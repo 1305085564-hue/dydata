@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { __internal as aiClientInternal, probeAiFeature, type AiMessage } from "@/lib/ai/client";
 import { getAiFeatureCatalogEntry } from "@/lib/ai/feature-catalog";
 import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "@/lib/ai-config/feature-controls";
 import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
@@ -769,7 +769,9 @@ async function loadKeyProvider(supabase: SupabaseClient, keyId: string) {
 
 const VISION_PROBE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
-export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" = "text") {
+export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" = "text"): {
+  model: string; messages: AiMessage[]; max_tokens: number; stream: boolean; response_format?: { type: "json_object" };
+} {
   return {
     model: modelId,
     messages: [{
@@ -830,7 +832,7 @@ async function probeProviderModel(
 
 export async function buildAiConfigResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor }
+  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature } = { requireSystemActor }
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -936,6 +938,26 @@ export async function buildAiConfigResponse(
 
   if (action === "test_key") {
     try {
+      const data = asRecord(body.data);
+      if (data.feature_key === "ocr_screenshot") {
+        const started = Date.now();
+        let result: Awaited<ReturnType<typeof probeAiFeature>> | null = null;
+        let message = "截图识别试跑失败";
+        try {
+          const sample = buildProbeRequestBody("", "vision");
+          result = await (deps.probeAiFeature ?? probeAiFeature)("ocr_screenshot", {
+            messages: sample.messages, jsonMode: true, maxTokens: 64,
+            timeoutMs: MODEL_PROBE_TIMEOUT_MS, totalTimeoutMs: 30_000,
+          });
+        } catch (error) {
+          if (error instanceof Error) message = error.message;
+        }
+        const bundle = await loadAiConfig(auth.supabase);
+        return NextResponse.json({ ...bundle, testResult: result ? {
+          ok: true, latencyMs: Date.now() - started, model: result.model, channelName: result.channelName,
+          channelLabel: bundle.keys.find((key) => key.id === result?.providerKeyId)?.label ?? result.channelName,
+        } : { ok: false, latencyMs: Date.now() - started, message } });
+      }
       const result = await handleTestKey(auth.supabase, asRecord(body.data));
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ testResult: result, ...bundle });

@@ -1,7 +1,7 @@
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
   getProviderKeyHealthStatus,
-  isProviderKeyHealthy,
+  isProviderKeyModelSchedulable,
   type ProviderKeyHealthStatus,
 } from "@/lib/ai/provider-routing";
 
@@ -10,7 +10,7 @@ import {
  *
  * 展示口径（健康）：复用 provider-routing.getProviderKeyHealthStatus，
  *   healthy=健康检测通过 / untested=已启用未检测 / fault=存在失败或健康冻结 / disabled=停用。
- * 调度口径（可调度）：复用运行时 isProviderKeyHealthy（key×模型×服务商三层启用且未被健康冻结），
+ * 调度口径（可调度）：复用运行时 isProviderKeyModelSchedulable（包含模型级健康状态），
  *   与 client.ts 的 resolveFeatureChannelChain / provider-routing.toConfig 完全同义。
  * 回退口径（受影响业务）：业务指定模型 → 该模型有可调度渠道；未指定 → 全局默认；
  *   指定/默认模型无渠道或未配置 → 运行时走全量顺位，记为"正在使用回退"。
@@ -43,6 +43,8 @@ export type AvailabilityModel = {
   display_name?: string | null;
   is_enabled: boolean;
   global_is_enabled?: boolean | null;
+  consecutive_failures?: number | null;
+  unhealthy_until?: string | null;
 };
 
 export type AvailabilityFeatureControl = {
@@ -141,24 +143,6 @@ function mapHealth(status: ProviderKeyHealthStatus): KeyHealthState {
   return status === "unhealthy" ? "fault" : status;
 }
 
-function isLayerEnabled(input: {
-  modelEnabled: boolean;
-  globalEnabled: boolean;
-  key?: AvailabilityKey;
-  provider?: AvailabilityProvider;
-}) {
-  return Boolean(input.globalEnabled && input.modelEnabled && input.key?.is_enabled && input.provider?.is_enabled);
-}
-
-function keyPassesRuntimeHealth(key: AvailabilityKey, now: number) {
-  return isProviderKeyHealthy({
-    isEnabled: true,
-    consecutiveFailures: key.consecutive_failures,
-    unhealthyUntil: key.unhealthy_until,
-    now,
-  });
-}
-
 /** 全局模型状态：未决策（null）时，沿用已有渠道启用状态。 */
 export function resolveModelGlobalEnabled(
   modelId: string,
@@ -202,7 +186,6 @@ export function computeAvailability(
     const key = keyById.get(m.key_id);
     const provider = key ? providerById.get(key.provider_id) : undefined;
     const globalEnabled = globalStateByModelId.get(m.model_id) === true;
-    const layerEnabled = isLayerEnabled({ modelEnabled: m.is_enabled, globalEnabled, key, provider });
 
     if (globalEnabled) shelvedModelIds.add(m.model_id);
     if (!displayNameByModelId.has(m.model_id)) {
@@ -228,7 +211,7 @@ export function computeAvailability(
       providerName: provider?.name ?? "",
       label: key?.label ?? "",
       health,
-      isSchedulable: layerEnabled && Boolean(key) && keyPassesRuntimeHealth(key!, now),
+      isSchedulable: isProviderKeyModelSchedulable({ model: m, key, provider, now }),
     });
   }
 
@@ -252,7 +235,7 @@ export function computeAvailability(
       providerId: k.provider_id,
       providerName: provider?.name ?? "",
       health,
-      isSchedulable: keyEnabled && enabledModelCount > 0 && keyPassesRuntimeHealth(k, now),
+      isSchedulable: channels.some((channel) => channel.keyId === k.id && channel.isSchedulable),
       enabledModelCount,
     };
   });
@@ -309,6 +292,7 @@ export function computeAvailability(
       keyById,
       providerById,
       globalDefaultModelId,
+      now,
     );
     const family = resolvedModelId ? familyByModelId.get(resolvedModelId) : undefined;
     const schedulableCount = family?.schedulableChannelCount ?? 0;
@@ -365,6 +349,7 @@ function resolveFeatureModelId(
   keyById: Map<string, AvailabilityKey>,
   providerById: Map<string, AvailabilityProvider>,
   defaultModelId: string | null,
+  now: number,
 ): string | null {
   const explicit = control.modelId?.trim();
   if (explicit) return explicit;
@@ -373,8 +358,7 @@ function resolveFeatureModelId(
     const pinned = modelById.get(control.providerKeyModelId);
     const key = pinned ? keyById.get(pinned.key_id) : undefined;
     const provider = key ? providerById.get(key.provider_id) : undefined;
-    const globalEnabled = pinned?.global_is_enabled === undefined ? true : pinned.global_is_enabled === true;
-    if (pinned && isLayerEnabled({ modelEnabled: pinned.is_enabled, globalEnabled, key, provider })) {
+    if (pinned && isProviderKeyModelSchedulable({ model: pinned, key, provider, now })) {
       return pinned.model_id;
     }
   }
