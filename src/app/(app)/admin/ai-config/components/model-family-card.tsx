@@ -426,8 +426,33 @@ export function ModelFamilyCard({
               const isTesting = testingKeyId === key.id;
               const isEditingThisKey = editingKeyId === key.id;
 
-              const isFirst = index === 0;
-              const isLast = index === activeItems.length - 1;
+              const isSleeping = identity === "sleeping";
+
+              // 任务 D 规格：主列表仅 active/retest 可移动，沿移动方向查找最近的 active/retest 行（跳过 sleeping）
+              let prevTarget: ModelFamilyKeyItem | null = null;
+              if (!isSleeping) {
+                for (let i = index - 1; i >= 0; i--) {
+                  const candidateIdentity = channelGovernanceMap.get(activeItems[i].key.id)?.identity ?? (activeItems[i].key.is_enabled ? "active" : "disabled");
+                  if (candidateIdentity === "active" || candidateIdentity === "retest") {
+                    prevTarget = activeItems[i];
+                    break;
+                  }
+                }
+              }
+
+              let nextTarget: ModelFamilyKeyItem | null = null;
+              if (!isSleeping) {
+                for (let i = index + 1; i < activeItems.length; i++) {
+                  const candidateIdentity = channelGovernanceMap.get(activeItems[i].key.id)?.identity ?? (activeItems[i].key.is_enabled ? "active" : "disabled");
+                  if (candidateIdentity === "active" || candidateIdentity === "retest") {
+                    nextTarget = activeItems[i];
+                    break;
+                  }
+                }
+              }
+
+              const canMoveUp = !isSleeping && prevTarget !== null;
+              const canMoveDown = !isSleeping && nextTarget !== null;
 
               const sleepUntil = governance?.sleepUntil ?? key.unhealthy_until;
               const isManualSleep = governance?.sleepSource === "manual" || (key.manual_sleep_until != null && new Date(key.manual_sleep_until).getTime() > Date.now());
@@ -593,33 +618,31 @@ export function ModelFamilyCard({
 
                     {/* 右侧操作按钮组 */}
                     <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
-                      {/* 顺位上移/下移（只动当前模型，相邻互换） */}
+                      {/* 顺位上移/下移（只动当前模型，跳过休眠与不可用渠道互换） */}
                       <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center gap-0.5">
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={isFirst || movingOrder}
+                          disabled={!canMoveUp || movingOrder}
                           onClick={() => {
-                            const prev = activeItems[index - 1];
-                            if (prev) void handleMove(item, prev);
+                            if (prevTarget) void handleMove(item, prevTarget);
                           }}
                           className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
-                          title="提高优先级（上移）"
-                          aria-label="提高优先级（上移）"
+                          title={isSleeping ? "休眠期间顺位锁定，恢复后可调整" : "提高优先级（上移）"}
+                          aria-label={isSleeping ? "休眠期间顺位锁定，恢复后可调整" : "提高优先级（上移）"}
                         >
                           <ArrowUp className="size-3" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={isLast || movingOrder}
+                          disabled={!canMoveDown || movingOrder}
                           onClick={() => {
-                            const next = activeItems[index + 1];
-                            if (next) void handleMove(item, next);
+                            if (nextTarget) void handleMove(item, nextTarget);
                           }}
                           className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
-                          title="降低优先级（下移）"
-                          aria-label="降低优先级（下移）"
+                          title={isSleeping ? "休眠期间顺位锁定，恢复后可调整" : "降低优先级（下移）"}
+                          aria-label={isSleeping ? "休眠期间顺位锁定，恢复后可调整" : "降低优先级（下移）"}
                         >
                           <ArrowDown className="size-3" />
                         </Button>

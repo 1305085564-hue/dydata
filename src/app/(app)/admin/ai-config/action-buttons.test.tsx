@@ -170,5 +170,87 @@ test("任务 D：模型视角失效/停用渠道收纳到卡片底部折叠区�
   assert.match(freshModelCardSource, /isArchivedOpen/);
 });
 
+test("任务 D 返工：休眠渠道顺位锁定且移动目标跳过休眠行", () => {
+  const freshModelCardSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/model-family-card.tsx"),
+    "utf8"
+  );
+
+  // 1. 源码级断言：包含休眠锁定提示与目标跳过 sleeping 逻辑
+  assert.match(freshModelCardSource, /休眠期间顺位锁定，恢复后可调整/);
+  assert.match(freshModelCardSource, /canMoveUp/);
+  assert.match(freshModelCardSource, /canMoveDown/);
+  assert.match(freshModelCardSource, /prevTarget/);
+  assert.match(freshModelCardSource, /nextTarget/);
+
+  // 2. 纯逻辑算法断言：模拟 [sleeping, retest, active] 序列目标查找
+  type Item = { id: string; identity: "active" | "retest" | "sleeping" };
+  const resolveTargets = (items: Item[]) => {
+    return items.map((item, index) => {
+      const isSleeping = item.identity === "sleeping";
+      let prevTarget: Item | null = null;
+      if (!isSleeping) {
+        for (let i = index - 1; i >= 0; i--) {
+          if (items[i].identity === "active" || items[i].identity === "retest") {
+            prevTarget = items[i];
+            break;
+          }
+        }
+      }
+      let nextTarget: Item | null = null;
+      if (!isSleeping) {
+        for (let i = index + 1; i < items.length; i++) {
+          if (items[i].identity === "active" || items[i].identity === "retest") {
+            nextTarget = items[i];
+            break;
+          }
+        }
+      }
+      return {
+        id: item.id,
+        canMoveUp: !isSleeping && prevTarget !== null,
+        canMoveDown: !isSleeping && nextTarget !== null,
+        prevTargetId: prevTarget?.id ?? null,
+        nextTargetId: nextTarget?.id ?? null,
+      };
+    });
+  };
+
+  const initialList: Item[] = [
+    { id: "ch-1", identity: "sleeping" },
+    { id: "ch-2", identity: "retest" },
+    { id: "ch-3", identity: "active" },
+  ];
+
+  const initialResults = resolveTargets(initialList);
+  // #1 sleeping: 两个方向均锁定不可移动
+  assert.strictEqual(initialResults[0].canMoveUp, false);
+  assert.strictEqual(initialResults[0].canMoveDown, false);
+  assert.strictEqual(initialResults[0].prevTargetId, null);
+  assert.strictEqual(initialResults[0].nextTargetId, null);
+
+  // #2 retest: 上方无可用目标（跳过 sleeping），下方目标为 ch-3
+  assert.strictEqual(initialResults[1].canMoveUp, false);
+  assert.strictEqual(initialResults[1].canMoveDown, true);
+  assert.strictEqual(initialResults[1].nextTargetId, "ch-3");
+
+  // #3 active: 上方目标为 ch-2，下方无可用目标
+  assert.strictEqual(initialResults[2].canMoveUp, true);
+  assert.strictEqual(initialResults[2].canMoveDown, false);
+  assert.strictEqual(initialResults[2].prevTargetId, "ch-2");
+
+  // 互换 ch-2 与 ch-3 后的反向还原测试
+  const swappedList: Item[] = [
+    { id: "ch-1", identity: "sleeping" },
+    { id: "ch-3", identity: "active" },
+    { id: "ch-2", identity: "retest" },
+  ];
+  const swappedResults = resolveTargets(swappedList);
+  // ch-2 (此时在索引 2) 上移目标恰好回到 ch-3，可逆性恢复且不碰 sleeping
+  assert.strictEqual(swappedResults[2].canMoveUp, true);
+  assert.strictEqual(swappedResults[2].prevTargetId, "ch-3");
+});
+
+
 
 
