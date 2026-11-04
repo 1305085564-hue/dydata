@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -86,11 +87,18 @@ test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部�
   assert.match(syncDialogSource, /检测此渠道全部挂载模型/);
 });
 
-/** 裁决④冻结词表：渠道健康四态文案只允许一个真源，旧词不得回退。 */
-test("渠道健康四态文案收敛到 presentation 唯一真源（禁止待测／正常在线／异常熔断）", () => {
-  assert.match(presentationSource, /健康[\s\S]*待命中[\s\S]*故障[\s\S]*已停用/);
-  assert.match(channelViewSource, /HEALTH_PRESENTATION/);
-  assert.doesNotMatch(channelViewSource, /"(待测|正常在线|异常熔断)"/);
+/** 裁决④冻结词表：渠道五态文案收敛到 presentation 唯一真源（全仓零 HEALTH_PRESENTATION 引用）。 */
+test("渠道五态文案收敛到 presentation 唯一真源（全仓零 HEALTH_PRESENTATION 引用）", () => {
+  assert.match(presentationSource, /正常在岗[\s\S]*待复测[\s\S]*休眠[\s\S]*已失效[\s\S]*已停用/);
+  assert.match(channelViewSource, /CHANNEL_IDENTITY_PRESENTATION/);
+  assert.match(modelCardSource, /CHANNEL_IDENTITY_PRESENTATION/);
+  assert.doesNotMatch(channelViewSource, /"(健康|待命中|故障|异常熔断|正常在线|待测)"/);
+  assert.doesNotMatch(modelCardSource, /"(健康|待命中|故障|异常熔断|正常在线|待测)"/);
+
+  const grepResult = execSync("git grep -n 'HEALTH_PRESENTATION' src/ | grep -v 'action-buttons.test.tsx' || true", {
+    encoding: "utf8",
+  }).trim();
+  assert.equal(grepResult, "", `src/ 业务代码中不得存在任何 HEALTH_PRESENTATION 残留: \n${grepResult}`);
 });
 
 test("全池全部模型检测契约对齐并展示失败明细条", () => {

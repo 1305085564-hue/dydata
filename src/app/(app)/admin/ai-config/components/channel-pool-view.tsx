@@ -22,94 +22,49 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { resolveModelDisplayName } from "@/lib/ai/model-families";
-import { formatSleepCountdown } from "@/lib/ai-config/presentation";
+import { CHANNEL_IDENTITY_PRESENTATION, formatSleepCountdown } from "@/lib/ai-config/presentation";
 import type { AvailabilityKeySummary } from "@/lib/ai-config/availability";
 import { cn } from "@/lib/utils";
 
 function getKeyGovernanceInfo(keyId?: string, availabilityKeys?: AvailabilityKeySummary[]) {
-  if (!keyId || !availabilityKeys) {
-    return {
-      identity: "unknown" as const,
-      label: "状态未知",
-      dot: "bg-[#A8A29E]",
-      color: "text-[#78716C]",
-      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
-    };
-  }
-
-  const found = availabilityKeys.find((k) => k.keyId === keyId);
-  if (!found) {
-    return {
-      identity: "unknown" as const,
-      label: "状态未知",
-      dot: "bg-[#A8A29E]",
-      color: "text-[#78716C]",
-      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
-    };
-  }
-
-  const { identity, sleepSource, sleepUntil, persistentFailure } = found;
-
-  if (identity === "active") {
-    return {
-      identity,
-      label: "正常在岗",
-      dot: "bg-[#4B6B4E]",
-      color: "text-[#4B6B4E]",
-      badgeClass: "bg-[#4B6B4E]/10 text-[#4B6B4E]",
-    };
-  }
-
-  if (identity === "retest") {
-    return {
-      identity,
-      label: "待复测",
-      dot: "bg-[#8A6A2F]",
-      color: "text-[#8A6A2F]",
-      badgeClass: "bg-[#8A6A2F]/10 text-[#8A6A2F]",
-    };
-  }
-
-  if (identity === "sleeping") {
-    const sleepType = sleepSource === "manual" ? "管理员手动休眠" : "自动休眠中";
-    const countdown = formatSleepCountdown(sleepUntil);
-    const label = `${sleepType} · ${countdown}`;
-    return {
-      identity,
-      label,
-      dot: "bg-[#78716C]",
-      color: "text-[#78716C]",
-      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
-    };
-  }
-
-  if (identity === "invalid") {
-    const label = persistentFailure ? "持续不可用（连续失败超24小时）" : "已失效";
-    return {
-      identity,
-      label,
-      dot: "bg-status-danger",
-      color: "text-status-danger-text",
-      badgeClass: "bg-status-danger/[0.10] text-status-danger-text",
-    };
-  }
-
-  if (identity === "disabled") {
-    return {
-      identity,
-      label: "已停用",
-      dot: "bg-[#A8A29E]",
-      color: "text-[#78716C]",
-      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
-    };
-  }
-
-  return {
+  const unknownState = {
     identity: "unknown" as const,
     label: "状态未知",
     dot: "bg-[#A8A29E]",
     color: "text-[#78716C]",
     badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+  };
+
+  if (!keyId || !availabilityKeys) {
+    return unknownState;
+  }
+
+  const found = availabilityKeys.find((k) => k.keyId === keyId);
+  if (!found) {
+    return unknownState;
+  }
+
+  const { identity, sleepSource, sleepUntil, persistentFailure } = found;
+  const base = CHANNEL_IDENTITY_PRESENTATION[identity];
+  if (!base) {
+    return unknownState;
+  }
+
+  let label = base.label;
+  if (identity === "sleeping") {
+    const sleepType = sleepSource === "manual" ? "管理员手动休眠" : "自动休眠中";
+    const countdown = formatSleepCountdown(sleepUntil);
+    label = `${sleepType} · ${countdown}`;
+  } else if (identity === "invalid" && persistentFailure) {
+    label = "持续不可用（连续失败超24小时）";
+  }
+
+  return {
+    identity,
+    label,
+    dot: base.dot,
+    color: base.color,
+    badgeClass: base.badgeClass,
   };
 }
 

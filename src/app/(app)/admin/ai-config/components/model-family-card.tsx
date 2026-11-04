@@ -20,7 +20,7 @@ import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { formatSleepCountdown } from "@/lib/ai-config/presentation";
+import { CHANNEL_IDENTITY_PRESENTATION, formatSleepCountdown } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 export type ModelFamilyKeyItem = {
@@ -499,23 +499,23 @@ export function ModelFamilyCard({
 
                       {/* 五态唯一互斥身份印记 */}
                       {identity === "active" && (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#4B6B4E]">
-                          <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-                          正常在岗
+                        <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.active.color)}>
+                          <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.active.dot)} />
+                          {CHANNEL_IDENTITY_PRESENTATION.active.label}
                         </span>
                       )}
 
                       {identity === "retest" && (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#8A6A2F]">
-                          <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
-                          待复测
+                        <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.retest.color)}>
+                          <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.retest.dot)} />
+                          {CHANNEL_IDENTITY_PRESENTATION.retest.label}
                         </span>
                       )}
 
                       {identity === "sleeping" && (
                         <div className="inline-flex items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C]">
-                            <span className="size-1.5 rounded-full bg-[#78716C]" />
+                          <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.sleeping.color)}>
+                            <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.sleeping.dot)} />
                             {isManualSleep ? "管理员手动休眠" : "自动休眠中"} · {formatSleepCountdown(sleepUntil)}
                             {!isManualSleep && sleepUntil && (
                               <span className="text-[#A8A29E] font-mono">（预计 {formatSleepTargetTime(sleepUntil)} 复测）</span>
@@ -544,16 +544,16 @@ export function ModelFamilyCard({
                       )}
 
                       {identity === "invalid" && (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-status-danger-text">
-                          <span className="size-1.5 rounded-full bg-status-danger" />
-                          {governance?.persistentFailure ? "持续不可用（连续失败超24小时）" : "已失效"}
+                        <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.invalid.color)}>
+                          <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.invalid.dot)} />
+                          {governance?.persistentFailure ? "持续不可用（连续失败超24小时）" : CHANNEL_IDENTITY_PRESENTATION.invalid.label}
                         </span>
                       )}
 
                       {identity === "disabled" && (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#A8A29E]">
-                          <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                          已停用
+                        <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.disabled.color)}>
+                          <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.disabled.dot)} />
+                          {CHANNEL_IDENTITY_PRESENTATION.disabled.label}
                         </span>
                       )}
 

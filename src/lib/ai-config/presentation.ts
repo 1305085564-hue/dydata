@@ -1,14 +1,43 @@
-import type { ProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
+import type { ChannelIdentity } from "@/lib/ai/channel-governance";
 
 /**
- * 检测明细四态的唯一文案与圆点配色真源（裁决④冻结词表）。
- * 页面不得各写一份四态词，避免同屏出现「待测／待命中」这类两本账。
+ * 渠道五态的唯一文案、圆点与配色真源（裁决④冻结词表）。
+ * 页面不得各写一份五态词，确保模型视角与渠道视角两账完全一致。
  */
-export const HEALTH_PRESENTATION: Record<ProviderKeyHealthStatus, { label: string; dot: string }> = {
-  healthy: { label: "健康", dot: "bg-[#6FAA7D]" },
-  untested: { label: "待命中", dot: "bg-[#B98A54]" },
-  unhealthy: { label: "故障", dot: "bg-status-danger" },
-  disabled: { label: "已停用", dot: "bg-[#A8A29E]" },
+export const CHANNEL_IDENTITY_PRESENTATION: Record<
+  ChannelIdentity,
+  { label: string; dot: string; color: string; badgeClass: string }
+> = {
+  active: {
+    label: "正常在岗",
+    dot: "bg-[#4B6B4E]",
+    color: "text-[#4B6B4E]",
+    badgeClass: "bg-[#4B6B4E]/10 text-[#4B6B4E]",
+  },
+  retest: {
+    label: "待复测",
+    dot: "bg-[#8A6A2F]",
+    color: "text-[#8A6A2F]",
+    badgeClass: "bg-[#8A6A2F]/10 text-[#8A6A2F]",
+  },
+  sleeping: {
+    label: "休眠中",
+    dot: "bg-[#78716C]",
+    color: "text-[#78716C]",
+    badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+  },
+  invalid: {
+    label: "已失效",
+    dot: "bg-status-danger",
+    color: "text-status-danger-text",
+    badgeClass: "bg-status-danger/[0.10] text-status-danger-text",
+  },
+  disabled: {
+    label: "已停用",
+    dot: "bg-[#A8A29E]",
+    color: "text-[#78716C]",
+    badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+  },
 };
 
 /** Formats a latency without making sub-second requests look like whole seconds. */
