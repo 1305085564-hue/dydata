@@ -132,10 +132,12 @@ export function ModelTestFeedback({
         </span>
       </div>
 
-      {/* 错误明细摘要 */}
-      <div className="text-[12px] text-status-danger-text break-words">
-        {rawMessage}
-      </div>
+      {/* 仅在 diagnostic 缺失时主体展示原始报错兜底，有 diagnostic 时收进折叠区 */}
+      {!diagnostic && (
+        <div className="text-[12px] text-status-danger-text break-words">
+          {rawMessage}
+        </div>
+      )}
 
       {/* 处置操作按钮组：主按钮临时休眠，次按钮仅记录 */}
       <div className="flex flex-wrap items-center gap-2 pt-0.5">

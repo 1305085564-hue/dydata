@@ -27,3 +27,18 @@ export function matchKnownError(raw: string, objectNoun?: string): string | null
 export function presentError(raw: string, fallback: string, objectNoun?: string): string {
   return matchKnownError(raw, objectNoun) ?? (raw || fallback);
 }
+
+/** 格式化休眠剩余倒计时（共用工具） */
+export function formatSleepCountdown(sleepUntilIso?: string | null): string {
+  if (!sleepUntilIso) return "即将复测";
+  const t = new Date(sleepUntilIso).getTime();
+  if (Number.isNaN(t)) return "即将复测";
+  const diffSec = Math.floor((t - Date.now()) / 1000);
+  if (diffSec <= 0) return "即将复测";
+  const minutes = Math.ceil(diffSec / 60);
+  if (minutes < 60) return `剩余 ${minutes} 分钟`;
+  const hours = Math.floor(minutes / 60);
+  const remMin = minutes % 60;
+  return `剩余 ${hours} 小时 ${remMin} 分`;
+}
+

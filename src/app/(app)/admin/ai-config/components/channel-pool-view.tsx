@@ -21,10 +21,97 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { resolveModelDisplayName } from "@/lib/ai/model-families";
-import { HEALTH_PRESENTATION } from "@/lib/ai-config/presentation";
+import { formatSleepCountdown } from "@/lib/ai-config/presentation";
+import type { AvailabilityKeySummary } from "@/lib/ai-config/availability";
 import { cn } from "@/lib/utils";
+
+function getKeyGovernanceInfo(keyId?: string, availabilityKeys?: AvailabilityKeySummary[]) {
+  if (!keyId || !availabilityKeys) {
+    return {
+      identity: "unknown" as const,
+      label: "状态未知",
+      dot: "bg-[#A8A29E]",
+      color: "text-[#78716C]",
+      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+    };
+  }
+
+  const found = availabilityKeys.find((k) => k.keyId === keyId);
+  if (!found) {
+    return {
+      identity: "unknown" as const,
+      label: "状态未知",
+      dot: "bg-[#A8A29E]",
+      color: "text-[#78716C]",
+      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+    };
+  }
+
+  const { identity, sleepSource, sleepUntil, persistentFailure } = found;
+
+  if (identity === "active") {
+    return {
+      identity,
+      label: "正常在岗",
+      dot: "bg-[#4B6B4E]",
+      color: "text-[#4B6B4E]",
+      badgeClass: "bg-[#4B6B4E]/10 text-[#4B6B4E]",
+    };
+  }
+
+  if (identity === "retest") {
+    return {
+      identity,
+      label: "待复测",
+      dot: "bg-[#8A6A2F]",
+      color: "text-[#8A6A2F]",
+      badgeClass: "bg-[#8A6A2F]/10 text-[#8A6A2F]",
+    };
+  }
+
+  if (identity === "sleeping") {
+    const sleepType = sleepSource === "manual" ? "管理员手动休眠" : "自动休眠中";
+    const countdown = formatSleepCountdown(sleepUntil);
+    const label = `${sleepType} · ${countdown}`;
+    return {
+      identity,
+      label,
+      dot: "bg-[#78716C]",
+      color: "text-[#78716C]",
+      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+    };
+  }
+
+  if (identity === "invalid") {
+    const label = persistentFailure ? "持续不可用（连续失败超24小时）" : "已失效";
+    return {
+      identity,
+      label,
+      dot: "bg-status-danger",
+      color: "text-status-danger-text",
+      badgeClass: "bg-status-danger/[0.10] text-status-danger-text",
+    };
+  }
+
+  if (identity === "disabled") {
+    return {
+      identity,
+      label: "已停用",
+      dot: "bg-[#A8A29E]",
+      color: "text-[#78716C]",
+      badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+    };
+  }
+
+  return {
+    identity: "unknown" as const,
+    label: "状态未知",
+    dot: "bg-[#A8A29E]",
+    color: "text-[#78716C]",
+    badgeClass: "bg-[#F1F1F0] text-[#78716C]",
+  };
+}
 
 export interface ChannelPoolViewProps {
   bundle: AiConfigBundle | null;
@@ -103,14 +190,7 @@ export function ChannelPoolView({
     );
   }
 
-  const selectedHealth = selectedChannel
-    ? getProviderKeyHealthStatus({
-        isEnabled: selectedChannel.is_enabled,
-        lastSuccessAt: selectedChannel.last_success_at,
-        lastFailureAt: selectedChannel.last_failure_at,
-        unhealthyUntil: selectedChannel.unhealthy_until,
-      })
-    : "untested";
+  const selectedGov = getKeyGovernanceInfo(selectedChannel?.id, bundle?.availability?.keys);
 
   const handleStartEdit = (field: "label" | "api_key" | "base_url" | "priority") => {
     setEditingField(field);
@@ -209,32 +289,37 @@ export function ChannelPoolView({
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input flex flex-col md:flex-row min-h-[580px]">
       {/* 左侧：渠道列表 */}
       <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#E2E2DF]/70 bg-[#FCFCFB] flex flex-col shrink-0">
-        <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Server className="size-3.5 text-[#78716C]" />
-            <span className="text-[14px] text-[#1F1E1D]">渠道</span>
-            <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
+        <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Server className="size-3.5 text-[#78716C]" />
+              <span className="text-[14px] text-[#1F1E1D]">渠道</span>
+              <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
+            </div>
+            <TooltipProvider delay={100}>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      aria-label="管理接入点列表"
+                      className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      onClick={onOpenManageProviders}
+                    >
+                      <Settings2 className="size-3.5" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="top" className="text-[12px]">
+                  管理接入点列表
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          <TooltipProvider delay={100}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="s"
-                    aria-label="管理接入点列表"
-                    className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                    onClick={onOpenManageProviders}
-                  >
-                    <Settings2 className="size-3.5" />
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                管理接入点列表
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <p className="text-[12px] text-[#A8A29E] leading-tight">
+            此处顺序为全量兜底调用顺位；模型内顺位请在模型视角调整。
+          </p>
         </div>
 
         <div className="divide-y divide-[#E2E2DF]/40 overflow-y-auto flex-1 p-1 space-y-0.5">
@@ -243,13 +328,7 @@ export function ChannelPoolView({
             const prov = bundle?.providers.find((p) => p.id === ch.provider_id);
             const keyModels = bundle?.models.filter((m) => m.key_id === ch.id) ?? [];
             const enabledCount = keyModels.filter((m) => m.is_enabled).length;
-
-            const health = getProviderKeyHealthStatus({
-              isEnabled: ch.is_enabled,
-              lastSuccessAt: ch.last_success_at,
-              lastFailureAt: ch.last_failure_at,
-              unhealthyUntil: ch.unhealthy_until,
-            });
+            const channelGov = getKeyGovernanceInfo(ch.id, bundle?.availability?.keys);
 
             return (
               <button
@@ -265,7 +344,10 @@ export function ChannelPoolView({
               >
                 <div className="flex items-center justify-between gap-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0">
+                    <span
+                      className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0"
+                      title="全局兜底顺位（跨模型）"
+                    >
                       #{idx + 1}
                     </span>
                     <span
@@ -278,8 +360,8 @@ export function ChannelPoolView({
                     </span>
                   </div>
                   <span
-                    className={cn("size-2 rounded-full shrink-0", HEALTH_PRESENTATION[health].dot)}
-                    title={HEALTH_PRESENTATION[health].label}
+                    className={cn("size-2 rounded-full shrink-0", channelGov.dot)}
+                    title={channelGov.label}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[12px] text-[#78716C]">
@@ -367,14 +449,11 @@ export function ChannelPoolView({
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-md",
-                    selectedHealth === "healthy" && "bg-[#4B6B4E]/10 text-[#4B6B4E]",
-                    selectedHealth === "untested" && "bg-[#8A6A2F]/10 text-[#8A6A2F]",
-                    selectedHealth === "unhealthy" && "bg-status-danger/[0.10] text-status-danger-text",
-                    selectedHealth === "disabled" && "bg-[#F1F1F0] text-[#78716C]"
+                    selectedGov.badgeClass
                   )}
                 >
-                  <span className={cn("size-1.5 rounded-full", HEALTH_PRESENTATION[selectedHealth].dot)} />
-                  {HEALTH_PRESENTATION[selectedHealth].label}
+                  <span className={cn("size-1.5 rounded-full", selectedGov.dot)} />
+                  {selectedGov.label}
                 </span>
               </div>
             </div>

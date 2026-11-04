@@ -20,6 +20,7 @@ import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { formatSleepCountdown } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 export type ModelFamilyKeyItem = {
@@ -51,19 +52,6 @@ interface ModelFamilyCardProps {
   onSwapOrder?: (modelId: string, keyModelId: string, targetKeyModelId: string) => Promise<void>;
   onSwapPriority?: (keyId: string, targetKeyId: string, p1: number, p2: number) => Promise<void>;
   onSetKeySleep?: (keyId: string, sleep: boolean) => Promise<void>;
-}
-
-function formatSleepRemaining(sleepUntilIso?: string | null): string {
-  if (!sleepUntilIso) return "即将复测";
-  const t = new Date(sleepUntilIso).getTime();
-  if (Number.isNaN(t)) return "即将复测";
-  const diffSec = Math.floor((t - Date.now()) / 1000);
-  if (diffSec <= 0) return "即将复测";
-  const minutes = Math.ceil(diffSec / 60);
-  if (minutes < 60) return `剩余 ${minutes} 分钟`;
-  const hours = Math.floor(minutes / 60);
-  const remMin = minutes % 60;
-  return `剩余 ${hours} 小时 ${remMin} 分`;
 }
 
 function formatSleepTargetTime(sleepUntilIso?: string | null): string {
@@ -528,7 +516,7 @@ export function ModelFamilyCard({
                         <div className="inline-flex items-center gap-1.5">
                           <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C]">
                             <span className="size-1.5 rounded-full bg-[#78716C]" />
-                            {isManualSleep ? "管理员手动休眠" : "自动休眠中"} · {formatSleepRemaining(sleepUntil)}
+                            {isManualSleep ? "管理员手动休眠" : "自动休眠中"} · {formatSleepCountdown(sleepUntil)}
                             {!isManualSleep && sleepUntil && (
                               <span className="text-[#A8A29E] font-mono">（预计 {formatSleepTargetTime(sleepUntil)} 复测）</span>
                             )}
