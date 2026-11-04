@@ -15,3 +15,7 @@ export function toChannelPriority(value: unknown, fallback = 50) {
   }
   return parsed;
 }
+
+export function compareChannelPriority(a: { id: string; priority: number }, b: { id: string; priority: number }) {
+  return a.priority - b.priority || a.id.localeCompare(b.id);
+}

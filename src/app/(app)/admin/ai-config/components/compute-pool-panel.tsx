@@ -6,6 +6,7 @@ import {
   useAiConfig,
   type AiProvider,
   type AiProviderKey,
+  type AiModelTestResult,
   type SyncModelReconciliation,
   AI_MODEL_BATCH_TIMEOUT_MESSAGE,
 } from "../hooks/use-ai-config";
@@ -33,6 +34,8 @@ import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-fam
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
 import { resolveModelGlobalEnabled } from "@/lib/ai-config/availability";
+import { compareChannelPriority } from "@/lib/ai-config/priority";
+import { modelTestKey } from "./model-test-feedback";
 
 export function ComputePoolPanel() {
   const {
@@ -51,6 +54,12 @@ export function ComputePoolPanel() {
   } = useAiConfig();
 
   const [channelReconciliations, setChannelReconciliations] = useState<Map<string, SyncModelReconciliation>>(new Map());
+  const [modelTestResults, setModelTestResults] = useState<Record<string, AiModelTestResult>>({});
+  const handleTestKeyModel = async (keyId: string, modelId: string) => {
+    const result: AiModelTestResult = await testKeyModel(keyId, modelId);
+    setModelTestResults((previous) => ({ ...previous, [modelTestKey(keyId, modelId)]: result }));
+    return result;
+  };
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
@@ -158,7 +167,7 @@ export function ComputePoolPanel() {
     }
 
     for (const group of groups.values()) {
-      group.items.sort((a, b) => a.key.priority - b.key.priority);
+      group.items.sort((a, b) => compareChannelPriority(a.key, b.key));
     }
     return Array.from(groups.values());
   }, [bundle]);
@@ -830,7 +839,8 @@ export function ComputePoolPanel() {
                   onRenameKey={handleRenameKey}
                   onToggleModelShelf={handleShelfChange}
                   onToggleKeyEnable={handleToggleKeyEnable}
-                  onTestKey={testKeyModel}
+                  onTestKey={handleTestKeyModel}
+                  modelTestResults={modelTestResults}
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
@@ -847,7 +857,8 @@ export function ComputePoolPanel() {
           bundle={bundle}
           channelReconciliations={channelReconciliations}
           onSyncKeyModels={handleSyncKeyModels}
-          onTestKeyModel={testKeyModel}
+          onTestKeyModel={handleTestKeyModel}
+          modelTestResults={modelTestResults}
           onTestKeyAllModels={handleTestKeyAllModels}
           onToggleKeyEnable={handleToggleKeyEnable}
           onRenameKey={handleRenameKey}

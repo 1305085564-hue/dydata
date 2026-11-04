@@ -42,7 +42,7 @@ test("高级参数边界拒绝越界值并保留默认值", () => {
   assert.throws(() => boundedInteger("12abc", "上下文轮数", 1, 50, 30), /1-50/);
 });
 
-function createKeySwapClient(initial: Record<string, number>, missingIds: string[] = [], conflictBeforeFirstUpdate = false) {
+function createKeySwapClient(initial: Record<string, number>, missingIds: string[] = [], conflictBeforeFirstUpdate = false, failUpdateId?: string) {
   const priorities = { ...initial };
   let updateCount = 0;
   let initialReadDone = false;
@@ -73,6 +73,7 @@ function createKeySwapClient(initial: Record<string, number>, missingIds: string
             },
             select() {
               return { maybeSingle: async () => {
+                if (targetId === failUpdateId) return { data: null, error: { message: "写入失败" } };
                 if (!targetId || priorities[targetId] !== expectedPriority) return { data: null, error: null };
                 priorities[targetId] = payload.priority;
                 updateCount += 1;
@@ -93,6 +94,32 @@ test("AI Key 顺位交换成功时一次请求内交换两条记录", async () =
   await swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 1, target_priority: 2 });
   assert.deepEqual(fake.priorities, { "key-a": 2, "key-b": 1 });
   assert.equal(fake.getUpdateCount(), 2);
+});
+
+test("相同顺位的渠道也能交换，并保持其他渠道的先后关系", async () => {
+  const fake = createKeySwapClient({ "key-0": 1, "key-1": 1, "key-a": 55, "key-b": 55, "key-c": 55, "key-d": 56, "key-e": 100, "key-f": 100 });
+  await swapKeyPriority(fake.client as never, { key_id: "key-b", target_key_id: "key-a", key_priority: 55, target_priority: 55 });
+  const ordered = Object.entries(fake.priorities).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([id]) => id);
+  assert.deepEqual(ordered, ["key-0", "key-1", "key-b", "key-a", "key-c", "key-d", "key-e", "key-f"]);
+  assert.equal(fake.priorities["key-0"], 1);
+  assert.equal(fake.priorities["key-1"], 1);
+  assert.equal(fake.priorities["key-e"], 100);
+  assert.equal(fake.priorities["key-f"], 100);
+});
+
+test("相同顺位展开时写入失败，恢复本次已更新的渠道", async () => {
+  const initial = { "key-a": 55, "key-b": 55, "key-c": 55 };
+  const fake = createKeySwapClient(initial, [], false, "key-c");
+  await assert.rejects(swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 55, target_priority: 55 }), /写入失败/);
+  assert.deepEqual(fake.priorities, initial);
+});
+
+test("相同顺位在上限也能下移，保存的数字不超过999", async () => {
+  const fake = createKeySwapClient({ "key-a": 999, "key-b": 999, "key-c": 999 });
+  await swapKeyPriority(fake.client as never, { key_id: "key-a", target_key_id: "key-b", key_priority: 999, target_priority: 999 });
+  assert.ok(fake.priorities["key-b"] < fake.priorities["key-a"]);
+  assert.ok(fake.priorities["key-a"] < fake.priorities["key-c"]);
+  assert.ok(Math.max(...Object.values(fake.priorities)) <= 999);
 });
 
 test("AI Key 顺位交换缺少目标 Key 时不产生半更新", async () => {

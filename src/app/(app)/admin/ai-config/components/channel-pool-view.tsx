@@ -13,7 +13,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { AiConfigBundle, AiProviderKey, SyncModelReconciliation } from "../hooks/use-ai-config";
+import type { AiConfigBundle, AiProviderKey, AiModelTestResult, SyncModelReconciliation } from "../hooks/use-ai-config";
+import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
+import { compareChannelPriority } from "@/lib/ai-config/priority";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -21,13 +23,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { resolveModelDisplayName } from "@/lib/ai/model-families";
-import { formatLatency, HEALTH_PRESENTATION } from "@/lib/ai-config/presentation";
+import { HEALTH_PRESENTATION } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 export interface ChannelPoolViewProps {
   bundle: AiConfigBundle | null;
   onSyncKeyModels: (key: AiProviderKey) => void;
   onTestKeyModel: (keyId: string, modelId: string) => Promise<unknown>;
+  modelTestResults?: Record<string, AiModelTestResult>;
   onTestKeyAllModels: (keyId: string) => Promise<void>;
   onToggleKeyEnable: (keyId: string, enabled: boolean) => Promise<boolean>;
   onRenameKey: (keyId: string, newLabel: string) => Promise<boolean>;
@@ -47,6 +50,7 @@ export function ChannelPoolView({
   channelReconciliations,
   onSyncKeyModels,
   onTestKeyModel,
+  modelTestResults,
   onTestKeyAllModels,
   onToggleKeyEnable,
   onRenameKey,
@@ -62,9 +66,6 @@ export function ChannelPoolView({
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [testingAllForChannel, setTestingAllForChannel] = useState(false);
   const [testingModelId, setTestingModelId] = useState<string | null>(null);
-  const [modelLatencies, setModelLatencies] = useState<
-    Record<string, { ok: boolean; latencyMs?: number; message?: string }>
-  >({});
 
   // 内联编辑状态
   const [editingField, setEditingField] = useState<"label" | "api_key" | "base_url" | "priority" | null>(null);
@@ -73,7 +74,7 @@ export function ChannelPoolView({
 
   const channels = useMemo(() => {
     if (!bundle) return [];
-    return [...bundle.keys].sort((a, b) => a.priority - b.priority || (a.label || "").localeCompare(b.label || ""));
+    return [...bundle.keys].sort(compareChannelPriority);
   }, [bundle]);
 
   const selectedChannel = useMemo(() => {
@@ -198,14 +199,7 @@ export function ChannelPoolView({
     if (!selectedChannel || testingModelId) return;
     setTestingModelId(modelId);
     try {
-      const res = (await onTestKeyModel(selectedChannel.id, modelId)) as {
-        ok: boolean;
-        latencyMs?: number;
-        message?: string;
-      } | null;
-      if (res) {
-        setModelLatencies((prev) => ({ ...prev, [modelId]: res }));
-      }
+      await onTestKeyModel(selectedChannel.id, modelId);
     } finally {
       setTestingModelId(null);
     }
@@ -772,7 +766,7 @@ export function ChannelPoolView({
               ) : (
                 <div className="rounded-lg border border-[#E2E2DF]/70 divide-y divide-[#E2E2DF]/50 overflow-hidden bg-white">
                   {selectedModels.map((m) => {
-                    const testInfo = modelLatencies[m.model_id];
+                    const testInfo = modelTestResults?.[modelTestKey(selectedChannel.id, m.model_id)];
                     const isTesting = testingModelId === m.model_id;
                     const displayName = resolveModelDisplayName(m.display_name, m.model_id);
 
@@ -791,24 +785,11 @@ export function ChannelPoolView({
                                 已就绪，但全站未启用
                               </span>
                             )}
-                            {testInfo && (
-                              <span
-                                className={cn(
-                                  "text-[12px] font-mono",
-                                  testInfo.ok ? "text-[#4B6B4E]" : "text-status-danger-text"
-                                )}
-                              >
-                                {testInfo.ok
-                                  ? testInfo.latencyMs != null
-                                    ? formatLatency(testInfo.latencyMs)
-                                    : "正常"
-                                  : "测试失败"}
-                              </span>
-                            )}
                           </div>
                           <div className="text-[12px] font-mono text-[#78716C] truncate">
                             {m.model_id}
                           </div>
+                          <ModelTestFeedback result={testInfo} />
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">

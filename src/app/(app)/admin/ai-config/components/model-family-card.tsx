@@ -13,7 +13,8 @@ import {
   Loader2,
   RefreshCw,
 } from "lucide-react";
-import type { AiProviderKey } from "../hooks/use-ai-config";
+import type { AiProviderKey, AiModelTestResult } from "../hooks/use-ai-config";
+import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
@@ -38,7 +39,8 @@ interface ModelFamilyCardProps {
   onRenameKey?: (keyId: string, newLabel: string) => Promise<boolean>;
   onToggleModelShelf?: (modelId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onToggleKeyEnable?: (keyId: string, enabled: boolean) => Promise<boolean>;
-  onTestKey: (keyId: string, modelId: string) => Promise<void>;
+  onTestKey: (keyId: string, modelId: string) => Promise<unknown>;
+  modelTestResults?: Record<string, AiModelTestResult>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
   onDeleteKeyWithCheck: (keyId: string) => void;
   onAddChannelForModel: (modelId: string) => void;
@@ -67,6 +69,7 @@ export function ModelFamilyCard({
   onToggleModelShelf,
   onToggleKeyEnable,
   onTestKey,
+  modelTestResults,
   onSyncKeyModels,
   onDeleteKeyWithCheck,
   onAddChannelForModel,
@@ -74,6 +77,13 @@ export function ModelFamilyCard({
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
+  const [movingPriority, setMovingPriority] = useState(false);
+  const handleMove = async (key: AiProviderKey, target: AiProviderKey) => {
+    if (movingPriority) return;
+    setMovingPriority(true);
+    try { await onSwapPriority(key.id, target.id, key.priority, target.priority); }
+    finally { setMovingPriority(false); }
+  };
 
   // 模型名编辑状态
   const [editingName, setEditingName] = useState(false);
@@ -459,6 +469,7 @@ export function ModelFamilyCard({
                         失败 {failureRelative}
                       </span>
                     )}
+                    <ModelTestFeedback result={modelTestResults?.[modelTestKey(key.id, modelId)]} />
                   </div>
 
                   {/* 右侧操作按钮组（常态降噪：高频单点暴露，低频悬浮微露） */}
@@ -469,11 +480,11 @@ export function ModelFamilyCard({
                           <Button
                             variant="ghost"
                             size="icon"
-                            disabled={isFirst}
+                            disabled={isFirst || movingPriority}
                             onClick={() => {
                               const prev = items[index - 1];
                               if (prev) {
-                                void onSwapPriority(key.id, prev.key.id, key.priority, prev.key.priority);
+                                void handleMove(key, prev.key);
                               }
                             }}
                             className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
@@ -484,11 +495,11 @@ export function ModelFamilyCard({
                           <Button
                             variant="ghost"
                             size="icon"
-                            disabled={isLast}
+                            disabled={isLast || movingPriority}
                             onClick={() => {
                               const next = items[index + 1];
                               if (next) {
-                                void onSwapPriority(key.id, next.key.id, key.priority, next.key.priority);
+                                void handleMove(key, next.key);
                               }
                             }}
                             className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"

@@ -86,6 +86,8 @@ export type KeyModelTestResult = {
   error?: string | null;
 };
 
+export type AiModelTestResult = { ok: boolean; latencyMs?: number; message?: string };
+
 export type KeyAllModelsTestResponse = {
   keyId: string;
   total: number;
@@ -326,6 +328,7 @@ export function useAiConfig() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "交换顺位失败");
       mutate(data as AiConfigBundle);
+      feedbackToast.success("已更新渠道顺位");
       return true;
     } catch (error) {
       void loadData(true);

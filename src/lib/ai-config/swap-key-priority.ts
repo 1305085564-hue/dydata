@@ -1,11 +1,9 @@
-import { toPriority } from "@/lib/ai-config/priority";
+import { compareChannelPriority, toPriority } from "@/lib/ai-config/priority";
 import { toTrimmedString } from "@/lib/type-guards";
 
 type KeyPrioritySupabase = {
   from: (table: string) => {
-    select: (columns: string) => {
-      in: (column: string, values: string[]) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-    };
+    select: (columns: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
     update: (payload: Record<string, unknown>) => {
       eq: (column: string, value: unknown) => MutationQuery;
     };
@@ -45,8 +43,7 @@ export async function swapKeyPriority(supabase: KeyPrioritySupabase, data: Recor
 
   const { data: keys, error: keysError } = await supabase
     .from("ai_provider_keys")
-    .select("id, priority")
-    .in("id", [keyId, targetKeyId]);
+    .select("id, priority");
   if (keysError) throw new Error(keysError.message);
   const rows = (keys ?? []) as Array<{ id: string; priority: number }>;
   const key = rows.find((row) => row.id === keyId);
@@ -63,6 +60,37 @@ export async function swapKeyPriority(supabase: KeyPrioritySupabase, data: Recor
 
   const currentKeyPriority = key.priority;
   const currentTargetPriority = target.priority;
+
+  if (currentKeyPriority === currentTargetPriority) {
+    // 相同数字不能直接交换。按页面的稳定顺序交换位置，再只展开冲突的顺位。
+    const ordered = [...rows].sort(compareChannelPriority);
+    const from = ordered.findIndex((row) => row.id === keyId);
+    const to = ordered.findIndex((row) => row.id === targetKeyId);
+    [ordered[from], ordered[to]] = [ordered[to], ordered[from]];
+    const priorities = ordered.map((row) => row.priority);
+    const start = ordered.findIndex((row) => row.priority === currentKeyPriority);
+    let end = start;
+    while (end + 1 < priorities.length && priorities[end + 1] <= priorities[end]) {
+      priorities[end + 1] = priorities[end] + 1;
+      end++;
+    }
+    priorities[end] = Math.min(priorities[end], 999);
+    for (let i = end - 1; i >= 0 && priorities[i] >= priorities[i + 1]; i--) priorities[i] = priorities[i + 1] - 1;
+    const applied: Array<{ id: string; before: number; after: number }> = [];
+    try {
+      for (let i = 0; i < ordered.length; i++) {
+        const row = ordered[i];
+        if (row.priority === priorities[i]) continue;
+        const result = await updatePriority(supabase, row.id, row.priority, priorities[i]);
+        if (result.error || !result.data) throw new Error(result.error?.message ?? "顺位已变化，请刷新后重试");
+        applied.push({ id: row.id, before: row.priority, after: priorities[i] });
+      }
+    } catch (error) {
+      for (const row of applied.reverse()) await updatePriority(supabase, row.id, row.after, row.before);
+      throw error;
+    }
+    return;
+  }
 
   const firstResult = await updatePriority(supabase, keyId, currentKeyPriority, currentTargetPriority);
   if (firstResult.error) throw new Error(firstResult.error.message);
