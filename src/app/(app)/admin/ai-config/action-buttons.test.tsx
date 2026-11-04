@@ -159,5 +159,16 @@ test("结果条在同步模型弹窗内部常驻显示且关闭后重开仍保�
   assert.match(freshSyncSource, /lastTestSummary/);
 });
 
+test("任务 D：模型视角失效/停用渠道收纳到卡片底部折叠区且无顺位调整按钮", () => {
+  const freshModelCardSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/model-family-card.tsx"),
+    "utf8"
+  );
+  assert.match(freshModelCardSource, /activeItems/);
+  assert.match(freshModelCardSource, /archivedItems/);
+  assert.match(freshModelCardSource, /个不可用渠道（已失效或停用）/);
+  assert.match(freshModelCardSource, /isArchivedOpen/);
+});
+
 
 

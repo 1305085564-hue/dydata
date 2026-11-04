@@ -85,6 +85,7 @@ export function ModelFamilyCard({
   onSetKeySleep,
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
   const [movingOrder, setMovingOrder] = useState(false);
 
@@ -125,6 +126,31 @@ export function ModelFamilyCard({
     }
     return map;
   }, [availabilityFamily]);
+
+  // 任务 D 规格：availability 缺失时不收纳（保持全量主列表），存在时将 invalid/disabled 归入底部折叠收纳区
+  const { activeItems, archivedItems } = useMemo(() => {
+    if (!availabilityFamily) {
+      return { activeItems: items, archivedItems: [] as ModelFamilyKeyItem[] };
+    }
+
+    const active: ModelFamilyKeyItem[] = [];
+    const archived: ModelFamilyKeyItem[] = [];
+
+    for (const item of items) {
+      const governance = channelGovernanceMap.get(item.key.id);
+      const identity = governance?.identity ?? (item.key.is_enabled ? "active" : "disabled");
+      if (identity === "invalid" || identity === "disabled") {
+        archived.push(item);
+      } else {
+        active.push(item);
+      }
+    }
+
+    return { activeItems: active, archivedItems: archived };
+  }, [availabilityFamily, items, channelGovernanceMap]);
+
+  // 任务 D 规格：主列表为空且收纳区非空时，收纳区自动展开
+  const isArchivedOpen = archivedExpanded || (activeItems.length === 0 && archivedItems.length > 0);
 
   const handleMove = async (item: ModelFamilyKeyItem, target: ModelFamilyKeyItem) => {
     if (movingOrder) return;
@@ -388,12 +414,12 @@ export function ModelFamilyCard({
       {/* 展开的渠道列表 */}
       {expanded && (
         <div id={`model-family-${modelId}`} className="divide-y divide-[#E2E2DF]/60 bg-white">
-          {items.length === 0 ? (
+          {activeItems.length === 0 ? (
             <div className="py-4 pl-8 text-left text-[12px] text-[#A8A29E]">
               暂未接入可用渠道，可点击右上角「为此模型添加接入渠道」。
             </div>
           ) : (
-            items.map((item, index) => {
+            activeItems.map((item, index) => {
               const key = item.key;
               const governance = channelGovernanceMap.get(key.id);
               const identity = governance?.identity ?? (key.is_enabled ? "active" : "disabled");
@@ -401,7 +427,7 @@ export function ModelFamilyCard({
               const isEditingThisKey = editingKeyId === key.id;
 
               const isFirst = index === 0;
-              const isLast = index === items.length - 1;
+              const isLast = index === activeItems.length - 1;
 
               const sleepUntil = governance?.sleepUntil ?? key.unhealthy_until;
               const isManualSleep = governance?.sleepSource === "manual" || (key.manual_sleep_until != null && new Date(key.manual_sleep_until).getTime() > Date.now());
@@ -574,7 +600,7 @@ export function ModelFamilyCard({
                           size="icon"
                           disabled={isFirst || movingOrder}
                           onClick={() => {
-                            const prev = items[index - 1];
+                            const prev = activeItems[index - 1];
                             if (prev) void handleMove(item, prev);
                           }}
                           className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
@@ -588,7 +614,7 @@ export function ModelFamilyCard({
                           size="icon"
                           disabled={isLast || movingOrder}
                           onClick={() => {
-                            const next = items[index + 1];
+                            const next = activeItems[index + 1];
                             if (next) void handleMove(item, next);
                           }}
                           className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
@@ -651,6 +677,192 @@ export function ModelFamilyCard({
                 </div>
               );
             })
+          )}
+
+          {/* 任务 D：底部折叠收纳区（不可用渠道：已失效或已停用） */}
+          {archivedItems.length > 0 && (
+            <div className="border-t border-[#E2E2DF]/80 bg-[#FAF9F8]">
+              <button
+                type="button"
+                onClick={() => setArchivedExpanded((prev) => !prev)}
+                className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#F5F4F2] transition-colors"
+                aria-expanded={isArchivedOpen}
+              >
+                <span className="font-medium">
+                  {archivedItems.length} 个不可用渠道（已失效或停用）
+                </span>
+                {isArchivedOpen ? (
+                  <ChevronDown className="size-4 text-[#78716C]" />
+                ) : (
+                  <ChevronRight className="size-4 text-[#78716C]" />
+                )}
+              </button>
+
+              {isArchivedOpen && (
+                <div className="divide-y divide-[#E2E2DF]/60 border-t border-[#E2E2DF]/60 bg-[#FAF9F8]">
+                  {archivedItems.map((item) => {
+                    const key = item.key;
+                    const governance = channelGovernanceMap.get(key.id);
+                    const identity = governance?.identity ?? (key.is_enabled ? "active" : "disabled");
+                    const isTesting = testingKeyId === key.id;
+                    const isEditingThisKey = editingKeyId === key.id;
+
+                    return (
+                      <div
+                        key={key.id}
+                        data-key-id={key.id}
+                        className="group flex flex-col justify-between gap-2 pl-4 sm:pl-6 pr-3.5 py-2.5 bg-[#FAF9F8] text-[#78716C] transition-colors"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          {/* 左侧：开关、渠道名、原因徽章（无顺位序号） */}
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            {/* 渠道启用开关 */}
+                            {onToggleKeyEnable && (
+                              <Switch
+                                checked={key.is_enabled}
+                                onCheckedChange={(checked) => void onToggleKeyEnable(key.id, checked)}
+                                aria-label="是否启用渠道"
+                              />
+                            )}
+
+                            {/* 渠道显示名与就地编辑 */}
+                            {isEditingThisKey ? (
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="text"
+                                  value={keyLabelInput}
+                                  onChange={(e) => setKeyLabelInput(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+                                    if (e.key === "Enter") void handleSaveKeyName(key.id);
+                                    if (e.key === "Escape") handleCancelKeyName();
+                                  }}
+                                  autoFocus
+                                  disabled={savingKeyId === key.id}
+                                  className="h-6 px-1.5 text-[14px] border border-[#78716C] rounded-md bg-white text-[#141413] focus:outline-none"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="s"
+                                  disabled={savingKeyId === key.id}
+                                  onClick={() => void handleSaveKeyName(key.id)}
+                                  className="h-6 text-[12px] px-1.5 text-[#141413]"
+                                >
+                                  {savingKeyId === key.id ? "保存中" : "保存"}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="s"
+                                  disabled={savingKeyId === key.id}
+                                  onClick={handleCancelKeyName}
+                                  className="h-6 text-[12px] px-1.5 text-[#78716C]"
+                                >
+                                  取消
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className="text-[14px] font-normal text-[#78716C]"
+                                  title={key.api_key_masked ? `渠道凭证 ${key.api_key_masked}` : undefined}
+                                >
+                                  {key.label}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartRenameKey(key.id, key.label)}
+                                  className="size-5 flex items-center justify-center rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors"
+                                  title="修改渠道显示名"
+                                >
+                                  <Pencil className="size-3" />
+                                </button>
+                              </div>
+                            )}
+
+                            <span className="text-[#E2E2DF]">·</span>
+
+                            {/* 原因徽章 */}
+                            {identity === "invalid" && (
+                              <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.invalid.color)}>
+                                <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.invalid.dot)} />
+                                {governance?.persistentFailure ? "持续不可用（连续失败超24小时）" : CHANNEL_IDENTITY_PRESENTATION.invalid.label}
+                              </span>
+                            )}
+
+                            {identity === "disabled" && (
+                              <span className={cn("inline-flex items-center gap-1 text-[12px]", CHANNEL_IDENTITY_PRESENTATION.disabled.color)}>
+                                <span className={cn("size-1.5 rounded-full", CHANNEL_IDENTITY_PRESENTATION.disabled.dot)} />
+                                {CHANNEL_IDENTITY_PRESENTATION.disabled.label}
+                              </span>
+                            )}
+
+                            {/* 已就绪但全站未启用 */}
+                            {key.is_enabled && !isShelved && (
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#8A6A2F]/10 text-[#8A6A2F] border border-[#8A6A2F]/20">
+                                已就绪，但全站未启用
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 右侧操作按钮组：无上移/下移按钮 */}
+                          <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
+                            <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center gap-0.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => void onSyncKeyModels(key)}
+                                className="size-6 text-[#78716C] hover:text-[#141413]"
+                                title="打开全部模型清单"
+                                aria-label="同步模型"
+                              >
+                                <RefreshCw className="size-3" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onDeleteKeyWithCheck(key.id)}
+                                className="size-6 text-[#78716C] hover:text-status-danger"
+                                title="删除此渠道"
+                                aria-label="删除此渠道"
+                              >
+                                <Trash2 className="size-3" />
+                              </Button>
+                            </div>
+
+                            {/* 测此渠道此模型主行动按钮 */}
+                            <Button
+                              variant="outline"
+                              size="s"
+                              disabled={isTesting}
+                              onClick={() => handleTest(key.id)}
+                              className="h-6.5 text-[12px] px-2 border-[#E2E2DF] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                              title="测这条渠道供应的当前模型"
+                              aria-label="测此渠道此模型"
+                            >
+                              {isTesting ? (
+                                <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
+                              ) : (
+                                <Play className="size-3 text-[#78716C] mr-1" />
+                              )}
+                              测此渠道此模型
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* 测此渠道测试反馈与处置入口 */}
+                        <ModelTestFeedback
+                          result={modelTestResults?.[modelTestKey(key.id, modelId)]}
+                          keyId={key.id}
+                          onSleepKey={onSetKeySleep ? async (kId) => { await onSetKeySleep(kId, true); } : undefined}
+                          onDismiss={() => onClearTestResult?.(key.id, modelId)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
