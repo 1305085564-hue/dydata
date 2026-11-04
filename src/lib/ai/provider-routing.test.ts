@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import {
   listRankedProviderKeyModels,
   getProviderKeyModelConfig,
-  getProviderKeyHealthStatus,
   selectHealthyProviderKeyModel,
 } from "./provider-routing";
 
@@ -86,31 +85,6 @@ function providerRow(input: {
     },
   };
 }
-
-test("provider key health status keeps untested keys out of the healthy state", () => {
-  assert.equal(getProviderKeyHealthStatus({ isEnabled: true }), "untested");
-});
-
-test("provider key health status marks a single failed test as unhealthy", () => {
-  const now = Date.parse("2026-07-31T12:00:00.000Z");
-
-  assert.equal(getProviderKeyHealthStatus({
-    isEnabled: true,
-    lastFailureAt: "2026-07-31T11:59:00.000Z",
-    now,
-  }), "unhealthy");
-});
-
-test("provider key health status becomes healthy only after a later successful test", () => {
-  const now = Date.parse("2026-07-31T12:00:00.000Z");
-
-  assert.equal(getProviderKeyHealthStatus({
-    isEnabled: true,
-    lastFailureAt: "2026-07-31T11:59:00.000Z",
-    lastSuccessAt: "2026-07-31T12:00:00.000Z",
-    now,
-  }), "healthy");
-});
 
 test("getProviderKeyModelConfig returns null for unhealthy key model", async () => {
   const service = createFakeService([

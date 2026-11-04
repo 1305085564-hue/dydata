@@ -180,14 +180,16 @@ test("真实库 B1：同步只插入新模型且保留已有上下架状态", as
     const body = await response.json();
     assert.equal(body.keyId, key.id);
     assert.equal(body.newCount, 1);
+    // 同步返回列表不承诺顺序，按 modelId 排序后做集合比较（顺序无业务含义）。
+    const byModelId = (a: { modelId: string }, b: { modelId: string }) => a.modelId.localeCompare(b.modelId);
     assert.deepEqual(body.allModels.map((model: { modelId: string; isEnabled: boolean; isNewlyDiscovered: boolean }) => ({
       modelId: model.modelId,
       isEnabled: model.isEnabled,
       isNewlyDiscovered: model.isNewlyDiscovered,
-    })), [
-      { modelId: "real-b1-old", isEnabled: false, isNewlyDiscovered: false },
+    })).sort(byModelId), [
       { modelId: "real-b1-live", isEnabled: true, isNewlyDiscovered: false },
       { modelId: "real-b1-new", isEnabled: false, isNewlyDiscovered: true },
+      { modelId: "real-b1-old", isEnabled: false, isNewlyDiscovered: false },
     ]);
     assert.deepEqual((await readModels(db, key.id)).map((row) => ({ model_id: row.model_id, is_enabled: row.is_enabled })), [
       { model_id: "real-b1-live", is_enabled: true },
