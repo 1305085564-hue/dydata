@@ -1016,6 +1016,19 @@ export async function buildAiConfigResponse(
         const id = toTrimmedString(data.key_model_id);
         const targetId = toTrimmedString(data.target_key_model_id);
         if (!modelId || !id || !targetId || id === targetId) throw mutationError("顺位交换参数不合法");
+        // 「可调度相邻」校验复用五态唯一真源：中间隔着失效/停用渠道不阻断交换，端点不可调度则拒绝。
+        const preloaded = await loadAiConfig(auth.supabase);
+        const family = preloaded.availability.modelFamilies.find((f) => f.modelId === modelId);
+        const current = family?.channels.find((c) => c.keyModelId === id);
+        const target = family?.channels.find((c) => c.keyModelId === targetId);
+        if (!family || !current || !target || !current.isSchedulable || !target.isSchedulable) {
+          throw mutationError("渠道不存在、不属于同一模型或当前不可调度，请刷新后重试", 409);
+        }
+        const low = Math.min(current.sortOrder, target.sortOrder);
+        const high = Math.max(current.sortOrder, target.sortOrder);
+        if (family.channels.some((c) => c.isSchedulable && c.sortOrder > low && c.sortOrder < high)) {
+          throw mutationError("两条渠道之间还有可用渠道，请刷新后重试", 409);
+        }
         const { error } = await (deps.createAdminClient ?? createAdminClient)().rpc("swap_provider_key_model_order", {
           p_model_id: modelId, p_key_model_id: id, p_target_key_model_id: targetId,
         });

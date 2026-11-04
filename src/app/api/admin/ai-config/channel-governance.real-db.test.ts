@@ -60,6 +60,21 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
       assert.equal((await action("swap_model_channel_order", { ...data, target_key_model_id: before[2].id })).status, 409);
       assert.deepEqual(await ordered(modelA), before);
     });
+    await t.test("中间隔失效或休眠渠道时可跳过交换，端点不可调度被拒绝", async () => {
+      const rows = await ordered(modelA); const otherBefore = await ordered(modelB);
+      assert.equal((await db.from("ai_provider_key_models").update({ invalidated_at: new Date().toISOString() }).eq("id", rows[1].id)).error, null);
+      const data = { model_id: modelA, key_model_id: rows[0].id, target_key_model_id: rows[2].id };
+      assert.equal((await action("swap_model_channel_order", data)).status, 200, "失效渠道不阻断两侧可用渠道的可调度相邻交换");
+      assert.deepEqual((await ordered(modelA)).map((r) => r.id), [rows[2].id, rows[1].id, rows[0].id]);
+      assert.equal((await action("swap_model_channel_order", data)).status, 200);
+      assert.deepEqual(await ordered(modelA), rows);
+      assert.equal((await action("swap_model_channel_order", { model_id: modelA, key_model_id: rows[1].id, target_key_model_id: rows[2].id })).status, 409, "失效端点拒绝交换");
+      assert.equal((await db.from("ai_provider_key_models").update({ invalidated_at: null }).eq("id", rows[1].id)).error, null);
+      assert.equal((await action("sleep_key", { key_id: rows[0].key_id })).status, 200);
+      assert.equal((await action("swap_model_channel_order", { model_id: modelA, key_model_id: rows[0].id, target_key_model_id: rows[1].id })).status, 409, "休眠端点拒绝交换");
+      assert.equal((await action("resume_key", { key_id: rows[0].key_id })).status, 200);
+      assert.deepEqual(await ordered(modelA), rows); assert.deepEqual(await ordered(modelB), otherBefore);
+    });
     await t.test("临时休眠持久化且不污染自动健康，恢复只解除手动限制", async () => {
       const now = Date.now(); const before = await keys();
       const response = await action("sleep_key", { key_id: keyIds[0] }); assert.equal(response.status, 200);

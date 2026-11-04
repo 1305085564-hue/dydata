@@ -167,3 +167,79 @@ test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除
   assert.equal(fake.wasKeyDeleted(), true);
   assert.equal(fake.wasKeyModelDeleted(), true);
 });
+
+function createSwapTestClient(options: { middleInvalidated?: boolean } = {}) {
+  const now = new Date().toISOString();
+  const rows: Record<string, Record<string, unknown>[]> = {
+    ai_providers: [{ id: "p1", name: "P1", base_url: "https://p1.test/v1", description: null, priority: 0, is_enabled: true, created_at: now, updated_at: now }],
+    ai_provider_keys: ["k1", "k2", "k3"].map((id) => ({
+      id, provider_id: "p1", label: id, api_key: `secret-${id}`, priority: 55, is_enabled: true,
+      unhealthy_until: null, consecutive_failures: 0, last_failure_at: null, last_success_at: null,
+      last_error_message: null, first_failure_at: null, invalidated_at: null, manual_sleep_until: null,
+      available_models: [], created_at: now, updated_at: now,
+    })),
+    ai_provider_key_models: [
+      { id: "m1", key_id: "k1", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 1, created_at: now },
+      { id: "m2", key_id: "k2", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: options.middleInvalidated ? now : null, sort_order: 2, created_at: now },
+      { id: "m3", key_id: "k3", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 3, created_at: now },
+    ],
+    ai_feature_bindings: [],
+  };
+  const client = {
+    from(table: string) {
+      const data = rows[table] ?? [];
+      const query = {
+        select() { return query; },
+        order() { return query; },
+        eq() { return query; },
+        then(resolve: (value: unknown) => unknown) {
+          return Promise.resolve({ data, error: null }).then(resolve);
+        },
+      };
+      return query;
+    },
+  };
+  const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  const adminClient = {
+    rpc: async (fn: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ fn, args });
+      return { error: null };
+    },
+  };
+  return { client, adminClient, rpcCalls };
+}
+
+async function swapAction(fake: ReturnType<typeof createSwapTestClient>, keyModelId: string, targetKeyModelId: string) {
+  return buildAiConfigResponse(new NextRequest("http://localhost/api/admin/ai-config", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ action: "swap_model_channel_order", data: { model_id: "model-x", key_model_id: keyModelId, target_key_model_id: targetKeyModelId } }),
+  }), {
+    requireSystemActor: async () => ({ supabase: fake.client as never, actor: { userId: "admin-1", role: "owner" } as never }),
+    createAdminClient: () => fake.adminClient as never,
+  });
+}
+
+test("模型顺位交换：可调度相邻放行，中间有可用渠道或端点不可调度被拒绝", async () => {
+  const ok = createSwapTestClient();
+  assert.equal((await swapAction(ok, "m1", "m2")).status, 200);
+  assert.equal(ok.rpcCalls.length, 1);
+  assert.equal(ok.rpcCalls[0].fn, "swap_provider_key_model_order");
+
+  const blocked = createSwapTestClient();
+  const blockedRes = await swapAction(blocked, "m1", "m3");
+  assert.equal(blockedRes.status, 409);
+  assert.match((await blockedRes.json()).error, /之间还有可用渠道/);
+  assert.equal(blocked.rpcCalls.length, 0);
+});
+
+test("模型顺位交换：中间仅隔失效渠道时跳过交换，失效端点拒绝", async () => {
+  const skipped = createSwapTestClient({ middleInvalidated: true });
+  assert.equal((await swapAction(skipped, "m1", "m3")).status, 200, "失效渠道不阻断两侧可用渠道交换");
+  assert.equal(skipped.rpcCalls.length, 1);
+
+  const endpoint = createSwapTestClient({ middleInvalidated: true });
+  const endpointRes = await swapAction(endpoint, "m1", "m2");
+  assert.equal(endpointRes.status, 409);
+  assert.match((await endpointRes.json()).error, /不可调度/);
+  assert.equal(endpoint.rpcCalls.length, 0);
+});

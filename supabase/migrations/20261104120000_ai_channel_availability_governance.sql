@@ -112,9 +112,10 @@ grant execute on function public.bump_provider_key_model_failure(uuid, text, tex
 create or replace function public.swap_provider_key_model_order(
   p_model_id text, p_key_model_id uuid, p_target_key_model_id uuid
 ) returns void language plpgsql security definer set search_path = public as $$
-declare current_order integer; target_order integer; adjacent_count integer;
+declare current_order integer; target_order integer;
 begin
   -- 同模型顺位在单事务内读取、校验与互换，不改其他模型或Key全局顺位。
+  -- 「可调度相邻」校验由管理接口在调用前完成（SQL 内无法复用五态判断），此处只保证同模型与原子交换。
   perform id from public.ai_provider_key_models where model_id = p_model_id order by sort_order for update;
   select sort_order into current_order from public.ai_provider_key_models
     where id = p_key_model_id and model_id = p_model_id;
@@ -123,9 +124,6 @@ begin
   if current_order is null or target_order is null or p_key_model_id = p_target_key_model_id then
     raise exception '渠道不存在或不属于同一模型';
   end if;
-  select count(*) into adjacent_count from public.ai_provider_key_models
-    where model_id = p_model_id and sort_order between least(current_order,target_order) and greatest(current_order,target_order);
-  if adjacent_count <> 2 then raise exception '只能交换相邻渠道，请刷新后重试'; end if;
   update public.ai_provider_key_models set sort_order = case
     when id = p_key_model_id then target_order else current_order end
   where id in (p_key_model_id,p_target_key_model_id) and model_id = p_model_id;
