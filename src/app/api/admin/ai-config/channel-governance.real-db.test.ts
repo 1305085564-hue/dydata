@@ -7,6 +7,7 @@ import { parse } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { buildAiConfigResponse } from "./route";
+import { acquireRealDbAiFeatureBindingLock } from "./real-db-binding-lock";
 import { listRankedProviderKeyModels } from "@/lib/ai/provider-routing";
 
 // Explicit opt-in: never fall back to a production URL or silently skip a requested run.
@@ -21,6 +22,7 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
   const modelA = `governance-a-${randomUUID()}`;
   const modelB = `governance-b-${randomUUID()}`;
   const featureKey = "content_tools";
+  t.after(await acquireRealDbAiFeatureBindingLock(env.SUPABASE_DB_URL));
   const previousBindings = await db.from("ai_feature_bindings").select("*").in("feature_key",[featureKey,"default"]);
   assert.equal(previousBindings.error,null);
   let upstreamStatus = 503;

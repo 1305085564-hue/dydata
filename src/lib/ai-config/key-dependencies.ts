@@ -139,6 +139,7 @@ export async function buildDependencyPreview(
   requireTarget(snapshot, input);
   const before = computeReport(snapshot);
   const after = computeReport(simulateDisable(snapshot, input));
+  // gate:transient-map this before/after comparison index exists only while building one preview.
   const beforeByKey = new Map(before.businessAssurances.map((item) => [item.key, item]));
   const affectedBusinesses = after.businessAssurances
     .filter((item) => item.routingStatus === "outage" && beforeByKey.get(item.key)?.routingStatus !== "outage")
@@ -165,6 +166,7 @@ export async function buildDependencyPreview(
         : input.scope === "model"
           ? snapshot.keys.filter((key) => snapshot.models.some((model) => model.key_id === key.id && model.model_id === input.id))
         : [];
+  // gate:transient-map this result index is used only for this preview response and then discarded.
   const afterModelFamilies = new Map(after.modelFamilies.map((family) => [family.modelId, family]));
   const channels = selectedKeys.map((key) => {
     const provider = snapshot.providers.find((item) => item.id === key.provider_id);
