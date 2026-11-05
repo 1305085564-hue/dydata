@@ -144,20 +144,20 @@ export function ModelFamilyCard({
           )}
 
           {/* S5: 模型卡汇总：「M 条渠道供货，N 条能用」 */}
-          <span className="text-[#1F1E1D]">
+          <span className="text-[12px] text-[#1F1E1D]">
             {channels.length} 条渠道供货，{schedulableCount} 条能用
           </span>
 
           {/* 恰好 1 条能用时的单点建议 */}
           {isSingleSupply && (
-            <span className="text-[#8A6A2F]">
+            <span className="text-[12px] text-[#8A6A2F]">
               · {AI_CONFIG_MESSAGES["model.single_supply"]}
             </span>
           )}
 
           {/* 0 条能用时的原因 */}
           {isNoSupply && family.unavailableReasonKey && (
-            <span className="text-status-danger-text">
+            <span className="text-[12px] text-status-danger-text">
               · {AI_CONFIG_MESSAGES[family.unavailableReasonKey]}
             </span>
           )}
