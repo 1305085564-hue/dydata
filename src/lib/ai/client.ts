@@ -3,18 +3,19 @@
  * 支持环境变量单渠道模式，以及数据库多渠道 failover + 熔断
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
 import { buildHaikuVisionBody, parseHaikuVisionResponse, usesHaikuNativeVision } from "./haiku-vision-transport";
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
   getProviderKeyModelConfig,
   claimProviderRecovery,
   releaseProviderRecovery,
-  listRankedProviderKeyModels,
-  type ProviderKeyModelConfig,
 } from "./provider-routing";
 import { recordProviderFailure, recordProviderSuccess } from "./provider-health-recorder";
-import { resolveFeatureModelRouting } from "./feature-routing";
+import {
+  getEnvFlag, isDbChannelModeEnabled, getChannelFromEnv, getServiceSupabaseClient,
+  getFeatureConfig, resolveFeatureChannelChain, getProviderKeyModelChannel,
+  resetFeatureCache, setServiceClientForTests, type ChannelConfig,
+} from "./client-routing";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { sanitizeProviderErrorMessage } from "./provider-health";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
@@ -64,36 +65,6 @@ export type AiResponse = {
   elapsedMs: number;
 };
 
-type ChannelConfig = {
-  id?: string;
-  name: string;
-  baseUrl: string;
-  apiKey: string;
-  model?: string | null;
-  providerKeyModelId?: string | null;
-  providerKeyId?: string | null;
-  source: "env" | "provider_key_model";
-  requiresProbe?: boolean;
-};
-
-type FeatureConfig = {
-  featureKey: string;
-  providerKeyModelId: string | null;
-  modelId: string | null;
-  systemPrompt: string | null;
-  isEnabled: boolean;
-  lifecycleState: "active" | "archived";
-};
-
-type AiFeatureBindingRow = {
-  feature_key: string;
-  provider_key_model_id: string | null;
-  model_id?: string | null;
-  system_prompt: string | null;
-  is_enabled: boolean;
-  lifecycle_state?: "active" | "archived" | null;
-};
-
 type UpstreamResponseBody = {
   choices?: Array<{
     message?: {
@@ -138,127 +109,6 @@ const DEFAULT_TOTAL_TIMEOUT_MS = 30_000;
 const MIN_CHANNEL_ATTEMPT_BUDGET_MS = 2_000;
 const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_MODEL = DEFAULT_AI_MODEL;
-const CHANNEL_CACHE_TTL_MS = 60_000;
-
-let cachedFeatureConfigs: { expiresAt: number; configs: Map<string, FeatureConfig> } | null = null;
-
-function getEnvFlag(name: string) {
-  return process.env[name]?.trim().toLowerCase();
-}
-
-function isDbChannelModeEnabled() {
-  return getEnvFlag("AI_CHANNELS_ENABLED") !== "false";
-}
-
-function getChannelFromEnv(): ChannelConfig | null {
-  const baseUrl = process.env.AI_BASE_URL?.trim();
-  const apiKey = process.env.AI_API_KEY?.trim();
-  if (!baseUrl || !apiKey) return null;
-
-  return {
-    name: "env-default",
-    baseUrl,
-    apiKey,
-    model: process.env.AI_MODEL?.trim() || null,
-    source: "env",
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _serviceClient: any = null;
-
-function getServiceSupabaseClient() {
-  if (_serviceClient) return _serviceClient;
-  try { return (_serviceClient = createAdminClient()); } catch { return null; }
-}
-
-function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
-  return {
-    featureKey: row.feature_key,
-    providerKeyModelId: null,
-    modelId: row.model_id ?? null,
-    systemPrompt: row.system_prompt,
-    isEnabled: row.is_enabled,
-    lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
-  };
-}
-
-async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | null> {
-  const now = Date.now();
-  if (cachedFeatureConfigs && cachedFeatureConfigs.expiresAt > now) {
-    return cachedFeatureConfigs.configs.get(featureKey) ?? null;
-  }
-
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) {
-    cachedFeatureConfigs = {
-      expiresAt: now + CHANNEL_CACHE_TTL_MS,
-      configs: new Map(),
-    };
-    return null;
-  }
-
-  const { data: bindingData, error: bindingError } = await supabase
-    .from("ai_feature_bindings")
-    .select("feature_key, model_id, system_prompt, is_enabled, lifecycle_state");
-  if (bindingError) throw new Error("读取 AI 业务配置失败");
-
-  const configs = new Map<string, FeatureConfig>();
-  if (!bindingError && bindingData?.length) {
-    for (const row of bindingData as AiFeatureBindingRow[]) {
-      const config = mapFeatureBinding(row);
-      configs.set(config.featureKey, config);
-    }
-  }
-
-  cachedFeatureConfigs = {
-    expiresAt: now + CHANNEL_CACHE_TTL_MS,
-    configs,
-  };
-
-  return configs.get(featureKey) ?? null;
-}
-
-/** 正式候选与指定渠道共用同一份调用参数映射。 */
-function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
-  return {
-    id: config.providerKeyModelId,
-    name: config.providerName,
-    baseUrl: config.baseUrl,
-    apiKey: config.apiKey,
-    model: config.modelId,
-    providerKeyModelId: config.providerKeyModelId,
-    providerKeyId: config.providerKeyId,
-    requiresProbe: config.requiresProbe,
-    source: "provider_key_model",
-  };
-}
-
-/** Selected model channels, then global default channels. No arbitrary-model fallback. */
-async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise<ChannelConfig[]> {
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) return [];
-  const fallback = await getFeatureConfig("default");
-  const ids = [...new Set([featureConfig.modelId, fallback?.modelId].filter((id): id is string => Boolean(id?.trim())))];
-  const lists = await Promise.all(ids.map(async id => [id, await listRankedProviderKeyModels(supabase, id)] as const));
-  const candidates = new Map(lists);
-  const routing = resolveFeatureModelRouting({
-    modelId: featureConfig.modelId, defaultModelId: fallback?.modelId,
-    isAvailable: id => Boolean(candidates.get(id)?.length),
-  });
-  return routing.modelIds.flatMap(id => candidates.get(id)!.map(({ config }) => toChannelConfig(config)));
-}
-
-async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) return null;
-
-  const config = await getProviderKeyModelConfig(supabase, providerKeyModelId);
-  if (!config) return null;
-
-  return toChannelConfig(config);
-}
-
 function normalizeResponseContent(content: unknown): string | null {
   if (typeof content === "string" && content.trim()) {
     return content.trim();
@@ -751,7 +601,7 @@ async function sendWithFailover(
     // An earlier attempt can freeze this key; do not reuse a stale candidate later in the same chain.
     if (send === sendToChannel && channel.providerKeyModelId && channel.providerKeyId && failedProviderKeyIds.has(channel.providerKeyId)) {
       const service = getServiceSupabaseClient();
-      if (!service || !await getProviderKeyModelConfig(service, channel.providerKeyModelId)) continue;
+      if (!service || !await getProviderKeyModelConfig(service, channel.providerKeyModelId, { includeSleeping: Boolean(channel.cooldownUntil) })) continue;
     }
     const attemptBudgetMs = resolveAttemptBudgetMs(perChannelTimeoutMs, deadline - Date.now());
     if (attemptBudgetMs < MIN_CHANNEL_ATTEMPT_BUDGET_MS) break;
@@ -762,7 +612,7 @@ async function sendWithFailover(
     if (recoveryService) {
       if (attemptBudgetMs < perChannelTimeoutMs) continue;
       try {
-        recoveryToken = await claimProviderRecovery(recoveryService, channel.providerKeyModelId!, attemptBudgetMs);
+        recoveryToken = await claimProviderRecovery(recoveryService, channel.providerKeyModelId!, attemptBudgetMs, Boolean(channel.cooldownUntil));
       } catch (error) {
         console.warn("[ai-client] recovery lease unavailable", error);
       }
@@ -867,11 +717,6 @@ export const __internal = {
   resolveFeatureChannelChainForTests: resolveFeatureChannelChain,
   parseChatCompletionSse,
   getServiceClient: getServiceSupabaseClient,
-  setServiceClientForTests(client: unknown) {
-    _serviceClient = client;
-    cachedFeatureConfigs = null;
-  },
-  resetCache() {
-    cachedFeatureConfigs = null;
-  },
+  setServiceClientForTests,
+  resetCache: resetFeatureCache,
 };

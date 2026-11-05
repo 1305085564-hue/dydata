@@ -182,8 +182,11 @@ export async function handleCheckAllInUse(supabase: AiConfigClient) {
   const defaultModelId = before.featureBindings.find((binding) => binding.feature_key === "default")?.model_id;
   if (defaultModelId) modelIds.add(defaultModelId);
 
+  // gate:transient-map this key index is built for one check request and discarded with its response.
   const keyById = new Map(before.keys.map((key) => [key.id, key]));
+  // gate:transient-map this provider index is built for one check request and discarded with its response.
   const providerById = new Map(before.providers.map((provider) => [provider.id, provider]));
+  // gate:transient-map this deduplication index is built for one check request and discarded with its response.
   const targets = new Map<string, { key_id: string; model_id: string }>();
   for (const model of before.models) {
     if (!modelIds.has(model.model_id) || !model.is_enabled) continue;
@@ -208,6 +211,7 @@ export async function handleCheckAllInUse(supabase: AiConfigClient) {
   };
   const latestBundle = await loadAiConfig(supabase);
   // 一次性、待删、勿参考：旧界面的结果字段适配；新界面只读 checkResult。
+  // gate:transient-map this label index is built for one response and discarded when it returns.
   const names = new Map(latestBundle.keys.map(key=>[key.id,key.label]));
   const failures = checkResult.results.filter(result=>!result.ok).map(result=>({keyId:result.keyId,keyLabel:names.get(result.keyId) ?? "",modelId:result.modelId,error:result.message ?? "检测失败"}));
   return { ...latestBundle, checkResult,

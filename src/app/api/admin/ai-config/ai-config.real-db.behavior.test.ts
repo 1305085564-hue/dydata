@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { buildAiConfigResponse } from "./route";
 import { buildSyncModelsResponse } from "./sync-models/route";
+import { acquireRealDbAiFeatureBindingLock } from "./real-db-binding-lock";
 import { selectHealthyProviderKeyModel } from "@/lib/ai/provider-routing";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,22 +80,6 @@ function scopeKeys(db: Db, keyIds: string[]): Db {
       query.select = (...args: unknown[]) => select(...args).in(table === "ai_provider_keys" ? "id" : "key_id", keyIds);
       return query;
     },
-  };
-}
-
-async function suspendExistingModels(db: Db) {
-  const { data, error } = await db.from("ai_provider_key_models").select("id, is_enabled");
-  if (error) throw new Error(error.message);
-  const snapshot = (data ?? []) as Array<{ id: string; is_enabled: boolean }>;
-  for (const row of snapshot) {
-    const result = await db.from("ai_provider_key_models").update({ is_enabled: false }).eq("id", row.id);
-    if (result.error) throw new Error(result.error.message);
-  }
-  return async () => {
-    for (const row of snapshot) {
-      const result = await db.from("ai_provider_key_models").update({ is_enabled: row.is_enabled }).eq("id", row.id);
-      if (result.error) throw new Error(result.error.message);
-    }
   };
 }
 
@@ -206,32 +191,34 @@ test("真实库 B1：同步只插入新模型且保留已有上下架状态", as
 test("真实库 B2：独占模型停用需确认，明确默认可顶班后允许停用", async (t) => {
   const db = await getRealDb(t);
   if (!db) return;
-  const restoreExistingModels = await suspendExistingModels(db);
   const provider = await createProvider(db, "https://unused.invalid");
   const key = await createKey(db, provider.id, "b2");
   const featureKey = "content_tools";
+  const targetModelId = `real-b2-target-${id()}`;
+  const backupModelId = `real-b2-backup-${id()}`;
+  t.after(await acquireRealDbAiFeatureBindingLock(localEnv.SUPABASE_DB_URL));
   const previousBindings = await db.from("ai_feature_bindings").select("*").in("feature_key",[featureKey,"default"]);
   assert.equal(previousBindings.error,null);
   try {
-    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b2-target", display_name: "目标", is_enabled: true, global_is_enabled: true });
-    await db.from("ai_provider_keys").update({ available_models: ["real-b2-target"] }).eq("id", key.id);
+    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: targetModelId, display_name: "目标", is_enabled: true, global_is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: [targetModelId] }).eq("id", key.id);
     assert.equal((await db.from("ai_feature_bindings").upsert([
-      { feature_key: featureKey, label: "真实库独占业务", model_id: "real-b2-target", is_enabled: true, lifecycle_state: "active" },
-      { feature_key: "default", label: "全局默认", model_id: "real-b2-target", is_enabled: true, lifecycle_state: "active" },
+      { feature_key: featureKey, label: "真实库独占业务", model_id: targetModelId, is_enabled: true, lifecycle_state: "active" },
+      { feature_key: "default", label: "全局默认", model_id: targetModelId, is_enabled: true, lifecycle_state: "active" },
     ],{onConflict:"feature_key"})).error,null);
 
     let response = await buildAiConfigResponse(request({
-      action: "set_global_model_shelf_state", data: { modelId: "real-b2-target", is_enabled: false },
+      action: "set_global_model_shelf_state", data: { modelId: targetModelId, is_enabled: false },
     }), actor(db));
     assert.equal(response.status, 409);
     assert.equal((await readModels(db, key.id))[0]?.is_enabled, true);
 
     const backupKey = await createKey(db, provider.id, "b2-backup");
-    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: "real-b2-backup", display_name: "备用", is_enabled: true, global_is_enabled: true });
-    await db.from("ai_provider_keys").update({ available_models: ["real-b2-backup"] }).eq("id", backupKey.id);
-    assert.equal((await db.from("ai_feature_bindings").update({model_id:"real-b2-backup"}).eq("feature_key","default")).error,null);
+    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: backupModelId, display_name: "备用", is_enabled: true, global_is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: [backupModelId] }).eq("id", backupKey.id);
+    assert.equal((await db.from("ai_feature_bindings").update({model_id:backupModelId}).eq("feature_key","default")).error,null);
     response = await buildAiConfigResponse(request({
-      action: "set_global_model_shelf_state", data: { modelId: "real-b2-target", is_enabled: false },
+      action: "set_global_model_shelf_state", data: { modelId: targetModelId, is_enabled: false },
     }), actor(db));
     assert.equal(response.status, 200);
     assert.equal((await readModels(db, key.id))[0]?.is_enabled, false);
@@ -241,7 +228,6 @@ test("真实库 B2：独占模型停用需确认，明确默认可顶班后允�
     await db.from("ai_feature_bindings").delete().in("feature_key",[featureKey,"default"]);
     if (previousBindings.data?.length) assert.equal((await db.from("ai_feature_bindings").upsert(previousBindings.data,{onConflict:"feature_key"})).error,null);
     await deleteById(db, "ai_providers", provider.id);
-    await restoreExistingModels();
   }
 });
 
@@ -379,6 +365,7 @@ test("真实库 B8：使用中检查只测默认模型的开启供应并返回�
   const disabledKey = await createKey(db, provider.id, "b8-disabled");
   const modelId = `real-b8-${id()}`;
   const modelRows = [successKey, failureKey, timeoutKey, disabledKey].map((key) => ({ id: id(), key_id: key.id, model_id: modelId, is_enabled: true }));
+  t.after(await acquireRealDbAiFeatureBindingLock(localEnv.SUPABASE_DB_URL));
   const previousDefault = await db.from("ai_feature_bindings").select("*").eq("feature_key", "default").maybeSingle();
   try {
     await db.from("ai_provider_keys").update({ api_key: "success-secret" }).eq("id", successKey.id);

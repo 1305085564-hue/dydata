@@ -23,6 +23,7 @@ export function isModelConfirmedUnavailable(status: number, responseBody: string
 
 /** Groups only case and separator variants; date and model-variant suffixes stay distinct. */
 export function groupModelIdAliases(modelIds: string[]): ModelAliasGroup[] {
+  // gate:transient-map this aggregation exists only for one grouping call and is discarded on return.
   const groups = new Map<string, string[]>();
   for (const rawId of modelIds) {
     const modelId = rawId.trim();
@@ -57,8 +58,9 @@ export type ModelChannelCandidate = {
   requiresProbe: true;
 };
 
-/** Cache presence means a candidate to probe, not that the model has passed a live test. */
+/** Presence in available_models makes a candidate to probe, not proof of a live test. */
 export function findModelChannelCandidates(input: ModelChannelDiscoveryInput, modelId: string): ModelChannelCandidate[] {
+  // gate:transient-map this provider index is built for one candidate lookup and discarded on return.
   const providerById = new Map(input.providers.map((provider) => [provider.id, provider]));
   const candidates: ModelChannelCandidate[] = [];
   for (const key of input.keys) {

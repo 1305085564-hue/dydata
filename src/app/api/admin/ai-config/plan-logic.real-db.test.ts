@@ -6,6 +6,7 @@ import { parse } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { buildAiConfigResponse } from "./route";
+import { acquireRealDbAiFeatureBindingLock } from "./real-db-binding-lock";
 import { __internal } from "@/lib/ai/client";
 
 test("第一批真实库：供给独立、模型恢复记忆、四层影响确认与运行解析对账", async t => {
@@ -15,6 +16,7 @@ test("第一批真实库：供给独立、模型恢复记忆、四层影响确�
   const provider = randomUUID(), key1 = randomUUID(), key2 = randomUUID();
   const a1 = randomUUID(), a2 = randomUUID(), b = randomUUID(), c = randomUUID();
   const modelA = `plan-a-${a1}`, modelB = `plan-b-${b}`, other = `plan-other-${c}`;
+  t.after(await acquireRealDbAiFeatureBindingLock(env.SUPABASE_DB_URL));
   const previous = await db.from("ai_feature_bindings").select("*").in("feature_key", ["content_tools", "default"]);
   assert.equal(previous.error, null);
   const actor = { createAdminClient: () => db as never, requireSystemActor: async () => ({ supabase: db as never, actor: { userId: env.DYDATA_AI_TEST_USER_ID, role: "owner" } as never }) };

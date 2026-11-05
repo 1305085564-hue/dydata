@@ -127,7 +127,7 @@ export type BusinessAssuranceItem = {
   selectedModelId: string | null;
   preferredModelId: string | null;
   defaultModelId: string | null;
-  messageKey: "business.normal" | "business.fallback" | "business.outage";
+  messageKey: "business.normal" | "business.fallback" | "business.outage" | "business.outage_retrying";
 };
 
 export type AvailabilityReport = {
@@ -316,7 +316,9 @@ export function computeAvailability(
       totalChannelCount: family?.channels.length ?? 0,
       status: routing.status === "normal" ? "healthy" : routing.status === "fallback" ? "degraded" : "outage",
       routingStatus: routing.status,
-      messageKey: `business.${routing.status}`,
+      messageKey: routing.status === "outage" && [routing.selectedModelId, routing.defaultModelId]
+        .some(id => id && familyByModelId.get(id)?.channels.some(channel => channel.identity === "sleeping"))
+        ? "business.outage_retrying" : `business.${routing.status}`,
     });
     if (routing.status === "outage") affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId: null });
   }
