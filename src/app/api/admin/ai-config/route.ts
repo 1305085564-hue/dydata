@@ -21,19 +21,17 @@ import {
   handleSyncKeyModels,
   handleSyncAllKeys,
   handleTestAllKeys,
+  restoreModelShelfState,
 } from "@/lib/ai-config/batch-actions";
 import { discoverModelIds } from "./sync-models/route";
 import {
   buildDependencyPreview,
-  checkKeyDependencies,
-  checkModelDependencies,
-  checkProviderDependencies,
+  requireDependencyConfirmation,
 } from "@/lib/ai-config/key-dependencies";
 import {
   requireSystemActor,
   toBoolean,
   toNullableString,
-  toPriority,
   toTrimmedString,
 } from "../ai-channels/_shared";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
@@ -59,6 +57,7 @@ type AiConfigAction =
   | "archive_feature"
   | "restore_feature"
   | "set_global_default_model"
+  | "set_model_enabled"
   | "sync_key_models"
   | "set_key_model_selection"
   | "set_global_model_shelf_state"
@@ -92,7 +91,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_model_channel_order" || action === "sleep_key" || action === "resume_key" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_model_channel_order" || action === "sleep_key" || action === "resume_key" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -115,7 +114,6 @@ function providerPatch(data: Record<string, unknown>, mode: "create" | "update")
   if (mode === "create" || data.name !== undefined) patch.name = toTrimmedString(data.name);
   if (mode === "create" || data.base_url !== undefined) patch.base_url = toTrimmedString(data.base_url);
   if (data.description !== undefined) patch.description = toNullableString(data.description);
-  if (data.priority !== undefined) patch.priority = toPriority(data.priority, 100);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.name || !patch.base_url)) throw new Error("供应商缺少 name/base_url");
   return patch;
@@ -124,7 +122,8 @@ function providerPatch(data: Record<string, unknown>, mode: "create" | "update")
 function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
   const patch: Record<string, unknown> = {};
   if (mode === "create" || data.key_id !== undefined) patch.key_id = toTrimmedString(data.key_id);
-  if (mode === "create" || data.model_id !== undefined) patch.model_id = toTrimmedString(data.model_id);
+  if (mode === "create") patch.model_id = toTrimmedString(data.model_id);
+  else if (data.model_id !== undefined) throw new Error("模型 ID 不可修改");
   if (data.display_name !== undefined) patch.display_name = toNullableString(data.display_name);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.key_id || !patch.model_id)) throw new Error("模型缺少 key_id/model_id");
@@ -133,15 +132,14 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
 
 async function loadAiConfig(supabase: SupabaseClient) {
   const [providersResult, keysResult, featureBindingsResult] = await Promise.all([
-    supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
-    supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, first_failure_at, invalidated_at, manual_sleep_until, available_models, created_at, updated_at").order("priority", { ascending: true }),
-    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
+    supabase.from("ai_providers").select("id, name, base_url, description, is_enabled, created_at, updated_at"),
+    supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, first_failure_at, invalidated_at, manual_sleep_until, available_models, created_at, updated_at"),
+    supabase.from("ai_feature_bindings").select("id, feature_key, label, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at"),
   ]);
 
   const modelsResult = await supabase
     .from("ai_provider_key_models")
-    .select("id, key_id, model_id, display_name, is_enabled, global_is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, last_error_message, last_failure_scope, first_failure_at, invalidated_at, sort_order, created_at")
-    .order("created_at", { ascending: true });
+    .select("*");
 
   const firstError =
     providersResult.error ??
@@ -151,36 +149,73 @@ async function loadAiConfig(supabase: SupabaseClient) {
 
   if (firstError) throw new Error(firstError.message);
 
+  const rawModels = (modelsResult.data ?? []) as Array<Record<string, unknown>>;
+  const modelsWithoutLegacyState = rawModels.map((row) => {
+    const model = { ...row };
+    delete model.global_is_enabled;
+    return model;
+  });
+  const enabledModelIds = new Set(rawModels.filter((row) => row.is_enabled === true).map((row) => row.model_id));
   const secrets = (keysResult.data ?? []).map((key) => String(key.api_key ?? ""));
   const bundle = {
-    providers: providersResult.data ?? [],
+    providers: (providersResult.data ?? []).map((provider) => ({ ...provider, priority: 0 })),
     keys: (keysResult.data ?? []).map((row) => ({
       ...row,
+      priority: 0,
       last_error_message: row.last_error_message ? sanitizeProviderErrorMessage(row.last_error_message, secrets) : null,
-      failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: row.last_error_message, secrets }) : null,
+      failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: String(row.last_error_message), secrets }) : null,
       api_key: undefined,
       api_key_masked: maskApiKeyLast4((row as { api_key?: unknown }).api_key),
     })),
-    models: (modelsResult.data ?? []).map((row) => ({ ...row,
+    models: modelsWithoutLegacyState.map((row) => ({ ...row,
+      global_is_enabled: enabledModelIds.has(row.model_id),
       last_error_message: row.last_error_message ? sanitizeProviderErrorMessage(row.last_error_message, secrets) : null,
-      failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: row.last_error_message, secrets }) : null,
+      failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: String(row.last_error_message), secrets }) : null,
     })),
-    featureBindings: featureBindingsResult.data ?? [],
+    featureBindings: (featureBindingsResult.data ?? []).map((binding) => ({ ...binding, provider_key_model_id: null })),
     featureControls: buildAiFeatureControls((featureBindingsResult.data ?? []) as AiFeatureBindingControlRow[]),
   };
-  return { ...bundle, availability: computeAvailability({ ...bundle, defaultBinding: bundle.featureBindings.find((binding) => binding.feature_key === "default") }) };
+  return { ...bundle, availability: computeAvailability({
+    providers: providersResult.data ?? [],
+    keys: keysResult.data ?? [],
+    models: modelsWithoutLegacyState as never,
+    featureControls: bundle.featureControls,
+    defaultBinding: bundle.featureBindings.find((binding) => binding.feature_key === "default") ?? null,
+  }) };
+}
+
+async function requireSelectableModel(supabase: SupabaseClient, modelId: string, currentModelId: string | null) {
+  if (modelId === currentModelId) return;
+  const { availability } = await loadAiConfig(supabase);
+  const family = availability.modelFamilies.find((item) => item.modelId === modelId);
+  if (!family?.isSelectable) throw mutationError(`模型【${modelId}】当前没有可用渠道，不能新选`, 409);
 }
 
 type MutationResult = {
   affectedCount?: number;
   cascade?: { keyCount: number; modelCount: number };
 };
-type MutationError = Error & { status?: number };
+type MutationError = Error & {
+  status?: number;
+  requiresConfirmation?: boolean;
+  affectedBusinesses?: Array<{ key: string; label: string; selectedModelId: string | null; preferredModelId: string | null; defaultModelId: string | null }>;
+  unknownReasons?: string[];
+};
 
 function mutationError(message: string, status = 400): MutationError {
   const error = new Error(message) as MutationError;
   error.status = status;
   return error;
+}
+
+function mutationErrorBody(error: unknown, fallback: string) {
+  const cause = error as MutationError;
+  return {
+    error: error instanceof Error ? error.message : fallback,
+    ...(typeof cause?.requiresConfirmation === "boolean" ? { requiresConfirmation: cause.requiresConfirmation } : {}),
+    ...(Array.isArray(cause?.affectedBusinesses) ? { affectedBusinesses: cause.affectedBusinesses } : {}),
+    ...(Array.isArray(cause?.unknownReasons) ? { unknownReasons: cause.unknownReasons } : {}),
+  };
 }
 
 export function boundedInteger(
@@ -224,32 +259,13 @@ async function handleRemoveKeyModel(
     model_id: string;
     display_name?: string | null;
     is_enabled: boolean;
-    global_is_enabled?: boolean | null;
     key?: { label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null } | Array<{ label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null }> | null;
   };
-  const preview = await buildDependencyPreview(supabase, {
-    scope: "model",
-    id: target.model_id,
-    keyId: target.key_id,
-  });
-  if (!preview.complete) {
-    throw mutationError(`无法确认模型收走依赖：${preview.unknownReasons.join("；")}`, 409);
-  }
+  const preview = await buildDependencyPreview(supabase, { scope: "supply", id: target.id });
+  requireDependencyConfirmation(preview, data.confirm_impact === true, "删除渠道模型供应");
   const bundle = await loadAiConfig(supabase);
   const remaining = bundle.availability.modelFamilies.find((family) => family.modelId === target.model_id)?.channels
     .filter((candidate) => candidate.keyModelId !== target.id && candidate.isSchedulable) ?? [];
-
-  const { data: bindings, error: bindingError } = await supabase
-    .from("ai_feature_bindings")
-    .select("id, feature_key, label")
-    .eq("is_enabled", true)
-    .neq("lifecycle_state", "archived")
-    .or(`provider_key_model_id.eq.${target.id},model_id.eq.${target.model_id}`);
-  if (bindingError) throw new Error(bindingError.message);
-  if (remaining.length === 0 && (bindings ?? []).length > 0) {
-    const labels = (bindings as Array<{ label: string }>).map((binding) => binding.label).join("、");
-    throw mutationError(`收走【${target.model_id}】会让业务【${labels}】失去唯一可用线路，请先换模型`, 409);
-  }
 
   const { error: deleteError } = await supabase.from("ai_provider_key_models").delete().eq("id", target.id);
   if (deleteError) throw new Error(deleteError.message);
@@ -288,7 +304,7 @@ async function handleRemoveKeyModel(
   };
 }
 
-async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Record<string, unknown>) {
+async function handleSetModelEnabled(supabase: SupabaseClient, data: Record<string, unknown>) {
   const modelId = toTrimmedString(data.modelId ?? data.model_id);
   if (!modelId) throw new Error("缺少 modelId");
   if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
@@ -296,43 +312,43 @@ async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Re
 
   if (!isEnabled) {
     const preview = await buildDependencyPreview(supabase, { scope: "model", id: modelId });
-    if (!preview.complete) throw mutationError(`无法确认模型依赖：${preview.unknownReasons.join("；")}`, 409);
-    const deps = await checkModelDependencies(supabase, modelId);
-    if (deps.criticalBindings.length > 0) {
-      const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
-      throw mutationError(`模型【${modelId}】仍被【${labels}】独占使用且无健康备用渠道，禁止下架`, 409);
-    }
+    requireDependencyConfirmation(preview, data.confirm_impact === true, "停用模型");
   }
 
   const { data: currentRows, error: readError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, global_is_enabled")
+    .select("id, is_enabled, disabled_by_model")
     .eq("model_id", modelId);
-  if (readError) throw new Error(readError.message);
-  const snapshot = (currentRows ?? []) as Array<{ id: string; global_is_enabled: boolean | null }>;
+  if (readError) {
+    if (/disabled_by_model/i.test(readError.message ?? "")) {
+      throw mutationError("数据库尚未执行 AI 供应开关迁移，暂不能批量停用或恢复模型", 409);
+    }
+    throw new Error(readError.message);
+  }
+  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
+  const changedRows = isEnabled
+    ? snapshot.filter((row) => row.disabled_by_model === true)
+    : snapshot.filter((row) => row.is_enabled);
+  if (changedRows.length === 0) {
+    return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
+  }
 
   const { error: updateError } = await supabase
     .from("ai_provider_key_models")
-    .update({ global_is_enabled: isEnabled })
-    .eq("model_id", modelId);
+    .update(isEnabled
+      ? { is_enabled: true, disabled_by_model: false }
+      : { is_enabled: false, disabled_by_model: true })
+    .in("id", changedRows.map((row) => row.id));
   if (updateError) {
     try {
-      for (const state of [true, false, null] as const) {
-        const ids = snapshot.filter((row) => row.global_is_enabled === state).map((row) => row.id);
-        if (ids.length > 0) await supabase.from("ai_provider_key_models").update({ global_is_enabled: state }).in("id", ids);
-      }
+      await restoreModelShelfState(supabase, snapshot);
     } catch (rollbackError) {
       throw new Error(`${updateError.message}；${rollbackError instanceof Error ? rollbackError.message : "状态回滚失败"}`);
     }
     throw new Error(updateError.message);
   }
 
-  return {
-    modelId,
-    is_enabled: isEnabled,
-    affectedCount: snapshot.length,
-    channelStatesUnchanged: true,
-  };
+  return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
 }
 
 async function applyMutation(
@@ -357,34 +373,22 @@ async function applyMutation(
 
   if (action === "delete" && entity === "model") {
     if (!actorId) throw new Error("缺少审计操作人");
-    return handleRemoveKeyModel(supabase, { id: targetId }, actorId) as unknown as MutationResult;
+    return handleRemoveKeyModel(supabase, { ...data, id: targetId }, actorId) as unknown as MutationResult;
   }
 
   if (action === "delete") {
     if (entity === "provider") {
       const preview = await buildDependencyPreview(supabase, { scope: "provider", id: targetId });
-      if (!preview.complete) throw mutationError(`无法确认接入点依赖：${preview.unknownReasons.join("；")}`, 409);
-      const deps = await checkProviderDependencies(supabase, targetId);
-      if (deps.criticalBindings.length > 0) {
-        const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
-        throw mutationError(`该服务商正被【${labels}】独占使用且无健康备用渠道，禁止删除`, 409);
-      }
+      requireDependencyConfirmation(preview, data.confirm_impact === true, "删除接入点");
       const { error } = await supabase.from("ai_providers").delete().eq("id", targetId);
       if (error) throw new Error(error.message);
-      return { cascade: { keyCount: deps.keyCount, modelCount: deps.modelCount } };
+      return { cascade: { keyCount: preview.channels.length, modelCount: preview.channels.reduce((count, channel) => count + channel.models.length, 0) } };
     }
     if (entity === "key") {
       const preview = await buildDependencyPreview(supabase, { scope: "key", id: targetId });
-      if (!preview.complete) throw mutationError(`无法确认渠道依赖：${preview.unknownReasons.join("；")}`, 409);
-      const deps = await checkKeyDependencies(supabase, targetId);
-      if (deps.criticalBindings.length > 0) {
-        const labels = deps.criticalBindings.map((b) => b.label).join("、");
-        const error = new Error(`该密钥正被【${labels}】使用且无备用模型，禁止删除`);
-        (error as { status?: number }).status = 409;
-        throw error;
-      }
-      // 级联删除关联的 key_models
-      await supabase.from("ai_provider_key_models").delete().eq("key_id", targetId);
+      requireDependencyConfirmation(preview, data.confirm_impact === true, "删除渠道");
+      const { error: modelsError } = await supabase.from("ai_provider_key_models").delete().eq("key_id", targetId);
+      if (modelsError) throw new Error(modelsError.message);
     }
     const { error } = await supabase.from(table).delete().eq("id", targetId);
     if (error) throw new Error(error.message);
@@ -402,9 +406,12 @@ async function applyMutation(
         ? buildAiKeyPatch(data, action)
         : modelPatch(data, action);
 
-  if (Object.keys(patch).length === 0) throw new Error("没有可写入字段");
+  if (Object.keys(patch).length === 0) {
+    if (action === "update" && data.priority !== undefined) return {};
+    throw new Error("没有可写入字段");
+  }
 
-  let affectedCount = 0;
+  const affectedCount = 0;
 
   if (action === "create") {
     const { error } = await supabase.from(table).insert(patch);
@@ -412,27 +419,30 @@ async function applyMutation(
   } else {
     if (entity === "provider" && patch.is_enabled === false) {
       const preview = await buildDependencyPreview(supabase, { scope: "provider", id: targetId });
-      if (!preview.complete) throw mutationError(`无法确认接入点依赖：${preview.unknownReasons.join("；")}`, 409);
-      const deps = await checkProviderDependencies(supabase, targetId);
-      if (deps.criticalBindings.length > 0) {
-        throw mutationError(`接入点停用会影响【${deps.criticalBindings.map((binding) => binding.label).join("、")}】且无健康备用渠道，禁止停用`, 409);
-      }
+      requireDependencyConfirmation(preview, data.confirm_impact === true, "停用接入点");
     }
     if (entity === "key" && patch.is_enabled === false) {
       const preview = await buildDependencyPreview(supabase, { scope: "key", id: targetId });
-      if (!preview.complete) throw mutationError(`无法确认渠道依赖：${preview.unknownReasons.join("；")}`, 409);
+      requireDependencyConfirmation(preview, data.confirm_impact === true, "停用渠道");
     }
     let renameModelId: string | null = null;
     let previousDisplayName: string | null = null;
-    if (entity === "model" && patch.display_name !== undefined) {
+    if (entity === "model" && (patch.display_name !== undefined || patch.is_enabled !== undefined)) {
       const { data: currentModel, error: currentModelError } = await supabase
         .from("ai_provider_key_models")
-        .select("model_id, display_name")
+        .select("*")
         .eq("id", targetId)
         .single();
       if (currentModelError || !currentModel) throw new Error(currentModelError?.message || "模型不存在");
-      renameModelId = (currentModel as { model_id: string }).model_id;
-      previousDisplayName = (currentModel as { display_name?: string | null }).display_name ?? null;
+      if (patch.display_name !== undefined) {
+        renameModelId = (currentModel as { model_id: string }).model_id;
+        previousDisplayName = (currentModel as { display_name?: string | null }).display_name ?? null;
+      }
+      if (patch.is_enabled === false) {
+        const preview = await buildDependencyPreview(supabase, { scope: "supply", id: targetId });
+        requireDependencyConfirmation(preview, data.confirm_impact === true, "关闭模型供应");
+      }
+      if (Object.prototype.hasOwnProperty.call(currentModel, "disabled_by_model")) patch.disabled_by_model = false;
     }
 
     const { error } = await supabase.from(table).update(patch).eq("id", targetId);
@@ -449,31 +459,6 @@ async function applyMutation(
       }
     }
 
-    // 级联处理：若禁用密钥，自动将该密钥下所有模型联动为禁用
-    if (entity === "key" && patch.is_enabled === false) {
-      const { error: keyModelsError } = await supabase
-        .from("ai_provider_key_models")
-        .update({ is_enabled: false })
-        .eq("key_id", targetId);
-      if (keyModelsError) throw new Error(keyModelsError.message);
-
-      // 查询受影响的业务功能数量
-      const { data: affectedKeyModels } = await supabase
-        .from("ai_provider_key_models")
-        .select("id, model_id")
-        .eq("key_id", targetId);
-
-      const affectedIds = (affectedKeyModels ?? []).map((m: { id: string }) => m.id);
-      const affectedModelIds = (affectedKeyModels ?? []).map((m: { model_id: string }) => m.model_id);
-
-      if (affectedIds.length > 0) {
-        const { data: affectedBindings } = await supabase
-          .from("ai_feature_bindings")
-          .select("id, feature_key, model_id, provider_key_model_id")
-          .or(`provider_key_model_id.in.(${affectedIds.join(",")}),model_id.in.(${affectedModelIds.map(m => `"${m}"`).join(",")})`);
-        affectedCount = affectedBindings?.length ?? 0;
-      }
-    }
   }
 
   return { affectedCount };
@@ -497,8 +482,6 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
   const patch: Record<string, unknown> = {
     feature_key: feature.key,
     label: feature.label,
-    provider_key_model_id: toNullableString(data.provider_key_model_id),
-    model_id: toNullableString(data.model_id),
     system_prompt: toNullableString(data.system_prompt),
     output_token_limit: boundedInteger(data.output_token_limit, "最大输出 Token", 1200, 8000, 3600),
     context_message_limit: boundedInteger(data.context_message_limit, "上下文轮数", 1, 50, 30),
@@ -507,6 +490,19 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
     archived_at: null,
     archived_reason: null,
   };
+  if (data.model_id !== undefined) {
+    const nextModelId = toNullableString(data.model_id);
+    if (nextModelId) {
+      const { data: current, error } = await supabase
+        .from("ai_feature_bindings")
+        .select("model_id")
+        .eq("feature_key", feature.key)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      await requireSelectableModel(supabase, nextModelId, toNullableString(current?.model_id));
+    }
+    patch.model_id = nextModelId;
+  }
   if (feature.key === "ocr_screenshot") {
     patch.channel_settings = {
       ocr_screenshot_channel: parseOcrChannelSetting(data.ocr_screenshot_channel),
@@ -852,19 +848,19 @@ export async function buildAiConfigResponse(
       return NextResponse.json({ syncResult: result, ...bundle });
     } catch (error) {
       const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
-      return NextResponse.json({ error: error instanceof Error ? error.message : "保存模型勾选失败" }, { status });
+      return NextResponse.json(mutationErrorBody(error, "保存模型勾选失败"), { status });
     }
   }
 
-  if (action === "set_global_model_shelf_state") {
+  if (action === "set_model_enabled" || action === "set_global_model_shelf_state") {
     try {
-      const result = await handleSetGlobalModelShelfState(auth.supabase, asRecord(body.data));
+      const result = await handleSetModelEnabled(auth.supabase, asRecord(body.data));
       aiClientInternal.resetCache();
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ ...bundle, shelfResult: result, affectedCount: result.affectedCount });
     } catch (error) {
       const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
-      return NextResponse.json({ error: error instanceof Error ? error.message : "更新模型上架状态失败" }, { status });
+      return NextResponse.json(mutationErrorBody(error, "更新模型开关失败"), { status });
     }
   }
 
@@ -876,7 +872,7 @@ export async function buildAiConfigResponse(
       return NextResponse.json({ ...bundle, removalResult: result });
     } catch (error) {
       const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
-      return NextResponse.json({ error: error instanceof Error ? error.message : "收走模型失败" }, { status });
+      return NextResponse.json(mutationErrorBody(error, "收走模型失败"), { status });
     }
   }
 
@@ -942,14 +938,14 @@ export async function buildAiConfigResponse(
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
       // 任务 2：去掉 is_enabled=true 过滤，测该渠道全部挂载模型（含未勾选/停用的）
-      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled, global_is_enabled");
+      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled");
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
       if (keyStateError) throw new Error(keyStateError.message);
       const enabledKeyIds = new Set(((keyStateRows ?? []) as Array<{ id: string; is_enabled: boolean }>).filter((row) => row.is_enabled).map((row) => row.id));
       // 过滤条件：只要渠道启用即可，不再要求模型本身启用或全局启用
-      const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean; global_is_enabled?: boolean | null }>)
+      const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean }>)
         .filter((row) => enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id))
         .map(({ key_id, model_id }) => ({ key_id, model_id }));
       const modelResults = await mapWithConcurrency(
@@ -1056,6 +1052,13 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const modelId = toNullableString(data.model_id);
       if (!modelId) throw new Error("还没有选择默认兜底模型");
+      const { data: current, error: currentError } = await auth.supabase
+        .from("ai_feature_bindings")
+        .select("model_id")
+        .eq("feature_key", "default")
+        .maybeSingle();
+      if (currentError) throw new Error(currentError.message);
+      await requireSelectableModel(auth.supabase, modelId, toNullableString(current?.model_id));
       const { error } = await auth.supabase
         .from("ai_feature_bindings")
         .upsert(
@@ -1066,7 +1069,8 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "设置全局默认模型失败" }, { status: 400 });
+      const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
+      return NextResponse.json(mutationErrorBody(error, "设置全局默认模型失败"), { status });
     }
   }
 
@@ -1080,7 +1084,8 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "保存业务功能失败" }, { status: 400 });
+      const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
+      return NextResponse.json(mutationErrorBody(error, "保存业务功能失败"), { status });
     }
   }
 
@@ -1103,10 +1108,7 @@ export async function buildAiConfigResponse(
       typeof (error as { status?: unknown })?.status === "number"
         ? (error as { status: number }).status
         : 400;
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "保存 AI 配置失败" },
-      { status }
-    );
+    return NextResponse.json(mutationErrorBody(error, "保存 AI 配置失败"), { status });
   }
 }
 

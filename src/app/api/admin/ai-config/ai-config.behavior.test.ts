@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 
 import { buildAiConfigResponse, defaultAiConfigDeps, POST as postAiConfig } from "./route";
 import { buildSyncModelsResponse, defaultSyncModelsDeps, POST as postSyncModels, syncModelsForKey } from "./sync-models/route";
-import { buildCheckDependenciesResponse } from "./check-dependencies/route";
+import { buildCheckDependenciesResponse, defaultCheckDependenciesDeps } from "./check-dependencies/route";
 import { __internal as aiClientInternal } from "@/lib/ai/client";
 import { computeAvailability } from "@/lib/ai-config/availability";
 
@@ -27,8 +27,9 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
     private readonly table: TableName,
   ) {}
 
-  select() {
+  select(columns?: string) {
     this.operation = "select";
+    if (columns) this.db.selectCalls.push(`${this.table}:${columns}`);
     return this;
   }
 
@@ -147,6 +148,7 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
 
 class MemorySupabase {
   nextId = 1;
+  readonly selectCalls: string[] = [];
   readonly tables: Record<TableName, Row[]>;
   readonly options: MemoryOptions;
 
@@ -266,7 +268,7 @@ test("check-dependencies 真 handler：依赖抛错返回 500 且保留分层字
     }),
     {
       requireSystemActor: async () => ({ supabase: {} as never, actor: {} as never }),
-      checkKeyDependencies: async () => { throw new Error("依赖查询失败"); },
+      buildDependencyPreview: async () => { throw new Error("依赖查询失败"); },
     },
   );
   assert.equal(response.status, 500);
@@ -294,6 +296,141 @@ function configTables(overrides: Partial<Record<TableName, Row[]>> = {}, options
     ...overrides,
   }, options);
 }
+
+function dependencyScenario() {
+  return configTables({
+    ai_provider_key_models: [
+      { id: "target-row", key_id: "key-1", model_id: "target-model", display_name: "目标模型", is_enabled: true, disabled_by_model: false },
+      { id: "default-row", key_id: "key-1", model_id: "default-model", display_name: "默认模型", is_enabled: false, disabled_by_model: false },
+      { id: "unrelated-row", key_id: "key-1", model_id: "unrelated-model", display_name: "其他模型", is_enabled: true, disabled_by_model: false },
+    ],
+    ai_feature_bindings: [
+      { id: "default-binding", feature_key: "default", label: "全局默认", model_id: "default-model", provider_key_model_id: "unrelated-row", is_enabled: true, lifecycle_state: "active" },
+      { id: "business-binding", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "unrelated-row", is_enabled: true, lifecycle_state: "active" },
+    ],
+  });
+}
+
+test("依赖预览只模拟关闭目标供应；没有可用默认时，不会拿任意模型兜底", async () => {
+  const db = dependencyScenario();
+  const response = await buildCheckDependenciesResponse(
+    new NextRequest("http://localhost/api/admin/ai-config/check-dependencies", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "supply", id: "target-row" }),
+    }),
+    { ...defaultCheckDependenciesDeps, requireSystemActor: actor(db).requireSystemActor },
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.requiresConfirmation, true);
+  assert.deepEqual(body.affectedBusinesses.map((item: Row) => item.key), ["content_analysis"]);
+  assert.deepEqual(body.businessFunctions.map((item: Row) => item.key), ["content_analysis"]);
+  assert.equal(body.criticalBindings.length, 0);
+});
+
+test("配置响应不读废弃列，旧 UI 字段由新开关状态派生", async () => {
+  const db = configTables({
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true, global_is_enabled: false }],
+    ai_feature_bindings: [{
+      id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "model-a",
+      provider_key_model_id: "model-row", system_prompt: null, output_token_limit: 3600, context_message_limit: 30,
+      is_enabled: true, lifecycle_state: "active", archived_at: null, archived_reason: null,
+    }],
+  });
+  const response = await buildAiConfigResponse(request({
+    action: "update", entity: "key", data: { id: "key-1", label: "新渠道名" },
+  }), actor(db));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.providers[0].priority, 0);
+  assert.equal(body.keys[0].priority, 0);
+  assert.equal(body.models[0].global_is_enabled, true);
+  assert.equal(body.featureBindings[0].provider_key_model_id, null);
+  assert.equal(body.featureControls.find((item: Row) => item.key === "content_analysis").providerKeyModelId, null);
+  assert.equal(db.selectCalls.some((call) => /global_is_enabled|provider_key_model_id|priority/.test(call)), false);
+});
+
+test("模型 ID 不可通过更新改写；旧渠道顺位参数被接受但不落库", async () => {
+  const db = configTables({
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
+  });
+  const rename = await buildAiConfigResponse(request({
+    action: "update", entity: "model", data: { id: "model-row", model_id: "model-b" },
+  }), actor(db));
+  assert.equal(rename.status, 400);
+  assert.equal(db.tables.ai_provider_key_models[0].model_id, "model-a");
+
+  const priority = await buildAiConfigResponse(request({
+    action: "update", entity: "key", data: { id: "key-1", priority: 1 },
+  }), actor(db));
+  assert.equal(priority.status, 200);
+  assert.equal(db.tables.ai_provider_keys[0].priority, 1);
+});
+
+test("关闭单条供应需要确认；确认后只关该供应并清掉模型停用标记", async () => {
+  const db = dependencyScenario();
+  const makeRequest = (confirm: boolean) => request({
+    action: "update", entity: "model",
+    data: { id: "target-row", is_enabled: false, confirm_impact: confirm },
+  });
+
+  const preview = await buildAiConfigResponse(makeRequest(false), actor(db));
+  assert.equal(preview.status, 409);
+  const previewBody = await preview.json();
+  assert.equal(previewBody.requiresConfirmation, true);
+  assert.deepEqual(previewBody.affectedBusinesses.map((item: Row) => item.key), ["content_analysis"]);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, true);
+
+  const confirmed = await buildAiConfigResponse(makeRequest(true), actor(db));
+  assert.equal(confirmed.status, 200);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, false);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.disabled_by_model, false);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "unrelated-row")?.is_enabled, true);
+});
+
+test("关渠道需要确认；确认后不级联清零渠道内模型开关", async () => {
+  const db = dependencyScenario();
+  const response = await buildAiConfigResponse(request({
+    action: "update", entity: "key",
+    data: { id: "key-1", is_enabled: false, confirm_impact: true },
+  }), actor(db));
+
+  assert.equal(response.status, 200);
+  assert.equal(db.tables.ai_provider_keys.find((row) => row.id === "key-1")?.is_enabled, false);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, true);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "unrelated-row")?.is_enabled, true);
+});
+
+test("模型停用只标记并关闭原来开启的供应；恢复只恢复标记供应", async () => {
+  const db = dependencyScenario();
+  db.tables.ai_provider_key_models.push({
+    id: "manual-off-row", key_id: "key-1", model_id: "target-model", display_name: "目标模型",
+    is_enabled: false, disabled_by_model: false,
+  });
+  const disable = await buildAiConfigResponse(request({
+    action: "set_model_enabled", data: { model_id: "target-model", is_enabled: false, confirm_impact: true },
+  }), actor(db));
+  assert.equal(disable.status, 200);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, false);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.disabled_by_model, true);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "manual-off-row")?.disabled_by_model, false);
+
+  const userToggle = await buildAiConfigResponse(request({
+    action: "update", entity: "model", data: { id: "target-row", is_enabled: false },
+  }), actor(db));
+  assert.equal(userToggle.status, 200);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.disabled_by_model, false);
+
+  const restore = await buildAiConfigResponse(request({
+    action: "set_model_enabled", data: { model_id: "target-model", is_enabled: true },
+  }), actor(db));
+  assert.equal(restore.status, 200);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, false);
+  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "manual-off-row")?.is_enabled, false);
+});
 
 test("服务端模型探测只返回模型清单，不把临时 API Key 写入数据库", async () => {
   const db = configTables();
@@ -403,48 +540,53 @@ test("sync_key_models 动作返回当前渠道全量模型分类", async () => {
   }
 });
 
-test("B2 模型全局下架会拦截无备用渠道的业务绑定", async () => {
+test("B2 模型停用需要确认；无可用默认时返回受影响业务", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "target-row", key_id: "key-1", model_id: "target-model", is_enabled: true }],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "feature-a", label: "功能 A", model_id: "target-model", provider_key_model_id: "target-row", is_enabled: true, lifecycle_state: "active" }],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "target-row", is_enabled: true, lifecycle_state: "active" }],
   });
 
   const response = await buildAiConfigResponse(request({
-    action: "set_global_model_shelf_state",
+    action: "set_model_enabled",
     data: { modelId: "target-model", is_enabled: false },
   }), actor(db));
 
   assert.equal(response.status, 409);
-  assert.match((await response.json()).error, /功能 A/);
+  const body = await response.json();
+  assert.equal(body.requiresConfirmation, true);
+  assert.deepEqual(body.affectedBusinesses.map((item: Row) => item.key), ["content_analysis"]);
   assert.equal(db.tables.ai_provider_key_models[0].is_enabled, true);
 });
 
-test("B2 模型全局下架有其他健康模型时放行且全库熄灭目标模型", async () => {
+test("B2 其他模型不会越过全局默认成为随机兜底", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "target-row", key_id: "key-1", model_id: "target-model", is_enabled: true },
       { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true },
     ],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "feature-a", label: "功能 A", model_id: "target-model", provider_key_model_id: "target-row", is_enabled: true, lifecycle_state: "active" }],
+    ai_feature_bindings: [
+      { id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "backup-row", is_enabled: true, lifecycle_state: "active" },
+      { id: "default-binding", feature_key: "default", label: "默认模型", model_id: "missing-default", is_enabled: true, lifecycle_state: "active" },
+    ],
   });
 
   const response = await buildAiConfigResponse(request({
-    action: "set_global_model_shelf_state",
+    action: "set_model_enabled",
     data: { modelId: "target-model", is_enabled: false },
   }), actor(db));
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).requiresConfirmation, true);
   assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.is_enabled, true);
-  assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "target-row")?.global_is_enabled, false);
   assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "backup-row")?.is_enabled, true);
 });
 
 test("B2 模型全局下架部分更新失败时恢复操作前状态", async () => {
   const db = configTables({
     ai_provider_key_models: [
-      { id: "target-a", key_id: "key-1", model_id: "target-model", is_enabled: true },
-      { id: "target-b", key_id: "key-2", model_id: "target-model", is_enabled: true },
-      { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true },
+      { id: "target-a", key_id: "key-1", model_id: "target-model", is_enabled: true, disabled_by_model: false },
+      { id: "target-b", key_id: "key-2", model_id: "target-model", is_enabled: true, disabled_by_model: false },
+      { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true, disabled_by_model: false },
     ],
     ai_provider_keys: [
       { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
@@ -454,15 +596,15 @@ test("B2 模型全局下架部分更新失败时恢复操作前状态", async ()
 
   const before = db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled }));
   const response = await buildAiConfigResponse(request({
-    action: "set_global_model_shelf_state",
-    data: { modelId: "target-model", is_enabled: false },
+    action: "set_model_enabled",
+    data: { modelId: "target-model", is_enabled: false, confirm_impact: true },
   }), actor(db));
 
   assert.equal(response.status, 400);
   assert.deepEqual(db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled })), before);
 });
 
-test("S2 下架目标模型后运行时顺位切到健康备用渠道", async () => {
+test("S2 停用目标模型后运行时只切到明确的全局默认", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "target-row", key_id: "key-1", model_id: "target-model", is_enabled: true },
@@ -493,6 +635,7 @@ test("S2 下架目标模型后运行时顺位切到健康备用渠道", async ()
 
   const runtimeService = {
     from(table: string) {
+      if (table === "ai_feature_bindings") return new RuntimeQuery([{ feature_key: "default", model_id: "backup-model", is_enabled: true }]);
       if (table !== "ai_provider_key_models") throw new Error(`unexpected runtime table ${table}`);
       const rows = [
         {
@@ -577,18 +720,25 @@ test("B4 删除服务商返回级联数量并由数据库级联清理资产", as
   assert.equal(db.tables.ai_provider_key_models.length, 0);
 });
 
-test("B4 删除服务商时独占业务绑定返回 409 且资产保持不变", async () => {
+test("B4 删除服务商先返回影响确认；确认后允许执行", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "feature-a", label: "功能 A", model_id: "model-a", provider_key_model_id: "model-row", is_enabled: true, lifecycle_state: "active" }],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "model-a", provider_key_model_id: "model-row", is_enabled: true, lifecycle_state: "active" }],
   });
 
-  const response = await buildAiConfigResponse(request({ action: "delete", entity: "provider", data: { id: "provider-1" } }), actor(db));
-  assert.equal(response.status, 409);
-  assert.match((await response.json()).error, /功能 A/);
+  const unconfirmed = await buildAiConfigResponse(request({ action: "delete", entity: "provider", data: { id: "provider-1" } }), actor(db));
+  assert.equal(unconfirmed.status, 409);
+  assert.equal((await unconfirmed.json()).requiresConfirmation, true);
   assert.equal(db.tables.ai_providers.length, 1);
   assert.equal(db.tables.ai_provider_keys.length, 1);
   assert.equal(db.tables.ai_provider_key_models.length, 1);
+
+  const confirmed = await buildAiConfigResponse(request({
+    action: "delete", entity: "provider", data: { id: "provider-1", confirm_impact: true },
+  }), actor(db));
+  assert.equal(confirmed.status, 200);
+  assert.equal(db.tables.ai_providers.length, 0);
+  assert.equal(db.tables.ai_provider_keys.length, 0);
 });
 
 test("B5 模型改名同步到同 model_id 的所有 Key 记录", async () => {
@@ -630,7 +780,7 @@ test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠
   }
 });
 
-test("C-R1 全站下架后新增渠道勾选模型不得复活全站供给", async () => {
+test("C-R1 新渠道勾选只写单渠道供应开关，不再读写旧全局字段", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "shelved-row", key_id: "key-1", model_id: "shelved-model", is_enabled: true, global_is_enabled: false },
@@ -650,17 +800,17 @@ test("C-R1 全站下架后新增渠道勾选模型不得复活全站供给", asy
     assert.ok(newKey);
     const newModel = db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "shelved-model");
     assert.equal(newModel?.is_enabled, true);
-    assert.equal(newModel?.global_is_enabled, false);
+    assert.equal(Object.prototype.hasOwnProperty.call(newModel, "global_is_enabled"), false);
 
     const availability = computeAvailability({
       providers: [{ id: "provider-1", name: "Provider 1", is_enabled: true }],
       keys: [{ id: newKey.id as string, provider_id: "provider-1", label: "new-key-after-shelf", is_enabled: true, consecutive_failures: 0, last_success_at: new Date().toISOString() }],
-      models: [{ id: newModel?.id as string, key_id: newKey.id as string, model_id: "shelved-model", is_enabled: true, global_is_enabled: newModel?.global_is_enabled as boolean }],
-      featureControls: [{ key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "shelved-model", providerKeyModelId: null }],
+      models: [{ id: newModel?.id as string, key_id: newKey.id as string, model_id: "shelved-model", is_enabled: true }],
+      featureControls: [],
       defaultBinding: null,
     });
-    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.schedulableChannelCount, 0);
-    assert.equal(availability.businessAssurances.find((item) => item.key === "content_tools")?.status, "outage");
+    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.schedulableChannelCount, 1);
+    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.isSelectable, true);
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -1036,53 +1186,35 @@ test("单模型测试与批量检测共用同一条 15 秒判定线与同一句�
   }
 });
 
-test("C1 依赖名单不完整时危险动作默认拒绝且不写入", async () => {
+test("C1 上游清单为空不替代真实业务依赖；无业务受影响可关闭", async () => {
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api1 default", api_key: "secret", priority: 1, is_enabled: true, available_models: [] }],
-    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "channel", api_key: "secret", is_enabled: true, available_models: [] }],
+    ai_provider_key_models: [{ id: "row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
   });
-  const response = await buildAiConfigResponse(request({
-    action: "update",
-    entity: "key",
-    data: { id: "key-1", is_enabled: false },
-  }), actor(db));
-  assert.equal(response.status, 409);
-  assert.match((await response.json()).error, /从未成功同步|空清单/);
-  assert.equal(db.tables.ai_provider_keys[0].is_enabled, true);
+  const response = await buildAiConfigResponse(request({ action: "update", entity: "key", data: { id: "key-1", is_enabled: false } }), actor(db));
+  assert.equal(response.status, 200);
+  assert.equal(db.tables.ai_provider_keys[0].is_enabled, false);
+  assert.equal(db.tables.ai_provider_key_models[0].is_enabled, true);
 });
 
-test("C1 跨渠道批量启用在供给未知时也必须先拒绝", async () => {
-  const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api1 default", api_key: "secret", priority: 1, is_enabled: true, available_models: [] }],
-    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: false }],
-  });
-  const response = await buildAiConfigResponse(request({
-    action: "set_key_model_selection",
-    data: { key_id: "key-1", model_ids: ["model-a"] },
-  }), actor(db));
-  assert.equal(response.status, 409);
-  assert.match((await response.json()).error, /从未成功同步|空清单/);
-  assert.equal(db.tables.ai_provider_key_models[0].is_enabled, false);
+test("C1 现有供应可重新打开，不因上游清单未知增加第二套开关规则", async () => {
+  const db = configTables({ ai_provider_key_models: [{ id: "row", key_id: "key-1", model_id: "model-a", is_enabled: false }] });
+  const response = await buildAiConfigResponse(request({ action: "set_key_model_selection", data: { key_id: "key-1", model_ids: ["model-a"] } }), actor(db));
+  assert.equal(response.status, 200);
+  assert.equal(db.tables.ai_provider_key_models[0].is_enabled, true);
 });
 
-test("C2 全站下架再上架只改全站状态，逐条渠道状态原样保留", async () => {
-  const db = configTables({
-    ai_provider_key_models: [
-      { id: "model-on", key_id: "key-1", model_id: "model-a", is_enabled: true, global_is_enabled: true },
-      { id: "model-off", key_id: "key-1", model_id: "model-a", is_enabled: false, global_is_enabled: true },
-    ],
-  });
-  const before = db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled }));
+test("C2 批量停用恢复只恢复原来打开的供应", async () => {
+  const db = configTables({ ai_provider_key_models: [
+    { id: "on", key_id: "key-1", model_id: "model-a", is_enabled: true, disabled_by_model: false },
+    { id: "off", key_id: "key-1", model_id: "model-a", is_enabled: false, disabled_by_model: false },
+  ] });
   for (const isEnabled of [false, true]) {
-    const response = await buildAiConfigResponse(request({
-      action: "set_global_model_shelf_state",
-      data: { modelId: "model-a", is_enabled: isEnabled },
-    }), actor(db));
+    const response = await buildAiConfigResponse(request({ action: "set_model_enabled", data: { model_id: "model-a", is_enabled: isEnabled } }), actor(db));
     assert.equal(response.status, 200);
-    assert.equal((await response.json()).shelfResult.channelStatesUnchanged, true);
   }
-  assert.deepEqual(db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled })), before);
-  assert.deepEqual(db.tables.ai_provider_key_models.map((row) => row.global_is_enabled), [true, true]);
+  assert.deepEqual(db.tables.ai_provider_key_models.map(row => row.is_enabled), [true, false]);
+  assert.deepEqual(db.tables.ai_provider_key_models.map(row => row.disabled_by_model), [false, false]);
 });
 
 test("C3 同一渠道连点五次检测不改变供给或健康计数", async () => {

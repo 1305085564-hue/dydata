@@ -1,278 +1,243 @@
-import { isProviderKeyModelSchedulable } from "@/lib/ai/provider-routing";
+import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "@/lib/ai-config/feature-controls";
+import { computeAvailability, type AvailabilityInput } from "@/lib/ai-config/availability";
 
-export type KeyDependencyItem = {
-  id: string;
+export type DependencyScope = "provider" | "key" | "supply" | "model";
+
+export type AffectedBusiness = {
   key: string;
   label: string;
-  modelId: string | null;
-};
-
-export type KeyDependencyCheckResult = {
-  criticalBindings: KeyDependencyItem[];
-  affectedBindings: KeyDependencyItem[];
-};
-
-export type ModelDependencyCheckResult = {
-  criticalBindings: KeyDependencyItem[];
-  affectedBindings: KeyDependencyItem[];
-};
-
-export type ProviderDependencyCheckResult = {
-  criticalBindings: KeyDependencyItem[];
-  affectedBindings: KeyDependencyItem[];
-  keyCount: number;
-  modelCount: number;
+  selectedModelId: string | null;
+  preferredModelId: string | null;
+  defaultModelId: string | null;
 };
 
 export type DependencyPreview = {
-  scope: "provider" | "key" | "model";
+  scope: DependencyScope;
   targetId: string;
   complete: boolean;
   unknownReasons: string[];
+  requiresConfirmation: boolean;
+  affectedBusinesses: AffectedBusiness[];
   channels: Array<{
     id: string;
     name: string;
     providerName: string;
-    models: Array<{ modelId: string; displayName: string | null; isEnabled: boolean; isGloballyEnabled: boolean | null }>;
+    models: Array<{ modelId: string; displayName: string | null; isEnabled: boolean; isGloballyEnabled: boolean }>;
     businessFunctions: Array<{ key: string; label: string }>;
   }>;
   businessFunctions: Array<{ key: string; label: string }>;
+  criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>;
+  affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>;
   remainingAvailableLineCount?: number;
   soleBusinessFunctions?: Array<{ key: string; label: string }>;
 };
 
-type ActiveBindingRow = {
+type DependencyInput = {
+  scope: DependencyScope;
   id: string;
-  feature_key: string;
+  /** Used by set_key_model_selection to simulate only the rows being unchecked. */
+  disableSupplyIds?: string[];
+};
+
+type DependencyBindingRow = AiFeatureBindingControlRow & {
   label: string;
-  model_id: string | null;
-  provider_key_model_id: string | null;
 };
 
-import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
-
-type KeyRow = ProviderHealthFields & {
-  manual_sleep_until?: string | null;
-  id: string;
-  provider_id: string;
-  is_enabled: boolean;
-  consecutive_failures?: number | null;
-  unhealthy_until?: string | null;
+type DependencySnapshot = {
+  providers: NonNullable<AvailabilityInput["providers"]>;
+  keys: NonNullable<AvailabilityInput["keys"]>;
+  models: NonNullable<AvailabilityInput["models"]>;
+  bindings: DependencyBindingRow[];
 };
 
-type ProviderRow = {
-  id: string;
-  is_enabled: boolean;
-};
-
-type KeyModelRow = ProviderHealthFields & {
-  id: string;
-  key_id: string;
-  model_id: string;
-  is_enabled: boolean;
-  global_is_enabled?: boolean | null;
-};
-
+// Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadDependencyRows(supabase: any) {
-  const [bindingsResult, keyModelsResult, keysResult, providersResult] = await Promise.all([
-    supabase
-      .from("ai_feature_bindings")
-      .select("id, feature_key, label, model_id, provider_key_model_id")
-      .eq("is_enabled", true)
-      .neq("lifecycle_state", "archived"),
-    supabase.from("ai_provider_key_models").select("id, key_id, model_id, is_enabled, global_is_enabled, consecutive_failures, unhealthy_until, first_failure_at, invalidated_at, last_failure_at, last_success_at"),
-    supabase.from("ai_provider_keys").select("id, provider_id, is_enabled, consecutive_failures, unhealthy_until, manual_sleep_until, first_failure_at, invalidated_at, last_failure_at, last_success_at"),
-    supabase.from("ai_providers").select("id, is_enabled"),
-  ]);
-
-  const firstError = bindingsResult.error ?? keyModelsResult.error ?? keysResult.error ?? providersResult.error;
-  if (firstError) throw new Error(firstError.message);
-
-  const bindings = (bindingsResult.data ?? []) as ActiveBindingRow[];
-  const keyModels = (keyModelsResult.data ?? []) as KeyModelRow[];
-  const keys = (keysResult.data ?? []) as KeyRow[];
-  const providers = (providersResult.data ?? []) as ProviderRow[];
-  // gate:transient-map 请求级供应商状态索引；扫描结束释放，无外部缓存 TTL/容量。
-  const providerEnabled = new Map(providers.map((provider) => [provider.id, provider.is_enabled]));
-
-  const keyById = new Map(keys.map((key) => [key.id, key])); // gate:transient-map 单次依赖查询索引，返回后释放
-  const providerById = new Map(providers.map((provider) => [provider.id, provider])); // gate:transient-map 单次依赖查询索引，返回后释放
-  const schedulableModelIds = new Set(keyModels.filter((model) => {
-    const key = keyById.get(model.key_id);
-    return isProviderKeyModelSchedulable({ model, key, provider: providerById.get(key?.provider_id ?? "") });
-  }).map((model) => model.id));
-  return { bindings, keyModels, keys, providerEnabled, schedulableModelIds };
-}
-
-function asDependencyItem(binding: ActiveBindingRow): KeyDependencyItem {
-  return {
-    id: binding.id,
-    key: binding.feature_key,
-    label: binding.label,
-    modelId: binding.model_id,
-  };
-}
-
-/**
- * 模型维度的下架依赖扫描：下架会让目标 model_id 的所有渠道退出调度，
- * 因此备用必须是仍健康的其它模型渠道，运行时才能走全库顺位兜底。
- */
-export async function checkModelDependencies(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  modelId: string,
-): Promise<ModelDependencyCheckResult> {
-  const rows = await loadDependencyRows(supabase);
-  const targetModels = rows.keyModels.filter((model) => model.model_id === modelId);
-  const targetModelIds = new Set(targetModels.map((model) => model.id));
-  const relevantBindings = rows.bindings.filter(
-    (binding) => binding.model_id === modelId || (binding.provider_key_model_id ? targetModelIds.has(binding.provider_key_model_id) : false),
-  );
-
-  const hasHealthyFallback = rows.keyModels.some(
-    (model) => model.model_id !== modelId && rows.schedulableModelIds.has(model.id),
-  );
-
-  return relevantBindings.reduce<ModelDependencyCheckResult>(
-    (result, binding) => {
-      const item = asDependencyItem(binding);
-      (hasHealthyFallback ? result.affectedBindings : result.criticalBindings).push(item);
-      return result;
-    },
-    { criticalBindings: [], affectedBindings: [] },
-  );
-}
-
-/** 服务商删除前扫描：删除后仍须存在健康渠道，否则阻断核心业务。 */
-export async function checkProviderDependencies(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  providerId: string,
-): Promise<ProviderDependencyCheckResult> {
-  const rows = await loadDependencyRows(supabase);
-  const providerKeyIds = new Set(rows.keys.filter((key) => key.provider_id === providerId).map((key) => key.id));
-  const providerModelIds = new Set(rows.keyModels.filter((model) => providerKeyIds.has(model.key_id)).map((model) => model.id));
-  const providerModelNames = new Set(rows.keyModels.filter((model) => providerKeyIds.has(model.key_id)).map((model) => model.model_id));
-  const relevantBindings = rows.bindings.filter(
-    (binding) =>
-      (binding.provider_key_model_id ? providerModelIds.has(binding.provider_key_model_id) : false) ||
-      (binding.model_id ? providerModelNames.has(binding.model_id) : false),
-  );
-  const hasHealthyFallback = rows.keyModels.some(
-    (model) =>
-      !providerKeyIds.has(model.key_id) &&
-      rows.schedulableModelIds.has(model.id),
-  );
-
-  return {
-    criticalBindings: hasHealthyFallback ? [] : relevantBindings.map(asDependencyItem),
-    affectedBindings: hasHealthyFallback ? relevantBindings.map(asDependencyItem) : [],
-    keyCount: providerKeyIds.size,
-    modelCount: rows.keyModels.filter((model) => providerKeyIds.has(model.key_id)).length,
-  };
-}
-
-export async function checkKeyDependencies(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  keyId: string
-): Promise<KeyDependencyCheckResult> {
-  const rows = await loadDependencyRows(supabase);
-  const currentModels = rows.keyModels.filter((model) => model.key_id === keyId);
-  const currentIds = new Set(currentModels.map((model) => model.id));
-  const currentModelIds = new Set(currentModels.map((model) => model.model_id));
-  const relevant = rows.bindings.filter((binding) =>
-    (binding.provider_key_model_id && currentIds.has(binding.provider_key_model_id)) ||
-    (binding.model_id && currentModelIds.has(binding.model_id)));
-  const backups = new Set(rows.keyModels.filter((model) => model.key_id !== keyId && rows.schedulableModelIds.has(model.id)).map((model) => model.model_id));
-  return relevant.reduce<KeyDependencyCheckResult>((result, binding) => {
-    const hasBackup = Boolean(binding.model_id && backups.has(binding.model_id));
-    (hasBackup ? result.affectedBindings : result.criticalBindings).push(asDependencyItem(binding));
-    return result;
-  }, { criticalBindings: [], affectedBindings: [] });
-}
-
-/**
- * 危险动作执行前的只读名单。任何查询不完整都会以 complete=false 返回，
- * 调用方必须拒绝执行，不能把未知压成空数组。
- */
-export async function buildDependencyPreview(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  input: { scope: "provider" | "key" | "model"; id: string; keyId?: string; modelId?: string },
-): Promise<DependencyPreview> {
+async function loadDependencySnapshot(supabase: any): Promise<DependencySnapshot> {
   const [providersResult, keysResult, modelsResult, bindingsResult] = await Promise.all([
     supabase.from("ai_providers").select("id, name, is_enabled"),
-    supabase.from("ai_provider_keys").select("id, provider_id, label, available_models, is_enabled, consecutive_failures, unhealthy_until, first_failure_at, last_failure_at, last_success_at, invalidated_at, manual_sleep_until"),
-    supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, global_is_enabled, consecutive_failures, unhealthy_until, first_failure_at, last_failure_at, last_success_at, invalidated_at"),
-    supabase.from("ai_feature_bindings").select("feature_key, label, model_id, provider_key_model_id").eq("is_enabled", true).neq("lifecycle_state", "archived"),
+    supabase.from("ai_provider_keys").select("id, provider_id, label, is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, first_failure_at, invalidated_at, manual_sleep_until"),
+    // `*` keeps the new marker readable with an app-before-migration rollout; old columns are discarded below.
+    supabase.from("ai_provider_key_models").select("*"),
+    supabase.from("ai_feature_bindings").select("id, feature_key, label, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason"),
   ]);
   const firstError = providersResult.error ?? keysResult.error ?? modelsResult.error ?? bindingsResult.error;
   if (firstError) throw new Error(firstError.message);
 
-  const providers = (providersResult.data ?? []) as Array<ProviderRow & { name: string }>;
-  const keys = (keysResult.data ?? []) as Array<KeyRow & { label: string; available_models?: unknown }>;
-  const models = (modelsResult.data ?? []) as Array<KeyModelRow & { display_name: string | null }>;
-  const bindings = (bindingsResult.data ?? []) as Array<{ feature_key: string; label: string; model_id: string | null; provider_key_model_id: string | null }>;
-  const providerById = new Map(providers.map((provider) => [provider.id, provider])); // gate:transient-map 单次依赖查询索引，返回后释放
-  const selectedKeys = input.scope === "provider"
-    ? keys.filter((key) => key.provider_id === input.id)
-    : input.scope === "key"
-      ? keys.filter((key) => key.id === input.id)
-      : keys.filter((key) => models.some((model) => model.key_id === key.id && model.model_id === input.id));
-  const selectedKeyIds = new Set(selectedKeys.map((key) => key.id));
-  const selectedModels = input.scope === "model"
-    ? models.filter((model) => model.model_id === input.id)
-    : models.filter((model) => selectedKeyIds.has(model.key_id));
-  const selectedModelIds = new Set(selectedModels.map((model) => model.id));
-  const relevantBindings = bindings.filter((binding) =>
-    (binding.provider_key_model_id ? selectedModelIds.has(binding.provider_key_model_id) : false)
-      || (binding.model_id && (input.scope === "model" ? binding.model_id === input.id : selectedModels.some((model) => model.model_id === binding.model_id))),
-  );
-  const unknownReasons = selectedKeys.flatMap((key) => {
-    const available = key.available_models;
-    return Object.prototype.hasOwnProperty.call(key, "available_models") && (!Array.isArray(available) || available.length === 0)
-      ? [`渠道【${key.label}】从未成功同步或上游返回空清单，无法确认其真实供给`]
-      : [];
+  const models = ((modelsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => {
+    const model = { ...row };
+    delete model.global_is_enabled;
+    return model;
+  }) as unknown as NonNullable<AvailabilityInput["models"]>;
+
+  return {
+    providers: (providersResult.data ?? []) as NonNullable<AvailabilityInput["providers"]>,
+    keys: (keysResult.data ?? []) as NonNullable<AvailabilityInput["keys"]>,
+    models,
+    bindings: (bindingsResult.data ?? []) as DependencyBindingRow[],
+  };
+}
+
+function computeReport(snapshot: DependencySnapshot) {
+  const defaultBinding = snapshot.bindings.find((binding) => binding.feature_key === "default") ?? null;
+  return computeAvailability({
+    providers: snapshot.providers,
+    keys: snapshot.keys,
+    models: snapshot.models,
+    featureControls: buildAiFeatureControls(snapshot.bindings),
+    defaultBinding,
   });
-  const businessFunctions = relevantBindings.map((binding) => ({ key: binding.feature_key, label: binding.label }));
+}
+
+function requireTarget(snapshot: DependencySnapshot, input: DependencyInput) {
+  if (input.scope === "provider" && !snapshot.providers.some((provider) => provider.id === input.id)) throw new Error("接入点不存在");
+  if (input.scope === "key" && !snapshot.keys.some((key) => key.id === input.id)) throw new Error("渠道不存在");
+  if (input.scope === "supply" && !snapshot.models.some((model) => model.id === input.id)) throw new Error("渠道未挂载此模型");
+  if (input.scope === "model" && !snapshot.models.some((model) => model.model_id === input.id)) throw new Error("模型不存在");
+}
+
+function simulateDisable(snapshot: DependencySnapshot, input: DependencyInput): DependencySnapshot {
+  const disabledSupplyIds = new Set(input.disableSupplyIds ?? []);
+
+  return {
+    ...snapshot,
+    providers: snapshot.providers.map((provider) => provider.id === input.id && input.scope === "provider"
+      ? { ...provider, is_enabled: false }
+      : provider),
+    keys: snapshot.keys.map((key) => key.id === input.id && input.scope === "key" && input.disableSupplyIds === undefined
+      ? { ...key, is_enabled: false }
+      : key),
+    models: snapshot.models.map((model) => {
+      const disabled = input.scope === "model"
+        ? model.model_id === input.id
+        : input.scope === "supply"
+          ? model.id === input.id
+          : input.scope === "key"
+            ? input.disableSupplyIds !== undefined && disabledSupplyIds.has(model.id)
+            : false;
+      return disabled ? { ...model, is_enabled: false } : model;
+    }),
+  };
+}
+
+function toAffectedBusiness(item: ReturnType<typeof computeAvailability>["businessAssurances"][number]): AffectedBusiness {
+  return {
+    key: item.key,
+    label: item.label,
+    selectedModelId: item.selectedModelId,
+    preferredModelId: item.preferredModelId,
+    defaultModelId: item.defaultModelId,
+  };
+}
+
+/** Uses one database snapshot and the same availability rules as the admin response. */
+export async function buildDependencyPreview(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  input: DependencyInput,
+): Promise<DependencyPreview> {
+  const snapshot = await loadDependencySnapshot(supabase);
+  requireTarget(snapshot, input);
+  const before = computeReport(snapshot);
+  const after = computeReport(simulateDisable(snapshot, input));
+  const beforeByKey = new Map(before.businessAssurances.map((item) => [item.key, item]));
+  const affectedBusinesses = after.businessAssurances
+    .filter((item) => item.routingStatus === "outage" && beforeByKey.get(item.key)?.routingStatus !== "outage")
+    .map(toAffectedBusiness);
+  const businessFunctions = affectedBusinesses.map(({ key, label }) => ({ key, label }));
+  const affectedBindings = affectedBusinesses.map((item) => ({
+    id: item.key,
+    key: item.key,
+    label: item.label,
+    modelId: item.selectedModelId,
+  }));
+
+  const targetModelId = input.scope === "model"
+    ? input.id
+    : input.scope === "supply"
+      ? snapshot.models.find((model) => model.id === input.id)?.model_id ?? null
+      : null;
+  const selectedKeys = input.scope === "provider"
+    ? snapshot.keys.filter((key) => key.provider_id === input.id)
+    : input.scope === "key"
+      ? snapshot.keys.filter((key) => key.id === input.id)
+      : input.scope === "supply"
+        ? snapshot.keys.filter((key) => key.id === snapshot.models.find((model) => model.id === input.id)?.key_id)
+        : input.scope === "model"
+          ? snapshot.keys.filter((key) => snapshot.models.some((model) => model.key_id === key.id && model.model_id === input.id))
+        : [];
+  const afterModelFamilies = new Map(after.modelFamilies.map((family) => [family.modelId, family]));
   const channels = selectedKeys.map((key) => {
-    const channelModels = selectedModels.filter((model) => model.key_id === key.id);
-    const channelModelIds = new Set(channelModels.map((model) => model.id));
+    const provider = snapshot.providers.find((item) => item.id === key.provider_id);
+    const models = snapshot.models.filter((model) => model.key_id === key.id && (
+      input.scope === "supply" ? model.id === input.id : input.scope === "model" ? model.model_id === input.id : true
+    ));
+    const affectedKeys = new Set(affectedBusinesses.map((item) => item.key));
+    const modelIds = new Set(models.map((model) => model.model_id));
+    const directlyAffected = after.businessAssurances
+      .filter((item) => affectedKeys.has(item.key) && item.selectedModelId && modelIds.has(item.selectedModelId))
+      .map((item) => ({ key: item.key, label: item.label }));
     return {
       id: key.id,
-      name: key.label,
-      providerName: providerById.get(key.provider_id)?.name ?? "未知接入点",
-      models: channelModels.map((model) => ({
+      name: key.label ?? "",
+      providerName: provider?.name ?? "未知接入点",
+      models: models.map((model) => ({
         modelId: model.model_id,
-        displayName: model.display_name,
+        displayName: model.display_name ?? null,
         isEnabled: model.is_enabled,
-        isGloballyEnabled: model.global_is_enabled ?? null,
+        isGloballyEnabled: model.is_enabled,
       })),
-      businessFunctions: relevantBindings
-        .filter((binding) => (binding.provider_key_model_id ? channelModelIds.has(binding.provider_key_model_id) : false) || (binding.model_id && channelModels.some((model) => model.model_id === binding.model_id)))
-        .map((binding) => ({ key: binding.feature_key, label: binding.label })),
+      businessFunctions: directlyAffected,
     };
   });
+  const remainingAvailableLineCount = targetModelId
+    ? afterModelFamilies.get(targetModelId)?.schedulableChannelCount ?? 0
+    : undefined;
 
-  const preview: DependencyPreview = {
+  return {
     scope: input.scope,
     targetId: input.id,
-    complete: unknownReasons.length === 0,
-    unknownReasons,
-    channels: input.scope === "model" ? [] : channels,
+    complete: true,
+    unknownReasons: [],
+    requiresConfirmation: affectedBusinesses.length > 0,
+    affectedBusinesses,
+    channels,
     businessFunctions,
+    criticalBindings: [],
+    affectedBindings,
+    ...(remainingAvailableLineCount !== undefined ? {
+      remainingAvailableLineCount,
+      soleBusinessFunctions: remainingAvailableLineCount === 0 ? businessFunctions : [],
+    } : {}),
   };
+}
 
-  if (input.scope === "model") {
-    const keyById = new Map(keys.map((key) => [key.id, key])); // gate:transient-map 单次依赖查询索引，返回后释放
-    const availableLines = models.filter((model) => {
-      const key = keyById.get(model.key_id);
-      return model.model_id === input.id && model.key_id !== input.keyId && isProviderKeyModelSchedulable({ model, key, provider: providerById.get(key?.provider_id ?? "") });
-    });
-    preview.remainingAvailableLineCount = availableLines.length;
-    preview.soleBusinessFunctions = preview.remainingAvailableLineCount === 0 ? businessFunctions : [];
+export function requireDependencyConfirmation(
+  preview: DependencyPreview,
+  confirmed: boolean,
+  actionLabel: string,
+) {
+  if (!preview.complete) {
+    const error = new Error(`${actionLabel}无法确认业务影响范围：${preview.unknownReasons.join("；")}`) as Error & {
+      status?: number;
+      requiresConfirmation?: boolean;
+      affectedBusinesses?: AffectedBusiness[];
+      unknownReasons?: string[];
+    };
+    error.status = 409;
+    error.requiresConfirmation = false;
+    error.affectedBusinesses = preview.affectedBusinesses;
+    error.unknownReasons = preview.unknownReasons;
+    throw error;
   }
-  return preview;
+  if (!preview.requiresConfirmation || confirmed) return;
+  const names = preview.affectedBusinesses.map((item) => item.label).join("、");
+  const error = new Error(`${actionLabel}会让【${names}】无可用模型，请确认后重试`) as Error & {
+    status?: number;
+    requiresConfirmation?: boolean;
+    affectedBusinesses?: AffectedBusiness[];
+  };
+  error.status = 409;
+  error.requiresConfirmation = true;
+  error.affectedBusinesses = preview.affectedBusinesses;
+  throw error;
 }

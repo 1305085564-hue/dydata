@@ -2,7 +2,7 @@ import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { discoverModelIds, syncModelsForKey } from "@/app/api/admin/ai-config/sync-models/route";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
-import { buildDependencyPreview } from "@/lib/ai-config/key-dependencies";
+import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-config/key-dependencies";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,43 +47,32 @@ export async function handleSetKeyModelSelection(
   if (!keyId) throw new Error("缺少 key_id");
   const modelIds = parseModelIds(data.model_ids);
 
-  if (modelIds.length > 0) {
-    const preview = await buildDependencyPreview(supabase, { scope: "key", id: keyId });
-    if (!preview.complete) {
-      const error = new Error(`无法确认渠道模型供给：${preview.unknownReasons.join("；")}`) as Error & { status?: number };
-      error.status = 409;
-      throw error;
-    }
-  }
-
   const { data: existing, error: existErr } = await supabase
     .from("ai_provider_key_models")
-    .select("id, model_id, is_enabled")
+    .select("*")
     .eq("key_id", keyId);
   if (existErr) throw new Error(existErr.message);
 
-  const existingRows = (existing ?? []) as Array<{ id: string; model_id: string; is_enabled: boolean }>;
-  const { data: globalRows, error: globalRowsError } = await supabase
-    .from("ai_provider_key_models")
-    .select("model_id, global_is_enabled")
-    .in("model_id", modelIds);
-  if (globalRowsError && !/column .*global_is_enabled|schema cache/i.test(globalRowsError.message ?? "")) throw new Error(globalRowsError.message);
-  const globalStateByModel = new Map<string, boolean | null>();
-  for (const row of (globalRows ?? []) as Array<{ model_id: string; global_is_enabled?: boolean | null }>) {
-    if (row.global_is_enabled === undefined) continue;
-    const previous = globalStateByModel.get(row.model_id);
-    globalStateByModel.set(row.model_id, previous === true || row.global_is_enabled === true ? true : previous === null || row.global_is_enabled === null ? null : false);
-  }
+  const existingRows = (existing ?? []) as Array<{ id: string; model_id: string; is_enabled: boolean; disabled_by_model?: boolean | null }>;
   // gate:transient-map 请求级模型选择索引；调用结束释放，无外部缓存 TTL/容量。
   const existingByModel = new Map(existingRows.map((row) => [row.model_id, row.id]));
-  const nowIso = new Date().toISOString();
 
   const toCreate = modelIds.filter((modelId) => !existingByModel.has(modelId));
   const toDisable = existingRows.filter((row) => !modelIds.includes(row.model_id));
+  if (toDisable.length > 0) {
+    const preview = await buildDependencyPreview(supabase, {
+      scope: "key",
+      id: keyId,
+      disableSupplyIds: toDisable.map((row) => row.id),
+    });
+    requireDependencyConfirmation(preview, data.confirm_impact === true, "关闭渠道模型供应");
+  }
+
+  const hasModelDisableMarker = existingRows.some((row) => Object.prototype.hasOwnProperty.call(row, "disabled_by_model"));
   try {
     if (toCreate.length > 0) {
       const { error: insertErr } = await supabase.from("ai_provider_key_models").insert(
-        toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, global_is_enabled: globalStateByModel.get(modelId) ?? null, created_at: nowIso })),
+        toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, created_at: new Date().toISOString() })),
       );
       if (insertErr) throw new Error(insertErr.message);
     }
@@ -91,17 +80,17 @@ export async function handleSetKeyModelSelection(
     if (toDisable.length > 0) {
       const { error: disableErr } = await supabase
         .from("ai_provider_key_models")
-        .update({ is_enabled: false })
+        .update({ is_enabled: false, ...(hasModelDisableMarker ? { disabled_by_model: false } : {}) })
         .in("id", toDisable.map((row) => row.id));
       if (disableErr) throw new Error(disableErr.message);
     }
 
-    if (modelIds.length > 0) {
+    const selectedRows = existingRows.filter((row) => modelIds.includes(row.model_id));
+    if (selectedRows.length > 0) {
       const { error: enableErr } = await supabase
         .from("ai_provider_key_models")
-        .update({ is_enabled: true })
-        .eq("key_id", keyId)
-        .in("model_id", modelIds);
+        .update({ is_enabled: true, ...(hasModelDisableMarker ? { disabled_by_model: false } : {}) })
+        .in("id", selectedRows.map((row) => row.id));
       if (enableErr) throw new Error(enableErr.message);
     }
   } catch (error) {
@@ -112,7 +101,7 @@ export async function handleSetKeyModelSelection(
         .eq("key_id", keyId)
         .in("model_id", toCreate);
     }
-    await restoreModelShelfState(supabase, existingRows);
+      await restoreModelShelfState(supabase, existingRows);
     throw error;
   }
 
@@ -121,15 +110,21 @@ export async function handleSetKeyModelSelection(
 
 export async function restoreModelShelfState(
   supabase: AiConfigSupabase,
-  snapshot: Array<{ id: string; is_enabled: boolean }>,
+  snapshot: Array<{ id: string; is_enabled: boolean; disabled_by_model?: boolean | null }>,
 ) {
-  for (const state of [true, false]) {
-    const ids = snapshot.filter((row) => row.is_enabled === state).map((row) => row.id);
-    if (ids.length === 0) continue;
-    const { error } = await supabase
-      .from("ai_provider_key_models")
-      .update({ is_enabled: state })
-      .in("id", ids);
+  const groups = new Map<string, { patch: Record<string, boolean | null>; ids: string[] }>();
+  for (const row of snapshot) {
+    const patch = {
+      is_enabled: row.is_enabled,
+      ...(row.disabled_by_model !== undefined ? { disabled_by_model: row.disabled_by_model } : {}),
+    };
+    const key = `${patch.is_enabled}:${patch.disabled_by_model ?? "missing"}`;
+    const group: { patch: Record<string, boolean | null>; ids: string[] } = groups.get(key) ?? { patch, ids: [] };
+    group.ids.push(row.id);
+    groups.set(key, group);
+  }
+  for (const { patch, ids } of groups.values()) {
+    const { error } = await supabase.from("ai_provider_key_models").update(patch).in("id", ids);
     if (error) throw new Error(`模型上架状态回滚失败：${error.message}`);
   }
 }
@@ -156,34 +151,6 @@ export async function handleCreateKey(
     const { error } = await supabase.from("ai_provider_keys").insert(patch);
     if (error) throw new Error(error.message);
     return {};
-  }
-
-  const { data: previousSelectedRows, error: previousRowsError } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, is_enabled, model_id")
-    .in("model_id", selectedModelIds);
-  if (previousRowsError) throw new Error(previousRowsError.message);
-  const previousRows = (previousSelectedRows ?? []) as Array<{ id: string; is_enabled: boolean; model_id: string }>;
-
-  const { data: globalRows, error: globalRowsError } = selectedModelIds.length > 0
-    ? await supabase
-      .from("ai_provider_key_models")
-      .select("model_id, global_is_enabled")
-      .in("model_id", selectedModelIds)
-    : { data: [], error: null };
-  if (globalRowsError) throw new Error(globalRowsError.message);
-  const globalStateByModel = new Map<string, boolean | null>();
-  for (const row of (globalRows ?? []) as Array<{ model_id: string; global_is_enabled?: boolean | null }>) {
-    if (row.global_is_enabled === undefined) continue;
-    const previous = globalStateByModel.get(row.model_id);
-    globalStateByModel.set(
-      row.model_id,
-      previous === true || row.global_is_enabled === true
-        ? true
-        : previous === null || row.global_is_enabled === null
-          ? null
-          : false,
-    );
   }
 
   let keyId: string | null = null;
@@ -217,8 +184,6 @@ export async function handleCreateKey(
         model_id: modelId,
         display_name: getModelDisplayName(modelId),
         is_enabled: selectedModelIds.includes(modelId),
-        // 新增渠道的勾选只写渠道级供给；全站级状态沿用现有模型状态，未知保持 NULL。
-        global_is_enabled: globalStateByModel.get(modelId) ?? null,
         created_at: new Date().toISOString(),
       })),
     );
@@ -245,11 +210,6 @@ export async function handleCreateKey(
     if (keyId) {
       await supabase.from("ai_provider_keys").delete().eq("id", keyId);
     }
-    try {
-      await restoreModelShelfState(supabase, previousRows);
-    } catch (rollbackError) {
-      throw new Error(`${error instanceof Error ? error.message : "新增 Key 失败"}；${rollbackError instanceof Error ? rollbackError.message : "状态回滚失败"}`);
-    }
     throw error;
   }
 }
@@ -272,8 +232,7 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item
 export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
   const { data: keys, error } = await supabase
     .from("ai_provider_keys")
-    .select("id, label")
-    .order("priority", { ascending: true });
+    .select("id, label");
   if (error) throw new Error(error.message);
 
   const keyRows = (keys ?? []) as AiConfigKeyRow[];
@@ -309,8 +268,7 @@ export async function handleTestAllKeys(
   const { data: keys, error } = await supabase
     .from("ai_provider_keys")
     .select("id, label")
-    .eq("is_enabled", true)
-    .order("priority", { ascending: true });
+    .eq("is_enabled", true);
   if (error) throw new Error(error.message);
 
   const keyRows = (keys ?? []) as AiConfigKeyRow[];

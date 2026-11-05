@@ -49,8 +49,12 @@ test("更新 AI Key 时空 api_key 不进入写入 patch", () => {
   assert.match(source, /buildAiKeyPatch\(data, action\)/);
 });
 
-test("全局顺位修改被拒绝，要求在模型内调整", () => {
-  assert.throws(() => buildAiKeyPatch({ priority: 20 }, "update"), /对应模型/);
+test("已废弃的渠道全局顺位参数不再写入数据库", () => {
+  assert.deepEqual(buildAiKeyPatch({ priority: 20 }, "update"), {});
+  assert.deepEqual(
+    buildAiKeyPatch({ provider_id: "provider-1", label: "key-1", api_key: "key", priority: 20 }, "create"),
+    { provider_id: "provider-1", label: "key-1", api_key: "key" },
+  );
 });
 
 test("高级参数边界拒绝越界值并保留默认值", () => {
@@ -138,7 +142,8 @@ test("服务端删除密钥强阻断：独占引用的 key 执行删除返回 40
 
   assert.equal(res.status, 409);
   const json = await res.json();
-  assert.match(json.error, /该密钥正被【次日复盘】使用且无备用模型，禁止删除/);
+  assert.match(json.error, /删除渠道会让【次日复盘】无可用模型/);
+  assert.equal(json.requiresConfirmation, true);
   assert.equal(fake.wasKeyDeleted(), false);
   assert.equal(fake.wasKeyModelDeleted(), false);
 });

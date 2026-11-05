@@ -11,7 +11,7 @@ import {
 export type AiFeatureBindingControlRow = {
   id: string;
   feature_key: string;
-  provider_key_model_id: string | null;
+  provider_key_model_id?: string | null;
   model_id?: string | null;
   system_prompt: string | null;
   output_token_limit: number;
@@ -57,7 +57,7 @@ export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFe
       group: entry.group,
       routing: entry.routing,
       bindingId: binding?.id ?? null,
-      providerKeyModelId: binding?.provider_key_model_id ?? null,
+      providerKeyModelId: null,
       modelId: binding?.model_id ?? null,
       systemPrompt: binding?.system_prompt ?? null,
       outputTokenLimit: binding?.output_token_limit ?? 3600,

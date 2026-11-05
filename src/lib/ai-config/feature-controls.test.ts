@@ -41,7 +41,7 @@ test("功能总控以代码目录为准，并把内部绑定合并成业务可�
     group: "business",
     routing: "binding",
     bindingId: "binding-ocr",
-    providerKeyModelId: "model-1",
+    providerKeyModelId: null,
     modelId: "gemini-2.5-flash",
     systemPrompt: "看图回退提示词",
     outputTokenLimit: 2400,
@@ -56,7 +56,7 @@ test("功能总控以代码目录为准，并把内部绑定合并成业务可�
   const structure = controls.find((control) => control.key === "ocr_screenshot_structure");
   assert.equal(structure?.label, "截图识别·文字结构化");
   assert.equal(structure?.description, "百度通道 OCR 提字后的文本字段映射");
-  assert.equal(structure?.providerKeyModelId, "model-2");
+  assert.equal(structure?.providerKeyModelId, null);
   assert.equal(structure?.ocrChannel, "baidu");
 });
 
