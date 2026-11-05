@@ -50,14 +50,14 @@ test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => 
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
-  const familyCard = readSource(
-    "src/app/(app)/admin/ai-config/components/model-family-card.tsx",
+  const channelRow = readSource(
+    "src/app/(app)/admin/ai-config/components/model-channel-row.tsx",
   );
   const modules = modulesSource;
 
   // 图标按钮必须带可访问名（title 或 aria-label），否则读屏只会念成“按钮”
-  const iconButtons = familyCard.match(/size="icon"[\s\S]*?<\/Button>/g) ?? [];
-  assert.ok(iconButtons.length > 0, "模型卡片应保留图标操作按钮");
+  const iconButtons = channelRow.match(/size="icon(?:-s)?"[\s\S]*?<\/Button>/g) ?? [];
+  assert.ok(iconButtons.length > 0, "模型渠道行应保留图标操作按钮");
   for (const button of iconButtons) {
     assert.match(button, /(?:title|aria-label)=/, "图标按钮缺少可访问名");
   }
@@ -70,9 +70,9 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
 
 test("接入点与渠道开关提供可读标签", () => {
   const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
-  const modelCard = readSource("src/app/(app)/admin/ai-config/components/model-family-card.tsx");
-  assert.match(dialogs, /aria-label="是否启用接入点"/);
-  assert.match(modelCard, /aria-label="是否启用渠道"/);
+  const channelRow = readSource("src/app/(app)/admin/ai-config/components/model-channel-row.tsx");
+  assert.match(dialogs, /aria-label="是否启用接入点/);
+  assert.match(channelRow, /aria-label="是否启用渠道/);
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {

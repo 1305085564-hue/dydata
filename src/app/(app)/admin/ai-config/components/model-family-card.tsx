@@ -17,23 +17,8 @@ import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
 import { cn } from "@/lib/utils";
 
-export type ModelFamilyKeyItem = {
-  key: {
-    id: string;
-    provider_id: string;
-    label?: string | null;
-    is_enabled: boolean;
-    [key: string]: unknown;
-  };
-  providerName: string;
-  modelRecordId: string;
-  modelId: string;
-  displayName?: string | null;
-  sortOrder?: number;
-};
-
 export interface ModelFamilyCardProps {
-  family?: AvailabilityModelFamily;
+  family: AvailabilityModelFamily;
   diagnosticMap?: Record<string, ChannelFailureDiagnostic>;
   onToggleSupply?: (keyModelId: string, enabled: boolean) => Promise<void>;
   onToggleModelEnabled?: (modelId: string, enabled: boolean) => Promise<void>;
@@ -44,21 +29,10 @@ export interface ModelFamilyCardProps {
   onOpenSupply?: (keyId: string, modelId: string) => Promise<AiConfigCommandResult>;
   runCommand?: (action: string, data?: Record<string, unknown>) => Promise<AiConfigCommandResult>;
   testingKeyModelId?: string | null;
-
-  // 兼容输入法测试 fixture 属性
-  modelId?: string;
-  displayName?: string;
-  items?: ModelFamilyKeyItem[];
-  onRenameModel?: () => Promise<boolean>;
-  onRenameKey?: () => Promise<boolean>;
-  onTestKey?: () => Promise<void>;
-  onSyncKeyModels?: () => Promise<void>;
-  onDeleteKeyWithCheck?: () => void;
-  onAddChannelForModel?: () => void;
 }
 
 export function ModelFamilyCard({
-  family: propFamily,
+  family,
   diagnosticMap = {},
   onToggleSupply = async () => {},
   onToggleModelEnabled = async () => {},
@@ -69,55 +43,7 @@ export function ModelFamilyCard({
   onOpenSupply = async () => ({ ok: true, body: {} }),
   runCommand = async () => ({ ok: true, body: {} }),
   testingKeyModelId,
-  modelId: propModelId,
-  displayName: propDisplayName,
-  items: propItems,
 }: ModelFamilyCardProps) {
-  const family = useMemo<AvailabilityModelFamily>(() => {
-    if (propFamily) return propFamily;
-    const mId = propModelId || "fixture-model";
-    const dName = propDisplayName || "测试模型";
-    const channels: AvailabilityChannel[] = (propItems || []).map((it, idx) => {
-      const ch: Record<string, unknown> = {
-        keyModelId: it.modelRecordId,
-        keyId: it.key.id,
-        modelId: mId,
-        providerId: it.key.provider_id,
-        providerName: it.providerName,
-        label: it.key.label || "",
-        identity: it.key.is_enabled ? "active" : "disabled",
-        health: it.key.is_enabled ? "healthy" : "disabled",
-        messageKey: it.key.is_enabled ? "channel.usable" : "channel.disabled",
-        sortOrder: it.sortOrder ?? idx + 1,
-        sleepUntil: null,
-        cooldownMinutes: 0,
-        consecutiveFailures: 0,
-        sleepSource: null,
-        persistentFailure: false,
-      };
-      ch["isSched" + "ulable"] = it.key.is_enabled;
-      return ch as AvailabilityChannel;
-    });
-    const famObj: Record<string, unknown> = {
-      modelId: mId,
-      displayName: dName,
-      isShelved: true,
-      channelReadyButGlobalDisabled: 0,
-      channels,
-      identityCounts: { active: channels.length, retest: 0, sleeping: 0, invalid: 0, disabled: 0 },
-      redundancyCount: Math.max(0, channels.length - 1),
-      singlePointRisk: channels.length === 1,
-      healthyChannelCount: channels.length,
-      untestedChannelCount: 0,
-      schedulableChannelCount: channels.length,
-      faultChannelCount: 0,
-      isConfigured: true,
-      isSelectable: true,
-      unavailableReasonKey: null,
-    };
-    famObj["global" + "IsEnabled"] = true;
-    return famObj as AvailabilityModelFamily;
-  }, [propFamily, propModelId, propDisplayName, propItems]);
   const [showFindChannels, setShowFindChannels] = useState(false);
   const [disabledExpanded, setDisabledExpanded] = useState(false);
   const [isTogglingModel, setIsTogglingModel] = useState(false);

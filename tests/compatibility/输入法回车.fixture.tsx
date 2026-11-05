@@ -2,19 +2,46 @@
 // 构建：node_modules/tsx/node_modules/esbuild/bin/esbuild tests/compatibility/输入法回车.fixture.tsx --bundle --platform=browser --outfile=/tmp/dydata-ime/app.js
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ModelFamilyCard, type ModelFamilyKeyItem } from "../../src/app/(app)/admin/ai-config/components/model-family-card";
+import { ModelFamilyCard } from "../../src/app/(app)/admin/ai-config/components/model-family-card";
+import type { AvailabilityModelFamily } from "../../src/lib/ai-config/availability";
 import { toDateTimeLocalValue } from "../../src/lib/video-submit/domain/form-rules";
 import { normalizePublishedAtForStorage } from "../../src/lib/日报";
 
-const items: ModelFamilyKeyItem[] = [{
-  key: {
-    id: "fixture-key", provider_id: "fixture-provider", label: "测试渠道",
-    priority: 1, is_enabled: true, unhealthy_until: null, consecutive_failures: 0,
-    last_failure_at: null, last_success_at: null, api_key_masked: "fixture-only",
-    last_error_message: null, created_at: "2026-10-30T00:00:00Z", updated_at: "2026-10-30T00:00:00Z",
-  },
-  providerName: "测试服务", modelRecordId: "fixture-record", modelId: "fixture-model", displayName: "测试模型",
-}];
+const fixtureFamily: AvailabilityModelFamily = {
+  modelId: "fixture-model",
+  displayName: "测试模型",
+  globalIsEnabled: true,
+  isShelved: true,
+  isSelectable: true,
+  isConfigured: true,
+  singlePointRisk: false,
+  redundancyCount: 0,
+  healthyChannelCount: 1,
+  schedulableChannelCount: 1,
+  untestedChannelCount: 0,
+  faultChannelCount: 0,
+  channelReadyButGlobalDisabled: 0,
+  unavailableReasonKey: null,
+  identityCounts: { active: 1, retest: 0, sleeping: 0, invalid: 0, disabled: 0 },
+  channels: [
+    {
+      keyModelId: "fixture-record",
+      keyId: "fixture-key",
+      modelId: "fixture-model",
+      providerId: "fixture-provider",
+      providerName: "测试服务",
+      label: "测试渠道",
+      identity: "active",
+      health: "healthy",
+      isSchedulable: true,
+      messageKey: "channel.usable",
+      sortOrder: 1,
+      sleepUntil: null,
+      sleepSource: null,
+      persistentFailure: false,
+    },
+  ],
+};
 
 function Fixture() {
   const [saves, setSaves] = useState(0);
@@ -24,11 +51,11 @@ function Fixture() {
     <p>设备时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}</p>
     <p>上海发布时间：{publishedAt}；保存值：{normalizePublishedAtForStorage(publishedAt)}</p>
     <output>保存次数：{saves}</output>
-    <ModelFamilyCard modelId="fixture-model" displayName="测试模型" items={items}
-      onRenameModel={async () => { setSaves((count) => count + 1); return true; }}
-      onRenameKey={async () => { setSaves((count) => count + 1); return true; }}
-      onTestKey={async () => {}} onSyncKeyModels={async () => {}}
-      onDeleteKeyWithCheck={() => {}} onAddChannelForModel={() => {}} onSwapOrder={async () => {}} />
+    <ModelFamilyCard
+      family={fixtureFamily}
+      onRenameSupply={async () => { setSaves((count) => count + 1); }}
+      onSwapOrder={async () => {}}
+    />
     {[{ name: "组合输入回车", isComposing: true, keyCode: 13 },
       { name: "229确认回车", isComposing: false, keyCode: 229 },
       { name: "正常回车", isComposing: false, keyCode: 13 },

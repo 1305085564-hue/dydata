@@ -60,9 +60,11 @@ test("模型名解析保留库内自定义名，配置池使用服务端模型�
   assert.equal(resolveModelDisplayName("gpt-5.6-terra", "gpt-5.6-terra"), "GPT-5.6 Terra");
   assert.equal(resolveModelDisplayName(null, "gpt-5.6-sol"), "GPT-5.6 Sol");
 
-  const source = fs.readFileSync(path.resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx"), "utf8");
-  assert.match(source, /bundle\.availability\.modelFamilies/);
-  assert.doesNotMatch(source, /computeAvailability\s*\(/);
+  const hookSource = fs.readFileSync(path.resolve(process.cwd(), "src/app/(app)/admin/ai-config/hooks/use-availability.ts"), "utf8");
+  const panelSource = fs.readFileSync(path.resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx"), "utf8");
+  assert.match(hookSource, /bundle\?\.availability/);
+  assert.match(panelSource, /useAvailabilityReport/);
+  assert.doesNotMatch(panelSource, /computeAvailability\s*\(/);
 });
 
 test("新显示名按模型 ID 规则生成，变体和日期保持独立名称", () => {

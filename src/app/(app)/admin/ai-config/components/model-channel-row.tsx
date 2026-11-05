@@ -111,6 +111,7 @@ export function ModelChannelRow({
               onClick={onMoveUp}
               className="size-6 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
               title="上移顺位"
+              aria-label="上移顺位"
             >
               <ArrowUp className="size-3" />
             </Button>
@@ -121,6 +122,7 @@ export function ModelChannelRow({
               onClick={onMoveDown}
               className="size-6 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
               title="下移顺位"
+              aria-label="下移顺位"
             >
               <ArrowDown className="size-3" />
             </Button>
@@ -146,6 +148,8 @@ export function ModelChannelRow({
                   size="icon-s"
                   onClick={handleSaveRename}
                   className="size-6 text-[#4B6B4E]"
+                  title="保存"
+                  aria-label="保存"
                 >
                   <Check className="size-3" />
                 </Button>
@@ -154,6 +158,8 @@ export function ModelChannelRow({
                   size="icon-s"
                   onClick={() => setIsEditingName(false)}
                   className="size-6 text-[#78716C]"
+                  title="取消"
+                  aria-label="取消"
                 >
                   <X className="size-3" />
                 </Button>
@@ -172,6 +178,7 @@ export function ModelChannelRow({
                   onClick={handleStartRename}
                   className="size-5 text-[#A8A29E] hover:text-[#141413]"
                   title="修改渠道供应名称"
+                  aria-label="修改渠道供应名称"
                 >
                   <Edit2 className="size-2.5" />
                 </Button>
@@ -220,6 +227,7 @@ export function ModelChannelRow({
             onClick={() => onTest(channel.keyId, modelId)}
             className="size-7 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
             title="测试此渠道该模型供应"
+            aria-label="测试此渠道该模型供应"
           >
             <Play className={cn("size-3", isTesting && "animate-spin")} />
           </Button>
@@ -228,7 +236,7 @@ export function ModelChannelRow({
           <Switch
             checked={isEnabled}
             onCheckedChange={(checked) => onToggleEnabled(channel.keyModelId, checked)}
-            aria-label={`开关${channel.label || "渠道"}对此模型的供应`}
+            aria-label="是否启用渠道"
           />
 
           {/* 删除此供应 */}
@@ -238,6 +246,7 @@ export function ModelChannelRow({
             onClick={() => onDeleteSupply(channel.keyModelId)}
             className="size-7 text-[#A8A29E] hover:text-status-danger"
             title="移除此模型在此渠道的供应"
+            aria-label="移除此模型在此渠道的供应"
           >
             <Trash2 className="size-3" />
           </Button>

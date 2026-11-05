@@ -171,7 +171,7 @@ export function AddKeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[680px] sm:max-w-[680px] max-h-[88vh]">
+      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[680px] sm:max-w-[680px] max-h-[calc(100dvh-2rem)]">
         <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
           <div className="flex items-center gap-2">
             {step === "explore" && (

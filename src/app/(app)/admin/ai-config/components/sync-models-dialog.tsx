@@ -239,7 +239,7 @@ export function SyncModelsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[760px] sm:max-w-[760px] max-h-[88vh]">
+      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[760px] sm:max-w-[760px] max-h-[calc(100dvh-2rem)]">
         <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
           <div className="flex items-center justify-between pr-6">
             <div>
@@ -253,7 +253,7 @@ export function SyncModelsDialog({
           </div>
         </DialogHeader>
 
-        <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-3">
+        <DialogBody className="flex min-h-0 flex-1 flex-col space-y-3 py-3 overflow-hidden">
           {/* S8: 上游比对卡 */}
           <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 flex flex-wrap items-center justify-between gap-3 text-[12px]">
             <div className="flex items-center gap-2">
@@ -349,6 +349,7 @@ export function SyncModelsDialog({
           </div>
 
           {/* 模型列表 */}
+          <div className="min-h-0 flex-1 overflow-y-auto">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-[12px] text-[#78716C]">
               <Loader2 className="size-5 animate-spin" />
@@ -460,6 +461,7 @@ export function SyncModelsDialog({
               })}
             </div>
           )}
+          </div>
         </DialogBody>
 
         <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3 shrink-0 flex items-center justify-between sm:justify-between">

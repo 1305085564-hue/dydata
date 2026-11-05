@@ -103,7 +103,7 @@ export function ManageProvidersDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[88vh] w-[94vw] max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <Server className="size-5 text-[#78716C]" />
@@ -178,7 +178,7 @@ export function ManageProvidersDialog({
                       <Switch
                         checked={p.is_enabled}
                         onCheckedChange={(checked) => handleToggleProvider(p, checked)}
-                        aria-label={`开关接入点${p.name}`}
+                        aria-label="是否启用接入点"
                       />
                     </div>
                   </div>

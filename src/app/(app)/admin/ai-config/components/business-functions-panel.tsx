@@ -320,28 +320,7 @@ export function BusinessFunctionsPanel() {
                 />
               </TableCell>
               <TableCell className="py-3">
-                {renderBusinessStatus(
-                  assuranceMap["default"] || {
-                    key: "default",
-                    label: "全局默认",
-                    resolvedModelId: globalDefaultModelId,
-                    modelDisplayName: globalDefaultModelId
-                      ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId
-                      : "未指定",
-                    schedulableChannelCount: globalDefaultModelId
-                      ? (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0)
-                      : 0,
-                    faultChannelCount: 0,
-                    totalChannelCount: 0,
-                    status: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "healthy" : "outage",
-                    routingStatus: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "normal" : "outage",
-                    selectedModelId: globalDefaultModelId,
-                    preferredModelId: globalDefaultModelId,
-                    defaultModelId: globalDefaultModelId,
-                    messageKey: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "business.normal" : "business.outage",
-                  },
-                  modelFamilyNameMap
-                )}
+                {renderBusinessStatus(assuranceMap["default"], modelFamilyNameMap)}
               </TableCell>
               <TableCell className="py-3 pr-4 text-right">
                 <span className="text-[12px] text-[#A8A29E]">基石配置</span>
@@ -473,26 +452,7 @@ export function BusinessFunctionsPanel() {
             allowEmptyLabel={null}
           />
           <div className="pt-1">
-            {renderBusinessStatus(
-              assuranceMap["default"] || {
-                key: "default",
-                label: "全局默认",
-                resolvedModelId: globalDefaultModelId,
-                modelDisplayName: globalDefaultModelId
-                  ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId
-                  : "未指定",
-                schedulableChannelCount: 1,
-                faultChannelCount: 0,
-                totalChannelCount: 0,
-                status: "healthy",
-                routingStatus: "normal",
-                selectedModelId: globalDefaultModelId,
-                preferredModelId: globalDefaultModelId,
-                defaultModelId: globalDefaultModelId,
-                messageKey: "business.normal",
-              },
-              modelFamilyNameMap
-            )}
+            {renderBusinessStatus(assuranceMap["default"], modelFamilyNameMap)}
           </div>
         </div>
 
