@@ -24,7 +24,7 @@ test("第三批真实接口：地址自动归组、共享地址确认、候选�
   });
   await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
   const address=`http://127.0.0.1:${(server.address() as {port:number}).port}/v1`;
-  const actor={requireSystemActor:async()=>({supabase:db as never,actor:{userId:randomUUID(),role:"owner"} as never})};
+  const actor={createAdminClient:()=>db as never,requireSystemActor:async()=>({supabase:db as never,actor:{userId:randomUUID(),role:"owner"} as never})};
   const command=(action:string,data:Record<string,unknown>,entity?:string)=>buildAiConfigResponse(new NextRequest("http://localhost/api/admin/ai-config",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action,data,entity})}),actor);
   let providerId:string|undefined;
   try {

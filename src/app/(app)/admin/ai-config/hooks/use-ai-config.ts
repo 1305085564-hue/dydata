@@ -1,3 +1,4 @@
+import type { ModelAliasGroup } from "@/lib/ai/model-discovery";
 import { requestAiConfigCommand } from "@/lib/ai-config/client-command";
 import { useState, useCallback, useEffect } from "react";
 import type { AvailabilityReport } from "@/lib/ai-config/availability";
@@ -22,6 +23,7 @@ export type AiProvider = {
 
 export type AiProviderKey = ProviderHealthFields & {
   failureDiagnostic?: ChannelFailureDiagnostic | null;
+  available_models?: string[];
   manual_sleep_until?: string | null;
   id: string;
   provider_id: string;
@@ -81,6 +83,7 @@ export type SyncModelReconciliation = {
 };
 
 export type SyncKeyModelsResult = {
+  modelGroups: ModelAliasGroup[];
   keyId: string;
   allModels: KeyModelInventoryItem[];
   newCount?: number;
@@ -304,8 +307,9 @@ export function useAiConfig() {
     }, AI_MODEL_BATCH_TIMEOUT_MS, AI_MODEL_BATCH_TIMEOUT_MESSAGE);
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "渠道模型检测失败");
+    if(data.availability) mutate(data as AiConfigBundle);
     return data as KeyAllModelsTestResponse;
-  }, []);
+  }, [mutate]);
 
   const testAllKeysAllModels = useCallback(async () => {
     const res = await fetchWithTimeout("/api/admin/ai-config", {
@@ -315,8 +319,9 @@ export function useAiConfig() {
     }, AI_MODEL_BATCH_TIMEOUT_MS, AI_MODEL_BATCH_TIMEOUT_MESSAGE);
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "全部模型检测失败");
+    if(data.availability) mutate(data as AiConfigBundle);
     return data;
-  }, []);
+  }, [mutate]);
 
   const swapModelChannelOrder = useCallback(async (modelId: string, keyModelId: string, targetKeyModelId: string) => {
     try {

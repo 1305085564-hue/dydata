@@ -140,6 +140,7 @@ export function ComputePoolPanel() {
     }>;
   } | null>(null);
 
+  // 一次性、待删、勿参考：本轮只做数据接线，界面由 Antigravity 重做。
   // 数据接线：分组、顺位和状态直接读取服务端报告，不在页面重算。
   const modelFamilyGroups = useMemo<WarehouseModelGroup[]>(() => {
     if (!bundle?.availability) return [];
@@ -879,11 +880,6 @@ export function ComputePoolPanel() {
                   onSwapOrder={async (mId, firstRecordId, secondRecordId) => {
                     await swapModelChannelOrder(mId, firstRecordId, secondRecordId);
                   }}
-                  onSwapPriority={async (k1, k2) => {
-                    const first = group.items.find((item) => item.key.id === k1)!;
-                    const second = group.items.find((item) => item.key.id === k2)!;
-                    await swapModelChannelOrder(group.modelId, first.modelRecordId, second.modelRecordId);
-                  }}
                   onSetKeySleep={async (keyId, sleep) => {
                     await setKeySleep(keyId, sleep);
                   }}
@@ -907,10 +903,6 @@ export function ComputePoolPanel() {
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
           onToggleModelEnable={async (modelRecordId, enabled) => {
             const res = await mutateEntity("update", "model", { id: modelRecordId, is_enabled: enabled });
-            return res.ok;
-          }}
-          onUpdateKeyPriority={async (keyId, priority) => {
-            const res = await mutateEntity("update", "key", { id: keyId, priority });
             return res.ok;
           }}
           onUpdateKeyApiKey={async (keyId, apiKey) => {

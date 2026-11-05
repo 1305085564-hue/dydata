@@ -9,21 +9,6 @@ export function normalizeChannelAddress(value: unknown): string {
   return url.href.replace(/\/+$/, "");
 }
 
-/** Direct address entry reuses the address group; old provider-id creation stays compatible. */
-export async function resolveChannelGroup(supabase: AiConfigSupabase, data: Record<string, unknown>): Promise<Record<string, unknown>> {
-  if (!toTrimmedString(data.base_url)) return data;
-  const baseUrl = normalizeChannelAddress(data.base_url);
-  const { data: groups, error } = await supabase.from("ai_providers").select("id, base_url");
-  if (error) throw new Error(error.message);
-  const existing = (groups ?? []).find((group: { base_url: string }) => normalizeChannelAddress(group.base_url) === baseUrl);
-  if (existing) return { ...data, provider_id: existing.id, label: toTrimmedString(data.label) || new URL(baseUrl).host };
-  const { data: created, error: insertError } = await supabase.from("ai_providers")
-    .insert({ name: toTrimmedString(data.provider_name) || new URL(baseUrl).host, base_url: baseUrl, is_enabled: true })
-    .select("id").single();
-  if (insertError || !created) throw new Error(insertError?.message || "创建地址分组失败");
-  return { ...data, provider_id: created.id, label: toTrimmedString(data.label) || new URL(baseUrl).host };
-}
-
 export type SharedAddressImpact = { providerId: string; affectedKeyCount: number; affectedKeys: Array<{ id: string; label: string }> };
 
 /** The caller updates the shared group only after this server-side confirmation. */

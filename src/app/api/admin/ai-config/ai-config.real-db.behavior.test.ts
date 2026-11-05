@@ -57,6 +57,7 @@ function request(body: Record<string, unknown>) {
 
 function actor(db: Db) {
   return {
+    createAdminClient: () => db as never,
     requireSystemActor: async () => ({
       supabase: db as never,
       actor: { userId: "ai-config-real-db-test", role: "owner" } as never,

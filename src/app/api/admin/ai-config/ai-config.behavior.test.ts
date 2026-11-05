@@ -12,7 +12,8 @@ type Row = Record<string, unknown>;
 type TableName = "ai_providers" | "ai_provider_keys" | "ai_provider_key_models" | "ai_feature_bindings" | "audit_logs";
 
 type MemoryOptions = {
-  failUpdateAfterMutation?: TableName;
+  failUpdate?: TableName;
+  failRpc?: string;
 };
 
 class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { message: string } | null }> {
@@ -131,11 +132,11 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
 
     const matchingRows = matches();
     if (this.operation === "update") {
-      for (const row of matchingRows) Object.assign(row, this.payload ?? {});
-      if (this.db.options.failUpdateAfterMutation === this.table) {
-        this.db.options.failUpdateAfterMutation = undefined;
+      if (this.db.options.failUpdate === this.table) {
+        this.db.options.failUpdate = undefined;
         return { data: null, error: { message: `simulated ${this.table} update failure` } };
       }
+      for (const row of matchingRows) Object.assign(row, this.payload ?? {});
       return { data: matchingRows, error: null };
     }
 
@@ -149,6 +150,7 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
 class MemorySupabase {
   nextId = 1;
   readonly selectCalls: string[] = [];
+  readonly rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   readonly tables: Record<TableName, Row[]>;
   readonly options: MemoryOptions;
 
@@ -165,6 +167,167 @@ class MemorySupabase {
 
   from(table: TableName) {
     return new MemoryQuery(this, table);
+  }
+
+  async rpc(fn: string, args: Record<string, unknown>) {
+    this.rpcCalls.push({ fn, args: { ...args } });
+    if (this.options.failRpc === fn) {
+      this.options.failRpc = undefined;
+      return { data: null, error: { message: `simulated ${fn} RPC failure` } };
+    }
+
+    const nextId = (prefix: string) => `${prefix}-generated-${this.nextId++}`;
+    if (fn === "create_ai_config_channel") {
+      const providerId = typeof args.p_provider_id === "string" ? args.p_provider_id : nextId("provider");
+      const keyId = nextId("key");
+      const providerExists = this.tables.ai_providers.some((row) => row.id === providerId);
+      if (typeof args.p_provider_id !== "string") {
+        this.tables.ai_providers.push({
+          id: providerId,
+          name: args.p_provider_name,
+          base_url: args.p_base_url,
+          is_enabled: true,
+        });
+      } else if (!providerExists) {
+        return { data: null, error: { message: "provider not found" } };
+      }
+
+      this.tables.ai_provider_keys.push({
+        id: keyId,
+        provider_id: providerId,
+        label: args.p_label,
+        api_key: args.p_api_key,
+        available_models: args.p_available_models,
+        is_enabled: args.p_enabled,
+      });
+      const modelRows = Array.isArray(args.p_models) ? args.p_models as Row[] : [];
+      for (const model of modelRows) {
+        this.tables.ai_provider_key_models.push({
+          id: nextId("supply"),
+          key_id: keyId,
+          model_id: model.model_id,
+          display_name: model.display_name,
+          is_enabled: model.is_enabled,
+        });
+      }
+      return { data: { keyId, providerId, affectedCount: modelRows.length }, error: null };
+    }
+
+    if (fn === "set_ai_channel_model_selection") {
+      const keyId = String(args.p_key_id ?? "");
+      const selectedIds = new Set(Array.isArray(args.p_model_ids) ? args.p_model_ids.map(String) : []);
+      const displayNames = args.p_display_names && typeof args.p_display_names === "object"
+        ? args.p_display_names as Record<string, unknown>
+        : {};
+      const existingRows = this.tables.ai_provider_key_models.filter((row) => row.key_id === keyId);
+      let created = 0;
+      let disabled = 0;
+      for (const modelId of selectedIds) {
+        const existing = existingRows.find((row) => row.model_id === modelId);
+        if (existing) {
+          existing.is_enabled = true;
+          if (Object.prototype.hasOwnProperty.call(existing, "disabled_by_model")) existing.disabled_by_model = false;
+          if (typeof displayNames[modelId] === "string") existing.display_name = displayNames[modelId];
+        } else {
+          this.tables.ai_provider_key_models.push({
+            id: nextId("supply"), key_id: keyId, model_id: modelId,
+            display_name: typeof displayNames[modelId] === "string" ? displayNames[modelId] : modelId,
+            is_enabled: true,
+          });
+          created += 1;
+        }
+      }
+      for (const row of existingRows) {
+        if (selectedIds.has(String(row.model_id)) || row.is_enabled === false) continue;
+        row.is_enabled = false;
+        if (Object.prototype.hasOwnProperty.call(row, "disabled_by_model")) row.disabled_by_model = false;
+        disabled += 1;
+      }
+      return { data: { created, disabled, removed: 0 }, error: null };
+    }
+
+    if (fn === "update_ai_config_model") {
+      const supplyId = String(args.p_supply_id ?? "");
+      const patch = args.p_patch && typeof args.p_patch === "object" ? args.p_patch as Row : {};
+      const target = this.tables.ai_provider_key_models.find((row) => row.id === supplyId);
+      if (!target) return { data: null, error: { message: "supply not found" } };
+      const affectedRows = patch.display_name !== undefined
+        ? this.tables.ai_provider_key_models.filter((row) => row.model_id === target.model_id)
+        : [target];
+      for (const row of affectedRows) {
+        if (patch.display_name !== undefined) row.display_name = patch.display_name;
+      }
+      for (const field of ["is_enabled", "key_id"] as const) {
+        if (patch[field] !== undefined) target[field] = patch[field];
+      }
+      if (patch.is_enabled !== undefined && Object.prototype.hasOwnProperty.call(target, "disabled_by_model")) {
+        target.disabled_by_model = false;
+      }
+      return { data: { affectedCount: affectedRows.length }, error: null };
+    }
+
+    if (fn === "update_ai_config_key") {
+      const keyId = String(args.p_key_id ?? "");
+      const key = this.tables.ai_provider_keys.find((row) => row.id === keyId);
+      if (!key) return { data: null, error: { message: "key not found" } };
+      const patch = args.p_patch && typeof args.p_patch === "object" ? args.p_patch as Row : {};
+      const provider = typeof args.p_base_url === "string"
+        ? this.tables.ai_providers.find((row) => row.id === key.provider_id)
+        : undefined;
+      if (typeof args.p_base_url === "string" && !provider) {
+        return { data: null, error: { message: "provider not found" } };
+      }
+      Object.assign(key, patch);
+      if (typeof args.p_base_url === "string") {
+        provider!.base_url = args.p_base_url;
+      }
+      return { data: null, error: null };
+    }
+
+    if (fn === "remove_ai_config_supply_with_audit") {
+      const supplyId = String(args.p_supply_id ?? "");
+      const supplyIndex = this.tables.ai_provider_key_models.findIndex((row) => row.id === supplyId);
+      if (supplyIndex < 0) return { data: null, error: { message: "supply not found" } };
+      this.tables.ai_provider_key_models.splice(supplyIndex, 1);
+      this.tables.audit_logs.push({
+        id: nextId("audit"),
+        user_id: args.p_actor_id,
+        action: "ai_provider_model_remove",
+        target: supplyId,
+        detail: args.p_audit_detail,
+      });
+      return { data: null, error: null };
+    }
+
+    if (fn === "enable_ai_config_supply") {
+      const keyId = String(args.p_key_id ?? "");
+      const modelId = String(args.p_model_id ?? "");
+      let supply = this.tables.ai_provider_key_models.find((row) => row.key_id === keyId && row.model_id === modelId);
+      if (supply) {
+        supply.is_enabled = true;
+        if (Object.prototype.hasOwnProperty.call(supply, "disabled_by_model")) supply.disabled_by_model = false;
+      } else {
+        supply = {
+          id: nextId("supply"), key_id: keyId, model_id: modelId,
+          display_name: args.p_display_name, is_enabled: true,
+        };
+        this.tables.ai_provider_key_models.push(supply);
+      }
+      const key = this.tables.ai_provider_keys.find((row) => row.id === keyId);
+      if (key) Object.assign(key, {
+        consecutive_failures: 0, first_failure_at: null, last_failure_at: null,
+        last_error_message: null, invalidated_at: null, unhealthy_until: null, manual_sleep_until: null,
+        last_success_at: new Date().toISOString(),
+      });
+      Object.assign(supply, {
+        consecutive_failures: 0, first_failure_at: null, last_failure_at: null,
+        last_error_message: null, last_failure_scope: null, invalidated_at: null, unhealthy_until: null,
+        last_success_at: new Date().toISOString(),
+      });
+      return { data: supply.id, error: null };
+    }
+
+    return { data: null, error: { message: `unhandled RPC ${fn}` } };
   }
 
   cascade(table: TableName, rows: Row[]) {
@@ -284,6 +447,7 @@ function actor(db: MemorySupabase) {
       supabase: db as never,
       actor: { userId: "admin-1", role: "owner" } as never,
     }),
+    createAdminClient: () => db as never,
   };
 }
 
@@ -351,6 +515,9 @@ test("配置响应不读废弃列，旧 UI 字段由新开关状态派生", asyn
   assert.equal(body.featureBindings[0].provider_key_model_id, null);
   assert.equal(body.featureControls.find((item: Row) => item.key === "content_analysis").providerKeyModelId, null);
   assert.equal(db.selectCalls.some((call) => /global_is_enabled|provider_key_model_id|priority/.test(call)), false);
+  assert.deepEqual(db.rpcCalls.find((call) => call.fn === "update_ai_config_key")?.args, {
+    p_key_id: "key-1", p_patch: { label: "新渠道名" }, p_base_url: null,
+  });
 });
 
 test("模型 ID 不可通过更新改写；旧渠道顺位参数被接受但不落库", async () => {
@@ -581,7 +748,7 @@ test("B2 其他模型不会越过全局默认成为随机兜底", async () => {
   assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "backup-row")?.is_enabled, true);
 });
 
-test("B2 模型全局下架部分更新失败时恢复操作前状态", async () => {
+test("B2 模型全局下架单次更新报错时状态保持不变", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "target-a", key_id: "key-1", model_id: "target-model", is_enabled: true, disabled_by_model: false },
@@ -592,7 +759,7 @@ test("B2 模型全局下架部分更新失败时恢复操作前状态", async ()
       { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
       { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true },
     ],
-  }, { failUpdateAfterMutation: "ai_provider_key_models" });
+  }, { failUpdate: "ai_provider_key_models" });
 
   const before = db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled }));
   const response = await buildAiConfigResponse(request({
@@ -699,6 +866,10 @@ test("B3 取消勾选停用模型记录，重新勾选恢复启用", async () =>
   let response = await buildAiConfigResponse(request({ action: "set_key_model_selection", data: { key_id: "key-1", model_ids: ["keep-model"] } }), actor(db));
   assert.equal(response.status, 200);
   assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "old-row")?.is_enabled, false);
+  assert.deepEqual(db.rpcCalls[0], {
+    fn: "set_ai_channel_model_selection",
+    args: { p_key_id: "key-1", p_model_ids: ["keep-model"], p_display_names: { "keep-model": "Keep Model" } },
+  });
 
   response = await buildAiConfigResponse(request({ action: "set_key_model_selection", data: { key_id: "key-1", model_ids: ["old-model", "keep-model"] } }), actor(db));
   assert.equal(response.status, 200);
@@ -753,6 +924,9 @@ test("B5 模型改名同步到同 model_id 的所有 Key 记录", async () => {
   const response = await buildAiConfigResponse(request({ action: "update", entity: "model", data: { id: "model-a", display_name: "新名" } }), actor(db));
   assert.equal(response.status, 200);
   assert.deepEqual(db.tables.ai_provider_key_models.map((row) => row.display_name), ["新名", "新名"]);
+  assert.deepEqual(db.rpcCalls.find((call) => call.fn === "update_ai_config_model")?.args, {
+    p_supply_id: "model-a", p_patch: { display_name: "新名" },
+  });
 });
 
 test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠道", async () => {
@@ -775,6 +949,13 @@ test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "selected-model")?.is_enabled, true);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "discovered-only")?.is_enabled, false);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-active")?.is_enabled, false);
+    const createCall = db.rpcCalls.find((call) => call.fn === "create_ai_config_channel");
+    assert.ok(createCall);
+    assert.deepEqual(createCall.args.p_available_models, ["selected-model", "discovered-only"]);
+    assert.deepEqual(createCall.args.p_models, [
+      { model_id: "selected-model", display_name: "Selected Model", is_enabled: true },
+      { model_id: "discovered-only", display_name: "Discovered Only", is_enabled: false },
+    ]);
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -1430,6 +1611,29 @@ test("C6 收走渠道模型成功后写入操作人、对象和来源审计", as
   assert.equal(db.tables.audit_logs[0].user_id, "admin-1");
   assert.equal(db.tables.audit_logs[0].action, "ai_provider_model_remove");
   assert.match(String(db.tables.audit_logs[0].detail), /admin_ai_config/);
+  assert.deepEqual(db.rpcCalls[0], {
+    fn: "remove_ai_config_supply_with_audit",
+    args: {
+      p_supply_id: "model-row",
+      p_actor_id: "admin-1",
+      p_audit_detail: db.tables.audit_logs[0].detail,
+    },
+  });
+});
+
+test("收走供应的原子审计 RPC 报错时返回已回滚并保持完整状态", async () => {
+  const db = configTables({
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", priority: 1, is_enabled: true, available_models: ["model-a"] }],
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", display_name: "模型 A", is_enabled: false }],
+  }, { failRpc: "remove_ai_config_supply_with_audit" });
+  const before = structuredClone(db.tables);
+
+  const response = await buildAiConfigResponse(request({ action: "delete", entity: "model", data: { id: "model-row" } }), actor(db));
+
+  assert.equal(response.status, 500);
+  assert.equal((await response.json()).error, "收走模型失败：审计写入失败，已回滚");
+  assert.deepEqual(db.tables, before);
+  assert.equal(db.rpcCalls[0]?.fn, "remove_ai_config_supply_with_audit");
 });
 
 test("C8 没有正在使用的可检测供应时 checkResult 返回 0/0", async () => {

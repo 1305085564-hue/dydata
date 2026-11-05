@@ -71,9 +71,11 @@ begin
     or k.invalidated_at is not null or m.invalidated_at is not null
     or k.unhealthy_until > now() or m.unhealthy_until > now()
     or k.recovery_until > now() or m.recovery_until > now() then return null; end if;
-  if coalesce(k.consecutive_failures,0) = 0 and coalesce(m.consecutive_failures,0) = 0 then return null; end if;
+  if not (coalesce(k.consecutive_failures,0)>0 or coalesce(m.consecutive_failures,0)>0
+    or coalesce(k.last_failure_at > coalesce(k.last_success_at,'-infinity'::timestamptz),false)
+    or coalesce(m.last_failure_at > coalesce(m.last_success_at,'-infinity'::timestamptz),false)) then return null; end if;
   update public.ai_provider_key_models set recovery_token=token,recovery_until=now()+make_interval(secs=>lease_seconds) where id=supply_id;
-  if coalesce(k.consecutive_failures,0)>0 then
+  if coalesce(k.consecutive_failures,0)>0 or coalesce(k.last_failure_at > coalesce(k.last_success_at,'-infinity'::timestamptz),false) then
     update public.ai_provider_keys set recovery_token=token,recovery_until=now()+make_interval(secs=>lease_seconds) where id=k.id;
   end if;
   return token;

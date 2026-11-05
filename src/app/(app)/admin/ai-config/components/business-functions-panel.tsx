@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
-import { formatLatency } from "@/lib/ai-config/presentation";
+import { CHANNEL_IDENTITY_PRESENTATION, formatLatency } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 function ChannelRedundancyCell({
@@ -121,12 +121,13 @@ function ChannelRedundancyCell({
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {channels.map((c, idx) => {
                 const identity = c.identity ?? (c.health === "healthy" ? "active" : c.health === "fault" ? "invalid" : c.health);
+                // 一次性、待删、勿参考：仅将状态文案接到统一来源，不改展示结构。
                 const identityCfg = {
-                  active: { text: "正常在岗", dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
-                  retest: { text: "待复测", dot: "bg-[#8A6A2F]", color: "text-[#8A6A2F]" },
-                  sleeping: { text: "休眠中", dot: "bg-[#78716C]", color: "text-[#78716C]" },
-                  invalid: { text: "已失效", dot: "bg-status-danger", color: "text-status-danger-text" },
-                  disabled: { text: "已停用", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
+                  active: { text: CHANNEL_IDENTITY_PRESENTATION.active.label, dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
+                  retest: { text: CHANNEL_IDENTITY_PRESENTATION.retest.label, dot: "bg-[#8A6A2F]", color: "text-[#8A6A2F]" },
+                  sleeping: { text: CHANNEL_IDENTITY_PRESENTATION.sleeping.label, dot: "bg-[#78716C]", color: "text-[#78716C]" },
+                  invalid: { text: CHANNEL_IDENTITY_PRESENTATION.invalid.label, dot: "bg-status-danger", color: "text-status-danger-text" },
+                  disabled: { text: CHANNEL_IDENTITY_PRESENTATION.disabled.label, dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
                 }[identity as keyof typeof identityCounts] || { text: "未知", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" };
 
                 return (

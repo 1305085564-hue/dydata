@@ -27,7 +27,6 @@ type ProviderKeyModelJoinRow = ProviderHealthFields & {
 type ProviderKeyJoinRow = ProviderHealthFields & {
   id: string;
   api_key: string;
-  priority: number;
   manual_sleep_until?: string | null;
   provider: ProviderJoinRow | ProviderJoinRow[] | null;
 };
@@ -36,7 +35,6 @@ type ProviderJoinRow = {
   id: string;
   name: string;
   base_url: string;
-  priority: number;
   is_enabled: boolean;
 };
 

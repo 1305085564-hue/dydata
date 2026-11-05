@@ -17,7 +17,7 @@ test("第一批真实库：供给独立、模型恢复记忆、四层影响确�
   const modelA = `plan-a-${a1}`, modelB = `plan-b-${b}`, other = `plan-other-${c}`;
   const previous = await db.from("ai_feature_bindings").select("*").in("feature_key", ["content_tools", "default"]);
   assert.equal(previous.error, null);
-  const actor = { requireSystemActor: async () => ({ supabase: db as never, actor: { userId: env.DYDATA_AI_TEST_USER_ID, role: "owner" } as never }) };
+  const actor = { createAdminClient: () => db as never, requireSystemActor: async () => ({ supabase: db as never, actor: { userId: env.DYDATA_AI_TEST_USER_ID, role: "owner" } as never }) };
   async function command(action: string, data: Record<string, unknown>, entity?: string) {
     return buildAiConfigResponse(new NextRequest("http://localhost/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, entity, data }) }), actor);
   }

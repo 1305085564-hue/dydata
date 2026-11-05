@@ -28,7 +28,7 @@ function Fixture() {
       onRenameModel={async () => { setSaves((count) => count + 1); return true; }}
       onRenameKey={async () => { setSaves((count) => count + 1); return true; }}
       onTestKey={async () => {}} onSyncKeyModels={async () => {}}
-      onDeleteKeyWithCheck={() => {}} onAddChannelForModel={() => {}} onSwapPriority={async () => {}} />
+      onDeleteKeyWithCheck={() => {}} onAddChannelForModel={() => {}} onSwapOrder={async () => {}} />
     {[{ name: "组合输入回车", isComposing: true, keyCode: 13 },
       { name: "229确认回车", isComposing: false, keyCode: 229 },
       { name: "正常回车", isComposing: false, keyCode: 13 },

@@ -50,7 +50,6 @@ interface ModelFamilyCardProps {
   onDeleteKeyWithCheck: (keyId: string) => void;
   onAddChannelForModel: (modelId: string) => void;
   onSwapOrder?: (modelId: string, keyModelId: string, targetKeyModelId: string) => Promise<void>;
-  onSwapPriority?: (keyId: string, targetKeyId: string, p1: number, p2: number) => Promise<void>;
   onSetKeySleep?: (keyId: string, sleep: boolean) => Promise<void>;
 }
 
@@ -81,7 +80,6 @@ export function ModelFamilyCard({
   onDeleteKeyWithCheck,
   onAddChannelForModel,
   onSwapOrder,
-  onSwapPriority,
   onSetKeySleep,
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
@@ -152,14 +150,14 @@ export function ModelFamilyCard({
   // 任务 D 规格：主列表为空且收纳区非空时，收纳区自动展开
   const isArchivedOpen = archivedExpanded || (activeItems.length === 0 && archivedItems.length > 0);
 
+  // 一次性、待删、勿参考：仅移除不可达的旧全局顺位分支。
   const handleMove = async (item: ModelFamilyKeyItem, target: ModelFamilyKeyItem) => {
     if (movingOrder) return;
     setMovingOrder(true);
     try {
       if (onSwapOrder) {
         await onSwapOrder(modelId, item.modelRecordId, target.modelRecordId);
-      } else if (onSwapPriority) {
-        await onSwapPriority(item.key.id, target.key.id, item.key.priority, target.key.priority);
+
       }
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "调整渠道顺序失败，已回滚");

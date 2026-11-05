@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import type { AiConfigBundle, AiProviderKey, AiModelTestResult, SyncModelReconciliation } from "../hooks/use-ai-config";
 import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
-import { compareChannelPriority } from "@/lib/ai-config/priority";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -80,7 +79,6 @@ export interface ChannelPoolViewProps {
   onOpenManageProviders: () => void;
   onOpenAddKey: () => void;
   onToggleModelEnable: (modelRecordId: string, enabled: boolean) => Promise<boolean>;
-  onUpdateKeyPriority: (keyId: string, priority: number) => Promise<boolean>;
   onUpdateKeyApiKey: (keyId: string, apiKey: string) => Promise<boolean>;
   onUpdateKeyProvider: (keyId: string, providerId: string) => Promise<boolean>;
   onUpdateProviderBaseUrl: (providerId: string, baseUrl: string) => Promise<boolean>;
@@ -100,7 +98,6 @@ export function ChannelPoolView({
   onOpenManageProviders,
   onOpenAddKey,
   onToggleModelEnable,
-  onUpdateKeyPriority,
   onUpdateKeyApiKey,
   onUpdateKeyProvider,
   onUpdateProviderBaseUrl,
@@ -110,13 +107,14 @@ export function ChannelPoolView({
   const [testingModelId, setTestingModelId] = useState<string | null>(null);
 
   // 内联编辑状态
-  const [editingField, setEditingField] = useState<"label" | "api_key" | "base_url" | "priority" | null>(null);
+  const [editingField, setEditingField] = useState<"label" | "api_key" | "base_url" | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [savingField, setSavingField] = useState(false);
 
+  // 一次性、待删、勿参考：仅清除失效的全局顺位数据接线，界面由 Antigravity 重做。
   const channels = useMemo(() => {
     if (!bundle) return [];
-    return [...bundle.keys].sort(compareChannelPriority);
+    return [...bundle.keys].sort((a,b)=>a.id.localeCompare(b.id));
   }, [bundle]);
 
   const selectedChannel = useMemo(() => {
@@ -147,12 +145,11 @@ export function ChannelPoolView({
 
   const selectedGov = getKeyGovernanceInfo(selectedChannel?.id, bundle?.availability?.keys);
 
-  const handleStartEdit = (field: "label" | "api_key" | "base_url" | "priority") => {
+  const handleStartEdit = (field: "label" | "api_key" | "base_url") => {
     setEditingField(field);
     if (field === "label") setEditingValue(selectedChannel?.label ?? "");
     else if (field === "api_key") setEditingValue("");
     else if (field === "base_url") setEditingValue(selectedProvider?.base_url ?? "");
-    else if (field === "priority") setEditingValue(String(selectedChannel?.priority ?? 1));
   };
 
   const handleCancelEdit = () => {
@@ -201,17 +198,6 @@ export function ChannelPoolView({
         const ok = await onUpdateProviderBaseUrl(selectedProvider.id, trimmed);
         if (ok) {
           feedbackToast.success("已更新接入点 API 地址");
-          setEditingField(null);
-        }
-      } else if (editingField === "priority") {
-        const pNum = Number.parseInt(trimmed, 10);
-        if (Number.isNaN(pNum) || pNum < 1 || pNum > 999) {
-          feedbackToast.error("顺位权重必须为 1-999 的正整数");
-          return;
-        }
-        const ok = await onUpdateKeyPriority(selectedChannel.id, pNum);
-        if (ok) {
-          feedbackToast.success("已更新渠道顺位");
           setEditingField(null);
         }
       }

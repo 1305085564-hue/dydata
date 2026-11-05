@@ -3,6 +3,7 @@ import test from "node:test";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { CHANNEL_IDENTITY_PRESENTATION } from "@/lib/ai-config/presentation";
 
 const computePanelSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx"),
@@ -89,7 +90,8 @@ test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部�
 
 /** 裁决④冻结词表：渠道五态文案收敛到 presentation 唯一真源（全仓零 HEALTH_PRESENTATION 引用）。 */
 test("渠道五态文案收敛到 presentation 唯一真源（全仓零 HEALTH_PRESENTATION 引用）", () => {
-  assert.match(presentationSource, /正常在岗[\s\S]*待复测[\s\S]*休眠[\s\S]*已失效[\s\S]*已停用/);
+  assert.match(presentationSource, /能用[\s\S]*暂时歇着[\s\S]*需要你处理[\s\S]*已停用/);
+  assert.equal(CHANNEL_IDENTITY_PRESENTATION.active.label,CHANNEL_IDENTITY_PRESENTATION.retest.label);
   assert.match(channelViewSource, /CHANNEL_IDENTITY_PRESENTATION/);
   assert.match(modelCardSource, /CHANNEL_IDENTITY_PRESENTATION/);
   assert.doesNotMatch(channelViewSource, /"(健康|待命中|故障|异常熔断|正常在线|待测)"/);

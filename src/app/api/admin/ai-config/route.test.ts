@@ -27,6 +27,7 @@ test("截图识别试跑复用业务调用，不接受页面指定的旧渠道",
     body: JSON.stringify({ action: "test_key", data: { feature_key: "ocr_screenshot", key_id: "old-channel" } }),
   }), {
     requireSystemActor: async () => ({ supabase: fake.client as never, actor: { userId: "admin-1", role: "owner" } as never }),
+    createAdminClient: () => fake.client as never,
     probeAiFeature: async (feature, options) => {
       invoked = true;
       assert.equal(feature, "ocr_screenshot");
@@ -85,7 +86,7 @@ test("AI 功能总控只接受系统目录中的保存、归档和恢复动作",
   assert.match(source, /"save_feature_control"/);
   assert.match(source, /"archive_feature"/);
   assert.match(source, /"restore_feature"/);
-  assert.match(source, /buildAiFeatureControls/);
+  assert.match(readFileSync("src/lib/ai-config/config-loader.ts", "utf8"), /buildAiFeatureControls/);
   assert.match(source, /getAiFeatureCatalogEntry/);
 });
 
@@ -100,29 +101,37 @@ function createDeleteKeyTestClient(options: {
   targetKeyId: string;
   hasBackup: boolean;
 }) {
-  let keyDeleted = false;
-  let keyModelDeleted = false;
-
+  const allRows: Record<string, Record<string, unknown>[]> = {
+    ai_providers: [{ id: "provider", is_enabled: true }],
+    ai_provider_keys: [{ id: options.targetKeyId, provider_id: "provider", is_enabled: true }, ...(options.hasBackup ? [{ id: "key-backup", provider_id: "provider", is_enabled: true }] : [])],
+    ai_provider_key_models: [{ id: "km-exclusive", key_id: options.targetKeyId, model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }, ...(options.hasBackup ? [{ id: "km-backup", key_id: "key-backup", model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }] : [])],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "next_day_review", label: "次日复盘", model_id: "claude-3-5-sonnet", provider_key_model_id: "km-exclusive", is_enabled: true, lifecycle_state: "active" }],
+  };
+  let keyDeleteCalls = 0;
+  let modelDeleteCalls = 0;
   const client = {
     from(table: string) {
-      const allRows: Record<string, Record<string, unknown>[]> = {
-        ai_providers: [{ id: "provider", is_enabled: true }],
-        ai_provider_keys: [{ id: options.targetKeyId, provider_id: "provider", is_enabled: true }, ...(options.hasBackup ? [{ id: "key-backup", provider_id: "provider", is_enabled: true }] : [])],
-        ai_provider_key_models: [{ id: "km-exclusive", key_id: options.targetKeyId, model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }, ...(options.hasBackup ? [{ id: "km-backup", key_id: "key-backup", model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }] : [])],
-        ai_feature_bindings: [{ id: "binding-1", feature_key: "next_day_review", label: "次日复盘", model_id: "claude-3-5-sonnet", provider_key_model_id: "km-exclusive", is_enabled: true, lifecycle_state: "active" }],
-      };
-      let rows = allRows[table] ?? [];
+      let filters: Array<(row: Record<string, unknown>) => boolean> = [];
       let removing = false;
       const query = {
         select() { return query; },
         order() { return query; },
         delete() { removing = true; return query; },
-        eq(field: string, value: unknown) { rows = rows.filter((row) => row[field] === value); return query; },
-        neq(field: string, value: unknown) { rows = rows.filter((row) => row[field] !== value); return query; },
+        eq(field: string, value: unknown) { filters = [...filters, (row) => row[field] === value]; return query; },
+        neq(field: string, value: unknown) { filters = [...filters, (row) => row[field] !== value]; return query; },
         then(resolve: (value: unknown) => unknown) {
-          if (removing && table === "ai_provider_keys") keyDeleted = true;
-          if (removing && table === "ai_provider_key_models") keyModelDeleted = true;
-          return Promise.resolve({ data: rows, error: null }).then(resolve);
+          const rows = allRows[table] ?? [];
+          const matching = rows.filter((row) => filters.every((filter) => filter(row)));
+          if (removing) {
+            allRows[table] = rows.filter((row) => !matching.includes(row));
+            if (table === "ai_provider_keys") {
+              keyDeleteCalls += 1;
+              const deletedIds = new Set(matching.map((row) => row.id));
+              allRows.ai_provider_key_models = allRows.ai_provider_key_models.filter((row) => !deletedIds.has(row.key_id));
+            }
+            if (table === "ai_provider_key_models") modelDeleteCalls += 1;
+          }
+          return Promise.resolve({ data: removing ? null : matching, error: null }).then(resolve);
         },
       };
       return query;
@@ -131,8 +140,10 @@ function createDeleteKeyTestClient(options: {
 
   return {
     client,
-    wasKeyDeleted: () => keyDeleted,
-    wasKeyModelDeleted: () => keyModelDeleted,
+    wasKeyDeleted: () => !allRows.ai_provider_keys.some((row) => row.id === options.targetKeyId),
+    wasKeyModelDeleted: () => !allRows.ai_provider_key_models.some((row) => row.key_id === options.targetKeyId),
+    keyDeleteCallCount: () => keyDeleteCalls,
+    modelDeleteCallCount: () => modelDeleteCalls,
   };
 }
 
@@ -154,6 +165,7 @@ test("服务端删除密钥强阻断：独占引用的 key 执行删除返回 40
       supabase: fake.client as never,
       actor: { userId: "admin-1", role: "owner" } as never,
     }),
+    createAdminClient: () => fake.client as never,
   });
 
   assert.equal(res.status, 409);
@@ -162,6 +174,8 @@ test("服务端删除密钥强阻断：独占引用的 key 执行删除返回 40
   assert.equal(json.requiresConfirmation, true);
   assert.equal(fake.wasKeyDeleted(), false);
   assert.equal(fake.wasKeyModelDeleted(), false);
+  assert.equal(fake.keyDeleteCallCount(), 0);
+  assert.equal(fake.modelDeleteCallCount(), 0);
 });
 
 test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除", async () => {
@@ -182,11 +196,14 @@ test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除
       supabase: fake.client as never,
       actor: { userId: "admin-1", role: "owner" } as never,
     }),
+    createAdminClient: () => fake.client as never,
   });
 
   assert.equal(res.status, 200);
   assert.equal(fake.wasKeyDeleted(), true);
   assert.equal(fake.wasKeyModelDeleted(), true);
+  assert.equal(fake.keyDeleteCallCount(), 1, "整条渠道删除只删除 key，由外键级联清理供应模型");
+  assert.equal(fake.modelDeleteCallCount(), 0);
 });
 
 function createSwapTestClient(options: { middleInvalidated?: boolean } = {}) {

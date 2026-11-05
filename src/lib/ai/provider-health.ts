@@ -12,6 +12,7 @@ function parseHttpStatus(errorType?: string) {
 export function isPermanentProviderFailure(input: { status?: number; errorType?: string; message?: string }) {
   const status = input.status ?? parseHttpStatus(input.errorType);
   if (status === 401) return true;
+  if (status === 402 || status === 408 || status === 429) return false;
   if (status === 403 && /unauthori[sz]ed|invalid (?:api[_\s-]?key|credential)/i.test(input.message ?? "")) return true;
   if (status === 403 && /quota|billing|余额|额度|Cloudflare|captcha|access denied/i.test(input.message ?? "")) return false;
   if (status !== undefined && status >= 500) return false;
@@ -27,17 +28,11 @@ export function classifyProviderFailure(input: {
   const status = input.status ?? parseHttpStatus(input.errorType);
   const message = `${input.errorType ?? ""} ${input.message ?? ""}`;
 
-  if (status !== 401 && MODEL_FAILURE_PATTERN.test(message)) return "model";
-  if (
-    status === 401 ||
-    status === 402 ||
-    status === 403 ||
-    KEY_FAILURE_PATTERN.test(message)
-  ) {
-    return "key";
-  }
-
+  if (status === 401 || status === 402) return "key";
   if (status === 408 || status === 429 || (status !== undefined && status >= 500) || input.errorType === "network" || input.errorType === "timeout") return "model";
+  if (MODEL_FAILURE_PATTERN.test(message)) return "model";
+  if (status === 403 || KEY_FAILURE_PATTERN.test(message)) return "key";
+
   return "unknown";
 }
 
