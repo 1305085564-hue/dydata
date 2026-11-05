@@ -149,6 +149,7 @@ export function LoginForm({
           <div className="flex items-center justify-between">
             <Label htmlFor="password">密码</Label>
             <Link
+              prefetch={false}
               className="text-[12px] text-[#78716C] hover:text-[#D97757] transition-colors"
               href={forgotPasswordHref}
             >
@@ -203,7 +204,7 @@ export function LoginForm({
 
         <p className="text-center text-[14px] text-[#78716C]">
           还没有账号？
-          <Link className="ml-1 text-[#1F1E1D] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
+          <Link prefetch={false} className="ml-1 text-[#1F1E1D] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
             去注册
           </Link>
         </p>

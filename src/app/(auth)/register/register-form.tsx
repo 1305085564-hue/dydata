@@ -295,7 +295,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
         <p className="text-center text-[14px] text-[#78716C]">
           已有账号？
-          <Link className="ml-1 text-[#1F1E1D] underline underline-offset-4 hover:text-[#D97757]" href={loginHref}>
+          <Link prefetch={false} className="ml-1 text-[#1F1E1D] underline underline-offset-4 hover:text-[#D97757]" href={loginHref}>
             返回登录
           </Link>
         </p>

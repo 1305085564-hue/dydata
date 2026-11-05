@@ -11,7 +11,7 @@ export function PasswordResetNotice({ next, title }: { next?: string; title: "�
       <div className="space-y-5">
         <Alert>{PASSWORD_RESET_UNAVAILABLE_MESSAGE}</Alert>
         <p className="text-center text-[14px] text-[#78716C]">
-          <Link className="text-[#1F1E1D] underline underline-offset-4" href={buildLoginPath(next)}>
+          <Link prefetch={false} className="text-[#1F1E1D] underline underline-offset-4" href={buildLoginPath(next)}>
             返回登录
           </Link>
         </p>

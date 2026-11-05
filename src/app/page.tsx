@@ -27,7 +27,7 @@ export default function HomePage() {
       <main className="mx-auto max-w-7xl px-6 lg:px-12 2xl:max-w-[88rem]">
         {/* Header */}
         <header className="flex items-center justify-between border-b border-[#E2E2DF]/60 py-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" prefetch={false} className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#141413] text-[#FCFCFB] shadow-input">
               <Zap className="size-4 fill-white text-white" />
             </div>
@@ -41,12 +41,14 @@ export default function HomePage() {
           <div className="flex items-center gap-4">
             <Link
               href="/login"
+              prefetch={false}
               className="text-[13px] font-normal text-[#78716C] transition-colors hover:text-[#141413]"
             >
               登录
             </Link>
             <Link
               href="/register"
+              prefetch={false}
               className="inline-flex items-center justify-center rounded-md bg-[#F1F1F0] px-3.5 py-1.5 text-[13px] font-normal text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9]"
             >
               申请加入团队
@@ -78,6 +80,7 @@ export default function HomePage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/login"
+                prefetch={false}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#D97757] px-6 text-[14px] font-normal text-white shadow-input hover:bg-[#C46A4D] active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150"
               >
                 <span>进入工作台</span>
@@ -85,6 +88,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/register"
+                prefetch={false}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E2E2DF] bg-transparent px-4 text-[14px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] transition-[transform,background-color,color] duration-150"
               >
                 申请加入团队

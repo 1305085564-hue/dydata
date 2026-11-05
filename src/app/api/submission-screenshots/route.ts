@@ -46,7 +46,8 @@ export async function optimizeStoredSubmissionScreenshot(input: {
     return input;
   }
 
-  const optimized = await sharp(input.buffer).jpeg({ quality: 90, mozjpeg: true }).toBuffer();
+  // 高频上传使用快速 JPEG 编码；mozjpeg 的额外压缩收益不足以抵消 CPU 成本。
+  const optimized = await sharp(input.buffer).jpeg({ quality: 90 }).toBuffer();
   return optimized.length < input.buffer.length
     ? { buffer: optimized, contentType: "image/jpeg" }
     : input;
