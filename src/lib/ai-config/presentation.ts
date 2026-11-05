@@ -2,6 +2,11 @@ import type { ChannelIdentity } from "@/lib/ai/channel-governance";
 
 /** Stable text keys consumed by the three AI configuration views. */
 export const AI_CONFIG_MESSAGES = {
+  "channel.usable": "能用",
+  "channel.cooling": "暂时歇着",
+  "channel.action_required": "需要你处理",
+  "channel.disabled": "已停用",
+  "operation.shared_address": "同地址的 {count} 条渠道会一起改",
   "business.normal": "当前优先使用：{preferredModelName}",
   "business.fallback": "{selectedModelName} 暂时不可用，当前优先使用默认 {preferredModelName}",
   "business.outage": "停摆：无可用模型",
@@ -12,6 +17,11 @@ export const AI_CONFIG_MESSAGES = {
 
 export type AiConfigMessageKey = keyof typeof AI_CONFIG_MESSAGES;
 
+export const CHANNEL_MESSAGE_KEYS = {
+  active: "channel.usable", retest: "channel.usable", sleeping: "channel.cooling",
+  invalid: "channel.action_required", disabled: "channel.disabled",
+} as const;
+
 /**
  * 渠道内部状态对应的唯一产品文案。
  * 页面不得各写一份五态词，确保模型视角与渠道视角两账完全一致。
@@ -21,31 +31,31 @@ export const CHANNEL_IDENTITY_PRESENTATION: Record<
   { label: string; dot: string; color: string; badgeClass: string }
 > = {
   active: {
-    label: "能用",
+    label: AI_CONFIG_MESSAGES["channel.usable"],
     dot: "bg-[#4B6B4E]",
     color: "text-[#4B6B4E]",
     badgeClass: "bg-[#4B6B4E]/10 text-[#4B6B4E]",
   },
   retest: {
-    label: "能用",
+    label: AI_CONFIG_MESSAGES["channel.usable"],
     dot: "bg-[#8A6A2F]",
     color: "text-[#8A6A2F]",
     badgeClass: "bg-[#8A6A2F]/10 text-[#8A6A2F]",
   },
   sleeping: {
-    label: "暂时歇着",
+    label: AI_CONFIG_MESSAGES["channel.cooling"],
     dot: "bg-[#78716C]",
     color: "text-[#78716C]",
     badgeClass: "bg-[#F1F1F0] text-[#78716C]",
   },
   invalid: {
-    label: "需要你处理",
+    label: AI_CONFIG_MESSAGES["channel.action_required"],
     dot: "bg-status-danger",
     color: "text-status-danger-text",
     badgeClass: "bg-status-danger/[0.10] text-status-danger-text",
   },
   disabled: {
-    label: "已停用",
+    label: AI_CONFIG_MESSAGES["channel.disabled"],
     dot: "bg-[#A8A29E]",
     color: "text-[#78716C]",
     badgeClass: "bg-[#F1F1F0] text-[#78716C]",

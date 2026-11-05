@@ -20,7 +20,9 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
   const keyIds = [randomUUID(), randomUUID(), randomUUID()];
   const modelA = `governance-a-${randomUUID()}`;
   const modelB = `governance-b-${randomUUID()}`;
-  const featureKey = `governance-${randomUUID()}`;
+  const featureKey = "content_tools";
+  const previousBindings = await db.from("ai_feature_bindings").select("*").in("feature_key",[featureKey,"default"]);
+  assert.equal(previousBindings.error,null);
   let upstreamStatus = 503;
   const server = createServer((_req, res) => {
     res.writeHead(upstreamStatus, { "content-type": "application/json", "x-request-id": "local-governance-probe" });
@@ -70,25 +72,20 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
       assert.deepEqual(await ordered(modelA), rows);
       assert.equal((await action("swap_model_channel_order", { model_id: modelA, key_model_id: rows[1].id, target_key_model_id: rows[2].id })).status, 409, "失效端点拒绝交换");
       assert.equal((await db.from("ai_provider_key_models").update({ invalidated_at: null }).eq("id", rows[1].id)).error, null);
-      assert.equal((await action("sleep_key", { key_id: rows[0].key_id })).status, 200);
-      assert.equal((await action("swap_model_channel_order", { model_id: modelA, key_model_id: rows[0].id, target_key_model_id: rows[1].id })).status, 409, "休眠端点拒绝交换");
-      assert.equal((await action("resume_key", { key_id: rows[0].key_id })).status, 200);
+      assert.equal((await db.from("ai_provider_key_models").update({ unhealthy_until: new Date(Date.now() + 60_000).toISOString() }).eq("id", rows[0].id)).error, null);
+      assert.equal((await action("swap_model_channel_order", { model_id: modelA, key_model_id: rows[0].id, target_key_model_id: rows[1].id })).status, 409, "自动冷却中的端点拒绝交换");
+      assert.equal((await db.from("ai_provider_key_models").update({ unhealthy_until: null }).eq("id", rows[0].id)).error, null);
       assert.deepEqual(await ordered(modelA), rows); assert.deepEqual(await ordered(modelB), otherBefore);
     });
-    await t.test("临时休眠持久化且不污染自动健康，恢复只解除手动限制", async () => {
-      const now = Date.now(); const before = await keys();
-      const response = await action("sleep_key", { key_id: keyIds[0] }); assert.equal(response.status, 200);
-      const body = await response.json(); const summary = body.availability.keys.find((k: { keyId: string }) => k.keyId === keyIds[0]);
-      assert.equal(summary.identity, "sleeping"); assert.equal(summary.sleepSource, "manual");
-      const sleeping = (await keys()).find((k) => k.id === keyIds[0])!;
-      assert.ok(Date.parse(sleeping.manual_sleep_until) >= now + 29 * 60_000);
-      const automatic = ["consecutive_failures", "first_failure_at", "last_failure_at", "last_success_at", "unhealthy_until", "invalidated_at"];
-      for (const field of automatic) assert.equal(sleeping[field], before.find((k) => k.id === keyIds[0])![field]);
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2);
-      await updateKey({ consecutive_failures: 3, unhealthy_until: new Date(Date.now() + 300_000).toISOString() });
-      assert.equal((await action("resume_key", { key_id: keyIds[0] })).status, 200);
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2);
-      assert.equal((await keys()).find((k) => k.id === keyIds[0])!.manual_sleep_until, null);
+    await t.test("旧手动休眠动作明确拒绝，遗留字段不影响调度", async () => {
+      const until = new Date(Date.now() + 30 * 60_000).toISOString();
+      await updateKey({ manual_sleep_until: until });
+      const before = await keys();
+      assert.equal((await action("sleep_key", { key_id: keyIds[0] })).status, 400);
+      assert.equal((await action("resume_key", { key_id: keyIds[0] })).status, 400);
+      assert.deepEqual(await keys(), before);
+      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3);
+      await updateKey({ manual_sleep_until: null });
     });
     await t.test("失败测试只返回事实，不改健康；成功复测才恢复失效", async () => {
       const before = await keys();
@@ -97,38 +94,57 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
       assert.equal(body.testResult.ok, false); assert.equal(body.testResult.failureDiagnostic.owner, "provider");
       assert.equal(body.testResult.failureDiagnostic.technical.requestId, "local-governance-probe");
       assert.deepEqual(await keys(), before);
-      await updateKey({ consecutive_failures: 8, first_failure_at: new Date(Date.now() - 25 * 3600_000).toISOString(), last_failure_at: new Date().toISOString(), unhealthy_until: new Date(Date.now() - 1000).toISOString() });
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2);
+      const oldFailure = new Date(Date.now() - 25 * 3600_000).toISOString();
+      await updateKey({ consecutive_failures: 1, first_failure_at: oldFailure, last_failure_at: oldFailure, unhealthy_until: new Date(Date.now() - 1000).toISOString(), invalidated_at: null });
+      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3, "单次旧故障且没有新失败证据不判永久失效");
+      await updateKey({ consecutive_failures: 8, last_failure_at: new Date().toISOString(), unhealthy_until: new Date(Date.now() + 60_000).toISOString() });
+      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2, "有新失败证据时按冷却暂歇");
+      await updateKey({ unhealthy_until: new Date(Date.now() - 1000).toISOString() });
+      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3, "冷却过期后不因旧首败时间自动判死");
       upstreamStatus = 200;
       assert.equal((await action("test_key_model", { key_id: keyIds[0], model_id: modelA })).status, 200);
       const restored = (await keys()).find((k) => k.id === keyIds[0])!;
       assert.equal(restored.first_failure_at, null); assert.equal(restored.invalidated_at, null); assert.equal(restored.consecutive_failures, 0);
       assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3);
     });
-    await t.test("真实失败记录递增冷却，旧应用参数仍可调用", async () => {
+    await t.test("供应级故障记录按1/5/30/60分钟冷却递增且封顶", async () => {
       const cooldowns: number[] = [];
+      const supplyId = (await ordered(modelA))[0].id;
       for (let count = 1; count <= 5; count++) {
-        assert.equal((await db.rpc("bump_provider_key_failure", { key_id: keyIds[0], error_message: "local fixture" })).error, null);
-        const row = (await keys()).find((k) => k.id === keyIds[0])!;
+        assert.equal((await db.rpc("record_ai_supply_failure", {
+          supply_id: supplyId, failure_scope: "model", failure_kind: "timeout", permanent_failure: false,
+          error_message: "local fixture", window_seconds: 600, distinct_models: 3, pause_seconds: 300,
+        })).error, null);
+        const result = await db.from("ai_provider_key_models").select("consecutive_failures, last_failure_at, unhealthy_until").eq("id", supplyId).single();
+        assert.equal(result.error, null);
+        const row = result.data;
         assert.equal(row.consecutive_failures, count);
-        if (count >= 3) cooldowns.push(Math.round((Date.parse(row.unhealthy_until) - Date.parse(row.last_failure_at)) / 60_000));
+        cooldowns.push(Math.round((Date.parse(row.unhealthy_until) - Date.parse(row.last_failure_at)) / 60_000));
       }
-      assert.deepEqual(cooldowns, [5, 15, 30]);
+      assert.deepEqual(cooldowns, [1, 5, 30, 60, 60]);
     });
     await t.test("休眠渠道不能充当删除最后在岗渠道的备用", async () => {
-      const models = await ordered(modelA);
-      assert.equal((await db.from("ai_feature_bindings").insert({ feature_key: featureKey, label: "验收业务", model_id: modelA, provider_key_model_id: models.find((r) => r.key_id === keyIds[2])!.id, is_enabled: true, lifecycle_state: "active" })).error, null);
-      assert.equal((await action("sleep_key", { key_id: keyIds[1] })).status, 200);
+      assert.equal((await db.from("ai_feature_bindings").upsert([
+        { feature_key: featureKey, label: "验收业务", model_id: modelA, is_enabled: true, lifecycle_state: "active" },
+        { feature_key: "default", label: "全局默认", model_id: modelA, is_enabled: true, lifecycle_state: "active" },
+      ], {onConflict:"feature_key"})).error, null);
+      assert.equal((await db.from("ai_provider_keys").update({ unhealthy_until: new Date(Date.now() + 60_000).toISOString() }).eq("id", keyIds[1])).error, null);
       const response = await buildAiConfigResponse(new NextRequest("http://localhost/api/admin/ai-config", {
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", entity: "key", data: { id: keyIds[2] } }),
       }), actor);
-      assert.equal(response.status, 409); assert.match((await response.json()).error, /无备用模型/);
+      assert.equal(response.status, 409);
+      const impact = await response.json();
+      assert.equal(impact.requiresConfirmation,true);
+      assert.ok(impact.affectedBusinesses.some((item: { key: string })=>item.key===featureKey));
       assert.equal((await keys()).length, 3);
     });
     await t.test("收走最后在岗模型渠道被阻止，审计失败恢复完整顺位与健康记录", async () => {
       const live = (await ordered(modelA)).find((r) => r.key_id === keyIds[2])!;
       const blocked = await action("remove_key_model", { key_model_id: live.id });
-      assert.equal(blocked.status, 409); assert.match((await blocked.json()).error, /唯一可用线路/);
+      assert.equal(blocked.status, 409);
+      const impact = await blocked.json();
+      assert.equal(impact.requiresConfirmation,true);
+      assert.ok(impact.affectedBusinesses.some((item: { key: string })=>item.key===featureKey));
       const target = (await ordered(modelB))[0];
       assert.equal((await db.from("ai_provider_key_models").update({ consecutive_failures: 4, first_failure_at: new Date(Date.now() - 9000).toISOString(), invalidated_at: new Date().toISOString(), last_error_message: "local fixture model failure" }).eq("id", target.id)).error, null);
       const snapshot = (await db.from("ai_provider_key_models").select("*").eq("id", target.id).single()).data;
@@ -140,7 +156,8 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
     });
 
   } finally {
-    assert.equal((await db.from("ai_feature_bindings").delete().eq("feature_key", featureKey)).error, null);
+    assert.equal((await db.from("ai_feature_bindings").delete().in("feature_key",[featureKey,"default"])).error, null);
+    if(previousBindings.data?.length) assert.equal((await db.from("ai_feature_bindings").upsert(previousBindings.data,{onConflict:"feature_key"})).error,null);
     assert.equal((await db.from("ai_providers").delete().eq("id", providerId)).error, null);
     assert.equal((await db.from("ai_provider_keys").select("id").in("id", keyIds)).data?.length, 0);
     await new Promise<void>((resolve) => server.close(() => resolve()));

@@ -12,10 +12,11 @@ function parseHttpStatus(errorType?: string) {
 export function isPermanentProviderFailure(input: { status?: number; errorType?: string; message?: string }) {
   const status = input.status ?? parseHttpStatus(input.errorType);
   if (status === 401) return true;
+  if (status === 403 && /unauthori[sz]ed|invalid (?:api[_\s-]?key|credential)/i.test(input.message ?? "")) return true;
   if (status === 403 && /quota|billing|余额|额度|Cloudflare|captcha|access denied/i.test(input.message ?? "")) return false;
   if (status !== undefined && status >= 500) return false;
   const message = `${input.errorType ?? ""} ${input.message ?? ""}`;
-  return /(?:model[_\s-]?(?:not[_\s-]?found|unsupported|invalid)|unsupported[_\s-]?model|invalid[_\s-]?model|unknown[_\s-]?model|no such model|does not support (?:the )?model|invalid (?:api[_\s-]?key|credential))/i.test(message);
+  return /(?:unauthori[sz]ed|model[_\s-]?(?:not[_\s-]?found|unsupported|invalid)|unsupported[_\s-]?model|invalid[_\s-]?model|unknown[_\s-]?model|no such model|does not support (?:the )?model|invalid (?:api[_\s-]?key|credential))/i.test(message);
 }
 
 export function classifyProviderFailure(input: {
@@ -36,7 +37,7 @@ export function classifyProviderFailure(input: {
     return "key";
   }
 
-  if (status === 429 || (status !== undefined && status >= 500) || input.errorType === "network" || input.errorType === "timeout") return "model";
+  if (status === 408 || status === 429 || (status !== undefined && status >= 500) || input.errorType === "network" || input.errorType === "timeout") return "model";
   return "unknown";
 }
 
@@ -54,6 +55,6 @@ export function sanitizeProviderErrorMessage(message: unknown, secrets: string[]
 
 /** Only matching temporary transport failures may pause an entire channel. */
 export function providerFailureKind(errorType: string): "timeout" | "service" | "other" {
-  if (errorType === "timeout" || errorType === "network") return "timeout";
+  if (errorType === "timeout" || errorType === "network" || errorType === "http_408") return "timeout";
   return /^http_5\d\d$/.test(errorType) ? "service" : "other";
 }

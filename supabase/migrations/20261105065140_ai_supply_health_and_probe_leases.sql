@@ -52,7 +52,7 @@ begin
   where m.key_id = target_key and m.last_failure_kind = failure_kind
     and m.last_failure_at >= now() - make_interval(secs => window_seconds)
     and (m.last_success_at is null or m.last_failure_at > m.last_success_at)
-    and (k.last_success_at is null or m.last_failure_at > k.last_success_at);
+    and (k.last_success_at is null or k.last_success_at < now() - make_interval(secs => window_seconds));
   if affected_count >= distinct_models then
     update public.ai_provider_keys set unhealthy_until = now() + make_interval(secs => pause_seconds),
       consecutive_failures = greatest(consecutive_failures,1), first_failure_at = coalesce(first_failure_at,now()),

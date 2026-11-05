@@ -479,7 +479,7 @@ export function resolveAttemptBudgetMs(perChannelTimeoutMs: number, remainingBud
 }
 
 function isRetryableStatus(status: number): boolean {
-  if (status === 429) return true;
+  if (status === 408 || status === 429) return true;
   // Some providers/proxies use 403 for edge blocks (for example Cloudflare
   // 1010). Let the failover chain try the next configured channel; auth and
   // quota 403 responses are filtered by isNonRetryableProviderError below.
@@ -792,7 +792,7 @@ async function sendWithFailover(
         if (channel.providerKeyId) failedProviderKeyIds.add(channel.providerKeyId);
       }
 
-      if (!aiError.retryable && !/^http_(401|402|403|404|422)$/.test(aiError.errorType)) {
+      if (!aiError.retryable && !/^http_(401|402|403|404|408|422)$/.test(aiError.errorType)) {
         aiError.message = `[${channel.name}] ${aiError.message}`;
         throw aiError;
       }

@@ -518,6 +518,38 @@ test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选�
   }
 });
 
+test("所选模型渠道遇到上游408超时后，仍继续尝试完所选模型并切到默认渠道", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      { feature_key: "ocr_screenshot_structure", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      makePkmRow({ id: "selected-a", modelId: "selected-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "selected-b", modelId: "selected-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "default-a", modelId: "default-model", keyPriority: 100, keyName: "keyC", sortOrder: 1 }),
+      makePkmRow({ id: "unselected", modelId: "other-model", keyPriority: 1, keyName: "keyD" }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+    const attempts: string[] = [];
+    const result = await __internal.sendWithFailoverForTests(chain, { messages: [] }, false, async (channel) => {
+      attempts.push(channel.providerKeyModelId ?? "");
+      if (channel.model === "selected-model") throw new AiChannelError("HTTP 408", "http_408", false);
+      return { content: "ok", model: channel.model ?? "", channelName: channel.name, elapsedMs: 1 };
+    });
+
+    assert.deepEqual(attempts, ["selected-a", "selected-b", "default-a"]);
+    assert.equal(result.model, "default-model");
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
 test("空 modelId 跟随全局默认，调用链不包含其他模型", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [

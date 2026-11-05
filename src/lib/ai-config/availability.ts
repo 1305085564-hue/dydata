@@ -1,3 +1,4 @@
+import { CHANNEL_MESSAGE_KEYS } from "./presentation";
 import { resolveFeatureModelRouting } from "@/lib/ai/feature-routing";
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
@@ -65,6 +66,7 @@ export type AvailabilityInput = {
 };
 
 export type AvailabilityChannel = ChannelGovernance & {
+  messageKey: (typeof CHANNEL_MESSAGE_KEYS)[ChannelIdentity];
   sortOrder: number;
   keyModelId: string;
   keyId: string;
@@ -96,6 +98,7 @@ export type AvailabilityModelFamily = {
 };
 
 export type AvailabilityKeySummary = ChannelGovernance & {
+  messageKey: (typeof CHANNEL_MESSAGE_KEYS)[ChannelIdentity];
   keyId: string;
   label: string;
   providerId: string;
@@ -202,6 +205,7 @@ export function computeAvailability(
 
     channels.push({
       ...governance,
+      messageKey: CHANNEL_MESSAGE_KEYS[governance.identity],
       sortOrder: m.sort_order ?? 0,
       keyModelId: m.id,
       keyId: m.key_id,
@@ -227,6 +231,7 @@ export function computeAvailability(
     const enabledModelCount = models.filter((m) => m.key_id === k.id && m.is_enabled).length;
     return {
       identity: governance.identity,
+      messageKey: CHANNEL_MESSAGE_KEYS[governance.identity],
       sleepSource: governance.sleepSource,
       sleepUntil: governance.sleepUntil,
       persistentFailure: governance.persistentFailure,
@@ -355,7 +360,10 @@ export function computeAvailability(
       normal: businessAssurances.filter(item => item.routingStatus === "normal").length,
       fallback: businessAssurances.filter(item => item.routingStatus === "fallback").length,
       outage: affectedBusinessFeatures.length,
-      needsAttentionChannels: keySummaries.filter(key => key.identity === "invalid").length,
+      needsAttentionChannels: new Set([
+        ...keySummaries.filter(key => key.identity === "invalid").map(key => key.keyId),
+        ...channels.filter(channel => channel.identity === "invalid").map(channel => channel.keyId),
+      ]).size,
     },
   };
 }

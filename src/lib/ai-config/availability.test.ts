@@ -360,3 +360,16 @@ test("未挂载模型的启用渠道不能计为正常在岗或可调度", () =>
   assert.equal(report.keys[0].identity, "invalid"); assert.equal(report.keys[0].isSchedulable, false);
   assert.equal(report.identityCounts.active, 0); assert.equal(report.identityCounts.invalid, 1);
 });
+
+test("同渠道有一个能用模型时，另一个需人工处理的模型仍计入待处理渠道", () => {
+  const report = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+    models: [
+      { id: "m1", key_id: "k1", model_id: "healthy", is_enabled: true },
+      { id: "m2", key_id: "k1", model_id: "invalid", is_enabled: true, invalidated_at: new Date(NOW).toISOString() },
+    ],
+  }));
+  assert.equal(report.keys[0].isSchedulable, true);
+  assert.equal(report.businessSummary.needsAttentionChannels, 1);
+  assert.equal(report.modelFamilies.find(family=>family.modelId==="invalid")?.channels[0].messageKey,"channel.action_required");
+});

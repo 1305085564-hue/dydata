@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   classifyProviderFailure,
+  providerFailureKind,
   isPermanentProviderFailure,
   sanitizeProviderErrorMessage,
   type ProviderFailureScope,
@@ -50,4 +51,13 @@ test("403 的临时拦截和额度故障不永久失效，明确凭据拒绝才�
   assert.equal(isPermanentProviderFailure({ status: 403, message: "insufficient_user_quota" }), false);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid api key" }), true);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "Forbidden" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "unauthorized" }), true);
+});
+
+
+test("408属于模型超时，明确403鉴权拒绝优先于暂时拦截词", () => {
+  assert.equal(classifyProviderFailure({errorType:"http_408"}),"model");
+  assert.equal(providerFailureKind("http_408"),"timeout");
+  assert.equal(isPermanentProviderFailure({status:403,message:"invalid api key: access denied"}),true);
+  assert.equal(isPermanentProviderFailure({status:403,message:"unauthorized: access denied"}),true);
 });

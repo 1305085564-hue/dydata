@@ -72,9 +72,9 @@ function scopeKeys(db: Db, keyIds: string[]): Db {
   return {
     from(table: string) {
       const query = db.from(table);
-      if (table !== "ai_provider_keys") return query;
+      if (table !== "ai_provider_keys" && table !== "ai_provider_key_models") return query;
       const select = query.select.bind(query);
-      query.select = (...args: unknown[]) => select(...args).in("id", keyIds);
+      query.select = (...args: unknown[]) => select(...args).in(table === "ai_provider_keys" ? "id" : "key_id", keyIds);
       return query;
     },
   };
@@ -201,20 +201,22 @@ test("真实库 B1：同步只插入新模型且保留已有上下架状态", as
   }
 });
 
-test("真实库 B2：独占模型下架返回 409，存在其它健康渠道时全库更新", async (t) => {
+test("真实库 B2：独占模型停用需确认，明确默认可顶班后允许停用", async (t) => {
   const db = await getRealDb(t);
   if (!db) return;
   const restoreExistingModels = await suspendExistingModels(db);
   const provider = await createProvider(db, "https://unused.invalid");
   const key = await createKey(db, provider.id, "b2");
-  const featureKey = `real_b2_${id()}`;
+  const featureKey = "content_tools";
+  const previousBindings = await db.from("ai_feature_bindings").select("*").in("feature_key",[featureKey,"default"]);
+  assert.equal(previousBindings.error,null);
   try {
     const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b2-target", display_name: "目标", is_enabled: true, global_is_enabled: true });
     await db.from("ai_provider_keys").update({ available_models: ["real-b2-target"] }).eq("id", key.id);
-    await insert(db, "ai_feature_bindings", {
-      id: id(), feature_key: featureKey, label: "真实库独占业务", model_id: "real-b2-target", provider_key_model_id: target.id,
-      is_enabled: true, lifecycle_state: "active",
-    });
+    assert.equal((await db.from("ai_feature_bindings").upsert([
+      { feature_key: featureKey, label: "真实库独占业务", model_id: "real-b2-target", is_enabled: true, lifecycle_state: "active" },
+      { feature_key: "default", label: "全局默认", model_id: "real-b2-target", is_enabled: true, lifecycle_state: "active" },
+    ],{onConflict:"feature_key"})).error,null);
 
     let response = await buildAiConfigResponse(request({
       action: "set_global_model_shelf_state", data: { modelId: "real-b2-target", is_enabled: false },
@@ -225,15 +227,17 @@ test("真实库 B2：独占模型下架返回 409，存在其它健康渠道时�
     const backupKey = await createKey(db, provider.id, "b2-backup");
     await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: "real-b2-backup", display_name: "备用", is_enabled: true, global_is_enabled: true });
     await db.from("ai_provider_keys").update({ available_models: ["real-b2-backup"] }).eq("id", backupKey.id);
+    assert.equal((await db.from("ai_feature_bindings").update({model_id:"real-b2-backup"}).eq("feature_key","default")).error,null);
     response = await buildAiConfigResponse(request({
       action: "set_global_model_shelf_state", data: { modelId: "real-b2-target", is_enabled: false },
     }), actor(db));
     assert.equal(response.status, 200);
-    assert.equal((await readModels(db, key.id))[0]?.is_enabled, true);
-    assert.equal((await db.from("ai_provider_key_models").select("global_is_enabled").eq("id", target.id).single()).data?.global_is_enabled, false);
+    assert.equal((await readModels(db, key.id))[0]?.is_enabled, false);
+    assert.equal((await db.from("ai_provider_key_models").select("disabled_by_model").eq("id", target.id).single()).data?.disabled_by_model, true);
     await deleteById(db, "ai_provider_keys", backupKey.id);
   } finally {
-    await db.from("ai_feature_bindings").delete().eq("feature_key", featureKey);
+    await db.from("ai_feature_bindings").delete().in("feature_key",[featureKey,"default"]);
+    if (previousBindings.data?.length) assert.equal((await db.from("ai_feature_bindings").upsert(previousBindings.data,{onConflict:"feature_key"})).error,null);
     await deleteById(db, "ai_providers", provider.id);
     await restoreExistingModels();
   }
@@ -352,7 +356,7 @@ test("真实库 B7：全池同步隔离失败 Key，并把新模型按未上架�
   }
 });
 
-test("真实库 B8：全池连通测试返回成功、失败和超时三态", async (t) => {
+test("真实库 B8：使用中检查只测默认模型的开启供应并返回统一结果", async (t) => {
   const db = await getRealDb(t);
   if (!db) return;
   const upstream = await startUpstream((request, response) => {
@@ -371,23 +375,44 @@ test("真实库 B8：全池连通测试返回成功、失败和超时三态", as
   const failureKey = await createKey(db, provider.id, "b8-failure");
   const timeoutKey = await createKey(db, provider.id, "b8-timeout");
   const disabledKey = await createKey(db, provider.id, "b8-disabled");
+  const modelId = `real-b8-${id()}`;
+  const modelRows = [successKey, failureKey, timeoutKey, disabledKey].map((key) => ({ id: id(), key_id: key.id, model_id: modelId, is_enabled: true }));
+  const previousDefault = await db.from("ai_feature_bindings").select("*").eq("feature_key", "default").maybeSingle();
   try {
     await db.from("ai_provider_keys").update({ api_key: "success-secret" }).eq("id", successKey.id);
     await db.from("ai_provider_keys").update({ api_key: "failure-secret" }).eq("id", failureKey.id);
     await db.from("ai_provider_keys").update({ api_key: "timeout-secret" }).eq("id", timeoutKey.id);
     await db.from("ai_provider_keys").update({ is_enabled: false }).eq("id", disabledKey.id);
-    const response = await buildAiConfigResponse(request({ action: "test_all_keys" }), actor(scopeKeys(db, [successKey.id, failureKey.id, timeoutKey.id, disabledKey.id])));
+    assert.equal((await db.from("ai_provider_key_models").insert(modelRows)).error, null);
+    assert.equal((await db.from("ai_feature_bindings").upsert({ feature_key: "default", label: "全局默认 AI 模型", model_id: modelId, is_enabled: true }, { onConflict: "feature_key" })).error, null);
+    const response = await buildAiConfigResponse(request({ action: "check_all_in_use" }), actor(scopeKeys(db, [successKey.id, failureKey.id, timeoutKey.id, disabledKey.id])));
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(body.total, 3);
-    const byId = new Map(body.results.map((result: { keyId: string; [key: string]: unknown }) => [result.keyId, result]));
-    assert.equal((byId.get(successKey.id) as { ok: boolean }).ok, true);
-    assert.equal(typeof (byId.get(successKey.id) as { latencyMs: unknown }).latencyMs, "number");
-    assert.equal((byId.get(failureKey.id) as { ok: boolean; latencyMs: unknown }).ok, false);
-    assert.equal((byId.get(failureKey.id) as { latencyMs: unknown }).latencyMs, null);
-    assert.equal((byId.get(timeoutKey.id) as { ok: boolean; latencyMs: unknown }).ok, false);
-    assert.equal((byId.get(timeoutKey.id) as { latencyMs: unknown }).latencyMs, null);
+    assert.equal(body.checkResult.total, 3);
+    assert.equal(body.checkResult.successCount, 1);
+    assert.equal(body.checkResult.failureCount, 2);
+    const byKeyId = new Map(body.checkResult.results.map((result: { keyId: string; [key: string]: unknown }) => [result.keyId, result]));
+    assert.equal((byKeyId.get(successKey.id) as { modelId: string; ok: boolean }).modelId, modelId);
+    assert.equal((byKeyId.get(successKey.id) as { ok: boolean }).ok, true);
+    assert.equal((byKeyId.get(failureKey.id) as { ok: boolean; latencyMs: unknown }).ok, false);
+    assert.equal((byKeyId.get(failureKey.id) as { latencyMs: unknown }).latencyMs, null);
+    assert.match((byKeyId.get(failureKey.id) as { message: string }).message, /HTTP 500/);
+    assert.equal((byKeyId.get(timeoutKey.id) as { ok: boolean; latencyMs: unknown }).ok, false);
+    assert.equal((byKeyId.get(timeoutKey.id) as { latencyMs: unknown }).latencyMs, null);
+    assert.match((byKeyId.get(timeoutKey.id) as { message: string }).message, /15 秒/);
+    assert.equal(byKeyId.has(disabledKey.id), false);
+    assert.ok(body.availability);
+    const tested = await db.from("ai_provider_key_models").select("last_success_at, consecutive_failures").eq("id", modelRows[0].id).single();
+    assert.equal(tested.error, null);
+    assert.ok(tested.data.last_success_at);
+    assert.equal(tested.data.consecutive_failures, 0);
   } finally {
+    if (previousDefault.error) throw new Error(previousDefault.error.message);
+    if (previousDefault.data) {
+      assert.equal((await db.from("ai_feature_bindings").upsert(previousDefault.data, { onConflict: "feature_key" })).error, null);
+    } else {
+      assert.equal((await db.from("ai_feature_bindings").delete().eq("feature_key", "default")).error, null);
+    }
     await deleteById(db, "ai_providers", provider.id);
     await closeServer(upstream.server);
   }

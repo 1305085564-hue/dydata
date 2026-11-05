@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-import { __internal as aiClientInternal, probeAiFeature, type AiMessage } from "@/lib/ai/client";
+import { __internal as aiClientInternal, extractJsonString, probeAiFeature, type AiMessage } from "@/lib/ai/client";
+import { buildHaikuVisionBody, parseHaikuVisionResponse, usesHaikuNativeVision } from "@/lib/ai/haiku-vision-transport";
 import { getAiFeatureCatalogEntry } from "@/lib/ai/feature-catalog";
 import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "@/lib/ai-config/feature-controls";
 import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
@@ -20,7 +21,6 @@ import {
   handleSetKeyModelSelection,
   handleSyncKeyModels,
   handleSyncAllKeys,
-  handleTestAllKeys,
   restoreModelShelfState,
 } from "@/lib/ai-config/batch-actions";
 import { discoverModelIds } from "./sync-models/route";
@@ -50,9 +50,8 @@ type AiConfigAction =
   | "test_key_model"
   | "test_key_all_models"
   | "test_all_keys_all_models"
+  | "check_all_in_use"
   | "swap_model_channel_order"
-  | "sleep_key"
-  | "resume_key"
   | "save_feature_control"
   | "archive_feature"
   | "restore_feature"
@@ -91,7 +90,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_model_channel_order" || action === "sleep_key" || action === "resume_key" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "check_all_in_use" || action === "swap_model_channel_order" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -572,16 +571,16 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   }
   if (!provider?.base_url) throw new Error("渠道 URL 不存在");
 
-  let testModel = modelId;
-  if (!testModel) {
-    const { data: modelData } = await supabase
-      .from("ai_provider_key_models")
-      .select("id, model_id")
-      .eq("key_id", keyId)
-      .limit(1)
-      .maybeSingle();
-    testModel = (modelData as { model_id?: string } | null)?.model_id || "gpt-3.5-turbo";
-  }
+  let modelQuery = supabase
+    .from("ai_provider_key_models")
+    .select("id, model_id")
+    .eq("key_id", keyId);
+  if (modelId) modelQuery = modelQuery.eq("model_id", modelId);
+  else modelQuery = modelQuery.limit(1);
+  const { data: modelData, error: modelError } = await modelQuery.maybeSingle();
+  if (modelError) throw new Error(modelError.message);
+  const mounted = modelData as { id?: string; model_id?: string } | null;
+  const testModel = modelId || mounted?.model_id || "gpt-3.5-turbo";
 
   const result = await probeProviderModel(
     keyRow.api_key,
@@ -591,6 +590,8 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   );
   if (result.ok) {
     await markProviderKeySuccess(supabase, keyId);
+    await clearLegacyManualSleep(supabase, keyId);
+    if (mounted?.id) await markProviderKeyModelSuccess(supabase, mounted.id);
     return { ...result, errorScope: null };
   }
 
@@ -619,6 +620,7 @@ async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string,
   if (probe.ok) {
     await markProviderKeyModelSuccess(supabase, (modelData as { id: string }).id);
     await markProviderKeySuccess(supabase, keyId);
+    await clearLegacyManualSleep(supabase, keyId);
   }
   return probe;
 }
@@ -633,6 +635,11 @@ type MountedModelTestResult = {
 };
 
 const MODEL_TEST_CONCURRENCY = 4;
+
+async function clearLegacyManualSleep(supabase: SupabaseClient, keyId: string) {
+  const { error } = await supabase.from("ai_provider_keys").update({ manual_sleep_until: null }).eq("id", keyId);
+  if (error) throw new Error(error.message);
+}
 
 // 单个模型的探测等待上限，也是「这个模型算不算能用」的产品判定线：
 // 超过 15 秒才回话的模型，业务上等同于不可用。单测（测试连通）与批量检测共用这一条线，
@@ -689,6 +696,51 @@ async function testMountedModel(
   }
 }
 
+async function handleCheckAllInUse(supabase: SupabaseClient) {
+  const before = await loadAiConfig(supabase) as unknown as {
+    featureControls: Array<{ group: string; isEnabled: boolean; lifecycleState: string; modelId: string | null }>;
+    featureBindings: Array<{ feature_key: string; model_id?: string | null }>;
+    keys: Array<{ id: string; provider_id: string; is_enabled: boolean }>;
+    providers: Array<{ id: string; is_enabled: boolean }>;
+    models: Array<{ key_id: string; model_id: string; is_enabled: boolean }>;
+  };
+  const modelIds = new Set(
+    before.featureControls
+      .filter((control) => control.group === "business" && control.isEnabled && control.lifecycleState === "active")
+      .map((control) => control.modelId)
+      .filter((modelId): modelId is string => Boolean(modelId)),
+  );
+  const defaultModelId = before.featureBindings.find((binding) => binding.feature_key === "default")?.model_id;
+  if (defaultModelId) modelIds.add(defaultModelId);
+
+  const keyById = new Map(before.keys.map((key) => [key.id, key]));
+  const providerById = new Map(before.providers.map((provider) => [provider.id, provider]));
+  const targets = new Map<string, { key_id: string; model_id: string }>();
+  for (const model of before.models) {
+    if (!modelIds.has(model.model_id) || !model.is_enabled) continue;
+    const key = keyById.get(model.key_id);
+    const provider = key ? providerById.get(key.provider_id) : undefined;
+    if (!key?.is_enabled || !provider?.is_enabled) continue;
+    targets.set(`${model.key_id}\u0000${model.model_id}`, { key_id: model.key_id, model_id: model.model_id });
+  }
+
+  const results = await mapWithConcurrency(
+    Array.from(targets.values()),
+    MODEL_TEST_CONCURRENCY,
+    (target) => testMountedModel(supabase, target),
+  );
+  const checkResult = {
+    total: results.length,
+    successCount: results.filter((result) => result.ok).length,
+    failureCount: results.filter((result) => !result.ok).length,
+    results: results.map(({ keyId, modelId, ok, latencyMs, error, failureDiagnostic }) => ({
+      keyId, modelId, ok, latencyMs, message: error, failureDiagnostic: failureDiagnostic ?? null,
+    })),
+  };
+  const latestBundle = await loadAiConfig(supabase);
+  return { ...latestBundle, checkResult };
+}
+
 type ProbeResult = { failureDiagnostic?: ChannelFailureDiagnostic | null } & (
   | { ok: true; latencyMs: number; status: number; message: string; errorScope: null }
   | { ok: false; latencyMs: number; status: number; message: string; errorScope: ProviderFailureScope });
@@ -723,6 +775,16 @@ async function loadKeyProvider(supabase: SupabaseClient, keyId: string) {
 
 const VISION_PROBE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
+function isValidVisionProbeContent(content: string) {
+  const json = extractJsonString(content);
+  if (!json) return false;
+  try {
+    return (JSON.parse(json) as { color?: unknown }).color === "black";
+  } catch {
+    return false;
+  }
+}
+
 export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" = "text"): {
   model: string; messages: AiMessage[]; max_tokens: number; stream: boolean; response_format?: { type: "json_object" };
 } {
@@ -732,7 +794,7 @@ export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" =
       role: "user",
       content: mode === "vision"
         ? [
-            { type: "text", text: "请识别这张图片并只返回 JSON：{\"ok\":true}" },
+            { type: "text", text: "请识别图片中单个像素的颜色。若是黑色，只返回 JSON：{\"color\":\"black\"}；否则返回 {\"color\":\"other\"}。" },
             { type: "image_url", image_url: { url: VISION_PROBE_IMAGE } },
           ]
         : "hi",
@@ -750,15 +812,35 @@ async function probeProviderModel(
   mode: "text" | "vision" = "text",
 ): Promise<ProbeResult> {
   const startedAt = Date.now();
-  const targetUrl = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const probeBody = buildProbeRequestBody(modelId, mode);
+  const probeOptions = { messages: probeBody.messages, jsonMode: mode === "vision", maxTokens: probeBody.max_tokens };
+  const nativeVision = mode === "vision" && usesHaikuNativeVision(modelId, probeOptions);
+  const targetUrl = `${baseUrl.replace(/\/+$/, "")}${nativeVision ? "/messages" : "/chat/completions"}`;
   try {
     const response = await fetch(targetUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify(buildProbeRequestBody(modelId, mode)),
+      headers: {
+        "Content-Type": "application/json",
+        ...(nativeVision ? { "x-api-key": apiKey, "anthropic-version": "2023-06-01" } : { Authorization: `Bearer ${apiKey}` }),
+      },
+      body: JSON.stringify(nativeVision ? buildHaikuVisionBody(modelId, probeOptions) : probeBody),
       signal: AbortSignal.timeout(MODEL_PROBE_TIMEOUT_MS),
     });
     const raw = response.ok ? "" : await response.text().catch(() => "");
+    if (response.ok && nativeVision) {
+      const parsed = await parseHaikuVisionResponse(response, probeOptions);
+      if (!isValidVisionProbeContent(parsed.content)) {
+        const message = "图片识别验证失败：没有识别出黑色测试像素";
+        return {
+          ok: false,
+          latencyMs: Date.now() - startedAt,
+          status: response.status,
+          message,
+          errorScope: "model",
+          failureDiagnostic: describeChannelFailure({ message, status: response.status, requestId: response.headers.get("x-request-id") ?? response.headers.get("request-id"), secrets: [apiKey] }),
+        };
+      }
+    }
     const message = response.ok
       ? "连通测试成功"
       : sanitizeProviderErrorMessage(`HTTP ${response.status}${raw ? `: ${raw}` : ""}`, [apiKey]);
@@ -884,11 +966,11 @@ export async function buildAiConfigResponse(
     }
   }
 
-  if (action === "test_all_keys") {
+  if (action === "check_all_in_use" || action === "test_all_keys" || action === "test_all_keys_all_models") {
     try {
-      return NextResponse.json(await handleTestAllKeys(auth.supabase, handleTestKey));
+      return NextResponse.json(await handleCheckAllInUse(auth.supabase));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "全池连通测试失败" }, { status: 400 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "使用中模型检查失败" }, { status: 400 });
     }
   }
 
@@ -904,7 +986,13 @@ export async function buildAiConfigResponse(
           result = await (deps.probeAiFeature ?? probeAiFeature)("ocr_screenshot", {
             messages: sample.messages, jsonMode: true, maxTokens: 64,
             timeoutMs: MODEL_PROBE_TIMEOUT_MS, totalTimeoutMs: 30_000,
+            validateContent: isValidVisionProbeContent,
           });
+          if (result.providerKeyId) {
+            await markProviderKeySuccess(auth.supabase, result.providerKeyId);
+            await clearLegacyManualSleep(auth.supabase, result.providerKeyId);
+            if (result.providerKeyModelId) await markProviderKeyModelSuccess(auth.supabase, result.providerKeyModelId);
+          }
         } catch (error) {
           if (error instanceof Error) message = error.message;
         }
@@ -912,7 +1000,7 @@ export async function buildAiConfigResponse(
         return NextResponse.json({ ...bundle, testResult: result ? {
           ok: true, latencyMs: Date.now() - started, model: result.model, channelName: result.channelName,
           channelLabel: bundle.keys.find((key) => key.id === result?.providerKeyId)?.label ?? result.channelName,
-        } : { ok: false, latencyMs: Date.now() - started, message } });
+        } : { ok: false, latencyMs: Date.now() - started, message, failureDiagnostic: describeChannelFailure({ message }) } });
       }
       const result = await handleTestKey(auth.supabase, asRecord(body.data));
       const bundle = await loadAiConfig(auth.supabase);
@@ -932,19 +1020,19 @@ export async function buildAiConfigResponse(
     }
   }
 
-  if (action === "test_key_all_models" || action === "test_all_keys_all_models") {
+  if (action === "test_key_all_models") {
     try {
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
-      // 任务 2：去掉 is_enabled=true 过滤，测该渠道全部挂载模型（含未勾选/停用的）
+      // 显式单渠道检查测其全部挂载模型（含手动关闭的供应）；全局检查有独立的使用中范围。
       const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled");
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
       if (keyStateError) throw new Error(keyStateError.message);
       const enabledKeyIds = new Set(((keyStateRows ?? []) as Array<{ id: string; is_enabled: boolean }>).filter((row) => row.is_enabled).map((row) => row.id));
-      // 过滤条件：只要渠道启用即可，不再要求模型本身启用或全局启用
+      // 显式渠道检查要求渠道开启，但不按该模型供应开关过滤。
       const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean }>)
         .filter((row) => enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id))
         .map(({ key_id, model_id }) => ({ key_id, model_id }));
@@ -956,90 +1044,51 @@ export async function buildAiConfigResponse(
       const successCount = modelResults.filter((result) => result.ok).length;
       const failureCount = modelResults.length - successCount;
 
-      if (action === "test_key_all_models") {
-        return NextResponse.json({
-          keyId,
-          results: modelResults.map(({ modelId, ok, latencyMs, error: modelError, failureDiagnostic }) => ({
-            modelId,
-            ok,
-            latencyMs,
-            error: modelError,
-            failureDiagnostic,
-          })),
-          total: modelResults.length,
-          successCount,
-          failureCount,
-          emptyResult: modelResults.length === 0,
-          allPassed: modelResults.length > 0 && failureCount === 0,
-          failedModelIds: modelResults.filter((result) => !result.ok).map((result) => result.modelId),
-        });
-      }
-
-      const { data: keyRows, error: keyError } = await auth.supabase
-        .from("ai_provider_keys")
-        .select("id, label");
-      if (keyError) throw new Error(keyError.message);
-      const keyLabels = new Map(
-        ((keyRows ?? []) as Array<{ id: string; label: string }>).map((key) => [key.id, key.label]),
-      );
       return NextResponse.json({
-        totalKeys: keyLabels.size,
-        totalModels: modelResults.length,
+        keyId,
+        results: modelResults.map(({ modelId, ok, latencyMs, error: modelError, failureDiagnostic }) => ({
+          modelId,
+          ok,
+          latencyMs,
+          error: modelError,
+          failureDiagnostic,
+        })),
+        total: modelResults.length,
         successCount,
         failureCount,
         emptyResult: modelResults.length === 0,
         allPassed: modelResults.length > 0 && failureCount === 0,
-        failures: modelResults
-          .filter((result) => !result.ok)
-          .map((result) => ({
-            keyId: result.keyId,
-            keyLabel: keyLabels.get(result.keyId) ?? "未知渠道",
-            modelId: result.modelId,
-            error: result.error,
-            failureDiagnostic: result.failureDiagnostic,
-          })),
+        failedModelIds: modelResults.filter((result) => !result.ok).map((result) => result.modelId),
       });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
     }
   }
 
-  if (action === "sleep_key" || action === "resume_key" || action === "swap_model_channel_order") {
+  if (action === "swap_model_channel_order") {
     try {
       const data = asRecord(body.data);
-      if (action === "swap_model_channel_order") {
-        const modelId = toTrimmedString(data.model_id);
-        const id = toTrimmedString(data.key_model_id);
-        const targetId = toTrimmedString(data.target_key_model_id);
-        if (!modelId || !id || !targetId || id === targetId) throw mutationError("顺位交换参数不合法");
-        // 「可调度相邻」校验复用五态唯一真源：中间隔着失效/停用渠道不阻断交换，端点不可调度则拒绝。
-        const preloaded = await loadAiConfig(auth.supabase);
-        const family = preloaded.availability.modelFamilies.find((f) => f.modelId === modelId);
-        const current = family?.channels.find((c) => c.keyModelId === id);
-        const target = family?.channels.find((c) => c.keyModelId === targetId);
-        if (!family || !current || !target || !current.isSchedulable || !target.isSchedulable) {
-          throw mutationError("渠道不存在、不属于同一模型或当前不可调度，请刷新后重试", 409);
-        }
-        const low = Math.min(current.sortOrder, target.sortOrder);
-        const high = Math.max(current.sortOrder, target.sortOrder);
-        if (family.channels.some((c) => c.isSchedulable && c.sortOrder > low && c.sortOrder < high)) {
-          throw mutationError("两条渠道之间还有可用渠道，请刷新后重试", 409);
-        }
-        const { error } = await (deps.createAdminClient ?? createAdminClient)().rpc("swap_provider_key_model_order", {
-          p_model_id: modelId, p_key_model_id: id, p_target_key_model_id: targetId,
-        });
-        if (error) throw mutationError(error.message, 409);
-      } else {
-        const keyId = toTrimmedString(data.key_id);
-        if (!keyId) throw mutationError("缺少 key_id");
-        const { data: key, error: readError } = await auth.supabase.from("ai_provider_keys").select("id").eq("id", keyId).maybeSingle();
-        if (readError) throw new Error(readError.message);
-        if (!key) throw mutationError("渠道不存在", 404);
-        const { error } = await auth.supabase.from("ai_provider_keys").update({
-          manual_sleep_until: action === "sleep_key" ? new Date(Date.now() + 30 * 60_000).toISOString() : null,
-        }).eq("id", keyId);
-        if (error) throw new Error(error.message);
+      const modelId = toTrimmedString(data.model_id);
+      const id = toTrimmedString(data.key_model_id);
+      const targetId = toTrimmedString(data.target_key_model_id);
+      if (!modelId || !id || !targetId || id === targetId) throw mutationError("顺位交换参数不合法");
+      // 「可调度相邻」校验复用五态唯一真源：中间隔着失效/停用渠道不阻断交换，端点不可调度则拒绝。
+      const preloaded = await loadAiConfig(auth.supabase);
+      const family = preloaded.availability.modelFamilies.find((f) => f.modelId === modelId);
+      const current = family?.channels.find((c) => c.keyModelId === id);
+      const target = family?.channels.find((c) => c.keyModelId === targetId);
+      if (!family || !current || !target || !current.isSchedulable || !target.isSchedulable) {
+        throw mutationError("渠道不存在、不属于同一模型或当前不可调度，请刷新后重试", 409);
       }
+      const low = Math.min(current.sortOrder, target.sortOrder);
+      const high = Math.max(current.sortOrder, target.sortOrder);
+      if (family.channels.some((c) => c.isSchedulable && c.sortOrder > low && c.sortOrder < high)) {
+        throw mutationError("两条渠道之间还有可用渠道，请刷新后重试", 409);
+      }
+      const { error } = await (deps.createAdminClient ?? createAdminClient)().rpc("swap_provider_key_model_order", {
+        p_model_id: modelId, p_key_model_id: id, p_target_key_model_id: targetId,
+      });
+      if (error) throw mutationError(error.message, 409);
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {

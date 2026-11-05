@@ -147,9 +147,18 @@ test("model-local routing order follows sort_order then id", async () => {
   assert.deepEqual((await listRankedProviderKeyModels(service, "model-a")).map((item) => item.providerKeyModelId), ["aa", "b", "a"]);
 });
 
-test("manual sleep and permanent failure exclude mounted models from production candidates", async () => {
+test("automatic cooldown and permanent failure exclude mounted models from production candidates", async () => {
   const manual = providerRow({ id: "manual", modelId: "model-a", keyPriority: 1 });
   const invalid = { ...providerRow({ id: "invalid", modelId: "model-a", keyPriority: 2 }), invalidated_at: new Date().toISOString() };
   (manual.key as Row).unhealthy_until = new Date(Date.now() + 60_000).toISOString();
   assert.deepEqual(await listRankedProviderKeyModels(createFakeService([manual, invalid]), "model-a"), []);
+});
+
+
+test("冷却到期的恢复供应排在健康供应之前，普通顺位保持不变", async () => {
+  const recovery = { ...providerRow({ id: "recovery", modelId: "model-a", keyPriority: 100 }), consecutive_failures: 1, unhealthy_until: new Date(Date.now()-1000).toISOString(), sort_order: 9 };
+  const healthy = { ...providerRow({ id: "healthy", modelId: "model-a", keyPriority: 1 }), sort_order: 1 };
+  const ranked = await listRankedProviderKeyModels(createFakeService([healthy,recovery]), "model-a");
+  assert.deepEqual(ranked.map(row=>row.providerKeyModelId), ["recovery","healthy"]);
+  assert.equal(ranked[0].config.requiresProbe,true);
 });

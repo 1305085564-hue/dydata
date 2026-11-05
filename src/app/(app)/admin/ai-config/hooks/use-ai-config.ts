@@ -398,12 +398,14 @@ export function useAiConfig() {
   }, [mutate]);
 
   const checkDependencies = useCallback(async (
-    target: string | { scope: "provider" | "key" | "model"; id: string; keyId?: string }
+    target: string | { scope: "provider" | "key" | "model" | "supply"; id: string; keyId?: string }
   ): Promise<{
     ok: boolean;
     complete: boolean;
     unknownReasons: string[];
-    scope?: "provider" | "key" | "model";
+    scope?: "provider" | "key" | "model" | "supply";
+    requiresConfirmation?: boolean;
+    affectedBusinesses?: Array<{ key: string; label: string }>;
     targetId?: string;
     channels?: Array<{
       id: string;
@@ -440,6 +442,8 @@ export function useAiConfig() {
         complete: data.complete !== false,
         unknownReasons: Array.isArray(data.unknownReasons) ? data.unknownReasons : [],
         scope: data.scope,
+        requiresConfirmation: data.requiresConfirmation === true,
+        affectedBusinesses: data.affectedBusinesses ?? [],
         targetId: data.targetId,
         channels: data.channels ?? [],
         businessFunctions: data.businessFunctions ?? [],
@@ -517,6 +521,7 @@ export function useAiConfig() {
     mutate,
     mutateEntity,
     runCommand,
+    checkAllInUse: () => runCommand("check_all_in_use", {}, undefined, AI_MODEL_BATCH_TIMEOUT_MS),
     saveFeatureControl,
     setGlobalDefaultModel,
     archiveFeature,

@@ -35,7 +35,7 @@ test("第二批真实库：故障隔离、升级条件、冷却、跨连接单�
     assert.equal(Math.round((row.unhealthy_until-row.last_failure_at)/1000),CHANNEL_ESCALATION_PAUSE_SECONDS);
     // Success between model failures prevents aggregation of earlier failures.
     await db.query("update public.ai_provider_keys set consecutive_failures=0,unhealthy_until=null,last_success_at=now() where id=$1",[key]);
-    await record(supplies[0]);
+    await record(supplies[0]); await record(supplies[1]); await record(supplies[2]);
     assert.equal((await read("ai_provider_keys",key)).consecutive_failures,0);
     // Long history alone is never permanent. Progression is bounded at one hour.
     await db.query("update public.ai_provider_key_models set first_failure_at=now()-interval '2 days', consecutive_failures=0 where id=$1",[supplies[0]]);
