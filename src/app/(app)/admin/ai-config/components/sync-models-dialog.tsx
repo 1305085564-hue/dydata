@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { useAiConfig } from "../hooks/use-ai-config";
 import {
   Dialog,
   DialogBody,
@@ -15,47 +17,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Search,
   X,
-  CheckCheck,
-  Square,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  Activity,
+  ChevronDown,
+  ChevronRight,
   Trash2,
 } from "lucide-react";
-import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
-import { ChannelModelTestList } from "./channel-model-test-list";
-import { cn } from "@/lib/utils";
-import {
-  AI_MODEL_BATCH_TIMEOUT_MESSAGE,
-  type KeyModelInventoryItem,
-  type SyncKeyModelsResult,
-  type SyncModelReconciliation,
-  type KeyAllModelsTestResponse,
-} from "../hooks/use-ai-config";
-
-export type ChannelTestSummary = {
-  total: number;
-  successCount: number;
-  failureCount: number;
-  /** 本渠道每个被测模型的逐条结果，用于「每个模型一行」铺开呈现 */
-  results: Array<{ modelId: string; ok: boolean; latencyMs: number | null; error: string | null }>;
-};
 
 export interface SyncModelsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   keyId: string | null;
   keyLabel: string;
-  onSync: (keyId: string) => Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }>;
-  onSave: (keyId: string, modelIds: string[]) => Promise<boolean>;
-  onTestKeyAllModels: (keyId: string) => Promise<KeyAllModelsTestResponse>;
-  onRemoveModel?: (keyId: string, modelId: string) => Promise<{ ok: boolean; error?: string }>;
-  lastTestSummary?: ChannelTestSummary | null;
-  onTestSummaryChange?: (keyId: string, summary: ChannelTestSummary) => void;
-  lastReconciliation?: SyncModelReconciliation | null;
-  onReconciliationChange?: (keyId: string, reconciliation: SyncModelReconciliation | null) => void;
+}
+
+interface ModelGroupItem {
+  displayName: string;
+  recommendedModelId: string;
+  modelIds: string[];
 }
 
 export function SyncModelsDialog({
@@ -63,764 +42,446 @@ export function SyncModelsDialog({
   onOpenChange,
   keyId,
   keyLabel,
-  onSync,
-  onSave,
-  onTestKeyAllModels,
-  onRemoveModel,
-  lastTestSummary,
-  onTestSummaryChange,
-  lastReconciliation,
-  onReconciliationChange,
 }: SyncModelsDialogProps) {
-  const [inventory, setInventory] = useState<KeyModelInventoryItem[] | null>(null);
+  const { bundle, runCommand } = useAiConfig();
+
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // 同步结果数据
+  const [modelGroups, setModelGroups] = useState<ModelGroupItem[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  // 幽灵模型比对结果状态
-  const [reconciliation, setReconciliation] = useState<SyncModelReconciliation | null>(lastReconciliation ?? null);
-  const [removingModelId, setRemovingModelId] = useState<string | null>(null);
-  const [isBatchRemoving, setIsBatchRemoving] = useState(false);
+  // S8: 上游变动对比
+  const [newCount, setNewCount] = useState(0);
+  const [staleModelIds, setStaleModelIds] = useState<string[]>([]);
+  const [cleanupResults, setCleanupResults] = useState<
+    Array<{ modelId: string; status: string; reason?: string }> | null
+  >(null);
+  const [cleaning, setCleaning] = useState(false);
 
-  // 渠道模型检测状态（优先读取父级持久化的结果，弹窗开关/30秒后再看依然常驻）
-  const [testingChannel, setTestingChannel] = useState(false);
-  const [testSummary, setTestSummary] = useState<ChannelTestSummary | null>(lastTestSummary ?? null);
+  // 当前渠道正在使用的模型集合
+  const currentChannelEnabledModelIds = useMemo(() => {
+    if (!keyId || !bundle?.models) return new Set<string>();
+    return new Set(
+      bundle.models
+        .filter((m: { key_id: string; is_enabled: boolean; model_id: string }) => m.key_id === keyId && m.is_enabled)
+        .map((m: { model_id: string }) => m.model_id)
+    );
+  }, [keyId, bundle]);
 
-  useEffect(() => {
-    if (lastTestSummary !== undefined) {
-      setTestSummary(lastTestSummary);
-    }
-  }, [lastTestSummary, keyId]);
-
-  useEffect(() => {
-    if (lastReconciliation !== undefined) {
-      setReconciliation(lastReconciliation);
-    }
-  }, [lastReconciliation, keyId]);
-
-  // 滑动选择状态控制
-  const isMouseDownRef = useRef(false);
-  const targetCheckedRef = useRef(true);
-
-  // onSync 保持稳定引用，避免父组件重新渲染导致死循环
-  const onSyncRef = useRef(onSync);
-  useEffect(() => {
-    onSyncRef.current = onSync;
-  }, [onSync]);
-
-  const onReconciliationChangeRef = useRef(onReconciliationChange);
-  useEffect(() => {
-    onReconciliationChangeRef.current = onReconciliationChange;
-  }, [onReconciliationChange]);
-
-  const inFlightKeyIdRef = useRef<string | null>(null);
-
-  const loadData = useCallback(async (targetKeyId: string) => {
-    if (inFlightKeyIdRef.current === targetKeyId) return;
-    inFlightKeyIdRef.current = targetKeyId;
+  // 拉取与同步上游模型
+  const handleSync = useCallback(async (targetKeyId: string) => {
     setLoading(true);
     setLoadError(null);
+    setCleanupResults(null);
     try {
-      const res = await onSyncRef.current(targetKeyId);
-      if (!res.ok) {
-        setLoadError(res.error || "拉取模型列表失败");
-        setReconciliation(null);
-        if (onReconciliationChangeRef.current) {
-          onReconciliationChangeRef.current(targetKeyId, null);
+      const res = await runCommand("sync_key_models", { key_id: targetKeyId });
+      if (res.ok) {
+        const body = res.body as {
+          syncResult?: {
+            allModels?: Array<{ modelId: string; isEnabled: boolean }>;
+            modelGroups?: ModelGroupItem[];
+            newCount?: number;
+            reconciliation?: { staleInDb?: string[] };
+          };
+        };
+
+        const result = body.syncResult;
+        const groups = result?.modelGroups || [];
+        setModelGroups(groups);
+        setNewCount(result?.newCount ?? 0);
+        setStaleModelIds(result?.reconciliation?.staleInDb ?? []);
+
+        // 默认勾选：原本已开通的模型
+        const initialSelected = new Set<string>();
+        if (result?.allModels) {
+          for (const m of result.allModels) {
+            if (m.isEnabled) initialSelected.add(m.modelId);
+          }
         }
-        return;
+        setSelectedModelIds(initialSelected);
+      } else {
+        setLoadError(res.error || "获取上游模型失败");
       }
-      const models = res.data.allModels ?? [];
-      setInventory(models);
-      const rec = res.data.reconciliation ?? null;
-      setReconciliation(rec);
-      if (onReconciliationChangeRef.current) {
-        onReconciliationChangeRef.current(targetKeyId, rec);
-      }
-      // 默认勾选：现役（isGlobalActive）或本渠道启用（isEnabled）
-      const initialSelected = new Set(
-        models
-          .filter((m) => m.isGlobalActive || m.isEnabled)
-          .map((m) => m.modelId)
-      );
-      setSelectedModelIds(initialSelected);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "拉取模型列表失败");
-      setReconciliation(null);
+      setLoadError(err instanceof Error ? err.message : "获取上游模型失败");
     } finally {
-      inFlightKeyIdRef.current = null;
       setLoading(false);
     }
-  }, []);
+  }, [runCommand]);
 
   useEffect(() => {
     if (open && keyId) {
+      handleSync(keyId);
       setSearchQuery("");
-      isMouseDownRef.current = false;
-      void loadData(keyId);
-    } else if (!open) {
-      inFlightKeyIdRef.current = null;
-      setInventory(null);
-      setLoadError(null);
-      setReconciliation(null);
+      setExpandedGroups(new Set());
     }
-  }, [open, keyId, loadData]);
+  }, [open, keyId, handleSync]);
 
-  const unverifiedCandidates = useMemo(() => {
-    if (!reconciliation) return [];
-    const unavailableSet = new Set(reconciliation.verifiedUnavailableModelIds);
-    return (reconciliation.candidateModelIds ?? []).filter((id) => !unavailableSet.has(id));
-  }, [reconciliation]);
-
-  const handleRemoveSingleModel = async (modelId: string) => {
-    if (!keyId || !onRemoveModel || removingModelId || isBatchRemoving) return;
-    setRemovingModelId(modelId);
-    try {
-      const res = await onRemoveModel(keyId, modelId);
-      if (res.ok) {
-        feedbackToast.success(`已收走失效模型「${resolveModelDisplayName(undefined, modelId)}」`);
-        setInventory((prev) => (prev ? prev.filter((m) => m.modelId !== modelId) : null));
-        setSelectedModelIds((prev) => {
-          const next = new Set(prev);
-          next.delete(modelId);
-          return next;
-        });
-        setReconciliation((prev) => {
-          if (!prev) return null;
-          const nextRec: SyncModelReconciliation = {
-            ...prev,
-            candidateModelIds: prev.candidateModelIds.filter((id) => id !== modelId),
-            verifiedUnavailableModelIds: prev.verifiedUnavailableModelIds.filter((id) => id !== modelId),
-            unknownModelIds: prev.unknownModelIds.filter((id) => id !== modelId),
-            checks: prev.checks?.filter((c) => c.modelId !== modelId),
-          };
-          if (onReconciliationChangeRef.current && keyId) {
-            onReconciliationChangeRef.current(keyId, nextRec);
-          }
-          return nextRec;
-        });
-      } else {
-        feedbackToast.error(res.error || "收走模型失败");
-      }
-    } finally {
-      setRemovingModelId(null);
-    }
-  };
-
-  const handleRemoveAllVerifiedUnavailable = async () => {
-    if (!keyId || !onRemoveModel || removingModelId || isBatchRemoving || !reconciliation) return;
-    const targetIds = [...reconciliation.verifiedUnavailableModelIds];
-    if (targetIds.length === 0) return;
-    setIsBatchRemoving(true);
-    let successCount = 0;
-    const failedErrors: string[] = [];
-    try {
-      for (const mId of targetIds) {
-        const res = await onRemoveModel(keyId, mId);
-        if (res.ok) {
-          successCount++;
-          setInventory((prev) => (prev ? prev.filter((m) => m.modelId !== mId) : null));
-          setSelectedModelIds((prev) => {
-            const next = new Set(prev);
-            next.delete(mId);
-            return next;
-          });
-          setReconciliation((prev) => {
-            if (!prev) return null;
-            const nextRec: SyncModelReconciliation = {
-              ...prev,
-              candidateModelIds: prev.candidateModelIds.filter((id) => id !== mId),
-              verifiedUnavailableModelIds: prev.verifiedUnavailableModelIds.filter((id) => id !== mId),
-              unknownModelIds: prev.unknownModelIds.filter((id) => id !== mId),
-              checks: prev.checks?.filter((c) => c.modelId !== mId),
-            };
-            if (onReconciliationChangeRef.current && keyId) {
-              onReconciliationChangeRef.current(keyId, nextRec);
-            }
-            return nextRec;
-          });
-        } else {
-          failedErrors.push(res.error || "收走失败");
-        }
-      }
-      if (successCount > 0) {
-        feedbackToast.success(`已收走 ${successCount} 个已确认失效模型`);
-      }
-      if (failedErrors.length > 0) {
-        feedbackToast.error(failedErrors[0]);
-      }
-    } finally {
-      setIsBatchRemoving(false);
-    }
-  };
-
-  // 全局监听 mouseup，确保无论鼠标滑到哪里松开都能平稳结束滑动选择
-  useEffect(() => {
-    const handleMouseUp = () => {
-      isMouseDownRef.current = false;
-    };
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
-  const isFirstLoading = loading && inventory === null;
-  const isRefreshing = loading && inventory !== null;
-  const currentInventory = useMemo(() => inventory ?? [], [inventory]);
-
-  const filteredModels = useMemo(() => {
-    if (!inventory) return [];
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return inventory;
-    return inventory.filter(
-      (m) =>
-        m.modelId.toLowerCase().includes(q) ||
-        (m.displayName && m.displayName.toLowerCase().includes(q))
-    );
-  }, [inventory, searchQuery]);
-
-  const handleRowMouseDown = (modelId: string, e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-
-    const isMouse = (e.nativeEvent instanceof PointerEvent)
-      ? e.nativeEvent.pointerType === "mouse"
-      : !("ontouchstart" in window && navigator.maxTouchPoints > 0);
-
-    const currentlyChecked = selectedModelIds.has(modelId);
-    const nextState = !currentlyChecked;
-
-    if (isMouse) {
-      targetCheckedRef.current = nextState;
-      isMouseDownRef.current = true;
-    }
-
-    setSelectedModelIds((prev) => {
-      const next = new Set(prev);
-      if (nextState) next.add(modelId);
-      else next.delete(modelId);
-      return next;
-    });
-  };
-
-  const handleRowMouseEnter = (modelId: string) => {
-    if (!isMouseDownRef.current) return;
-    const nextState = targetCheckedRef.current;
-    setSelectedModelIds((prev) => {
-      const next = new Set(prev);
-      if (nextState) next.add(modelId);
-      else next.delete(modelId);
-      return next;
-    });
-  };
-
-  const handleSelectAllFiltered = () => {
-    setSelectedModelIds((prev) => {
-      const next = new Set(prev);
-      filteredModels.forEach((m) => next.add(m.modelId));
-      return next;
-    });
-  };
-
-  const handleDeselectAllFiltered = () => {
-    setSelectedModelIds((prev) => {
-      const next = new Set(prev);
-      filteredModels.forEach((m) => next.delete(m.modelId));
-      return next;
-    });
-  };
-
+  // 保存勾选结果（取消勾选只是关闭，不删除）
   const handleSave = async () => {
     if (!keyId) return;
-    if (selectedModelIds.size === 0) {
-      feedbackToast.error("至少保留一项可用型号；若暂不使用该渠道，可直接停用该渠道。");
-      return;
-    }
-
     setSaving(true);
     try {
-      const ok = await onSave(keyId, Array.from(selectedModelIds));
-      if (ok) {
-        feedbackToast.success("已更新渠道可用型号配置");
+      const res = await runCommand("set_key_model_selection", {
+        key_id: keyId,
+        model_ids: Array.from(selectedModelIds),
+      });
+
+      if (res.ok) {
+        feedbackToast.success("已保存模型配置");
         onOpenChange(false);
+      } else {
+        feedbackToast.error(res.error || "保存失败");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleRunChannelTest = async () => {
-    if (!keyId || testingChannel) return;
-    setTestingChannel(true);
+  // 口径 7: 一键清理已下线模型
+  const handleCleanupStale = async () => {
+    if (!keyId || staleModelIds.length === 0) return;
+    setCleaning(true);
     try {
-      const data = await onTestKeyAllModels(keyId);
-      const results = (data.results ?? []).map((r) => ({
-        modelId: r.modelId,
-        ok: r.ok,
-        latencyMs: r.latencyMs ?? null,
-        error: r.error ?? null,
-      }));
-      const failures = results.filter((r) => !r.ok);
-      const summary: ChannelTestSummary = {
-        total: data.total ?? results.length,
-        successCount: data.successCount ?? results.filter((r) => r.ok).length,
-        failureCount: data.failureCount ?? failures.length,
-        results,
-      };
-      setTestSummary(summary);
-      if (keyId && onTestSummaryChange) {
-        onTestSummaryChange(keyId, summary);
-      }
-      if (results.length === 0) {
-        feedbackToast.warning("该渠道没有可检测的模型，未形成通过结论");
-      } else if (failures.length === 0) {
-        feedbackToast.success(`渠道模型检测通过（${data.total} 个）`);
+      const res = await runCommand("cleanup_stale_models", {
+        key_id: keyId,
+        model_ids: staleModelIds,
+      });
+
+      if (res.ok) {
+        const body = res.body as {
+          cleanupResult?: Array<{ modelId: string; status: string; reason?: string }>;
+        };
+        const results = body.cleanupResult || [];
+        setCleanupResults(results);
+
+        const removedCount = results.filter((r) => r.status === "removed").length;
+        if (removedCount > 0) {
+          feedbackToast.success(`已清理 ${removedCount} 个已下线模型`);
+          // 重新同步拉取最新状态
+          handleSync(keyId);
+        } else {
+          feedbackToast.warning("未发现可直接清理的模型");
+        }
       } else {
-        feedbackToast.warning(`渠道模型检测完成：${data.successCount} 个通过，${failures.length} 个未通过`);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
-        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
-          description: "检测已中断，可以继续检测。",
-          action: {
-            label: "继续检测",
-            onClick: () => {
-              void handleRunChannelTest();
-            },
-          },
-        });
-      } else {
-        feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+        feedbackToast.error(res.error || "清理下线模型失败");
       }
     } finally {
-      setTestingChannel(false);
+      setCleaning(false);
     }
   };
 
-  const isAllFilteredSelected =
-    filteredModels.length > 0 &&
-    filteredModels.every((m) => selectedModelIds.has(m.modelId));
+  // 展开/收起更多版本
+  const toggleGroupExpanded = (displayName: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(displayName)) next.delete(displayName);
+      else next.add(displayName);
+      return next;
+    });
+  };
+
+  // 勾选/取消勾选单个真实 ID
+  const toggleModelSelection = (modelId: string, checked: boolean) => {
+    setSelectedModelIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(modelId);
+      else next.delete(modelId);
+      return next;
+    });
+  };
+
+  // 切换一组主模型的勾选
+  const toggleGroupSelection = (group: ModelGroupItem, checked: boolean) => {
+    setSelectedModelIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        // 推荐勾选推荐写法
+        next.add(group.recommendedModelId);
+      } else {
+        // 取消时把组内全部取消
+        for (const id of group.modelIds) {
+          next.delete(id);
+        }
+      }
+      return next;
+    });
+  };
+
+  // 过滤后的模型组
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return modelGroups;
+    const q = searchQuery.toLowerCase().trim();
+    return modelGroups.filter(
+      (g) =>
+        g.displayName.toLowerCase().includes(q) ||
+        g.modelIds.some((id) => id.toLowerCase().includes(q))
+    );
+  }, [modelGroups, searchQuery]);
+
+  // 全选/全不选
+  const handleToggleAll = (checked: boolean) => {
+    if (checked) {
+      const all = new Set<string>();
+      for (const g of modelGroups) {
+        all.add(g.recommendedModelId);
+      }
+      setSelectedModelIds(all);
+    } else {
+      setSelectedModelIds(new Set());
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
-        {/* 弹窗 Header：去掉接入点名，只显示渠道名称 */}
-        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-[20px] text-[#141413]">
-              {keyLabel}
-            </DialogTitle>
-            {isRefreshing && (
-              <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] bg-surface-sand px-2 py-0.5 rounded-md">
-                <Loader2 className="size-3 animate-spin text-[#78716C]" />
-                <span>正在刷新...</span>
-              </div>
-            )}
+      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[760px] sm:max-w-[760px] max-h-[88vh]">
+        <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
+          <div className="flex items-center justify-between pr-6">
+            <div>
+              <DialogTitle className="text-[20px] text-[#141413]">
+                同步模型 · {keyLabel}
+              </DialogTitle>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">
+                拉取上游服务商支持的最新模型清单。同模型的不同写法已合并为一行。
+              </p>
+            </div>
           </div>
-          <p className="text-[12px] text-[#78716C] leading-normal">
-            管理此渠道挂载的可用模型。按住鼠标划过可批量启用或取消。
-          </p>
         </DialogHeader>
 
-        <DialogBody className="flex min-h-0 flex-1 flex-col overflow-hidden py-1">
-          {isFirstLoading ? (
-            <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
-              <Loader2 className="size-6 animate-spin text-[#78716C]" />
-              <div className="space-y-1">
-                <p className="text-[14px] text-[#141413]">正在拉取该渠道全部模型列表...</p>
-                <p className="text-[12px] text-[#78716C]">连接上游接入点中，请稍候</p>
-              </div>
+        <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-3">
+          {/* S8: 上游比对卡 */}
+          <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 flex flex-wrap items-center justify-between gap-3 text-[12px]">
+            <div className="flex items-center gap-2">
+              <span className="text-[#141413]">
+                上游新增 {newCount} 个
+              </span>
+              <span className="text-[#78716C]">/</span>
+              <span className={staleModelIds.length > 0 ? "text-[#8A6A2F]" : "text-[#78716C]"}>
+                下线 {staleModelIds.length} 个
+              </span>
             </div>
-          ) : loadError && inventory === null ? (
-            <div className="flex flex-col items-center justify-center p-10 text-center space-y-3">
-              <div className="size-8 rounded-full bg-status-danger/[0.10] flex items-center justify-center text-status-danger">
-                <AlertCircle className="size-4" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-[14px] text-[#141413]">模型列表同步失败</p>
-                <p className="text-[12px] text-[#78716C] max-w-md mx-auto">{loadError}</p>
-              </div>
+
+            <div className="flex items-center gap-2">
+              {staleModelIds.length > 0 && (
+                <Button
+                  size="s"
+                  variant="outline"
+                  disabled={cleaning}
+                  onClick={handleCleanupStale}
+                  className="h-7 gap-1 text-[12px] text-status-danger border-status-danger/30 hover:bg-status-danger/[0.08]"
+                >
+                  <Trash2 className="size-3" />
+                  <span>{cleaning ? "清理中…" : "清理上游已下线模型"}</span>
+                </Button>
+              )}
               <Button
-                variant="outline"
                 size="s"
-                onClick={() => keyId && void loadData(keyId)}
-                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                variant="outline"
+                disabled={loading}
+                onClick={() => keyId && handleSync(keyId)}
+                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
               >
-                重试
+                {loading ? <Loader2 className="size-3 animate-spin mr-1" /> : null}
+                重新拉取
               </Button>
             </div>
-          ) : (
-            <>
-              {loadError && (
-                <div className="shrink-0 mb-2 flex items-center justify-between gap-2 rounded-lg border border-status-danger/20 bg-status-danger/[0.05] px-3 py-2 text-[12px] text-status-danger-text">
-                  <span>刷新失败：{loadError}</span>
-                  <button
-                    type="button"
-                    onClick={() => keyId && void loadData(keyId)}
-                    className=" underline hover:text-ink-strong cursor-pointer"
-                  >
-                    重试
-                  </button>
-                </div>
-              )}
+          </div>
 
-              {/* 渠道全模型检测结果展示区（常驻显示在标题下方 / 模型列表上方） */}
-              {testSummary && !testingChannel && (
-                <div
-                  className={cn(
-                    "shrink-0 mb-2 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
-                    testSummary.failureCount > 0
-                      ? "border-status-danger/25 bg-status-danger/[0.05]"
-                      : testSummary.results.length === 0
-                        ? "border-[#8A6A2F]/25 bg-[#8A6A2F]/5"
-                        : "border-[#4B6B4E]/25 bg-[#4B6B4E]/5"
-                  )}
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {testSummary.failureCount > 0 ? (
-                      <AlertCircle className="size-4 text-status-danger shrink-0" />
-                    ) : testSummary.results.length === 0 ? (
-                      <AlertCircle className="size-4 text-[#8A6A2F] shrink-0" />
-                    ) : (
-                      <CheckCircle2 className="size-4 text-[#4B6B4E] shrink-0" />
-                    )}
-                    <div className="text-[14px] text-[#141413]">
-                      <span>
-                        {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的模型" : "检测完成（全部通过）"}
-                      </span>
-                      <span className="mx-1.5 text-[#78716C]/60">·</span>
-                      <span className="text-[12px] text-[#78716C]">
-                        测了 <span className=" text-[#141413] tabular-nums">{testSummary.results.length}</span> 个模型
-                        {" "}· 通过 <span className="text-[#4B6B4E] tabular-nums">{testSummary.successCount}</span> 个
-                        {" "}· 未通过 <span className={cn("tabular-nums", testSummary.failureCount > 0 ? "text-status-danger-text" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
-                      </span>
-                    </div>
+          {/* 清理结果展示 */}
+          {cleanupResults && cleanupResults.length > 0 && (
+            <div className="rounded-xl border border-[#E2E2DF] bg-[#F7F7F6] p-3 text-[12px] space-y-1">
+              <div className="font-normal text-[#141413]">清理结果：</div>
+              <div className="space-y-1">
+                {cleanupResults.map((r) => (
+                  <div key={r.modelId} className="flex items-center justify-between text-[#78716C]">
+                    <span className="font-mono">{r.modelId}</span>
+                    <span>
+                      {r.status === "removed"
+                        ? "已清理"
+                        : `未清理（${r.reason || r.status}）`}
+                    </span>
                   </div>
-
-                  {/* 每个模型一行铺开：通过看耗时，未通过看失败原因 */}
-                  {testSummary.results.length > 0 && (
-                    <div className="max-h-64 overflow-y-auto">
-                      <ChannelModelTestList
-                        rows={testSummary.results.map((r) => ({
-                          name: getModelDisplayName(r.modelId),
-                          detail: r.modelId,
-                          ok: r.ok,
-                          latencyMs: r.latencyMs,
-                          error: r.error,
-                        }))}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 检测进行中进度状态（杜绝假数字，显示「正在检测 N 个模型…」） */}
-              {testingChannel && (
-                <div
-                  role="status"
-                  className="shrink-0 mb-2 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-surface-row-hover px-3.5 py-2.5 text-[12px] text-[#78716C]"
-                >
-                  <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-                  <span className="text-[#141413] ">
-                    正在检测 {currentInventory.length} 个模型…
-                  </span>
-                </div>
-              )}
-
-              {/* 幽灵模型比对结果展示区（B-R1） */}
-              {reconciliation && !isFirstLoading && (
-                <div className="shrink-0 mb-2 space-y-2 select-text">
-                  {/* 情况 A: 无法判定 / 未成功同步（禁止显示 0） */}
-                  {reconciliation.status === "unknown" && (
-                    <div className="rounded-xl border border-[#A8A29E]/30 bg-surface-row-hover p-3 text-[12px] space-y-1">
-                      <div className="flex items-center gap-2 text-[#78716C]">
-                        <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
-                        <span className=" text-[#141413]">上游模型比对状态：未知 · 尚未成功同步</span>
-                      </div>
-                      <p className="text-[12px] text-[#78716C] pl-6">
-                        上游接口响应不确定或未完全探活，不展示猜测数字。
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 情况 B: 确认不可用：显示「N 个模型上游已不再提供」并逐条列出模型名，给收走入口 */}
-                  {reconciliation.verifiedUnavailableModelIds.length > 0 && (
-                    <div className="rounded-xl border border-status-danger/25 bg-status-danger/[0.05] p-3 text-[12px] space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-status-danger-text text-[14px]">
-                          <AlertCircle className="size-4 shrink-0 text-status-danger" />
-                          <span>{reconciliation.verifiedUnavailableModelIds.length} 个模型上游已不再提供</span>
-                        </div>
-                        {onRemoveModel && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="s"
-                            disabled={removingModelId !== null || isBatchRemoving}
-                            onClick={handleRemoveAllVerifiedUnavailable}
-                            className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15]"
-                          >
-                            {isBatchRemoving ? <Loader2 className="size-3 animate-spin mr-1 text-status-danger" /> : <Trash2 className="size-3 mr-1 text-status-danger" />}
-                            一键收走全部已确认失效模型 ({reconciliation.verifiedUnavailableModelIds.length})
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-[#78716C] text-[12px]">
-                        上游清单中已无此模型且实测探测已确认不可用（如 HTTP 404）。建议收走以防业务调度失效：
-                      </p>
-                      <div className="divide-y divide-status-danger/15 border border-status-danger/20 rounded-lg bg-white/70 overflow-hidden">
-                        {reconciliation.verifiedUnavailableModelIds.map((mId) => {
-                          const checkInfo = reconciliation.checks?.find((c) => c.modelId === mId);
-                          const displayName = resolveModelDisplayName(undefined, mId);
-                          return (
-                            <div key={mId} className="flex items-center justify-between gap-2 px-3 py-2 text-[12px]">
-                              <div className="min-w-0">
-                                <div className=" text-[#141413] truncate">{displayName}</div>
-                                <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[12px] text-status-danger-text bg-status-danger/[0.10] px-1.5 py-0.5 rounded">
-                                  {checkInfo?.reason || "上游未提供 (HTTP 404)"}
-                                </span>
-                                {onRemoveModel && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="s"
-                                    disabled={removingModelId === mId || isBatchRemoving}
-                                    onClick={() => handleRemoveSingleModel(mId)}
-                                    className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15]"
-                                  >
-                                    {removingModelId === mId ? <Loader2 className="size-3 animate-spin text-status-danger" /> : "收走"}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 情况 C: 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走 */}
-                  {unverifiedCandidates.length > 0 && (
-                    <div className="rounded-xl border border-[#8A6A2F]/25 bg-[#8A6A2F]/5 p-3 text-[12px] space-y-2">
-                      <div className="flex items-center gap-2 text-[#8A6A2F] text-[14px]">
-                        <AlertCircle className="size-4 shrink-0" />
-                        <span>{unverifiedCandidates.length} 个模型仅清单中未列出（疑似，未验证）</span>
-                      </div>
-                      <p className="text-[#78716C] text-[12px]">
-                        上游清单未显式列出，但实测能通或未完成探活验证。当前保持挂载，不提供一键收走。
-                      </p>
-                      <div className="divide-y divide-[#8A6A2F]/15 border border-[#8A6A2F]/20 rounded-lg bg-white/70 overflow-hidden">
-                        {unverifiedCandidates.map((mId) => {
-                          const displayName = resolveModelDisplayName(undefined, mId);
-                          return (
-                            <div key={mId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[12px]">
-                              <div className="min-w-0">
-                                <div className=" text-[#141413] truncate">{displayName}</div>
-                                <div className="font-mono text-[12px] text-[#78716C] truncate">{mId}</div>
-                              </div>
-                              <span className="text-[12px] text-[#8A6A2F] bg-[#8A6A2F]/10 px-1.5 py-0.5 rounded shrink-0">
-                                疑似，未验证
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 情况 D: 全部核实一致 */}
-                  {reconciliation.status === "verified" &&
-                    reconciliation.verifiedUnavailableModelIds.length === 0 &&
-                    reconciliation.candidateModelIds.length === 0 && (
-                      <div className="rounded-xl border border-[#4B6B4E]/25 bg-[#4B6B4E]/5 px-3 py-2 text-[12px] text-[#4B6B4E] flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-[#4B6B4E] shrink-0" />
-                        <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
-                      </div>
-                    )}
-                </div>
-              )}
-
-              {/* 顶部搜索与快捷批量操作 */}
-              <div className="shrink-0 select-none space-y-2 py-2.5">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="按关键词过滤型号..."
-                    className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E] bg-white shadow-input"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
-                  <div>
-                    已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / 共 <span className="tabular-nums">{currentInventory.length}</span> 个
-                    {searchQuery.trim() && (
-                      <span className="ml-1.5 text-[#78716C]/80">
-                        (匹配 {filteredModels.length} 项)
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      onClick={handleSelectAllFiltered}
-                      disabled={isAllFilteredSelected || filteredModels.length === 0}
-                      className="h-7 gap-1 px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                    >
-                      <CheckCheck className="size-3 text-[#78716C]" /> 全选过滤结果
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      onClick={handleDeselectAllFiltered}
-                      disabled={filteredModels.length === 0}
-                      className="h-7 gap-1 px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                    >
-                      <Square className="size-3" /> 取消全选
-                    </Button>
-                  </div>
-                </div>
+                ))}
               </div>
+            </div>
+          )}
 
-              {/* 模型列表主体 */}
-              <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white select-none">
-                {currentInventory.length === 0 ? (
-                  <div className="p-10 text-center text-[14px] text-[#78716C]">
-                    此渠道尚未返回任何模型
-                  </div>
-                ) : filteredModels.length === 0 ? (
-                  <div className="p-10 text-center text-[14px] text-[#78716C]">
-                    未找到匹配的型号
-                  </div>
-                ) : (
-              filteredModels.map((item) => {
-                const isChecked = selectedModelIds.has(item.modelId);
-                const readableName = resolveModelDisplayName(item.displayName, item.modelId);
-
-                // 四类标识判定
-                let categoryLabel = "储备中";
-                let categoryClass = "bg-[#78716C]/10 text-[#78716C]";
-
-                if (item.isGlobalActive) {
-                  categoryLabel = "现役";
-                  categoryClass = "bg-[#4B6B4E]/10 text-[#4B6B4E]";
-                } else if (item.isEnabled) {
-                  categoryLabel = "本渠道启用";
-                  categoryClass = "bg-[#43718E]/10 text-[#43718E]";
-                } else if (item.isNewlyDiscovered) {
-                  categoryLabel = "新增";
-                  categoryClass = "bg-[#8A6A2F]/10 text-[#8A6A2F]";
+          {/* 搜索与全选 */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="sync-select-all"
+                checked={
+                  selectedModelIds.size > 0 &&
+                  selectedModelIds.size === modelGroups.length
                 }
+                onCheckedChange={(checked) => handleToggleAll(Boolean(checked))}
+                className="size-4 rounded-md"
+              />
+              <label htmlFor="sync-select-all" className="text-[12px] text-[#1F1E1D] cursor-pointer">
+                全选推荐版本 ({selectedModelIds.size} 项已选)
+              </label>
+            </div>
+
+            <div className="relative min-w-[220px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索模型名称或标识..."
+                className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 模型列表 */}
+          {loading ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-2 text-[12px] text-[#78716C]">
+              <Loader2 className="size-5 animate-spin" />
+              <span>正在向服务商查询可用模型…</span>
+            </div>
+          ) : loadError ? (
+            <div className="rounded-xl border border-status-danger/30 bg-status-danger/[0.08] p-4 text-[12px] text-status-danger-text flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{loadError}</span>
+            </div>
+          ) : filteredGroups.length === 0 ? (
+            <div className="py-12 text-center text-[12px] text-[#78716C]">
+              未找到匹配的模型
+            </div>
+          ) : (
+            <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white overflow-hidden text-[12px]">
+              {filteredGroups.map((group) => {
+                const isGroupExpanded = expandedGroups.has(group.displayName);
+                const hasMultipleVersions = group.modelIds.length > 1;
+
+                // 判断是否有任何一个子版本被勾选
+                const isAnySelected = group.modelIds.some((id) => selectedModelIds.has(id));
+
+                // S9: 标签只保留「在用」和「新发现」两种
+                const isInUse = group.modelIds.some((id) => currentChannelEnabledModelIds.has(id));
 
                 return (
-                  <div
-                    key={item.modelId}
-                    role="option"
-                    tabIndex={0}
-                    aria-selected={isChecked}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleRowMouseDown(item.modelId, e as unknown as React.MouseEvent);
-                      }
-                    }}
-                    onMouseDown={(e) => handleRowMouseDown(item.modelId, e)}
-                    onMouseEnter={() => handleRowMouseEnter(item.modelId)}
-                    className={cn(
-                      "flex cursor-pointer select-none items-center justify-between gap-3 px-3.5 py-2.5 text-[14px] transition-colors",
-                      isChecked
-                        ? "bg-[#FCFCFB] text-[#141413]"
-                        : "text-[#1F1E1D] hover:bg-[#EBEBE9]/60",
-                    )}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Checkbox
-                        checked={isChecked}
-                        className="pointer-events-none shrink-0"
-                        tabIndex={-1}
-                      />
-                      <div className="min-w-0">
-                        <div className="truncate text-[14px] text-[#141413]">
-                          {readableName}
-                        </div>
-                        <div className="truncate font-mono text-[12px] text-[#78716C]">
-                          {item.modelId}
+                  <div key={group.displayName} className="p-3 space-y-2 hover:bg-[#F7F7F6]/40 transition-colors">
+                    {/* 主行 */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {/* S9 键盘空格勾选：Checkbox 焦聚时支持键盘空格 toggle */}
+                        <Checkbox
+                          checked={isAnySelected}
+                          onCheckedChange={(checked) => toggleGroupSelection(group, Boolean(checked))}
+                          className="size-4 rounded-md shrink-0"
+                          aria-label={`勾选${group.displayName}`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-normal text-[14px] text-[#141413] truncate">
+                              {group.displayName}
+                            </span>
+                            {/* S9 标签：在用 vs 新发现 */}
+                            {isInUse ? (
+                              <span className="rounded-md bg-[#4B6B4E]/10 px-1.5 py-0.5 text-[12px] text-[#4B6B4E]">
+                                在用
+                              </span>
+                            ) : (
+                              <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] text-[#D97757]">
+                                新发现
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-mono text-[12px] text-[#78716C] truncate mt-0.5">
+                            推荐写法: {group.recommendedModelId}
+                          </div>
                         </div>
                       </div>
+
+                      {/* 更多版本折叠按钮 */}
+                      {hasMultipleVersions && (
+                        <button
+                          type="button"
+                          onClick={() => toggleGroupExpanded(group.displayName)}
+                          className="flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
+                        >
+                          <span>更多版本 ({group.modelIds.length})</span>
+                          {isGroupExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                        </button>
+                      )}
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2">
-                      <span className={cn("text-[12px] px-2 py-0.5 rounded-md font-normal", categoryClass)}>
-                        {categoryLabel}
-                      </span>
-                    </div>
+                    {/* 口径 7: 展开展示同一模型的不同写法与变体 */}
+                    {isGroupExpanded && hasMultipleVersions && (
+                      <div className="mt-2 pl-6 pt-2 border-t border-[#E2E2DF]/60 space-y-1">
+                        <div className="text-[12px] text-[#78716C]">可勾选具体上游标识：</div>
+                        <div className="space-y-1">
+                          {group.modelIds.map((id) => {
+                            const isChecked = selectedModelIds.has(id);
+                            const isRec = id === group.recommendedModelId;
+
+                            return (
+                              <label
+                                key={id}
+                                className="flex items-center justify-between p-1.5 rounded-md hover:bg-[#F1F1F0] cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => toggleModelSelection(id, Boolean(checked))}
+                                    className="size-3.5 rounded-md"
+                                  />
+                                  <span className="font-mono text-[12px] text-[#1F1E1D] truncate">
+                                    {id}
+                                  </span>
+                                </div>
+                                {isRec && (
+                                  <span className="text-[12px] text-[#8A6A2F]">推荐</span>
+                                )}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
-              })
-            )}
-          </div>
-            </>
+              })}
+            </div>
           )}
         </DialogBody>
 
-        {/* 弹窗 Footer */}
-        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#E2E2DF]/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3 shrink-0 flex items-center justify-between sm:justify-between">
+          <span className="text-[12px] text-[#78716C]">
+            勾选后即参与渠道供给，取消勾选仅停止供应
+          </span>
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="s"
-              disabled={testingChannel || saving || isFirstLoading || currentInventory.length === 0}
-              onClick={handleRunChannelTest}
-              className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-              title="测此渠道全部挂载模型（含未勾选和已全站下架的）"
-              aria-label="检测此渠道全部挂载模型"
-            >
-              {testingChannel ? (
-                <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-              ) : (
-                <Activity className="size-3.5 text-[#78716C]" />
-              )}
-              {testingChannel ? "正在检测…" : "检测此渠道全部挂载模型"}
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               size="s"
               onClick={() => onOpenChange(false)}
-              disabled={saving}
-              className="h-7 border-[#E2E2DF] text-[12px] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
+              className="h-8 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
             >
               取消
             </Button>
             <Button
               size="s"
+              disabled={saving || loading}
               onClick={handleSave}
-              disabled={saving || isFirstLoading || currentInventory.length === 0}
-              className="h-7 gap-1 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+              className="h-8 px-4 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
             >
-              {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
-              保存启用配置 ({selectedModelIds.size})
+              {saving ? "保存中…" : `保存配置 (${selectedModelIds.size})`}
             </Button>
           </div>
         </DialogFooter>

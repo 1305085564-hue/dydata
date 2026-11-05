@@ -10,12 +10,17 @@ export function AIConfigShell() {
   const { bundle, isLoading, error, loadData } = useAiConfig();
 
   if (error && !bundle) {
-    return <div className="rounded-xl border border-status-danger/30 bg-white p-6 space-y-3">
-      <h2 className="font-normal text-[14px] text-[#141413]">配置加载失败</h2>
-      <p className="text-[14px] text-[#78716C]">{error}</p>
-      <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">重试</Button>
-    </div>;
+    return (
+      <div className="rounded-xl border border-status-danger/30 bg-white p-6 space-y-3">
+        <h2 className="font-normal text-[14px] text-[#141413]">配置加载失败</h2>
+        <p className="text-[14px] text-[#78716C]">{error}</p>
+        <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">
+          重试
+        </Button>
+      </div>
+    );
   }
+
   if (isLoading || !bundle) {
     return (
       <div className="space-y-5 py-6">
@@ -27,14 +32,21 @@ export function AIConfigShell() {
   }
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-6">
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
             业务功能调度
           </h2>
-          <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C] hover:text-[#141413]">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="刷新配置"
+            aria-label="刷新配置"
+            onClick={() => void loadData()}
+            className="size-7 text-[#78716C] hover:text-[#141413]"
+          >
             <RefreshCw className="size-3.5" />
           </Button>
         </div>
@@ -52,13 +64,6 @@ export function AIConfigShell() {
 
         <ComputePoolPanel />
       </section>
-
-      {/* 完卷微符装帧 */}
-      <div className="flex items-center justify-center gap-2 pt-4 pb-2 text-[12px] text-[#A8A29E] select-none">
-        <span aria-hidden="true" className="text-[#A8A29E] font-serif">✦</span>
-        <span>算力底座静候调度 · 智能容灾与高可用</span>
-        <span aria-hidden="true" className="text-[#A8A29E] font-serif">✦</span>
-      </div>
     </div>
   );
 }

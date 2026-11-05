@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
-import { useAiConfig, type AiConfigBundle } from "../hooks/use-ai-config";
+import { useEffect, useState, useMemo } from "react";
+import { useAiConfig } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import {
   Dialog,
   DialogBody,
@@ -14,628 +14,357 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { presentError } from "@/lib/ai-config/presentation";
-import { getModelDisplayName } from "@/lib/ai/model-families";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { ShelfModelsPicker, type DiscoveredModelItem } from "./shelf-models-dialog";
+import { Loader2, ArrowLeft, Sparkles, Search } from "lucide-react";
 
 interface AddKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  providerId?: string | null;
   onSuccess?: (keyId: string) => void;
 }
 
 export function AddKeyDialog({
   open,
   onOpenChange,
-  providerId,
   onSuccess,
 }: AddKeyDialogProps) {
-  const { bundle, mutate, mutateEntity } = useAiConfig();
+  const { bundle, runCommand } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
 
   const [step, setStep] = useState<"input" | "explore">("input");
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [label, setLabel] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
-  const [priority, setPriority] = useState<number>(50);
+  const [label, setLabel] = useState("");
+
   const [probing, setProbing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [labelError, setLabelError] = useState("");
-  const [keyError, setKeyError] = useState("");
-  const [priorityError, setPriorityError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // 就地新增接入点状态
-  const [isCreatingProvider, setIsCreatingProvider] = useState(false);
-  const [newProviderName, setNewProviderName] = useState("");
-  const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
-  const [newProviderDesc, setNewProviderDesc] = useState("");
-  const [savingProvider, setSavingProvider] = useState(false);
-
-  // 探索模型列表与选中项
-  const [activeInheritedModels, setActiveInheritedModels] = useState<DiscoveredModelItem[]>([]);
-  const [otherDiscoveredModels, setOtherDiscoveredModels] = useState<DiscoveredModelItem[]>([]);
+  // 探测到的模型列表
+  const [discoveredModelIds, setDiscoveredModelIds] = useState<string[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
-  const [isProbeSuccess, setIsProbeSuccess] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+
+  // 业务正在用的模型集合（用于自动勾选）
+  const inUseModelIds = useMemo(() => {
+    const set = new Set<string>();
+    if (report?.businessAssurances) {
+      for (const b of report.businessAssurances) {
+        if (b.selectedModelId) set.add(b.selectedModelId);
+      }
+    }
+    if (report?.globalDefaultModelId) {
+      set.add(report.globalDefaultModelId);
+    }
+    return set;
+  }, [report]);
 
   useEffect(() => {
     if (open) {
       setStep("input");
-      setSelectedProviderId(
-        providerId || bundle?.providers.find((p) => p.is_enabled)?.id || bundle?.providers[0]?.id || ""
-      );
-      setLabel("");
+      setBaseUrl("");
       setApiKey("");
-      setPriority(50);
-      setLabelError("");
-      setKeyError("");
-      setPriorityError("");
-      setIsCreatingProvider(false);
-      setNewProviderName("");
-      setNewProviderBaseUrl("");
-      setNewProviderDesc("");
-      setActiveInheritedModels([]);
-      setOtherDiscoveredModels([]);
+      setLabel("");
+      setDiscoveredModelIds([]);
       setSelectedModelIds(new Set());
-      setIsProbeSuccess(false);
+      setModelSearch("");
     }
-  // Reset only when entering the dialog; background bundle updates must not erase form input.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, providerId]);
+  }, [open]);
 
-  const isDirty = Boolean(
-    label.trim() || apiKey.trim() || priority !== 50 || step === "explore" ||
-    newProviderName.trim() || newProviderBaseUrl.trim() || newProviderDesc.trim(),
-  );
+  // 步骤 1：获取模型
+  const handleProbeModels = async () => {
+    const trimmedUrl = baseUrl.trim();
+    const trimmedKey = apiKey.trim();
 
-  const requestClose = () => {
-    if (isDirty && typeof window !== "undefined" && !window.confirm("接入配置尚未完成，关闭后填写内容会丢失。确定离开吗？")) {
-      return;
-    }
-    onOpenChange(false);
-  };
-
-  useEffect(() => {
-    if (!open || !isDirty || typeof window === "undefined") return;
-    const handlePageExit = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "接入配置尚未完成";
-    };
-    window.addEventListener("beforeunload", handlePageExit);
-    const handleInternalNavigation = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const link = target.closest("a[href]");
-      if (!link || link.getAttribute("target") === "_blank") return;
-      const href = link.getAttribute("href") ?? "";
-      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
-      if (!window.confirm("接入配置尚未完成，离开后填写内容会丢失。确定离开吗？")) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    };
-    document.addEventListener("click", handleInternalNavigation, true);
-    return () => {
-      window.removeEventListener("beforeunload", handlePageExit);
-      document.removeEventListener("click", handleInternalNavigation, true);
-    };
-  }, [open, isDirty]);
-
-  const handleSaveNewProvider = async () => {
-    const trimmedName = newProviderName.trim();
-    const trimmedUrl = newProviderBaseUrl.trim();
-    if (!trimmedName) {
-      feedbackToast.error("接入点名称还没填");
-      return;
-    }
     if (!trimmedUrl) {
-      feedbackToast.error("Base URL 还没填");
+      feedbackToast.error("请填写 API 接口地址");
       return;
     }
-
-    setSavingProvider(true);
-    try {
-      const res = await mutateEntity("create", "provider", {
-        name: trimmedName,
-        base_url: trimmedUrl,
-        description: newProviderDesc.trim() || null,
-        is_enabled: true,
-      });
-      if (res.ok) {
-        feedbackToast.success(`已添加接入点：${trimmedName}`);
-        const created = res.bundle?.providers.find((p) => p.name === trimmedName);
-        if (created) {
-          setSelectedProviderId(created.id);
-        }
-        setIsCreatingProvider(false);
-        setNewProviderName("");
-        setNewProviderBaseUrl("");
-        setNewProviderDesc("");
-      }
-    } finally {
-      setSavingProvider(false);
+    if (!trimmedKey) {
+      feedbackToast.error("请填写 API Key 密钥");
     }
-  };
-
-  const handleProbeAndExplore = async () => {
-    let hasErr = false;
-    if (!label.trim()) {
-      setLabelError("渠道显示名还没填");
-      hasErr = true;
-    } else {
-      setLabelError("");
-    }
-    if (!apiKey.trim()) {
-      setKeyError("API Key 还没填");
-      hasErr = true;
-    } else {
-      setKeyError("");
-    }
-    if (!Number.isInteger(priority) || priority < 1 || priority > 999) {
-      setPriorityError("只能填 1-999 的整数");
-      hasErr = true;
-    } else {
-      setPriorityError("");
-    }
-    if (hasErr) return;
 
     setProbing(true);
-    let probeOk = false;
     try {
-      const provider = bundle?.providers.find((p) => p.id === selectedProviderId);
-      let discoveredIds: string[] = [];
+      const res = await runCommand("probe_provider_models", {
+        base_url: trimmedUrl,
+        api_key: trimmedKey,
+      });
 
-      // 1. 由服务端携带临时 API Key 探测，浏览器不直连上游。
-      if (provider?.id) {
-        try {
-          const res = await fetch("/api/admin/ai-config", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "probe_provider_models",
-              data: { provider_id: provider.id, api_key: apiKey.trim() },
-            }),
-          });
-          const data = await res.json();
-          if (res.ok && Array.isArray(data.modelIds) && data.modelIds.length > 0) {
-            discoveredIds = data.modelIds;
-            probeOk = true;
+      if (res.ok) {
+        const body = res.body as {
+          modelIds?: string[];
+        };
+        const ids = body.modelIds || [];
+
+        setDiscoveredModelIds(ids);
+
+        // 自动勾上正在被业务或全局默认使用的模型（与 modelIds 取交集）
+        const autoSelected = new Set<string>();
+        for (const id of ids) {
+          if (inUseModelIds.has(id)) {
+            autoSelected.add(id);
           }
-        } catch {
-          // 服务端探测失败时使用系统已知模型备选，并明确标记为未探测成功。
         }
+        setSelectedModelIds(autoSelected);
+        setStep("explore");
+        feedbackToast.success(`成功探测到 ${ids.length} 个上游可用模型`);
+      } else {
+        feedbackToast.error(res.error || "获取上游模型失败，请检查地址和密钥");
       }
-
-      // 2. 如果上游直接探测未获结果，继承该渠道已探明模型或系统已知模型作为候选
-      if (!probeOk) {
-        const knownKeys = bundle?.keys.filter((k) => k.provider_id === selectedProviderId) ?? [];
-        const knownFromKeys = knownKeys.flatMap((k) => (k as unknown as { available_models?: string[] }).available_models ?? []);
-        const knownFromModels =
-          bundle?.models
-            .filter((m) => knownKeys.some((k) => k.id === m.key_id))
-            .map((m) => m.model_id) ?? [];
-        discoveredIds = [...new Set([...knownFromKeys, ...knownFromModels])];
-      }
-
-      // 3. 如果依然为空，补充全站现役模型作为候选
-      if (!probeOk && discoveredIds.length === 0 && bundle) {
-        discoveredIds = [...new Set(bundle.models.map((m) => m.model_id))];
-      }
-
-      setIsProbeSuccess(probeOk);
-
-      // 全站现役在用模型 ID 集合 (is_enabled === true)
-      const activeGlobalModelIds = new Set(
-        bundle?.models.filter((m) => m.is_enabled).map((m) => m.model_id) ?? []
-      );
-
-      const activeList: DiscoveredModelItem[] = [];
-      const otherList: DiscoveredModelItem[] = [];
-      const initialSelected = new Set<string>();
-
-      for (const id of discoveredIds) {
-        const matched = bundle?.models.find((m) => m.model_id === id);
-        const displayName = (matched?.display_name && matched.display_name !== id)
-          ? getModelDisplayName(matched.display_name)
-          : getModelDisplayName(id);
-        const item = { modelId: id, displayName };
-
-        if (activeGlobalModelIds.has(id)) {
-          activeList.push(item);
-          initialSelected.add(id); // 现役模型自动继承预勾选
-        } else {
-          otherList.push(item);
-        }
-      }
-
-      // 确保全站现役模型全部出现在区一，避免探测遗漏
-      for (const activeId of activeGlobalModelIds) {
-        if (!discoveredIds.includes(activeId)) {
-          const matched = bundle?.models.find((m) => m.model_id === activeId);
-          const displayName = (matched?.display_name && matched.display_name !== activeId)
-            ? getModelDisplayName(matched.display_name)
-            : getModelDisplayName(activeId);
-          activeList.push({ modelId: activeId, displayName });
-          initialSelected.add(activeId);
-        }
-      }
-
-      setActiveInheritedModels(activeList);
-      setOtherDiscoveredModels(otherList);
-      setSelectedModelIds(initialSelected);
-      setStep("explore");
     } finally {
       setProbing(false);
     }
   };
 
-  const handleToggleModel = (modelId: string) => {
+  // 步骤 2：提交保存
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await runCommand(
+        "create",
+        {
+          base_url: baseUrl.trim(),
+          api_key: apiKey.trim(),
+          label: label.trim() || undefined,
+          selected_model_ids: Array.from(selectedModelIds),
+        },
+        "key"
+      );
+
+      if (res.ok) {
+        feedbackToast.success("渠道接入成功！");
+        onOpenChange(false);
+        const createdKeyId = (res.body as { key?: { id: string } })?.key?.id;
+        if (createdKeyId && onSuccess) onSuccess(createdKeyId);
+      } else {
+        feedbackToast.error(res.error || "保存渠道失败");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedModelIds(new Set(discoveredModelIds));
+    } else {
+      setSelectedModelIds(new Set());
+    }
+  };
+
+  const handleToggleModel = (id: string, checked: boolean) => {
     setSelectedModelIds((prev) => {
       const next = new Set(prev);
-      if (next.has(modelId)) {
-        next.delete(modelId);
-      } else {
-        next.add(modelId);
-      }
+      if (checked) next.add(id);
+      else next.delete(id);
       return next;
     });
   };
 
-  const handleSubmitKey = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          entity: "key",
-          data: {
-            provider_id: selectedProviderId,
-            label: label.trim(),
-            api_key: apiKey.trim(),
-            priority,
-            is_enabled: true,
-            selectedModelIds: Array.from(selectedModelIds),
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "接入渠道失败");
-      }
-
-      mutate(data as AiConfigBundle);
-      onOpenChange(false);
-      feedbackToast.success(
-        `已成功接入渠道，并启用 ${selectedModelIds.size} 个渠道模型；全站下架模型仍保留为渠道就绪。`
-      );
-
-      const newKey = (data.keys as Array<{ id: string; label: string }> | undefined)?.find(
-        (k) => k.label === label.trim()
-      );
-      if (newKey && onSuccess) {
-        onSuccess(newKey.id);
-      }
-    } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "接入渠道失败"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 过滤后的模型
+  const filteredModelIds = useMemo(() => {
+    if (!modelSearch.trim()) return discoveredModelIds;
+    const q = modelSearch.toLowerCase().trim();
+    return discoveredModelIds.filter((id) => id.toLowerCase().includes(q));
+  }, [discoveredModelIds, modelSearch]);
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => nextOpen ? onOpenChange(true) : requestClose()}>
-      <DialogContent
-        className={cn(
-          "flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog transition-all duration-200",
-          step === "input" ? "max-w-lg" : "max-w-2xl"
-        )}
-      >
-        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[20px] text-[#141413]">
-            {step === "input" ? "接入渠道" : `同步并选择模型 · ${label}`}
-          </DialogTitle>
-          <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">
-            {step === "input" ? (
-              <>
-                <p className="text-[#1F1E1D]">接入点 = 上游服务商，渠道 = 这个服务商下的一条专线。</p>
-                <p>填写接入资料和渠道显示名，再同步可用模型。</p>
-              </>
-            ) : (
-              <p>勾选需要在这条渠道供给的模型；是否参与业务调度还受模型全站状态控制。</p>
-            )}
-          </div>
-        </DialogHeader>
-
-        {step === "input" ? (
-          <>
-            <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
-                    所属接入点
-                  </Label>
-                  {!isCreatingProvider && (
-                    <button
-                      type="button"
-                      onClick={() => setIsCreatingProvider(true)}
-                      className="text-[12px] text-[#D97757] hover:underline cursor-pointer"
-                    >
-                      ＋ 新增接入点
-                    </button>
-                  )}
-                </div>
-                <Select
-                  value={selectedProviderId}
-                  onValueChange={(val) => {
-                    if (val === "__CREATE_NEW_PROVIDER__") {
-                      setIsCreatingProvider(true);
-                    } else if (val) {
-                      setSelectedProviderId(val);
-                      setIsCreatingProvider(false);
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    id="provider-select"
-                    aria-label="所属接入点"
-                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[14px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                  >
-                    <SelectValue placeholder="选择接入点">
-                      {bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "选择接入点"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[14px] shadow-claude-float p-1 min-w-[240px]">
-                    {bundle?.providers.map((p) => (
-                      <SelectItem
-                        key={p.id}
-                        value={p.id}
-                        disabled={!p.is_enabled}
-                        className={cn("py-1.5", !p.is_enabled && "opacity-50 cursor-not-allowed text-[#A8A29E]")}
-                      >
-                        {p.name} {!p.is_enabled ? "（已停用）" : ""}
-                      </SelectItem>
-                    ))}
-                    <div className="my-1 h-px bg-[#E2E2DF]" />
-                    <SelectItem
-                      value="__CREATE_NEW_PROVIDER__"
-                      className="py-1.5 text-[#D97757] focus:text-[#D97757]"
-                    >
-                      ＋ 新增接入点
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* 就地展开新增接入点表单 */}
-                {isCreatingProvider && (
-                  <div className="mt-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 space-y-2.5">
-                    <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[12px] text-[#141413]">新增上游接入点</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsCreatingProvider(false)}
-                        className="text-[12px] text-[#78716C] hover:text-[#141413] cursor-pointer"
-                      >
-                        取消
-                      </button>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[12px] text-[#78716C]">接入点名称 *</Label>
-                      <Input
-                        value={newProviderName}
-                        onChange={(e) => setNewProviderName(e.target.value)}
-                        placeholder="例如：api10 或 OneAPI 接入点"
-                        className="h-8 text-[12px] bg-white border-[#E2E2DF] text-[#1F1E1D]"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[12px] text-[#78716C]">Base URL *</Label>
-                      <Input
-                        value={newProviderBaseUrl}
-                        onChange={(e) => setNewProviderBaseUrl(e.target.value)}
-                        placeholder="https://api.example.com/v1"
-                        className="h-8 text-[12px] font-mono bg-white border-[#E2E2DF] text-[#1F1E1D]"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[12px] text-[#78716C]">描述说明（选填）</Label>
-                      <Input
-                        value={newProviderDesc}
-                        onChange={(e) => setNewProviderDesc(e.target.value)}
-                        placeholder="例如：自建备用中继转发"
-                        className="h-8 text-[12px] bg-white border-[#E2E2DF] text-[#1F1E1D]"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2 pt-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="s"
-                        onClick={() => setIsCreatingProvider(false)}
-                        className="h-7 text-[12px] border-[#E2E2DF]"
-                      >
-                        取消
-                      </Button>
-                      <Button
-                        type="button"
-                        size="s"
-                        disabled={savingProvider}
-                        onClick={handleSaveNewProvider}
-                        className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
-                      >
-                        {savingProvider ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
-                        保存并选用
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
-                    渠道显示名
-                  </Label>
-                  <div className="flex items-center gap-1">
-                    {["Claude", "Gemini", "ChatGPT"].map((preset) => {
-                      const provider = bundle?.providers.find((p) => p.id === selectedProviderId);
-                      const prefix = provider?.name ? `${provider.name} ` : "";
-                      return (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => {
-                            setLabel(`${prefix}${preset}`);
-                            if (labelError) setLabelError("");
-                          }}
-                          className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
-                        >
-                          {preset}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <Input
-                  id="key-label"
-                  placeholder="例如：api9 Claude 主"
-                  value={label}
-                  onChange={(e) => {
-                    setLabel(e.target.value);
-                    if (labelError) setLabelError("");
-                  }}
-                  className={cn(
-                    "h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                    labelError && "ring-1 ring-status-danger/40 border-status-danger/60"
-                  )}
-                />
-                <p className="text-[12px] text-[#A8A29E]">建议名称：{bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "接入点"}{label.trim() ? ` ${label.trim()}` : " 渠道"}</p>
-                {labelError && <p className="text-status-danger-text text-[12px] mt-1">{labelError}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="api-key" className="text-[12px] text-[#78716C]">
-                  API Key 授权凭据
-                </Label>
-                <Input
-                  id="api-key"
-                  type="password"
-                  placeholder="sk-..."
-                  value={apiKey}
-                  onChange={(e) => {
-                    setApiKey(e.target.value);
-                    if (keyError) setKeyError("");
-                  }}
-                  onBlur={() => setApiKey((value) => value.trim())}
-                  className={cn(
-                    "h-8 text-[14px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                    keyError && "ring-1 ring-status-danger/40 border-status-danger/60"
-                  )}
-                />
-                {keyError && <p className="text-status-danger-text text-[12px] mt-1">{keyError}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="priority" className="text-[12px] text-[#78716C]">
-                    调度顺位优先级
-                  </Label>
-                  <span className="text-[12px] text-[#78716C]">数字越小越优先调度，1 为首选</span>
-                </div>
-                <Input
-                  id="priority"
-                  type="number"
-                  min={1}
-                  max={999}
-                  value={priority}
-                  onChange={(e) => {
-                    const next = Number(e.target.value);
-                    setPriority(next);
-                    setPriorityError(Number.isInteger(next) && next >= 1 && next <= 999 ? "" : "只能填 1-999 的整数");
-                  }}
-                  className="h-8 text-[14px] border-[#E2E2DF] text-[#1F1E1D]"
-                />
-                {priorityError && <p className="text-status-danger-text text-[12px] mt-1">{priorityError}</p>}
-              </div>
-            </DialogBody>
-
-            <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
-              <Button
-                variant="outline"
-                size="s"
-                onClick={requestClose}
-                disabled={probing}
-                className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
-              >
-                取消
-              </Button>
-              <Button
-                size="s"
-                onClick={handleProbeAndExplore}
-                disabled={probing}
-                className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
-              >
-                {probing && <Loader2 className="size-3.5 animate-spin mr-1 text-white" />}
-                {probing ? "正在探测…" : "下一步：同步并选择模型"}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-2.5">
-              <ShelfModelsPicker
-                activeInheritedModels={activeInheritedModels}
-                otherDiscoveredModels={otherDiscoveredModels}
-                selectedModelIds={selectedModelIds}
-                onToggleModel={handleToggleModel}
-                isProbeSuccess={isProbeSuccess}
-              />
-            </DialogBody>
-
-            <DialogFooter className="flex items-center justify-between sm:justify-between border-t border-[#E2E2DF]/60 pt-3">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[680px] sm:max-w-[680px] max-h-[88vh]">
+        <DialogHeader className="border-b border-[#E2E2DF]/60 pb-3 shrink-0">
+          <div className="flex items-center gap-2">
+            {step === "explore" && (
               <Button
                 variant="ghost"
-                size="s"
+                size="icon-s"
                 onClick={() => setStep("input")}
-                disabled={loading}
-                className="h-7.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2.5"
+                className="size-7 text-[#78716C] mr-1"
+                title="返回修改配置"
               >
-                <ArrowLeft className="size-3 mr-1" />
-                返回上一步
+                <ArrowLeft className="size-4" />
               </Button>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="s"
-                  onClick={requestClose}
-                  disabled={loading}
-                  className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
-                >
-                  取消
-                </Button>
-                <Button
-                  size="s"
-                  onClick={handleSubmitKey}
-                  disabled={loading}
-                  className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
-                >
-                  {loading && <Loader2 className="size-3.5 animate-spin mr-1 text-white" />}
-                  确认接入并启用渠道模型 ({selectedModelIds.size})
-                </Button>
+            )}
+            <DialogTitle className="text-[20px] text-[#141413]">
+              {step === "input" ? "接入新渠道" : "勾选供应模型"}
+            </DialogTitle>
+          </div>
+          <p className="text-[12px] text-[#78716C]">
+            {step === "input"
+              ? "填入服务商 API 接口地址与密钥，系统将自动识别上游提供的模型。"
+              : `已探测到 ${discoveredModelIds.length} 个模型，请勾选本渠道需要提供给系统调度的模型。`}
+          </p>
+        </DialogHeader>
+
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
+          {step === "input" ? (
+            <div className="space-y-4">
+              {/* 1. API 接口地址 */}
+              <div className="space-y-2">
+                <Label htmlFor="channel-base-url" className="text-[12px] text-[#1F1E1D]">
+                  API 接口地址 (Base URL) <span className="text-status-danger">*</span>
+                </Label>
+                <Input
+                  id="channel-base-url"
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  placeholder="https://api.openai.com/v1 或中转商地址"
+                  className="h-8 text-[12px] font-mono border-[#E2E2DF]"
+                />
+                <p className="text-[12px] text-[#78716C]">
+                  系统会自动根据地址归类接入点；若已接入过相同地址，将自动归入同一组。
+                </p>
               </div>
-            </DialogFooter>
-          </>
-        )}
+
+              {/* 2. API Key */}
+              <div className="space-y-2">
+                <Label htmlFor="channel-api-key" className="text-[12px] text-[#1F1E1D]">
+                  API Key 密钥 <span className="text-status-danger">*</span>
+                </Label>
+                <Input
+                  id="channel-api-key"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="sk-..."
+                  className="h-8 text-[12px] font-mono border-[#E2E2DF]"
+                />
+              </div>
+
+              {/* 3. 渠道名称（选填） */}
+              <div className="space-y-2">
+                <Label htmlFor="channel-label" className="text-[12px] text-[#1F1E1D]">
+                  渠道名称 (选填)
+                </Label>
+                <Input
+                  id="channel-label"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="例如：主通道、备用-硅基流动（留空则使用地址主机名）"
+                  className="h-8 text-[12px] border-[#E2E2DF]"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* 工具条：全选与搜索 */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all-models"
+                    checked={
+                      selectedModelIds.size > 0 &&
+                      selectedModelIds.size === discoveredModelIds.length
+                    }
+                    onCheckedChange={(checked) => handleToggleSelectAll(Boolean(checked))}
+                    className="size-4 rounded-md"
+                  />
+                  <Label htmlFor="select-all-models" className="text-[12px] text-[#1F1E1D] cursor-pointer">
+                    全选 ({selectedModelIds.size}/{discoveredModelIds.length})
+                  </Label>
+                </div>
+
+                <div className="relative min-w-[200px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-[#78716C]" />
+                  <Input
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    placeholder="筛选模型..."
+                    className="h-7 pl-7 text-[12px] border-[#E2E2DF]"
+                  />
+                </div>
+              </div>
+
+              {/* 模型列表 */}
+              <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white max-h-[360px] overflow-y-auto">
+                {filteredModelIds.length === 0 ? (
+                  <div className="p-8 text-center text-[12px] text-[#78716C]">
+                    未找到匹配的模型
+                  </div>
+                ) : (
+                  filteredModelIds.map((id) => {
+                    const isSelected = selectedModelIds.has(id);
+                    const isInUse = inUseModelIds.has(id);
+
+                    return (
+                      <div
+                        key={id}
+                        className="p-2.5 flex items-center justify-between gap-3 hover:bg-[#F7F7F6]/60 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Checkbox
+                            id={`model-${id}`}
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleToggleModel(id, Boolean(checked))}
+                            className="size-4 rounded-md"
+                          />
+                          <Label
+                            htmlFor={`model-${id}`}
+                            className="text-[12px] font-mono text-[#141413] cursor-pointer truncate"
+                          >
+                            {id}
+                          </Label>
+                        </div>
+
+                        {isInUse && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] text-[#D97757] shrink-0">
+                            <Sparkles className="size-2.5" />
+                            业务在用 · 推荐勾选
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3 shrink-0 flex items-center justify-between sm:justify-between">
+          <Button
+            variant="outline"
+            size="s"
+            onClick={() => onOpenChange(false)}
+            className="h-8 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+          >
+            取消
+          </Button>
+
+          {step === "input" ? (
+            <Button
+              size="s"
+              disabled={probing}
+              onClick={handleProbeModels}
+              className="h-8 px-4 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            >
+              {probing ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                  正在连接上游…
+                </>
+              ) : (
+                "获取模型"
+              )}
+            </Button>
+          ) : (
+            <Button
+              size="s"
+              disabled={saving}
+              onClick={handleSave}
+              className="h-8 px-4 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                  正在保存…
+                </>
+              ) : (
+                `保存渠道 (已选 ${selectedModelIds.size} 个模型)`
+              )}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

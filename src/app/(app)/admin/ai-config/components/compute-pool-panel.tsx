@@ -1,102 +1,35 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { Plus, RotateCcw, Loader2, Activity, X, Settings2, AlertTriangle } from "lucide-react";
-import {
-  useAiConfig,
-  type AiProvider,
-  type AiProviderKey,
-  type AiModelTestResult,
-  type SyncModelReconciliation,
-  AI_MODEL_BATCH_TIMEOUT_MESSAGE,
-} from "../hooks/use-ai-config";
-import { ModelFamilyCard } from "./model-family-card";
-import { AddKeyDialog } from "./add-key-dialog";
-import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
-import { DangerousActionDialog, type DangerousActionType } from "./dangerous-action-dialog";
-import { SyncModelsDialog, type ChannelTestSummary } from "./sync-models-dialog";
-import { ModelManagerDialog } from "./model-manager-dialog";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useAiConfig } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { PoolViewSwitcher, type PoolViewMode } from "./pool-view-switcher";
+import { ComputePoolHeader } from "./compute-pool-header";
+import { ModelFamilyCard } from "./model-family-card";
 import { ChannelPoolView } from "./channel-pool-view";
-import {
-  KeyTestResultsBar,
-  SyncFailedResultsBar,
-  type WarehouseModelGroup,
-  type KeyTestResultItem,
-} from "./shelf-models-dialog";
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { EmptyState } from "@/components/ui/empty-state";
+import { AddKeyDialog } from "./add-key-dialog";
+import { SyncModelsDialog } from "./sync-models-dialog";
+import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getModelDisplayName } from "@/lib/ai/model-families";
-import { fetchWithTimeout } from "@/lib/fetch-timeout";
-import { presentError } from "@/lib/ai-config/presentation";
-import { modelTestKey } from "./model-test-feedback";
+import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
+import type { CheckResultItem } from "./channel-model-test-list";
+import { cn } from "@/lib/utils";
 
 export function ComputePoolPanel() {
-  const {
-    bundle,
-    mutate,
-    mutateEntity,
-    swapModelChannelOrder,
-    setKeySleep,
-    testKeyModel,
-    testKeyAllModels,
-    testAllKeysAllModels,
-    checkDependencies,
-    setKeyModelSelection,
-    syncKeyModels,
-    removeKeyModel,
-    refresh,
-  } = useAiConfig();
-
-  const [channelReconciliations, setChannelReconciliations] = useState<Map<string, SyncModelReconciliation>>(new Map());
-  const [modelTestResults, setModelTestResults] = useState<Record<string, AiModelTestResult>>({});
-  const handleTestKeyModel = async (keyId: string, modelId: string) => {
-    const result: AiModelTestResult = await testKeyModel(keyId, modelId);
-    setModelTestResults((previous) => ({ ...previous, [modelTestKey(keyId, modelId)]: result }));
-    return result;
-  };
-  const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
-  const [modelManagerOpen, setModelManagerOpen] = useState(false);
-  const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
-  const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
-  const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
-  const [panelDangerousAction, setPanelDangerousAction] = useState<{
-    open: boolean;
-    actionType: DangerousActionType;
-    targetId: string;
-    targetName: string;
-    loading: boolean;
-    isExecuting: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    preview: any;
-    onExecute?: () => Promise<void>;
-    onNarrower?: () => Promise<void>;
-    narrowerLabel?: string;
-    narrowerDesc?: string;
-    confirmLabel?: string;
-  }>({
-    open: false,
-    actionType: "delete_key",
-    targetId: "",
-    targetName: "",
-    loading: false,
-    isExecuting: false,
-    preview: null,
-  });
+  const { bundle, runCommand } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
   const searchParams = useSearchParams();
-  const urlView = searchParams.get("view");
-  const [viewMode, setViewMode] = useState<PoolViewMode>(
-    urlView === "channel" ? "channel" : "model"
-  );
+
+  // 视角模式：模型视角 (model) vs 渠道视角 (channel)
+  const [viewMode, setViewMode] = useState<PoolViewMode>("model");
 
   useEffect(() => {
-    const v = searchParams.get("view");
-    if (v === "channel" || v === "model") {
-      setViewMode(v);
+    const view = searchParams.get("view");
+    if (view === "model" || view === "channel") {
+      setViewMode(view);
     }
   }, [searchParams]);
 
@@ -109,6 +42,21 @@ export function ComputePoolPanel() {
     }
   };
 
+  // 模型筛选：D1 只看在用 / 全部，默认只看在用（isShelved=true）
+  const [shelveFilter, setShelveFilter] = useState<"in_use" | "all">("in_use");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 检查测试状态
+  const [isCheckingAll, setIsCheckingAll] = useState(false);
+  const [checkResult, setCheckResult] = useState<{
+    total: number;
+    successCount: number;
+    failureCount: number;
+    results: CheckResultItem[];
+  } | null>(null);
+
+  // 弹窗状态
+  const [addKeyOpen, setAddKeyOpen] = useState(false);
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean;
     keyId: string | null;
@@ -119,912 +67,319 @@ export function ComputePoolPanel() {
     keyLabel: "",
   });
 
-  const [syncingAll, setSyncingAll] = useState(false);
-  const [testingAll, setTestingAll] = useState(false);
-  const [confirmTestAllOpen, setConfirmTestAllOpen] = useState(false);
-  const [testingAllModels, setTestingAllModels] = useState(false);
-  const [modelTestingState, setModelTestingState] = useState<{ total: number } | null>(null);
-  const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
-  const [channelTestSummaries, setChannelTestSummaries] = useState<Map<string, ChannelTestSummary>>(new Map());
-  const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
-  const [allModelsTestFailures, setAllModelsTestFailures] = useState<{
-    totalKeys: number;
-    totalModels: number;
-    successCount: number;
-    failureCount: number;
-    failures: Array<{
-      keyId: string;
-      keyLabel: string;
-      modelId: string;
-      error: string;
-    }>;
-  } | null>(null);
+  const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
+  const [testingKeyModelId, setTestingKeyModelId] = useState<string | null>(null);
 
-  // 一次性、待删、勿参考：本轮只做数据接线，界面由 Antigravity 重做。
-  // 数据接线：分组、顺位和状态直接读取服务端报告，不在页面重算。
-  const modelFamilyGroups = useMemo<WarehouseModelGroup[]>(() => {
-    if (!bundle?.availability) return [];
-    return bundle.availability.modelFamilies.map(family => ({
-      modelId: family.modelId, displayName: family.displayName, isShelved: family.isShelved,
-      items: family.channels.flatMap(channel => {
-        const key = bundle.keys.find(item => item.id === channel.keyId);
-        return key ? [{ key, providerName: channel.providerName, modelRecordId: channel.keyModelId,
-          sortOrder: channel.sortOrder, modelId: family.modelId, displayName: family.displayName }] : [];
-      }),
-    }));
+  // 诊断信息映射表：按 keyModelId 对应
+  const diagnosticMap = useMemo(() => {
+    const map: Record<string, ChannelFailureDiagnostic> = {};
+    if (bundle?.models) {
+      for (const m of bundle.models) {
+        if (m.failureDiagnostic) {
+          map[m.id] = m.failureDiagnostic;
+        }
+      }
+    }
+    return map;
   }, [bundle]);
 
-  const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
+  // 统一带确认执行命令
+  const executeWithConfirm = useCallback(
+    async (
+      action: string,
+      data: Record<string, unknown>,
+      entity?: "provider" | "key" | "model" | "feature_binding",
+      successMsg?: string
+    ) => {
+      const res = await runCommand(action, data, entity);
+      if (res.ok) {
+        if (successMsg) feedbackToast.success(successMsg);
+        return res;
+      }
 
-  const handleRenameModel = async (modelId: string, modelRecordId: string, newDisplayName: string) => {
-    const res = await mutateEntity("update", "model", { id: modelRecordId, display_name: newDisplayName });
-    return res.ok;
-  };
-
-  const handleDeleteModelPermanent = async (group: WarehouseModelGroup) => {
-    setPanelDangerousAction({
-      open: true,
-      actionType: "unmount_model",
-      targetId: group.modelId,
-      targetName: group.displayName,
-      loading: true,
-      isExecuting: false,
-      preview: null,
-      narrowerLabel: "仅下架模型（保留渠道配置）",
-      narrowerDesc: "如果后续可能还会使用，建议先下架保留渠道配置，无需彻底清除记录：",
-      confirmLabel: "确认收走模型供应",
-      onNarrower: async () => {
-        const res = await executeShelfChange(group.modelId, false);
-        if (!res.ok) {
-          feedbackToast.error(res.error || "模型下架失败");
-          return;
-        }
-        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-        feedbackToast.warning(`已下架模型「${group.displayName}」`, {
-          duration: 5000,
-          action: {
-            label: "撤回",
-            onClick: async () => {
-              const restored = await executeShelfChange(group.modelId, true);
-              if (restored.ok) feedbackToast.success(`已撤回下架 · 恢复「${group.displayName}」`);
-              else feedbackToast.error(`恢复「${group.displayName}」失败`);
-            },
+      if (res.status === 409 && res.requiresConfirmation) {
+        setImpactConfirm({
+          type: "impact",
+          affectedBusinesses: res.affectedBusinesses || [],
+          onConfirm: async () => {
+            const retryRes = await runCommand(action, { ...data, confirm_impact: true }, entity);
+            if (retryRes.ok) {
+              if (successMsg) feedbackToast.success(successMsg);
+            } else {
+              feedbackToast.error(retryRes.error || "操作失败");
+            }
           },
         });
-      },
-      onExecute: async () => {
-        const results = await Promise.all(group.items.map((item) => mutateEntity("delete", "model", { id: item.modelRecordId })));
-        const okCount = results.filter((result) => result.ok).length;
-        const failed = group.items.filter((_, index) => !results[index]?.ok).map((item) => item.displayName);
-        await refresh();
-        if (okCount === results.length) {
-          feedbackToast.success(`已收走 ${okCount} 条模型供给记录`);
-        } else {
-          feedbackToast.error(`已收走 ${okCount} 条，${results.length - okCount} 条失败：${failed.join("、")}`);
-        }
-        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-      },
-    });
-
-    try {
-      const deps = await checkDependencies({ scope: "model", id: group.modelId });
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: deps,
-      }));
-    } catch {
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: {
-          ok: false,
-          complete: false,
-          unknownReasons: ["无法连接依赖检查接口"],
-          criticalBindings: [],
-          affectedBindings: [],
-        },
-      }));
-    }
-  };
-
-  const handleSyncAll = async () => {
-    if (syncingAll || testingAll) return;
-    setSyncingAll(true);
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync_all_keys" }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "模型测试失败");
-
-      const freshBundle = await refresh();
-      const failedList = (data.failed ?? []) as Array<{ keyId: string; keyName: string; error: string }>;
-
-      const totalModels = freshBundle?.models?.length ?? bundle?.models?.length;
-      const stockPart = totalModels !== undefined ? `，池内共 ${totalModels} 个模型` : "";
-
-      if (failedList.length > 0) {
-        feedbackToast.warning(
-          `已测试 ${data.total} 个渠道${stockPart}，${failedList.length} 个渠道探测失败`,
-          {
-            action: {
-              label: "查看原因",
-              onClick: () => {
-                setSyncFailedChannels(failedList);
-              },
-            },
-          }
-        );
-      } else {
-        feedbackToast.success(`全池 ${data.total} 个渠道同步完成${stockPart}`);
+        return res;
       }
-    } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全部同步模型失败"));
-    } finally {
-      setSyncingAll(false);
-    }
-  };
 
-  const handleTestAll = async () => {
-    if (syncingAll || testingAll) return;
-    setTestingAll(true);
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "test_all_keys" }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "渠道测试失败");
-      setTestResults(data);
-      const okCount = data.results.filter((r: KeyTestResultItem) => r.ok).length;
-      feedbackToast.success(`已完成渠道测试：${okCount}/${data.total} 个渠道在线`);
-    } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "渠道测试失败"));
-    } finally {
-      setTestingAll(false);
-    }
-  };
-  const executeShelfChange = async (modelId: string, nextState: boolean) => {
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set_global_model_shelf_state", data: { modelId, is_enabled: nextState } }),
-      });
-      const data = await res.json();
-      if (!res.ok) return { ok: false, error: data.error || (res.status === 409 ? "这个接入点正被独占使用，不能下架" : "没能完成，稍后重试") };
-      mutate(data);
-      return { ok: true };
-    } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络不稳，重试一下" }; }
-  };
-
-  const handleShelfChange = async (modelId: string, nextState: boolean) => {
-    if (nextState) {
-      const res = await executeShelfChange(modelId, true);
-      if (res.ok) feedbackToast.success("已全站上架模型");
+      feedbackToast.error(res.error || "操作失败");
       return res;
-    }
+    },
+    [runCommand]
+  );
 
-    const group = modelFamilyGroups.find((g) => g.modelId === modelId);
-    const displayName = group?.displayName || modelId;
-
-    setPanelDangerousAction({
-      open: true,
-      actionType: "unshelf_model",
-      targetId: modelId,
-      targetName: displayName,
-      loading: true,
-      isExecuting: false,
-      preview: null,
-      narrowerLabel: "前往渠道视角管理单条渠道",
-      narrowerDesc: "如果只想在某条特定渠道上停用该模型，建议前往渠道视角单独关闭，无需全站下架：",
-      confirmLabel: "确认全站下架",
-      onNarrower: async () => {
-        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-        handleViewModeChange("channel");
-        feedbackToast.success("已切换至渠道视角，可在右侧单独管理各渠道的模型挂载");
-      },
-      onExecute: async () => {
-        const res = await executeShelfChange(modelId, false);
-        if (res.ok) {
-          feedbackToast.warning(`已全站下架模型「${displayName}」`, {
-            duration: 5000,
-            action: {
-              label: "撤回",
-              onClick: async () => {
-                const restored = await executeShelfChange(modelId, true);
-                if (restored.ok) feedbackToast.success(`已撤回下架 · 恢复「${displayName}」`);
-                else feedbackToast.error(`恢复「${displayName}」失败`);
-              },
-            },
-          });
-          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-        } else {
-          feedbackToast.error(res.error || "全站下架失败");
-        }
-      },
-    });
-
+  // S1: 检查一遍
+  const handleCheckAll = async () => {
+    setIsCheckingAll(true);
     try {
-      const deps = await checkDependencies({ scope: "model", id: modelId });
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: deps,
-      }));
-    } catch {
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: {
-          ok: false,
-          complete: false,
-          unknownReasons: ["无法连接依赖检查接口"],
-          criticalBindings: [],
-          affectedBindings: [],
-        },
-      }));
-    }
-    return { ok: true };
-  };
-
-  const handleSyncKeyModels = async (key: AiProviderKey) => {
-    setSyncDialog({
-      open: true,
-      keyId: key.id,
-      keyLabel: key.label,
-    });
-  };
-
-  const handleDeleteWithCheck = async (keyId: string) => {
-    const key = bundle?.keys.find((k) => k.id === keyId);
-    const keyLabel = key?.label || "未命名渠道";
-
-    setPanelDangerousAction({
-      open: true,
-      actionType: "delete_key",
-      targetId: keyId,
-      targetName: keyLabel,
-      loading: true,
-      isExecuting: false,
-      preview: null,
-      narrowerLabel: "仅停用此渠道（保留配置）",
-      narrowerDesc: "如果只是临时停用该线路，建议「仅停用此渠道」，配置与模型挂载均会保留：",
-      confirmLabel: "确认彻底删除渠道",
-      onNarrower: async () => {
-        const res = await mutateEntity("update", "key", { id: keyId, is_enabled: false });
-        if (res.ok) {
-          feedbackToast.warning(`已停用渠道「${keyLabel}」`, {
-            duration: 5000,
-            action: {
-              label: "撤回",
-              onClick: async () => {
-                const restored = await mutateEntity("update", "key", { id: keyId, is_enabled: true });
-                if (restored.ok) feedbackToast.success(`已撤回停用 · 恢复「${keyLabel}」`);
-                else feedbackToast.error(`恢复「${keyLabel}」失败`);
-              },
-            },
-          });
-          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+      const res = await runCommand("check_all_in_use", {});
+      if (res.ok) {
+        const body = res.body as Record<string, unknown>;
+        const resultData = body.checkResult as
+          | {
+              total: number;
+              successCount: number;
+              failureCount: number;
+              results: CheckResultItem[];
+            }
+          | undefined;
+        if (resultData) {
+          setCheckResult(resultData);
         }
-      },
-      onExecute: async () => {
-        const res = await mutateEntity("delete", "key", { id: keyId });
-        if (res.ok) {
-          feedbackToast.success(`已彻底删除渠道「${keyLabel}」`);
-          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-        } else {
-          feedbackToast.error("删除渠道失败");
-        }
-      },
-    });
-
-    try {
-      const deps = await checkDependencies({ scope: "key", id: keyId });
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: deps,
-      }));
-    } catch {
-      setPanelDangerousAction((prev) => ({
-        ...prev,
-        loading: false,
-        preview: {
-          ok: false,
-          complete: false,
-          unknownReasons: ["无法连接依赖检查接口"],
-          criticalBindings: [],
-          affectedBindings: [],
-        },
-      }));
-    }
-  };
-
-  const handleRenameKey = async (keyId: string, newLabel: string) => {
-    const res = await mutateEntity("update", "key", { id: keyId, label: newLabel });
-    return res.ok;
-  };
-
-  const handleToggleKeyEnable = async (keyId: string, enabled: boolean) => {
-    const res = await mutateEntity("update", "key", { id: keyId, is_enabled: enabled });
-    return res.ok;
-  };
-
-  const handleTestKeyAllModels = async (keyId: string) => {
-    const total = bundle?.models.filter((model) => model.key_id === keyId).length ?? 0;
-    setModelTestingState({ total });
-    try {
-      const data = await testKeyAllModels(keyId);
-      const key = bundle?.keys.find((k) => k.id === keyId);
-      const rawResults = data?.results ?? [];
-      const mappedResults: KeyTestResultItem[] = rawResults.map((r) => ({
-        keyId: `${keyId}-${r.modelId}`,
-        keyName: key?.label || "渠道",
-        modelId: r.modelId,
-        ok: r.ok,
-        latencyMs: r.latencyMs ?? null,
-        error: r.error ?? undefined,
-      }));
-      const results = rawResults.map((r) => ({
-        modelId: r.modelId,
-        ok: r.ok,
-        latencyMs: r.latencyMs ?? null,
-        error: r.error ?? null,
-      }));
-      const failures = results.filter((r) => !r.ok);
-      const channelSummary: ChannelTestSummary = {
-        total: data?.total ?? mappedResults.length,
-        successCount: data?.successCount ?? mappedResults.filter((r) => r.ok).length,
-        failureCount: data?.failureCount ?? failures.length,
-        results,
-      };
-      setChannelTestSummaries((prev) => {
-        const next = new Map(prev);
-        next.set(keyId, channelSummary);
-        return next;
-      });
-      setTestResults({ total: mappedResults.length, results: mappedResults });
-      const successCount = mappedResults.filter((r) => r.ok).length;
-      if (mappedResults.length > 0 && successCount === mappedResults.length) {
-        feedbackToast.success(`渠道模型检测全部通过（${successCount}/${mappedResults.length}）`);
-      } else if (mappedResults.length === 0) {
-        feedbackToast.warning("该渠道没有可检测的上架模型，未形成通过结论");
       } else {
-        feedbackToast.warning(`检测完成：${successCount} 个通过，${mappedResults.length - successCount} 个未通过`);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
-        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
-          description: "检测已中断，可以继续检测。",
-          action: {
-            label: "继续检测",
-            onClick: () => {
-              void handleTestKeyAllModels(keyId);
-            },
-          },
-        });
-      } else {
-        feedbackToast.error(err instanceof Error ? err.message : "渠道全模型检测异常");
+        feedbackToast.error(res.error || "执行检查失败");
       }
     } finally {
-      setModelTestingState(null);
+      setIsCheckingAll(false);
     }
   };
 
-  const handleRunTestAllKeysAllModels = async () => {
-    setTestingAllModels(true);
-    setAllModelsTestFailures(null);
-    setModelTestingState({ total: bundle?.models.length ?? 0 });
+  // 陷阱 A: 仅开关该供应
+  const handleToggleSupply = async (keyModelId: string, enabled: boolean) => {
+    await executeWithConfirm(
+      "update",
+      { id: keyModelId, is_enabled: enabled },
+      "model",
+      enabled ? "已开启该渠道对此模型的供应" : "已暂停该渠道对此模型的供应"
+    );
+  };
+
+  // N4: 整个模型停用 / 恢复
+  const handleToggleModelEnabled = async (modelId: string, enabled: boolean) => {
+    await executeWithConfirm(
+      "set_model_enabled",
+      { model_id: modelId, is_enabled: enabled },
+      undefined,
+      enabled ? "已恢复模型供应" : "已停用模型"
+    );
+  };
+
+  // 行内改名（禁止传 model_id）
+  const handleRenameSupply = async (keyModelId: string, newName: string) => {
+    await executeWithConfirm(
+      "update",
+      { id: keyModelId, display_name: newName },
+      "model",
+      "已更新渠道供应名称"
+    );
+  };
+
+  // 顺位调整
+  const handleSwapOrder = async (
+    modelId: string,
+    keyModelId: string,
+    targetKeyModelId: string
+  ) => {
+    await executeWithConfirm(
+      "swap_model_channel_order",
+      {
+        model_id: modelId,
+        key_model_id: keyModelId,
+        target_key_model_id: targetKeyModelId,
+      },
+      undefined,
+      "已调整渠道顺位"
+    );
+  };
+
+  // 单供应测试
+  const handleTestSupply = async (keyId: string, modelId: string) => {
+    const keyModelId = bundle?.models.find((m) => m.key_id === keyId && m.model_id === modelId)?.id;
+    if (keyModelId) setTestingKeyModelId(keyModelId);
     try {
-      const data = (await testAllKeysAllModels()) as {
-        totalKeys?: number;
-        totalModels?: number;
-        successCount?: number;
-        failureCount?: number;
-        failures?: Array<{
-          keyId: string;
-          keyLabel: string;
-          modelId: string;
-          error: string;
-        }>;
-      } | null;
-      if (!data) return;
-
-      const totalKeys = data.totalKeys ?? 0;
-      const totalModels = data.totalModels ?? 0;
-      const successCount = data.successCount ?? 0;
-      const failureCount = data.failureCount ?? 0;
-      const failures = data.failures ?? [];
-
-      setAllModelsTestFailures({
-        totalKeys,
-        totalModels,
-        successCount,
-        failureCount,
-        failures,
-      });
-      if (totalModels === 0) {
-        feedbackToast.warning("全池没有可检测的上架模型，未形成通过结论");
-      } else if (failureCount > 0) {
-        feedbackToast.warning(
-          `全池检测完成：测了 ${totalModels} 个模型，${successCount} 个通过，${failureCount} 个失败`
-        );
+      const res = await runCommand("test_key_model", { key_id: keyId, model_id: modelId });
+      if (res.ok) {
+        feedbackToast.success("测试通过，已恢复能用");
       } else {
-        feedbackToast.success(
-          `全部渠道模型检测通过（测了 ${totalModels} 个模型，覆盖 ${totalKeys} 个渠道，全部正常）`
-        );
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
-        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
-          description: "检测已中断，可以继续检测。",
-          action: {
-            label: "继续检测",
-            onClick: () => {
-              void handleRunTestAllKeysAllModels();
-            },
-          },
-        });
-      } else {
-        feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+        feedbackToast.error(`测试未通过: ${res.error || "服务异常"}`);
       }
     } finally {
-      setModelTestingState(null);
-      setTestingAllModels(false);
-      setConfirmTestAllOpen(false);
+      setTestingKeyModelId(null);
     }
   };
 
-  const triggerHighlight = (modelIds: string[]) => {
-    if (modelIds.length === 0) return;
-    setHighlightedModels(modelIds);
-    setTimeout(() => {
-      const el = document.querySelector(`[data-model-id="${modelIds[0]}"]`);
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 100);
-    setTimeout(() => setHighlightedModels([]), 2000);
+  // 删除单条供应
+  const handleDeleteSupply = async (keyModelId: string) => {
+    await executeWithConfirm(
+      "remove_key_model",
+      { key_model_id: keyModelId },
+      undefined,
+      "已移除此模型供应"
+    );
   };
+
+  // 开启候选供应
+  const handleOpenSupply = async (keyId: string, modelId: string) => {
+    return await runCommand("enable_model_channel", { key_id: keyId, model_id: modelId });
+  };
+
+  // 过滤后的模型系列列表
+  const filteredFamilies = useMemo(() => {
+    if (!report?.modelFamilies) return [];
+    let list = report.modelFamilies;
+
+    // D1: 只看在用 / 全部
+    if (shelveFilter === "in_use") {
+      list = list.filter((f) => f.isShelved);
+    }
+
+    // 搜索过滤
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (f) =>
+          f.displayName.toLowerCase().includes(q) ||
+          f.modelId.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [report, shelveFilter, searchQuery]);
 
   return (
-    <div className="space-y-3">
-      {/* 1. 外围工具栏：彻底脱壳裸铺，左侧为主导航视角切换，右侧为极简动作 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
-        {/* 左侧：统领全局的视角切换（纯粹导航） */}
-        <div className="flex items-center">
-          <PoolViewSwitcher viewMode={viewMode} onChange={handleViewModeChange} />
-        </div>
+    <div className="space-y-6">
+      {/* 顶部摘要与检查条 */}
+      <ComputePoolHeader
+        summary={
+          report?.businessSummary || {
+            normal: 0,
+            fallback: 0,
+            outage: 0,
+            needsAttentionChannels: 0,
+          }
+        }
+        onCheckAll={handleCheckAll}
+        onOpenAddKey={() => setAddKeyOpen(true)}
+        isChecking={isCheckingAll}
+        checkResult={checkResult}
+        onClearCheckResult={() => setCheckResult(null)}
+      />
 
-        {/* 右侧：操作按钮组（固定四按钮，符合规范与 tooltip 一句话） */}
-        <TooltipProvider delay={100}>
-          <div className="flex flex-wrap items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="s"
-                    aria-label="全部同步模型"
-                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
-                    disabled={syncingAll || testingAll || testingAllModels}
-                    onClick={handleSyncAll}
-                  >
-                    {syncingAll ? (
-                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-                    ) : (
-                      <RotateCcw className="size-3.5 text-[#78716C]" />
-                    )}
-                    <span>全部同步模型</span>
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                拉取所有渠道的模型清单
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="s"
-                    aria-label="模型管理与上下架"
-                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
-                    onClick={() => setModelManagerOpen(true)}
-                  >
-                    <Settings2 className="size-3.5 text-[#78716C]" />
-                    <span>模型管理</span>
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                集中查看模型并管理上下架
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="s"
-                    aria-label="巡检全部渠道"
-                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
-                    disabled={syncingAll || testingAll || testingAllModels}
-                    onClick={handleTestAll}
-                  >
-                    {testingAll ? (
-                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-                    ) : (
-                      <Activity className="size-3.5 text-[#78716C]" />
-                    )}
-                    <span>巡检全部渠道</span>
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                每渠道抽测一条，快速看在线
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="s"
-                    aria-label="全部模型检测"
-                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
-                    disabled={syncingAll || testingAll || testingAllModels}
-                    onClick={() => setConfirmTestAllOpen(true)}
-                  >
-                    {testingAllModels ? (
-                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-                    ) : (
-                      <Activity className="size-3.5 text-[#78716C]" />
-                    )}
-                    <span>全部模型检测</span>
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                全部渠道全部模型，最彻底
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    size="s"
-                    aria-label="接入渠道"
-                    className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input shrink-0"
-                    onClick={() => setAddKeyModal({ open: true, providerId: null })}
-                  >
-                    <Plus className="size-3.5" />
-                    <span>接入渠道</span>
-                  </Button>
-                }
-              />
-              <TooltipContent side="top" className="text-[12px]">
-                接入一条新的渠道
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+      {/* 视角切换器：模型视角 / 渠道视角 */}
+      <div className="flex items-center justify-between">
+        <PoolViewSwitcher viewMode={viewMode} onChange={handleViewModeChange} />
       </div>
 
-      {/* 算力底座全池五态概览条 */}
-      {bundle?.availability && (
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-input">
-          <div className="flex flex-wrap items-center gap-1.5 text-[#78716C]">
-            <span className="font-normal text-[#141413]">全池供给：</span>
-            <span>共 {bundle.availability.totalKeyCount} 渠道</span>
-            <span>·</span>
-            <span className="text-[#4B6B4E]">{bundle.availability.identityCounts.active} 正常在岗</span>
-            {bundle.availability.identityCounts.retest > 0 && (
-              <>
-                <span>·</span>
-                <span className="text-[#8A6A2F]">{bundle.availability.identityCounts.retest} 待复测</span>
-              </>
-            )}
-            {bundle.availability.identityCounts.sleeping > 0 && (
-              <>
-                <span>·</span>
-                <span>{bundle.availability.identityCounts.sleeping} 休眠中</span>
-              </>
-            )}
-            {(bundle.availability.identityCounts.invalid + bundle.availability.identityCounts.disabled) > 0 && (
-              <>
-                <span>·</span>
-                <span className="text-status-danger-text">
-                  {bundle.availability.identityCounts.invalid + bundle.availability.identityCounts.disabled} 已失效或停用
-                </span>
-              </>
-            )}
-            <span className="text-[#E2E2DF]">|</span>
-            <span className={bundle.availability.redundancyCount > 0 ? "text-[#4B6B4E]" : "text-[#8A6A2F]"}>
-              全池真实可用冗余 {bundle.availability.redundancyCount} 条
-            </span>
-          </div>
-
-          {bundle.availability.singlePointRisk && (
-            <div className="inline-flex items-center gap-1 text-[12px] text-[#8A6A2F] font-normal">
-              <AlertTriangle className="size-3" />
-              <span>全池处于单点风险</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {modelTestingState && (
-        <div
-          role="status"
-          className="flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-surface-row-hover px-3.5 py-2.5 text-[12px] text-[#78716C] shadow-input"
-        >
-          <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-          <span className="text-[#141413] ">
-            正在检测 {modelTestingState.total} 个模型…
-          </span>
-        </div>
-      )}
-
-      {/* 连通测试临时结果条（在概览条操作按钮正下方展开） */}
-      {testResults && testResults.results.length > 0 && (
-        <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />
-      )}
-
-      {/* 盘点失败明细临时结果条 */}
-      {syncFailedChannels && syncFailedChannels.length > 0 && (
-        <SyncFailedResultsBar
-          failedChannels={syncFailedChannels}
-          onClose={() => setSyncFailedChannels(null)}
-        />
-      )}
-
-      {/* 全部模型检测结果条 */}
-      {allModelsTestFailures && (
-        <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3.5 shadow-card space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[14px] text-status-danger-text">
-              <span>
-                {allModelsTestFailures.failureCount > 0 ? "全池模型深度检测异常" : "全池模型深度检测结果"}
-              </span>
-              <span className="text-[12px]">
-                (测了 {allModelsTestFailures.totalModels} 个模型 · 通过 {allModelsTestFailures.successCount} 个 · 失败 {allModelsTestFailures.failureCount} 个)
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAllModelsTestFailures(null)}
-              className="text-status-danger hover:bg-status-danger/[0.10] p-1 rounded-md cursor-pointer"
-              title="关闭明细"
-              aria-label="关闭明细"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-          {allModelsTestFailures.failures.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {allModelsTestFailures.failures.map((f, idx) => (
-              <div
-                key={`${f.keyId}-${f.modelId}-${idx}`}
-                className="flex flex-col gap-1 rounded-lg border border-status-danger/20 bg-white px-2.5 py-2 text-[12px]"
+      {/* 模型视角内容 */}
+      {viewMode === "model" && (
+        <div className="space-y-4">
+          {/* 工具栏：D1 切换 + 搜索 */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* 只看在用 / 全部 切换 */}
+            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F1F1F0] text-[12px]">
+              <button
+                type="button"
+                onClick={() => setShelveFilter("in_use")}
+                className={cn(
+                  "px-3 py-1 rounded-md transition-colors text-[12px]",
+                  shelveFilter === "in_use"
+                    ? "bg-white text-[#141413] shadow-input font-normal"
+                    : "text-[#78716C] hover:text-[#141413]"
+                )}
               >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[#141413] truncate" title={f.keyLabel}>
-                    {f.keyLabel}
-                  </span>
-                  <span className="text-[12px] px-1.5 py-0.2 rounded bg-status-danger/[0.10] text-status-danger-text shrink-0 font-normal">
-                    失败
-                  </span>
-                </div>
-                <div className="text-[12px] font-mono text-[#78716C] truncate">
-                  {getModelDisplayName(f.modelId)}
-                </div>
-                <div className="text-[12px] text-status-danger-text line-clamp-2" title={f.error}>
-                  {f.error && f.error.trim() ? f.error.trim() : "未返回原因"}
-                </div>
-              </div>
-              ))}
+                只看在用
+              </button>
+              <button
+                type="button"
+                onClick={() => setShelveFilter("all")}
+                className={cn(
+                  "px-3 py-1 rounded-md transition-colors text-[12px]",
+                  shelveFilter === "all"
+                    ? "bg-white text-[#141413] shadow-input font-normal"
+                    : "text-[#78716C] hover:text-[#141413]"
+                )}
+              >
+                全部模型 ({report?.modelFamilies.length ?? 0})
+              </button>
             </div>
-          ) : allModelsTestFailures.totalModels > 0 ? (
-            <div className="text-[12px] text-[#4B6B4E]">全部模型检测通过</div>
-          ) : (
-            <div className="text-[12px] text-[#8A6A2F]">没有可检测的上架模型，未形成通过结论</div>
-          )}
-        </div>
-      )}
 
-      {viewMode === "model" ? (
-        <div className="space-y-3">
-          {activeGroups.length === 0 ? (
-            <EmptyState
-              className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-              title="暂无可用模型"
-              description="接入渠道后模型将自动同步到此，可在此管理在册模型与可用状态。"
-              action={{ label: "接入渠道", onClick: () => setAddKeyModal({ open: true, providerId: null }) }}
-            />
+            {/* 搜索框 */}
+            <div className="relative min-w-[220px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索模型名称或标识..."
+                className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 模型卡列表 */}
+          {filteredFamilies.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E2E2DF] p-12 text-center text-[12px] text-[#78716C]">
+              未找到匹配的模型。可切换至「全部模型」或调整搜索词。
+            </div>
           ) : (
-            <div className="space-y-3">
-              {activeGroups.map((group) => (
+            <div className="space-y-4">
+              {filteredFamilies.map((family) => (
                 <ModelFamilyCard
-                  key={group.modelId}
-                  modelId={group.modelId}
-                  displayName={group.displayName}
-                  items={group.items}
-                  availabilityFamily={bundle?.availability?.modelFamilies.find((f) => f.modelId === group.modelId)}
-                  highlightedModelIds={highlightedModels}
-                  isShelved={group.isShelved}
-                  onRenameModel={handleRenameModel}
-                  onRenameKey={handleRenameKey}
-                  onToggleModelShelf={handleShelfChange}
-                  onToggleKeyEnable={handleToggleKeyEnable}
-                  onTestKey={handleTestKeyModel}
-                  modelTestResults={modelTestResults}
-                  onClearTestResult={(keyId, mId) => {
-                    setModelTestResults((prev) => {
-                      const next = { ...prev };
-                      delete next[modelTestKey(keyId, mId)];
-                      return next;
-                    });
-                  }}
-                  onSyncKeyModels={handleSyncKeyModels}
-                  onDeleteKeyWithCheck={handleDeleteWithCheck}
-                  onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
-                  onSwapOrder={async (mId, firstRecordId, secondRecordId) => {
-                    await swapModelChannelOrder(mId, firstRecordId, secondRecordId);
-                  }}
-                  onSetKeySleep={async (keyId, sleep) => {
-                    await setKeySleep(keyId, sleep);
-                  }}
+                  key={family.modelId}
+                  family={family}
+                  diagnosticMap={diagnosticMap}
+                  onToggleSupply={handleToggleSupply}
+                  onToggleModelEnabled={handleToggleModelEnabled}
+                  onRenameSupply={handleRenameSupply}
+                  onSwapOrder={handleSwapOrder}
+                  onTestSupply={handleTestSupply}
+                  onDeleteSupply={handleDeleteSupply}
+                  onOpenSupply={handleOpenSupply}
+                  runCommand={runCommand}
+                  testingKeyModelId={testingKeyModelId}
                 />
               ))}
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {/* 渠道视角内容 */}
+      {viewMode === "channel" && (
         <ChannelPoolView
-          bundle={bundle}
-          channelReconciliations={channelReconciliations}
-          onSyncKeyModels={handleSyncKeyModels}
-          onTestKeyModel={handleTestKeyModel}
-          modelTestResults={modelTestResults}
-          onTestKeyAllModels={handleTestKeyAllModels}
-          onToggleKeyEnable={handleToggleKeyEnable}
-          onRenameKey={handleRenameKey}
-          onDeleteKeyWithCheck={handleDeleteWithCheck}
-          onOpenManageProviders={() => setProvidersManagerOpen(true)}
-          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
-          onToggleModelEnable={async (modelRecordId, enabled) => {
-            const res = await mutateEntity("update", "model", { id: modelRecordId, is_enabled: enabled });
-            return res.ok;
-          }}
-          onUpdateKeyApiKey={async (keyId, apiKey) => {
-            const res = await mutateEntity("update", "key", { id: keyId, api_key: apiKey });
-            return res.ok;
-          }}
-          onUpdateKeyProvider={async (keyId, providerId) => {
-            const res = await mutateEntity("update", "key", { id: keyId, provider_id: providerId });
-            return res.ok;
-          }}
-          onUpdateProviderBaseUrl={async (providerId, baseUrl) => {
-            const res = await mutateEntity("update", "provider", { id: providerId, base_url: baseUrl });
-            return res.ok;
-          }}
+          onOpenSyncModal={(keyId, label) =>
+            setSyncDialog({ open: true, keyId, keyLabel: label })
+          }
         />
       )}
 
-      <ModelManagerDialog
-        open={modelManagerOpen}
-        onOpenChange={setModelManagerOpen}
-        allGroups={modelFamilyGroups}
-        providers={bundle?.providers ?? []}
-        onToggleShelf={handleShelfChange}
-        onDeleteModelPermanent={handleDeleteModelPermanent}
-      />
-
-      <ProvidersManagerDialog
-        open={providersManagerOpen}
-        onOpenChange={setProvidersManagerOpen}
-        onEditProvider={(provider) => setProviderModal({ open: true, data: provider })}
-        onCreateProvider={() => setProviderModal({ open: true, data: null })}
-      />
-
-      {/* 新增渠道弹窗 */}
+      {/* 接入新渠道弹窗 */}
       <AddKeyDialog
-        open={addKeyModal.open} onOpenChange={(open) => setAddKeyModal({ ...addKeyModal, open })}
-        providerId={addKeyModal.providerId}
-        onSuccess={(newKeyId) => {
-          const newModels = bundle?.models.filter((m) => m.key_id === newKeyId) ?? [];
-          triggerHighlight(newModels.map((m) => m.model_id));
-        }}
+        open={addKeyOpen}
+        onOpenChange={setAddKeyOpen}
       />
 
-      {/* 编辑/新建接入点表单弹窗 */}
-      <ProviderQuickActionsDialog
-        open={providerModal.open}
-        provider={providerModal.data}
-        onOpenChange={(open) => setProviderModal({ ...providerModal, open })}
-        onSave={async (data) => {
-          await mutateEntity(providerModal.data?.id ? "update" : "create", "provider", data);
-          setProviderModal({ open: false, data: null });
-        }}
-      />
-
-      {/* 自定义模型勾选弹窗 */}
+      {/* 同步模型弹窗 */}
       <SyncModelsDialog
         open={syncDialog.open}
+        onOpenChange={(open) => setSyncDialog((prev) => ({ ...prev, open }))}
         keyId={syncDialog.keyId}
         keyLabel={syncDialog.keyLabel}
-        onOpenChange={(open) => setSyncDialog((prev) => ({ ...prev, open }))}
-        onSync={syncKeyModels}
-        onTestKeyAllModels={testKeyAllModels}
-        onRemoveModel={removeKeyModel}
-        lastTestSummary={syncDialog.keyId ? channelTestSummaries.get(syncDialog.keyId) ?? null : null}
-        onTestSummaryChange={(kId, summary) => {
-          setChannelTestSummaries((prev) => {
-            const next = new Map(prev);
-            next.set(kId, summary);
-            return next;
-          });
-        }}
-        lastReconciliation={syncDialog.keyId ? channelReconciliations.get(syncDialog.keyId) ?? null : null}
-        onReconciliationChange={(kId, rec) => {
-          setChannelReconciliations((prev) => {
-            const next = new Map(prev);
-            if (rec) next.set(kId, rec);
-            else next.delete(kId);
-            return next;
-          });
-        }}
-        onSave={async (kId, mIds) => {
-          const ok = await setKeyModelSelection(kId, mIds);
-          if (ok) triggerHighlight(mIds);
-          return ok;
-        }}
       />
 
-      {/* 全部渠道全模型检测二次确认弹窗 */}
-      <ConfirmDialog
-        open={confirmTestAllOpen}
-        onOpenChange={setConfirmTestAllOpen}
-        title="检测全部渠道模型"
-        description="将逐一叩问全池渠道上的每个模型是否应答，会花上一些时间，结果会在下方慢慢铺开。现在开始吗？"
-        confirmText="开始全池检测"
-        cancelText="取消"
-        loading={testingAllModels}
-        onConfirm={handleRunTestAllKeysAllModels}
-      />
-
-      {/* 危险动作执行前确认闸门（B-2） */}
+      {/* 统一高风险影响确认弹窗 */}
       <DangerousActionDialog
-        open={panelDangerousAction.open}
-        onOpenChange={(op) => setPanelDangerousAction((prev) => ({ ...prev, open: op }))}
-        actionType={panelDangerousAction.actionType}
-        targetName={panelDangerousAction.targetName}
-        loading={panelDangerousAction.loading}
-        preview={panelDangerousAction.preview}
-        onConfirm={async () => {
-          if (panelDangerousAction.onExecute) {
-            setPanelDangerousAction((prev) => ({ ...prev, isExecuting: true }));
-            try {
-              await panelDangerousAction.onExecute();
-            } finally {
-              setPanelDangerousAction((prev) => ({ ...prev, isExecuting: false }));
-            }
-          }
-        }}
-        onNarrowerAction={panelDangerousAction.onNarrower}
-        narrowerActionLabel={panelDangerousAction.narrowerLabel}
-        narrowerActionDescription={panelDangerousAction.narrowerDesc}
-        confirmButtonLabel={panelDangerousAction.confirmLabel}
-        isExecuting={panelDangerousAction.isExecuting}
+        state={impactConfirm}
+        onClose={() => setImpactConfirm(null)}
       />
     </div>
   );

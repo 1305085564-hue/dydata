@@ -1,120 +1,58 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Activity,
-  AlertCircle,
-  Check,
-  Loader2,
-  Pencil,
-  RefreshCw,
-  Server,
-  Settings2,
-  Trash2,
-  X,
-} from "lucide-react";
-import type { AiConfigBundle, AiProviderKey, AiModelTestResult, SyncModelReconciliation } from "../hooks/use-ai-config";
-import { ModelTestFeedback, modelTestKey } from "./model-test-feedback";
-import { EmptyState } from "@/components/ui/empty-state";
+import { useAiConfig } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Play,
+  Trash2,
+  RefreshCw,
+  Edit2,
+  Check,
+  X,
+  AlertCircle,
+} from "lucide-react";
+import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
+import { ModelTestFeedback } from "./model-test-feedback";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { resolveModelDisplayName } from "@/lib/ai/model-families";
-import { CHANNEL_IDENTITY_PRESENTATION, formatSleepCountdown } from "@/lib/ai-config/presentation";
+import { formatSleepCountdown, AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import type { AvailabilityKeySummary } from "@/lib/ai-config/availability";
+import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { cn } from "@/lib/utils";
 
-function getKeyGovernanceInfo(keyId?: string, availabilityKeys?: AvailabilityKeySummary[]) {
-  const unknownState = {
-    identity: "unknown" as const,
-    label: "状态未知",
-    dot: "bg-[#A8A29E]",
-    color: "text-[#78716C]",
-    badgeClass: "bg-[#F1F1F0] text-[#78716C]",
-  };
-
-  if (!keyId || !availabilityKeys) {
-    return unknownState;
-  }
-
-  const found = availabilityKeys.find((k) => k.keyId === keyId);
-  if (!found) {
-    return unknownState;
-  }
-
-  const { identity, sleepSource, sleepUntil, persistentFailure } = found;
-  const base = CHANNEL_IDENTITY_PRESENTATION[identity];
-  if (!base) {
-    return unknownState;
-  }
-
-  let label = base.label;
-  if (identity === "sleeping") {
-    const sleepType = sleepSource === "manual" ? "管理员手动休眠" : "自动休眠中";
-    const countdown = formatSleepCountdown(sleepUntil);
-    label = `${sleepType} · ${countdown}`;
-  } else if (identity === "invalid" && persistentFailure) {
-    label = "持续不可用（连续失败超24小时）";
-  }
-
-  return {
-    identity,
-    label,
-    dot: base.dot,
-    color: base.color,
-    badgeClass: base.badgeClass,
-  };
-}
-
 export interface ChannelPoolViewProps {
-  bundle: AiConfigBundle | null;
-  onSyncKeyModels: (key: AiProviderKey) => void;
-  onTestKeyModel: (keyId: string, modelId: string) => Promise<unknown>;
-  modelTestResults?: Record<string, AiModelTestResult>;
-  onTestKeyAllModels: (keyId: string) => Promise<void>;
-  onToggleKeyEnable: (keyId: string, enabled: boolean) => Promise<boolean>;
-  onRenameKey: (keyId: string, newLabel: string) => Promise<boolean>;
-  onDeleteKeyWithCheck: (keyId: string) => void;
-  onOpenManageProviders: () => void;
-  onOpenAddKey: () => void;
-  onToggleModelEnable: (modelRecordId: string, enabled: boolean) => Promise<boolean>;
-  onUpdateKeyApiKey: (keyId: string, apiKey: string) => Promise<boolean>;
-  onUpdateKeyProvider: (keyId: string, providerId: string) => Promise<boolean>;
-  onUpdateProviderBaseUrl: (providerId: string, baseUrl: string) => Promise<boolean>;
-  channelReconciliations?: Map<string, SyncModelReconciliation>;
+  onOpenSyncModal: (keyId: string, label: string) => void;
 }
 
-export function ChannelPoolView({
-  bundle,
-  channelReconciliations,
-  onSyncKeyModels,
-  onTestKeyModel,
-  modelTestResults,
-  onTestKeyAllModels,
-  onToggleKeyEnable,
-  onRenameKey,
-  onDeleteKeyWithCheck,
-  onOpenManageProviders,
-  onOpenAddKey,
-  onToggleModelEnable,
-  onUpdateKeyApiKey,
-  onUpdateKeyProvider,
-  onUpdateProviderBaseUrl,
-}: ChannelPoolViewProps) {
+export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
+  const { bundle, runCommand } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
+
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
-  const [testingAllForChannel, setTestingAllForChannel] = useState(false);
-  const [testingModelId, setTestingModelId] = useState<string | null>(null);
+  const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
 
   // 内联编辑状态
   const [editingField, setEditingField] = useState<"label" | "api_key" | "base_url" | null>(null);
   const [editingValue, setEditingValue] = useState("");
-  const [savingField, setSavingField] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // 一次性、待删、勿参考：仅清除失效的全局顺位数据接线，界面由 Antigravity 重做。
+  // 检测渠道状态
+  const [isTestingChannel, setIsTestingChannel] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    ok: boolean;
+    latencyMs?: number;
+    message?: string;
+    failureDiagnostic?: ChannelFailureDiagnostic;
+  } | null>(null);
+
+  // 渠道列表
   const channels = useMemo(() => {
-    if (!bundle) return [];
-    return [...bundle.keys].sort((a,b)=>a.id.localeCompare(b.id));
+    if (!bundle?.keys) return [];
+    return [...bundle.keys].sort((a, b) => a.id.localeCompare(b.id));
   }, [bundle]);
 
   const selectedChannel = useMemo(() => {
@@ -123,27 +61,80 @@ export function ChannelPoolView({
   }, [channels, selectedKeyId]);
 
   const selectedProvider = useMemo(() => {
-    if (!selectedChannel || !bundle) return null;
+    if (!selectedChannel || !bundle?.providers) return null;
     return bundle.providers.find((p) => p.id === selectedChannel.provider_id) ?? null;
   }, [selectedChannel, bundle]);
 
-  const selectedModels = useMemo(() => {
-    if (!selectedChannel || !bundle) return [];
+  // 选中渠道的挂载模型
+  const channelModels = useMemo(() => {
+    if (!selectedChannel || !bundle?.models) return [];
     return bundle.models.filter((m) => m.key_id === selectedChannel.id);
   }, [selectedChannel, bundle]);
 
-  if (channels.length === 0) {
-    return (
-      <EmptyState
-        className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-        title="暂未接入渠道"
-        description="点击上方「接入渠道」，配置上游服务商与密钥后即可启用模型。"
-        action={{ label: "接入渠道", onClick: onOpenAddKey }}
-      />
-    );
-  }
+  // 渠道治理状态映射
+  const keyGovernanceMap = useMemo(() => {
+    const map: Record<string, AvailabilityKeySummary> = {};
+    if (report?.keys) {
+      for (const k of report.keys) {
+        map[k.keyId] = k;
+      }
+    }
+    return map;
+  }, [report]);
 
-  const selectedGov = getKeyGovernanceInfo(selectedChannel?.id, bundle?.availability?.keys);
+  const selectedGov = selectedChannel ? keyGovernanceMap[selectedChannel.id] : undefined;
+  const failureDiagnostic = selectedChannel?.failureDiagnostic;
+
+  // 统一带确认执行命令
+  const executeWithConfirm = async (
+    action: string,
+    data: Record<string, unknown>,
+    entity?: "provider" | "key" | "model" | "feature_binding",
+    successMsg?: string
+  ) => {
+    const res = await runCommand(action, data, entity);
+    if (res.ok) {
+      if (successMsg) feedbackToast.success(successMsg);
+      return true;
+    }
+
+    // 409 共享地址影响
+    if (res.status === 409 && res.sharedAddressImpact) {
+      setImpactConfirm({
+        type: "shared_address",
+        impact: res.sharedAddressImpact,
+        onConfirm: async () => {
+          const retryRes = await runCommand(action, { ...data, confirm_shared_address: true }, entity);
+          if (retryRes.ok) {
+            if (successMsg) feedbackToast.success(successMsg);
+          } else {
+            feedbackToast.error(retryRes.error || "操作失败");
+          }
+        },
+      });
+      return false;
+    }
+
+    // 409 业务停摆影响
+    if (res.status === 409 && res.requiresConfirmation) {
+      setImpactConfirm({
+        type: "impact",
+        affectedBusinesses: res.affectedBusinesses || [],
+        onConfirm: async () => {
+          const retryRes = await runCommand(action, { ...data, confirm_impact: true }, entity);
+          if (retryRes.ok) {
+            if (successMsg) feedbackToast.success(successMsg);
+          } else {
+            feedbackToast.error(retryRes.error || "操作失败");
+          }
+        },
+      });
+      return false;
+    }
+
+    feedbackToast.error(res.error || "操作失败");
+    return false;
+  };
 
   const handleStartEdit = (field: "label" | "api_key" | "base_url") => {
     setEditingField(field);
@@ -152,656 +143,451 @@ export function ChannelPoolView({
     else if (field === "base_url") setEditingValue(selectedProvider?.base_url ?? "");
   };
 
-  const handleCancelEdit = () => {
-    setEditingField(null);
-    setEditingValue("");
-  };
-
   const handleSaveEdit = async () => {
-    if (!selectedChannel || !editingField || savingField) return;
+    if (!selectedChannel) return;
     const trimmed = editingValue.trim();
 
-    setSavingField(true);
+    setIsSavingEdit(true);
     try {
       if (editingField === "label") {
         if (!trimmed) {
           feedbackToast.error("渠道名称不能为空");
           return;
         }
-        const ok = await onRenameKey(selectedChannel.id, trimmed);
-        if (ok) {
-          feedbackToast.success("已更新渠道名称");
-          setEditingField(null);
-        }
+        await executeWithConfirm("update", { id: selectedChannel.id, label: trimmed }, "key", "已修改渠道名称");
       } else if (editingField === "api_key") {
         if (!trimmed) {
-          feedbackToast.error("API Key 不能为空");
+          feedbackToast.error("密钥不能为空");
           return;
         }
-        const ok = await onUpdateKeyApiKey(selectedChannel.id, trimmed);
-        if (ok) {
-          feedbackToast.success("已更新 API Key");
-          setEditingField(null);
-        }
+        await executeWithConfirm("update", { id: selectedChannel.id, api_key: trimmed }, "key", "已更新渠道密钥");
       } else if (editingField === "base_url") {
-        if (!selectedProvider) return;
         if (!trimmed) {
           feedbackToast.error("API 地址不能为空");
           return;
         }
-        try {
-          new URL(trimmed);
-        } catch {
-          feedbackToast.error("API 地址要填有效的");
-          return;
+        // S7 改 API 地址支持 409 sharedAddressImpact 确认
+        await executeWithConfirm("update", { id: selectedChannel.id, base_url: trimmed }, "key", "已更新 API 地址");
+      }
+      setEditingField(null);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // 渠道总开关
+  const handleToggleKeyEnable = async (keyId: string, enabled: boolean) => {
+    await executeWithConfirm(
+      "update",
+      { id: keyId, is_enabled: enabled },
+      "key",
+      enabled ? "已开启该渠道" : "已停用该渠道"
+    );
+  };
+
+  // 删除渠道
+  const handleDeleteKey = async (keyId: string) => {
+    await executeWithConfirm("delete", { id: keyId }, "key", "已删除渠道");
+  };
+
+  // 检测此渠道
+  const handleTestKey = async () => {
+    if (!selectedChannel) return;
+    setIsTestingChannel(true);
+    setTestResult(null);
+    try {
+      const res = await runCommand("test_key", { key_id: selectedChannel.id, test_mode: "text" });
+      if (res.ok) {
+        const body = res.body as Record<string, unknown>;
+        const testRes = body.testResult as
+          | { ok: boolean; latencyMs?: number; message?: string; failureDiagnostic?: ChannelFailureDiagnostic }
+          | undefined;
+        if (testRes) {
+          setTestResult(testRes);
+          if (testRes.ok) feedbackToast.success("渠道检测通过，已恢复能用");
+          else feedbackToast.error(`检测未通过: ${testRes.message || "服务异常"}`);
+        } else {
+          setTestResult({ ok: true });
+          feedbackToast.success("渠道检测通过");
         }
-        const ok = await onUpdateProviderBaseUrl(selectedProvider.id, trimmed);
-        if (ok) {
-          feedbackToast.success("已更新接入点 API 地址");
-          setEditingField(null);
-        }
+      } else {
+        feedbackToast.error(`检测失败: ${res.error || "服务无响应"}`);
+        setTestResult({
+          ok: false,
+          message: res.error,
+          failureDiagnostic: res.testResult as ChannelFailureDiagnostic | undefined,
+        });
       }
     } finally {
-      setSavingField(false);
+      setIsTestingChannel(false);
     }
   };
 
-  const handleTestChannelAll = async () => {
-    if (!selectedChannel || testingAllForChannel) return;
-    setTestingAllForChannel(true);
-    try {
-      await onTestKeyAllModels(selectedChannel.id);
-    } finally {
-      setTestingAllForChannel(false);
-    }
+  // 模型勾选（取消勾选只是关闭，不删除）
+  const handleToggleModelSelection = async (modelId: string, willEnable: boolean) => {
+    if (!selectedChannel) return;
+    const currentEnabledIds = channelModels.filter((m) => m.is_enabled).map((m) => m.model_id);
+    const nextIds = willEnable
+      ? Array.from(new Set([...currentEnabledIds, modelId]))
+      : currentEnabledIds.filter((id) => id !== modelId);
+
+    await executeWithConfirm(
+      "set_key_model_selection",
+      { key_id: selectedChannel.id, model_ids: nextIds },
+      undefined,
+      "已更新该渠道模型勾选"
+    );
   };
 
-  const handleTestSingleModel = async (modelId: string) => {
-    if (!selectedChannel || testingModelId) return;
-    setTestingModelId(modelId);
-    try {
-      await onTestKeyModel(selectedChannel.id, modelId);
-    } finally {
-      setTestingModelId(null);
-    }
-  };
+  if (channels.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-[#E2E2DF] p-12 text-center text-[12px] text-[#78716C]">
+        暂未接入渠道。点击上方「接入新渠道」添加上游服务商。
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input flex flex-col md:flex-row min-h-[580px]">
-      {/* 左侧：渠道列表 */}
-      <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#E2E2DF]/70 bg-[#FCFCFB] flex flex-col shrink-0">
-        <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 space-y-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Server className="size-3.5 text-[#78716C]" />
-              <span className="text-[14px] text-[#1F1E1D]">渠道</span>
-              <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
-            </div>
-            <TooltipProvider delay={100}>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      aria-label="管理接入点列表"
-                      className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                      onClick={onOpenManageProviders}
-                    >
-                      <Settings2 className="size-3.5" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="top" className="text-[12px]">
-                  管理接入点列表
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <p className="text-[12px] text-[#A8A29E] leading-tight">
-            此处顺序为全量兜底调用顺位；模型内顺位请在模型视角调整。
-          </p>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      {/* 左侧：渠道列表（无 #N 序号，无顺位说明） */}
+      <div className="md:col-span-4 rounded-2xl border border-[#E2E2DF] bg-white p-3 space-y-2 shadow-card self-start">
+        <div className="text-[12px] text-[#78716C] px-2 py-1 font-normal">
+          已接入渠道 ({channels.length})
         </div>
-
-        <div className="divide-y divide-[#E2E2DF]/40 overflow-y-auto flex-1 p-1 space-y-0.5">
-          {channels.map((ch, idx) => {
+        <div className="space-y-1">
+          {channels.map((ch) => {
+            const gov = keyGovernanceMap[ch.id];
             const isSelected = selectedChannel?.id === ch.id;
-            const prov = bundle?.providers.find((p) => p.id === ch.provider_id);
-            const keyModels = bundle?.models.filter((m) => m.key_id === ch.id) ?? [];
-            const enabledCount = keyModels.filter((m) => m.is_enabled).length;
-            const channelGov = getKeyGovernanceInfo(ch.id, bundle?.availability?.keys);
+            const isEnabled = ch.is_enabled;
+            const isInvalid = gov?.identity === "invalid";
+            const isSleeping = gov?.identity === "sleeping";
+            const isUsable = gov?.identity === "active" || gov?.identity === "retest";
 
             return (
-              <button
+              <div
                 key={ch.id}
-                type="button"
-                onClick={() => setSelectedKeyId(ch.id)}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setSelectedKeyId(ch.id);
+                  setEditingField(null);
+                  setTestResult(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSelectedKeyId(ch.id);
+                    setEditingField(null);
+                    setTestResult(null);
+                  }
+                }}
                 className={cn(
-                  "w-full text-left px-3 py-2.5 rounded-lg transition-all cursor-pointer flex flex-col gap-1",
+                  "flex items-center justify-between rounded-xl p-3 text-left transition-colors cursor-pointer select-none",
                   isSelected
-                    ? "bg-surface-sand shadow-xs border border-[#E2E2DF]"
-                    : "hover:bg-[#F7F7F6] border border-transparent"
+                    ? "bg-[#F1F1F0] border border-[#78716C]/40"
+                    : "border border-transparent hover:bg-[#F7F7F6]"
                 )}
               >
-                <div className="flex items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span
-                      className="font-mono text-[12px] text-[#78716C] px-1.5 py-0.2 rounded bg-[#F1F1F0] shrink-0"
-                      title="全局兜底顺位（跨模型）"
-                    >
-                      #{idx + 1}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[14px] truncate",
-                        isSelected ? "text-[#141413]" : "text-[#1F1E1D]"
-                      )}
-                    >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-normal text-[13px] text-[#141413] truncate">
                       {ch.label || "未命名渠道"}
                     </span>
                   </div>
-                  <span
-                    className={cn("size-2 rounded-full shrink-0", channelGov.dot)}
-                    title={channelGov.label}
-                  />
+                  <div className="flex items-center gap-2 text-[12px] text-[#78716C]">
+                    <span className="truncate">
+                      {bundle?.providers.find((p) => p.id === ch.provider_id)?.name || "未知接入点"}
+                    </span>
+                    <span>·</span>
+                    <span>{ch.available_models?.length ?? 0} 个模型</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[12px] text-[#78716C]">
-                  <span className="truncate max-w-[130px]">{prov?.name || "未知接入点"}</span>
-                  <span className="font-mono tabular-nums">
-                    {keyModels.length === 0 ? "未知" : `${enabledCount}/${keyModels.length} 模型`}
-                  </span>
+
+                <div className="shrink-0 pl-2">
+                  {!isEnabled ? (
+                    <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
+                      {AI_CONFIG_MESSAGES["channel.disabled"]}
+                    </span>
+                  ) : isInvalid ? (
+                    <span className="rounded-md bg-status-danger/[0.10] px-1.5 py-0.5 text-[12px] text-status-danger-text">
+                      {AI_CONFIG_MESSAGES["channel.action_required"]}
+                    </span>
+                  ) : isSleeping ? (
+                    <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
+                      {AI_CONFIG_MESSAGES["channel.cooling"]}
+                    </span>
+                  ) : isUsable ? (
+                    <span className="rounded-md bg-[#4B6B4E]/10 px-1.5 py-0.5 text-[12px] text-[#4B6B4E]">
+                      {AI_CONFIG_MESSAGES["channel.usable"]}
+                    </span>
+                  ) : (
+                    <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
+                      {AI_CONFIG_MESSAGES["channel.usable"]}
+                    </span>
+                  )}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* 右侧：选中渠道工作台 */}
-      {selectedChannel ? (
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {/* 工作台顶部标题栏 */}
-          <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="min-w-0">
+      {/* 右侧：渠道详情 */}
+      {selectedChannel && (
+        <div className="md:col-span-8 rounded-2xl border border-[#E2E2DF] bg-white p-5 space-y-5 shadow-card">
+          {/* 详情头部 */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 pb-4">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                {editingField === "label" ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      autoFocus
-                      disabled={savingField}
-                      value={editingValue}
-                      onChange={(e) => setEditingValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") void handleSaveEdit();
-                        if (e.key === "Escape") handleCancelEdit();
-                      }}
-                      className="h-7 rounded border border-[#78716C] bg-white px-2 text-[14px] text-[#1F1E1D] focus:outline-none"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      aria-label="保存渠道名称"
-                      className="size-7 p-0 text-[#4B6B4E]"
-                      onClick={handleSaveEdit}
-                      disabled={savingField}
-                    >
-                      <Check className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      aria-label="取消重命名"
-                      className="size-7 p-0 text-[#78716C]"
-                      onClick={handleCancelEdit}
-                      disabled={savingField}
-                    >
-                      <X className="size-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="group/name flex items-center gap-1.5">
-                    <h3 className="font-normal text-[14px] text-[#1F1E1D] truncate">
-                      {selectedChannel.label || "未命名渠道"}
-                    </h3>
-                    <TooltipProvider delay={100}>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              aria-label="修改渠道名称"
-                              className="size-6 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                              onClick={() => handleStartEdit("label")}
-                            >
-                              <Pencil className="size-3" />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          修改渠道名称
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-md",
-                    selectedGov.badgeClass
-                  )}
-                >
-                  <span className={cn("size-1.5 rounded-full", selectedGov.dot)} />
-                  {selectedGov.label}
+                <span className="font-normal text-[14px] text-[#141413]">
+                  {selectedChannel.label || "未命名渠道"}
                 </span>
+                {selectedGov && (
+                  <span
+                    className={cn(
+                      "rounded-md px-2 py-0.5 text-[12px]",
+                      !selectedChannel.is_enabled
+                        ? "bg-[#F1F1F0] text-[#78716C]"
+                        : selectedGov.identity === "invalid"
+                        ? "bg-status-danger/[0.10] text-status-danger-text"
+                        : selectedGov.identity === "sleeping"
+                        ? "bg-[#F1F1F0] text-[#78716C]"
+                        : "bg-[#4B6B4E]/10 text-[#4B6B4E]"
+                    )}
+                  >
+                    {!selectedChannel.is_enabled
+                      ? AI_CONFIG_MESSAGES["channel.disabled"]
+                      : selectedGov.identity === "invalid"
+                      ? AI_CONFIG_MESSAGES["channel.action_required"]
+                      : selectedGov.identity === "sleeping"
+                      ? `${AI_CONFIG_MESSAGES["channel.cooling"]} · ${formatSleepCountdown(selectedGov.sleepUntil)}`
+                      : AI_CONFIG_MESSAGES["channel.usable"]}
+                  </span>
+                )}
               </div>
+              <p className="text-[12px] text-[#78716C]">
+                接入点：{selectedProvider?.name || "未指定"} · ID: {selectedChannel.id}
+              </p>
             </div>
 
-            {/* 顶部操作动作 */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              {/* 检测此渠道 */}
               <Button
                 variant="outline"
                 size="s"
-                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                disabled={testingAllForChannel}
-                onClick={handleTestChannelAll}
-                title="测此渠道全部挂载模型（含未勾选和已全站下架的）"
-                aria-label="检测此渠道全部挂载模型"
+                disabled={isTestingChannel || !selectedChannel.is_enabled}
+                onClick={handleTestKey}
+                className="h-8 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
               >
-                {testingAllForChannel ? (
-                  <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
-                ) : (
-                  <Activity className="size-3 mr-1 text-[#78716C]" />
-                )}
-                检测此渠道全部挂载模型
+                <Play className={cn("size-3.5", isTestingChannel && "animate-spin")} />
+                <span>{isTestingChannel ? "检测中…" : "检测此渠道"}</span>
               </Button>
 
+              {/* 渠道总开关 */}
+              <Switch
+                checked={selectedChannel.is_enabled}
+                onCheckedChange={(checked) => handleToggleKeyEnable(selectedChannel.id, checked)}
+                aria-label="开关此渠道"
+              />
+
+              {/* 删除渠道 */}
               <Button
-                size="s"
-                className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal"
-                onClick={() => onSyncKeyModels(selectedChannel)}
-                title="打开全部模型清单"
-                aria-label="同步模型"
+                variant="ghost"
+                size="icon-s"
+                onClick={() => handleDeleteKey(selectedChannel.id)}
+                className="size-8 text-[#A8A29E] hover:text-status-danger"
+                title="删除渠道"
               >
-                <RefreshCw className="size-3" />
-                同步模型
+                <Trash2 className="size-4" />
               </Button>
-
-              <TooltipProvider delay={100}>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="删除该渠道"
-                        className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
-                        onClick={() => onDeleteKeyWithCheck(selectedChannel.id)}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="top" className="text-[12px]">
-                    删除该渠道
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
 
-          <div className="p-4 space-y-4">
-            {/* 幽灵模型比对结果卡片（B-R1） */}
-            {(() => {
-              const selectedReconciliation = selectedChannel ? channelReconciliations?.get(selectedChannel.id) ?? null : null;
-              if (!selectedReconciliation) {
-                return (
-                  <div className="rounded-lg border border-[#E2E2DF]/60 bg-surface-row-hover px-3 py-2 text-[12px] flex items-center justify-between gap-2 text-[#78716C]">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="size-3.5 text-[#A8A29E] shrink-0" />
-                      <span>上游模型比对：<span className="text-[#A8A29E]">未知 · 尚未成功同步</span></span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      className="h-6 px-2 text-[12px] text-[#78716C] hover:text-[#141413]"
-                      onClick={() => onSyncKeyModels(selectedChannel)}
-                    >
-                      同步模型
-                    </Button>
-                  </div>
-                );
-              }
+          {/* 检测反馈 */}
+          {testResult && (
+            <ModelTestFeedback
+              result={{
+                ok: testResult.ok,
+                latencyMs: testResult.latencyMs ?? 0,
+                message: testResult.message,
+                failureDiagnostic: testResult.failureDiagnostic,
+              }}
+              onDismiss={() => setTestResult(null)}
+            />
+          )}
 
-              if (selectedReconciliation.status === "unknown") {
-                return (
-                  <div className="rounded-lg border border-[#A8A29E]/30 bg-surface-row-hover p-2.5 text-[12px] flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[#78716C]">
-                      <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
-                      <span>上游模型比对状态：<span className=" text-[#141413]">未知 · 尚未成功同步</span>（不展示猜测数字）</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="s"
-                      className="h-6 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                      onClick={() => onSyncKeyModels(selectedChannel)}
-                    >
-                      同步核验
-                    </Button>
-                  </div>
-                );
-              }
-
-              if (selectedReconciliation.verifiedUnavailableModelIds.length > 0) {
-                return (
-                  <div className="rounded-lg border border-status-danger/25 bg-status-danger/[0.05] p-2.5 text-[12px] flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-status-danger-text">
-                      <AlertCircle className="size-4 shrink-0 text-status-danger" />
-                      <span>上游比对发现 <span className="tabular-nums">{selectedReconciliation.verifiedUnavailableModelIds.length}</span> 个模型上游已不再提供（待收走）</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="s"
-                      className="h-6 px-2 text-[12px] text-status-danger-text border-status-danger/30 hover:bg-status-danger/[0.15] shrink-0"
-                      onClick={() => onSyncKeyModels(selectedChannel)}
-                    >
-                      去同步并收走
-                    </Button>
-                  </div>
-                );
-              }
-
-              const unverified = (selectedReconciliation.candidateModelIds ?? []).filter(
-                (id) => !selectedReconciliation.verifiedUnavailableModelIds.includes(id)
-              );
-              if (unverified.length > 0) {
-                return (
-                  <div className="rounded-lg border border-[#8A6A2F]/25 bg-[#8A6A2F]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[#8A6A2F]">
-                      <AlertCircle className="size-4 shrink-0" />
-                      <span>上游比对发现 <span className="tabular-nums">{unverified.length}</span> 个模型仅清单中未列出（疑似，未验证）</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="s"
-                      className="h-6 px-2 text-[12px] text-[#8A6A2F] border-[#8A6A2F]/30 hover:bg-[#8A6A2F]/15 shrink-0"
-                      onClick={() => onSyncKeyModels(selectedChannel)}
-                    >
-                      查看明细
-                    </Button>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="rounded-lg border border-[#4B6B4E]/25 bg-[#4B6B4E]/5 px-3 py-2 text-[12px] flex items-center gap-2 text-[#4B6B4E]">
-                  <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
-                </div>
-              );
-            })()}
-
-            {/* 渠道基础配置卡片 */}
-            <div className="rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* 1. API Key */}
-                <div className="space-y-1">
-                  <span className="text-[#78716C]">API Key</span>
-                  {editingField === "api_key" ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="password"
-                        autoFocus
-                        disabled={savingField}
-                        value={editingValue}
-                        placeholder="输入新 API Key"
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void handleSaveEdit();
-                          if (e.key === "Escape") handleCancelEdit();
-                        }}
-                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="保存 API Key"
-                        className="size-7 p-0 text-[#4B6B4E]"
-                        onClick={handleSaveEdit}
-                        disabled={savingField}
-                      >
-                        <Check className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="取消编辑 API Key"
-                        className="size-7 p-0 text-[#78716C]"
-                        onClick={handleCancelEdit}
-                        disabled={savingField}
-                      >
-                        <X className="size-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-1 bg-white border border-[#E2E2DF]/60 rounded px-2 py-1">
-                      <code className="text-[#1F1E1D] font-mono truncate">
-                        {selectedChannel.api_key_masked || "已配置（已隐藏）"}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="修改 API Key"
-                        className="size-5 p-0 text-[#78716C] hover:text-[#1F1E1D]"
-                        onClick={() => handleStartEdit("api_key")}
-                      >
-                        <Pencil className="size-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. API 地址 */}
-                <div className="space-y-1">
-                  <span className="text-[#78716C]">API 地址</span>
-                  {editingField === "base_url" ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="url"
-                        autoFocus
-                        disabled={savingField}
-                        value={editingValue}
-                        placeholder="https://api.example.com/v1"
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void handleSaveEdit();
-                          if (e.key === "Escape") handleCancelEdit();
-                        }}
-                        className="h-7 w-full rounded border border-[#78716C] bg-white px-2 font-mono text-[12px] text-[#1F1E1D] focus:outline-none"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="保存 API 地址"
-                        className="size-7 p-0 text-[#4B6B4E]"
-                        onClick={handleSaveEdit}
-                        disabled={savingField}
-                      >
-                        <Check className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="取消编辑 API 地址"
-                        className="size-7 p-0 text-[#78716C]"
-                        onClick={handleCancelEdit}
-                        disabled={savingField}
-                      >
-                        <X className="size-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-1 bg-white border border-[#E2E2DF]/60 rounded px-2 py-1">
-                      <code className="text-[#1F1E1D] font-mono truncate">
-                        {selectedProvider?.base_url || "未配置"}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        aria-label="修改 API 地址"
-                        className="size-5 p-0 text-[#78716C] hover:text-[#1F1E1D]"
-                        onClick={() => handleStartEdit("base_url")}
-                      >
-                        <Pencil className="size-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. 模型顺位说明 */}
-                <div className="space-y-1">
-                  <span className="text-[#78716C]">模型顺位排序</span>
-                  <div className="bg-white border border-[#E2E2DF]/60 rounded px-2.5 py-1.5 text-[12px] text-[#78716C]">
-                    顺位已升级为按模型独立治理，请在「模型视角」中上下移动排序。
-                  </div>
-                </div>
-
-                {/* 4. 所属接入点 */}
-                <div className="space-y-1">
-                  <span className="text-[#78716C]">所属接入点</span>
-                  <div className="flex items-center bg-white border border-[#E2E2DF]/60 rounded px-2 py-0.5">
-                    <select
-                      aria-label="切换接入点"
-                      value={selectedChannel.provider_id}
-                      onChange={(e) => void onUpdateKeyProvider(selectedChannel.id, e.target.value)}
-                      className="w-full bg-transparent text-[12px] text-[#1F1E1D] focus:outline-none cursor-pointer"
-                    >
-                      {(bundle?.providers ?? []).map((prov) => (
-                        <option key={prov.id} value={prov.id}>
-                          {prov.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* 渠道启用状态总开关 */}
-              <div className="pt-2 border-t border-[#E2E2DF]/60 flex items-center justify-between">
-                <div>
-                  <span className="text-[14px] text-[#1F1E1D] font-normal">是否启用渠道</span>
-                  <p className="text-[12px] text-[#78716C]">
-                    关闭后，系统将彻底跳过该渠道，不参与任何业务的模型算力调度。
-                  </p>
-                </div>
-                <Switch
-                  aria-label="是否启用渠道"
-                  checked={selectedChannel.is_enabled}
-                  onCheckedChange={(checked) => void onToggleKeyEnable(selectedChannel.id, checked)}
-                />
+          {/* 需要你处理：展示原因 */}
+          {selectedGov?.identity === "invalid" && failureDiagnostic && (
+            <div className="rounded-xl border border-status-danger/30 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger-text space-y-1">
+              <div className="flex items-center gap-2 font-normal">
+                <AlertCircle className="size-4 shrink-0 text-status-danger" />
+                <span>需要你处理：{failureDiagnostic.technical?.message || "渠道连通性异常"}</span>
               </div>
             </div>
+          )}
 
-            {/* 挂载模型列表卡片 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-normal text-[14px] text-[#1F1E1D]">挂载模型与生效状态</h4>
-                  <p className="text-[12px] text-[#78716C]">
-                    此渠道支持的模型系列，可独立启闭或试跑连通性。
-                  </p>
-                </div>
-                <span className="text-[12px] font-mono tabular-nums text-[#78716C]">
-                  {selectedModels.length === 0
-                    ? "未知 · 尚未成功同步"
-                    : `${selectedModels.filter((m) => m.is_enabled).length}/${selectedModels.length} 已启用`}
-                </span>
-              </div>
+          {/* S8: 上游比对卡与同步模型 */}
+          <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[12px] text-[#1F1E1D]">
+              上游提供 {selectedChannel.available_models?.length ?? 0} 个模型
+            </div>
+            <Button
+              variant="outline"
+              size="s"
+              onClick={() => onOpenSyncModal(selectedChannel.id, selectedChannel.label || "渠道")}
+              className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+            >
+              <RefreshCw className="size-3" />
+              <span>同步模型</span>
+            </Button>
+          </div>
 
-              {selectedModels.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-[#E2E2DF] p-6 text-center">
-                  <p className="text-[12px] text-[#78716C]">未知 · 尚未成功同步模型清单。</p>
-                  <Button
-                    variant="outline"
-                    size="s"
-                    className="mt-2 h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                    onClick={() => onSyncKeyModels(selectedChannel)}
-                  >
-                    立即同步模型
+          {/* 属性编辑区 */}
+          <div className="rounded-xl border border-[#E2E2DF] bg-white divide-y divide-[#E2E2DF]/60 text-[12px]">
+            {/* 1. 渠道名称 */}
+            <div className="p-3 flex items-center justify-between gap-3">
+              <span className="text-[#78716C] w-24 shrink-0">渠道名称</span>
+              {editingField === "label" ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="h-7 text-[12px] border-[#E2E2DF] flex-1 max-w-sm"
+                    autoFocus
+                  />
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={handleSaveEdit} className="size-6 text-[#4B6B4E]">
+                    <Check className="size-3" />
+                  </Button>
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={() => setEditingField(null)} className="size-6 text-[#78716C]">
+                    <X className="size-3" />
                   </Button>
                 </div>
               ) : (
-                <div className="rounded-lg border border-[#E2E2DF]/70 divide-y divide-[#E2E2DF]/50 overflow-hidden bg-white">
-                  {selectedModels.map((m) => {
-                    const testInfo = modelTestResults?.[modelTestKey(selectedChannel.id, m.model_id)];
-                    const isTesting = testingModelId === m.model_id;
-                    const displayName = resolveModelDisplayName(m.display_name, m.model_id);
+                <div className="flex items-center justify-between flex-1">
+                  <span className="text-[#141413]">{selectedChannel.label || "—"}</span>
+                  <Button size="icon-s" variant="ghost" onClick={() => handleStartEdit("label")} className="size-6 text-[#78716C]">
+                    <Edit2 className="size-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
 
-                    return (
-                      <div
-                        key={m.id}
-                        className="px-3 py-2 flex items-center justify-between gap-3 hover:bg-[#F7F7F6]/60 transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-normal text-[#1F1E1D] truncate">
-                              {displayName}
-                            </span>
-                            {m.is_enabled && m.global_is_enabled === false && (
-                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#8A6A2F]/10 text-[#8A6A2F] border border-[#8A6A2F]/20 shrink-0">
-                                已就绪，但全站未启用
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[12px] font-mono text-[#78716C] truncate">
-                            {m.model_id}
-                          </div>
-                          <ModelTestFeedback result={testInfo} />
-                        </div>
+            {/* 2. API 地址 (S7 支持共享地址提示) */}
+            <div className="p-3 flex items-center justify-between gap-3">
+              <span className="text-[#78716C] w-24 shrink-0">API 地址</span>
+              {editingField === "base_url" ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="h-7 text-[12px] border-[#E2E2DF] flex-1 max-w-sm font-mono"
+                    autoFocus
+                  />
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={handleSaveEdit} className="size-6 text-[#4B6B4E]">
+                    <Check className="size-3" />
+                  </Button>
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={() => setEditingField(null)} className="size-6 text-[#78716C]">
+                    <X className="size-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between flex-1">
+                  <span className="font-mono text-[#141413] truncate max-w-md">{selectedProvider?.base_url || "—"}</span>
+                  <Button size="icon-s" variant="ghost" onClick={() => handleStartEdit("base_url")} className="size-6 text-[#78716C]">
+                    <Edit2 className="size-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <TooltipProvider delay={100}>
-                            <Tooltip>
-                              <TooltipTrigger
-                                render={
-                                  <Button
-                                    variant="ghost"
-                                    size="s"
-                                    aria-label={`测试 ${displayName} 连通性`}
-                                    className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                                    disabled={isTesting}
-                                    onClick={() => handleTestSingleModel(m.model_id)}
-                                  >
-                                    {isTesting ? (
-                                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
-                                    ) : (
-                                      <Activity className="size-3.5" />
-                                    )}
-                                  </Button>
-                                }
-                              />
-                              <TooltipContent side="top" className="text-[12px]">
-                                测试模型连通性
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <Switch
-                            aria-label={`启用 ${displayName}`}
-                            checked={m.is_enabled}
-                            onCheckedChange={(checked) => void onToggleModelEnable(m.id, checked)}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+            {/* 3. API Key */}
+            <div className="p-3 flex items-center justify-between gap-3">
+              <span className="text-[#78716C] w-24 shrink-0">API Key</span>
+              {editingField === "api_key" ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    type="password"
+                    placeholder="输入新密钥"
+                    className="h-7 text-[12px] border-[#E2E2DF] flex-1 max-w-sm font-mono"
+                    autoFocus
+                  />
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={handleSaveEdit} className="size-6 text-[#4B6B4E]">
+                    <Check className="size-3" />
+                  </Button>
+                  <Button size="icon-s" variant="ghost" disabled={isSavingEdit} onClick={() => setEditingField(null)} className="size-6 text-[#78716C]">
+                    <X className="size-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between flex-1">
+                  <span className="font-mono text-[#78716C]">•••••••••••• (已保存)</span>
+                  <Button size="icon-s" variant="ghost" onClick={() => handleStartEdit("api_key")} className="size-6 text-[#78716C]">
+                    <Edit2 className="size-3" />
+                  </Button>
                 </div>
               )}
             </div>
           </div>
+
+          {/* 挂载模型清单（取消勾选只是关闭，不删除） */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-normal text-[14px] text-[#141413]">
+                供应模型 ({channelModels.length})
+              </span>
+              <span className="text-[12px] text-[#78716C]">
+                勾选开启该渠道对此模型的供应
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white overflow-hidden text-[12px]">
+              {channelModels.length === 0 ? (
+                <div className="p-6 text-center text-[#78716C]">
+                  该渠道尚未配置任何模型。点击上方「同步模型」拉取上游支持的模型。
+                </div>
+              ) : (
+                channelModels.map((m) => (
+                  <div key={m.id} className="p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Checkbox
+                        checked={m.is_enabled}
+                        onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
+                        className="size-4 rounded-md"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-[13px] text-[#141413] font-normal truncate">
+                          {m.display_name || m.model_id}
+                        </div>
+                        <div className="text-[12px] font-mono text-[#78716C] truncate">
+                          {m.model_id}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[12px]",
+                        m.is_enabled
+                          ? "bg-[#4B6B4E]/10 text-[#4B6B4E]"
+                          : "bg-[#F1F1F0] text-[#78716C]"
+                      )}
+                    >
+                      {m.is_enabled ? "供应已开启" : "未开启"}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-      ) : null}
+      )}
+
+      {/* 统一危险操作确认弹窗 */}
+      <DangerousActionDialog
+        state={impactConfirm}
+        onClose={() => setImpactConfirm(null)}
+      />
     </div>
   );
 }

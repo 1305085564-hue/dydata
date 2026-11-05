@@ -2,17 +2,19 @@
 
 import { useCallback, useMemo, useState } from "react";
 import {
-  Sparkles,
   Settings2,
   Archive,
   ArchiveRestore,
   Play,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
-import { useAiConfig, type AiFeatureControl, type AiModelTestResult } from "../hooks/use-ai-config";
-import { ModelTestFeedback } from "./model-test-feedback";
+import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
+import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,192 +25,69 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getModelDisplayName } from "@/lib/ai/model-families";
-import { CHANNEL_IDENTITY_PRESENTATION, formatLatency } from "@/lib/ai-config/presentation";
+import { AI_CONFIG_MESSAGES, formatLatency } from "@/lib/ai-config/presentation";
+import type { BusinessAssuranceItem } from "@/lib/ai-config/availability";
 import { cn } from "@/lib/utils";
 
-function ChannelRedundancyCell({
-  modelId,
-  report,
-  isGlobalDefault = false,
-}: {
-  modelId: string | null;
-  report: ReturnType<typeof useAvailabilityReport>;
-  isGlobalDefault?: boolean;
-}) {
-  // 非全局默认行且未指定专属模型（即跟随全局默认）
-  if (!isGlobalDefault && !modelId) {
-    return <span className="text-[12px] text-[#A8A29E]">跟随全局默认</span>;
+/**
+ * 格式化业务状态文案
+ */
+function renderBusinessStatus(
+  assurance: BusinessAssuranceItem | undefined,
+  modelFamilyNameMap: Record<string, string>
+) {
+  if (!assurance) {
+    return (
+      <span className="text-[12px] text-[#A8A29E]">未接入监控</span>
+    );
   }
 
-  // 全局默认行但未配置模型
-  if (!modelId) {
-    return <span className="text-[12px] text-[#A8A29E]">未配置模型</span>;
+  const { routingStatus, messageKey, selectedModelId, preferredModelId } = assurance;
+  const rawTemplate = AI_CONFIG_MESSAGES[messageKey] || "状态未知";
+
+  const preferredName = preferredModelId
+    ? modelFamilyNameMap[preferredModelId] || preferredModelId
+    : "无可用模型";
+  const selectedName = selectedModelId
+    ? modelFamilyNameMap[selectedModelId] || selectedModelId
+    : "全局默认";
+
+  const text = rawTemplate
+    .replace("{preferredModelName}", preferredName)
+    .replace("{selectedModelName}", selectedName);
+
+  if (routingStatus === "outage") {
+    return (
+      <span className="inline-flex items-center gap-2 text-[12px] text-status-danger-text">
+        <AlertCircle className="size-3.5 shrink-0 text-status-danger" />
+        <span className="font-normal">{text}</span>
+      </span>
+    );
   }
 
-  const family = report?.modelFamilies.find((f) => f.modelId === modelId);
-  const channels = family?.channels ?? [];
-  const totalCount = channels.length;
-
-  if (totalCount === 0) {
-    return <span className="text-[12px] text-[#8A6A2F]">共 0 渠道（未接入渠道）</span>;
+  if (routingStatus === "fallback") {
+    // 顶班不是故障，不许标红，用温和警示墨度
+    return (
+      <span className="inline-flex items-center gap-2 text-[12px] text-[#8A6A2F]">
+        <Clock className="size-3.5 shrink-0 text-[#8A6A2F]" />
+        <span className="font-normal">{text}</span>
+      </span>
+    );
   }
 
-  // 统一采用互斥五态与真实冗余口径，杜绝 2+2=4 重叠矛盾
-  const identityCounts = family?.identityCounts ?? {
-    active: 0,
-    retest: 0,
-    sleeping: 0,
-    invalid: 0,
-    disabled: 0,
-  };
-  const schedulableCount = family?.schedulableChannelCount ?? (identityCounts.active + identityCounts.retest);
-  const redundancyCount = family?.redundancyCount ?? Math.max(0, schedulableCount - 1);
-  const isSinglePoint = family?.singlePointRisk ?? (schedulableCount <= 1);
-
+  // normal
   return (
-    <TooltipProvider delay={100}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <div
-              tabIndex={0}
-              className="inline-flex flex-wrap items-center gap-1.5 text-[12px] cursor-default focus:outline-none"
-            >
-              <span className="font-mono text-[#78716C]">共 {totalCount} 渠道：</span>
-
-              {schedulableCount === 0 ? (
-                <span className="inline-flex items-center gap-1 text-status-danger-text">
-                  <span className="size-1.5 rounded-full bg-status-danger" />
-                  0 可调度（服务中断）
-                </span>
-              ) : isSinglePoint ? (
-                <span className="inline-flex items-center gap-1 text-[#8A6A2F]">
-                  <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
-                  1 可调度（单点风险）
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-[#4B6B4E]">
-                  <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-                  {schedulableCount} 可调度（冗余 {redundancyCount} 条）
-                </span>
-              )}
-
-              {identityCounts.sleeping > 0 && (
-                <span className="text-[#78716C]">· {identityCounts.sleeping} 休眠</span>
-              )}
-              {(identityCounts.invalid + identityCounts.disabled) > 0 && (
-                <span className="text-status-danger-text">
-                  · {identityCounts.invalid + identityCounts.disabled} 失效/停用
-                </span>
-              )}
-            </div>
-          }
-        />
-        <TooltipContent side="top" className="text-[12px] p-2.5 max-w-sm">
-          <div className="space-y-1.5 min-w-[220px]">
-            <div className="text-[12px] text-[#A8A29E] border-b border-white/10 pb-1 flex justify-between">
-              <span>渠道状态构成</span>
-              <span className="font-mono">共 {totalCount} 条</span>
-            </div>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              {channels.map((c, idx) => {
-                const identity = c.identity ?? (c.health === "healthy" ? "active" : c.health === "fault" ? "invalid" : c.health);
-                // 一次性、待删、勿参考：仅将状态文案接到统一来源，不改展示结构。
-                const identityCfg = {
-                  active: { text: CHANNEL_IDENTITY_PRESENTATION.active.label, dot: "bg-[#4B6B4E]", color: "text-[#4B6B4E]" },
-                  retest: { text: CHANNEL_IDENTITY_PRESENTATION.retest.label, dot: "bg-[#8A6A2F]", color: "text-[#8A6A2F]" },
-                  sleeping: { text: CHANNEL_IDENTITY_PRESENTATION.sleeping.label, dot: "bg-[#78716C]", color: "text-[#78716C]" },
-                  invalid: { text: CHANNEL_IDENTITY_PRESENTATION.invalid.label, dot: "bg-status-danger", color: "text-status-danger-text" },
-                  disabled: { text: CHANNEL_IDENTITY_PRESENTATION.disabled.label, dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
-                }[identity as keyof typeof identityCounts] || { text: "未知", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" };
-
-                return (
-                  <div
-                    key={c.keyModelId || `${c.keyId}-${idx}`}
-                    className="flex items-center justify-between gap-3 text-[12px]"
-                  >
-                    <span className="truncate max-w-[150px] text-white/90">
-                      {c.label || "未命名渠道"}
-                    </span>
-                    <span className={cn("inline-flex items-center gap-1 font-mono shrink-0", identityCfg.color)}>
-                      <span className={cn("size-1.5 rounded-full", identityCfg.dot)} />
-                      {identityCfg.text}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function MobileFeatureCard({
-  label,
-  description,
-  modelId,
-  report,
-  isGlobalDefault = false,
-  statusLabel,
-  onModelChange,
-  onAdvanced,
-  onArchive,
-}: {
-  label: string;
-  description: string;
-  modelId: string | null;
-  report: ReturnType<typeof useAvailabilityReport>;
-  isGlobalDefault?: boolean;
-  statusLabel: string;
-  onModelChange: (modelId: string | null) => void;
-  onAdvanced?: () => void;
-  onArchive?: () => void;
-}) {
-  return (
-    <article className="space-y-3 p-3.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-normal text-[14px] text-[#1F1E1D]">{label}</h3>
-            {isGlobalDefault && <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">兜底</span>}
-          </div>
-          <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">{description}</p>
-        </div>
-        <span className="shrink-0 rounded-md bg-[#F1F1F0] px-2 py-1 text-[12px] text-[#78716C]">{statusLabel}</span>
-      </div>
-      <div className="space-y-2">
-        <ModelFamilySelect value={modelId} onChange={onModelChange} allowEmptyLabel={isGlobalDefault ? "未配置 · 按渠道顺位兜底" : "跟随全局默认兜底"} triggerTitle="改选即生效" />
-        <ChannelRedundancyCell modelId={modelId} report={report} isGlobalDefault={isGlobalDefault} />
-      </div>
-      {(onAdvanced || onArchive) && (
-        <div className="flex justify-end gap-1 border-t border-[#E2E2DF]/60 pt-2">
-          {onAdvanced && <Button variant="ghost" size="s" onClick={onAdvanced} className="h-7 text-[12px]">调整高级参数</Button>}
-          {onArchive && <Button variant="ghost" size="s" onClick={onArchive} className="h-7 text-[12px] text-status-danger-text hover:text-status-danger">停用</Button>}
-        </div>
-      )}
-    </article>
+    <span className="inline-flex items-center gap-2 text-[12px] text-[#4B6B4E]">
+      <CheckCircle2 className="size-3.5 shrink-0 text-[#4B6B4E]" />
+      <span className="font-normal text-[#1F1E1D]">{text}</span>
+    </span>
   );
 }
 
 export function BusinessFunctionsPanel() {
-  const {
-    bundle,
-    saveFeatureControl,
-    setGlobalDefaultModel,
-    archiveFeature,
-    restoreFeature,
-    testKeyConnection,
-  } = useAiConfig();
+  const { bundle, runCommand } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
 
   const [bindingModal, setBindingModal] = useState<{
     open: boolean;
@@ -219,32 +98,41 @@ export function BusinessFunctionsPanel() {
   });
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
-
-  // 截图识别专属试跑状态
   const [testingOcr, setTestingOcr] = useState(false);
-  const [ocrTrialResult, setOcrTrialResult] = useState<AiModelTestResult>();
+  const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
 
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
-  const globalDefaultModelId = defaultBinding?.model_id ?? null;
+  const globalDefaultModelId = defaultBinding?.model_id ?? report?.globalDefaultModelId ?? null;
 
-  // 统一可用性口径：全局默认模型有可调度渠道才算运行中，否则如实标注回落
-  const report = useAvailabilityReport(bundle);
-  const globalDefaultAvailable =
-    Boolean(globalDefaultModelId && (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0);
+  // 模型名映射表
+  const modelFamilyNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (report?.modelFamilies) {
+      for (const f of report.modelFamilies) {
+        map[f.modelId] = f.displayName;
+      }
+    }
+    return map;
+  }, [report]);
 
-  const getStatusForFeature = useCallback((ctrl: AiFeatureControl) => {
-    if (!ctrl.isEnabled) return "paused" as const;
-    const modelId = ctrl.modelId ?? globalDefaultModelId;
-    return modelId && (report?.modelFamilies.find((f) => f.modelId === modelId)?.schedulableChannelCount ?? 0) > 0 ? "running" as const : "fallback" as const;
-  }, [globalDefaultModelId, report]);
+  // 业务保障字典
+  const assuranceMap = useMemo(() => {
+    const map: Record<string, BusinessAssuranceItem> = {};
+    if (report?.businessAssurances) {
+      for (const a of report.businessAssurances) {
+        map[a.key] = a;
+      }
+    }
+    return map;
+  }, [report]);
 
   // 截图识别配置
   const ocrControl = useMemo(() => {
     return bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
   }, [bundle]);
 
-  // 活跃业务功能列表（排除截图识别及内部结构化，因其已在表格置顶展现；排除 default）
+  // 活跃业务功能列表
   const businessFeatures = useMemo(() => {
     if (!bundle) return [];
     return bundle.featureControls.filter(
@@ -263,433 +151,412 @@ export function BusinessFunctionsPanel() {
     );
   }, [bundle]);
 
-  const handleModelChange = async (featureKey: string, modelId: string | null) => {
+  // 统一带确认执行命令
+  const executeWithConfirm = useCallback(
+    async (
+      action: string,
+      data: Record<string, unknown>,
+      entity?: "provider" | "key" | "model" | "feature_binding",
+      successMsg?: string
+    ) => {
+      const res = await runCommand(action, data, entity);
+      if (res.ok) {
+        if (successMsg) feedbackToast.success(successMsg);
+        return true;
+      }
+
+      if (res.status === 409 && res.requiresConfirmation) {
+        setImpactConfirm({
+          type: "impact",
+          affectedBusinesses: res.affectedBusinesses || [],
+          onConfirm: async () => {
+            const retryRes = await runCommand(action, { ...data, confirm_impact: true }, entity);
+            if (retryRes.ok) {
+              if (successMsg) feedbackToast.success(successMsg);
+            } else {
+              feedbackToast.error(retryRes.error || "操作失败");
+            }
+          },
+        });
+        return false;
+      }
+
+      feedbackToast.error(res.error || "操作失败");
+      return false;
+    },
+    [runCommand]
+  );
+
+  const handleModelChange = async (featureKey: string, nextModelId: string | null) => {
     const ctrl = bundle?.featureControls.find((c) => c.key === featureKey);
     if (!ctrl) return;
-    const ok = await saveFeatureControl({
-      feature_key: ctrl.key,
-      model_id: modelId,
-      provider_key_model_id: ctrl.providerKeyModelId,
-      system_prompt: ctrl.systemPrompt,
-      output_token_limit: ctrl.outputTokenLimit,
-      context_message_limit: ctrl.contextMessageLimit,
-      is_enabled: ctrl.isEnabled,
-    });
-    if (ok) feedbackToast.success(`已更新「${ctrl.label}」模型调度 · 改选即生效`);
+    await executeWithConfirm(
+      "save_feature_control",
+      {
+        feature_key: ctrl.key,
+        model_id: nextModelId,
+        system_prompt: ctrl.systemPrompt,
+        output_token_limit: ctrl.outputTokenLimit,
+        context_message_limit: ctrl.contextMessageLimit,
+        is_enabled: ctrl.isEnabled,
+      },
+      undefined,
+      `已更新「${ctrl.label}」模型调度`
+    );
   };
 
-  const handleGlobalDefaultChange = async (modelId: string | null) => {
-    if (!modelId) return;
-    const ok = await setGlobalDefaultModel(modelId);
-    if (ok) feedbackToast.success("已更新全局默认 AI 兜底模型 · 改选即生效");
+  const handleGlobalDefaultChange = async (nextModelId: string | null) => {
+    if (!nextModelId) return;
+    await executeWithConfirm(
+      "set_global_default_model",
+      { model_id: nextModelId },
+      undefined,
+      "已更新全局默认 AI 模型"
+    );
   };
 
   const handleOcrModelChange = async (newModelId: string | null) => {
     if (!ocrControl) return;
-    const ok = await saveFeatureControl({
-      feature_key: "ocr_screenshot",
-      model_id: newModelId,
-      provider_key_model_id: ocrControl.providerKeyModelId,
-      system_prompt: ocrControl.systemPrompt,
-      output_token_limit: ocrControl.outputTokenLimit,
-      context_message_limit: ocrControl.contextMessageLimit,
-      is_enabled: ocrControl.isEnabled,
-      ocr_screenshot_channel: ocrControl.ocrChannel,
-    });
-    if (ok) feedbackToast.success("已更新截图识别模型调度 · 改选即生效");
+    await executeWithConfirm(
+      "save_feature_control",
+      {
+        feature_key: "ocr_screenshot",
+        model_id: newModelId,
+        system_prompt: ocrControl.systemPrompt,
+        output_token_limit: ocrControl.outputTokenLimit,
+        context_message_limit: ocrControl.contextMessageLimit,
+        is_enabled: ocrControl.isEnabled,
+        ocr_screenshot_channel: ocrControl.ocrChannel,
+      },
+      undefined,
+      "已更新截图识别模型调度"
+    );
   };
 
   const handleOcrTrialRun = async () => {
     if (!bundle || !ocrControl) return;
     setTestingOcr(true);
     try {
-      const res = await testKeyConnection({ featureKey: "ocr_screenshot" });
-      setOcrTrialResult(res);
-      if (res?.ok) {
-        const modelLabel = res.model ? getModelDisplayName(res.model) : "自动调度";
-        const keyLabel = res.channelLabel || res.channelName || "未命名渠道";
-        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
+      const res = await runCommand("test_key", { feature_key: "ocr_screenshot" });
+      if (res.ok) {
+        const testRes = (res.body as Record<string, unknown>).testResult as
+          | { model?: string; channelLabel?: string; channelName?: string; latencyMs?: number }
+          | undefined;
+        const modelLabel = testRes?.model ? (modelFamilyNameMap[testRes.model] || testRes.model) : "自动调度";
+        const keyLabel = testRes?.channelLabel || testRes?.channelName || "可用渠道";
+        const latencyText = testRes?.latencyMs ? ` · 耗时 ${formatLatency(testRes.latencyMs)}` : "";
+        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」${latencyText}`);
       } else {
-        const message = res?.message || "无响应";
-        feedbackToast.error(`试跑未通过: ${message}`);
+        feedbackToast.error(`试跑未通过: ${res.error || "服务无响应"}`);
       }
     } finally {
       setTestingOcr(false);
     }
   };
 
+  const handleSaveAdvanced = async (data: Record<string, unknown>) => {
+    return await executeWithConfirm(
+      "save_feature_control",
+      data,
+      undefined,
+      "已更新业务功能高级配置"
+    );
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!archiveModal) return;
+    const target = archiveModal;
+    setArchiveModal(null);
+    await executeWithConfirm(
+      "archive_feature",
+      { feature_key: target.key },
+      undefined,
+      `已停用「${target.label}」`
+    );
+  };
+
+  const handleRestore = async (ctrl: AiFeatureControl) => {
+    await executeWithConfirm(
+      "restore_feature",
+      { feature_key: ctrl.key },
+      undefined,
+      `已恢复「${ctrl.label}」`
+    );
+  };
+
   return (
-    <div className="space-y-3">
-      {/* 业务功能调度列表（全站统一发丝表格） */}
-      <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input">
-        <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-[#78716C]" />
-            <span className="text-[14px] text-[#141413]">
-              业务模块调度列表
-            </span>
-          </div>
-          <span className="text-[12px] text-[#78716C]">
-            选定模型系列后，底层自动挑选最佳可用渠道
-          </span>
-        </div>
-
-        <div className="divide-y divide-[#E2E2DF]/60 md:hidden">
-          <MobileFeatureCard
-            label="全局默认"
-            description="未配置专属模型时全站调用的兜底基座"
-            modelId={globalDefaultModelId}
-            report={report}
-            isGlobalDefault
-            statusLabel={globalDefaultModelId && globalDefaultAvailable ? "运行中" : globalDefaultModelId ? "按渠道顺位兜底" : "未配置"}
-            onModelChange={handleGlobalDefaultChange}
-          />
-          {ocrControl && (
-            <MobileFeatureCard
-              label="截图识别"
-              description="提取图片中短视频与运营指标"
-              modelId={ocrControl.modelId}
-              report={report}
-              statusLabel={getStatusForFeature(ocrControl) === "running" ? "运行中" : getStatusForFeature(ocrControl) === "fallback" ? "按渠道顺位兜底" : "已暂停"}
-              onModelChange={handleOcrModelChange}
-              onAdvanced={() => setBindingModal({ open: true, data: ocrControl })}
-              onArchive={() => setArchiveModal(ocrControl)}
-            />
-          )}
-          {businessFeatures.map((feature) => (
-            <MobileFeatureCard
-              key={feature.key}
-              label={feature.label}
-              description={feature.description}
-              modelId={feature.modelId}
-              report={report}
-              statusLabel={getStatusForFeature(feature) === "running" ? "运行中" : getStatusForFeature(feature) === "fallback" ? "按渠道顺位兜底" : "已暂停"}
-              onModelChange={(modelId) => handleModelChange(feature.key, modelId)}
-              onAdvanced={() => setBindingModal({ open: true, data: feature })}
-              onArchive={() => setArchiveModal(feature)}
-            />
-          ))}
-        </div>
-
-        <div className="hidden md:block">
+    <div className="space-y-6">
+      {/* 桌面端高密表格 */}
+      <div className="hidden rounded-xl border border-[#E2E2DF] bg-white md:block">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
-              <TableHead className="w-[140px] text-[12px] font-normal text-[#78716C] py-2 px-3">业务功能</TableHead>
-              <TableHead className="min-w-[160px] text-[12px] font-normal text-[#78716C] py-2 px-3">定位与说明</TableHead>
-              <TableHead className="min-w-[240px] w-[260px] text-[12px] font-normal text-[#78716C] py-2 px-3">调度模型系列</TableHead>
-              <TableHead className="min-w-[200px] text-[12px] font-normal text-[#78716C] py-2 px-3">渠道冗余与健康度</TableHead>
-              <TableHead className="w-[120px] text-[12px] font-normal text-[#78716C] py-2 px-3">运行状态</TableHead>
-              <TableHead className="w-[100px] text-right text-[12px] font-normal text-[#78716C] py-2 px-3">操作</TableHead>
+            <TableRow className="border-b border-[#E2E2DF] bg-[#F7F7F6]/60">
+              <TableHead className="w-[200px] text-[12px] text-[#78716C] pl-4">业务功能</TableHead>
+              <TableHead className="w-[260px] text-[12px] text-[#78716C]">模型调度</TableHead>
+              <TableHead className="text-[12px] text-[#78716C]">现在状态</TableHead>
+              <TableHead className="w-[140px] text-right text-[12px] text-[#78716C] pr-4">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* 1. 全局默认兜底行 */}
-            <TableRow className="bg-surface-row-hover/60 hover:bg-surface-row-hover border-b border-[#E2E2DF]/60">
-              <TableCell className="py-2.5 px-3">
+            {/* 1. 全局默认兜底设置行 */}
+            <TableRow className="border-b border-[#E2E2DF] bg-[#FCFCFB]/60 hover:bg-[#F7F7F6]/60">
+              <TableCell className="py-3 pl-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-normal text-[#1F1E1D]">全局默认</span>
-                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-                    兜底
+                  <span className="font-normal text-[14px] text-[#141413]">全局默认 AI 模型</span>
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
+                    默认兜底
                   </span>
                 </div>
+                <p className="mt-0.5 text-[12px] text-[#78716C]">
+                  所有未明确指定模型、或所选模型不可用时的统一跨模型顶班兜底
+                </p>
               </TableCell>
-              <TableCell className="py-2.5 px-3">
-                <div className="text-[12px] text-[#78716C] truncate max-w-[280px]">
-                  未配置专属模型时全站调用的兜底基座
-                </div>
-              </TableCell>
-              <TableCell className="py-2.5 px-3">
-                <div className="w-full max-w-[270px]">
-                  <ModelFamilySelect
-                    value={globalDefaultModelId}
-                    onChange={handleGlobalDefaultChange}
-                    allowEmptyLabel="未配置 · 按渠道顺位兜底"
-                    triggerTitle="改选即生效"
-                  />
-                </div>
-              </TableCell>
-              <TableCell className="py-2.5 px-3">
-                <ChannelRedundancyCell
-                  modelId={globalDefaultModelId}
-                  report={report}
-                  isGlobalDefault={true}
+              <TableCell className="py-3">
+                <ModelFamilySelect
+                  value={globalDefaultModelId}
+                  onChange={handleGlobalDefaultChange}
+                  allowEmptyLabel={null}
+                  triggerTitle="全局默认必须指定模型"
                 />
               </TableCell>
-              <TableCell className="py-2.5 px-3">
-                {globalDefaultModelId && globalDefaultAvailable ? (
-                  <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                    <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-                    运行中
-                  </span>
-                ) : globalDefaultModelId ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
-                    <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
-                    按渠道顺位兜底
-                  </span>
-                ) : (
-                  <span className="text-[12px] text-[#8A6A2F]">未配置</span>
+              <TableCell className="py-3">
+                {renderBusinessStatus(
+                  assuranceMap["default"] || {
+                    key: "default",
+                    label: "全局默认",
+                    resolvedModelId: globalDefaultModelId,
+                    modelDisplayName: globalDefaultModelId
+                      ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId
+                      : "未指定",
+                    schedulableChannelCount: globalDefaultModelId
+                      ? (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0)
+                      : 0,
+                    faultChannelCount: 0,
+                    totalChannelCount: 0,
+                    status: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "healthy" : "outage",
+                    routingStatus: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "normal" : "outage",
+                    selectedModelId: globalDefaultModelId,
+                    preferredModelId: globalDefaultModelId,
+                    defaultModelId: globalDefaultModelId,
+                    messageKey: (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0 ? "business.normal" : "business.outage",
+                  },
+                  modelFamilyNameMap
                 )}
               </TableCell>
-              <TableCell className="text-right py-2.5 px-3">
-                <span className="text-[12px] text-[#A8A29E]">—</span>
+              <TableCell className="py-3 pr-4 text-right">
+                <span className="text-[12px] text-[#A8A29E]">基石配置</span>
               </TableCell>
             </TableRow>
 
-            {/* 2. 核心业务功能：截图识别 */}
+            {/* 2. 截图识别专属置顶行 */}
             {ocrControl && (
-              <TableRow
-                data-feature-key={ocrControl.key}
-                className={cn(
-                  "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 transition-colors",
-                )}
-              >
-                <TableCell className="py-2.5 px-3">
+              <TableRow className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
+                <TableCell className="py-3 pl-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-normal text-[#1F1E1D]">截图识别</span>
+                    <span className="font-normal text-[14px] text-[#141413]">
+                      {ocrControl.label}
+                    </span>
                     <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
                       核心
                     </span>
                   </div>
+                  <p className="mt-0.5 text-[12px] text-[#78716C]">
+                    {ocrControl.description}
+                  </p>
                 </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <div
-                    className="text-[12px] text-[#78716C] truncate max-w-[280px]"
-                    title="提取图片中短视频与运营指标"
-                  >
-                    提取图片中短视频与运营指标
-                  </div>
-                  <ModelTestFeedback result={ocrTrialResult} />
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <div className="w-full max-w-[270px]">
-                    <ModelFamilySelect
-                      value={ocrControl.modelId}
-                      onChange={handleOcrModelChange}
-                      allowEmptyLabel="跟随全局默认兜底"
-                      triggerTitle="改选即生效"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <ChannelRedundancyCell
-                    modelId={ocrControl.modelId}
-                    report={report}
+                <TableCell className="py-3">
+                  <ModelFamilySelect
+                    value={ocrControl.modelId}
+                    onChange={handleOcrModelChange}
+                    allowEmptyLabel="跟随全局默认"
                   />
                 </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  {getStatusForFeature(ocrControl) === "running" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-                      运行中
-                    </span>
-                  ) : getStatusForFeature(ocrControl) === "fallback" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
-                      <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
-                      按渠道顺位兜底
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                      已暂停
-                    </span>
-                  )}
+                <TableCell className="py-3">
+                  {renderBusinessStatus(assuranceMap["ocr_screenshot"], modelFamilyNameMap)}
                 </TableCell>
-                <TableCell className="text-right py-2.5 px-3">
-                  <div className="inline-flex items-center justify-end gap-1">
-                    <TooltipProvider delay={100}>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              disabled={testingOcr}
-                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                              onClick={handleOcrTrialRun}
-                              aria-label="试跑视觉通道"
-                            >
-                              <Play className={cn("size-3 text-[#78716C]", testingOcr && "animate-pulse")} />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          {testingOcr ? "视觉测试中…" : "试跑视觉通道"}
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                              onClick={() => setBindingModal({ open: true, data: ocrControl })}
-                              aria-label="调整高级参数"
-                            >
-                              <Settings2 className="size-3.5" />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          调整高级参数
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
-                              onClick={() => setArchiveModal(ocrControl)}
-                              aria-label="停用该功能"
-                            >
-                              <Archive className="size-3.5" />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          停用该功能
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                <TableCell className="py-3 pr-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-s"
+                      onClick={handleOcrTrialRun}
+                      disabled={testingOcr}
+                      className="size-7 text-[#78716C] hover:text-[#141413]"
+                      title="快速连通性试跑"
+                    >
+                      <Play className={cn("size-3.5", testingOcr && "animate-spin")} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-s"
+                      onClick={() => setBindingModal({ open: true, data: ocrControl })}
+                      className="size-7 text-[#78716C] hover:text-[#141413]"
+                      title="高级配置"
+                    >
+                      <Settings2 className="size-3.5" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
             )}
 
-            {/* 3. 其余活跃业务功能列表 */}
-            {businessFeatures.map((feature) => (
-              <TableRow
-                key={feature.key}
-                data-feature-key={feature.key}
-                className={cn(
-                  "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors",
-                )}
-              >
-                <TableCell className="py-2.5 px-3 text-[14px] font-normal text-[#1F1E1D]">
-                  {feature.label}
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <div
-                    className="text-[12px] text-[#78716C] truncate max-w-[280px]"
-                    title={feature.description}
-                  >
-                    {feature.description}
-                  </div>
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <div className="w-full max-w-[270px]">
+            {/* 3. 普通活跃业务功能列表 */}
+            {businessFeatures.map((ctrl) => {
+              const assurance = assuranceMap[ctrl.key];
+              return (
+                <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
+                  <TableCell className="py-3 pl-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-normal text-[14px] text-[#141413]">
+                        {ctrl.label}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[12px] text-[#78716C]">
+                      {ctrl.description}
+                    </p>
+                  </TableCell>
+                  <TableCell className="py-3">
                     <ModelFamilySelect
-                      value={feature.modelId}
-                      onChange={(mId) => handleModelChange(feature.key, mId)}
-                      allowEmptyLabel="跟随全局默认兜底"
-                      triggerTitle="改选即生效"
+                      value={ctrl.modelId}
+                      onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+                      allowEmptyLabel="跟随全局默认"
                     />
-                  </div>
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  <ChannelRedundancyCell
-                    modelId={feature.modelId}
-                    report={report}
-                  />
-                </TableCell>
-                <TableCell className="py-2.5 px-3">
-                  {getStatusForFeature(feature) === "running" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
-                      运行中
-                    </span>
-                  ) : getStatusForFeature(feature) === "fallback" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#8A6A2F]/10 text-[#8A6A2F]">
-                      <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
-                      按渠道顺位兜底
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                      已暂停
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right py-2.5 px-3">
-                  <div className="inline-flex items-center justify-end gap-1">
-                    <TooltipProvider delay={100}>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                              onClick={() => setBindingModal({ open: true, data: feature })}
-                              aria-label="调整高级参数"
-                            >
-                              <Settings2 className="size-3.5" />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          调整高级参数
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.10]"
-                              onClick={() => setArchiveModal(feature)}
-                              aria-label="停用该功能"
-                            >
-                              <Archive className="size-3.5" />
-                            </Button>
-                          }
-                        />
-                        <TooltipContent side="top" className="text-[12px]">
-                          停用该功能
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {renderBusinessStatus(assurance, modelFamilyNameMap)}
+                  </TableCell>
+                  <TableCell className="py-3 pr-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-s"
+                        onClick={() => setBindingModal({ open: true, data: ctrl })}
+                        className="size-7 text-[#78716C] hover:text-[#141413]"
+                        title="高级参数设置"
+                      >
+                        <Settings2 className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-s"
+                        onClick={() => setArchiveModal(ctrl)}
+                        className="size-7 text-[#78716C] hover:text-status-danger"
+                        title="停用此业务功能"
+                      >
+                        <Archive className="size-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
-        </div>
       </div>
 
-      {/* 已停用/归档功能折叠区（若有） */}
-      {archivedFeatures.length > 0 && (
-        <div className="rounded-xl border border-[#E2E2DF]/60 bg-surface-row-hover/60 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-[14px] text-[#78716C]">
-            <Archive className="size-3.5" />
-            <span>已停用的功能 ({archivedFeatures.length})</span>
+      {/* 移动端卡片视图 */}
+      <div className="space-y-3 md:hidden">
+        {/* 全局默认卡片 */}
+        <div className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-normal text-[14px] text-[#141413]">全局默认 AI 模型</span>
+            <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] text-[#D97757]">
+              默认兜底
+            </span>
           </div>
-          <div className="divide-y divide-[#E2E2DF]/40">
-            {archivedFeatures.map((af) => (
-              <div key={af.key} className="flex items-center justify-between py-2 text-[12px]">
-                <span className="text-[#78716C] line-through">{af.label}</span>
+          <p className="text-[12px] text-[#78716C]">
+            未明确指定模型时的统一顶班兜底
+          </p>
+          <ModelFamilySelect
+            value={globalDefaultModelId}
+            onChange={handleGlobalDefaultChange}
+            allowEmptyLabel={null}
+          />
+          <div className="pt-1">
+            {renderBusinessStatus(
+              assuranceMap["default"] || {
+                key: "default",
+                label: "全局默认",
+                resolvedModelId: globalDefaultModelId,
+                modelDisplayName: globalDefaultModelId
+                  ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId
+                  : "未指定",
+                schedulableChannelCount: 1,
+                faultChannelCount: 0,
+                totalChannelCount: 0,
+                status: "healthy",
+                routingStatus: "normal",
+                selectedModelId: globalDefaultModelId,
+                preferredModelId: globalDefaultModelId,
+                defaultModelId: globalDefaultModelId,
+                messageKey: "business.normal",
+              },
+              modelFamilyNameMap
+            )}
+          </div>
+        </div>
+
+        {/* 业务功能卡片 */}
+        {businessFeatures.map((ctrl) => (
+          <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-normal text-[14px] text-[#141413]">{ctrl.label}</span>
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="s"
-                  className="h-7 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                  onClick={async () => {
-                    const ok = await restoreFeature(af.key);
-                    if (ok) {
-                      feedbackToast.success(`已恢复「${af.label}」`);
-                    } else {
-                      feedbackToast.error(`恢复「${af.label}」失败`);
-                    }
-                  }}
+                  size="icon-s"
+                  onClick={() => setBindingModal({ open: true, data: ctrl })}
+                  className="size-6 text-[#78716C]"
                 >
-                  <ArchiveRestore className="size-3 mr-1" /> 恢复启用
+                  <Settings2 className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-s"
+                  onClick={() => setArchiveModal(ctrl)}
+                  className="size-6 text-[#78716C] hover:text-status-danger"
+                >
+                  <Archive className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>
+            <ModelFamilySelect
+              value={ctrl.modelId}
+              onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+              allowEmptyLabel="跟随全局默认"
+            />
+            <div className="pt-1">
+              {renderBusinessStatus(assuranceMap[ctrl.key], modelFamilyNameMap)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 已停用/已归档功能抽屉 */}
+      {archivedFeatures.length > 0 && (
+        <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-4">
+          <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
+            <div className="flex items-center gap-2">
+              <Archive className="size-4 text-[#78716C]" />
+              <span className="text-[14px] text-[#1F1E1D]">已停用的业务功能 ({archivedFeatures.length})</span>
+            </div>
+          </div>
+          <div className="divide-y divide-[#E2E2DF]/40">
+            {archivedFeatures.map((f) => (
+              <div key={f.key} className="flex items-center justify-between py-2.5">
+                <div>
+                  <span className="text-[13px] text-[#78716C]">{f.label}</span>
+                  <span className="ml-2 font-mono text-[12px] text-[#A8A29E]">{f.key}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="s"
+                  onClick={() => handleRestore(f)}
+                  className="h-7 text-[12px] border-[#E2E2DF]"
+                >
+                  <ArchiveRestore className="size-3 mr-1" />
+                  恢复功能
                 </Button>
               </div>
             ))}
@@ -697,55 +564,29 @@ export function BusinessFunctionsPanel() {
         </div>
       )}
 
-      {/* 高级参数弹窗 */}
+      {/* 高级参数设置弹窗 */}
       <BindingDialog
-        open={bindingModal.open}
         control={bindingModal.data}
-        onOpenChange={(open) => setBindingModal({ ...bindingModal, open })}
-        onSave={async (data) => {
-          const ok = await saveFeatureControl(data);
-          if (ok) feedbackToast.success("保存设置成功");
-          return ok;
-        }}
+        open={bindingModal.open}
+        onOpenChange={(open) => setBindingModal((prev) => ({ ...prev, open }))}
+        onSave={handleSaveAdvanced}
       />
 
-      {/* 停用确认弹窗 */}
+      {/* 停用功能确认弹窗 */}
       <ConfirmDialog
-        open={!!archiveModal}
-        title={`停止使用「${archiveModal?.label ?? ""}」`}
-        description="系统会保留当前配置与历史映射，但前台将阻止发起该业务请求。后续可随时恢复。"
-        confirmText="确认停止"
+        open={Boolean(archiveModal)}
+        onOpenChange={(open) => !open && setArchiveModal(null)}
+        title="停用业务功能确认"
+        description={`停用「${archiveModal?.label}」后，该业务将无法发起新的 AI 请求。已有的配置将被保留，随时可恢复。`}
+        confirmText="确认停用"
         cancelText="取消"
-        onConfirm={async () => {
-          if (archiveModal) {
-            const target = archiveModal;
-            setArchiveModal(null);
-            const ok = await archiveFeature(target.key);
-            if (ok) {
-              feedbackToast.warning(`已停用「${target.label}」`, {
-                duration: 5000,
-                action: {
-                  label: "撤回",
-                  onClick: async () => {
-                    const restored = await restoreFeature(target.key);
-                    if (restored) {
-                      feedbackToast.success(`已撤回停用 · 恢复「${target.label}」`);
-                    } else {
-                      feedbackToast.error(`恢复「${target.label}」失败`);
-                    }
-                  },
-                },
-              });
-            } else {
-              feedbackToast.error(`停用「${target.label}」失败`);
-            }
-          } else {
-            setArchiveModal(null);
-          }
-        }}
-        onOpenChange={(open) => {
-          if (!open) setArchiveModal(null);
-        }}
+        onConfirm={handleConfirmArchive}
+      />
+
+      {/* 统一高风险影响确认弹窗 */}
+      <DangerousActionDialog
+        state={impactConfirm}
+        onClose={() => setImpactConfirm(null)}
       />
     </div>
   );
