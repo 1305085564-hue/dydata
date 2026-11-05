@@ -31,14 +31,12 @@ export function classifyProviderFailure(input: {
     status === 401 ||
     status === 402 ||
     status === 403 ||
-    (typeof status === "number" && status >= 500 && status <= 599) ||
-    input.errorType === "network" ||
-    input.errorType === "timeout" ||
     KEY_FAILURE_PATTERN.test(message)
   ) {
     return "key";
   }
 
+  if (status === 429 || (status !== undefined && status >= 500) || input.errorType === "network" || input.errorType === "timeout") return "model";
   return "unknown";
 }
 
@@ -52,4 +50,10 @@ export function sanitizeProviderErrorMessage(message: unknown, secrets: string[]
   }
   sanitized = sanitized.replace(/(?:api[_-]?key|token|secret)\s*[:=]\s*[^\s,;]+/gi, "凭据已隐藏");
   return sanitized.trim().slice(0, 200) || "上游请求失败";
+}
+
+/** Only matching temporary transport failures may pause an entire channel. */
+export function providerFailureKind(errorType: string): "timeout" | "service" | "other" {
+  if (errorType === "timeout" || errorType === "network") return "timeout";
+  return /^http_5\d\d$/.test(errorType) ? "service" : "other";
 }

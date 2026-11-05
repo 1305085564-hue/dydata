@@ -8,13 +8,13 @@ import {
   type ProviderFailureScope,
 } from "./provider-health";
 
-test("provider failure classification keeps auth, network, and repeated upstream failures at Key scope", () => {
+test("provider failure classification keeps auth at Key scope and transient failures at model scope", () => {
   const cases: Array<{ input: Parameters<typeof classifyProviderFailure>[0]; expected: ProviderFailureScope }> = [
     { input: { status: 401, message: "invalid api key" }, expected: "key" },
     { input: { status: 402, message: "insufficient quota" }, expected: "key" },
-    { input: { status: 500, message: "upstream failed" }, expected: "key" },
-    { input: { errorType: "timeout", message: "request timed out" }, expected: "key" },
-    { input: { errorType: "network", message: "connection reset" }, expected: "key" },
+    { input: { status: 500, message: "upstream failed" }, expected: "model" },
+    { input: { errorType: "timeout", message: "request timed out" }, expected: "model" },
+    { input: { errorType: "network", message: "connection reset" }, expected: "model" },
   ];
 
   for (const { input, expected } of cases) {

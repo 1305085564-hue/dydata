@@ -269,7 +269,7 @@ export function computeAvailability(
   }
   const modelFamilies = Array.from(familyByModelId.values());
   for (const family of modelFamilies) {
-    family.channels.sort((a, b) => a.sortOrder - b.sortOrder || a.keyModelId.localeCompare(b.keyModelId));
+    family.channels.sort((a, b) => Number(b.identity === "retest") - Number(a.identity === "retest") || a.sortOrder - b.sortOrder || a.keyModelId.localeCompare(b.keyModelId));
     family.identityCounts = countIdentities(family.channels);
     family.redundancyCount = Math.max(0, family.channels.filter((c) => c.isSchedulable).length - 1);
     family.singlePointRisk = family.channels.filter((c) => c.isSchedulable).length <= 1;

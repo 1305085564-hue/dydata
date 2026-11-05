@@ -8,6 +8,8 @@ import { buildHaikuVisionBody, parseHaikuVisionResponse, usesHaikuNativeVision }
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
   getProviderKeyModelConfig,
+  claimProviderRecovery,
+  releaseProviderRecovery,
   listRankedProviderKeyModels,
   type ProviderKeyModelConfig,
 } from "./provider-routing";
@@ -71,6 +73,7 @@ type ChannelConfig = {
   providerKeyModelId?: string | null;
   providerKeyId?: string | null;
   source: "env" | "provider_key_model";
+  requiresProbe?: boolean;
 };
 
 type FeatureConfig = {
@@ -226,6 +229,7 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
     model: config.modelId,
     providerKeyModelId: config.providerKeyModelId,
     providerKeyId: config.providerKeyId,
+    requiresProbe: config.requiresProbe,
     source: "provider_key_model",
   };
 }
@@ -752,6 +756,18 @@ async function sendWithFailover(
     const attemptBudgetMs = resolveAttemptBudgetMs(perChannelTimeoutMs, deadline - Date.now());
     if (attemptBudgetMs < MIN_CHANNEL_ATTEMPT_BUDGET_MS) break;
 
+    let recoveryToken: string | null = null;
+    const recoveryService = recordHealth && channel.requiresProbe && channel.providerKeyModelId && send === sendToChannel
+      ? getServiceSupabaseClient() : null;
+    if (recoveryService) {
+      if (attemptBudgetMs < perChannelTimeoutMs) continue;
+      try {
+        recoveryToken = await claimProviderRecovery(recoveryService, channel.providerKeyModelId!, attemptBudgetMs);
+      } catch (error) {
+        console.warn("[ai-client] recovery lease unavailable", error);
+      }
+      if (!recoveryToken) continue;
+    }
     attemptedChannels += 1;
     try {
       const result = await send(channel, {
@@ -782,6 +798,14 @@ async function sendWithFailover(
       }
 
       lastRetryableError = aiError;
+    } finally {
+      if (recoveryService && recoveryToken) {
+        try {
+          await releaseProviderRecovery(recoveryService, channel.providerKeyModelId!, recoveryToken);
+        } catch (error) {
+          console.warn("[ai-client] recovery release skipped", error);
+        }
+      }
     }
   }
 

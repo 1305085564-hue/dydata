@@ -13,7 +13,7 @@ test("five identities are exclusive and routing uses precisely active or retest"
   const cases = [
     { ...base },
     { ...base, key: { ...base.key, consecutive_failures: 1, last_failure_at: ago(1), first_failure_at: ago(1) } },
-    { ...base, key: { ...base.key, manual_sleep_until: later } },
+    { ...base, key: { ...base.key, unhealthy_until: later } },
     { ...base, model: { ...base.model, invalidated_at: ago(1) } },
     { ...base, provider: { is_enabled: false } },
   ];
@@ -24,9 +24,9 @@ test("five identities are exclusive and routing uses precisely active or retest"
   }
 });
 
-test("cooldown escalates from 5 to 360 minutes and is capped", () => {
-  assert.deepEqual(Array.from({ length: 10 }, (_, failure) => channelCooldownMinutes(failure)), [0, 0, 0, 5, 15, 30, 60, 120, 240, 360]);
-  assert.equal(channelCooldownMinutes(100), 360);
+test("cooldown waits 1, 5, 30, 60 minutes and is capped", () => {
+  assert.deepEqual(Array.from({ length: 10 }, (_, failure) => channelCooldownMinutes(failure)), [0, 1, 5, 30, 60, 60, 60, 60, 60, 60]);
+  assert.equal(channelCooldownMinutes(100), 60);
 });
 
 test("an elapsed cooldown returns to retest, never healthy without success", () => {
@@ -35,24 +35,20 @@ test("an elapsed cooldown returns to retest, never healthy without success", () 
   assert.equal(getChannelGovernance(input).isSchedulable, true);
 });
 
-test("24 hour unsuccessful failure streak stays invalid after cooldown expiry", () => {
+test("24 hours alone never invalidates a supply", () => {
   const input = { ...base, model: { ...base.model, consecutive_failures: 3, first_failure_at: ago(24), last_failure_at: ago(1), unhealthy_until: ago(0.5) } };
-  assert.equal(getChannelGovernance(input).identity, "invalid");
-  assert.equal(getChannelGovernance(input).persistentFailure, true);
-  assert.equal(getChannelGovernance(input).isSchedulable, false);
+  assert.equal(getChannelGovernance(input).identity, "retest");
+  assert.equal(getChannelGovernance(input).persistentFailure, false);
+  assert.equal(getChannelGovernance(input).isSchedulable, true);
 });
 
-test("manual sleep does not change health and automatic restriction survives manual restoration", () => {
-  const key = { ...base.key, manual_sleep_until: later, first_failure_at: ago(1), last_failure_at: ago(1), consecutive_failures: 1 };
-  const before = { ...key };
-  assert.equal(getProviderKeyGovernance({ key, provider: base.provider, now }).sleepSource, "manual");
-  assert.deepEqual(key, before);
-  assert.equal(getProviderKeyGovernance({ key: { ...key, manual_sleep_until: null }, provider: base.provider, now }).identity, "retest");
-  assert.equal(getProviderKeyGovernance({ key: { ...key, manual_sleep_until: null, unhealthy_until: later }, provider: base.provider, now }).identity, "sleeping");
+test("legacy manual sleep no longer affects routing", () => {
+  const key = { ...base.key, manual_sleep_until: later };
+  assert.equal(getProviderKeyGovernance({ key, provider: base.provider, now }).identity, "active");
 });
 
 test("disable and permanent invalidity take precedence over sleep", () => {
-  const key = { ...base.key, manual_sleep_until: later, invalidated_at: ago(1) };
+  const key = { ...base.key, unhealthy_until: later, invalidated_at: ago(1) };
   assert.equal(getChannelGovernance({ ...base, key }).identity, "invalid");
   assert.equal(getChannelGovernance({ ...base, key: { ...key, is_enabled: false } }).identity, "disabled");
 });

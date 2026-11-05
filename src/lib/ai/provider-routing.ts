@@ -11,6 +11,7 @@ export type ProviderKeyModelConfig = {
   providerName: string;
   providerKeyId: string;
   providerKeyModelId: string;
+  requiresProbe?: boolean;
 };
 
 type ProviderKeyModelJoinRow = ProviderHealthFields & {
@@ -60,6 +61,7 @@ function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
     providerName: provider.name,
     providerKeyId: key.id,
     providerKeyModelId: row.id,
+    requiresProbe: getChannelGovernance({ model: row, key, provider }).identity === "retest",
   };
 }
 
@@ -141,7 +143,7 @@ export async function listRankedProviderKeyModels(
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
     )
-    .sort((left, right) => (left.row.sort_order ?? 0) - (right.row.sort_order ?? 0) || left.row.id.localeCompare(right.row.id));
+    .sort((left, right) => Number(right.config.requiresProbe) - Number(left.config.requiresProbe) || (left.row.sort_order ?? 0) - (right.row.sort_order ?? 0) || left.row.id.localeCompare(right.row.id));
   return ranked.map((item) => ({ providerKeyModelId: item.config.providerKeyModelId, config: item.config }));
 }
 
@@ -226,5 +228,19 @@ export async function markProviderKeyModelSuccess(
     })
     .eq("id", providerKeyModelId);
 
+  if (error) throw new Error(error.message);
+}
+
+/** A database lease serializes the one recovery attempt across app instances. */
+export async function claimProviderRecovery(service: MinimalClient, supplyId: string, timeoutMs: number): Promise<string | null> {
+  const { data, error } = await service.rpc("claim_ai_supply_recovery", {
+    supply_id: supplyId, lease_seconds: Math.ceil(timeoutMs / 1000) + 5,
+  });
+  if (error) throw new Error(error.message);
+  return data as string | null;
+}
+
+export async function releaseProviderRecovery(service: MinimalClient, supplyId: string, token: string): Promise<void> {
+  const { error } = await service.rpc("release_ai_supply_recovery", { supply_id: supplyId, lease_token: token });
   if (error) throw new Error(error.message);
 }

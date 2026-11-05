@@ -343,7 +343,7 @@ test("五类身份互斥、合计守恒，模型故障与手动休眠均与正�
   }));
   const keys = ["active", "retest", "sleeping", "invalid", "disabled"].map((identity) => ({
     id: `k-${identity}`, provider_id: "p1", is_enabled: true,
-    manual_sleep_until: identity === "sleeping" ? new Date(NOW + MINUTE).toISOString() : null,
+    unhealthy_until: identity === "sleeping" ? new Date(NOW + MINUTE).toISOString() : null,
   }));
   const result = computeAvailabilityT(baseInput({ keys, models }));
   const family = result.modelFamilies[0];

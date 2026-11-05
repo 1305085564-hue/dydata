@@ -150,6 +150,6 @@ test("model-local routing order follows sort_order then id", async () => {
 test("manual sleep and permanent failure exclude mounted models from production candidates", async () => {
   const manual = providerRow({ id: "manual", modelId: "model-a", keyPriority: 1 });
   const invalid = { ...providerRow({ id: "invalid", modelId: "model-a", keyPriority: 2 }), invalidated_at: new Date().toISOString() };
-  (manual.key as Row).manual_sleep_until = new Date(Date.now() + 60_000).toISOString();
+  (manual.key as Row).unhealthy_until = new Date(Date.now() + 60_000).toISOString();
   assert.deepEqual(await listRankedProviderKeyModels(createFakeService([manual, invalid]), "model-a"), []);
 });

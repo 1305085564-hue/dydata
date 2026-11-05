@@ -19,12 +19,14 @@ export type ChannelGovernance = {
   persistentFailure: boolean;
 };
 
-export const CHANNEL_FAILURE_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const CHANNEL_ESCALATION_WINDOW_SECONDS = 10 * 60;
+export const CHANNEL_ESCALATION_MODEL_COUNT = 3;
+export const CHANNEL_ESCALATION_PAUSE_SECONDS = 5 * 60;
 
-/** Failures 1–2 remain available for retest; later attempts wait progressively longer. */
+/** Every failed real request waits 1, 5, 30, then at most 60 minutes. */
 export function channelCooldownMinutes(consecutiveFailures: number): number {
-  if (consecutiveFailures < 3) return 0;
-  return [5, 15, 30, 60, 120, 240, 360][Math.min(consecutiveFailures - 3, 6)];
+  if (consecutiveFailures <= 0) return 0;
+  return [1, 5, 30, 60][Math.min(consecutiveFailures - 1, 3)];
 }
 
 export function getChannelGovernance(input: {
@@ -44,21 +46,12 @@ export function getChannelGovernance(input: {
   }
 
   const health = [key, model];
-  const persistentFailure = health.some((row) => {
-    const firstFailure = row.first_failure_at && Date.parse(row.first_failure_at);
-    return Boolean(firstFailure && now - firstFailure >= CHANNEL_FAILURE_WINDOW_MS &&
-      (!row.last_success_at || Date.parse(row.last_success_at) < firstFailure));
-  });
-  if (persistentFailure || health.some((row) => row.invalidated_at)) {
-    return { ...result, identity: "invalid", isSchedulable: false, persistentFailure };
+  if (health.some((row) => row.invalidated_at)) {
+    return { ...result, identity: "invalid", isSchedulable: false };
   }
-
-  const sleeps = [
-    { until: key.manual_sleep_until, source: "manual" as const },
-    { until: key.unhealthy_until, source: "automatic" as const },
-    { until: model.unhealthy_until, source: "automatic" as const },
-  ].filter((sleep): sleep is { until: string; source: "manual" | "automatic" } =>
-    Boolean(sleep.until && Date.parse(sleep.until) > now));
+  const sleeps = health
+    .filter((row) => row.unhealthy_until && Date.parse(row.unhealthy_until) > now)
+    .map((row) => ({ until: row.unhealthy_until!, source: "automatic" as const }));
   if (sleeps.length) {
     // The latest deadline is when this channel can actually rejoin the queue.
     const sleep = sleeps.sort((a, b) => Date.parse(b.until) - Date.parse(a.until))[0];
