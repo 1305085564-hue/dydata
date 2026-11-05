@@ -12,6 +12,7 @@ export type ProviderKeyModelConfig = {
   providerKeyId: string;
   providerKeyModelId: string;
   requiresProbe?: boolean;
+  cooldownUntil?: string | null;
 };
 
 type ProviderKeyModelJoinRow = ProviderHealthFields & {
@@ -47,10 +48,12 @@ export function isProviderKeyModelSchedulable(input: Parameters<typeof getChanne
   return getChannelGovernance(input).isSchedulable;
 }
 
-function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
+function toConfig(row: ProviderKeyModelJoinRow, options: { includeSleeping?: boolean } = {}): ProviderKeyModelConfig | null {
   const key = firstOrNull(row.key);
   const provider = firstOrNull(key?.provider);
-  if (!key || !provider || !isProviderKeyModelSchedulable({ model: row, key, provider })) return null;
+  if (!key || !provider) return null;
+  const governance = getChannelGovernance({ model: row, key, provider });
+  if (!governance.isSchedulable && !(options.includeSleeping && governance.identity === "sleeping")) return null;
 
   return {
     baseUrl: provider.base_url,
@@ -59,7 +62,8 @@ function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
     providerName: provider.name,
     providerKeyId: key.id,
     providerKeyModelId: row.id,
-    requiresProbe: getChannelGovernance({ model: row, key, provider }).identity === "retest",
+    requiresProbe: governance.identity === "retest" || governance.identity === "sleeping",
+    cooldownUntil: governance.sleepUntil,
   };
 }
 
@@ -119,6 +123,7 @@ async function selectProviderKeyModelRows(
 export async function getProviderKeyModelConfig(
   service: MinimalClient,
   providerKeyModelId: string,
+  options: { includeSleeping?: boolean } = {},
 ): Promise<ProviderKeyModelConfig | null> {
   const fullResult = await service
     .from("ai_provider_key_models")
@@ -126,18 +131,19 @@ export async function getProviderKeyModelConfig(
     .eq("id", providerKeyModelId)
     .maybeSingle();
   if (fullResult.error) throw new Error(fullResult.error.message);
-  return fullResult.data ? toConfig(fullResult.data as ProviderKeyModelJoinRow) : null;
+  return fullResult.data ? toConfig(fullResult.data as ProviderKeyModelJoinRow, options) : null;
 }
 
 /** 模型内按独立顺位；兜底保留跨模型位置，同模型仍遵守独立顺位。 */
 export async function listRankedProviderKeyModels(
   service: MinimalClient,
   modelIdPreference?: string,
+  options: { includeSleeping?: boolean } = {},
 ): Promise<Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>> {
   const data = await selectProviderKeyModelRows(service, modelIdPreference);
 
   const ranked = data
-    .map((row) => ({ row, config: toConfig(row) }))
+    .map((row) => ({ row, config: toConfig(row, options) }))
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
     )
@@ -230,9 +236,10 @@ export async function markProviderKeyModelSuccess(
 }
 
 /** A database lease serializes the one recovery attempt across app instances. */
-export async function claimProviderRecovery(service: MinimalClient, supplyId: string, timeoutMs: number): Promise<string | null> {
+export async function claimProviderRecovery(service: MinimalClient, supplyId: string, timeoutMs: number, allowCooling = false): Promise<string | null> {
   const { data, error } = await service.rpc("claim_ai_supply_recovery", {
     supply_id: supplyId, lease_seconds: Math.ceil(timeoutMs / 1000) + 5,
+    ...(allowCooling ? { allow_cooling: true } : {}),
   });
   if (error) throw new Error(error.message);
   return data as string | null;

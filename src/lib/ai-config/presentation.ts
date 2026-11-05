@@ -10,6 +10,7 @@ export const AI_CONFIG_MESSAGES = {
   "business.normal": "当前优先使用：{preferredModelName}",
   "business.fallback": "{selectedModelName} 暂时不可用，当前优先使用默认 {preferredModelName}",
   "business.outage": "停摆：无可用模型",
+  "business.outage_retrying": "停摆：无可用模型，系统仍在自动重试",
   "model.no_available_supply": "暂时不可用：没有能用的渠道",
   "model.single_supply": "只剩 1 条能用，建议再加一条",
   "operation.confirm_impact": "此操作会让以下业务停摆，请确认后执行",

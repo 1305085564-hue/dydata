@@ -198,7 +198,7 @@ test("未指定模型的业务跟随全局默认：默认可用不算受影响�
   assert.equal(withDeadDefault.businessAssurances[0]?.resolvedModelId, null);
   assert.equal(withDeadDefault.businessAssurances[0]?.routingStatus, "outage");
   assert.equal(withDeadDefault.businessAssurances[0]?.status, "outage");
-  assert.equal(withDeadDefault.businessAssurances[0]?.messageKey, "business.outage");
+  assert.equal(withDeadDefault.businessAssurances[0]?.messageKey, "business.outage_retrying");
 
   const withoutDefault = computeAvailabilityT(baseInput({
     keys, models,
