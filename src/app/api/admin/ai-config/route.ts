@@ -525,7 +525,7 @@ export async function buildAiConfigResponse(
 
   if (action === "sync_key_models") {
     try {
-      const result = await handleSyncKeyModels(auth.supabase, asRecord(body.data));
+      const result = await handleSyncKeyModels((deps.createAdminClient ?? createAdminClient)(), asRecord(body.data));
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ syncResult: result, ...bundle });
     } catch (error) {
@@ -571,7 +571,7 @@ export async function buildAiConfigResponse(
 
   if (action === "sync_all_keys") {
     try {
-      return NextResponse.json(await handleSyncAllKeys(auth.supabase));
+      return NextResponse.json(await handleSyncAllKeys((deps.createAdminClient ?? createAdminClient)()));
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "全池同步模型列表失败" }, { status: 400 });
     }

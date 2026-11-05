@@ -95,6 +95,23 @@ begin
   return supply_id;
 end $$;
 
+-- 同步清单允许重新试用，不把“上游列出模型”当作一次生成成功。
+create or replace function public.sync_ai_config_models(p_key_id uuid,p_available_models text[],p_models jsonb,p_verified boolean)
+returns void language plpgsql security invoker set search_path=public as $$
+declare item jsonb;
+begin
+  for item in select value from jsonb_array_elements(p_models) loop
+    insert into public.ai_provider_key_models as m(key_id,model_id,display_name,is_enabled)
+      values(p_key_id,item->>'model_id',item->>'display_name',false)
+      on conflict(key_id,model_id) do update set display_name=case when m.display_name=m.model_id then excluded.display_name else m.display_name end;
+  end loop;
+  update public.ai_provider_keys set available_models=to_jsonb(p_available_models) where id=p_key_id;
+  if p_verified then
+    update public.ai_provider_keys set invalidated_at=null,unhealthy_until=null where id=p_key_id;
+    update public.ai_provider_key_models set invalidated_at=null,unhealthy_until=null where key_id=p_key_id and model_id=any(p_available_models);
+  end if;
+end $$;
+
 -- 地址改变后允许重新试用；不是成功证明，不清零计数、不伪造成功时间。
 create or replace function public.retry_ai_group_after_address_change()
 returns trigger language plpgsql security invoker set search_path=public as $$
@@ -111,9 +128,9 @@ create trigger retry_ai_group_after_address_change after update of base_url on p
   for each row execute function public.retry_ai_group_after_address_change();
 revoke all on function public.create_ai_config_channel(uuid,text,text,text,text,text[],jsonb,boolean),
  public.set_ai_channel_model_selection(uuid,text[],jsonb),public.update_ai_config_model(uuid,jsonb),public.update_ai_config_key(uuid,jsonb,text),
- public.remove_ai_config_supply_with_audit(uuid,uuid,text),public.enable_ai_config_supply(uuid,text,text),public.retry_ai_group_after_address_change() from public,anon,authenticated;
+ public.remove_ai_config_supply_with_audit(uuid,uuid,text),public.enable_ai_config_supply(uuid,text,text),public.retry_ai_group_after_address_change(),public.sync_ai_config_models(uuid,text[],jsonb,boolean) from public,anon,authenticated;
 grant execute on function public.create_ai_config_channel(uuid,text,text,text,text,text[],jsonb,boolean),
  public.set_ai_channel_model_selection(uuid,text[],jsonb),public.update_ai_config_model(uuid,jsonb),public.update_ai_config_key(uuid,jsonb,text),
- public.remove_ai_config_supply_with_audit(uuid,uuid,text),public.enable_ai_config_supply(uuid,text,text),public.retry_ai_group_after_address_change() to service_role;
+ public.remove_ai_config_supply_with_audit(uuid,uuid,text),public.enable_ai_config_supply(uuid,text,text),public.retry_ai_group_after_address_change(),public.sync_ai_config_models(uuid,text[],jsonb,boolean) to service_role;
 notify pgrst,'reload schema';
 commit;

@@ -71,6 +71,7 @@ function id(): string {
 
 function scopeKeys(db: Db, keyIds: string[]): Db {
   return {
+    rpc: db.rpc.bind(db),
     from(table: string) {
       const query = db.from(table);
       if (table !== "ai_provider_keys" && table !== "ai_provider_key_models") return query;

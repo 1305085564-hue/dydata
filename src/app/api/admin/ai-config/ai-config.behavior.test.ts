@@ -177,6 +177,51 @@ class MemorySupabase {
     }
 
     const nextId = (prefix: string) => `${prefix}-generated-${this.nextId++}`;
+    if (fn === "sync_ai_config_models") {
+      const keyId = String(args.p_key_id ?? "");
+      const key = this.tables.ai_provider_keys.find((row) => row.id === keyId);
+      if (!key) return { data: null, error: { message: "key not found" } };
+
+      const availableModels = Array.isArray(args.p_available_models)
+        ? [...new Set(args.p_available_models.map(String))]
+        : [];
+      const availableModelIds = new Set(availableModels);
+      const payloadModels = Array.isArray(args.p_models) ? args.p_models as Row[] : [];
+      key.available_models = availableModels;
+
+      for (const model of payloadModels) {
+        const modelId = String(model.model_id ?? "");
+        if (!modelId) continue;
+        const existing = this.tables.ai_provider_key_models.find((row) => row.key_id === keyId && row.model_id === modelId);
+        if (!existing) {
+          this.tables.ai_provider_key_models.push({
+            id: nextId("supply"),
+            key_id: keyId,
+            model_id: modelId,
+            display_name: model.display_name,
+            is_enabled: false,
+          });
+          continue;
+        }
+        if (typeof model.display_name === "string" && model.display_name &&
+          (!existing.display_name || existing.display_name === modelId)) {
+          existing.display_name = model.display_name;
+        }
+      }
+
+      if (args.p_verified === true) {
+        key.invalidated_at = null;
+        key.unhealthy_until = null;
+        for (const model of this.tables.ai_provider_key_models) {
+          if (model.key_id === keyId && availableModelIds.has(String(model.model_id))) {
+            model.invalidated_at = null;
+            model.unhealthy_until = null;
+          }
+        }
+      }
+      return { data: null, error: null };
+    }
+
     if (fn === "create_ai_config_channel") {
       const providerId = typeof args.p_provider_id === "string" ? args.p_provider_id : nextId("provider");
       const keyId = nextId("key");

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
-import { canBackfillRawModelDisplayName, getModelDisplayName } from "@/lib/ai/model-families";
+import { getModelDisplayName } from "@/lib/ai/model-families";
 import { groupModelIdAliases, isModelConfirmedUnavailable } from "@/lib/ai/model-discovery";
+import { runAiConfigWrite } from "@/lib/ai-config/atomic-write";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type SyncSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +127,13 @@ async function checkStaleModel(
   }
 }
 
-export const defaultSyncModelsDeps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor };
+export type SyncModelsDeps = {
+  requireSystemActor: typeof requireSystemActor;
+  createAdminClient?: typeof createAdminClient;
+  fetcher?: typeof fetch;
+};
+
+export const defaultSyncModelsDeps: SyncModelsDeps = { requireSystemActor, createAdminClient };
 
 export async function syncModelsForKey(
   supabase: SyncSupabase,
@@ -152,9 +160,11 @@ export async function syncModelsForKey(
     if (providerError) throw syncError(providerError.message);
     provider = providerRow as ProviderInfo | null;
   }
-  const targetModelIds = input.modelIds && input.modelIds.length > 0
-    ? [...new Set(input.modelIds.map((id) => toTrimmedString(id)).filter(Boolean))]
+  const hasClientModelIds = Boolean(input.modelIds && input.modelIds.length > 0);
+  const targetModelIds = hasClientModelIds
+    ? [...new Set((input.modelIds ?? []).map((id) => toTrimmedString(id)).filter(Boolean))]
     : await discoverModelIds(provider, (keyData as { api_key?: string }).api_key, fetcher);
+  const verifiedFromUpstream = !hasClientModelIds;
 
   const { data: existingModels, error: existingError } = await supabase
     .from("ai_provider_key_models")
@@ -168,33 +178,13 @@ export async function syncModelsForKey(
   );
   const toInsert = targetModelIds.filter((modelId) => !existingMap.has(modelId));
   const insertedModelIds = new Set(toInsert);
-
-  for (const [modelId, existing] of existingMap) {
-    if (!canBackfillRawModelDisplayName(existing.display_name, modelId)) continue;
-    const displayName = getModelDisplayName(modelId);
-    if (existing.display_name === displayName) continue;
-    const { error } = await supabase.from("ai_provider_key_models").update({ display_name: displayName }).eq("id", existing.id);
-    if (error) throw syncError(error.message);
-  }
-
-  if (toInsert.length > 0) {
-    const { error: insertError } = await supabase.from("ai_provider_key_models").insert(
-      toInsert.map((modelId) => ({
-        key_id: input.keyId,
-        model_id: modelId,
-        display_name: getModelDisplayName(modelId),
-        is_enabled: false,
-        created_at: new Date().toISOString(),
-      })),
-    );
-    if (insertError) throw syncError(insertError.message);
-  }
-
-  const { error: availableModelsError } = await supabase
-    .from("ai_provider_keys")
-    .update({ available_models: targetModelIds })
-    .eq("id", input.keyId);
-  if (availableModelsError) throw syncError(availableModelsError.message);
+  const modelIdsToWrite = [...new Set([...targetModelIds, ...existingMap.keys()])];
+  await runAiConfigWrite(supabase as Parameters<typeof runAiConfigWrite>[0], "sync_ai_config_models", {
+    p_key_id: input.keyId,
+    p_available_models: targetModelIds,
+    p_models: modelIdsToWrite.map((model_id) => ({ model_id, display_name: getModelDisplayName(model_id) })),
+    p_verified: verifiedFromUpstream,
+  });
 
   const { data: finalModels, error: finalModelsError } = await supabase
     .from("ai_provider_key_models")
@@ -317,7 +307,7 @@ export async function cleanupStaleModelsForKey(
 
 export async function buildSyncModelsResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor } = defaultSyncModelsDeps,
+  deps: SyncModelsDeps = defaultSyncModelsDeps,
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -333,7 +323,13 @@ export async function buildSyncModelsResponse(
     : undefined;
 
   try {
-    return NextResponse.json(await syncModelsForKey(auth.supabase, { keyId, modelIds }));
+    // Production POST uses a service client after the system-admin guard; custom auth deps may inject their test client.
+    const supabase = deps.createAdminClient
+      ? deps.createAdminClient()
+      : deps.requireSystemActor === requireSystemActor
+        ? createAdminClient()
+        : auth.supabase;
+    return NextResponse.json(await syncModelsForKey(supabase, { keyId, modelIds }, deps.fetcher ?? fetch));
   } catch (error) {
     const status = typeof (error as SyncError)?.status === "number" ? (error as SyncError).status : 400;
     return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status });
