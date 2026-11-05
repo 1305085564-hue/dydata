@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Trash2,
 } from "lucide-react";
+import { sortSyncGroups } from "@/lib/ai-config/list-order";
 
 export interface SyncModelsDialogProps {
   open: boolean;
@@ -91,11 +92,6 @@ export function SyncModelsDialog({
         };
 
         const result = body.syncResult;
-        const groups = result?.modelGroups || [];
-        setModelGroups(groups);
-        setNewCount(result?.newCount ?? 0);
-        setStaleModelIds(result?.reconciliation?.staleInDb ?? []);
-
         // 默认勾选：原本已开通的模型
         const initialSelected = new Set<string>();
         if (result?.allModels) {
@@ -103,6 +99,10 @@ export function SyncModelsDialog({
             if (m.isEnabled) initialSelected.add(m.modelId);
           }
         }
+        // 打开时排一次：本渠道在用的在上；勾选/取消时位置不变
+        setModelGroups(sortSyncGroups(result?.modelGroups || [], initialSelected));
+        setNewCount(result?.newCount ?? 0);
+        setStaleModelIds(result?.reconciliation?.staleInDb ?? []);
         setSelectedModelIds(initialSelected);
       } else {
         setLoadError(res.error || "获取上游模型失败");

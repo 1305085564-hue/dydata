@@ -4,6 +4,8 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
+import { useFrozenOrder } from "../hooks/use-frozen-order";
+import { compareModelFamilies } from "@/lib/ai-config/list-order";
 import { PoolViewSwitcher, type PoolViewMode } from "./pool-view-switcher";
 import { ComputePoolHeader } from "./compute-pool-header";
 import { ModelFamilyCard } from "./model-family-card";
@@ -226,9 +228,16 @@ export function ComputePoolPanel() {
   };
 
   // 过滤后的模型系列列表
+  // 进入模型视角时排一次：有业务在用 → 能用 → 暂时不可用 → 已停用；页面内操作期间位置不变
+  const orderedFamilies = useFrozenOrder(
+    report?.modelFamilies ?? [],
+    (family) => family.modelId,
+    compareModelFamilies(report?.businessAssurances ?? []),
+    viewMode,
+  );
+
   const filteredFamilies = useMemo(() => {
-    if (!report?.modelFamilies) return [];
-    let list = report.modelFamilies;
+    let list = orderedFamilies;
 
     // D1: 只看在用 / 全部
     if (shelveFilter === "in_use") {
@@ -246,7 +255,7 @@ export function ComputePoolPanel() {
     }
 
     return list;
-  }, [report, shelveFilter, searchQuery]);
+  }, [orderedFamilies, shelveFilter, searchQuery]);
 
   return (
     <div className="space-y-6">

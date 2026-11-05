@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
+import { compareSelectableModels } from "@/lib/ai-config/list-order";
 import {
   Select,
   SelectContent,
@@ -44,7 +45,7 @@ export function ModelFamilySelect({
         : null,
       schedulableCount: f.schedulableChannelCount,
       isShelved: f.isShelved,
-    }));
+    })).sort(compareSelectableModels);
   }, [report]);
 
   const currentFamily = value ? families.find((f) => f.id === value) : undefined;

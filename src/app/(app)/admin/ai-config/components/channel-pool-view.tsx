@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
+import { useFrozenOrder } from "../hooks/use-frozen-order";
+import { compareChannelModels, compareChannels } from "@/lib/ai-config/list-order";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -50,10 +52,8 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
   } | null>(null);
 
   // 渠道列表
-  const channels = useMemo(() => {
-    if (!bundle?.keys) return [];
-    return [...bundle.keys].sort((a, b) => a.id.localeCompare(b.id));
-  }, [bundle]);
+  // 进入渠道视角时排一次：开着的在上、关掉的在下；页面内操作期间位置不变
+  const channels = useFrozenOrder(bundle?.keys ?? [], (key) => key.id, compareChannels);
 
   const selectedChannel = useMemo(() => {
     if (channels.length === 0) return null;
@@ -66,10 +66,12 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
   }, [selectedChannel, bundle]);
 
   // 选中渠道的挂载模型
-  const channelModels = useMemo(() => {
+  const mountedModels = useMemo(() => {
     if (!selectedChannel || !bundle?.models) return [];
     return bundle.models.filter((m) => m.key_id === selectedChannel.id);
   }, [selectedChannel, bundle]);
+  // 换渠道时排一次：勾选的在上、没勾的在下；勾选/取消时位置不变
+  const channelModels = useFrozenOrder(mountedModels, (model) => model.id, compareChannelModels, selectedChannel?.id ?? "");
 
   // 渠道治理状态映射
   const keyGovernanceMap = useMemo(() => {
