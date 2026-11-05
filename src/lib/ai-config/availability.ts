@@ -297,15 +297,14 @@ export function computeAvailability(
   // 业务保障：计算全量活跃业务功能的模型解析与渠道保障状态
   const affectedBusinessFeatures: AffectedBusinessFeature[] = [];
   const businessAssurances: BusinessAssuranceItem[] = [];
-  for (const control of featureControls) {
-    if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) continue;
+  function buildAssurance(key: string, label: string, modelId: string | null): BusinessAssuranceItem {
     const routing = resolveFeatureModelRouting({
-      modelId: control.modelId, defaultModelId: globalDefaultModelId,
+      modelId, defaultModelId: globalDefaultModelId,
       isAvailable: id => Boolean(familyByModelId.get(id)?.schedulableChannelCount),
     });
     const family = routing.preferredModelId ? familyByModelId.get(routing.preferredModelId) : undefined;
-    businessAssurances.push({
-      key: control.key, label: control.label,
+    return {
+      key, label,
       resolvedModelId: routing.preferredModelId,
       preferredModelId: routing.preferredModelId,
       selectedModelId: routing.selectedModelId,
@@ -319,8 +318,13 @@ export function computeAvailability(
       messageKey: routing.status === "outage" && [routing.selectedModelId, routing.defaultModelId]
         .some(id => id && familyByModelId.get(id)?.channels.some(channel => channel.identity === "sleeping"))
         ? "business.outage_retrying" : `business.${routing.status}`,
-    });
-    if (routing.status === "outage") affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId: null });
+    };
+  }
+  for (const control of featureControls) {
+    if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) continue;
+    const assurance = buildAssurance(control.key, control.label, control.modelId);
+    businessAssurances.push(assurance);
+    if (assurance.routingStatus === "outage") affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId: null });
   }
   // Configured and selected models stay discoverable even during a total outage.
   const referenced = new Set([globalDefaultModelId, ...featureControls.map(control => control.modelId)].filter((id): id is string => Boolean(id)));
@@ -357,7 +361,7 @@ export function computeAvailability(
     globalDefaultModelId,
     affectedBusinessFeatures,
     affectedBusinessCount: affectedBusinessFeatures.length,
-    businessAssurances,
+    businessAssurances: [...businessAssurances, buildAssurance("default", "全局默认", globalDefaultModelId)],
     businessSummary: {
       normal: businessAssurances.filter(item => item.routingStatus === "normal").length,
       fallback: businessAssurances.filter(item => item.routingStatus === "fallback").length,

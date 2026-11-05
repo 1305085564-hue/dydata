@@ -142,7 +142,7 @@ export async function buildDependencyPreview(
   // gate:transient-map this before/after comparison index exists only while building one preview.
   const beforeByKey = new Map(before.businessAssurances.map((item) => [item.key, item]));
   const affectedBusinesses = after.businessAssurances
-    .filter((item) => item.routingStatus === "outage" && beforeByKey.get(item.key)?.routingStatus !== "outage")
+    .filter((item) => item.key !== "default" && item.routingStatus === "outage" && beforeByKey.get(item.key)?.routingStatus !== "outage")
     .map(toAffectedBusiness);
   const businessFunctions = affectedBusinesses.map(({ key, label }) => ({ key, label }));
   const affectedBindings = affectedBusinesses.map((item) => ({
