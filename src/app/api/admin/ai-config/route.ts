@@ -23,7 +23,10 @@ import {
   handleSyncAllKeys,
   restoreModelShelfState,
 } from "@/lib/ai-config/batch-actions";
-import { discoverModelIds } from "./sync-models/route";
+import { discoverModelIds, cleanupStaleModelsForKey } from "./sync-models/route";
+import { findModelChannelCandidates, groupModelIdAliases, type ModelChannelDiscoveryInput } from "@/lib/ai/model-discovery";
+import { getModelDisplayName } from "@/lib/ai/model-families";
+import { normalizeChannelAddress, requireSharedAddressConfirmation, type SharedAddressImpact } from "@/lib/ai-config/channel-address";
 import {
   buildDependencyPreview,
   requireDependencyConfirmation,
@@ -63,7 +66,10 @@ type AiConfigAction =
   | "remove_key_model"
   | "sync_all_keys"
   | "test_all_keys"
-  | "probe_provider_models";
+  | "probe_provider_models"
+  | "find_model_channels"
+  | "enable_model_channel"
+  | "cleanup_stale_models";
 
 type AiConfigBody = {
   action?: unknown;
@@ -90,7 +96,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "check_all_in_use" || action === "swap_model_channel_order" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "check_all_in_use" || action === "swap_model_channel_order" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" || action === "find_model_channels" || action === "enable_model_channel" || action === "cleanup_stale_models" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -111,7 +117,7 @@ function requireId(data: Record<string, unknown>) {
 function providerPatch(data: Record<string, unknown>, mode: "create" | "update") {
   const patch: Record<string, unknown> = {};
   if (mode === "create" || data.name !== undefined) patch.name = toTrimmedString(data.name);
-  if (mode === "create" || data.base_url !== undefined) patch.base_url = toTrimmedString(data.base_url);
+  if (mode === "create" || data.base_url !== undefined) patch.base_url = normalizeChannelAddress(data.base_url);
   if (data.description !== undefined) patch.description = toNullableString(data.description);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.name || !patch.base_url)) throw new Error("供应商缺少 name/base_url");
@@ -193,12 +199,14 @@ async function requireSelectableModel(supabase: SupabaseClient, modelId: string,
 type MutationResult = {
   affectedCount?: number;
   cascade?: { keyCount: number; modelCount: number };
+  sharedAddressImpact?: SharedAddressImpact;
 };
 type MutationError = Error & {
   status?: number;
   requiresConfirmation?: boolean;
   affectedBusinesses?: Array<{ key: string; label: string; selectedModelId: string | null; preferredModelId: string | null; defaultModelId: string | null }>;
   unknownReasons?: string[];
+  sharedAddressImpact?: SharedAddressImpact;
 };
 
 function mutationError(message: string, status = 400): MutationError {
@@ -213,6 +221,7 @@ function mutationErrorBody(error: unknown, fallback: string) {
     error: error instanceof Error ? error.message : fallback,
     ...(typeof cause?.requiresConfirmation === "boolean" ? { requiresConfirmation: cause.requiresConfirmation } : {}),
     ...(Array.isArray(cause?.affectedBusinesses) ? { affectedBusinesses: cause.affectedBusinesses } : {}),
+    ...(cause?.sharedAddressImpact ? { sharedAddressImpact: cause.sharedAddressImpact } : {}),
     ...(Array.isArray(cause?.unknownReasons) ? { unknownReasons: cause.unknownReasons } : {}),
   };
 }
@@ -405,17 +414,32 @@ async function applyMutation(
         ? buildAiKeyPatch(data, action)
         : modelPatch(data, action);
 
-  if (Object.keys(patch).length === 0) {
+  if (Object.keys(patch).length === 0 && !(entity === "key" && data.base_url !== undefined)) {
     if (action === "update" && data.priority !== undefined) return {};
     throw new Error("没有可写入字段");
   }
 
   const affectedCount = 0;
+  let sharedAddressImpact: SharedAddressImpact | undefined;
 
   if (action === "create") {
     const { error } = await supabase.from(table).insert(patch);
     if (error) throw new Error(error.message);
   } else {
+    if (entity === "provider" && patch.base_url !== undefined) {
+      sharedAddressImpact = await requireSharedAddressConfirmation(supabase,targetId,String(patch.base_url),data.confirm_shared_address === true);
+    }
+    if (entity === "key" && (data.provider_id !== undefined || data.base_url !== undefined)) {
+      const {data: currentKey,error: keyError} = await supabase.from("ai_provider_keys").select("provider_id").eq("id",targetId).single();
+      if (keyError || !currentKey) throw new Error(keyError?.message || "渠道不存在");
+      if (data.provider_id !== undefined && toTrimmedString(data.provider_id) !== currentKey.provider_id) throw new Error("渠道不能改换所属地址组，请新接入渠道");
+      if (data.base_url !== undefined) {
+        const address = normalizeChannelAddress(data.base_url);
+        sharedAddressImpact = await requireSharedAddressConfirmation(supabase,currentKey.provider_id,address,data.confirm_shared_address === true);
+        const {error} = await supabase.from("ai_providers").update({base_url:address}).eq("id",currentKey.provider_id);
+        if (error) throw new Error(error.message);
+      }
+    }
     if (entity === "provider" && patch.is_enabled === false) {
       const preview = await buildDependencyPreview(supabase, { scope: "provider", id: targetId });
       requireDependencyConfirmation(preview, data.confirm_impact === true, "停用接入点");
@@ -444,8 +468,10 @@ async function applyMutation(
       if (Object.prototype.hasOwnProperty.call(currentModel, "disabled_by_model")) patch.disabled_by_model = false;
     }
 
-    const { error } = await supabase.from(table).update(patch).eq("id", targetId);
-    if (error) throw new Error(error.message);
+    if (Object.keys(patch).length > 0) {
+      const { error } = await supabase.from(table).update(patch).eq("id", targetId);
+      if (error) throw new Error(error.message);
+    }
 
     if (renameModelId) {
       const { error: renameError } = await supabase
@@ -460,7 +486,7 @@ async function applyMutation(
 
   }
 
-  return { affectedCount };
+  return { affectedCount, sharedAddressImpact };
 }
 
 function requireManageableBusinessFeature(data: Record<string, unknown>) {
@@ -893,22 +919,62 @@ export async function buildAiConfigResponse(
     const data = asRecord(body.data);
     const providerId = toTrimmedString(data.provider_id);
     const apiKey = toTrimmedString(data.api_key);
-    if (!providerId || !apiKey) {
-      return NextResponse.json({ error: "缺少 provider_id 或 api_key" }, { status: 400 });
+    if ((!providerId && !toTrimmedString(data.base_url)) || !apiKey) {
+      return NextResponse.json({ error: "缺少渠道地址或 api_key" }, { status: 400 });
     }
     try {
-      const { data: provider, error } = await auth.supabase
+      const { data: provider, error } = providerId ? await auth.supabase
         .from("ai_providers")
         .select("id, name, base_url, is_enabled")
         .eq("id", providerId)
-        .maybeSingle();
+        .maybeSingle() : {data:{base_url:normalizeChannelAddress(data.base_url),is_enabled:true},error:null};
       if (error || !provider) throw new Error(error?.message || "接入点不存在");
       if (!(provider as { is_enabled?: boolean }).is_enabled) throw new Error("接入点已停用");
       const modelIds = await discoverModelIds(provider as { name?: string; base_url?: string }, apiKey);
-      return NextResponse.json({ modelIds });
+      return NextResponse.json({ modelIds, modelGroups: groupModelIdAliases(modelIds) });
     } catch {
       // 不把上游响应原文返回给浏览器，避免错误消息意外回显凭据。
       return NextResponse.json({ error: "服务端探测模型列表失败，请检查接入点和 API Key" }, { status: 502 });
+    }
+  }
+
+  if (action === "find_model_channels" || action === "enable_model_channel" || action === "cleanup_stale_models") {
+    try {
+      const data = asRecord(body.data);
+      if (action === "cleanup_stale_models") {
+        const keyId = toTrimmedString(data.key_id);
+        if (!keyId) throw new Error("缺少 key_id");
+        const cleanupResult = await cleanupStaleModelsForKey(auth.supabase,{keyId,modelIds:Array.isArray(data.model_ids) ? data.model_ids.map(toTrimmedString).filter(Boolean) : []});
+        aiClientInternal.resetCache();
+        return NextResponse.json({...await loadAiConfig(auth.supabase),cleanupResult});
+      }
+      const modelId = toTrimmedString(data.model_id);
+      if (!modelId) throw new Error("缺少 model_id");
+      const bundle = await loadAiConfig(auth.supabase);
+      const candidates = findModelChannelCandidates(bundle as unknown as ModelChannelDiscoveryInput,modelId);
+      if (action === "find_model_channels") return NextResponse.json({modelId,candidates});
+      const candidate = candidates.find(item=>item.keyId === toTrimmedString(data.key_id));
+      if (!candidate) throw new Error("该供应已经打开，或上游缓存未发现这个模型，请先同步");
+      if (!candidate.keyEnabled || !candidate.providerEnabled) throw new Error("请先打开渠道及其地址组，再开启模型供应");
+      const target = await loadKeyProvider(auth.supabase,candidate.keyId);
+      const testResult = await probeProviderModel(target.key.api_key,target.provider.base_url,modelId);
+      if (!testResult.ok) return NextResponse.json({error:"该渠道的模型测试未通过，供应仍关闭",testResult},{status:422});
+      let supplyId = candidate.existingSupplyId;
+      if (supplyId) {
+        const {error} = await auth.supabase.from("ai_provider_key_models").update({is_enabled:true,disabled_by_model:false}).eq("id",supplyId);
+        if (error) throw new Error(error.message);
+      } else {
+        const {data: created,error} = await auth.supabase.from("ai_provider_key_models").insert({key_id:candidate.keyId,model_id:modelId,display_name:getModelDisplayName(modelId),is_enabled:true}).select("id").single();
+        if (error || !created) throw new Error(error?.message || "创建模型供应失败");
+        supplyId = created.id;
+      }
+      await markProviderKeySuccess(auth.supabase,candidate.keyId);
+      await clearLegacyManualSleep(auth.supabase,candidate.keyId);
+      await markProviderKeyModelSuccess(auth.supabase,supplyId!);
+      aiClientInternal.resetCache();
+      return NextResponse.json({...await loadAiConfig(auth.supabase),enableResult:{keyId:candidate.keyId,modelId,supplyId,testResult}});
+    } catch (error) {
+      return NextResponse.json(mutationErrorBody(error,"模型供应操作失败"),{status:(error as MutationError).status ?? 400});
     }
   }
 
@@ -1151,6 +1217,7 @@ export async function buildAiConfigResponse(
       ...bundle,
       affectedCount: mutationResult.affectedCount,
       ...(mutationResult.cascade ? { cascade: mutationResult.cascade } : {}),
+      ...(mutationResult.sharedAddressImpact ? { sharedAddressImpact: mutationResult.sharedAddressImpact } : {}),
     });
   } catch (error) {
     const status =

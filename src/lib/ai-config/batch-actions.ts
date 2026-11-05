@@ -1,3 +1,4 @@
+import { resolveChannelGroup } from "./channel-address";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { discoverModelIds, syncModelsForKey } from "@/app/api/admin/ai-config/sync-models/route";
 import { getModelDisplayName } from "@/lib/ai/model-families";
@@ -133,6 +134,7 @@ export async function handleCreateKey(
   supabase: AiConfigSupabase,
   data: Record<string, unknown>,
 ): Promise<AiConfigMutationResult> {
+  data = await resolveChannelGroup(supabase,data);
   const patch = buildAiKeyPatch(data, "create");
   const { data: duplicateRows, error: duplicateError } = await supabase
     .from("ai_provider_keys")

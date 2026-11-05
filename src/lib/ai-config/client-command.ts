@@ -1,8 +1,11 @@
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
+import type { SharedAddressImpact } from "./channel-address";
 import type { AvailabilityReport } from "./availability";
 
 export type AiConfigConfirmation = {
   requiresConfirmation: boolean;
+  sharedAddressImpact?: SharedAddressImpact;
+  testResult?: unknown;
   affectedBusinesses: Array<{ key: string; label: string }>;
 };
 
@@ -28,6 +31,8 @@ export async function requestAiConfigCommand(
     ok: false, status: response.status, error: body.error || "操作失败",
     requiresConfirmation: body.requiresConfirmation === true,
     affectedBusinesses: body.affectedBusinesses ?? [],
+    ...(body.sharedAddressImpact ? {sharedAddressImpact:body.sharedAddressImpact} : {}),
+    ...(body.testResult ? {testResult:body.testResult} : {}),
   };
   return { ok: true, body };
 }
