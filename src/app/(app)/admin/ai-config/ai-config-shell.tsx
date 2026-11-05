@@ -32,7 +32,7 @@ export function AIConfigShell() {
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-5">
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
@@ -55,7 +55,7 @@ export function AIConfigShell() {
       </section>
 
       {/* 算力储备与渠道底座 */}
-      <section className="space-y-3 pt-1">
+      <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
             算力储备与渠道底座

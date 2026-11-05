@@ -83,7 +83,7 @@ export function FindChannelsPanel({
   };
 
   return (
-    <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-4 space-y-3">
+    <div className="mx-4 my-2 rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
       <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2">
         <div className="flex items-center gap-2">
           <span className="font-normal text-[14px] text-[#141413]">为此模型找渠道</span>

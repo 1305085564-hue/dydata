@@ -243,16 +243,16 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
 
   if (channels.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#E2E2DF] p-12 text-center text-[12px] text-[#78716C]">
+      <div className="rounded-xl border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
         暂未接入渠道。点击上方「接入新渠道」添加上游服务商。
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
       {/* 左侧：渠道列表（无 #N 序号，无顺位说明） */}
-      <div className="md:col-span-4 rounded-2xl border border-[#E2E2DF] bg-white p-3 space-y-2 shadow-card self-start">
+      <div className="md:col-span-4 rounded-xl border border-[#E2E2DF] bg-white p-2 space-y-1 self-start">
         <div className="text-[12px] text-[#78716C] px-2 py-1 font-normal">
           已接入渠道 ({channels.length})
         </div>
@@ -270,6 +270,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 key={ch.id}
                 role="button"
                 tabIndex={0}
+                data-slot="ai-key-item"
                 onClick={() => {
                   setSelectedKeyId(ch.id);
                   setEditingField(null);
@@ -283,25 +284,19 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                   }
                 }}
                 className={cn(
-                  "flex items-center justify-between rounded-xl p-3 text-left transition-colors cursor-pointer select-none",
+                  "flex items-center justify-between rounded-md px-2 py-2 text-left transition-colors cursor-pointer select-none",
                   isSelected
                     ? "bg-[#F1F1F0] border border-[#78716C]/40"
                     : "border border-transparent hover:bg-[#F7F7F6]"
                 )}
               >
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-normal text-[13px] text-[#141413] truncate">
-                      {ch.label || "未命名渠道"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px] text-[#78716C]">
-                    <span className="truncate">
-                      {bundle?.providers.find((p) => p.id === ch.provider_id)?.name || "未知接入点"}
-                    </span>
-                    <span>·</span>
-                    <span>{ch.available_models?.length ?? 0} 个模型</span>
-                  </div>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="font-normal text-[13px] text-[#141413] truncate">
+                    {ch.label || "未命名渠道"}
+                  </span>
+                  <span className="text-[12px] text-[#78716C] truncate shrink">
+                    ({bundle?.providers.find((p) => p.id === ch.provider_id)?.name || "未知接入点"} · {ch.available_models?.length ?? 0} 个模型)
+                  </span>
                 </div>
 
                 <div className="shrink-0 pl-2">
@@ -335,9 +330,9 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
 
       {/* 右侧：渠道详情 */}
       {selectedChannel && (
-        <div className="md:col-span-8 rounded-2xl border border-[#E2E2DF] bg-white p-5 space-y-5 shadow-card">
+        <div className="md:col-span-8 rounded-xl border border-[#E2E2DF] bg-white p-4 space-y-3">
           {/* 详情头部 */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 pb-3">
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-normal text-[14px] text-[#141413]">
@@ -378,7 +373,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 size="s"
                 disabled={isTestingChannel || !selectedChannel.is_enabled}
                 onClick={handleTestKey}
-                className="h-8 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+                className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
               >
                 <Play className={cn("size-3.5", isTestingChannel && "animate-spin")} />
                 <span>{isTestingChannel ? "检测中…" : "检测此渠道"}</span>
@@ -396,10 +391,10 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 variant="ghost"
                 size="icon-s"
                 onClick={() => handleDeleteKey(selectedChannel.id)}
-                className="size-8 text-[#A8A29E] hover:text-status-danger"
+                className="size-7 text-[#A8A29E] hover:text-status-danger"
                 title="删除渠道"
               >
-                <Trash2 className="size-4" />
+                <Trash2 className="size-3.5" />
               </Button>
             </div>
           </div>
@@ -427,26 +422,10 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
             </div>
           )}
 
-          {/* S8: 上游比对卡与同步模型 */}
-          <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-[12px] text-[#1F1E1D]">
-              上游提供 {selectedChannel.available_models?.length ?? 0} 个模型
-            </div>
-            <Button
-              variant="outline"
-              size="s"
-              onClick={() => onOpenSyncModal(selectedChannel.id, selectedChannel.label || "渠道")}
-              className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
-            >
-              <RefreshCw className="size-3" />
-              <span>同步模型</span>
-            </Button>
-          </div>
-
           {/* 属性编辑区 */}
           <div className="rounded-xl border border-[#E2E2DF] bg-white divide-y divide-[#E2E2DF]/60 text-[12px]">
             {/* 1. 渠道名称 */}
-            <div className="p-3 flex items-center justify-between gap-3">
+            <div className="px-3 py-2 flex items-center justify-between gap-3">
               <span className="text-[#78716C] w-24 shrink-0">渠道名称</span>
               {editingField === "label" ? (
                 <div className="flex items-center gap-2 flex-1">
@@ -474,7 +453,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
             </div>
 
             {/* 2. API 地址 (S7 支持共享地址提示) */}
-            <div className="p-3 flex items-center justify-between gap-3">
+            <div className="px-3 py-2 flex items-center justify-between gap-3">
               <span className="text-[#78716C] w-24 shrink-0">API 地址</span>
               {editingField === "base_url" ? (
                 <div className="flex items-center gap-2 flex-1">
@@ -502,7 +481,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
             </div>
 
             {/* 3. API Key */}
-            <div className="p-3 flex items-center justify-between gap-3">
+            <div className="px-3 py-2 flex items-center justify-between gap-3">
               <span className="text-[#78716C] w-24 shrink-0">API Key</span>
               {editingField === "api_key" ? (
                 <div className="flex items-center gap-2 flex-1">
@@ -533,15 +512,29 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
           </div>
 
           {/* 挂载模型清单（取消勾选只是关闭，不删除） */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-normal text-[14px] text-[#141413]">
-                供应模型 ({channelModels.length})
-              </span>
-              <span className="text-[12px] text-[#78716C]">
-                勾选开启该渠道对此模型的供应
-              </span>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-normal text-[14px] text-[#141413]">
+                  供应模型 ({channelModels.length})
+                </span>
+                <span className="text-[12px] text-[#78716C]">
+                  · 上游提供 {selectedChannel.available_models?.length ?? 0} 个模型
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="s"
+                onClick={() => onOpenSyncModal(selectedChannel.id, selectedChannel.label || "渠道")}
+                className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+              >
+                <RefreshCw className="size-3" />
+                <span>同步模型</span>
+              </Button>
             </div>
+            <p className="text-[12px] text-[#78716C]">
+              勾选开启该渠道对此模型的供应
+            </p>
 
             <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white overflow-hidden text-[12px]">
               {channelModels.length === 0 ? (
@@ -550,33 +543,24 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 </div>
               ) : (
                 channelModels.map((m) => (
-                  <div key={m.id} className="p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Checkbox
-                        checked={m.is_enabled}
-                        onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
-                        className="size-4 rounded-md"
-                      />
-                      <div className="min-w-0">
-                        <div className="text-[13px] text-[#141413] font-normal truncate">
-                          {m.display_name || m.model_id}
-                        </div>
-                        <div className="text-[12px] font-mono text-[#78716C] truncate">
-                          {m.model_id}
-                        </div>
-                      </div>
-                    </div>
-
-                    <span
-                      className={cn(
-                        "rounded-md px-1.5 py-0.5 text-[12px]",
-                        m.is_enabled
-                          ? "bg-[#4B6B4E]/10 text-[#4B6B4E]"
-                          : "bg-[#F1F1F0] text-[#78716C]"
-                      )}
-                    >
-                      {m.is_enabled ? "供应已开启" : "未开启"}
+                  <div
+                    key={m.id}
+                    data-slot="ai-key-model-row"
+                    className="h-9 px-3 py-2 flex items-center gap-2 min-w-0"
+                  >
+                    <Checkbox
+                      checked={m.is_enabled}
+                      onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
+                      className="size-4 rounded-md shrink-0"
+                    />
+                    <span className="font-normal text-[13px] text-[#141413] truncate">
+                      {m.display_name || m.model_id}
                     </span>
+                    {m.display_name && m.display_name !== m.model_id && (
+                      <span className="text-[12px] font-mono text-[#78716C] truncate">
+                        {m.model_id}
+                      </span>
+                    )}
                   </div>
                 ))
               )}

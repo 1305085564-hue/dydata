@@ -258,7 +258,7 @@ export function ComputePoolPanel() {
   }, [orderedFamilies, shelveFilter, searchQuery]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* 顶部摘要与检查条 */}
       <ComputePoolHeader
         summary={
@@ -276,16 +276,15 @@ export function ComputePoolPanel() {
         onClearCheckResult={() => setCheckResult(null)}
       />
 
-      {/* 视角切换器：模型视角 / 渠道视角 */}
-      <div className="flex items-center justify-between">
+      {/* 合并后的筛选与视角切换工具行 */}
+      <div
+        data-slot="ai-pool-toolbar"
+        className="sticky top-[var(--app-top-offset)] z-[var(--z-sticky-nav)] -mx-1 px-1 py-2 bg-[#FCFCFB]/85 backdrop-blur-md flex flex-wrap items-center gap-3"
+      >
         <PoolViewSwitcher viewMode={viewMode} onChange={handleViewModeChange} />
-      </div>
 
-      {/* 模型视角内容 */}
-      {viewMode === "model" && (
-        <div className="space-y-4">
-          {/* 工具栏：D1 切换 + 搜索 */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        {viewMode === "model" && (
+          <>
             {/* 只看在用 / 全部 切换 */}
             <div className="inline-flex items-center p-0.5 rounded-md bg-[#F1F1F0] text-[12px]">
               <button
@@ -315,7 +314,7 @@ export function ComputePoolPanel() {
             </div>
 
             {/* 搜索框 */}
-            <div className="relative min-w-[220px]">
+            <div className="relative min-w-[220px] ml-auto">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
               <Input
                 value={searchQuery}
@@ -333,15 +332,20 @@ export function ComputePoolPanel() {
                 </button>
               )}
             </div>
-          </div>
+          </>
+        )}
+      </div>
 
+      {/* 模型视角内容 */}
+      {viewMode === "model" && (
+        <div className="space-y-3">
           {/* 模型卡列表 */}
           {filteredFamilies.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#E2E2DF] p-12 text-center text-[12px] text-[#78716C]">
+            <div className="rounded-xl border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
               未找到匹配的模型。可切换至「全部模型」或调整搜索词。
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white divide-y divide-[#E2E2DF]">
               {filteredFamilies.map((family) => (
                 <ModelFamilyCard
                   key={family.modelId}

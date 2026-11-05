@@ -300,7 +300,7 @@ export function BusinessFunctionsPanel() {
           <TableBody>
             {/* 1. 全局默认兜底设置行 */}
             <TableRow className="border-b border-[#E2E2DF] bg-[#FCFCFB]/60 hover:bg-[#F7F7F6]/60">
-              <TableCell className="py-3 pl-4">
+              <TableCell className="pl-4">
                 <div className="flex items-center gap-2">
                   <span className="font-normal text-[14px] text-[#141413]">全局默认 AI 模型</span>
                   <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
@@ -311,7 +311,7 @@ export function BusinessFunctionsPanel() {
                   所有未明确指定模型、或所选模型不可用时的统一跨模型顶班兜底
                 </p>
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell>
                 <ModelFamilySelect
                   value={globalDefaultModelId}
                   onChange={handleGlobalDefaultChange}
@@ -319,10 +319,10 @@ export function BusinessFunctionsPanel() {
                   triggerTitle="全局默认必须指定模型"
                 />
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell>
                 {renderBusinessStatus(assuranceMap["default"], modelFamilyNameMap)}
               </TableCell>
-              <TableCell className="py-3 pr-4 text-right">
+              <TableCell className="pr-4 text-right">
                 <span className="text-[12px] text-[#A8A29E]">基石配置</span>
               </TableCell>
             </TableRow>
@@ -330,7 +330,7 @@ export function BusinessFunctionsPanel() {
             {/* 2. 截图识别专属置顶行 */}
             {ocrControl && (
               <TableRow className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
-                <TableCell className="py-3 pl-4">
+                <TableCell className="pl-4">
                   <div className="flex items-center gap-2">
                     <span className="font-normal text-[14px] text-[#141413]">
                       {ocrControl.label}
@@ -343,17 +343,17 @@ export function BusinessFunctionsPanel() {
                     {ocrControl.description}
                   </p>
                 </TableCell>
-                <TableCell className="py-3">
+                <TableCell>
                   <ModelFamilySelect
                     value={ocrControl.modelId}
                     onChange={handleOcrModelChange}
                     allowEmptyLabel="跟随全局默认"
                   />
                 </TableCell>
-                <TableCell className="py-3">
+                <TableCell>
                   {renderBusinessStatus(assuranceMap["ocr_screenshot"], modelFamilyNameMap)}
                 </TableCell>
-                <TableCell className="py-3 pr-4 text-right">
+                <TableCell className="pr-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button
                       variant="ghost"
@@ -384,7 +384,7 @@ export function BusinessFunctionsPanel() {
               const assurance = assuranceMap[ctrl.key];
               return (
                 <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
-                  <TableCell className="py-3 pl-4">
+                  <TableCell className="pl-4">
                     <div className="flex items-center gap-2">
                       <span className="font-normal text-[14px] text-[#141413]">
                         {ctrl.label}
@@ -394,17 +394,17 @@ export function BusinessFunctionsPanel() {
                       {ctrl.description}
                     </p>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell>
                     <ModelFamilySelect
                       value={ctrl.modelId}
                       onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
                       allowEmptyLabel="跟随全局默认"
                     />
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell>
                     {renderBusinessStatus(assurance, modelFamilyNameMap)}
                   </TableCell>
-                  <TableCell className="py-3 pr-4 text-right">
+                  <TableCell className="pr-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"

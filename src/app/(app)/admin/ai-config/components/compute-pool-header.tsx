@@ -36,9 +36,12 @@ export function ComputePoolHeader({
   const hasNeedsAttention = summary.needsAttentionChannels > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* 顶部单行摘要与操作条 */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E2E2DF] bg-white p-4 shadow-card">
+      <div
+        data-slot="ai-pool-header"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-4 py-2"
+      >
         {/* S3: 顶部摘要一行字 */}
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="text-[#4B6B4E]">
@@ -80,7 +83,7 @@ export function ComputePoolHeader({
               size="s"
               onClick={onCheckAll}
               disabled={isChecking}
-              className="h-8 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+              className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
             >
               <RefreshCw className={cn("size-3.5", isChecking && "animate-spin")} />
               <span>{isChecking ? "检查中…" : "检查一遍"}</span>
@@ -91,7 +94,7 @@ export function ComputePoolHeader({
           <Button
             size="s"
             onClick={onOpenAddKey}
-            className="h-8 gap-1 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            className="h-7 gap-1 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
           >
             <Plus className="size-3.5" />
             <span>接入新渠道</span>

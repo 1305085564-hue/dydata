@@ -23,6 +23,8 @@ import { formatSleepCountdown, AI_CONFIG_MESSAGES } from "@/lib/ai-config/presen
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
+const REVEAL_ON_HOVER = "pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 transition-opacity duration-150";
+
 export interface ModelChannelRowProps {
   channel: AvailabilityChannel;
   modelId: string;
@@ -90,20 +92,22 @@ export function ModelChannelRow({
 
   return (
     <div
+      data-slot="ai-channel-row"
       className={cn(
-        "rounded-xl border p-3 text-[12px] space-y-2 transition-colors",
+        "group px-4 py-2 text-[12px] transition-colors",
+        !isInvalid && "md:h-10",
         !isEnabled
-          ? "border-[#E2E2DF]/60 bg-[#F7F7F6]/60 opacity-70"
+          ? "bg-[#F7F7F6]/60 opacity-70"
           : isInvalid
-          ? "border-status-danger/30 bg-status-danger/[0.04]"
-          : "border-[#E2E2DF] bg-white hover:bg-[#FCFCFB]"
+          ? "bg-status-danger/[0.04]"
+          : "bg-white hover:bg-[#F7F7F6]"
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-3 md:grid md:grid-cols-[minmax(0,1fr)_200px_112px] md:gap-3">
         {/* 左侧：顺位移动、渠道信息与供应改名 */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0">
           {/* 顺位上移/下移 */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className={cn("flex items-center gap-1 shrink-0", REVEAL_ON_HOVER)}>
             <Button
               variant="ghost"
               size="icon-s"
@@ -176,7 +180,7 @@ export function ModelChannelRow({
                   variant="ghost"
                   size="icon-s"
                   onClick={handleStartRename}
-                  className="size-5 text-[#A8A29E] hover:text-[#141413]"
+                  className={cn("size-5 text-[#A8A29E] hover:text-[#141413]", REVEAL_ON_HOVER)}
                   title="修改渠道供应名称"
                   aria-label="修改渠道供应名称"
                 >
@@ -188,7 +192,7 @@ export function ModelChannelRow({
         </div>
 
         {/* 中间：口径 5 的四种状态 */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div data-slot="ai-channel-status" className="flex items-center gap-2 shrink-0 md:justify-start">
           {isUsable && (
             <span className="inline-flex items-center gap-1 rounded-md bg-[#4B6B4E]/10 px-2 py-0.5 text-[12px] text-[#4B6B4E]">
               <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
@@ -218,19 +222,21 @@ export function ModelChannelRow({
         </div>
 
         {/* 右侧：单供应开关、测试、删除供应 */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 md:justify-end">
           {/* 单条测试 */}
-          <Button
-            variant="ghost"
-            size="icon-s"
-            disabled={isTesting || !isEnabled}
-            onClick={() => onTest(channel.keyId, modelId)}
-            className="size-7 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
-            title="测试此渠道该模型供应"
-            aria-label="测试此渠道该模型供应"
-          >
-            <Play className={cn("size-3", isTesting && "animate-spin")} />
-          </Button>
+          <span className={cn("inline-flex", !isTesting && REVEAL_ON_HOVER)}>
+            <Button
+              variant="ghost"
+              size="icon-s"
+              disabled={isTesting || !isEnabled}
+              onClick={() => onTest(channel.keyId, modelId)}
+              className="size-6 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
+              title="测试此渠道该模型供应"
+              aria-label="测试此渠道该模型供应"
+            >
+              <Play className={cn("size-3", isTesting && "animate-spin")} />
+            </Button>
+          </span>
 
           {/* 陷阱 A: 仅控制此供应的开关，传 keyModelId */}
           <Switch
@@ -244,7 +250,7 @@ export function ModelChannelRow({
             variant="ghost"
             size="icon-s"
             onClick={() => onDeleteSupply(channel.keyModelId)}
-            className="size-7 text-[#A8A29E] hover:text-status-danger"
+            className={cn("size-6 text-[#A8A29E] hover:text-status-danger", REVEAL_ON_HOVER)}
             title="移除此模型在此渠道的供应"
             aria-label="移除此模型在此渠道的供应"
           >
@@ -255,7 +261,7 @@ export function ModelChannelRow({
 
       {/* 需要你处理：展示原因（在主列表里显眼，不折叠原因），技术详情可折叠 */}
       {isInvalid && (
-        <div className="pt-1 border-t border-status-danger/20 text-[12px] space-y-1">
+        <div className="pt-1 text-[12px] space-y-1 md:pl-15">
           <div className="text-status-danger-text">
             原因：{failureDiagnostic?.technical?.message || "渠道连通性异常或鉴权失败"}
           </div>

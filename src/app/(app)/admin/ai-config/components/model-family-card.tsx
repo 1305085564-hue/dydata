@@ -47,6 +47,9 @@ export function ModelFamilyCard({
   const [showFindChannels, setShowFindChannels] = useState(false);
   const [disabledExpanded, setDisabledExpanded] = useState(false);
   const [isTogglingModel, setIsTogglingModel] = useState(false);
+  const [channelsExpanded, setChannelsExpanded] = useState(false);
+
+  const isChannelsVisible = family.isShelved || channelsExpanded;
 
   const channels = useMemo(() => family.channels ?? [], [family.channels]);
   const schedulableCount = family.schedulableChannelCount;
@@ -99,51 +102,65 @@ export function ModelFamilyCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border p-4 space-y-4 shadow-card transition-colors",
+        "transition-colors",
         !family.isShelved
-          ? "border-[#E2E2DF]/60 bg-[#F7F7F6]/40 opacity-80"
+          ? "bg-[#F7F7F6]/40 opacity-80"
           : isNoSupply
-          ? "border-[#E2E2DF] bg-[#FCFCFB]"
-          : "border-[#E2E2DF] bg-white"
+          ? "bg-[#FCFCFB]"
+          : "bg-white"
       )}
     >
       {/* 头部：模型名称、S5 汇总与停用/找渠道操作 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 pb-3">
-        <div className="space-y-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-normal text-[14px] text-[#141413]">
-              {family.displayName}
+      <div
+        data-slot="ai-model-header"
+        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-[#FCFCFB]"
+      >
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+          {!family.isShelved && (
+            <button
+              type="button"
+              onClick={() => setChannelsExpanded((v) => !v)}
+              aria-expanded={isChannelsVisible}
+              aria-label={isChannelsVisible ? "收起渠道" : "展开渠道"}
+              className="inline-flex items-center text-[#78716C] hover:text-[#141413]"
+            >
+              {isChannelsVisible ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronRight className="size-3.5" />
+              )}
+            </button>
+          )}
+          <span className="font-normal text-[14px] text-[#141413]">
+            {family.displayName}
+          </span>
+          <span className="font-mono text-[12px] text-[#78716C]">
+            {family.modelId}
+          </span>
+          {isNoSupply && (
+            <span className="rounded-md bg-status-danger/[0.10] px-2 py-0.5 text-[12px] text-status-danger-text">
+              暂时不可用
             </span>
-            <span className="font-mono text-[12px] text-[#78716C]">
-              {family.modelId}
-            </span>
-            {isNoSupply && (
-              <span className="rounded-md bg-status-danger/[0.10] px-2 py-0.5 text-[12px] text-status-danger-text">
-                暂时不可用
-              </span>
-            )}
-          </div>
+          )}
 
           {/* S5: 模型卡汇总：「M 条渠道供货，N 条能用」 */}
-          <div className="flex flex-wrap items-center gap-2 text-[12px]">
-            <span className="text-[#1F1E1D]">
-              {channels.length} 条渠道供货，{schedulableCount} 条能用
+          <span className="text-[#1F1E1D]">
+            {channels.length} 条渠道供货，{schedulableCount} 条能用
+          </span>
+
+          {/* 恰好 1 条能用时的单点建议 */}
+          {isSingleSupply && (
+            <span className="text-[#8A6A2F]">
+              · {AI_CONFIG_MESSAGES["model.single_supply"]}
             </span>
+          )}
 
-            {/* 恰好 1 条能用时的单点建议 */}
-            {isSingleSupply && (
-              <span className="text-[#8A6A2F]">
-                · {AI_CONFIG_MESSAGES["model.single_supply"]}
-              </span>
-            )}
-
-            {/* 0 条能用时的原因 */}
-            {isNoSupply && family.unavailableReasonKey && (
-              <span className="text-status-danger-text">
-                · {AI_CONFIG_MESSAGES[family.unavailableReasonKey]}
-              </span>
-            )}
-          </div>
+          {/* 0 条能用时的原因 */}
+          {isNoSupply && family.unavailableReasonKey && (
+            <span className="text-status-danger-text">
+              · {AI_CONFIG_MESSAGES[family.unavailableReasonKey]}
+            </span>
+          )}
         </div>
 
         {/* 头部右侧操作 */}
@@ -198,83 +215,85 @@ export function ModelFamilyCard({
       )}
 
       {/* 渠道供应主列表 */}
-      {channels.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
-          当前没有接入提供此模型的渠道。点击上方「为此模型找渠道」扫描已接入渠道，或在顶部接入新渠道。
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {/* 1. 主列表：能用 / 歇着 / 需要你处理 */}
-          {mainChannels.map((channel) => {
-            const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
-            const canMoveUp = sortedIdx > 0;
-            const canMoveDown = sortedIdx < sortedChannels.length - 1;
+      {isChannelsVisible && (
+        channels.length === 0 ? (
+          <div className="px-4 py-3 text-[12px] text-[#78716C]">
+            当前没有接入提供此模型的渠道。点击上方「为此模型找渠道」扫描已接入渠道，或在顶部接入新渠道。
+          </div>
+        ) : (
+          <div className="border-t border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60">
+            {/* 1. 主列表：能用 / 歇着 / 需要你处理 */}
+            {mainChannels.map((channel) => {
+              const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
+              const canMoveUp = sortedIdx > 0;
+              const canMoveDown = sortedIdx < sortedChannels.length - 1;
 
-            return (
-              <ModelChannelRow
-                key={channel.keyModelId}
-                channel={channel}
-                modelId={family.modelId}
-                canMoveUp={canMoveUp}
-                canMoveDown={canMoveDown}
-                onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
-                onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
-                onToggleEnabled={onToggleSupply}
-                onRename={onRenameSupply}
-                onTest={onTestSupply}
-                onDeleteSupply={onDeleteSupply}
-                failureDiagnostic={diagnosticMap[channel.keyModelId]}
-                isTesting={testingKeyModelId === channel.keyModelId}
-              />
-            );
-          })}
+              return (
+                <ModelChannelRow
+                  key={channel.keyModelId}
+                  channel={channel}
+                  modelId={family.modelId}
+                  canMoveUp={canMoveUp}
+                  canMoveDown={canMoveDown}
+                  onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
+                  onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
+                  onToggleEnabled={onToggleSupply}
+                  onRename={onRenameSupply}
+                  onTest={onTestSupply}
+                  onDeleteSupply={onDeleteSupply}
+                  failureDiagnostic={diagnosticMap[channel.keyModelId]}
+                  isTesting={testingKeyModelId === channel.keyModelId}
+                />
+              );
+            })}
 
-          {/* 2. 已停用供应折叠区（只有已停用可以折叠） */}
-          {disabledChannels.length > 0 && (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setDisabledExpanded(!disabledExpanded)}
-                className="flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] transition-colors"
-              >
-                {isShowDisabled ? (
-                  <ChevronDown className="size-3.5" />
-                ) : (
-                  <ChevronRight className="size-3.5" />
+            {/* 2. 已停用供应折叠区（只有已停用可以折叠） */}
+            {disabledChannels.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setDisabledExpanded(!disabledExpanded)}
+                  className="flex w-full items-center gap-1 px-4 py-2 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#F7F7F6]"
+                >
+                  {isShowDisabled ? (
+                    <ChevronDown className="size-3.5" />
+                  ) : (
+                    <ChevronRight className="size-3.5" />
+                  )}
+                  <span>已停用的供应 ({disabledChannels.length})</span>
+                </button>
+
+                {isShowDisabled && (
+                  <div className="border-t border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60">
+                    {disabledChannels.map((channel) => {
+                      const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
+                      const canMoveUp = sortedIdx > 0;
+                      const canMoveDown = sortedIdx < sortedChannels.length - 1;
+
+                      return (
+                        <ModelChannelRow
+                          key={channel.keyModelId}
+                          channel={channel}
+                          modelId={family.modelId}
+                          canMoveUp={canMoveUp}
+                          canMoveDown={canMoveDown}
+                          onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
+                          onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
+                          onToggleEnabled={onToggleSupply}
+                          onRename={onRenameSupply}
+                          onTest={onTestSupply}
+                          onDeleteSupply={onDeleteSupply}
+                          failureDiagnostic={diagnosticMap[channel.keyModelId]}
+                          isTesting={testingKeyModelId === channel.keyModelId}
+                        />
+                      );
+                    })}
+                  </div>
                 )}
-                <span>已停用的供应 ({disabledChannels.length})</span>
-              </button>
-
-              {isShowDisabled && (
-                <div className="mt-2 space-y-2 pl-2 border-l-2 border-[#E2E2DF]">
-                  {disabledChannels.map((channel) => {
-                    const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
-                    const canMoveUp = sortedIdx > 0;
-                    const canMoveDown = sortedIdx < sortedChannels.length - 1;
-
-                    return (
-                      <ModelChannelRow
-                        key={channel.keyModelId}
-                        channel={channel}
-                        modelId={family.modelId}
-                        canMoveUp={canMoveUp}
-                        canMoveDown={canMoveDown}
-                        onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
-                        onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
-                        onToggleEnabled={onToggleSupply}
-                        onRename={onRenameSupply}
-                        onTest={onTestSupply}
-                        onDeleteSupply={onDeleteSupply}
-                        failureDiagnostic={diagnosticMap[channel.keyModelId]}
-                        isTesting={testingKeyModelId === channel.keyModelId}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )
       )}
     </div>
   );
