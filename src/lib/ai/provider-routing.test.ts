@@ -101,16 +101,17 @@ test("getProviderKeyModelConfig returns null for unhealthy key model", async () 
   assert.equal(config, null);
 });
 
-test("selectHealthyProviderKeyModel selects the lowest priority healthy candidate", async () => {
+test("selectHealthyProviderKeyModel orders by model sort_order then id, ignoring channel priorities", async () => {
   const service = createFakeService([
-    providerRow({ id: "pkm-slow", modelId: "claude-sonnet-4-6", keyPriority: 50 }),
-    providerRow({ id: "pkm-fast", modelId: "claude-sonnet-4-6", keyPriority: 10 }),
+    { ...providerRow({ id: "pkm-priority-first", modelId: "claude-sonnet-4-6", keyPriority: 1, providerPriority: 1 }), sort_order: 9 },
+    { ...providerRow({ id: "pkm-b", modelId: "claude-sonnet-4-6", keyPriority: 100, providerPriority: 100 }), sort_order: 1 },
+    { ...providerRow({ id: "pkm-a", modelId: "claude-sonnet-4-6", keyPriority: 100, providerPriority: 100 }), sort_order: 1 },
     providerRow({ id: "pkm-other", modelId: "other-model", keyPriority: 1 }),
   ]);
 
   const selected = await selectHealthyProviderKeyModel(service as never, "claude-sonnet-4-6");
-  assert.equal(selected?.providerKeyModelId, "pkm-fast");
-  assert.equal(selected?.config.baseUrl, "https://provider-pkm-fast.test");
+  assert.equal(selected?.providerKeyModelId, "pkm-a");
+  assert.equal(selected?.config.baseUrl, "https://provider-pkm-a.test");
 });
 
 test("停用供应商后调度器不会选择其仍启用的 Key 模型", async () => {
@@ -138,13 +139,12 @@ test("模型级熔断只排除当前模型，不影响同一 Key 下的其他模
   assert.equal(selectedUnhealthy, null);
 });
 
-test("model-local order applies to selected-model and full fallback chains", async () => {
+test("model-local routing order follows sort_order then id", async () => {
   const first = { ...providerRow({ id: "a", modelId: "model-a", keyPriority: 1 }), sort_order: 2 };
   const second = { ...providerRow({ id: "b", modelId: "model-a", keyPriority: 100 }), sort_order: 1 };
-  const other = { ...providerRow({ id: "c", modelId: "model-b", keyPriority: 2 }), sort_order: 1 };
-  const service = createFakeService([first, second, other]);
-  assert.deepEqual((await listRankedProviderKeyModels(service, "model-a")).map((item) => item.providerKeyModelId), ["b", "a"]);
-  assert.deepEqual((await listRankedProviderKeyModels(service)).map((item) => item.providerKeyModelId), ["b", "c", "a"]);
+  const tied = { ...providerRow({ id: "aa", modelId: "model-a", keyPriority: 200 }), sort_order: 1 };
+  const service = createFakeService([first, second, tied]);
+  assert.deepEqual((await listRankedProviderKeyModels(service, "model-a")).map((item) => item.providerKeyModelId), ["aa", "b", "a"]);
 });
 
 test("manual sleep and permanent failure exclude mounted models from production candidates", async () => {
@@ -152,16 +152,4 @@ test("manual sleep and permanent failure exclude mounted models from production 
   const invalid = { ...providerRow({ id: "invalid", modelId: "model-a", keyPriority: 2 }), invalidated_at: new Date().toISOString() };
   (manual.key as Row).manual_sleep_until = new Date(Date.now() + 60_000).toISOString();
   assert.deepEqual(await listRankedProviderKeyModels(createFakeService([manual, invalid]), "model-a"), []);
-});
-
-
-test("全量兜底保留跨模型位置并尊重每个模型的独立顺位", async () => {
-  const rows = [
-    { ...providerRow({ id: "a1", modelId: "a", keyPriority: 1 }), sort_order: 2 },
-    { ...providerRow({ id: "b1", modelId: "b", keyPriority: 2 }), sort_order: 1 },
-    { ...providerRow({ id: "a2", modelId: "a", keyPriority: 3 }), sort_order: 1 },
-    { ...providerRow({ id: "b2", modelId: "b", keyPriority: 4 }), sort_order: 2 },
-  ];
-  const ranked = await listRankedProviderKeyModels(createFakeService(rows));
-  assert.deepEqual(ranked.map((r) => r.providerKeyModelId), ["a2", "b1", "a1", "b2"]);
 });

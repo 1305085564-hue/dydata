@@ -4,6 +4,7 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildHaikuVisionBody, parseHaikuVisionResponse, usesHaikuNativeVision } from "./haiku-vision-transport";
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
   getProviderKeyModelConfig,
@@ -11,6 +12,7 @@ import {
   type ProviderKeyModelConfig,
 } from "./provider-routing";
 import { recordProviderFailure, recordProviderSuccess } from "./provider-health-recorder";
+import { resolveFeatureModelRouting } from "./feature-routing";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { sanitizeProviderErrorMessage } from "./provider-health";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
@@ -170,7 +172,7 @@ function getServiceSupabaseClient() {
 function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
   return {
     featureKey: row.feature_key,
-    providerKeyModelId: row.provider_key_model_id,
+    providerKeyModelId: null,
     modelId: row.model_id ?? null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
@@ -193,16 +195,10 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
     return null;
   }
 
-  // 优先读取 model_id（模型为主改造）；生产库尚未执行加列 migration 时降级为旧字段
-  let result = await supabase
+  const { data: bindingData, error: bindingError } = await supabase
     .from("ai_feature_bindings")
-    .select("feature_key, provider_key_model_id, model_id, system_prompt, is_enabled, lifecycle_state");
-  if (result.error) {
-    result = await supabase
-      .from("ai_feature_bindings")
-      .select("feature_key, provider_key_model_id, system_prompt, is_enabled, lifecycle_state");
-  }
-  const { data: bindingData, error: bindingError } = result;
+    .select("feature_key, model_id, system_prompt, is_enabled, lifecycle_state");
+  if (bindingError) throw new Error("读取 AI 业务配置失败");
 
   const configs = new Map<string, FeatureConfig>();
   if (!bindingError && bindingData?.length) {
@@ -234,36 +230,19 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
   };
 }
 
-/** 场景路由解析调用链（模型为主，渠道为辅）：
- * 1) 场景指定了模型 → 该模型在所有渠道上的部署按当前模型独立顺位排列，同模型跨渠道自动切换；
- *    model_id 为空时兼容从旧组合绑定推导出模型
- * 2) 场景未指定 → 走「全局默认」（feature_key=default，最低优先级）的模型，同样跨渠道顺位
- * 3) 指定/默认模型全部不健康或不存在 → 全量顺位最后兜底 */
-async function resolveFeatureChannelChain(
-  featureConfig: FeatureConfig,
-): Promise<ChannelConfig[]> {
+/** Selected model channels, then global default channels. No arbitrary-model fallback. */
+async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise<ChannelConfig[]> {
   const supabase = getServiceSupabaseClient();
   if (!supabase) return [];
-
-  let modelId = featureConfig.modelId?.trim() || null;
-  if (!modelId && featureConfig.providerKeyModelId) {
-    const pinnedConfig = await getProviderKeyModelConfig(supabase, featureConfig.providerKeyModelId);
-    modelId = pinnedConfig?.modelId ?? null;
-  }
-  if (!modelId) {
-    const fallback = await getFeatureConfig("default");
-    modelId = fallback?.modelId?.trim() || null;
-  }
-
-  if (modelId) {
-    const forModel = await listRankedProviderKeyModels(supabase, modelId);
-    if (forModel.length > 0) {
-      return forModel.map(({ config }) => toChannelConfig(config));
-    }
-  }
-
-  const allRanked = await listRankedProviderKeyModels(supabase, undefined);
-  return allRanked.map(({ config }) => toChannelConfig(config));
+  const fallback = await getFeatureConfig("default");
+  const ids = [...new Set([featureConfig.modelId, fallback?.modelId].filter((id): id is string => Boolean(id?.trim())))];
+  const lists = await Promise.all(ids.map(async id => [id, await listRankedProviderKeyModels(supabase, id)] as const));
+  const candidates = new Map(lists);
+  const routing = resolveFeatureModelRouting({
+    modelId: featureConfig.modelId, defaultModelId: fallback?.modelId,
+    isAvailable: id => Boolean(candidates.get(id)?.length),
+  });
+  return routing.modelIds.flatMap(id => candidates.get(id)!.map(({ config }) => toChannelConfig(config)));
 }
 
 async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
@@ -535,19 +514,21 @@ async function sendToChannel(
   const model = resolveModel(channel, options);
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const startedAt = Date.now();
+  const nativeVision = usesHaikuNativeVision(model, options);
+  const upstreamUrl = nativeVision ? `${channel.baseUrl.replace(/\/+$/, "")}/messages` : buildUpstreamUrl(channel.baseUrl);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     return await withPinnedExternalResponse(
-      buildUpstreamUrl(channel.baseUrl),
+      upstreamUrl,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${channel.apiKey}`,
+          ...(nativeVision ? { "x-api-key": channel.apiKey, "anthropic-version": "2023-06-01" } : { Authorization: `Bearer ${channel.apiKey}` }),
         },
-        body: JSON.stringify(buildRequestBody(options, model)),
+        body: JSON.stringify(nativeVision ? buildHaikuVisionBody(model, options) : buildRequestBody(options, model)),
         signal: controller.signal,
       },
       async (pinnedResponse) => {
@@ -564,7 +545,7 @@ async function sendToChannel(
           );
         }
 
-        const streamed = await parseChatCompletionSse(response, options);
+        const streamed = nativeVision ? await parseHaikuVisionResponse(response, options) : await parseChatCompletionSse(response, options);
         const content = streamed.content || streamed.reasoningContent;
         if (!content) {
           throw new AiChannelError(
@@ -682,6 +663,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
   };
 
   if (options.featureKey) {
+    delete effectiveOptions.model;
     const access = resolveAiFeatureAccess(options.featureKey);
     if (!access.allowed) {
       throw new Error(access.reason);
@@ -695,11 +677,13 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
       throw new Error("该 AI 功能已禁用");
     }
 
-    if (featureConfig) {
-      for (const channel of await resolveFeatureChannelChain(featureConfig)) {
+    {
+      for (const channel of await resolveFeatureChannelChain(featureConfig ?? { featureKey: options.featureKey, modelId: null, providerKeyModelId: null, systemPrompt: null, isEnabled: true, lifecycleState: "active" })) {
         pushChannelUnique(channel);
       }
     }
+
+    if (configuredChannels.length === 0 && isDbChannelModeEnabled()) throw new Error("无可用模型");
 
     if (featureConfig?.systemPrompt) {
       effectiveOptions.messages = [
@@ -709,7 +693,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     }
   }
 
-  const providerKeyModelId = options.providerKeyModelId?.trim();
+  const providerKeyModelId = !options.featureKey ? options.providerKeyModelId?.trim() : undefined;
   if (providerKeyModelId) {
     const providerChannel = await getProviderKeyModelChannel(providerKeyModelId);
     if (providerChannel) {
@@ -731,7 +715,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     return sendWithFailover(channels, effectiveOptions, recordHealth);
   }
 
-  if (!options.databaseOnly) {
+  if (!options.databaseOnly && !options.featureKey) {
     pushChannelUnique(getChannelFromEnv());
   }
 
@@ -792,7 +776,7 @@ async function sendWithFailover(
         if (channel.providerKeyId) failedProviderKeyIds.add(channel.providerKeyId);
       }
 
-      if (!aiError.retryable) {
+      if (!aiError.retryable && !/^http_(401|402|403|404|422)$/.test(aiError.errorType)) {
         aiError.message = `[${channel.name}] ${aiError.message}`;
         throw aiError;
       }
@@ -844,6 +828,7 @@ export function extractJsonString(content: string): string | null {
 
 export const __internal = {
   sendWithFailoverForTests: sendWithFailover,
+  sendToChannelForTests: sendToChannel,
   getEnvFlag,
   getChannelFromEnv,
   isDbChannelModeEnabled,

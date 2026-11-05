@@ -30,10 +30,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
+import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
-import { resolveModelGlobalEnabled } from "@/lib/ai-config/availability";
 import { modelTestKey } from "./model-test-feedback";
 
 export function ComputePoolPanel() {
@@ -141,35 +140,17 @@ export function ComputePoolPanel() {
     }>;
   } | null>(null);
 
-  const modelFamilyGroups = useMemo(() => {
-    if (!bundle) return [];
-    const providerMap = new Map(bundle.providers.map((p) => [p.id, p])); // gate:transient-map useMemo内部查找索引，随渲染释放
-    const keyMap = new Map(bundle.keys.map((k) => [k.id, k])); // gate:transient-map useMemo内部查找索引，随渲染释放
-    const groups = new Map<string, WarehouseModelGroup>(); // gate:transient-map useMemo内部模型索引，随渲染释放
-
-    for (const m of bundle.models) {
-      const key = keyMap.get(m.key_id);
-      if (!key) continue;
-      const provider = providerMap.get(key.provider_id);
-      if (!provider) continue;
-
-      const modelId = m.model_id;
-      const displayName = resolveModelDisplayName(m.display_name, modelId);
-      const globalEnabled = resolveModelGlobalEnabled(modelId, bundle.models);
-
-      if (!groups.has(modelId)) {
-        groups.set(modelId, { modelId, displayName, items: [], isShelved: globalEnabled });
-      } else if (globalEnabled) {
-        groups.get(modelId)!.isShelved = true;
-      }
-
-      groups.get(modelId)!.items.push({ key, providerName: provider.name, modelRecordId: m.id, sortOrder: m.sort_order ?? key.priority, modelId, displayName });
-    }
-
-    for (const group of groups.values()) {
-      group.items.sort((a, b) => (a.sortOrder ?? a.key.priority) - (b.sortOrder ?? b.key.priority) || a.key.id.localeCompare(b.key.id));
-    }
-    return Array.from(groups.values());
+  // 数据接线：分组、顺位和状态直接读取服务端报告，不在页面重算。
+  const modelFamilyGroups = useMemo<WarehouseModelGroup[]>(() => {
+    if (!bundle?.availability) return [];
+    return bundle.availability.modelFamilies.map(family => ({
+      modelId: family.modelId, displayName: family.displayName, isShelved: family.isShelved,
+      items: family.channels.flatMap(channel => {
+        const key = bundle.keys.find(item => item.id === channel.keyId);
+        return key ? [{ key, providerName: channel.providerName, modelRecordId: channel.keyModelId,
+          sortOrder: channel.sortOrder, modelId: family.modelId, displayName: family.displayName }] : [];
+      }),
+    }));
   }, [bundle]);
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);

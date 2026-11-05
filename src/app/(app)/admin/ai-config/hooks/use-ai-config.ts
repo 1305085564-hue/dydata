@@ -1,3 +1,4 @@
+import { requestAiConfigCommand } from "@/lib/ai-config/client-command";
 import { useState, useCallback, useEffect } from "react";
 import type { AvailabilityReport } from "@/lib/ai-config/availability";
 import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
@@ -191,6 +192,12 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const runCommand = useCallback(async (action: string, data: Record<string, unknown> = {}, entity?: "provider" | "key" | "model" | "feature_binding", timeoutMs?: number) => {
+    const result = await requestAiConfigCommand(action, data, entity, timeoutMs);
+    if (result.ok && result.body.availability) mutate(result.body as AiConfigBundle);
+    return result;
+  }, [mutate]);
+
   const mutateEntity = useCallback(async (
     action: "create" | "update" | "delete",
     entity: "provider" | "key" | "model" | "feature_binding",
@@ -223,7 +230,7 @@ export function useAiConfig() {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, data }),
+        body: JSON.stringify({ action, data: Object.fromEntries(Object.entries(data).filter(([key]) => key !== "provider_key_model_id")) }),
       });
       const responseData = await res.json();
       if (!res.ok || responseData.error) {
@@ -509,6 +516,7 @@ export function useAiConfig() {
     loadData,
     mutate,
     mutateEntity,
+    runCommand,
     saveFeatureControl,
     setGlobalDefaultModel,
     archiveFeature,

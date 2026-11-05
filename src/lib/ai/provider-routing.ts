@@ -67,7 +67,6 @@ const PROVIDER_KEY_MODEL_SELECT = `
   id,
   model_id,
   is_enabled,
-  global_is_enabled,
   consecutive_failures,
   unhealthy_until,
   last_failure_at,
@@ -81,7 +80,6 @@ const PROVIDER_KEY_MODEL_SELECT = `
     id,
     api_key,
     is_enabled,
-    priority,
     consecutive_failures,
     unhealthy_until,
     last_failure_at,
@@ -93,8 +91,7 @@ const PROVIDER_KEY_MODEL_SELECT = `
       id,
       name,
       base_url,
-      priority,
-      is_enabled
+        is_enabled
     )
   )
 `;
@@ -144,31 +141,7 @@ export async function listRankedProviderKeyModels(
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
     )
-    .sort((left, right) => {
-      const leftKey = firstOrNull(left.row.key);
-      const rightKey = firstOrNull(right.row.key);
-      const leftProvider = firstOrNull(leftKey?.provider);
-      const rightProvider = firstOrNull(rightKey?.provider);
-      const leftScore = (leftKey?.priority ?? 100) + (leftProvider?.priority ?? 100);
-      const rightScore = (rightKey?.priority ?? 100) + (rightProvider?.priority ?? 100);
-      if (modelIdPreference && left.row.sort_order != null && right.row.sort_order != null) {
-        return left.row.sort_order - right.row.sort_order || left.row.id.localeCompare(right.row.id);
-      }
-      return leftScore - rightScore || (leftKey?.id ?? "").localeCompare(rightKey?.id ?? "") || left.row.id.localeCompare(right.row.id);
-    });
-  if (!modelIdPreference) {
-    const groups = new Map<string, typeof ranked>(); // gate:transient-map 单次候选排序分组，返回后释放，不跨请求缓存
-    for (const item of ranked) {
-      const group = groups.get(item.row.model_id) ?? [];
-      group.push(item);
-      groups.set(item.row.model_id, group);
-    }
-    for (const group of groups.values()) group.sort((a, b) => (a.row.sort_order ?? 0) - (b.row.sort_order ?? 0));
-    return ranked.map((item) => {
-      const next = groups.get(item.row.model_id)!.shift()!;
-      return { providerKeyModelId: next.config.providerKeyModelId, config: next.config };
-    });
-  }
+    .sort((left, right) => (left.row.sort_order ?? 0) - (right.row.sort_order ?? 0) || left.row.id.localeCompare(right.row.id));
   return ranked.map((item) => ({ providerKeyModelId: item.config.providerKeyModelId, config: item.config }));
 }
 

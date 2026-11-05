@@ -1,3 +1,4 @@
+import { resolveFeatureModelRouting } from "@/lib/ai/feature-routing";
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
   isProviderKeyModelSchedulable,
@@ -47,7 +48,7 @@ export type AvailabilityFeatureControl = {
   isEnabled: boolean;
   lifecycleState: string;
   modelId: string | null;
-  providerKeyModelId: string | null;
+  providerKeyModelId?: string | null;
 };
 
 export type AvailabilityDefaultBinding = {
@@ -89,6 +90,9 @@ export type AvailabilityModelFamily = {
   untestedChannelCount: number;
   schedulableChannelCount: number;
   faultChannelCount: number;
+  isConfigured: boolean;
+  isSelectable: boolean;
+  unavailableReasonKey: "model.no_available_supply" | null;
 };
 
 export type AvailabilityKeySummary = ChannelGovernance & {
@@ -116,6 +120,11 @@ export type BusinessAssuranceItem = {
   faultChannelCount: number;
   totalChannelCount: number;
   status: "healthy" | "degraded" | "outage";
+  routingStatus: "normal" | "fallback" | "outage";
+  selectedModelId: string | null;
+  preferredModelId: string | null;
+  defaultModelId: string | null;
+  messageKey: "business.normal" | "business.fallback" | "business.outage";
 };
 
 export type AvailabilityReport = {
@@ -137,6 +146,7 @@ export type AvailabilityReport = {
   affectedBusinessFeatures: AffectedBusinessFeature[];
   affectedBusinessCount: number;
   businessAssurances: BusinessAssuranceItem[];
+  businessSummary: { normal: number; fallback: number; outage: number; needsAttentionChannels: number };
 };
 
 function legacyHealth(identity: ChannelIdentity, hasSuccess: boolean): KeyHealthState {
@@ -149,21 +159,9 @@ function countIdentities(rows: Array<{ identity: ChannelIdentity }>): Record<Cha
   return counts;
 }
 
-/** 全局模型状态：未决策（null）时，沿用已有渠道启用状态。 */
-export function resolveModelGlobalEnabled(
-  modelId: string,
-  models: AvailabilityModel[],
-): boolean {
-  const sameModel = models.filter((model) => model.model_id === modelId);
-  const hasEnabledChannel = sameModel.some((model) => model.is_enabled);
-  const explicitStates = sameModel
-    .map((model) => model.global_is_enabled)
-    .filter((state): state is boolean | null => state !== undefined);
-
-  if (explicitStates.some((state) => state === true)) return true;
-  if (explicitStates.some((state) => state === null)) return hasEnabledChannel;
-  if (explicitStates.length === 0) return hasEnabledChannel;
-  return false;
+/** Compatibility name for the old UI; only supply switches determine configuration. */
+export function resolveModelGlobalEnabled(modelId: string, models: AvailabilityModel[]): boolean {
+  return models.some(model => model.model_id === modelId && model.is_enabled);
 }
 
 export function computeAvailability(
@@ -204,7 +202,7 @@ export function computeAvailability(
 
     channels.push({
       ...governance,
-      sortOrder: m.sort_order ?? key?.priority ?? 100,
+      sortOrder: m.sort_order ?? 0,
       keyModelId: m.id,
       keyId: m.key_id,
       modelId: m.model_id,
@@ -261,6 +259,9 @@ export function computeAvailability(
         untestedChannelCount: 0,
         schedulableChannelCount: 0,
         faultChannelCount: 0,
+        isConfigured: false,
+        isSelectable: false,
+        unavailableReasonKey: "model.no_available_supply",
       };
       familyByModelId.set(ch.modelId, family);
     }
@@ -268,7 +269,7 @@ export function computeAvailability(
   }
   const modelFamilies = Array.from(familyByModelId.values());
   for (const family of modelFamilies) {
-    family.channels.sort((a, b) => a.sortOrder - b.sortOrder || a.keyId.localeCompare(b.keyId));
+    family.channels.sort((a, b) => a.sortOrder - b.sortOrder || a.keyModelId.localeCompare(b.keyModelId));
     family.identityCounts = countIdentities(family.channels);
     family.redundancyCount = Math.max(0, family.channels.filter((c) => c.isSchedulable).length - 1);
     family.singlePointRisk = family.channels.filter((c) => c.isSchedulable).length <= 1;
@@ -276,13 +277,11 @@ export function computeAvailability(
     family.untestedChannelCount = family.channels.filter((c) => c.health === "untested").length;
     family.schedulableChannelCount = family.channels.filter((c) => c.isSchedulable).length;
     family.faultChannelCount = family.channels.filter((c) => c.health === "fault").length;
-    family.channelReadyButGlobalDisabled = models.filter((model) => model.model_id === family.modelId && model.global_is_enabled === false && getChannelGovernance({
-      model: { ...model, global_is_enabled: true }, key: keyById.get(model.key_id),
-      provider: providerById.get(keyById.get(model.key_id)?.provider_id ?? ""), now,
-    }).isSchedulable).length;
+    family.isConfigured = models.some(model => model.model_id === family.modelId && model.is_enabled);
+    family.isSelectable = family.schedulableChannelCount > 0;
+    family.unavailableReasonKey = family.isSelectable ? null : "model.no_available_supply";
   }
 
-  const activeFamilies = modelFamilies.filter((f) => f.isShelved);
 
   // 全局默认模型：default 绑定不在 featureControls（仅 business 组），从 featureBindings 取
   const globalDefaultModelId =
@@ -291,49 +290,47 @@ export function computeAvailability(
     null;
 
   // 业务保障：计算全量活跃业务功能的模型解析与渠道保障状态
-  const modelById = new Map(models.map((m) => [m.id, m])); // gate:transient-map 函数内查找索引，随调用返回释放
   const affectedBusinessFeatures: AffectedBusinessFeature[] = [];
   const businessAssurances: BusinessAssuranceItem[] = [];
   for (const control of featureControls) {
-    if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) {
-      continue;
-    }
-    const resolvedModelId = resolveFeatureModelId(
-      control,
-      modelById,
-      keyById,
-      providerById,
-      globalDefaultModelId,
-      now,
-    );
-    const family = resolvedModelId ? familyByModelId.get(resolvedModelId) : undefined;
-    const schedulableCount = family?.schedulableChannelCount ?? 0;
-    const faultCount = family?.faultChannelCount ?? 0;
-    const totalCount = family?.channels.length ?? 0;
-    const modelDisplayName = family?.displayName ?? (resolvedModelId ? getModelDisplayName(resolvedModelId) : "未配置模型");
-
-    const status: "healthy" | "degraded" | "outage" =
-      !resolvedModelId || schedulableCount === 0
-        ? "outage"
-        : faultCount > 0
-        ? "degraded"
-        : "healthy";
-
-    businessAssurances.push({
-      key: control.key,
-      label: control.label,
-      resolvedModelId,
-      modelDisplayName,
-      schedulableChannelCount: schedulableCount,
-      faultChannelCount: faultCount,
-      totalChannelCount: totalCount,
-      status,
+    if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) continue;
+    const routing = resolveFeatureModelRouting({
+      modelId: control.modelId, defaultModelId: globalDefaultModelId,
+      isAvailable: id => Boolean(familyByModelId.get(id)?.schedulableChannelCount),
     });
-
-    if (!resolvedModelId || schedulableCount === 0) {
-      affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId });
-    }
+    const family = routing.preferredModelId ? familyByModelId.get(routing.preferredModelId) : undefined;
+    businessAssurances.push({
+      key: control.key, label: control.label,
+      resolvedModelId: routing.preferredModelId,
+      preferredModelId: routing.preferredModelId,
+      selectedModelId: routing.selectedModelId,
+      defaultModelId: routing.defaultModelId,
+      modelDisplayName: family?.displayName ?? (routing.preferredModelId ? getModelDisplayName(routing.preferredModelId) : "无可用模型"),
+      schedulableChannelCount: family?.schedulableChannelCount ?? 0,
+      faultChannelCount: family?.faultChannelCount ?? 0,
+      totalChannelCount: family?.channels.length ?? 0,
+      status: routing.status === "normal" ? "healthy" : routing.status === "fallback" ? "degraded" : "outage",
+      routingStatus: routing.status,
+      messageKey: `business.${routing.status}`,
+    });
+    if (routing.status === "outage") affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId: null });
   }
+  // Configured and selected models stay discoverable even during a total outage.
+  const referenced = new Set([globalDefaultModelId, ...featureControls.map(control => control.modelId)].filter((id): id is string => Boolean(id)));
+  for (const family of modelFamilies) family.isShelved = family.isConfigured || referenced.has(family.modelId);
+  for (const id of referenced) {
+    if (familyByModelId.has(id)) continue;
+    const family: AvailabilityModelFamily = {
+      modelId: id, displayName: getModelDisplayName(id), isShelved: true, globalIsEnabled: false,
+      channelReadyButGlobalDisabled: 0, channels: [], identityCounts: countIdentities([]),
+      redundancyCount: 0, singlePointRisk: true, healthyChannelCount: 0, untestedChannelCount: 0,
+      schedulableChannelCount: 0, faultChannelCount: 0, isConfigured: false, isSelectable: false,
+      unavailableReasonKey: "model.no_available_supply",
+    };
+    familyByModelId.set(id, family);
+    modelFamilies.push(family);
+  }
+  const activeFamilies = modelFamilies.filter(family => family.isShelved);
 
   return {
     keys: keySummaries,
@@ -354,28 +351,11 @@ export function computeAvailability(
     affectedBusinessFeatures,
     affectedBusinessCount: affectedBusinessFeatures.length,
     businessAssurances,
+    businessSummary: {
+      normal: businessAssurances.filter(item => item.routingStatus === "normal").length,
+      fallback: businessAssurances.filter(item => item.routingStatus === "fallback").length,
+      outage: affectedBusinessFeatures.length,
+      needsAttentionChannels: keySummaries.filter(key => key.identity === "invalid").length,
+    },
   };
-}
-
-/** 口径对齐 resolveFeatureChannelChain：显式模型 → 整链启用的 pinned 渠道推导 → 全局默认 */
-function resolveFeatureModelId(
-  control: AvailabilityFeatureControl,
-  modelById: Map<string, AvailabilityModel>,
-  keyById: Map<string, AvailabilityKey>,
-  providerById: Map<string, AvailabilityProvider>,
-  defaultModelId: string | null,
-  now: number,
-): string | null {
-  const explicit = control.modelId?.trim();
-  if (explicit) return explicit;
-
-  if (control.providerKeyModelId) {
-    const pinned = modelById.get(control.providerKeyModelId);
-    const key = pinned ? keyById.get(pinned.key_id) : undefined;
-    const provider = key ? providerById.get(key.provider_id) : undefined;
-    if (pinned && isProviderKeyModelSchedulable({ model: pinned, key, provider, now })) {
-      return pinned.model_id;
-    }
-  }
-  return defaultModelId;
 }

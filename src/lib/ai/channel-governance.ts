@@ -39,7 +39,7 @@ export function getChannelGovernance(input: {
     identity: "active", isSchedulable: true,
     sleepSource: null, sleepUntil: null, persistentFailure: false,
   };
-  if (!key || !provider?.is_enabled || !key.is_enabled || !model.is_enabled || model.global_is_enabled === false || model.global_is_enabled === null) {
+  if (!key || !provider?.is_enabled || !key.is_enabled || !model.is_enabled) {
     return { ...result, identity: "disabled", isSchedulable: false };
   }
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { computeAvailability, resolveModelGlobalEnabled, type AvailabilityInput } from "./availability";
+import { computeAvailability, type AvailabilityInput } from "./availability";
 import { listRankedProviderKeyModels } from "@/lib/ai/provider-routing";
 
 const NOW = Date.parse("2026-10-04T12:00:00Z");
@@ -22,18 +22,23 @@ function baseInput(overrides: Partial<AvailabilityInput> = {}): AvailabilityInpu
   };
 }
 
-test("未决策的全局模型只要有启用渠道就算现役", () => {
-  const models = [
-    { id: "m1", key_id: "k1", model_id: "deepseek-flash", is_enabled: true, global_is_enabled: null },
-    { id: "m2", key_id: "k2", model_id: "deepseek-flash", is_enabled: false, global_is_enabled: null },
-  ];
+test("global_is_enabled 的 null、false、true 均不影响供给开关", () => {
+  for (const globalIsEnabled of [null, false, true]) {
+    const report = computeAvailabilityT(baseInput({
+      keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+      models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: globalIsEnabled }],
+    }));
 
-  assert.equal(resolveModelGlobalEnabled("deepseek-flash", models), true);
-  assert.equal(resolveModelGlobalEnabled("missing", models), false);
-  assert.equal(resolveModelGlobalEnabled("deepseek-flash", models.map((model) => ({ ...model, global_is_enabled: false }))), false);
+    assert.equal(report.modelFamilies[0]?.schedulableChannelCount, 1);
+    assert.equal(report.modelFamilies[0]?.isShelved, true);
+  }
 
-  const report = computeAvailabilityT(baseInput({ models }));
-  assert.equal(report.modelFamilies.find((family) => family.modelId === "deepseek-flash")?.isShelved, true);
+  const switchedOff = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: false, global_is_enabled: true }],
+  }));
+  assert.equal(switchedOff.modelFamilies[0]?.schedulableChannelCount, 0);
+  assert.equal(switchedOff.modelFamilies[0]?.isShelved, false);
 });
 
 test("渠道本身正常但某模型已冻结时，该模型不计为可调度", () => {
@@ -46,12 +51,12 @@ test("渠道本身正常但某模型已冻结时，该模型不计为可调度",
   assert.equal(report.schedulableKeyCount, 0);
 });
 
-test("全站状态为空时，页面不把正式调度排除的模型计入可调度", () => {
+test("global_is_enabled 为空时，页面仍按正式供给开关计为可调度", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: null }],
   }));
-  assert.equal(report.modelFamilies[0].schedulableChannelCount, 0);
+  assert.equal(report.modelFamilies[0].schedulableChannelCount, 1);
 });
 
 test("同一份配置的页面可调度数与正式候选链逐项一致", async () => {
@@ -59,9 +64,9 @@ test("同一份配置的页面可调度数与正式候选链逐项一致", async
   const cases = [
     { model: {}, key: {}, provider: {}, expected: 1 },
     { model: { consecutive_failures: 3, unhealthy_until: future }, key: {}, provider: {}, expected: 0 },
-    { model: { global_is_enabled: null }, key: {}, provider: {}, expected: 0 },
+    { model: { global_is_enabled: null }, key: {}, provider: {}, expected: 1 },
     { model: { is_enabled: false }, key: {}, provider: {}, expected: 0 },
-    { model: { global_is_enabled: false }, key: {}, provider: {}, expected: 0 },
+    { model: { global_is_enabled: false }, key: {}, provider: {}, expected: 1 },
     { model: {}, key: { consecutive_failures: 3, unhealthy_until: future }, provider: {}, expected: 0 },
     { model: {}, key: { is_enabled: false }, provider: {}, expected: 0 },
     { model: {}, key: {}, provider: { is_enabled: false }, expected: 0 },
@@ -141,25 +146,30 @@ test("冻结密钥不可调度，冻结过期后恢复可调度", () => {
   assert.equal(stuck.identityCounts.retest, 1);
 });
 
-test("所有渠道被冻结的现役模型计入无可用渠道，绑定它的业务受影响", () => {
+test("指定模型不可用时改由全局默认顶班，不借用其他模型", () => {
   const report = computeAvailabilityT(baseInput({
-    keys: [{
-      id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3,
-      unhealthy_until: new Date(NOW + 10 * MINUTE).toISOString(),
-      last_failure_at: new Date(NOW - 5 * MINUTE).toISOString(),
-    }],
-    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
-    featureControls: [
-      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "model-a", providerKeyModelId: null },
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+    models: [
+      { id: "m1", key_id: "k1", model_id: "model-selected", is_enabled: false },
+      { id: "m2", key_id: "k1", model_id: "model-default", is_enabled: true },
+      { id: "m3", key_id: "k1", model_id: "model-random", is_enabled: true },
     ],
+    featureControls: [
+      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "model-selected", providerKeyModelId: "must-be-ignored" },
+    ],
+    defaultBinding: { feature_key: "default", model_id: "model-default" },
   }));
 
-  assert.equal(report.activeModelFamilyCount, 1);
-  assert.equal(report.noChannelModelFamilyCount, 1);
-  assert.equal(report.schedulableModelFamilyCount, 0);
-  assert.deepEqual(report.affectedBusinessFeatures, [
-    { key: "content_tools", label: "内容工具", resolvedModelId: "model-a" },
-  ]);
+  const assurance = report.businessAssurances[0];
+  assert.equal(assurance?.selectedModelId, "model-selected");
+  assert.equal(assurance?.defaultModelId, "model-default");
+  assert.equal(assurance?.preferredModelId, "model-default");
+  assert.equal(assurance?.resolvedModelId, "model-default");
+  assert.equal(assurance?.routingStatus, "fallback");
+  assert.equal(assurance?.status, "degraded");
+  assert.equal(assurance?.messageKey, "business.fallback");
+  assert.equal(report.modelFamilies.find((family) => family.modelId === "model-selected")?.isShelved, true);
+  assert.equal(report.affectedBusinessCount, 0);
 });
 
 test("未指定模型的业务跟随全局默认：默认可用不算受影响，默认缺失或不可用才算", () => {
@@ -181,7 +191,14 @@ test("未指定模型的业务跟随全局默认：默认可用不算受影响�
     defaultBinding: { feature_key: "default", model_id: "model-a" },
   }));
   assert.equal(withDeadDefault.affectedBusinessCount, 1);
-  assert.deepEqual(withDeadDefault.affectedBusinessFeatures[0].resolvedModelId, "model-a");
+  assert.equal(withDeadDefault.affectedBusinessFeatures[0]?.resolvedModelId, null);
+  assert.equal(withDeadDefault.businessAssurances[0]?.selectedModelId, null);
+  assert.equal(withDeadDefault.businessAssurances[0]?.preferredModelId, null);
+  assert.equal(withDeadDefault.businessAssurances[0]?.defaultModelId, "model-a");
+  assert.equal(withDeadDefault.businessAssurances[0]?.resolvedModelId, null);
+  assert.equal(withDeadDefault.businessAssurances[0]?.routingStatus, "outage");
+  assert.equal(withDeadDefault.businessAssurances[0]?.status, "outage");
+  assert.equal(withDeadDefault.businessAssurances[0]?.messageKey, "business.outage");
 
   const withoutDefault = computeAvailabilityT(baseInput({
     keys, models,
@@ -192,7 +209,7 @@ test("未指定模型的业务跟随全局默认：默认可用不算受影响�
   assert.equal(withoutDefault.affectedBusinessFeatures[0].resolvedModelId, null);
 });
 
-test("指定模型无渠道时业务回落全量顺位，指定模型健康则不受影响", () => {
+test("无可用模型时保留业务所选模型但不伪造实际模型", () => {
   const keys = [
     { id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() },
   ];
@@ -204,21 +221,29 @@ test("指定模型无渠道时业务回落全量顺位，指定模型健康则�
     key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId, providerKeyModelId: null,
   });
 
-  const ok = computeAvailabilityT(baseInput({ keys, models, featureControls: [feature("model-good")] }));
-  assert.equal(ok.affectedBusinessCount, 0);
-  assert.equal(ok.modelFamilies.find((f) => f.modelId === "model-ghost")?.schedulableChannelCount, 1);
-
-  // model-ghost 无任何渠道记录：视同无渠道，业务回落
-  const ghost = computeAvailabilityT(baseInput({ keys, models: models.slice(0, 1), featureControls: [feature("model-ghost")] }));
-  assert.equal(ghost.affectedBusinessCount, 1);
-  assert.deepEqual(ghost.affectedBusinessFeatures[0].resolvedModelId, "model-ghost");
+  const unavailable = computeAvailabilityT(baseInput({
+    keys,
+    models: [
+      { id: "m1", key_id: "k1", model_id: "model-ghost", is_enabled: false },
+      models[0],
+    ],
+    featureControls: [feature("model-ghost")],
+  }));
+  const assurance = unavailable.businessAssurances[0];
+  assert.equal(assurance?.selectedModelId, "model-ghost");
+  assert.equal(assurance?.preferredModelId, null);
+  assert.equal(assurance?.resolvedModelId, null);
+  assert.equal(assurance?.routingStatus, "outage");
+  assert.equal(assurance?.status, "outage");
+  assert.equal(unavailable.affectedBusinessFeatures[0]?.resolvedModelId, null);
+  assert.equal(unavailable.modelFamilies.find((family) => family.modelId === "model-ghost")?.isShelved, true);
 });
 
-test("pinned 渠道绑定整链启用才推导模型，链路断开回落全局默认", () => {
+test("空 modelId 忽略旧 providerKeyModelId 并跟随默认模型", () => {
   const keys = [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }];
   const models = [
-    { id: "m1", key_id: "k1", model_id: "model-pinned", is_enabled: true },
-    { id: "m2", key_id: "k1", model_id: "model-broken", is_enabled: false },
+    { id: "m1", key_id: "k1", model_id: "model-legacy-pinned", is_enabled: true },
+    { id: "m2", key_id: "k1", model_id: "model-default", is_enabled: true },
   ];
   const feature = {
     key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active",
@@ -228,18 +253,16 @@ test("pinned 渠道绑定整链启用才推导模型，链路断开回落全局�
   const healthy = computeAvailabilityT(baseInput({
     keys, models,
     featureControls: [{ ...feature, providerKeyModelId: "m1" }],
-    defaultBinding: { feature_key: "default", model_id: "model-pinned" },
+    defaultBinding: { feature_key: "default", model_id: "model-default" },
   }));
-  // pinned 生效：解析到 model-pinned 且可用
-  assert.equal(healthy.affectedBusinessCount, 0);
-
-  const broken = computeAvailabilityT(baseInput({
-    keys, models,
-    featureControls: [{ ...feature, providerKeyModelId: "m2" }],
-    defaultBinding: { feature_key: "default", model_id: "model-pinned" },
-  }));
-  // pinned 记录被停用：视同未指定，回落默认 model-pinned，仍可用
-  assert.equal(broken.affectedBusinessCount, 0);
+  const assurance = healthy.businessAssurances[0];
+  assert.equal(assurance?.selectedModelId, null);
+  assert.equal(assurance?.defaultModelId, "model-default");
+  assert.equal(assurance?.preferredModelId, "model-default");
+  assert.equal(assurance?.resolvedModelId, "model-default");
+  assert.equal(assurance?.routingStatus, "normal");
+  assert.equal(assurance?.status, "healthy");
+  assert.equal(assurance?.messageKey, "business.normal");
 });
 
 test("暂停与归档的业务不计入受影响", () => {
@@ -267,7 +290,7 @@ test("服务商停用时其密钥按停用计，渠道全部不可调度", () =>
   assert.equal(report.modelFamilies[0]?.schedulableChannelCount, 0);
 });
 
-test("模型记录全部下架不入现役系列，渠道级计数以运行时口径为准", () => {
+test("模型配置开关决定是否保留在模型列表中", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }],
     models: [
@@ -281,18 +304,17 @@ test("模型记录全部下架不入现役系列，渠道级计数以运行时�
   assert.equal(report.schedulableModelFamilyCount, 1);
 });
 
-test("全站关闭时渠道仍可保留就绪状态，但业务可用数为零并明确暴露原因", () => {
+test("global_is_enabled=false 不会覆盖已开启的模型供应", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: false }],
   }));
   const family = report.modelFamilies.find((item) => item.modelId === "model-a");
-  assert.equal(family?.schedulableChannelCount, 0);
-  assert.equal(family?.channelReadyButGlobalDisabled, 1);
-  assert.equal(family?.globalIsEnabled, false);
+  assert.equal(family?.schedulableChannelCount, 1);
+  assert.equal(family?.isSelectable, true);
 });
 
-test("未指定模型的业务在全局默认指向冻结模型时按默认模型记受影响", () => {
+test("默认模型不可用时没有实际模型，并保留默认模型标识", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3, unhealthy_until: new Date(NOW + 10 * MINUTE).toISOString(), last_failure_at: new Date(NOW - MINUTE).toISOString() }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
@@ -302,14 +324,19 @@ test("未指定模型的业务在全局默认指向冻结模型时按默认模�
     defaultBinding: { feature_key: "default", model_id: "model-a" },
   }));
   assert.equal(report.affectedBusinessCount, 1);
-  assert.deepEqual(report.affectedBusinessFeatures[0].resolvedModelId, "model-a");
+  assert.equal(report.affectedBusinessFeatures[0]?.resolvedModelId, null);
+  assert.equal(report.businessAssurances[0]?.selectedModelId, null);
+  assert.equal(report.businessAssurances[0]?.preferredModelId, null);
+  assert.equal(report.businessAssurances[0]?.resolvedModelId, null);
+  assert.equal(report.businessAssurances[0]?.defaultModelId, "model-a");
+  assert.equal(report.businessAssurances[0]?.routingStatus, "outage");
   assert.equal(report.globalDefaultModelId, "model-a");
 });
 
 
 test("五类身份互斥、合计守恒，模型故障与手动休眠均与正式调度一致", () => {
   const models = ["active", "retest", "sleeping", "invalid", "disabled"].map((identity, index) => ({
-    id: `m-${identity}`, key_id: `k-${identity}`, model_id: "governed-model", is_enabled: identity !== "disabled", global_is_enabled: true,
+    id: `m-${identity}`, key_id: `k-${identity}`, model_id: "governed-model", is_enabled: identity !== "disabled",
     consecutive_failures: identity === "retest" ? 1 : 0,
     invalidated_at: identity === "invalid" ? new Date(NOW - MINUTE).toISOString() : null,
     sort_order: index + 1,
