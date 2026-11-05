@@ -126,17 +126,18 @@ export function ComputePoolPanel() {
       const res = await runCommand("check_all_in_use", {});
       if (res.ok) {
         const body = res.body as Record<string, unknown>;
-        const resultData = body.checkResult as
-          | {
-              total: number;
-              successCount: number;
-              failureCount: number;
-              results: CheckResultItem[];
-            }
-          | undefined;
-        if (resultData) {
-          setCheckResult(resultData);
-        }
+        const rawCheck = (body.checkResult as Record<string, unknown>) || body;
+        const total = (rawCheck.totalModels as number) ?? (rawCheck.total as number) ?? ((rawCheck.results as unknown[])?.length ?? 0);
+        const successCount = (rawCheck.successCount as number) ?? 0;
+        const failureCount = (rawCheck.failureCount as number) ?? 0;
+        const results = (rawCheck.results as CheckResultItem[]) ?? [];
+
+        setCheckResult({
+          total,
+          successCount,
+          failureCount,
+          results,
+        });
       } else {
         feedbackToast.error(res.error || "执行检查失败");
       }
