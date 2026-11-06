@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-normal tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-smooth active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
+  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-normal tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-smooth active:scale-[0.97] active:duration-100 focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
   {
     variants: {
       variant: {
@@ -20,7 +20,7 @@ const buttonVariants = cva(
         ghost:
           "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         destructive:
-          "bg-status-danger/[0.08] text-status-danger border border-status-danger/20 hover:bg-status-danger/15 active:scale-[0.99]",
+          "bg-status-danger/[0.08] text-status-danger border border-status-danger/20 hover:bg-status-danger/15",
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
@@ -36,13 +36,13 @@ const buttonVariants = cva(
         l: "h-10 gap-2 rounded-md px-4 text-[14px] has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
         lg: "h-10 gap-2 rounded-md px-4 text-[14px] has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
         // 图标按钮
-        icon: "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-m": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-sm": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-s": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-l": "size-10 rounded-md [&_svg:not([class*='size-'])]:size-4",
-        "icon-lg": "size-10 rounded-md [&_svg:not([class*='size-'])]:size-4",
+        icon: "size-7 rounded-md active:scale-[0.92] [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-m": "size-7 rounded-md active:scale-[0.92] [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm": "size-7 rounded-md active:scale-[0.92] [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-s": "size-6 rounded-md active:scale-[0.92] [&_svg:not([class*='size-'])]:size-3",
+        "icon-xs": "size-6 rounded-md active:scale-[0.92] [&_svg:not([class*='size-'])]:size-3",
+        "icon-l": "size-10 rounded-md active:scale-[0.94] [&_svg:not([class*='size-'])]:size-4",
+        "icon-lg": "size-10 rounded-md active:scale-[0.94] [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {

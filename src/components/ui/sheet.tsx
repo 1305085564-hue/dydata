@@ -11,13 +11,13 @@ type SheetSide = "right" | "left" | "top" | "bottom"
 
 const sideClasses: Record<SheetSide, string> = {
   right:
-    "top-[var(--app-top-offset,64px)] bottom-0 right-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-right-7 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-right-7",
+    "top-[var(--app-top-offset,64px)] bottom-0 right-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-right-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-right-16",
   left:
-    "top-[var(--app-top-offset,64px)] bottom-0 left-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-left-7 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-left-7",
+    "top-[var(--app-top-offset,64px)] bottom-0 left-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-left-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-left-16",
   top:
-    "top-[var(--app-top-offset,64px)] inset-x-0 w-full data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-7 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-top-7",
+    "top-[var(--app-top-offset,64px)] inset-x-0 w-full data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-top-16",
   bottom:
-    "inset-x-0 bottom-0 w-full data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-7 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-7",
+    "inset-x-0 bottom-0 w-full data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-16",
 }
 
 function Sheet({ ...props }: DialogPrimitive.Root.Props) {
@@ -41,7 +41,7 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
     <DialogPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed top-[var(--app-top-offset,64px)] bottom-0 inset-x-0 isolate z-[70] bg-[#141413]/20 duration-240 ease-smooth data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed top-[var(--app-top-offset,64px)] bottom-0 inset-x-0 isolate z-[70] bg-[#141413]/20 duration-280 ease-smooth data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className,
       )}
       {...props}
@@ -69,7 +69,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-[70] flex flex-col gap-4 bg-white text-[14px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-240 ease-smooth",
+          "fixed z-[70] flex flex-col gap-4 bg-white text-[14px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-280 ease-smooth",
           sideClasses[side],
           className,
         )}

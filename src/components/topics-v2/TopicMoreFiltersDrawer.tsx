@@ -103,7 +103,7 @@ export function TopicMoreFiltersDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="更多高级筛选"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in fade-in slide-in-from-right-7 duration-240"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in fade-in slide-in-from-right-16 duration-280"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF]/60 bg-white px-5 py-3.5">
           <SectionHeading as="h3">更多筛选</SectionHeading>

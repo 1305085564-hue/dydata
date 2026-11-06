@@ -70,8 +70,8 @@ export const cardVariants: Variants = {
  * 首屏已有条目不做动画，只有真实新增/移除时才动。
  */
 export const listItemMotion: Pick<MotionProps, "initial" | "animate" | "exit" | "transition"> = {
-  initial: { opacity: 0, y: 4 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: DEFAULT_EASE } },
+  initial: { opacity: 0, y: 10, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.24, ease: DEFAULT_EASE } },
   exit: {
     opacity: 0,
     height: 0,

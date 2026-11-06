@@ -184,7 +184,7 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in fade-in slide-in-from-right-7 duration-240"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in fade-in slide-in-from-right-16 duration-280"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">
