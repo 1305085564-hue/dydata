@@ -180,10 +180,10 @@
   select,
   [role="combobox"] {
     transition:
-      border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-      color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      border-color 150ms var(--ease-smooth),
+      box-shadow 150ms var(--ease-smooth),
+      background-color 150ms var(--ease-smooth),
+      color 150ms var(--ease-smooth);
   }
   /* 去掉 number input 的上下箭头 */
   input[type="number"]::-webkit-inner-spin-button,

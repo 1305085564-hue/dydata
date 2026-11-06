@@ -47,7 +47,6 @@ export function FulfillmentAppealCard({
   return (
     <motion.div
       id={`approval-card-${index}`}
-      layout
       {...listItemMotion}
       onClick={onFocus}
     >

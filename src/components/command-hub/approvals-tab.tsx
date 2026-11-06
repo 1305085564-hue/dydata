@@ -259,8 +259,8 @@ export function ApprovalsTab({
       />
     ) : (
       /* Unified Cards List */
-      <motion.div layout className="space-y-3">
-        <AnimatePresence mode="popLayout" initial={false}>
+      <motion.div className="space-y-3">
+        <AnimatePresence initial={false}>
           {visibleCards.map((card, index) => {
             const isFocused = focusedCardIndex === index;
 

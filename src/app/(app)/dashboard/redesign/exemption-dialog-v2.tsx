@@ -154,8 +154,6 @@ export function ExemptionDialogV2({
     }
   };
 
-  if (!isOpen) return null;
-
   const currentMonthPrefix = `${viewYear}-${String(viewMonth).padStart(2, "0")}`;
 
   return (

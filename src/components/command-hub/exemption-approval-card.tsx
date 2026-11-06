@@ -44,7 +44,6 @@ export function ExemptionApprovalCard({
   return (
     <motion.div
       id={`approval-card-${index}`}
-      layout
       {...listItemMotion}
       onClick={onFocus}
     >

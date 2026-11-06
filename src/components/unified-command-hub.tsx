@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -71,6 +72,13 @@ export function UnifiedCommandHub({
   onActionCenterChanged,
 }: UnifiedCommandHubProps) {
   const [now] = useState(() => Date.now());
+  // 只在面板打开期间「切换标签」时才播视图淡入；首次打开（面板自身已有入场）不叠加
+  const [fadeTab, setFadeTab] = useState<{ tab: typeof activeTab; switched: boolean }>({ tab: activeTab, switched: false });
+  if (!open && fadeTab.switched) {
+    setFadeTab({ tab: activeTab, switched: false });
+  } else if (fadeTab.tab !== activeTab) {
+    setFadeTab({ tab: activeTab, switched: open });
+  }
 
   // 审批与历史状态
   const [approvalsLoading, setApprovalsLoading] = useState(false);
@@ -1114,7 +1122,7 @@ export function UnifiedCommandHub({
             />
 
             {/* Main Content Area: 纯净白纸质感，消除三重套娃底板 */}
-            <div key={activeTab} className="view-fade-in flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white">
+            <div key={activeTab} className={cn(fadeTab.switched && "view-fade-in", "flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white")}>
               <ApprovalsTab
                 activeTab={activeTab === "history" ? "history" : "approvals"}
                 isAdmin={isAdmin}

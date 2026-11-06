@@ -79,7 +79,6 @@ export function TodosTab({
             return (
               <motion.div
                 key={todo.id}
-                layout
                 {...listItemMotion}
               >
                 <Card className=" p-4 sm:p-4.5 flex flex-row items-start gap-3 transition">

@@ -1,4 +1,4 @@
-import { useTransition, type Dispatch, type SetStateAction } from "react";
+import { useState, useTransition, type Dispatch, type SetStateAction } from "react";
 
 import { ExemptionDialogV2 } from "@/app/(app)/dashboard/redesign/exemption-dialog-v2";
 import { submitExemptionRequest } from "@/app/(app)/dashboard/actions";
@@ -29,12 +29,19 @@ export function VideoSubmitPanelExemptionDialog({
 }: VideoSubmitPanelExemptionDialogProps) {
   // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
   const [, startExemptionTransition] = useTransition();
+  // 弹窗常驻挂载，关闭时才能播完退场动画；每次重新打开换一个 key，保证日历选择等状态清零（等同以前的卸载重建）。
+  const [openCount, setOpenCount] = useState(0);
+  const [wasOpen, setWasOpen] = useState(isExemptionDialogOpen);
+  if (isExemptionDialogOpen !== wasOpen) {
+    setWasOpen(isExemptionDialogOpen);
+    if (isExemptionDialogOpen) setOpenCount((n) => n + 1);
+  }
 
   return (
     <>
       {/* 申请豁免弹窗 */}
-      {isExemptionDialogOpen && (
-        <ExemptionDialogV2
+      <ExemptionDialogV2
+          key={openCount}
           isOpen={isExemptionDialogOpen}
           onClose={() => setIsExemptionDialogOpen(false)}
           today={today}
@@ -67,7 +74,6 @@ export function VideoSubmitPanelExemptionDialog({
             })
           }
         />
-      )}
 
     </>
   );

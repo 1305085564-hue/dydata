@@ -114,7 +114,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               prefetch={false}
               onMouseEnter={() => prefetchOnHover(group.href!)}
               className={cn(
-                "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[14px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[14px] tracking-tight transition-[color,background-color,box-shadow,transform] duration-150 ease-smooth group origin-center select-none",
                 isGroupActive
                   ? "text-[#141413] bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
@@ -152,7 +152,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
               className={cn(
-                "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-3 text-[14px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-3 text-[14px] tracking-tight transition-[color,background-color,box-shadow,transform] duration-150 ease-smooth group origin-center select-none",
                 isGroupActive || isDropdownOpen
                   ? "text-[#141413] bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",

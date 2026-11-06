@@ -29,17 +29,16 @@ export interface ExitMotion {
 export function useExitMotion(open: boolean, durationMs: number = EXIT_MOTION_MS): ExitMotion {
   const [mounted, setMounted] = useState(open);
 
+  // 打开时在渲染阶段直接标记挂载（React 推荐的「随 props 调整 state」写法，不在 effect 里同步 setState）
+  if (open && !mounted) {
+    setMounted(true);
+  }
+
   useLayoutEffect(() => {
-    if (open) {
-      setMounted(true);
-      return;
-    }
-    if (!mounted) return;
-    if (prefersReducedMotion()) {
-      setMounted(false);
-      return;
-    }
-    const timer = window.setTimeout(() => setMounted(false), durationMs);
+    if (open || !mounted) return;
+    // 减弱动效时不等动画，下一拍就卸载
+    const delay = prefersReducedMotion() ? 0 : durationMs;
+    const timer = window.setTimeout(() => setMounted(false), delay);
     return () => window.clearTimeout(timer);
   }, [open, mounted, durationMs]);
 
