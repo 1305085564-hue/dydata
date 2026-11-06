@@ -885,6 +885,7 @@ export function TopicCreateModal({
                       <Metric
                         value={importResult.successCount}
                         tone="success"
+                        settleKey="topic-import:success"
                         className="mt-0.5"
                       />
                     </div>
@@ -892,6 +893,7 @@ export function TopicCreateModal({
                       <div className="text-[#78716C]">跳过重复</div>
                       <Metric
                         value={importResult.skippedCount}
+                        settleKey="topic-import:skipped"
                         className="mt-0.5"
                       />
                     </div>
@@ -900,6 +902,7 @@ export function TopicCreateModal({
                       <Metric
                         value={importResult.failedCount}
                         tone="danger"
+                        settleKey="topic-import:failed"
                         className="mt-0.5"
                       />
                     </div>

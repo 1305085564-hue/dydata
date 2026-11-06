@@ -74,24 +74,28 @@ export function PersonalCardMetrics({
                       <div>
                         <div className="text-[12px] text-[#78716C] mb-1">总播放</div>
                         <Metric
+                          settleKey="personal-card:total-play"
                           value={formatBigNumber(data.operatorSummary.totalPlay)}
                         />
                       </div>
                       <div>
                         <div className="text-[12px] text-[#78716C] mb-1">条均播放</div>
                         <Metric
+                          settleKey="personal-card:avg-play"
                           value={formatBigNumber(data.operatorSummary.avgPlay)}
                         />
                       </div>
                       <div>
                         <div className="text-[12px] text-[#78716C] mb-1">导粉量</div>
                         <Metric
+                          settleKey="personal-card:follower-convert"
                           value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
                         />
                       </div>
                       <div>
                         <div className="text-[12px] text-[#78716C] mb-1">爆款作品</div>
                         <Metric
+                          settleKey="personal-card:hit-count"
                           value={data.operatorSummary.hitCount}
                         />
                       </div>

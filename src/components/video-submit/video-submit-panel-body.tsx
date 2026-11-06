@@ -142,6 +142,7 @@ export function VideoSubmitPanelBody({
                         <div className="text-[12px] font-normal text-[#78716C] truncate">播放量</div>
                         <Metric
                           className="mt-0.5 sm:mt-1"
+                          settleKey="submit-panel:play"
                           value={
                             primarySummary.playCount !== null
                               ? primarySummary.playCount >= 10000
@@ -155,6 +156,7 @@ export function VideoSubmitPanelBody({
                         <div className="text-[12px] font-normal text-[#78716C] truncate">点赞量</div>
                         <Metric
                           className="mt-0.5 sm:mt-1"
+                          settleKey="submit-panel:likes"
                           value={
                             primarySummary.likes !== null
                               ? primarySummary.likes >= 10000
@@ -168,6 +170,7 @@ export function VideoSubmitPanelBody({
                         <div className="text-[12px] font-normal text-[#78716C] truncate">完播率</div>
                         <Metric
                           className="mt-0.5 sm:mt-1"
+                          settleKey="submit-panel:completion-rate"
                           value={primarySummary.completionRate ?? "—"}
                         />
                       </div>

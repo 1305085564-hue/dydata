@@ -14,6 +14,11 @@ interface MetricProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 注脚说明 */
   footnote?: React.ReactNode
   /**
+   * 指标身份（如「content-detail:play」）：跨重新挂载记住上一次的值，
+   * 以便数据刷新后数字确实变化时仍能播落定动画；首次出现不播。
+   */
+  settleKey?: string
+  /**
    * 数值语义着色（组件契约，非业务逃生口）。需要强调时用 tone，
    * 不要在业务侧覆盖字号或直接给 Metric 追 `valueClassName`。
    */
@@ -36,6 +41,7 @@ function Metric({
   value,
   label,
   footnote,
+  settleKey,
   tone = "default",
   className,
   ...props
@@ -53,7 +59,7 @@ function Metric({
           toneClass[tone]
         )}
       >
-        <MetricValue value={value} />
+        <MetricValue value={value} settleKey={settleKey} />
       </div>
       {label != null && (
         <div

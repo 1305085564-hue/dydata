@@ -104,6 +104,7 @@ export function BreakdownSummarySections({
                   <div className="grid grid-cols-3 gap-3">
                     <Metric
                       label="最高播放"
+                      settleKey="topic-breakdown:best-play"
                       value={
                         bestPlay !== null
                           ? bestPlay >= 10000
@@ -114,6 +115,7 @@ export function BreakdownSummarySections({
                     />
                     <Metric
                       label="平均播放"
+                      settleKey="topic-breakdown:avg-play"
                       value={
                         avgPlay !== null
                           ? avgPlay >= 10000
@@ -124,6 +126,7 @@ export function BreakdownSummarySections({
                     />
                     <Metric
                       label="优质作品数"
+                      settleKey="topic-breakdown:qualified-count"
                       value={qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                     />
                   </div>

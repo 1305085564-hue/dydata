@@ -208,6 +208,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
                       <Metric
+                        settleKey="content-detail:play"
                         value={formatNumber(snapshot?.play_count)}
                         className="mt-1.5"
                       />
@@ -225,6 +226,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
                       <Metric
+                        settleKey="content-detail:follower-rate"
                         value={formatPercent(followerConv)}
                         className="mt-1.5"
                       />
@@ -250,6 +252,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <TrendingUp className="size-3.5 text-[#78716C]" />
                       </div>
                       <Metric
+                        settleKey="content-detail:interaction-rate"
                         value={formatPercent(interaction)}
                         className="mt-1.5"
                       />
@@ -274,6 +277,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         )}
                       </div>
                       <Metric
+                        settleKey="content-detail:fourth-rate"
                         value={formatPercent(fourthSlotValue)}
                         className="mt-1.5"
                       />

@@ -359,8 +359,8 @@ export function PremiumSettingsModal({
             {/* TAB 1: PROFILE */}
             {activeTab === "profile" && (
               <motion.div
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-5"
               >
@@ -450,8 +450,8 @@ export function PremiumSettingsModal({
             {/* TAB 2: ACCOUNTS */}
             {activeTab === "accounts" && (
               <motion.div
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-4"
               >
@@ -675,8 +675,8 @@ export function PremiumSettingsModal({
             {/* TAB 3: SYSTEM SETTINGS */}
             {activeTab === "system" && (
               <motion.div
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-5"
               >
