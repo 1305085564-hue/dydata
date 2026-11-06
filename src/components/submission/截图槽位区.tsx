@@ -176,7 +176,7 @@ export function SubmissionSlotsSection({
         handleImplicitFiles(extractImageFiles(e.dataTransfer.files));
       }}
       className={cn(
-        "flex flex-col h-full rounded-xl transition-all duration-200",
+        "flex flex-col h-full rounded-xl transition duration-200",
         isDragOverGlobal
           ? "border-2 border-dashed border-[#D97757]/60 bg-[#D97757]/[0.02] ring-1 ring-[#D97757]/15 shadow-input p-1.5"
           : ""
@@ -256,7 +256,7 @@ export function SubmissionSlotsSection({
               }}
               title={slot.status === "empty" ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : undefined}
               className={cn(
-                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-300",
+                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition duration-300",
                 slot.status === "empty"
                   ? pulseEmptySlots
                     ? "border-[#D97757]/50 bg-[#D97757]/[0.03] ring-1 ring-[#D97757]/15 cursor-pointer shadow-input"

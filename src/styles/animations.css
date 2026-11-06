@@ -12,7 +12,7 @@
 }
 
 .app-route-enter {
-  animation: app-route-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: app-route-enter 180ms var(--ease-smooth);
 }
 
 @keyframes pulse-soft {
@@ -77,16 +77,16 @@
   background-attachment: local, local, scroll, scroll;
 }
 
-/* 无障碍：减弱动效偏好 */
+/* 无障碍：减弱动效偏好——全站兜底（规范 §5.2）。
+   系统开启「减弱动态效果」后，所有过渡与动画瞬间完成，滚动也不再平滑。
+   做法参考 OpenMausBot（Apache-2.0）src/styles.css 的全局回退。 */
 @media (prefers-reduced-motion: reduce) {
-  .typewriter-cursor,
-  .animate-float-y,
-  .animate-shake-horizontal {
-    transition: none;
-    animation: none !important;
-  }
-
-  .app-route-enter {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

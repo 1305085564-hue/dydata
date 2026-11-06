@@ -221,7 +221,7 @@ export function HealthBar({
       <button
         type="button"
         onClick={handleOpen}
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-normal transition-all cursor-pointer ${
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-normal transition cursor-pointer ${
           isHealthy
             ? "bg-[#F1F1F0] text-[#A8A29E] hover:bg-[#EBEBE9]/70"
             : "bg-status-warning/10 text-[#78716C] hover:bg-status-warning/15"
@@ -317,7 +317,7 @@ export function HealthBar({
                       <div
                         key={report.reportId}
                         data-pending-removal={isDone ? "true" : undefined}
-                        className={`p-3.5 space-y-2 transition-all duration-200 ease-out ${
+                        className={`p-3.5 space-y-2 transition duration-200 ease-out ${
                           isDone
                             ? "bg-status-success/10 border-l-2 border-l-status-success opacity-80 scale-[0.99] pointer-events-none"
                             : "hover:bg-[#F7F7F6]"

@@ -39,7 +39,7 @@ export function FulfillmentStatsOverview({
   return (
     <section
       aria-label="发布与考勤总览大盘"
-      className="rounded-xl border border-[#E2E2DF]/60 bg-white p-4 sm:p-5 shadow-card-ring transition-all duration-150"
+      className="rounded-xl border border-[#E2E2DF]/60 bg-white p-4 sm:p-5 shadow-card-ring transition duration-150"
     >
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
         {/* 1. 全月履约进度卡片 */}
@@ -75,7 +75,7 @@ export function FulfillmentStatsOverview({
             {/* 达成率细高进度条 */}
             <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[#F1F1F0]">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
+                className={`h-full rounded-full transition-[width,background-color] duration-300 ${
                   stats.periodFulfillmentRate >= 80
                     ? "bg-status-success"
                     : stats.periodFulfillmentRate >= 60
@@ -138,7 +138,7 @@ export function FulfillmentStatsOverview({
                 }
               : undefined
           }
-          className={`flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 md:border-t-0 md:border-l md:border-[#E2E2DF]/60 md:pl-5 lg:pl-6 rounded-md transition-all duration-150 ${
+          className={`flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 md:border-t-0 md:border-l md:border-[#E2E2DF]/60 md:pl-5 lg:pl-6 rounded-md transition duration-150 ${
             hasMissing
               ? "cursor-pointer hover:bg-[#F7F7F6]/80 p-2 -m-2"
               : ""
@@ -206,7 +206,7 @@ export function FulfillmentStatsOverview({
                 }
               : undefined
           }
-          className={`flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-6 rounded-md transition-all duration-150 ${
+          className={`flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-6 rounded-md transition duration-150 ${
             hasPending
               ? "cursor-pointer hover:bg-[#F7F7F6]/80 p-2 -m-2"
               : ""

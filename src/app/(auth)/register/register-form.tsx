@@ -211,7 +211,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             onValueChange={(val) => setSelectedTeamId(val ?? "")}
             disabled={isLoadingTeams || teams.length === 0}
           >
-            <SelectTrigger className="flex h-9 w-full rounded-md border border-[#E2E2DF] px-3 text-[14px] text-[#1F1E1D] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-placeholder:text-[#78716C]">
+            <SelectTrigger className="flex h-9 w-full rounded-md border border-[#E2E2DF] px-3 text-[14px] text-[#1F1E1D] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-smooth focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-placeholder:text-[#78716C]">
               <SelectValue placeholder={isLoadingTeams ? "正在获取可选团队列表..." : "请选择您所属的目标团队"} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float max-h-60">
@@ -259,7 +259,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                 {passwordStrengthConfig.map((item, idx) => (
                   <span
                     key={item.level}
-                    className="h-[3px] flex-1 rounded-full bg-[#F1F1F0] transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="h-[3px] flex-1 rounded-full bg-[#F1F1F0] transition-[background-color] duration-150 ease-smooth"
                     style={
                       idx < passwordStrengthIndex
                         ? { backgroundColor: activeConfig?.barColor }

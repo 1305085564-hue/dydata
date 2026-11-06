@@ -204,7 +204,7 @@ export function ApprovalsTab({
           <button
             type="button"
             onClick={handleApproveAll}
-            className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 hover:bg-[#D97757]/15 text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 hover:bg-[#D97757]/15 text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition active:scale-[0.98] cursor-pointer"
           >
             <Check className="size-3 stroke-[2.2]" />
           <span>一键同意当前 {approvalCounts.canApprove} 条</span>

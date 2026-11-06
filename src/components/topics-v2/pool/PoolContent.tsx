@@ -61,7 +61,7 @@ export function PoolContent({
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-1 px-3 h-7 rounded-md bg-white border border-[#E2E2DF] text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer shrink-0 shadow-input"
+            className="inline-flex items-center gap-1 px-3 h-7 rounded-md bg-white border border-[#E2E2DF] text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition cursor-pointer shrink-0 shadow-input"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>重新加载</span>

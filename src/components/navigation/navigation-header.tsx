@@ -70,7 +70,7 @@ export function NavigationHeader({
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 border-b pt-[max(env(safe-area-inset-top),0px)] transition-all duration-200 ease-in-out",
+        "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 border-b pt-[max(env(safe-area-inset-top),0px)] transition duration-200 ease-in-out",
         isScrolled
           ? "border-[#E2E2DF] bg-white/95 py-2.5 backdrop-blur-2xl shadow-card-ring"
           : "border-[#E2E2DF]/60 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",

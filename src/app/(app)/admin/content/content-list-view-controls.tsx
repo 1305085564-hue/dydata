@@ -114,7 +114,7 @@ export function ContentListViewControls({
                 type="button"
                 onClick={toggleOnlyAnomaly}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] transition-all cursor-pointer select-none",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] transition cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger shadow-input"
                     : anomalyCountForTime > 0

@@ -97,7 +97,7 @@ export function BindingDialog({
                   onClick={() => setOcrChannel("baidu")}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("baidu"); }}
                   className={cn(
-                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer select-none",
+                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
                     ocrChannel === "baidu"
                       ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
                       : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
@@ -136,7 +136,7 @@ export function BindingDialog({
                   onClick={() => setOcrChannel("vision")}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("vision"); }}
                   className={cn(
-                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer select-none",
+                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
                     ocrChannel === "vision"
                       ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
                       : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"

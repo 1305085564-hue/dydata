@@ -8,6 +8,7 @@ import { FilterBar } from "@/components/ui/filter-bar";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import type { ExemptionDateBuckets } from "@/lib/豁免";
 import { cn } from "@/lib/utils";
+import { useExitMotion } from "@/hooks/use-exit-motion";
 
 type VideoSubmitPanelToolbarProps = {
   primaryMode: string;
@@ -42,6 +43,7 @@ export function VideoSubmitPanelToolbar({
   setIsExemptionDialogOpen,
   setIsHistoryOpen,
 }: VideoSubmitPanelToolbarProps) {
+  const menuMotion = useExitMotion(isCalendarOpen);
   return (
     <>
         {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
@@ -71,7 +73,7 @@ export function VideoSubmitPanelToolbar({
                 type="button"
                 onClick={() => setIsCalendarOpen((prev) => !prev)}
                 className={cn(
-                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-transparent bg-transparent px-2.5 text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
+                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-transparent bg-transparent px-2.5 text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] transition hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
                   isCalendarOpen && "bg-[#EBEBE9] border-[#78716C]"
                 )}
                 aria-expanded={isCalendarOpen}
@@ -81,8 +83,14 @@ export function VideoSubmitPanelToolbar({
                 <span className="tabular-nums">{activeBizDate}</span>
               </button>
 
-              {isCalendarOpen && (
-                <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+              {menuMotion.shown && (
+                <div
+                  {...menuMotion.exitProps}
+                  className={cn(
+                    menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
+                    "absolute left-0 top-full mt-2 z-50 origin-top-left duration-150",
+                  )}
+                >
                   <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
                     <SubmissionCalendar
                       today={today}

@@ -3,17 +3,22 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Variants } from "framer-motion";
 
+/**
+ * 动效节奏（与 globals.css 的 --ease-smooth、《组件与场景契约》§5 同一套）：
+ * 150 即时反馈 · 200 弹层 · 240 面板与入场 · 封顶 300；只有数字滚动等仪式节点可超出。
+ */
 export const ANIMATION_TIMINGS = {
   micro: 150,
-  fast: 250,
-  normal: 350,
-  slow: 500,
+  fast: 200,
+  normal: 240,
+  slow: 300,
   number: 600,
 } as const;
 
-const DEFAULT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const DEFAULT_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const EXIT_EASE: [number, number, number, number] = [0.4, 0, 1, 1];
-export const SPRING_EASE: [number, number, number, number] = [0.34, 1.56, 0.64, 1];
+/** 历史名保留；规范禁浮夸弹跳，已改为与默认曲线一致、不过冲。 */
+export const SPRING_EASE: [number, number, number, number] = DEFAULT_EASE;
 
 export const containerVariants: Variants = {
   hidden: {},

@@ -50,7 +50,7 @@ export function ExemptionApprovalCard({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       onClick={onFocus}
     >
-      <Card className="group relative p-4.5 sm:p-5 transition-all duration-150 gap-0">
+      <Card className="group relative p-4.5 sm:p-5 transition duration-150 gap-0">
         {/* Card Header: 申请人/团队/类型徽标在左，卡片级快捷操作在右 */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           {/* Left: Applicant Name, Team & Decision Context Capsule */}
@@ -88,7 +88,7 @@ export function ExemptionApprovalCard({
             <button
               type="button"
               onClick={() => onGroupAction(group, "approved")}
-              className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] cursor-pointer"
+              className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition active:scale-[0.98] cursor-pointer"
             >
               <Check className="size-3.5 stroke-[2.2]" />
               <span>
@@ -101,7 +101,7 @@ export function ExemptionApprovalCard({
             <button
               type="button"
               onClick={() => onGroupAction(group, "rejected")}
-              className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-status-danger/[0.06] px-2 text-[12px] font-normal text-[#78716C] hover:text-status-danger transition-all active:scale-[0.98] cursor-pointer"
+              className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-status-danger/[0.06] px-2 text-[12px] font-normal text-[#78716C] hover:text-status-danger transition active:scale-[0.98] cursor-pointer"
             >
               <X className="size-3.5 stroke-[2]" />
               <span>
@@ -151,7 +151,7 @@ export function ExemptionApprovalCard({
                   <div
                     key={daily.id}
                     className={cn(
-                      "group/daily relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
+                      "group/daily relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition select-none",
                       isDailyApproved
                         ? "bg-status-success/[0.08] text-status-success border border-status-success/15"
                         : isDailyRejected

@@ -34,7 +34,7 @@ export function TodoItemCard({
   const canMarkDone = getTodoIsCompletable(todo) && !todo.actionUrl;
 
   return (
-    <Card className="p-4 sm:p-4.5 flex flex-row items-start gap-3 transition-all group">
+    <Card className="p-4 sm:p-4.5 flex flex-row items-start gap-3 transition group">
       {canMarkDone ? (
         <button
           type="button"

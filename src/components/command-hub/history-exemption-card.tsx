@@ -49,7 +49,7 @@ export function HistoryExemptionCard({
   return (
     <Card
       key={reqId || item.id}
-      className="group p-4 sm:p-4.5 space-y-2 transition-all gap-0"
+      className="group p-4 sm:p-4.5 space-y-2 transition gap-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">

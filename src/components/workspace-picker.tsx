@@ -5,6 +5,7 @@ import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useExitMotion } from "@/hooks/use-exit-motion";
 
 interface Account {
   id: string;
@@ -20,6 +21,7 @@ interface WorkspacePickerProps {
 
 export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const menuMotion = useExitMotion(isOpen);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,7 +82,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
+          "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#141413] bg-[#F1F1F0]/80"
         )}
@@ -111,11 +113,13 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         />
       </button>
 
-      {isOpen && (
+      {menuMotion.shown && (
         <div
           id={menuId}
+          {...menuMotion.exitProps}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/98 p-1.5 shadow-claude-float duration-150 border-[#E2E2DF] backdrop-blur-xl"
+            menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
+            "absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/98 p-1.5 shadow-claude-float duration-150 border-[#E2E2DF] backdrop-blur-xl"
           )}
         >
           {/* Account List */}

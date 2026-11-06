@@ -86,7 +86,7 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
                 handleImageLoad(activeScreenshots[previewIndex].url, img.naturalWidth / img.naturalHeight);
               }
             }}
-            className={`rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition-all duration-150 ${
+            className={`rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition duration-150 ${
               (aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15
                 ? "max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-3.5rem)] w-auto h-auto"
                 : "max-h-[calc(100dvh-6.5rem)] max-w-[min(90vw,560px)] w-auto h-auto"

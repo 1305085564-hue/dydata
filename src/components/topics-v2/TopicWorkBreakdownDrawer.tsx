@@ -184,7 +184,7 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in fade-in slide-in-from-right-7 duration-240"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">
@@ -248,7 +248,7 @@ export function TopicWorkBreakdownDrawer({
                     disabled={!hasPrevTopic}
                     title="上一篇 (快捷键 K 或 ↑)"
                     aria-label="上一篇选题"
-                    className="p-1 rounded-md text-[#78716C] hover:text-[#141413] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                    className="p-1 rounded-md text-[#78716C] hover:text-[#141413] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
                   >
                     <ChevronUp className="size-3.5" />
                   </button>
@@ -263,7 +263,7 @@ export function TopicWorkBreakdownDrawer({
                     disabled={!hasNextTopic}
                     title="下一篇 (快捷键 J 或 ↓)"
                     aria-label="下一篇选题"
-                    className="p-1 rounded-md text-[#78716C] hover:text-[#141413] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                    className="p-1 rounded-md text-[#78716C] hover:text-[#141413] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
                   >
                     <ChevronDown className="size-3.5" />
                   </button>

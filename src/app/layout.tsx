@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import { RouteToaster } from "@/components/ui/route-toaster";
+import { MotionPreferences } from "@/components/motion-preferences";
 
 import "./globals.css";
 
@@ -56,7 +57,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased tabular-nums">
-        {children}
+        <MotionPreferences>{children}</MotionPreferences>
         <RouteToaster />
       </body>
     </html>

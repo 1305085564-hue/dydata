@@ -86,7 +86,7 @@ export function InlineFeedbackTray({
         placeholder={placeholder}
         rows={2}
         className={cn(
-          "w-full rounded-md border bg-white p-2.5 sm:p-3 text-[14px] text-[#141413] placeholder:text-[#A8A29E] focus:outline-none transition-all resize-none shadow-input",
+          "w-full rounded-md border bg-white p-2.5 sm:p-3 text-[14px] text-[#141413] placeholder:text-[#A8A29E] focus:outline-none transition resize-none shadow-input",
           hasAttemptedSubmit && isInvalid
             ? "border-status-danger focus:border-status-danger focus:ring-1 focus:ring-status-danger/20"
             : "border-[#E2E2DF] focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10",
@@ -121,7 +121,7 @@ export function InlineFeedbackTray({
             disabled={isSubmitting || (hasAttemptedSubmit && isInvalid)}
             onClick={handleSubmit}
             className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-md px-3 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
+              "inline-flex h-7 items-center gap-1 rounded-md px-3 text-[12px] font-normal transition active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
               isApprove
                 ? "bg-status-success/[0.08] hover:bg-status-success/15 text-status-success"
                 : "bg-status-danger/[0.08] hover:bg-status-danger/15 text-status-danger",

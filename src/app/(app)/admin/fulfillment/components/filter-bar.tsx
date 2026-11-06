@@ -144,7 +144,7 @@ export function FilterBar({
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
-                  className={`rounded-md px-2.5 sm:px-3 py-1.5 text-[12px] whitespace-nowrap font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`rounded-md px-2.5 sm:px-3 py-1.5 text-[12px] whitespace-nowrap font-normal transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     isActive
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
@@ -177,7 +177,7 @@ export function FilterBar({
 
         {/* 飞书提醒开关（极简微气垫 · 调度机制状态微章） */}
         <div
-          className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 px-3 py-1.5 transition-all hover:bg-white hover:border-[#E2E2DF] hover:shadow-input"
+          className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 px-3 py-1.5 transition hover:bg-white hover:border-[#E2E2DF] hover:shadow-input"
           title={
             feishuEnabled === null && !settingsLoading
               ? "飞书每日催交由企业管理员在发布管理中统一配置"

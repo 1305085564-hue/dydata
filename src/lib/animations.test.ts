@@ -60,9 +60,9 @@ test("formatCountUpValue 支持整数、小数与万单位格式化", () => {
 
 test("动画时长常量和打字机光标类名可直接复用", () => {
   assert.equal(ANIMATION_TIMINGS.micro, 150);
-  assert.equal(ANIMATION_TIMINGS.fast, 250);
-  assert.equal(ANIMATION_TIMINGS.normal, 350);
-  assert.equal(ANIMATION_TIMINGS.slow, 500);
+  assert.equal(ANIMATION_TIMINGS.fast, 200);
+  assert.equal(ANIMATION_TIMINGS.normal, 240);
+  assert.equal(ANIMATION_TIMINGS.slow, 300);
   assert.equal(ANIMATION_TIMINGS.number, 600);
   assert.equal(typewriterCursorClassName, "typewriter-cursor");
 });

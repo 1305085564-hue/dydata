@@ -312,7 +312,7 @@ export function Leaderboard({
                       type="button"
                       onClick={() => handleSortClick(metric.key)}
                       className={cn(
-                        "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
+                        "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-[12px] font-normal transition active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
                         isSelected
                           ? "bg-[#D97757]/10 text-[#D97757] font-normal border border-[#D97757]/30"
                           : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9] border border-transparent"
@@ -481,7 +481,7 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 h-7 text-[12px] font-normal rounded-md transition-all active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
+              "px-3 h-7 text-[12px] font-normal rounded-md transition active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
               active
                 ? "bg-white text-[#141413] shadow-input font-normal"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"

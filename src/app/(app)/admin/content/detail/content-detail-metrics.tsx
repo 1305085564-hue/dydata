@@ -202,7 +202,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {/* 播放量 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
@@ -219,7 +219,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     </div>
 
                     {/* 转粉率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
@@ -244,7 +244,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     </div>
 
                     {/* 互动率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>互动率</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
@@ -264,7 +264,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     </div>
 
                     {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>{fourthSlotLabel}</span>
                         {fourthSlotIsFavorite ? (

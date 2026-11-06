@@ -82,7 +82,7 @@ export function TodosTab({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0, marginBottom: 0, padding: 0 }}
               >
-                <Card className=" p-4 sm:p-4.5 flex flex-row items-start gap-3 transition-all">
+                <Card className=" p-4 sm:p-4.5 flex flex-row items-start gap-3 transition">
                 {canMarkDone ? (
                   <button
                     type="button"

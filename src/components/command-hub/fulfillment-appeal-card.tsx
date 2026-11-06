@@ -53,7 +53,7 @@ export function FulfillmentAppealCard({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       onClick={onFocus}
     >
-      <Card className="group relative p-4.5 sm:p-5 transition-all duration-150 gap-0">
+      <Card className="group relative p-4.5 sm:p-5 transition duration-150 gap-0">
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
@@ -143,7 +143,7 @@ export function FulfillmentAppealCard({
               onToggleReject();
             }}
             className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] font-normal transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+              "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
               isRejectOpen
                 ? "bg-status-danger/10 text-status-danger"
                 : "text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.06]",
@@ -159,7 +159,7 @@ export function FulfillmentAppealCard({
               e.stopPropagation();
               onApprove();
             }}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <Check className="size-3.5 stroke-[2.2]" />
             <span>同意补交</span>

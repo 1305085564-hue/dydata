@@ -89,7 +89,7 @@ export function PoolToolbar({
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all flex items-center gap-1 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition flex items-center gap-1 cursor-pointer active:scale-[0.99] active:duration-120 ${
               currentView === "all"
                 ? "bg-white text-[#141413] font-normal shadow-input"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-white/60 font-normal"
@@ -111,7 +111,7 @@ export function PoolToolbar({
           <button
             type="button"
             onClick={() => onViewChange("my_created")}
-            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
               currentView === "my_created"
                 ? "bg-white text-[#141413] font-normal shadow-input"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-[#E2E2DF]/50 font-normal"
@@ -122,7 +122,7 @@ export function PoolToolbar({
           <button
             type="button"
             onClick={() => onViewChange("my_claims")}
-            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
               currentView === "my_claims"
                 ? "bg-white text-[#141413] font-normal shadow-input"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-[#E2E2DF]/50 font-normal"
@@ -141,7 +141,7 @@ export function PoolToolbar({
               placeholder="搜索选题/Hook..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-[12px] bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#141413] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 text-[#1F1E1D] placeholder:text-[#A8A29E] font-normal transition-all"
+              className="text-[12px] bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#141413] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 text-[#1F1E1D] placeholder:text-[#A8A29E] font-normal transition"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -202,7 +202,7 @@ export function PoolToolbar({
           <button
             type="button"
             onClick={onOpenMoreFilters}
-            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[12px] text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
+            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[12px] text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] font-normal transition active:scale-[0.99] active:duration-120 cursor-pointer"
             aria-label="展开更多筛选"
           >
             <span>更多</span>
@@ -219,7 +219,7 @@ export function PoolToolbar({
           <button
             type="button"
             onClick={onToggleDisplayMode}
-            className="group relative size-7 inline-flex items-center justify-center rounded-md text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all active:scale-[0.95] active:duration-120 cursor-pointer"
+            className="group relative size-7 inline-flex items-center justify-center rounded-md text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] transition active:scale-[0.95] active:duration-120 cursor-pointer"
             title={displayMode === "grid" ? "切换为表格视图" : "切换为卡片视图"}
             aria-label={displayMode === "grid" ? "切换为表格视图" : "切换为卡片视图"}
           >

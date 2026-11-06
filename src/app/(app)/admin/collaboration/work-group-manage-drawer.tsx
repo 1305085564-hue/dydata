@@ -100,7 +100,7 @@ function MemberMultiSelect({
         aria-haspopup="listbox"
         aria-controls={isOpen ? panelId : undefined}
         className={cn(
-          "w-full h-7 px-2.5 text-[14px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
+          "w-full h-7 px-2.5 text-[14px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 transition cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
           isOpen && "ring-1 ring-[#141413]/10 border-[#141413]",
         )}
       >
@@ -866,7 +866,7 @@ export function WorkGroupManageDrawer({
                     return (
                       <div
                         key={group.id}
-                        className="p-3.5 rounded-xl border border-[#E2E2DF] bg-white shadow-card-ring flex flex-col gap-2 transition-all"
+                        className="p-3.5 rounded-xl border border-[#E2E2DF] bg-white shadow-card-ring flex flex-col gap-2 transition"
                       >
                         <div className="flex items-center justify-between gap-2">
                           {isRenaming ? (

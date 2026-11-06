@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { fetchTopicJson } from "@/lib/topics/v2-client-contract";
 import type { TopicPoolItem } from "@/components/topics-v2/types";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useExitMotion } from "@/hooks/use-exit-motion";
 
 export interface SelectedTopicInfo {
   id: string;
@@ -38,6 +39,7 @@ export function TopicSelectDropdown({
   className,
 }: TopicSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const menuMotion = useExitMotion(isOpen);
   const [searchQuery, setSearchQuery] = useState("");
   const [myClaims, setMyClaims] = useState<TopicPoolItem[]>([]);
   const [searchResults, setSearchResults] = useState<TopicPoolItem[]>([]);
@@ -202,7 +204,7 @@ export function TopicSelectDropdown({
     <div ref={containerRef} className={cn("relative inline-block text-left", className)}>
       {/* 触发触点 */}
       {selectedTopicId ? (
-        <div className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] shadow-input transition-all hover:border-[#78716C]/40">
+        <div className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] shadow-input transition hover:border-[#78716C]/40">
           <Compass className="size-3.5 text-[#D97757]" />
           <span className="text-[#78716C]">关联选题:</span>
           <button
@@ -234,8 +236,15 @@ export function TopicSelectDropdown({
       )}
 
       {/* 浮动选择面板（锚点在行尾，向右展开会越出 overflow-hidden 的卡片，故右对齐向左展开） */}
-      {isOpen && (
-        <div ref={panelRef} className="absolute right-0 top-full z-40 mt-1.5 w-80 sm:w-96 rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float">
+      {menuMotion.shown && (
+        <div
+          ref={panelRef}
+          {...menuMotion.exitProps}
+          className={cn(
+            menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
+            "absolute right-0 top-full z-40 mt-1.5 w-80 sm:w-96 origin-top-right rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float duration-150",
+          )}
+        >
           {/* 搜索框 */}
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />

@@ -96,7 +96,7 @@ export function TeamActivitySection({
   const pastWorks = (data?.recentlyWorked ?? []).slice(1, 6);
 
   return (
-    <section className="mb-2.5 sm:mb-3 transition-all">
+    <section className="mb-2.5 sm:mb-3 transition">
       {/* 采用学者边注微印记：发丝线贴近下方筛选栏，与上方动态拉开舒适留白 */}
       <div className="flex items-center justify-between gap-3 text-[12px] sm:text-[14px] leading-relaxed text-[#78716C] pt-0.5 pb-3.5 border-b border-[#E2E2DF]/60">
         <div className="flex items-center gap-2 flex-1 min-w-0">

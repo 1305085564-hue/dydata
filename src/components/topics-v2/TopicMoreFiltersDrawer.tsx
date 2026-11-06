@@ -103,7 +103,7 @@ export function TopicMoreFiltersDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="更多高级筛选"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in fade-in slide-in-from-right-7 duration-240"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF]/60 bg-white px-5 py-3.5">
           <SectionHeading as="h3">更多筛选</SectionHeading>
@@ -146,7 +146,7 @@ export function TopicMoreFiltersDrawer({
                   key={category.key}
                   type="button"
                   onClick={() => setActiveCategory(category.key)}
-                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-md px-2 sm:px-3 py-2 sm:py-2.5 text-left text-[12px] transition-all ${
+                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-md px-2 sm:px-3 py-2 sm:py-2.5 text-left text-[12px] transition ${
                     isSelected
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] font-normal"

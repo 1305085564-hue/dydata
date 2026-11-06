@@ -238,7 +238,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
   return (
     <div
       className={cn(
-        "rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 transition-all duration-200 overflow-hidden",
+        "rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 transition duration-200 overflow-hidden",
         className,
       )}
     >

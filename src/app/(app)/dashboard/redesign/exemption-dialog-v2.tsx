@@ -270,7 +270,7 @@ export function ExemptionDialogV2({
                   type="button"
                   onClick={() => calendar.setExemptionType("leave")}
                   className={cn(
-                    "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition-all duration-150 cursor-pointer",
+                    "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition duration-150 cursor-pointer",
                     calendar.exemptionType === "leave"
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#1F1E1D]",
@@ -282,7 +282,7 @@ export function ExemptionDialogV2({
                   type="button"
                   onClick={() => calendar.setExemptionType("waive")}
                   className={cn(
-                    "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition-all duration-150 cursor-pointer",
+                    "flex h-8 items-center justify-center rounded-md text-[12px] font-normal transition duration-150 cursor-pointer",
                     calendar.exemptionType === "waive"
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#1F1E1D]",
@@ -414,7 +414,7 @@ export function ExemptionDialogV2({
                     }}
                     rows={3}
                     maxLength={100}
-                    className="w-full resize-none rounded-xl border border-[#E2E2DF] bg-white/50 px-3.5 py-2.5 text-[14px] leading-relaxed text-[#1F1E1D] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
+                    className="w-full resize-none rounded-xl border border-[#E2E2DF] bg-white/50 px-3.5 py-2.5 text-[14px] leading-relaxed text-[#1F1E1D] shadow-input transition duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     placeholder={
                       calendar.exemptionType === "leave"
                         ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
@@ -508,7 +508,7 @@ export function ExemptionDialogV2({
                             calendar.setDateReason(dateStr, e.target.value)
                           }
                           placeholder={`简述 ${dateStr} 的特殊豁免具体原因`}
-                          className="w-full h-7 rounded-md border border-[#E2E2DF] bg-white/50 px-2 text-[12px] text-[#1F1E1D] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                          className="w-full h-7 rounded-md border border-[#E2E2DF] bg-white/50 px-2 text-[12px] text-[#1F1E1D] shadow-input transition duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                         />
                       </div>
                     );

@@ -359,7 +359,7 @@ export function TopicCreateModal({
       }}
     >
       <DialogContent
-        className={`flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white/95 p-6 shadow-claude-dialog transition-all duration-150 ${
+        className={`flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white/95 p-6 shadow-claude-dialog transition duration-150 ${
           createMode === "batch" && importStep === "preview"
             ? "sm:max-w-4xl"
             : "sm:max-w-lg"
@@ -377,7 +377,7 @@ export function TopicCreateModal({
                 <button
                   type="button"
                   onClick={() => setCreateMode("single")}
-                  className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1 h-6 rounded-md text-[12px] transition cursor-pointer flex items-center gap-1 ${
                     createMode === "single"
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
@@ -388,7 +388,7 @@ export function TopicCreateModal({
                 <button
                   type="button"
                   onClick={() => setCreateMode("batch")}
-                  className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1 h-6 rounded-md text-[12px] transition cursor-pointer flex items-center gap-1 ${
                     createMode === "batch"
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
@@ -469,7 +469,7 @@ export function TopicCreateModal({
                         type="button"
                         onClick={handleApplySmartPaste}
                         disabled={!smartPasteText.trim()}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#141413] border border-[#E2E2DF]/60 text-[12px] font-normal shadow-input disabled:opacity-40 cursor-pointer transition-all active:scale-[0.99]"
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#141413] border border-[#E2E2DF]/60 text-[12px] font-normal shadow-input disabled:opacity-40 cursor-pointer transition active:scale-[0.99]"
                       >
                         <span>智能填入表单</span>
                       </button>
@@ -627,7 +627,7 @@ export function TopicCreateModal({
                       const file = e.dataTransfer.files?.[0];
                       if (file) void handleFile(file);
                     }}
-                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                       isDragging
                         ? "border-[#D97757]/70 bg-[#D97757]/5"
                         : "border-[#E2E2DF] bg-white/50 hover:border-[#D97757]/60 hover:bg-[#EBEBE9]"
@@ -733,7 +733,7 @@ export function TopicCreateModal({
                           <button
                             type="button"
                             onClick={() => setActiveFilterTab("all")}
-                            className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                            className={`px-2.5 py-0.5 rounded-md transition cursor-pointer ${
                               activeFilterTab === "all"
                                 ? "bg-white text-[#141413] shadow-input"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
@@ -744,7 +744,7 @@ export function TopicCreateModal({
                           <button
                             type="button"
                             onClick={() => setActiveFilterTab("valid")}
-                            className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                            className={`px-2.5 py-0.5 rounded-md transition cursor-pointer ${
                               activeFilterTab === "valid"
                                 ? "bg-white text-[#141413] shadow-input"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
@@ -756,7 +756,7 @@ export function TopicCreateModal({
                             <button
                               type="button"
                               onClick={() => setActiveFilterTab("warning")}
-                              className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                              className={`px-2.5 py-0.5 rounded-md transition cursor-pointer ${
                                 activeFilterTab === "warning"
                                   ? "bg-white text-[#141413] shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
@@ -769,7 +769,7 @@ export function TopicCreateModal({
                             <button
                               type="button"
                               onClick={() => setActiveFilterTab("error")}
-                              className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                              className={`px-2.5 py-0.5 rounded-md transition cursor-pointer ${
                                 activeFilterTab === "error"
                                   ? "bg-white text-[#141413] shadow-input"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"

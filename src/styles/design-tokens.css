@@ -49,17 +49,14 @@
   --radius-xl: 16px;      /* rounded-2xl：页面级容器 / Modal */
   --radius-full: 9999px;
 
-  /* === 动效 === */
+  /* === 动效 ===
+     曲线唯一出处在 globals.css @theme（--ease-smooth）；此处只保留时长档位供 CSS 引用。
+     档位：150 即时反馈（悬停/按压/菜单）· 200 弹窗与淡入淡出 · 240 抽屉与面板 · 封顶 300（仪式节点除外） */
   --duration-micro: 150ms;
   --duration-fast: 150ms;
-  --duration-normal: 150ms;
-  --duration-slow: 200ms;
+  --duration-normal: 200ms;
+  --duration-slow: 240ms;
   --duration-number: 400ms;
-  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-enter: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* === 阴影 === */
   --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);

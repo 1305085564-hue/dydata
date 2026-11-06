@@ -50,7 +50,7 @@ export function ActionCenterControls({
           type="button"
           onClick={onOpen}
           className={cn(
-            "relative flex h-8 w-8 cursor-pointer select-none items-center justify-center rounded-md outline-none transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-status-info/20 active:scale-[0.99] active:duration-120",
+            "relative flex h-8 w-8 cursor-pointer select-none items-center justify-center rounded-md outline-none transition duration-150 group focus-visible:ring-2 focus-visible:ring-status-info/20 active:scale-[0.99] active:duration-120",
             open
               ? "bg-[#F1F1F0] text-[#141413] shadow-input"
               : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",

@@ -107,7 +107,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -177,7 +177,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""

@@ -688,7 +688,7 @@ export function PremiumSettingsModal({
 
                 <div className="space-y-3">
                   {/* Combined Dynamic Reminder Card (Eliminating Dashed Borders) */}
-                  <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all shadow-card-ring">
+                  <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition shadow-card-ring">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <span className="text-[14px] font-normal text-[#141413]">

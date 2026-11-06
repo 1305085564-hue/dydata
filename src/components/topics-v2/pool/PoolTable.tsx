@@ -94,7 +94,7 @@ export function PoolTable({
                           e.stopPropagation();
                           onGoToFeishu(item);
                         }}
-                        className="px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                        className="px-2.5 h-7 rounded-md text-[12px] font-normal transition active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         aria-label={isWriting ? "继续创作" : "去飞书创作"}
                       >
                         {isWriting ? "继续创作" : "去飞书创作"}

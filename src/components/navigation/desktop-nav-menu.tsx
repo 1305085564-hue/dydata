@@ -158,7 +158,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
               )}
             >
-              {isGroupActive && <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#141413] transition-all duration-150" />}
+              {isGroupActive && <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#141413] transition duration-150" />}
               {GroupIcon && (
                 <GroupIcon
                   className={cn(

@@ -299,7 +299,7 @@ export function FulfillmentMatrixRoster({
               <button
                 type="button"
                 onClick={() => setSortMode("rate_asc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
+                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
                   sortMode === "rate_asc"
                     ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
@@ -310,7 +310,7 @@ export function FulfillmentMatrixRoster({
               <button
                 type="button"
                 onClick={() => setSortMode("rate_desc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
+                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
                   sortMode === "rate_desc"
                     ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
@@ -321,7 +321,7 @@ export function FulfillmentMatrixRoster({
               <button
                 type="button"
                 onClick={() => setSortMode("missing_desc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer ${
+                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
                   sortMode === "missing_desc"
                     ? "bg-white text-[#141413] shadow-input"
                     : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
@@ -525,7 +525,7 @@ export function FulfillmentMatrixRoster({
                           {/* 中行：饱满的进度条（横向延展，消除右侧空洞） */}
                           <div className="h-1 w-full overflow-hidden rounded-full bg-[#F1F1F0]">
                             <div
-                              className={`h-full rounded-full transition-all duration-200 ${
+                              className={`h-full rounded-full transition-[width,background-color] duration-200 ${
                                 member.fulfillmentRate >= 100
                                   ? "bg-status-success"
                                   : member.fulfillmentRate >= 80
@@ -617,7 +617,7 @@ export function FulfillmentMatrixRoster({
                               onMouseLeave={() => {
                                 setHoveredCell(null);
                               }}
-                              className={`mx-auto flex size-[22px] items-center justify-center rounded-md border transition-all duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 relative ${getStatusColor(
+                              className={`mx-auto flex size-[22px] items-center justify-center rounded-md border transition duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 relative ${getStatusColor(
                                 status,
                                 Boolean(record?.pendingExemption),
                               )} ${

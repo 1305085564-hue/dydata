@@ -63,7 +63,7 @@ export function CollaborationWorkbenchToolbar({
             <button
               type="button"
               onClick={() => onViewChange("roles")}
-              className={`h-7 px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
                 view === "roles"
                   ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -74,7 +74,7 @@ export function CollaborationWorkbenchToolbar({
             <button
               type="button"
               onClick={() => onViewChange("teams")}
-              className={`h-7 px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
                 view === "teams"
                   ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -91,7 +91,7 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("talents")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "talents"
                       ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -103,7 +103,7 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("operators")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "operators"
                       ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -116,7 +116,7 @@ export function CollaborationWorkbenchToolbar({
                   type="button"
                   onClick={() => onTabChange("writers")}
                   title="含已认证但本月还没有产出的文案（另三个页签只计当月有产出者）"
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "writers"
                       ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -128,7 +128,7 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("editors")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "editors"
                       ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -150,7 +150,7 @@ export function CollaborationWorkbenchToolbar({
             <button
               type="button"
               onClick={() => onOpenManageDrawer(null)}
-              className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
+              className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal shadow-input transition duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
             >
               <Settings className="size-3.5 text-[#78716C]" />
               管理小队

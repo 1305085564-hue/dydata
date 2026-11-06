@@ -354,7 +354,7 @@ export function FulfillmentMemberSheet({
                           key={d}
                           type="button"
                           onClick={() => handleDateSelect(d)}
-                          className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition-all ${
+                          className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition ${
                             isSelected ? "bg-[#F1F1F0] ring-1 ring-inset ring-[#78716C]/50" : "hover:bg-[#F7F7F6]"
                           }`}
                         >

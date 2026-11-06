@@ -27,7 +27,7 @@ export function MemberBatchActions({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition duration-200 animate-in fade-in slide-in-from-bottom-2"
         >
           <span className="text-[12px] font-normal text-[#141413] pr-3 border-r border-[#E2E2DF]">
             已选 {selectedMemberIds.length} 位成员

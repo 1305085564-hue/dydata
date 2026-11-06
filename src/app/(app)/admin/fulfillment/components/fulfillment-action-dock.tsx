@@ -119,7 +119,7 @@ export function FulfillmentActionDock({
   // 如果没有任何异常且没有待审补交，返回极简安心提示条
   if (totalActionCount === 0 && !isFiltered) {
     return (
-      <div className="flex items-center justify-between rounded-xl border border-status-success/20 bg-status-success/[0.04] px-4 py-2.5 text-[12px] text-status-success transition-all duration-150">
+      <div className="flex items-center justify-between rounded-xl border border-status-success/20 bg-status-success/[0.04] px-4 py-2.5 text-[12px] text-status-success transition duration-150">
         <span className="flex items-center gap-2">
           <span className="inline-block size-2 rounded-full bg-status-success" />
           全队今日发布与待审状态良好，无待处理异常或待审补交
@@ -132,7 +132,7 @@ export function FulfillmentActionDock({
   return (
     <Card
       aria-label="异常与补交行动港"
-      className="overflow-hidden border border-[#E2E2DF]/60 bg-white shadow-card-ring transition-all duration-150"
+      className="overflow-hidden border border-[#E2E2DF]/60 bg-white shadow-card-ring transition duration-150"
     >
       {/* 顶部行动条主幅 */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 bg-surface-row-hover/60 border-b border-[#E2E2DF]/50">

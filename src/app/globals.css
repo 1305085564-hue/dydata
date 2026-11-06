@@ -119,6 +119,15 @@
   --radius-4xl: 32px;
   --animate-float-y: float-y 4s ease-in-out infinite;
 
+  /* === 动效节奏（唯一出处，规范见《组件与场景契约》§5）===
+     一条曲线：起步快、收尾轻刹车，无回弹。参考 OpenMausBot（Apache-2.0）src/styles.css。
+     所有 transition-* 与 animate-in/out 默认都走这条曲线，组件里不再手写 cubic-bezier。 */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 150ms;
+  --animate-in: enter var(--tw-animation-duration, var(--tw-duration, 150ms)) var(--tw-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--tw-animation-delay, 0s) var(--tw-animation-iteration-count, 1) var(--tw-animation-direction, normal) var(--tw-animation-fill-mode, none);
+  --animate-out: exit var(--tw-animation-duration, var(--tw-duration, 150ms)) var(--tw-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--tw-animation-delay, 0s) var(--tw-animation-iteration-count, 1) var(--tw-animation-direction, normal) var(--tw-animation-fill-mode, forwards);
+
   /* === Layer / Z-Index 契约体系 === */
   --z-sticky-table: 10;
   --z-sticky-nav: 20;

@@ -110,7 +110,7 @@ export function MobileMoreDrawer({
               onOpenCommandHub();
             }}
             aria-label="打开行动中枢：待办、审批与风险"
-            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer group"
+            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition cursor-pointer group"
           >
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-md bg-[#FCFCFB] text-[#141413] border border-[#E2E2DF] group-hover:bg-[#EBEBE9] transition-colors">
@@ -188,7 +188,7 @@ export function MobileMoreDrawer({
                             href={child.href}
                             onClick={() => onOpenChange(false)}
                             className={cn(
-                              "flex items-center gap-2 rounded-xl p-2.5 text-[14px] font-normal transition-all active:scale-[0.99] active:duration-120",
+                              "flex items-center gap-2 rounded-xl p-2.5 text-[14px] font-normal transition active:scale-[0.99] active:duration-120",
                               active
                                 ? "bg-[#D97757]/10 text-[#D97757]"
                                 : "text-[#1F1E1D] hover:bg-[#F1F1F0]",
@@ -224,7 +224,7 @@ export function MobileMoreDrawer({
                       href={group.href}
                       onClick={() => onOpenChange(false)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-normal transition-all active:scale-[0.99] active:duration-120",
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-normal transition active:scale-[0.99] active:duration-120",
                         active
                           ? "bg-[#D97757]/10 text-[#D97757]"
                           : "text-[#1F1E1D] hover:bg-[#F1F1F0]",

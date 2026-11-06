@@ -45,7 +45,7 @@ export function PoolGrid({
                     onSelectTopic(item.id);
                   }
                 }}
-                className="relative p-4 hover:shadow-claude-float focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
+                className="relative p-4 hover:shadow-claude-float focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:outline-none transition duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
@@ -138,7 +138,7 @@ export function PoolGrid({
                         e.stopPropagation();
                         onGoToFeishu(item);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition active:scale-[0.99] active:duration-120 cursor-pointer bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       aria-label={isWriting ? "继续创作此题" : "去飞书创作此题"}
                     >
                       <span>{isWriting ? "继续创作" : "去飞书创作"}</span>

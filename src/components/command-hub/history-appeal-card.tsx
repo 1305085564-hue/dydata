@@ -38,7 +38,7 @@ export function HistoryAppealCard({
   };
 
   return (
-    <Card className="group p-4 sm:p-4.5 space-y-2.5 transition-all gap-0">
+    <Card className="group p-4 sm:p-4.5 space-y-2.5 transition gap-0">
       {/* Top Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -115,7 +115,7 @@ export function HistoryAppealCard({
               type="button"
               disabled={isProcessing}
               onClick={handleConfirmReopen}
-              className="inline-flex h-7 items-center gap-1 rounded-md bg-[#141413] hover:bg-[#1F1E1D] text-white px-3 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer disabled:opacity-40"
+              className="inline-flex h-7 items-center gap-1 rounded-md bg-[#141413] hover:bg-[#1F1E1D] text-white px-3 text-[12px] font-normal transition active:scale-[0.98] cursor-pointer disabled:opacity-40"
             >
               {isProcessing && <Loader2 className="size-3 animate-spin" />}
               <span>{isProcessing ? "打回中…" : "确认打回"}</span>

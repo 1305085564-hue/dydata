@@ -231,7 +231,7 @@ export function MemberInspectorBody({
                           <button
                             type="button"
                             onClick={() => handleRoleChangeClick(activeMember)}
-                            className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
+                            className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition cursor-pointer group"
                           >
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
@@ -277,7 +277,7 @@ export function MemberInspectorBody({
                             setPasswordResetTarget(activeMember);
                             setNewPassword("");
                           }}
-                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition cursor-pointer group"
                         >
                           <div className="flex items-center gap-2">
                             <KeyRound className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
@@ -294,7 +294,7 @@ export function MemberInspectorBody({
                         <button
                           type="button"
                           onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition cursor-pointer group"
                         >
                           <div className="flex items-center gap-2">
                             <UserMinus className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
@@ -339,7 +339,7 @@ export function MemberInspectorBody({
                         setArchiveTarget(activeMember);
                         setArchiveReason("");
                       }}
-                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-status-danger/10 active:scale-[0.99] transition-all cursor-pointer group"
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-status-danger/10 active:scale-[0.99] transition cursor-pointer group"
                     >
                       <div className="flex items-center gap-2">
                         <Trash2 className="size-3.5 text-status-danger shrink-0" />

@@ -111,7 +111,7 @@ export function MemberToolbar({
                     replaceWorkspaceUrl({ query: nextQuery });
                   }}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-7 pl-8 pr-4 text-[14px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-7 pl-8 pr-4 text-[14px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 outline-none transition placeholder:text-[#78716C]/60"
                 />
               </div>
 

@@ -41,7 +41,7 @@ export function BreakdownWorksSection({
                           key={sort}
                           type="button"
                           onClick={() => void loadWorksPage(1, sort)}
-                          className={`px-2 py-0.5 rounded-md transition-all cursor-pointer min-h-[44px] sm:min-h-0 flex items-center ${
+                          className={`px-2 py-0.5 rounded-md transition cursor-pointer min-h-[44px] sm:min-h-0 flex items-center ${
                             worksQuery.sort === sort
                               ? "bg-white text-[#141413] font-normal shadow-input"
                               : "text-[#78716C] hover:text-[#141413]"
@@ -75,7 +75,7 @@ export function BreakdownWorksSection({
                       return (
                         <Card
                           key={work.id}
-                          className="p-3 gap-2 hover:shadow-claude-float transition-all"
+                          className="p-3 gap-2 hover:shadow-claude-float transition"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">

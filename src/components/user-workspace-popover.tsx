@@ -14,6 +14,7 @@ import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { clearScreenshotGrant } from "@/components/screenshot-grant";
 import { getRoleLabel } from "@/lib/role-label";
+import { useExitMotion } from "@/hooks/use-exit-motion";
 
 interface Account {
   id: string;
@@ -43,6 +44,7 @@ export function UserWorkspacePopover({
 }: UserWorkspacePopoverProps) {
   const [menu, setMenu] = useState({ open: false, pinned: false });
   const isOpen = menu.open;
+  const menuMotion = useExitMotion(isOpen);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -157,13 +159,13 @@ export function UserWorkspacePopover({
         aria-controls={menuId}
         onClick={handleTriggerClick}
         className={cn(
-          "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
+          "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#141413] bg-[#F1F1F0]/80",
         )}
       >
         {/* User Avatar */}
-        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] transition-all duration-200 group-hover:bg-[#E4E4E1] group-hover:text-[#141413]">
+        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] transition duration-200 group-hover:bg-[#E4E4E1] group-hover:text-[#141413]">
           {name.trim().slice(0, 1).toUpperCase() || "?"}
         </div>
 
@@ -187,11 +189,13 @@ export function UserWorkspacePopover({
       </button>
 
       {/* Floating Popover Panel */}
-      {isOpen && (
+      {menuMotion.shown && (
         <div
           id={menuId}
+          {...menuMotion.exitProps}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E2E2DF] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#141413]/5 duration-150 backdrop-blur-xl",
+            menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
+            "absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E2E2DF] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#141413]/5 duration-150 backdrop-blur-xl",
           )}
         >
           {/* Section 1: Workspace Selector */}

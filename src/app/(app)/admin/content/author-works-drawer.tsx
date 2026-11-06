@@ -253,7 +253,7 @@ export function AuthorWorksView({
                   type="button"
                   onClick={() => { setSelectedVideoId(null); setTimeRange(t.key); }}
                   className={cn(
-                    "px-2.5 py-0.5 rounded-md text-[12px] transition-all cursor-pointer font-normal",
+                    "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
                     timeRange === t.key
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]",
@@ -280,7 +280,7 @@ export function AuthorWorksView({
                   type="button"
                   onClick={() => { setSelectedVideoId(null); setSortField(s.key); }}
                   className={cn(
-                    "px-2.5 py-0.5 rounded-md text-[12px] transition-all cursor-pointer font-normal",
+                    "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
                     sortField === s.key
                       ? "bg-white text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]",
@@ -478,7 +478,7 @@ export function AuthorWorksDrawer({
       <SheetContent
         showCloseButton={false}
         className={cn(
-          "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog rounded-l-2xl transition-[max-width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-w-4xl sm:max-w-4xl",
+          "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog rounded-l-2xl transition-[max-width] duration-240 ease-smooth max-w-4xl sm:max-w-4xl",
         )}
       >
         <AuthorWorksView

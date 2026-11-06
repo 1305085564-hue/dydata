@@ -84,7 +84,7 @@ export function WriterCertificationButton({
           disabled={isBusy}
           onClick={handleClick}
           title={certified ? "点击取消文案认证" : "点击认证为文案人员"}
-          className={`h-6 px-2 text-[12px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 flex items-center justify-center gap-1 tabular-nums ${
+          className={`h-6 px-2 text-[12px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 flex items-center justify-center gap-1 tabular-nums ${
             certified
               ? "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
               : hasWork

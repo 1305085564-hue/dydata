@@ -241,7 +241,7 @@ export function VideoSubmitPanelBody({
                                 if (report.id) setSelectedReportId(report.id);
                               }}
                               className={cn(
-                                "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left",
+                                "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition cursor-pointer text-left",
                                 isSelected
                                   ? "bg-[#F1F1F0] border-[#E2E2DF]"
                                   : "bg-white/70 border-[#E2E2DF] hover:border-[#78716C]/40 hover:bg-white",
