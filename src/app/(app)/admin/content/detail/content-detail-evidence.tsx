@@ -69,7 +69,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         </button>
                       </div>
                     )}
-                    <ChevronDown className="size-4 text-[#78716C] transition-transform duration-200 group-open/details:rotate-180" />
+                    <ChevronDown className="size-4 text-[#78716C] transition-[transform,color] duration-150 group-open/details:rotate-180" />
                   </div>
                 </summary>
 

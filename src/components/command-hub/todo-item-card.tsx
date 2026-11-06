@@ -2,6 +2,8 @@
 
 import { ArrowRight, Circle, Loader2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { listItemMotion } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
@@ -34,6 +36,7 @@ export function TodoItemCard({
   const canMarkDone = getTodoIsCompletable(todo) && !todo.actionUrl;
 
   return (
+    <motion.div layout {...listItemMotion}>
     <Card className="p-4 sm:p-4.5 flex flex-row items-start gap-3 transition group">
       {canMarkDone ? (
         <button
@@ -121,5 +124,6 @@ export function TodoItemCard({
         )}
       </div>
     </Card>
+    </motion.div>
   );
 }

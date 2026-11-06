@@ -2,6 +2,7 @@
 
 import { ArrowRight, CheckCircle2, Circle, Loader2, TriangleAlert } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { listItemMotion } from "@/lib/animations";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -78,9 +79,8 @@ export function TodosTab({
             return (
               <motion.div
                 key={todo.id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0, padding: 0 }}
+                layout
+                {...listItemMotion}
               >
                 <Card className=" p-4 sm:p-4.5 flex flex-row items-start gap-3 transition">
                 {canMarkDone ? (

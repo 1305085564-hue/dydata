@@ -121,7 +121,7 @@ export function PulseMemberTable({
                     <div className="flex items-center gap-2">
                       <ChevronRight
                         className={cn(
-                          "size-3.5 text-[#A8A29E] transition-transform",
+                          "size-3.5 text-[#A8A29E] transition-[transform,color] duration-150",
                           isExpanded && "rotate-90 text-[#141413]"
                         )}
                       />
@@ -259,7 +259,7 @@ export function PulseMemberTable({
                             >
                               <ChevronRight
                                 className={cn(
-                                  "size-3.5 text-[#78716C] transition-transform",
+                                  "size-3.5 text-[#78716C] transition-[transform,color] duration-150",
                                   isExpanded && "rotate-90 text-[#141413]"
                                 )}
                               />

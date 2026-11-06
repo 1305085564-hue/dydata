@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import type { Variants } from "framer-motion";
+import type { MotionProps, Variants } from "framer-motion";
 
 /**
  * 动效节奏（与 globals.css 的 --ease-smooth、《组件与场景契约》§5 同一套）：
@@ -61,6 +61,25 @@ export const cardVariants: Variants = {
       ease: SPRING_EASE,
     },
   },
+};
+
+/**
+ * 列表条目落位：新条目从下方 4px 淡入，处理完的条目淡出并收起高度，其余条目平滑补位。
+ * 参考 OpenMausBot（Apache-2.0）msg-in：translateY(4px) 0.18s。
+ * 用法：<motion.div layout {...listItemMotion}>，外层包 <AnimatePresence initial={false}>，
+ * 首屏已有条目不做动画，只有真实新增/移除时才动。
+ */
+export const listItemMotion: Pick<MotionProps, "initial" | "animate" | "exit" | "transition"> = {
+  initial: { opacity: 0, y: 4 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: DEFAULT_EASE } },
+  exit: {
+    opacity: 0,
+    height: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    transition: { duration: ANIMATION_TIMINGS.fast / 1000, ease: DEFAULT_EASE },
+  },
+  transition: { layout: { duration: ANIMATION_TIMINGS.fast / 1000, ease: DEFAULT_EASE } },
 };
 
 export const toastVariants: Variants = {

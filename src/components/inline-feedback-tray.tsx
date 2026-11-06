@@ -52,7 +52,7 @@ export function InlineFeedbackTray({
       initial={{ opacity: 0, height: 0, marginTop: 0 }}
       animate={{ opacity: 1, height: "auto", marginTop: 10 }}
       exit={{ opacity: 0, height: 0, marginTop: 0 }}
-      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className="overflow-hidden pt-1 space-y-2"
     >
       <div className="flex items-center justify-between text-[12px]">

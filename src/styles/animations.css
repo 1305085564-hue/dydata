@@ -15,6 +15,27 @@
   animation: app-route-enter 180ms var(--ease-smooth);
 }
 
+/* 切换标签 / 视图时，新内容 150ms 淡入（规范 §5.2）。只给"切换后的内容容器"用，不给整页。 */
+@keyframes view-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.view-fade-in {
+  animation: view-fade-in 150ms var(--ease-smooth);
+}
+
+/* 指标数字更新：数值变化那一刻轻微上浮淡入（规范 §5.2）。首屏不动，只在值真的变了才动。 */
+@keyframes value-settle {
+  from { opacity: 0.35; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.value-settle {
+  display: inline-block;
+  animation: value-settle 200ms var(--ease-smooth);
+}
+
 @keyframes pulse-soft {
   0%,
   100% {

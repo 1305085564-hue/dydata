@@ -2,6 +2,7 @@
 
 import { Check, ExternalLink, FileText, Paperclip, Video, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { listItemMotion } from "@/lib/animations";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
@@ -47,10 +48,7 @@ export function FulfillmentAppealCard({
     <motion.div
       id={`approval-card-${index}`}
       layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96, height: 0, marginBottom: 0 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      {...listItemMotion}
       onClick={onFocus}
     >
       <Card className="group relative p-4.5 sm:p-5 transition duration-150 gap-0">

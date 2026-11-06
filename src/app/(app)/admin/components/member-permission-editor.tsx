@@ -93,7 +93,7 @@ export function MemberPermissionEditor({
             <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
               <summary className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] cursor-pointer list-none flex items-center justify-between transition-colors">
                 <span>查看此角色包含的具体功能明细</span>
-                <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
+                <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-[transform,color] duration-150">▼</span>
               </summary>
               <div className="space-y-4 pt-3">
                 {categories.map((category) => {

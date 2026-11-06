@@ -172,7 +172,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               <span className="whitespace-nowrap">{group.label}</span>
               <ChevronDown
                 className={cn(
-                  "size-3.5 stroke-[2] opacity-50 transition-transform duration-200 ease-out group-hover:opacity-100",
+                  "size-3.5 stroke-[2] opacity-50 transition-[transform,color] duration-150 group-hover:opacity-100",
                   isDropdownOpen && "rotate-180 text-status-info opacity-100",
                 )}
               />

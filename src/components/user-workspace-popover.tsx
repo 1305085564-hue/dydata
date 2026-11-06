@@ -182,7 +182,7 @@ export function UserWorkspacePopover({
         <ChevronDown
           size={13}
           className={cn(
-            "text-[#78716C] transition-transform duration-200 shrink-0 group-hover:text-[#1F1E1D]",
+            "text-[#78716C] transition-[transform,color] duration-150 shrink-0 group-hover:text-[#1F1E1D]",
             isOpen && "rotate-180 text-[#141413]",
           )}
         />

@@ -1091,7 +1091,7 @@ export function UnifiedCommandHub({
             initial={{ opacity: 0, scale: 0.985, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.985, y: 6 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:max-h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white shadow-claude-dialog"
           >
             <h2 id="command-hub-title" className="sr-only">{isAdmin ? "审批工作台" : "通知与待办"}</h2>
@@ -1114,7 +1114,7 @@ export function UnifiedCommandHub({
             />
 
             {/* Main Content Area: 纯净白纸质感，消除三重套娃底板 */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white">
+            <div key={activeTab} className="view-fade-in flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white">
               <ApprovalsTab
                 activeTab={activeTab === "history" ? "history" : "approvals"}
                 isAdmin={isAdmin}

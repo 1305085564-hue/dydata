@@ -361,6 +361,7 @@ export function PremiumSettingsModal({
               <motion.div
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-5"
               >
                 <div>
@@ -451,6 +452,7 @@ export function PremiumSettingsModal({
               <motion.div
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-4"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -675,6 +677,7 @@ export function PremiumSettingsModal({
               <motion.div
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="space-y-5"
               >
                 <div>

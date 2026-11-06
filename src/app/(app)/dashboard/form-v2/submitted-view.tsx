@@ -75,7 +75,7 @@ export function SubmittedView({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="space-y-4 pb-2"
     >
       {/* 提交成功页面 - 禅意立卷与挑选明日选题闭环 */}

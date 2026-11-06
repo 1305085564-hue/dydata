@@ -99,7 +99,7 @@ export function WorkbenchNoticeCapsule({
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>
-            <ChevronDown className={cn("size-2.5 stroke-[2] transition-transform", isOpen && "rotate-180")} />
+            <ChevronDown className={cn("size-2.5 stroke-[2] transition-[transform,color] duration-150", isOpen && "rotate-180")} />
           </button>
         )}
 

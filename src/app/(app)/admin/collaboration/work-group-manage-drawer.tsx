@@ -121,7 +121,7 @@ function MemberMultiSelect({
         )}
         <ChevronDown
           className={cn(
-            "size-3.5 text-[#78716C] shrink-0 transition-transform duration-200",
+            "size-3.5 text-[#78716C] shrink-0 transition-[transform,color] duration-150",
             isOpen && "rotate-180 text-[#D97757]",
           )}
         />

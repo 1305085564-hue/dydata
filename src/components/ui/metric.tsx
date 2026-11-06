@@ -1,6 +1,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { MetricValue } from "@/components/ui/metric-value"
 
 /** 指标数值的语义着色：只上文字，不上底色（规范 §3.4） */
 type MetricTone = "default" | "success" | "danger" | "warning" | "accent"
@@ -52,7 +53,7 @@ function Metric({
           toneClass[tone]
         )}
       >
-        {value}
+        <MetricValue value={value} />
       </div>
       {label != null && (
         <div

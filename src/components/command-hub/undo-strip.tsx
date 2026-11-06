@@ -21,7 +21,7 @@ export function UndoStrip({
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="shrink-0 overflow-hidden border-b border-[#E2E2DF]/60 bg-white px-5 sm:px-6"
     >
       <div className="py-2 space-y-1">

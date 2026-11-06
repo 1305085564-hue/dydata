@@ -49,7 +49,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
         <span className={cn("whitespace-nowrap", isAll && "text-[#78716C]")}>
           {displayLabel}
         </span>
-        <ChevronDown className={cn("size-4 shrink-0 text-[#78716C] transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("size-4 shrink-0 text-[#78716C] transition-[transform,color] duration-150", open && "rotate-180")} />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-0">
         {/* 搜索框 */}

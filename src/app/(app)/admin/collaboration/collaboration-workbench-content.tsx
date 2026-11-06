@@ -63,6 +63,8 @@ export function CollaborationWorkbenchContent({
   return (
     <>
         {/* Tab / View Content 区域 */}
+        {/* 切岗位/小组/页签时新内容淡入（规范 §5.2）；key 变化才重放 */}
+        <div key={view === "teams" ? `teams-${activeGroupDetail ? "detail" : "list"}` : tab} className="view-fade-in space-y-5">
         {view === "teams" ? (
           activeGroupDetail ? (
             <WorkGroupDetailView
@@ -123,6 +125,7 @@ export function CollaborationWorkbenchContent({
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         )}
+        </div>
 
         {/* 账号表现榜中心弹窗 */}
         <LeaderboardDialog
