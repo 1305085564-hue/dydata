@@ -28,11 +28,11 @@ export type BaiduOcrAttemptInput = {
 
 export type BaiduOcrAttemptResult = {
   parsed: ParsedScreenshotResponse | null;
-  channelName: "baidu";
+  channelName: string;
   model: string | null;
 };
 
-export type StructureModelCaller = (prompt: string) => Promise<{ content: string; model?: string }>;
+export type StructureModelCaller = (prompt: string) => Promise<{ content: string; model?: string; channelName?: string }>;
 
 /** 结构化调用绑定独立功能键，与看图回退（ocr_screenshot）的模型绑定互不干扰 */
 export const STRUCTURE_FEATURE_KEY = "ocr_screenshot_structure";
@@ -61,7 +61,7 @@ function dataUrlToBuffer(dataUrl: string): Buffer {
   return Buffer.from(base64, "base64");
 }
 
-async function callStructureModelViaAi(prompt: string): Promise<{ content: string; model?: string }> {
+async function callStructureModelViaAi(prompt: string): Promise<{ content: string; model?: string; channelName?: string }> {
   const aiResult = await callAi({
     messages: [{ role: "user", content: prompt }],
     maxTokens: 500,
@@ -75,7 +75,7 @@ async function callStructureModelViaAi(prompt: string): Promise<{ content: strin
     // 同上：结构化这一步也要求正文里有 JSON 对象，否则换下一个渠道
     validateContent: hasJsonObject,
   });
-  return { content: aiResult.content, model: aiResult.model };
+  return { content: aiResult.content, model: aiResult.model, channelName: aiResult.channelName };
 }
 
 /**
@@ -113,7 +113,11 @@ export async function runBaiduOcrAttempt(
   input.timings.structure_ms = (input.timings.structure_ms ?? 0) + Date.now() - structureStart;
 
   const parsed = parseOcrResponse(structure.content, input.screenshotType);
-  return { parsed, channelName: "baidu", model: structure.model ?? null };
+  return {
+    parsed,
+    channelName: structure.channelName ? `baidu (${structure.channelName})` : "baidu",
+    model: structure.model ?? null,
+  };
 }
 
 export function buildStructurePromptByType(type: ScreenshotType, lines: string[]): string {

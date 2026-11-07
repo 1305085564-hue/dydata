@@ -16,5 +16,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, deleted: data ?? 0 });
+  let ocrDeleted = 0;
+  try {
+    const { data: ocrData } = await admin.rpc("cleanup_ocr_recognition_logs");
+    ocrDeleted = ocrData ?? 0;
+  } catch (ocrErr) {
+    console.error("[ocr_logs/cleanup] failed", ocrErr);
+  }
+
+  return NextResponse.json({ ok: true, deleted: data ?? 0, ocr_deleted: ocrDeleted });
 }

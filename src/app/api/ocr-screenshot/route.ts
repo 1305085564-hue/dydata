@@ -10,6 +10,7 @@ import type { MutationObservation } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
 import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 import { downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
+import { recordOcrRecognitionLog } from "./ocr-log";
 
 // 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
 export {
@@ -25,18 +26,6 @@ export type {
   OcrErrorCode,
   ParsedScreenshotResponse,
   RetentionMetrics,
-  ScreenshotType,
-} from "./ocr-contract";
-
-import {
-  getScreenshotTypeFallbackByAssetRole,
-  hasJsonObject,
-  parseOcrResponse,
-  resolveKnownScreenshotType,
-} from "./ocr-contract";
-import type {
-  OcrErrorCode,
-  ParsedScreenshotResponse,
   ScreenshotType,
   ScreenshotAssetRole,
 } from "./ocr-contract";
@@ -62,17 +51,9 @@ type ImagePayloadSuccess = {
   downloadMs?: number;
 };
 
-type ResolvedScreenshotType = {
-  type: ScreenshotType;
-  source: ScreenshotTypeSource;
-};
 type ScreenshotTypeSource = "explicit" | "asset_role" | "asset_role_fallback";
-
-type ImagePayloadError = {
-  error: string;
-  errorCode?: OcrErrorCode;
-  status?: number;
-};
+type ResolvedScreenshotType = { type: ScreenshotType; source: ScreenshotTypeSource };
+type ImagePayloadError = { error: string; errorCode?: OcrErrorCode; status?: number };
 
 type OcrTimings = {
   download_ms?: number;
@@ -154,7 +135,7 @@ async function runVisionOcrAttempt(
   const parsed = parseOcrResponse(aiResult.content, screenshotType);
   timings.parse_ms = (timings.parse_ms ?? 0) + Date.now() - parseStart;
 
-  return { parsed, channelName: "vision", model: aiResult.model };
+  return { parsed, channelName: aiResult.channelName ?? "vision", model: aiResult.model };
 }
 
 /**
@@ -212,7 +193,7 @@ export async function buildOcrScreenshotResponse(
     aiModel?: string | null;
   } = {};
 
-  const finish = (
+  const finish = async (
     body: Record<string, unknown>,
     status: number,
     outcome: string,
@@ -235,6 +216,20 @@ export async function buildOcrScreenshotResponse(
       ai_channel: logContext.aiChannel ?? null,
       ai_model: logContext.aiModel ?? null,
     });
+
+    // 修正 4 & 6 & 7：在 finish 内直接 await 单行插入，独立 try/catch 包裹，异常完全吞并
+    await recordOcrRecognitionLog({
+      totalMs: timings.total_ms,
+      ocrMs: timings.ocr_ms ?? timings.baidu_ms ?? null,
+      downloadMs: timings.download_ms ?? null,
+      channelName: logContext.aiChannel ?? null,
+      modelId: logContext.aiModel ?? null,
+      screenshotType: logContext.screenshotType ?? null,
+      isSuccess: businessSucceeded,
+      errorCode: errorCode ?? null,
+      userId: userId ?? null,
+    });
+
     return appendObservedMutationResult(NextResponse.json({ request_id: observation.requestId, ...body, businessSucceeded }, { status }), observation);
   };
 
@@ -244,7 +239,7 @@ export async function buildOcrScreenshotResponse(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return finish({ error: "未登录" }, 401, "unauthorized", null);
+    return await finish({ error: "未登录" }, 401, "unauthorized", null);
   }
 
   try {
@@ -255,7 +250,7 @@ export async function buildOcrScreenshotResponse(
       : await parseJsonPayload(request, user.id);
 
     if ("error" in imagePayload) {
-      return finish(
+      return await finish(
         { error: imagePayload.error, error_code: imagePayload.errorCode },
         imagePayload.status ?? 400,
         imagePayload.errorCode ? "input_error" : "bad_request",
@@ -270,7 +265,7 @@ export async function buildOcrScreenshotResponse(
     };
 
     if (!imagePayload.dataUrl) {
-      return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
+      return await finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
     }
 
     timings.download_ms = imagePayload.downloadMs ?? 0;
@@ -301,7 +296,7 @@ export async function buildOcrScreenshotResponse(
 
       if (!parsed) {
         const errorCode: OcrErrorCode = "AI_PARSE_FAILED";
-        return finish(
+        return await finish(
           {
             error: getOcrErrorMessage(errorCode),
             error_code: errorCode,
@@ -316,7 +311,7 @@ export async function buildOcrScreenshotResponse(
 
       if (parsed.slot_status === "failed") {
         const errorCode = parsed.error_code ?? "LOW_CONFIDENCE";
-        return finish(
+        return await finish(
           {
             data: parsed,
             screenshot_type: screenshotType,
@@ -330,7 +325,7 @@ export async function buildOcrScreenshotResponse(
         );
       }
 
-      return finish(
+      return await finish(
         {
           data: parsed,
           screenshot_type: screenshotType,
@@ -343,7 +338,7 @@ export async function buildOcrScreenshotResponse(
       );
     } catch (error) {
       const errorCode = mapBaiduErrorToOcrCode(error) ?? getAiErrorCode(error);
-      return finish(
+      return await finish(
         {
           error: getOcrErrorMessage(errorCode),
           error_code: errorCode,
@@ -356,7 +351,7 @@ export async function buildOcrScreenshotResponse(
       );
     }
   } catch {
-    return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
+    return await finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
   }
 }
 

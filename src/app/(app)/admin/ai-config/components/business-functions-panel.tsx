@@ -9,11 +9,13 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  Gauge,
 } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
+import { OcrSpeedDrawer } from "./ocr-speed-drawer";
 import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -99,6 +101,7 @@ export function BusinessFunctionsPanel() {
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
   const [testingOcr, setTestingOcr] = useState(false);
+  const [speedDrawerOpen, setSpeedDrawerOpen] = useState(false);
   const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
 
   // 全局默认兜底设置
@@ -238,17 +241,21 @@ export function BusinessFunctionsPanel() {
     setTestingOcr(true);
     try {
       const res = await runCommand("test_key", { feature_key: "ocr_screenshot" });
-      if (res.ok) {
-        const testRes = (res.body as Record<string, unknown>).testResult as
-          | { model?: string; channelLabel?: string; channelName?: string; latencyMs?: number }
-          | undefined;
-        const modelLabel = testRes?.model ? (modelFamilyNameMap[testRes.model] || testRes.model) : "自动调度";
-        const keyLabel = testRes?.channelLabel || testRes?.channelName || "可用渠道";
-        const latencyText = testRes?.latencyMs ? ` · 耗时 ${formatLatency(testRes.latencyMs)}` : "";
-        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」${latencyText}`);
-      } else {
-        feedbackToast.error(`试跑未通过: ${res.error || "服务无响应"}`);
+      if (!res.ok) {
+        feedbackToast.error(`试跑未通过: ${res.error || "服务无响应"}`, { duration: 6000 });
+        return;
       }
+      const testRes = (res.body as Record<string, unknown>).testResult as
+        | { ok?: boolean; model?: string; channelLabel?: string; channelName?: string; latencyMs?: number; message?: string }
+        | undefined;
+      if (!testRes?.ok) {
+        feedbackToast.error(`试跑未通过: ${testRes?.message || "服务未返回测试结果"}`, { duration: 6000 });
+        return;
+      }
+      const modelLabel = testRes?.model ? (modelFamilyNameMap[testRes.model] || testRes.model) : "自动调度";
+      const keyLabel = testRes?.channelLabel || testRes?.channelName || "可用渠道";
+      const latencyText = testRes?.latencyMs ? ` · 耗时 ${formatLatency(testRes.latencyMs)}` : "";
+      feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」${latencyText}`);
     } finally {
       setTestingOcr(false);
     }
@@ -338,6 +345,15 @@ export function BusinessFunctionsPanel() {
                     <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
                       核心
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setSpeedDrawerOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#EEF2F5] text-[#43718E] hover:bg-[#E2E2DF] transition-colors"
+                      title="查看截图识别测速台账"
+                    >
+                      <Gauge className="size-3" />
+                      测速台账
+                    </button>
                   </div>
                   <p className="mt-0.5 text-[12px] text-[#78716C]">
                     {ocrControl.description}
@@ -355,6 +371,15 @@ export function BusinessFunctionsPanel() {
                 </TableCell>
                 <TableCell className="pr-4 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-s"
+                      onClick={() => setSpeedDrawerOpen(true)}
+                      className="size-7 text-[#78716C] hover:text-[#141413]"
+                      title="测速台账"
+                    >
+                      <Gauge className="size-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon-s"
@@ -547,6 +572,12 @@ export function BusinessFunctionsPanel() {
       <DangerousActionDialog
         state={impactConfirm}
         onClose={() => setImpactConfirm(null)}
+      />
+
+      {/* 截图识别测速台账抽屉 */}
+      <OcrSpeedDrawer
+        open={speedDrawerOpen}
+        onOpenChange={setSpeedDrawerOpen}
       />
     </div>
   );
