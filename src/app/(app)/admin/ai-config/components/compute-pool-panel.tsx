@@ -202,10 +202,17 @@ export function ComputePoolPanel() {
     if (keyModelId) setTestingKeyModelId(keyModelId);
     try {
       const res = await runCommand("test_key_model", { key_id: keyId, model_id: modelId });
-      if (res.ok) {
+      if (!res.ok) {
+        feedbackToast.error(`测试未通过: ${res.error || "服务异常"}`, { duration: 6000 });
+        return;
+      }
+      const testRes = (res.body as Record<string, unknown>).testResult as
+        | { ok?: boolean; message?: string }
+        | undefined;
+      if (testRes?.ok) {
         feedbackToast.success("测试通过，已恢复能用");
       } else {
-        feedbackToast.error(`测试未通过: ${res.error || "服务异常"}`);
+        feedbackToast.error(`测试未通过: ${testRes?.message || "服务未返回测试结果"}`, { duration: 6000 });
       }
     } finally {
       setTestingKeyModelId(null);

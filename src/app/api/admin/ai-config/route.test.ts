@@ -11,7 +11,7 @@ test("视觉模型试跑发送图片消息，文本连通测试保持文本消�
   const visionContent = vision.messages[0].content;
   assert.ok(Array.isArray(visionContent));
   assert.equal(visionContent[1]?.type, "image_url");
-  assert.match(visionContent[0]?.type === "text" ? visionContent[0].text : "", /color/);
+  assert.match(visionContent[0]?.type === "text" ? visionContent[0].text : "", /数字/);
   assert.deepEqual(vision.response_format, { type: "json_object" });
 
   const text = buildProbeRequestBody("gemini-2.5-flash", "text");
@@ -33,9 +33,9 @@ test("截图识别试跑复用业务调用，不接受页面指定的旧渠道",
       assert.equal(feature, "ocr_screenshot");
       assert.equal(options.jsonMode, true);
       assert.ok(Array.isArray(options.messages[0].content));
-      assert.equal(options.validateContent?.('{"color":"black"}'), true);
-      assert.equal(options.validateContent?.('{"color":"white"}'), false);
-      return { content: '{"color":"black"}', model: "actual-model", channelName: "actual-provider", elapsedMs: 12 };
+      assert.equal(options.validateContent?.('{"number":"427"}'), true);
+      assert.equal(options.validateContent?.('{"number":"428"}'), false);
+      return { content: '{"number":"427"}', model: "actual-model", channelName: "actual-provider", elapsedMs: 12 };
     },
   });
   assert.equal(response.status, 200);

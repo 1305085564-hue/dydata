@@ -140,10 +140,10 @@ test("截图功能试跑失败不改健康；成功只恢复实际返回的Key�
   const deps = {
     requireSystemActor: actor(db).requireSystemActor,
     probeAiFeature: async (_feature: string, options: { validateContent?: (content: string) => boolean }) => {
-      assert.equal(options.validateContent?.('{"color":"black"}'), true);
-      assert.equal(options.validateContent?.('{"color":"white"}'), false);
-      if (failProbe) throw new Error("图片识别验证失败：没有识别出黑色测试像素");
-      return { content: '{"color":"black"}', model: "haiku-model", channelName: "测试渠道", providerKeyId: "key-1", providerKeyModelId: "tested-row", elapsedMs: 5 };
+      assert.equal(options.validateContent?.('{"number":"427"}'), true);
+      assert.equal(options.validateContent?.('{"number":"428"}'), false);
+      if (failProbe) throw new Error("图片识别验证失败：没有正确识别出测试图片中的数字");
+      return { content: '{"number":"427"}', model: "haiku-model", channelName: "测试渠道", providerKeyId: "key-1", providerKeyModelId: "tested-row", elapsedMs: 5 };
     },
   };
   const request = () => new NextRequest("http://localhost/api/admin/ai-config", {
@@ -175,7 +175,7 @@ test("Haiku 5.5 看图探测走原生 Messages API，并校验识别正文", asy
     ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "Haiku", api_key: "haiku-secret", priority: 1, is_enabled: true, consecutive_failures: 3, first_failure_at: stale, last_failure_at: stale, manual_sleep_until: new Date(Date.now() + 60_000).toISOString() }],
   });
   const previousFetch = globalThis.fetch;
-  let responseText = '{"color":"black"}';
+  let responseText = '{"number":"427"}';
   globalThis.fetch = async (input, init) => {
     assert.equal(String(input), "https://provider.test/messages");
     const headers = new Headers(init?.headers);
@@ -206,11 +206,11 @@ test("Haiku 5.5 看图探测走原生 Messages API，并校验识别正文", asy
     db.tables.ai_provider_key_models[0].last_error_message = "retain on failed probe";
     const modelSnapshot = { ...db.tables.ai_provider_key_models[0] };
     const keySnapshot = { ...db.tables.ai_provider_keys[0] };
-    responseText = '{"color":"white"}';
+    responseText = '{"number":"428"}';
     const failed = await runProbe();
     const body = await failed.json();
     assert.equal(body.testResult.ok, false);
-    assert.match(body.testResult.message, /没有识别出黑色测试像素/);
+    assert.match(body.testResult.message, /没有正确识别出测试图片中的数字/);
     assert.ok(body.testResult.failureDiagnostic);
     assert.deepEqual(db.tables.ai_provider_key_models[0], modelSnapshot);
     assert.deepEqual(db.tables.ai_provider_keys[0], keySnapshot);

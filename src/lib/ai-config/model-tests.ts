@@ -253,13 +253,20 @@ export async function loadKeyProvider(supabase: AiConfigClient, keyId: string) {
   return { key, provider };
 }
 
-const VISION_PROBE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+// 识图冒烟测试图：白底黑字 427。号码只放在图片里、不写进提示词，避免不读图的模型照抄提示词通过。
+const VISION_PROBE_NUMBER = "427";
+const VISION_PROBE_IMAGE = "data:image/png;base64,"
+  + "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";
 
 export function isValidVisionProbeContent(content: string) {
   const json = extractJsonString(content);
   if (!json) return false;
   try {
-    return (JSON.parse(json) as { color?: unknown }).color === "black";
+    const parsed = JSON.parse(json) as { number?: unknown };
+    return String(parsed.number ?? "").replace(/\s+/g, "") === VISION_PROBE_NUMBER;
   } catch {
     return false;
   }
@@ -274,7 +281,7 @@ export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" =
       role: "user",
       content: mode === "vision"
         ? [
-            { type: "text", text: "请识别图片中单个像素的颜色。若是黑色，只返回 JSON：{\"color\":\"black\"}；否则返回 {\"color\":\"other\"}。" },
+            { type: "text", text: "请识别图片中的三位数字，只返回 JSON 对象，字段 number 填图片里的数字；不要解释，不要 Markdown。" },
             { type: "image_url", image_url: { url: VISION_PROBE_IMAGE } },
           ]
         : "hi",
@@ -310,7 +317,7 @@ export async function probeProviderModel(
     if (response.ok && nativeVision) {
       const parsed = await parseHaikuVisionResponse(response, probeOptions);
       if (!isValidVisionProbeContent(parsed.content)) {
-        const message = "图片识别验证失败：没有识别出黑色测试像素";
+        const message = "图片识别验证失败：没有正确识别出测试图片中的数字";
         return {
           ok: false,
           latencyMs: Date.now() - startedAt,
