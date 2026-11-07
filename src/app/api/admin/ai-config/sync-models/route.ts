@@ -122,13 +122,13 @@ export async function syncModelsForKey(
     .eq("key_id", input.keyId);
   if (existingError) throw syncError(existingError.message);
 
-  // gate:transient-map 请求级模型查重索引；调用结束释放，无外部缓存 TTL/容量。
   const existingRows = (existingModels ?? []) as Array<{
     id: string;
     model_id: string;
     display_name?: string | null;
     is_enabled?: boolean;
   }>;
+  // gate:transient-map 请求级模型查重索引；调用结束释放，无外部缓存 TTL/容量。
   const existingMap = new Map(existingRows.map((model) => [model.model_id, model]));
   const toInsert = targetModelIds.filter((modelId) => !existingMap.has(modelId));
   const insertedModelIds = new Set(toInsert);

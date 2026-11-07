@@ -97,6 +97,7 @@ export function ComputePoolPanel() {
   // 诊断信息映射表：模型级失败按 keyModelId 对应；key 级失败回落到该渠道下所有模型。
   const diagnosticMap = useMemo(() => {
     const map: Record<string, ChannelFailureDiagnostic> = {};
+    // gate:transient-map 本次配置快照的诊断索引，随 memo 重建释放，不是持久缓存。
     const keyDiagnostics = new Map<string, ChannelFailureDiagnostic>();
     for (const key of bundle?.keys ?? []) {
       if (key.failureDiagnostic) keyDiagnostics.set(key.id, key.failureDiagnostic);
