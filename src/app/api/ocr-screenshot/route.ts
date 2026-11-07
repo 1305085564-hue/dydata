@@ -125,8 +125,9 @@ async function runVisionOcrAttempt(
     messages,
     maxTokens: 1000,
     jsonMode: true,
-    // 与结构化步骤同口径：共享渠道偶发超过 25 秒，放宽到 45 秒并同步放宽整链预算
-    timeoutMs: 45_000,
+    // 单条 15 秒、整次 60 秒：主模型最多试 2 条（共 30 秒），至少留 30 秒给全局兜底模型。
+    // 上游快失败（404/503）本来就秒切，只有完全无响应时才会等满 15 秒。
+    timeoutMs: 15_000,
     totalTimeoutMs: 60_000,
     featureKey: "ocr_screenshot",
     databaseOnly: true,

@@ -113,6 +113,12 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
   };
 }
 
+/**
+ * 主模型最多试几条就交给全局默认。两条 × 单次上限之和低于整链预算，
+ * 保证兜底模型仍有时间被尝试；主模型与默认是同一个模型时只有一条链，不截断。
+ */
+export const PRIMARY_MODEL_CHANNEL_LIMIT = 2;
+
 /** 能用供应按所选→默认；冷却中的供应统一排最后，截止早的先试。 */
 async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise<ChannelConfig[]> {
   const supabase = getServiceSupabaseClient();
@@ -124,8 +130,16 @@ async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise
   });
   const lists = await Promise.all(ids.map(id => listRankedProviderKeyModels(supabase, id, { includeSleeping: true })));
   const all = lists.flat().map(({ config }) => toChannelConfig(config));
+  const primaryModelId = ids[0];
+  const available = ids.length > 1
+    ? [
+        ...all.filter(channel => !channel.cooldownUntil && channel.model === primaryModelId)
+          .slice(0, PRIMARY_MODEL_CHANNEL_LIMIT),
+        ...all.filter(channel => !channel.cooldownUntil && channel.model !== primaryModelId),
+      ]
+    : all.filter(channel => !channel.cooldownUntil);
   return [
-    ...all.filter(channel => !channel.cooldownUntil),
+    ...available,
     ...all.filter(channel => channel.cooldownUntil).sort((a, b) => Date.parse(a.cooldownUntil!) - Date.parse(b.cooldownUntil!)),
   ];
 }

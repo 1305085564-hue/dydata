@@ -5,7 +5,7 @@ import { __internal, AiChannelError } from "./client";
 
 import { createFakeService, makePkmRow, type FakeDb } from "./client-test-fixtures";
 
-test("同次调用先尝试所选模型的全部渠道，再尝试默认模型的全部渠道", async () => {
+test("同次调用先用所选模型的渠道，再尝试默认模型的全部渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
       {
@@ -171,6 +171,63 @@ test("旧 provider_key_model_id 不参与解析，空 modelId 仍跟随全局默
     assert.equal(config?.modelId, null);
     assert.deepEqual(chain.map((channel) => channel.providerKeyModelId), ["pkm-default"]);
     assert.equal(chain[0]?.model, "default-model");
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("主模型最多试两条渠道，之后直接交给全局默认模型", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      { feature_key: "ocr_screenshot", model_id: "primary-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      makePkmRow({ id: "primary-1", modelId: "primary-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "primary-2", modelId: "primary-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "primary-3", modelId: "primary-model", keyPriority: 3, keyName: "keyC", sortOrder: 3 }),
+      makePkmRow({ id: "primary-4", modelId: "primary-model", keyPriority: 4, keyName: "keyD", sortOrder: 4 }),
+      makePkmRow({ id: "default-1", modelId: "default-model", keyPriority: 1, keyName: "keyE", sortOrder: 1 }),
+      makePkmRow({ id: "default-2", modelId: "default-model", keyPriority: 2, keyName: "keyF", sortOrder: 2 }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.deepEqual(
+      chain.map((channel) => channel.providerKeyModelId),
+      ["primary-1", "primary-2", "default-1", "default-2"],
+    );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("主模型与全局默认相同时只有一条链，不截断渠道", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      { feature_key: "ocr_screenshot", model_id: "same-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "same-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      makePkmRow({ id: "same-1", modelId: "same-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "same-2", modelId: "same-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "same-3", modelId: "same-model", keyPriority: 3, keyName: "keyC", sortOrder: 3 }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.deepEqual(
+      chain.map((channel) => channel.providerKeyModelId),
+      ["same-1", "same-2", "same-3"],
+    );
   } finally {
     __internal.setServiceClientForTests(null);
   }
