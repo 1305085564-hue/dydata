@@ -53,12 +53,9 @@ interface HistoryListProps {
   onReportOpen?: (report: HistoryReport) => void;
 }
 
-const DEFAULT_VISIBLE = 10;
-
 export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: HistoryListProps) {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [expanded, setExpanded] = useState(false);
 
   // 提取可用账号选项
   const accountOptions = useMemo(() => {
@@ -83,18 +80,15 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
 
   const handleAccountChange = (accId: string) => {
     setSelectedAccountId(accId);
-    setExpanded(false);
   };
 
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
-    setExpanded(false);
   };
 
   const clearFilter = () => {
     setSelectedAccountId("all");
     setSelectedMonth("all");
-    setExpanded(false);
   };
 
   const filteredHistory = useMemo(() => {
@@ -110,8 +104,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     });
   }, [history, selectedAccountId, selectedMonth]);
 
-  const visible = expanded ? filteredHistory : filteredHistory.slice(0, DEFAULT_VISIBLE);
-  const hasMore = filteredHistory.length > DEFAULT_VISIBLE;
+  const visible = filteredHistory;
   const isFiltered = selectedAccountId !== "all" || selectedMonth !== "all";
 
   return (
@@ -205,24 +198,25 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
         />
       ) : (
         <>
-          {/* 桌面端 Table */}
+          {/* 桌面端 Table（前排优先展示核心播放+涨粉+四项互动，后排保留完播明细可横向滑动查看） */}
           <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>发布日</TableHead>
-                  <TableHead>账号</TableHead>
-                  <TableHead>视频标题</TableHead>
-                  <TableHead className="text-right">播放量</TableHead>
-                  <TableHead className="text-right">完播率</TableHead>
-                  <TableHead className="text-right">均播时长</TableHead>
-                  <TableHead className="hidden text-right lg:table-cell">2s跳出</TableHead>
-                  <TableHead className="hidden text-right lg:table-cell">5s完播</TableHead>
-                  <TableHead className="text-right">点赞</TableHead>
-                  <TableHead className="text-right">评论</TableHead>
-                  <TableHead className="text-right">分享</TableHead>
-                  <TableHead className="hidden text-right lg:table-cell">收藏</TableHead>
-                  <TableHead className="w-[60px]" />
+                  <TableHead className="whitespace-nowrap">发布日</TableHead>
+                  <TableHead className="whitespace-nowrap">账号</TableHead>
+                  <TableHead className="whitespace-nowrap">视频标题</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">播放量</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">涨粉</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">点赞</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">评论</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">分享</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">收藏</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">完播率</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">均播时长</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">2s跳出</TableHead>
+                  <TableHead className="whitespace-nowrap text-right">5s完播</TableHead>
+                  <TableHead className="w-[48px]" />
                 </TableRow>
               </TableHeader>
               <TableBody className="text-[13px]">
@@ -241,10 +235,10 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <TableCell className="whitespace-nowrap text-[#78716C] tabular-nums">
                       {getPublishedDateKey(report)?.slice(5) ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[120px] truncate text-[#78716C]">
+                    <TableCell className="max-w-[140px] truncate text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[160px] text-[14px] text-[#1F1E1D]">
+                    <TableCell className="max-w-[240px] text-[14px] text-[#1F1E1D]">
                       <div className="flex min-w-0 items-center gap-1">
                         {onReportOpen ? (
                           <button
@@ -265,17 +259,20 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-normal tabular-nums text-[14px] text-[#141413]">
+                    <TableCell className="whitespace-nowrap text-right font-normal tabular-nums text-[14px] text-[#141413]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.completion_rate ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.avg_play_duration ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.bounce_rate_2s ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.completion_rate_5s ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.likes ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.comments ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.favorites ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-normal tabular-nums text-[14px] text-[#141413]">
+                      {report.follower_gain != null ? report.follower_gain.toLocaleString("zh-CN") : "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#1F1E1D]">{report.likes ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#1F1E1D]">{report.comments ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#1F1E1D]">{report.favorites ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#78716C]">{report.completion_rate ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#78716C]">{report.avg_play_duration ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#78716C]">{report.bounce_rate_2s ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums text-[#78716C]">{report.completion_rate_5s ?? "—"}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -359,10 +356,10 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 ) : (
                   <ItemHeading as="h4" className="truncate">{report.title ?? "—"}</ItemHeading>
                 )}
-                <div className="grid grid-cols-4 gap-2 text-[12px]">
+                <div className="grid grid-cols-5 gap-2 text-[12px]">
                   <div>
-                    <p className="text-[#78716C]">完播率</p>
-                    <p className="tabular-nums text-[#1F1E1D]">{report.completion_rate ?? "—"}</p>
+                    <p className="text-[#78716C]">涨粉</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.follower_gain ?? "—"}</p>
                   </div>
                   <div>
                     <p className="text-[#78716C]">点赞</p>
@@ -376,19 +373,33 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <p className="text-[#78716C]">分享</p>
                     <p className="tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</p>
                   </div>
+                  <div>
+                    <p className="text-[#78716C]">收藏</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.favorites ?? "—"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-[#E2E2DF]/60 text-[12px]">
+                  <div>
+                    <p className="text-[#78716C]">完播率</p>
+                    <p className="tabular-nums text-[#78716C]">{report.completion_rate ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#78716C]">均播时长</p>
+                    <p className="tabular-nums text-[#78716C]">{report.avg_play_duration ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#78716C]">2s跳出</p>
+                    <p className="tabular-nums text-[#78716C]">{report.bounce_rate_2s ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#78716C]">5s完播</p>
+                    <p className="tabular-nums text-[#78716C]">{report.completion_rate_5s ?? "—"}</p>
+                  </div>
                 </div>
               </Card>
               );
             })}
           </div>
-
-          {hasMore && (
-            <div className="mt-3 flex justify-center">
-              <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)}>
-                {expanded ? "收起" : `展开全部（${filteredHistory.length} 条）`}
-              </Button>
-            </div>
-          )}
         </>
       )}
     </div>

@@ -40,6 +40,20 @@ test("区间模式下展示起止日期范围标签", () => {
   assert.match(html, /10月1日 - 10月15日/);
 });
 
+test("单日模式下筛选命中数与当日总条数不同时，显式展示命中X/共Y条", () => {
+  const html = renderToStaticMarkup(
+    <DatePagination
+      currentDate="2026-10-20"
+      availableDates={["2026-10-20"]}
+      availableCounts={[{ d: "2026-10-20", c: 12 }]}
+      filteredCount={2}
+      hasActiveFilters={true}
+      onDateChange={() => {}}
+    />,
+  );
+  assert.match(html, /命中 2 \/ 共 12 条/);
+});
+
 test("MonthCalendar 渲染起止区间与快捷操作按钮", () => {
   const html = renderToStaticMarkup(
     <MonthCalendar

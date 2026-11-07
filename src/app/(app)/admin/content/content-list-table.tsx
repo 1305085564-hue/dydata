@@ -398,15 +398,33 @@ export function ContentListTable({
                               : "hover:bg-[#F7F7F6] active:bg-[#EBEBE9]"
                           )}
                         >
-                          {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
-                          <td data-col-key="status" className={cn("py-2 px-1 text-center shrink-0 transition-colors", hoveredColKey === "status" && "bg-surface-row-hover/60")}>
+                          {/* 状态徽标（降饱和微标签，消灭悬停猜谜；横向滚动冻结首列） */}
+                          <td
+                            data-col-key="status"
+                            className={cn(
+                              "sticky left-0 z-20 py-2 px-1 text-center shrink-0 transition-colors",
+                              isSelected
+                                ? "bg-[#F1F1F0] group-hover:bg-[#EBEBE9]"
+                                : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
+                              hoveredColKey === "status" && "bg-surface-row-hover/60",
+                            )}
+                          >
                             <Badge variant={dot.variant} title={`状态：${dot.label}`}>
                               {dot.label}
                             </Badge>
                           </td>
 
-                          {/* 标题与账号（使用 100ms 快速 Tooltip 悬停即时展示完整标题与账号） */}
-                          <td data-col-key="title" className={cn("py-2.5 px-3 min-w-[240px] transition-colors", hoveredColKey === "title" && "bg-surface-row-hover/60")}>
+                          {/* 标题与账号（使用 100ms 快速 Tooltip 悬停即时展示完整标题与账号；横向滚动冻结次列） */}
+                          <td
+                            data-col-key="title"
+                            className={cn(
+                              "sticky left-[61px] z-20 shadow-[1px_0_0_0_#E2E2DF] py-2.5 px-3 min-w-[240px] transition-colors",
+                              isSelected
+                                ? "bg-[#F1F1F0] group-hover:bg-[#EBEBE9]"
+                                : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
+                              hoveredColKey === "title" && "bg-surface-row-hover/60",
+                            )}
+                          >
                             <Tooltip>
                               <TooltipTrigger
                                 render={

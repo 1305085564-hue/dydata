@@ -113,6 +113,16 @@ export function ContentDetailDialog({
   const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const sync = () => setIsDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const hasIndex = typeof currentIndex === "number" && currentIndex >= 0;
   const hasPrev = hasIndex && currentIndex > 0;
@@ -140,12 +150,26 @@ export function ContentDetailDialog({
 
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
+  const [failedScreenshots, setFailedScreenshots] = useState<Record<string, boolean>>({});
   const [viewLayout, setViewLayout] = useState<"auto" | "side-by-side" | "stacked">("auto");
 
   const handleImageLoad = useCallback((url: string, ratio: number) => {
     setAspectRatios((prev) => {
       if (prev[url] === ratio) return prev;
       return { ...prev, [url]: ratio };
+    });
+    setFailedScreenshots((prev) => {
+      if (!prev[url]) return prev;
+      const next = { ...prev };
+      delete next[url];
+      return next;
+    });
+  }, []);
+
+  const handleImageError = useCallback((url: string) => {
+    setFailedScreenshots((prev) => {
+      if (prev[url]) return prev;
+      return { ...prev, [url]: true };
     });
   }, []);
 
@@ -155,6 +179,10 @@ export function ContentDetailDialog({
     if (retentionScreenshot) list.push({ label: "留存脱落截图", subLabel: "留存脱落", url: retentionScreenshot.url });
     return list;
   }, [curveScreenshot, retentionScreenshot]);
+
+  const hasAvailableScreenshots = useMemo(() => {
+    return activeScreenshots.some((s) => !failedScreenshots[s.url]);
+  }, [activeScreenshots, failedScreenshots]);
 
   const hasWideScreenshot = useMemo(() => {
     return activeScreenshots.some((s) => (aspectRatios[s.url] ?? 0.5) > 1.15);
@@ -505,6 +533,7 @@ export function ContentDetailDialog({
                 interactionRating={interactionRating}
                 fourthRating={fourthRating}
                 overallGrade={overallGrade}
+                hasAvailableScreenshots={hasAvailableScreenshots}
               />
               <ContentDetailEvidence
                 activeScreenshots={activeScreenshots}
@@ -514,6 +543,7 @@ export function ContentDetailDialog({
                 retentionScreenshot={retentionScreenshot}
                 aspectRatios={aspectRatios}
                 handleImageLoad={handleImageLoad}
+                handleImageError={handleImageError}
                 setPreviewIndex={setPreviewIndex}
                 setViewLayout={setViewLayout}
               />
@@ -595,7 +625,26 @@ export function ContentDetailDialog({
       {renderMode === "inline" ? (
         open ? innerContent : null
       ) : (
-        <Sheet open={open} onOpenChange={onOpenChange}>
+        <Sheet
+          open={open}
+          modal={!isDesktop}
+          onOpenChange={(nextOpen, eventDetails) => {
+            if (!nextOpen) {
+              // 桌面端非模态抽屉：焦点移出（如鼠标按下左侧列表行）绝不触发关闭，避免先收起再重开闪烁
+              if (eventDetails?.reason === "focus-out") {
+                return;
+              }
+              if (eventDetails?.event) {
+                const target = eventDetails.event.target as Element | null;
+                // 桌面端左右联看：点击左侧列表作品行时直接切换作品，不关闭当前抽屉
+                if (target?.closest?.("[data-video-id]")) {
+                  return;
+                }
+              }
+            }
+            onOpenChange(nextOpen);
+          }}
+        >
           <SheetContent
             side="right"
             role="dialog"
@@ -604,6 +653,7 @@ export function ContentDetailDialog({
             ref={sheetContentRef}
             tabIndex={-1}
             initialFocus={sheetContentRef}
+            overlayClassName="md:pointer-events-none md:bg-transparent"
             className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
           >
             {innerContent}

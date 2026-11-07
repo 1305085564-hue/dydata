@@ -9,6 +9,7 @@ export interface MonthlyFulfillmentStripProps {
   today: string;
   activeBizDate: string;
   submittedDates: string[];
+  submittedCountByDate?: Record<string, number>;
   waiveDates?: string[];
   leaveDates?: string[];
   pendingDates?: string[];
@@ -33,6 +34,7 @@ export function MonthlyFulfillmentStrip({
   today,
   activeBizDate,
   submittedDates = [],
+  submittedCountByDate = {},
   waiveDates = [],
   leaveDates = [],
   pendingDates = [],
@@ -71,6 +73,7 @@ export function MonthlyFulfillmentStrip({
       dateKey: string;
       dayNumber: number;
       state: CellState;
+      submitCount: number;
       isToday: boolean;
       isSelected: boolean;
       title: string;
@@ -94,6 +97,8 @@ export function MonthlyFulfillmentStrip({
 
       let state: CellState;
       let title = `${month}月${day}日`;
+      const rawSubmitCount = submittedCountByDate[dateKey] ?? 0;
+      const submitCount = submittedSet.has(dateKey) ? Math.max(rawSubmitCount, 1) : rawSubmitCount;
 
       if (dateKey > today) {
         state = "future";
@@ -101,7 +106,7 @@ export function MonthlyFulfillmentStrip({
       } else if (submittedSet.has(dateKey)) {
         state = "submitted";
         subCount++;
-        title += " · 已完成履约 ✦";
+        title += submitCount >= 2 ? ` · 已完成履约（${submitCount} 篇）✦` : " · 已完成履约 ✦";
       } else if (waiveSet.has(dateKey)) {
         state = "waive";
         subCount++;
@@ -131,6 +136,7 @@ export function MonthlyFulfillmentStrip({
         dateKey,
         dayNumber: day,
         state,
+        submitCount,
         isToday,
         isSelected,
         title,
@@ -149,6 +155,7 @@ export function MonthlyFulfillmentStrip({
     today,
     activeBizDate,
     submittedSet,
+    submittedCountByDate,
     waiveSet,
     leaveSet,
     pendingSet,
@@ -223,9 +230,9 @@ export function MonthlyFulfillmentStrip({
           aria-label={`${monthLabel}每日履约明细微格`}
           className="relative min-w-0 flex-1 overflow-x-auto scrollbar-none [mask-image:linear-gradient(to_right,black_92%,transparent_100%)] focus:outline-none"
         >
-          <div className="inline-flex items-center gap-1 py-0.5 pr-4" role="list">
+          <div className="inline-flex items-center gap-1 py-1 pl-0.5 pr-4" role="list">
             {cells.map((cell) => {
-              const { dateKey, dayNumber, state, isToday, isSelected, title } = cell;
+              const { dateKey, dayNumber, state, submitCount, isToday, isSelected, title } = cell;
               const isFuture = state === "future";
 
               // 样式判定
@@ -262,13 +269,21 @@ export function MonthlyFulfillmentStrip({
                   aria-label={title}
                   onClick={() => !isFuture && onSelectDate(dateKey)}
                   className={cn(
-                    "flex flex-col items-center justify-center h-[26px] min-w-[24px] px-1 rounded-[4px] border text-[12px] tabular-nums font-sans select-none transition duration-120",
+                    "relative flex flex-col items-center justify-center h-[26px] min-w-[24px] px-1 rounded-[4px] border text-[12px] tabular-nums font-sans select-none transition duration-120",
                     !isFuture && "cursor-pointer active:scale-95",
                     cellStyle,
                     isSelected && "ring-1.5 ring-[#141413] shadow-xs z-10",
                   )}
                 >
                   <span className="leading-none">{dayNumber}</span>
+                  {submitCount >= 2 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-[#4B6B4E] text-[12px] leading-none text-white scale-75"
+                    >
+                      {submitCount}
+                    </span>
+                  )}
                 </button>
               );
             })}

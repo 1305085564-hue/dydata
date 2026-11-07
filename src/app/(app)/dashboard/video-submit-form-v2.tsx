@@ -529,6 +529,14 @@ export function VideoSubmitFormV2({
   const [, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
+  // 是否已开始填表（上传了任意截图、或填写了任意指标/标题/文案/选题标签）：空表初开时不展示整排缺项，填表过程中常驻提示
+  const hasStartedFilling = useMemo(() => {
+    if (Object.values(slots).some((slot) => slot.status !== "empty")) return true;
+    if (Object.values(fields).some((field) => Boolean(field?.value?.trim()))) return true;
+    if (meta.videoTitle.trim() || meta.content.trim() || meta.topicTag) return true;
+    return false;
+  }, [fields, meta.content, meta.topicTag, meta.videoTitle, slots]);
+
   useEffect(() => {
     if (!isSubmitted) {
       setHasUserInteracted(false);
@@ -1332,7 +1340,7 @@ export function VideoSubmitFormV2({
 
               <FormV2SubmitFooter
                 canActuallySubmit={canActuallySubmit}
-                hasAttemptedSubmit={hasAttemptedSubmit}
+                hasAttemptedSubmit={hasAttemptedSubmit || hasStartedFilling}
                 issueSummary={issueSummary}
                 scrollToIssueAnchor={scrollToIssueAnchor}
                 triggerSlotsPulse={triggerSlotsPulse}

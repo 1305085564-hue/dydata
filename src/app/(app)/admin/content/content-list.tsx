@@ -135,6 +135,8 @@ export function ContentList(props: ContentListProps) {
         currentDate,
         availableDates,
         availableCounts,
+        filteredCount: visibleRows.length,
+        hasActiveFilters: state.hasActiveFilters,
         rangeStart: isRangeMode ? effectiveDates.effectiveStartDate : undefined,
         rangeEnd: isRangeMode ? effectiveDates.effectiveEndDate : undefined,
         isLoading: props.isViewLoading,

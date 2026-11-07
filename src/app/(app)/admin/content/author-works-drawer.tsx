@@ -62,15 +62,25 @@ export function AuthorWorksView({
     [author.id, videos, error],
   );
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>({});
+  const [lastDisplayedDetail, setLastDisplayedDetail] = useState<AdminContentVideoDetail | null>(null);
+  const selectVideoWithRetention = useCallback((id: string | null) => {
+    if (!id) {
+      setLastDisplayedDetail(null);
+    } else if (loadedDetails[id]) {
+      setLastDisplayedDetail(loadedDetails[id]);
+    }
+    setSelectedVideoId(id);
+  }, [loadedDetails, setSelectedVideoId]);
 
   const [detailError, setDetailError] = useState<string | null>(null);
   const [detailAttempt, setDetailAttempt] = useState(0);
   const refreshWorks = useCallback(async () => {
     setLoadedDetails({});
+    setLastDisplayedDetail(null);
     onWorksChanged?.();
     const updated = await refresh();
-    if (updated && selectedVideoId && !updated.works.some(v => v.id === selectedVideoId)) setSelectedVideoId(null);
-  }, [onWorksChanged, refresh, selectedVideoId, setSelectedVideoId]);
+    if (updated && selectedVideoId && !updated.works.some(v => v.id === selectedVideoId)) selectVideoWithRetention(null);
+  }, [onWorksChanged, refresh, selectedVideoId, selectVideoWithRetention]);
   const {topicLibraryStatuses, toggleTopicLibrary} = useContentTopicLibrary({videos, canReviewContent, refreshList: refreshWorks});
 
   // 当在内嵌详情中切换作品时加载详情数据
@@ -86,6 +96,7 @@ export function AuthorWorksView({
       .then((detail) => {
         if (cancelled) return;
         setLoadedDetails((prev) => ({ ...prev, [detail.video.id]: detail }));
+        setLastDisplayedDetail(detail);
       })
       .catch((error) => {
         if (cancelled) return;
@@ -97,8 +108,8 @@ export function AuthorWorksView({
     };
   }, [selectedVideoId, loadedDetails, detailAttempt]);
 
-  // 详情只使用独立详情接口，列表摘要不能替代详情或补录后的新快照。
-  const activeDetail = selectedVideoId ? loadedDetails[selectedVideoId] : undefined;
+  // 详情只使用独立详情接口，列表摘要不能替代详情或补录后的新快照；切换相邻作品时保留上一条详情直至新详情就绪，避免骨架闪断。
+  const activeDetail = selectedVideoId ? (loadedDetails[selectedVideoId] ?? lastDisplayedDetail ?? undefined) : undefined;
   const activeVideo = activeDetail?.video ?? null;
   const activeSnapshot = activeDetail?.snapshot ?? null;
 
@@ -113,14 +124,14 @@ export function AuthorWorksView({
       setDetailError(null);
       if (currentIndex === -1 || videos.length === 0) return;
       if (direction === "prev" && currentIndex > 0) {
-        setSelectedVideoId(videos[currentIndex - 1].id);
+        selectVideoWithRetention(videos[currentIndex - 1].id);
       } else if (direction === "next" && currentIndex < videos.length - 1) {
-        setSelectedVideoId(videos[currentIndex + 1].id);
+        selectVideoWithRetention(videos[currentIndex + 1].id);
       } else if (direction === "next" && data?.hasNextPage && !loading) {
-        void loadMore().then(next => { if (next?.works[currentIndex + 1]) setSelectedVideoId(next.works[currentIndex + 1].id); });
+        void loadMore().then(next => { if (next?.works[currentIndex + 1]) selectVideoWithRetention(next.works[currentIndex + 1].id); });
       }
     },
-    [currentIndex, videos, data?.hasNextPage, loading, loadMore, setSelectedVideoId],
+    [currentIndex, videos, data?.hasNextPage, loading, loadMore, selectVideoWithRetention],
   );
 
   return (
@@ -251,7 +262,7 @@ export function AuthorWorksView({
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => { setSelectedVideoId(null); setTimeRange(t.key); }}
+                  onClick={() => { selectVideoWithRetention(null); setTimeRange(t.key); }}
                   className={cn(
                     "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
                     timeRange === t.key
@@ -278,7 +289,7 @@ export function AuthorWorksView({
                 <button
                   key={s.key}
                   type="button"
-                  onClick={() => { setSelectedVideoId(null); setSortField(s.key); }}
+                  onClick={() => { selectVideoWithRetention(null); setSortField(s.key); }}
                   className={cn(
                     "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
                     sortField === s.key
@@ -339,7 +350,7 @@ export function AuthorWorksView({
                     return (
                       <tr
                         key={video.id}
-                        onClick={() => { setDetailError(null); setSelectedVideoId(video.id); }}
+                        onClick={() => { setDetailError(null); selectVideoWithRetention(video.id); }}
                         className="hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer group"
                       >
                         <td className="py-2 px-3 text-[#78716C] tabular-nums whitespace-nowrap">
@@ -404,8 +415,8 @@ export function AuthorWorksView({
       {selectedVideoId && (
         <div className="flex flex-col min-h-0 min-w-0 [grid-area:1/1]">
           {detailError ? (
-            <div role="alert" className="p-6">{detailError} <button type="button" onClick={() => { setDetailError(null); setDetailAttempt(n => n + 1); }}>重试详情</button> <button type="button" onClick={() => { setDetailError(null); setSelectedVideoId(null); }}>返回作品列表</button></div>
-          ) : !loadedDetails[selectedVideoId] ? (
+            <div role="alert" className="p-6">{detailError} <button type="button" onClick={() => { setDetailError(null); setDetailAttempt(n => n + 1); }}>重试详情</button> <button type="button" onClick={() => { setDetailError(null); selectVideoWithRetention(null); }}>返回作品列表</button></div>
+          ) : !activeDetail ? (
             <div className="flex flex-col h-full bg-white p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-6 w-32 rounded-md" />
@@ -418,20 +429,20 @@ export function AuthorWorksView({
             <ContentDetailDialog
               open={true}
               onOpenChange={(openState) => {
-                if (!openState) setSelectedVideoId(null);
+                if (!openState) selectVideoWithRetention(null);
               }}
               renderMode="inline"
               video={activeVideo}
               ownerNames={{[author.id]: author.name}}
               snapshot={activeSnapshot}
-              evaluationStandards={loadedDetails[selectedVideoId]?.evaluationStandards ?? data?.evaluationStandards ?? evaluationStandards}
-              topicKind={loadedDetails[selectedVideoId]?.topicKind}
-              topicLibraryStatus={topicLibraryStatuses[selectedVideoId]?.status ?? null}
-              onToggleTopicLibrary={canReviewContent ? action => toggleTopicLibrary(selectedVideoId, action) : undefined}
+              evaluationStandards={activeDetail.evaluationStandards ?? data?.evaluationStandards ?? evaluationStandards}
+              topicKind={activeDetail.topicKind}
+              topicLibraryStatus={topicLibraryStatuses[activeDetail.video.id]?.status ?? null}
+              onToggleTopicLibrary={canReviewContent ? action => toggleTopicLibrary(activeDetail.video.id, action) : undefined}
               canOperateLifecycle={canManageVideos}
               canPurge={false}
               titlePrefix="创作者档案"
-              onBack={() => setSelectedVideoId(null)}
+              onBack={() => selectVideoWithRetention(null)}
               backLabel={author?.name ? `${author.name} 的作品` : "创作者作品"}
               onCloseEntirely={onClose}
               currentIndex={currentIndex}

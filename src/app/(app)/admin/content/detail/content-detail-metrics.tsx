@@ -1,5 +1,5 @@
 import { getContentOwner } from "@/lib/content/content-owner";
-import { ExternalLink, Play, Bookmark, Layers, UserCheck, TrendingUp, ThumbsUp, Sparkles } from "lucide-react";
+import { ExternalLink, Play, Bookmark, Layers, UserCheck, TrendingUp, ThumbsUp, Sparkles, ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
@@ -58,11 +58,12 @@ export interface ContentDetailMetricsProps {
   interactionRating: BreakoutRating | null;
   fourthRating: BreakoutRating | null;
   overallGrade: BreakoutGrade | null;
+  hasAvailableScreenshots?: boolean;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
-export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
+export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
   const owner = onSelectAuthor || ownerNames
     ? getContentOwner(video, ownerNames)
     : { id: video.user_id, name: video.profiles.name };
@@ -305,22 +306,32 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                 </div>
               </section>
 
-              {/* 2. 快照全量指标明细 (紧随爆款数据核心大盘下方) */}
+              {/* 2. 快照全量指标明细 (有截图时默认折叠为单行摘要以让位首屏截图；无截图或截图异常时自动展开兜底) */}
               {snapshot && (
-                <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
+                <details
+                  key={hasAvailableScreenshots ? "collapsed" : "expanded"}
+                  open={!hasAvailableScreenshots}
+                  className="group/metrics border-t border-[#E2E2DF]/60 pt-4 mt-4"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-normal text-[#141413] select-none">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <Layers className="size-4 shrink-0 text-[#78716C]" />
+                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight shrink-0">
                         快照全量指标明细
                       </h3>
+                      <span className="text-[12px] text-[#78716C] font-normal tabular-nums truncate">
+                        点赞 {formatNumber(snapshot.likes)} · 评论 {formatNumber(snapshot.comments)} · 完播 {formatPercentagePoints(snapshot.completion_rate)} · 均播 {formatDuration(snapshot.avg_play_duration)}
+                      </span>
                     </div>
-                    <span className="text-[12px] text-[#78716C] font-normal">
-                      ({snapshot.snapshot_type} 抓取维度)
-                    </span>
-                  </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="hidden sm:inline text-[12px] text-[#78716C] font-normal">
+                        {!hasAvailableScreenshots ? "截图未就绪 · 已自动展开兜底" : `(${snapshot.snapshot_type} 抓取维度)`}
+                      </span>
+                      <ChevronDown className="size-4 text-[#78716C] transition-[transform,color] duration-150 group-open/metrics:rotate-180" />
+                    </div>
+                  </summary>
 
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-3 mt-3 border-t border-[#E2E2DF]/60 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">点赞数</span>
                       <span className="font-normal tabular-nums text-[#141413]">
@@ -406,7 +417,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       </span>
                     </ListRow>
                   </div>
-                </section>
+                </details>
               )}
 
               {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}

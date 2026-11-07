@@ -115,6 +115,9 @@ export function ContentPageClient({
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>(
     directVideoDetail ? { [directVideoDetail.video.id]: directVideoDetail } : {},
   );
+  const [lastDisplayedDetail, setLastDisplayedDetail] = useState<AdminContentVideoDetail | null>(
+    directVideoDetail ?? null,
+  );
   const [detailError, setDetailError] = useState<{ videoId: string; message: string } | null>(null);
   const [detailRequestAttempt, setDetailRequestAttempt] = useState(0);
   const selectedLoadedDetail = selectedVideoId ? loadedDetails[selectedVideoId] : undefined;
@@ -137,6 +140,7 @@ export function ContentPageClient({
 
   const handleSelectAuthor = useCallback((id: string, name: string) => {
     // A3: 详情内点作者名：先关详情再开作者抽屉，保证任一时刻 DOM 中 Sheet 层数 ≤ 1（缺口①）
+    setLastDisplayedDetail(null);
     closeVideo();
     setLastSelectedAuthorName(name);
     setSelectedAuthor({ id, name });
@@ -164,9 +168,12 @@ export function ContentPageClient({
   const openVideo = useCallback(
     (videoId: string) => {
       setDetailError(null);
+      if (loadedDetails[videoId]) {
+        setLastDisplayedDetail(loadedDetails[videoId]);
+      }
       selectVideo(videoId);
     },
-    [selectVideo],
+    [loadedDetails, selectVideo],
   );
 
   useEffect(() => {
@@ -178,7 +185,10 @@ export function ContentPageClient({
         return response.json() as Promise<AdminContentVideoDetail>;
       })
       .then((detail) => {
-        if (!cancelled) setLoadedDetails((current) => ({ ...current, [detail.video.id]: detail }));
+        if (!cancelled) {
+          setLoadedDetails((current) => ({ ...current, [detail.video.id]: detail }));
+          setLastDisplayedDetail(detail);
+        }
       })
       .catch((error) => {
         if (!cancelled) setDetailError({
@@ -314,7 +324,8 @@ export function ContentPageClient({
 
   let diagnosisDrawerNode = null;
   if (selectedVideoId) {
-    const selectedDetail = selectedLoadedDetail ?? null;
+    // 抽屉已打开时切换下一条作品：在新详情请求返回前保持上一条详情挂载，原地无感替换内容，避免抽屉先收起再重弹
+    const selectedDetail = selectedLoadedDetail ?? lastDisplayedDetail ?? null;
     const selectedVideo = selectedDetail?.video ?? (directVideoDetail?.video.id === selectedVideoId ? directVideoDetail.video : null);
     const selectedSnapshot = selectedDetail?.snapshot ?? null;
     // 详情已返回当前作品的真实分类，优先使用，避免入库状态未加载时丢失第四格与评级。
@@ -333,20 +344,27 @@ export function ContentPageClient({
             setDetailError(null);
             setDetailRequestAttempt((attempt) => attempt + 1);
           }}>重试加载详情</Button>
-          <Button type="button" size="s" variant="outline" onClick={closeVideo}>返回列表</Button>
+          <Button type="button" size="s" variant="outline" onClick={() => {
+            setLastDisplayedDetail(null);
+            closeVideo();
+          }}>返回列表</Button>
         </div>
       </section>
     ) : selectedVideo ? (
       <ContentDetailDialog
         open={selectedVideo !== null}
         onOpenChange={(open) => {
-          if (!open) closeVideo();
+          if (!open) {
+            setLastDisplayedDetail(null);
+            closeVideo();
+          }
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
         canPurge={permissionInfo.companyRole === "company_owner"}
         onLifecycleChanged={() => {
+          setLastDisplayedDetail(null);
           closeVideo();
           // 生命周期动作与 24h 补录都是写操作：绕过 60 秒缓存取最新列表，
           // 否则「刚移入回收站的作品」还会留在「全部」里最长一分钟

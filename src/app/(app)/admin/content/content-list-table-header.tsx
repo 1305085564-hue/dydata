@@ -34,13 +34,13 @@ export function ContentListTableHeader({
   };
 
   return (
-<thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
+<thead className="sticky top-0 z-30 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
   <tr>
-    {/* 1. 状态 */}
-    <th data-col-key="status" className={cn("font-normal py-2 px-1 text-center w-[61px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "status" && "bg-surface-sand")}>状态</th>
+    {/* 1. 状态（横向滚动冻结首列） */}
+    <th data-col-key="status" className={cn("sticky left-0 z-30 bg-[#FCFCFB] font-normal py-2 px-1 text-center w-[61px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "status" && "bg-surface-sand")}>状态</th>
 
-    {/* 2. 视频标题 / 账号 */}
-    <th data-col-key="title" className={cn("font-normal py-2 px-3 text-left w-[347px] whitespace-nowrap transition-colors", hoveredColKey === "title" && "bg-surface-sand")}>视频标题 / 账号</th>
+    {/* 2. 视频标题 / 账号（横向滚动冻结次列，右侧发丝分割线） */}
+    <th data-col-key="title" className={cn("sticky left-[61px] z-30 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF] font-normal py-2 px-3 text-left w-[347px] whitespace-nowrap transition-colors", hoveredColKey === "title" && "bg-surface-sand")}>视频标题 / 账号</th>
 
     {/* 6. 播放量 */}
     <th data-col-key="play_count" className={cn("font-normal py-2 px-2 text-right w-[69px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-sand")} aria-sort={ariaSortFor("play_count")}>

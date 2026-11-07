@@ -180,6 +180,11 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       (key: EditableMetricKey) => {
         onFocusField?.(key);
         if (typeof window === "undefined" || window.innerWidth < 640) return;
+        // 左侧大图悬浮检视窗（pip-inspector）已展开时，不再弹出 220x220 局部放大镜，避免双浮层打架
+        if (document.querySelector('[data-testid="pip-inspector"]')) {
+          setMagnifier((prev) => (prev.active ? { ...prev, active: false } : prev));
+          return;
+        }
 
         const role = getSlotRoleForMetric(key);
         const imgEl = document.querySelector<HTMLImageElement>(

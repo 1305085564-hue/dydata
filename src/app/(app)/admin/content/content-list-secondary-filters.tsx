@@ -81,10 +81,11 @@ export function ContentListSecondaryFilters({
         )}
         title={secondarySummary.fullDescription}
       >
-        {/* 胶囊固定只显示「筛选」：选中值交给下拉每行右侧回显，避免顶部与菜单重复；
-            激活态仍靠加粗墨色 + 右侧 × 提示「有筛选」，悬停 title 可看完整摘要 */}
-        <span>筛选</span>
-        <ChevronDown className="size-4 text-[#78716C]" />
+        {/* 胶囊回显当前已选筛选摘要，无条件时保持简短「筛选」 */}
+        <span className="truncate max-w-[180px]">
+          {secondarySummary.isActive ? `筛选 · ${secondarySummary.label}` : "筛选"}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-[#78716C]" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent

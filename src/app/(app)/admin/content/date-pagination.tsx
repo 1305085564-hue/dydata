@@ -14,6 +14,10 @@ interface DatePaginationProps {
   availableDates: string[];
   /** 与 availableDates 同序的每日条数 */
   availableCounts?: Array<{ d: string; c: number }>;
+  /** 当前筛选条件下实际展示的条数（单日模式下若与当日总数不同，则展示「命中 X / 共 Y 条」） */
+  filteredCount?: number;
+  /** 是否处于筛选激活态 */
+  hasActiveFilters?: boolean;
   /** 区间模式起点（近7天/近30天/本月/自定义起止） */
   rangeStart?: string;
   /** 区间模式终点 */
@@ -77,6 +81,8 @@ export function DatePagination({
   currentDate,
   availableDates,
   availableCounts,
+  filteredCount,
+  hasActiveFilters = false,
   rangeStart,
   rangeEnd,
   isLoading = false,
@@ -120,9 +126,20 @@ export function DatePagination({
     return null;
   }, [navigableDates, currentDate]);
 
+  const totalForDay = countByDate.get(currentDate) ?? 0;
+  const showFilteredCount =
+    !isRange &&
+    hasCounts &&
+    typeof filteredCount === "number" &&
+    (hasActiveFilters || filteredCount !== totalForDay);
+  const countSuffix = hasCounts
+    ? showFilteredCount
+      ? ` · 命中 ${filteredCount} / 共 ${totalForDay} 条`
+      : ` · ${totalForDay} 条`
+    : "";
   const baseLabel = isRange
     ? `${formatShortDate(rangeStart ?? "")} - ${formatShortDate(rangeEnd ?? "")}`
-    : `${formatDateLabel(currentDate)}${hasCounts ? ` · ${countByDate.get(currentDate) ?? 0} 条` : ""}`;
+    : `${formatDateLabel(currentDate)}${countSuffix}`;
   const loadingLabel = isLoading && pendingDate ? `正在加载 ${formatShortDate(pendingDate)}…` : baseLabel;
 
   const pickDate = (date: string) => {

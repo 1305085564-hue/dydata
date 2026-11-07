@@ -13,11 +13,12 @@ export interface ContentDetailEvidenceProps {
   retentionScreenshot?: { url: string };
   aspectRatios: Record<string, number>;
   handleImageLoad: (url: string, ratio: number) => void;
+  handleImageError?: (url: string) => void;
   setPreviewIndex: (index: number) => void;
   setViewLayout: (layout: "auto" | "side-by-side" | "stacked") => void;
 }
 
-export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, effectiveLayout, curveScreenshot, retentionScreenshot, aspectRatios, handleImageLoad, setPreviewIndex, setViewLayout }: ContentDetailEvidenceProps) {
+export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, effectiveLayout, curveScreenshot, retentionScreenshot, aspectRatios, handleImageLoad, handleImageError, setPreviewIndex, setViewLayout }: ContentDetailEvidenceProps) {
   const { ready: screenshotGrantReady } = useScreenshotGrant();
   const pending = (
     <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[12px] text-[#A8A29E]">
@@ -125,6 +126,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                               handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
                             }
                           }}
+                          onError={() => handleImageError?.(curveScreenshot.url)}
                           className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
                             effectiveLayout === "stacked"
                               ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
@@ -195,6 +197,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                               handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
                             }
                           }}
+                          onError={() => handleImageError?.(retentionScreenshot.url)}
                           className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
                             effectiveLayout === "stacked"
                               ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15

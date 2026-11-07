@@ -275,6 +275,17 @@ export function VideoSubmitPanelV2({
     );
   }, [activeBizDate, allReportRowsIncludingOverrides, selectedAccountId]);
 
+  const submittedCountByDate = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const report of allReportRowsIncludingOverrides) {
+      if (selectedAccountId && report.account_id !== selectedAccountId) continue;
+      const dateKey = getPublishedDateKey(report);
+      if (!dateKey) continue;
+      counts[dateKey] = (counts[dateKey] ?? 0) + 1;
+    }
+    return counts;
+  }, [allReportRowsIncludingOverrides, selectedAccountId]);
+
   const activeDateReport = useMemo(() => {
     return activeDateReports.find((report) => report.id === selectedReportId)
       ?? activeDateReports[0]
@@ -495,6 +506,7 @@ export function VideoSubmitPanelV2({
             today={today}
             activeBizDate={activeBizDate}
             submittedDates={submittedDatesIncludingActivity}
+            submittedCountByDate={submittedCountByDate}
             waiveDates={allExemptionDateBuckets.waiveDates}
             leaveDates={allExemptionDateBuckets.leaveDates}
             pendingDates={localPendingExemptionDates}
