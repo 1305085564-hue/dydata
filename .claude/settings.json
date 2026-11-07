@@ -1,5 +1,13 @@
 {
   "permissions": {
     "defaultMode": "bypassPermissions"
+  },
+  "enabledPlugins": {
+    "financial-analysis@financial-services-plugins": false,
+    "equity-research@financial-services-plugins": false,
+    "marketing@knowledge-work-plugins": false,
+    "product-management@knowledge-work-plugins": false,
+    "productivity@knowledge-work-plugins": false,
+    "codex@openai-codex": true
   }
 }
