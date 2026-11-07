@@ -8,7 +8,7 @@ function parseHttpStatus(errorType?: string) {
   return match ? Number(match[1]) : undefined;
 }
 
-const KEY_AUTH_PATTERN = /(?:unauthori[sz]ed|invalid (?:api[_\s-]?key|credential))/i;
+const KEY_AUTH_PATTERN = /(?:unauthori[sz]ed|invalid[_\s-]+(?:api[_\s-]?key|credential))/i;
 const KEY_TEMPORARY_PATTERN = /(?:quota|billing|余额|额度|Cloudflare|captcha|access denied)/i;
 
 /**

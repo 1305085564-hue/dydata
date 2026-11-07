@@ -50,6 +50,7 @@ test("403 的临时拦截和额度故障不永久失效，明确凭据拒绝才�
   assert.equal(isPermanentProviderFailure({ status: 403, message: "Cloudflare 1010" }), false);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "insufficient_user_quota" }), false);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid api key" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid_api_key" }), true);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "Forbidden" }), false);
   assert.equal(isPermanentProviderFailure({ status: 403, message: "unauthorized" }), true);
 });

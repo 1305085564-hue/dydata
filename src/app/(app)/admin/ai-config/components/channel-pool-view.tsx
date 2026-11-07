@@ -33,7 +33,7 @@ export interface ChannelPoolViewProps {
 export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
   const { bundle, runCommand, loadData } = useAiConfig();
   const report = useAvailabilityReport(bundle);
-  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped">("idle");
+  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped" | "unsynced">("idle");
   const detectionRefreshRef = useRef<{ stop: () => void } | null>(null);
   const channelTestSeq = useRef(0);
 
@@ -222,6 +222,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
     setTestResult(null);
     setDetectionState("idle");
     detectionRefreshRef.current?.stop();
+    const refreshDeadline = Date.now() + AI_MODEL_BATCH_TIMEOUT_MS;
     detectionRefreshRef.current = startDetectionRefresh({
       loadData,
       onWindowEnd: () => {
@@ -231,64 +232,57 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
     });
     try {
       const res = await runCommand("test_key_all_models", { key_id: testedKeyId }, undefined, AI_MODEL_BATCH_TIMEOUT_MS);
-      detectionRefreshRef.current?.stop();
       if (seq !== channelTestSeq.current) return;
-      if (res.ok) {
-        const body = res.body as {
-          total?: number;
-          successCount?: number;
-          failureCount?: number;
-          allPassed?: boolean;
-          stateWriteError?: string | null;
-          results?: Array<{
-            modelId: string;
-            ok: boolean;
-            error?: string | null;
-            failureDiagnostic?: ChannelFailureDiagnostic | null;
-          }>;
-        };
-        const total = body.total ?? 0;
-        const failures = (body.results ?? []).filter((result) => !result.ok);
-        if (total === 0) {
-          setTestResult({ ok: false, message: "该渠道当前没有勾选在供的模型，未执行检测" });
-          feedbackToast.warning("该渠道当前没有勾选在供的模型");
-          return;
-        }
-        const passed = body.allPassed === true || failures.length === 0;
-        const firstFailure = failures[0];
-        const message = passed
-          ? undefined
-          : `共测 ${total} 个在供模型，${failures.length} 个未通过：${failures.map((result) => result.modelId).join("、")}${firstFailure?.error ? `；首个原因：${firstFailure.error}` : ""}`;
-        setTestResult({
-          ok: passed,
-          message,
-          failureDiagnostic: firstFailure?.failureDiagnostic ?? undefined,
-        });
-        if (passed) {
-          feedbackToast.success("渠道检测通过，已恢复能用");
-        } else {
-          feedbackToast.error(`检测未通过：${firstFailure?.error || "服务异常"}`, { duration: 6000 });
-        }
-        if (body.stateWriteError) {
-          feedbackToast.error(`测试结果未能写入渠道状态：${body.stateWriteError}`, { duration: 6000 });
-        }
-        const finalReadOk = await loadData(true, true);
-        if (!finalReadOk) {
-          feedbackToast.error("最终状态未同步，请点击「重新读取最新状态」。", { duration: 6000 });
-        }
+      if (!res.ok) throw new Error(res.error || "服务无响应");
+      detectionRefreshRef.current?.stop();
+      const body = res.body as {
+        total?: number;
+        successCount?: number;
+        failureCount?: number;
+        allPassed?: boolean;
+        stateWriteError?: string | null;
+        results?: Array<{
+          modelId: string;
+          ok: boolean;
+          error?: string | null;
+          failureDiagnostic?: ChannelFailureDiagnostic | null;
+        }>;
+      };
+      const total = body.total ?? 0;
+      const failures = (body.results ?? []).filter((result) => !result.ok);
+      if (total === 0) {
+        setTestResult({ ok: false, message: "该渠道当前没有勾选在供的模型，未执行检测" });
+        feedbackToast.warning("该渠道当前没有勾选在供的模型");
+        return;
+      }
+      const passed = body.allPassed === true || failures.length === 0;
+      const firstFailure = failures[0];
+      const message = passed
+        ? undefined
+        : `共测 ${total} 个在供模型，${failures.length} 个未通过：${failures.map((result) => result.modelId).join("、")}${firstFailure?.error ? `；首个原因：${firstFailure.error}` : ""}`;
+      setTestResult({
+        ok: passed,
+        message,
+        failureDiagnostic: firstFailure?.failureDiagnostic ?? undefined,
+      });
+      if (passed) {
+        feedbackToast.success("渠道检测通过，已恢复能用");
       } else {
-        feedbackToast.error(`检测失败: ${res.error || "服务无响应"}`, { duration: 6000 });
-        setTestResult({
-          ok: false,
-          message: res.error,
-          failureDiagnostic: res.testResult as ChannelFailureDiagnostic | undefined,
-        });
+        feedbackToast.error(`检测未通过：${firstFailure?.error || "服务异常"}`, { duration: 6000 });
+      }
+      if (body.stateWriteError) {
+        feedbackToast.error(`测试结果未能写入渠道状态：${body.stateWriteError}`, { duration: 6000 });
+      }
+      const finalReadOk = await loadData(true, true);
+      if (!finalReadOk) {
+        setDetectionState("unsynced");
+        feedbackToast.error("最终状态未同步，请点击「重新读取最新状态」。", { duration: 6000 });
       }
     } catch (error) {
       if (seq === channelTestSeq.current) {
-        setDetectionState("reading");
+        setDetectionState(Date.now() >= refreshDeadline ? "stopped" : "reading");
         feedbackToast.error(
-          `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，页面会自动读取已落库状态。`,
+          `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，${Date.now() >= refreshDeadline ? "请手动重新读取最新状态" : "页面会自动读取已落库状态"}。`,
           { duration: 6000 },
         );
       }
@@ -299,8 +293,10 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
 
   const handleReloadAfterDetection = async () => {
     const ok = await loadData(true, true);
-    if (ok) feedbackToast.success("已读取最新状态");
-    else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
+    if (ok) {
+      if (detectionState === "unsynced") setDetectionState("idle");
+      feedbackToast.success("已读取最新状态");
+    } else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
   };
 
   // 模型勾选（取消勾选只是关闭，不删除）
@@ -510,7 +506,9 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
               className="rounded-xl border border-[#8A6A2F]/30 bg-[#8A6A2F]/[0.04] px-3 py-2 text-[12px] text-[#78716C] flex flex-wrap items-center justify-between gap-2"
             >
               <span>
-                {detectionState === "reading"
+                {detectionState === "unsynced"
+                  ? "检测结果已返回，但最新状态未同步。请重新读取最新状态。"
+                  : detectionState === "reading"
                   ? "检测未完整收齐：请求已中断，后台可能仍在完成，正在读取已落库状态…"
                   : "检测未完整收齐：已停止自动读取，后台可能仍在完成。请手动重新读取最新状态。"}
               </span>

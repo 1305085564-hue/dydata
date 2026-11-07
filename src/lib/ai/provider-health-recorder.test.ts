@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { recordManualProbeFailure } from "@/lib/ai-config/model-tests";
+
 import { recordProviderFailure } from "./provider-health-recorder";
 
 type RpcCall = { fn: string; args: Record<string, unknown> };
@@ -78,4 +80,20 @@ test("R3 真实调用记录：额度故障不升格为永久", async () => {
   });
   assert.equal(calls[0]?.args.failure_scope, "key");
   assert.equal(calls[0]?.args.permanent_failure, false);
+});
+
+
+test("R3 HTTP 403 invalid_api_key：手动和真实调用都记录明确密钥失效", async () => {
+  const { calls, service } = fakeService();
+  await recordManualProbeFailure(service as never, {
+    keyModelId: "supply-1", errorScope: "key", status: 403, message: "invalid_api_key",
+  });
+  await recordProviderFailure({
+    service: service as never, providerKeyId: "key-1", providerKeyModelId: "supply-1",
+    errorType: "http_403", message: "invalid_api_key",
+  });
+  assert.deepEqual(calls.map(({ fn, args }) => [fn, args.failure_scope, args.permanent_failure]), [
+    ["record_ai_manual_supply_failure", "key", true],
+    ["record_ai_supply_failure", "key", true],
+  ]);
 });

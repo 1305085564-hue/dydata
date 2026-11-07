@@ -69,7 +69,7 @@ export function ComputePoolPanel() {
 
   // 检查测试状态
   const [isCheckingAll, setIsCheckingAll] = useState(false);
-  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped">("idle");
+  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped" | "unsynced">("idle");
   const detectionRefreshRef = useRef<{ stop: () => void } | null>(null);
   const [checkResult, setCheckResult] = useState<{
     total: number;
@@ -155,8 +155,10 @@ export function ComputePoolPanel() {
   // S1: 检查一遍
   const handleCheckAll = async () => {
     setIsCheckingAll(true);
+    setCheckResult(null);
     setDetectionState("idle");
     detectionRefreshRef.current?.stop();
+    const refreshDeadline = Date.now() + AI_MODEL_BATCH_TIMEOUT_MS;
     detectionRefreshRef.current = startDetectionRefresh({
       loadData,
       onWindowEnd: () => setDetectionState("stopped"),
@@ -164,11 +166,8 @@ export function ComputePoolPanel() {
     });
     try {
       const res = await runCommand("check_all_in_use", {}, undefined, AI_MODEL_BATCH_TIMEOUT_MS);
+      if (!res.ok) throw new Error(res.error || "执行检查失败");
       detectionRefreshRef.current?.stop();
-      if (!res.ok) {
-        feedbackToast.error(res.error || "执行检查失败");
-        return;
-      }
       const body = res.body as Record<string, unknown>;
       const rawCheck = (body.checkResult as Record<string, unknown>) || body;
       const total = (rawCheck.totalModels as number) ?? (rawCheck.total as number) ?? ((rawCheck.results as unknown[])?.length ?? 0);
@@ -183,12 +182,13 @@ export function ComputePoolPanel() {
       }
       const finalReadOk = await loadData(true, true);
       if (!finalReadOk) {
+        setDetectionState("unsynced");
         feedbackToast.error("最终状态未同步，请点击「重新读取最新状态」。", { duration: 6000 });
       }
     } catch (error) {
-      setDetectionState("reading");
+      setDetectionState(Date.now() >= refreshDeadline ? "stopped" : "reading");
       feedbackToast.error(
-        `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，页面会自动读取已落库状态。`,
+        `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，${Date.now() >= refreshDeadline ? "请手动重新读取最新状态" : "页面会自动读取已落库状态"}。`,
         { duration: 6000 },
       );
     } finally {
@@ -198,8 +198,10 @@ export function ComputePoolPanel() {
 
   const handleReloadAfterDetection = async () => {
     const ok = await loadData(true, true);
-    if (ok) feedbackToast.success("已读取最新状态");
-    else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
+    if (ok) {
+      if (detectionState === "unsynced") setDetectionState("idle");
+      feedbackToast.success("已读取最新状态");
+    } else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
   };
 
   // 陷阱 A: 仅开关该供应
@@ -354,7 +356,9 @@ export function ComputePoolPanel() {
           className="rounded-xl border border-[#8A6A2F]/30 bg-[#8A6A2F]/[0.04] px-4 py-2 text-[12px] text-[#78716C] flex flex-wrap items-center justify-between gap-2"
         >
           <span>
-            {detectionState === "reading"
+            {detectionState === "unsynced"
+              ? "检测结果已返回，但最新状态未同步。请重新读取最新状态。"
+              : detectionState === "reading"
               ? "检测未完整收齐：请求已中断，后台可能仍在完成，正在读取已落库状态…"
               : "检测未完整收齐：已停止自动读取，后台可能仍在完成。请手动重新读取最新状态。"}
           </span>
