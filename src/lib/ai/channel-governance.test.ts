@@ -53,11 +53,11 @@ test("disable and permanent invalidity take precedence over sleep", () => {
   assert.equal(getChannelGovernance({ ...base, key: { ...key, is_enabled: false } }).identity, "disabled");
 });
 
-test("configuration and model rejection are permanent; transient failures and quota are not", () => {
-  for (const input of [{ errorType: "http_401" }, { errorType: "http_403", message: "invalid api key" }, { errorType: "http_404", message: "model_not_found" }, { errorType: "http_400", message: "invalid api key" }]) {
+test("Key 鉴权拒绝是永久；模型级拒绝、临时故障和额度都可恢复", () => {
+  for (const input of [{ errorType: "http_401" }, { errorType: "http_403", message: "invalid api key" }, { errorType: "http_400", message: "invalid api key" }]) {
     assert.equal(isPermanentProviderFailure(input), true);
   }
-  for (const input of [{ errorType: "http_500", message: "model unavailable" }, { errorType: "timeout" }, { errorType: "http_402", message: "insufficient quota" }, { errorType: "http_400", message: "model unavailable" }]) {
+  for (const input of [{ errorType: "http_404", message: "model_not_found" }, { errorType: "http_500", message: "model unavailable" }, { errorType: "timeout" }, { errorType: "http_402", message: "insufficient quota" }, { errorType: "http_400", message: "model unavailable" }]) {
     assert.equal(isPermanentProviderFailure(input), false);
   }
 });

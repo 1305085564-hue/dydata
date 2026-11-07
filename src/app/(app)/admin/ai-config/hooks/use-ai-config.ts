@@ -1,6 +1,6 @@
 import type { ModelAliasGroup } from "@/lib/ai/model-discovery";
 import { requestAiConfigCommand } from "@/lib/ai-config/client-command";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { AvailabilityReport } from "@/lib/ai-config/availability";
 import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
@@ -10,6 +10,63 @@ import { presentError } from "@/lib/ai-config/presentation";
 
 export const AI_MODEL_BATCH_TIMEOUT_MS = 120_000;
 export const AI_MODEL_BATCH_TIMEOUT_MESSAGE = "检测耗时较长，已中断";
+export const AI_DETECTION_REFRESH_INTERVAL_MS = 4_000;
+
+type LoadAiConfigData = (silent?: boolean, notifyOnError?: boolean) => Promise<boolean>;
+
+export type DetectionRefreshOptions = {
+  loadData: LoadAiConfigData;
+  onWindowEnd: () => void;
+  onReadError?: () => void;
+  intervalMs?: number;
+  windowMs?: number;
+};
+
+/**
+ * 只在一次检测生命周期内读取已落库状态：短周期、读取不重叠、到窗口上限或 stop 后停止。
+ * 不建立全站常驻轮询；onWindowEnd 只回调一次。
+ */
+export function startDetectionRefresh(options: DetectionRefreshOptions): { stop: () => void } {
+  const intervalMs = options.intervalMs ?? AI_DETECTION_REFRESH_INTERVAL_MS;
+  const windowMs = options.windowMs ?? AI_MODEL_BATCH_TIMEOUT_MS;
+  const deadline = Date.now() + windowMs;
+  let stopped = false;
+  let inFlight = false;
+  let readErrorNotified = false;
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  const stop = () => {
+    stopped = true;
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  };
+
+  const tick = async () => {
+    if (stopped) return;
+    if (Date.now() >= deadline) {
+      stop();
+      options.onWindowEnd();
+      return;
+    }
+    if (inFlight) return;
+    inFlight = true;
+    try {
+      const ok = await options.loadData(true);
+      if (!ok && !readErrorNotified) {
+        readErrorNotified = true;
+        options.onReadError?.();
+      }
+    } finally {
+      inFlight = false;
+    }
+  };
+
+  timer = setInterval(() => { void tick(); }, intervalMs);
+  void tick();
+  return { stop };
+}
 
 export type AiProvider = {
   id: string;
@@ -67,27 +124,16 @@ export type KeyModelInventoryItem = {
   isNewlyDiscovered: boolean;
 };
 
-export type StaleModelCheck = {
-  modelId: string;
-  status: "confirmed_unavailable" | "unknown";
-  reason?: string;
-};
-
-export type SyncModelReconciliation = {
-  status: "verified" | "unknown";
-  availableModelIds?: string[];
-  candidateModelIds: string[];
-  verifiedUnavailableModelIds: string[];
-  unknownModelIds: string[];
-  checks?: StaleModelCheck[];
-};
-
 export type SyncKeyModelsResult = {
   modelGroups: ModelAliasGroup[];
   keyId: string;
   allModels: KeyModelInventoryItem[];
   newCount?: number;
-  reconciliation?: SyncModelReconciliation;
+  removedCount?: number;
+  removedModelIds?: string[];
+  removedEnabledCount?: number;
+  removedEnabledModelIds?: string[];
+  lostBusinesses?: Array<{ key: string; label: string; modelId?: string | null }>;
 };
 
 export type KeyModelTestResult = {
@@ -96,9 +142,10 @@ export type KeyModelTestResult = {
   ok: boolean;
   latencyMs?: number | null;
   error?: string | null;
+  stateWriteError?: string | null;
 };
 
-export type AiModelTestResult = { ok: boolean; latencyMs?: number; message?: string; failureDiagnostic?: ChannelFailureDiagnostic | null };
+export type AiModelTestResult = { ok: boolean; latencyMs?: number; message?: string; failureDiagnostic?: ChannelFailureDiagnostic | null; stateWriteError?: string | null };
 
 export type KeyAllModelsTestResponse = {
   keyId: string;
@@ -109,6 +156,7 @@ export type KeyAllModelsTestResponse = {
   allPassed?: boolean;
   failedModelIds: string[];
   results: KeyModelTestResult[];
+  stateWriteError?: string | null;
 };
 
 export type AiFeatureBinding = {
@@ -162,6 +210,7 @@ export function useAiConfig() {
   const [bundle, setBundle] = useState<AiConfigBundle | null>(cachedBundle);
   const [isLoading, setIsLoading] = useState(!cachedBundle);
   const [error, setError] = useState<string | null>(null);
+  const requestSeq = useRef(0);
 
   useEffect(() => {
     const handler = (b: AiConfigBundle | null) => setBundle(b);
@@ -176,18 +225,24 @@ export function useAiConfig() {
     listeners.forEach((l) => l(newBundle));
   }, []);
 
-  const loadData = useCallback(async (silent = false) => {
+  const loadData = useCallback(async (silent = false, notifyOnError = false): Promise<boolean> => {
+    const seq = requestSeq.current + 1;
+    requestSeq.current = seq;
     if (!silent) setIsLoading(true);
     setError(null);
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config");
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "加载配置失败");
-      mutate(data as AiConfigBundle);
+      // 只让最后发起的那次读取落到页面，避免检测中旧快照晚到覆盖新状态。
+      if (seq === requestSeq.current) mutate(data as AiConfigBundle);
+      return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "加载配置失败";
-      setError(presentError(msg, "加载配置失败"));
-      if (!silent) feedbackToast.error(presentError(msg, "加载配置失败"));
+      const friendly = presentError(msg, "加载配置失败");
+      if (seq === requestSeq.current) setError(friendly);
+      if (!silent || notifyOnError) feedbackToast.error(friendly);
+      return false;
     } finally {
       if (!silent) setIsLoading(false);
     }

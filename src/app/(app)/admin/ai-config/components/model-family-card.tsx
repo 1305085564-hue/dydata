@@ -85,8 +85,12 @@ export function ModelFamilyCard({
   );
 
   const schedulableCount = family.schedulableChannelCount;
-  const isSingleSupply = schedulableCount === 1;
+  // 「能用」= 绿灯 active；未测过的渠道也是 active，不能因为没测过就不计入。
+  const activeCount = family.identityCounts.active;
+  const retestCount = family.identityCounts.retest;
+  const isSingleSupply = schedulableCount === 1 && activeCount > 0;
   const isNoSupply = schedulableCount === 0;
+  const isRetestOnly = isNoSupply === false && activeCount === 0 && retestCount > 0;
 
   // 查找交换对象仍按真实顺位，不用展示快照位置推断相邻关系
   const sortedChannels = useMemo(() => {
@@ -172,15 +176,23 @@ export function ModelFamilyCard({
             </span>
           )}
 
-          {/* S5: 模型卡汇总：「M 条渠道供货，N 条能用」 */}
+          {/* S5: 模型卡汇总：「M 条渠道供货，N 条能用，K 条待复测」；待复测不算能用 */}
           <span className="text-[12px] text-[#1F1E1D]">
-            {channels.length} 条渠道供货，{schedulableCount} 条能用
+            {channels.length} 条渠道供货，{activeCount} 条能用
+            {retestCount > 0 && <span className="text-[#8A6A2F]">，{retestCount} 条待复测</span>}
           </span>
 
           {/* 恰好 1 条能用时的单点建议 */}
           {isSingleSupply && (
             <span className="text-[12px] text-[#8A6A2F]">
               · {AI_CONFIG_MESSAGES["model.single_supply"]}
+            </span>
+          )}
+
+          {/* 没有完全健康渠道、但还有待复测时，别误报“停摆” */}
+          {isRetestOnly && (
+            <span className="text-[12px] text-[#8A6A2F]">
+              · 暂无完全健康渠道，{retestCount} 条待复测
             </span>
           )}
 

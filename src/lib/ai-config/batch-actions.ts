@@ -123,7 +123,15 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
   const results = await mapWithConcurrency(keyRows, 5, async (key) => {
     try {
       const sync = await syncModelsForKey(supabase, { keyId: key.id });
-      return { ok: true as const, key, reconciliation: sync.reconciliation };
+      return {
+        ok: true as const,
+        key,
+        newCount: sync.newCount,
+        removedCount: sync.removedCount,
+        removedModelIds: sync.removedModelIds,
+        removedEnabledCount: sync.removedEnabledCount,
+        removedEnabledModelIds: sync.removedEnabledModelIds,
+      };
     } catch (syncError) {
       return {
         ok: false as const,
@@ -137,7 +145,15 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
     total: keyRows.length,
     succeeded: results.filter((result) => result.ok).length,
     reconciled: results.flatMap((result) => result.ok
-      ? [{ keyId: result.key.id, keyName: result.key.label, reconciliation: result.reconciliation }]
+      ? [{
+        keyId: result.key.id,
+        keyName: result.key.label,
+        newCount: result.newCount,
+        removedCount: result.removedCount,
+        removedModelIds: result.removedModelIds,
+        removedEnabledCount: result.removedEnabledCount,
+        removedEnabledModelIds: result.removedEnabledModelIds,
+      }]
       : []),
     failed: results
       .filter((result): result is { ok: false; key: AiConfigKeyRow; error: string } => !result.ok)

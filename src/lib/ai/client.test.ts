@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 
 import { __internal, callAi, AiChannelError, resolveAttemptBudgetMs } from "./client";
 import { classifyProviderFailure } from "./provider-health";
@@ -90,6 +92,50 @@ test("上游成功但健康记录失败时，成功结果不会被遥测错误�
   } finally {
     console.warn = previousWarn;
     __internal.setServiceClientForTests(null);
+  }
+});
+
+test("R3 实际 callAi 遇到模型 404 只记录可恢复模型故障", async () => {
+  const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  const server = createServer((_request, response) => {
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end(JSON.stringify({ error: "model_not_found" }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address() as AddressInfo;
+
+  const pkm = makePkmRow({ id: "supply-1", modelId: "model-x", keyPriority: 1, keyName: "key-1" });
+  (pkm.key as Array<{ provider: Array<{ base_url: string }> }>)[0].provider[0].base_url = `http://127.0.0.1:${address.port}/v1`;
+  const db: FakeDb = {
+    ai_feature_bindings: [{
+      feature_key: "content_analysis",
+      model_id: "model-x",
+      provider_key_model_id: null,
+      system_prompt: null,
+      is_enabled: true,
+      lifecycle_state: "active",
+    }],
+    ai_provider_key_models: [pkm],
+  };
+  __internal.setServiceClientForTests({
+    from(table: string) {
+      return createFakeService(db).from(table);
+    },
+    rpc(fn: string, args: Record<string, unknown>) {
+      calls.push({ fn, args });
+      return Promise.resolve({ error: null });
+    },
+  });
+
+  try {
+    await assert.rejects(callAi({ featureKey: "content_analysis", messages: [{ role: "user", content: "hi" }] }));
+    assert.equal(calls.length, 1, "真实调用失败必须写入健康记录");
+    assert.equal(calls[0]?.fn, "record_ai_supply_failure");
+    assert.equal(calls[0]?.args.failure_scope, "model");
+    assert.equal(calls[0]?.args.permanent_failure, false);
+  } finally {
+    __internal.setServiceClientForTests(null);
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
 

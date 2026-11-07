@@ -62,7 +62,9 @@ export function ModelChannelRow({
   const isEnabled = channel.identity !== "disabled";
   const isInvalid = channel.identity === "invalid";
   const isSleeping = channel.identity === "sleeping";
-  const isUsable = channel.identity === "active" || channel.identity === "retest";
+  const isRetest = channel.identity === "retest";
+  const isActive = channel.identity === "active";
+  const showReason = isInvalid || isSleeping || isRetest;
   const moveLockReason = !channel.isSchedulable
     ? isSleeping
       ? "休眠期间顺位锁定，恢复后可调整"
@@ -200,10 +202,17 @@ export function ModelChannelRow({
 
         {/* 中间：口径 5 的四种状态 */}
         <div data-slot="ai-channel-status" className="flex items-center gap-2 shrink-0 md:justify-start">
-          {isUsable && (
+          {isActive && (
             <span className="inline-flex items-center gap-1 rounded-md bg-[#4B6B4E]/10 px-2 py-0.5 text-[12px] text-[#4B6B4E]">
               <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
               {AI_CONFIG_MESSAGES["channel.usable"]}
+            </span>
+          )}
+
+          {isRetest && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#8A6A2F]/10 px-2 py-0.5 text-[12px] text-[#8A6A2F]">
+              <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
+              {AI_CONFIG_MESSAGES["channel.retest"]}
             </span>
           )}
 
@@ -266,11 +275,11 @@ export function ModelChannelRow({
         </div>
       </div>
 
-      {/* 需要你处理：展示原因（在主列表里显眼，不折叠原因），技术详情可折叠 */}
-      {isInvalid && (
+      {/* 失败原因常驻当前行，不让人去追 6 秒消失的气泡；技术详情可折叠 */}
+      {showReason && (
         <div className="pt-1 text-[12px] space-y-1 md:pl-15">
-          <div className="text-status-danger-text">
-            原因：{failureDiagnostic?.technical?.message || "渠道连通性异常或鉴权失败"}
+          <div className={isInvalid ? "text-status-danger-text" : "text-[#78716C]"}>
+            原因：{failureDiagnostic?.technical?.message || (isInvalid ? "渠道连通性异常或鉴权失败" : "等待下一次复测验证")}
           </div>
 
           {failureDiagnostic && (

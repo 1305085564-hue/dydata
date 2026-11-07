@@ -201,15 +201,34 @@ export class MemorySupabase {
         }
       }
 
-      if (args.p_verified === true) {
-        key.invalidated_at = null;
-        key.unhealthy_until = null;
-        for (const model of this.tables.ai_provider_key_models) {
-          if (model.key_id === keyId && availableModelIds.has(String(model.model_id))) {
-            model.invalidated_at = null;
-            model.unhealthy_until = null;
-          }
-        }
+      if (args.p_verified === true && availableModels.length > 0) {
+        this.tables.ai_provider_key_models = this.tables.ai_provider_key_models.filter((row) => (
+          !(row.key_id === keyId && !availableModelIds.has(String(row.model_id)))
+        ));
+      }
+      return { data: null, error: null };
+    }
+
+    if (fn === "record_ai_manual_supply_failure") {
+      const supplyId = String(args.supply_id ?? "");
+      const supply = this.tables.ai_provider_key_models.find((row) => row.id === supplyId);
+      if (!supply) return { data: null, error: { message: "supply not found" } };
+      const key = this.tables.ai_provider_keys.find((row) => row.id === supply.key_id);
+      if (!key) return { data: null, error: { message: "key not found" } };
+      const scope = String(args.failure_scope ?? "unknown");
+      const permanent = args.permanent_failure === true;
+      const now = new Date();
+      const cooldownMs = (count: number) => count === 0 ? 5 * 60_000 : count === 1 ? 60 * 60_000 : 24 * 60 * 60_000;
+      const target = scope === "key" ? key : supply;
+      const previousFailures = Number(target.consecutive_failures ?? 0);
+      target.consecutive_failures = previousFailures + 1;
+      target.first_failure_at = target.first_failure_at ?? now.toISOString();
+      if (permanent) target.invalidated_at = target.invalidated_at ?? now.toISOString();
+      target.unhealthy_until = new Date(now.getTime() + cooldownMs(previousFailures)).toISOString();
+      target.last_failure_at = now.toISOString();
+      target.last_error_message = String(args.error_message ?? "").slice(0, 500);
+      if (scope !== "key") {
+        supply.last_failure_scope = scope === "model" || scope === "unknown" ? scope : "unknown";
       }
       return { data: null, error: null };
     }

@@ -1,6 +1,6 @@
 import {markProviderKeySuccess,markProviderKeyModelSuccess} from "@/lib/ai/provider-routing";
 import { loadAiConfig } from "@/lib/ai-config/config-loader";
-import { clearLegacyManualSleep,handleTestKey,handleTestKeyModel,handleCheckAllInUse,buildProbeRequestBody,isValidVisionProbeContent,MODEL_PROBE_TIMEOUT_MS,MODEL_TEST_CONCURRENCY,mapWithConcurrency,testMountedModel,loadKeyProvider,probeProviderModel } from "@/lib/ai-config/model-tests";
+import { clearLegacyManualSleep,handleTestKey,handleTestKeyModel,handleCheckAllInUse,buildProbeRequestBody,isValidVisionProbeContent,MODEL_PROBE_TIMEOUT_MS,MODEL_TEST_CONCURRENCY,mapWithConcurrency,testMountedModel,createKeyFailureClaim,loadKeyProvider,probeProviderModel } from "@/lib/ai-config/model-tests";
 export {buildProbeRequestBody} from "@/lib/ai-config/model-tests";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -18,7 +18,7 @@ import {
   handleSyncKeyModels,
   handleSyncAllKeys,
 } from "@/lib/ai-config/batch-actions";
-import { discoverModelIds, cleanupStaleModelsForKey } from "./sync-models/route";
+import { discoverModelIds } from "./sync-models/route";
 import { findModelChannelCandidates, groupModelIdAliases, type ModelChannelDiscoveryInput } from "@/lib/ai/model-discovery";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { normalizeChannelAddress, requireSharedAddressConfirmation, type SharedAddressImpact } from "@/lib/ai-config/channel-address";
@@ -63,8 +63,7 @@ type AiConfigAction =
   | "test_all_keys"
   | "probe_provider_models"
   | "find_model_channels"
-  | "enable_model_channel"
-  | "cleanup_stale_models";
+  | "enable_model_channel";
 
 type AiConfigBody = {
   action?: unknown;
@@ -85,7 +84,7 @@ function firstOrNull<T>(value: T | T[] | null | undefined) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "check_all_in_use" || action === "swap_model_channel_order" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" || action === "find_model_channels" || action === "enable_model_channel" || action === "cleanup_stale_models" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "check_all_in_use" || action === "swap_model_channel_order" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "set_model_enabled" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" || action === "find_model_channels" || action === "enable_model_channel" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -492,16 +491,9 @@ export async function buildAiConfigResponse(
     }
   }
 
-  if (action === "find_model_channels" || action === "enable_model_channel" || action === "cleanup_stale_models") {
+  if (action === "find_model_channels" || action === "enable_model_channel") {
     try {
       const data = asRecord(body.data);
-      if (action === "cleanup_stale_models") {
-        const keyId = toTrimmedString(data.key_id);
-        if (!keyId) throw new Error("缺少 key_id");
-        const cleanupResult = await cleanupStaleModelsForKey(auth.supabase,{keyId,modelIds:Array.isArray(data.model_ids) ? data.model_ids.map(toTrimmedString).filter(Boolean) : []});
-        aiClientInternal.resetCache();
-        return NextResponse.json({...await loadAiConfig(auth.supabase),cleanupResult});
-      }
       const modelId = toTrimmedString(data.model_id);
       if (!modelId) throw new Error("缺少 model_id");
       const bundle = await loadAiConfig(auth.supabase);
@@ -527,7 +519,18 @@ export async function buildAiConfigResponse(
     try {
       const result = await handleSyncKeyModels((deps.createAdminClient ?? createAdminClient)(), asRecord(body.data));
       const bundle = await loadAiConfig(auth.supabase);
-      return NextResponse.json({ syncResult: result, ...bundle });
+      // 撤下模型后，如果某个业务（含全局默认）从“有渠道”变成“完全没渠道”，要在同步结果里点名。
+      const removedModelIds = new Set(result.removedModelIds);
+      const lostBusinesses = bundle.availability.businessAssurances
+        .filter((assurance) => assurance.routingStatus === "outage"
+          && [assurance.selectedModelId, assurance.defaultModelId]
+            .some((modelId) => Boolean(modelId && removedModelIds.has(modelId))))
+        .map((assurance) => ({
+          key: assurance.key,
+          label: assurance.label,
+          modelId: assurance.selectedModelId ?? assurance.defaultModelId,
+        }));
+      return NextResponse.json({ syncResult: { ...result, lostBusinesses }, ...bundle });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status: 400 });
     }
@@ -579,7 +582,8 @@ export async function buildAiConfigResponse(
 
   if (action === "check_all_in_use" || action === "test_all_keys" || action === "test_all_keys_all_models") {
     try {
-      return NextResponse.json(await handleCheckAllInUse(auth.supabase));
+      const healthClient = (deps.createAdminClient ?? createAdminClient)();
+      return NextResponse.json(await handleCheckAllInUse(auth.supabase, { healthClient }));
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "使用中模型检查失败" }, { status: 400 });
     }
@@ -613,7 +617,8 @@ export async function buildAiConfigResponse(
           channelLabel: bundle.keys.find((key) => key.id === result?.providerKeyId)?.label ?? result.channelName,
         } : { ok: false, latencyMs: Date.now() - started, message, failureDiagnostic: describeChannelFailure({ message }) } });
       }
-      const result = await handleTestKey(auth.supabase, asRecord(body.data));
+      const healthClient = (deps.createAdminClient ?? createAdminClient)();
+      const result = await handleTestKey(auth.supabase, asRecord(body.data), { healthClient });
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ testResult: result, ...bundle });
     } catch (error) {
@@ -623,7 +628,8 @@ export async function buildAiConfigResponse(
 
   if (action === "test_key_model") {
     try {
-      const result = await handleTestKeyModel(auth.supabase, asRecord(body.data));
+      const healthClient = (deps.createAdminClient ?? createAdminClient)();
+      const result = await handleTestKeyModel(auth.supabase, asRecord(body.data), { recordFailure: true, healthClient });
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ testResult: result, ...bundle });
     } catch (error) {
@@ -636,38 +642,45 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
-      // 显式单渠道检查测其全部挂载模型（含手动关闭的供应）；全局检查有独立的使用中范围。
+      // 显式单渠道检查只测该渠道当前勾选在供的模型；不再盲抽第 1 个挂载模型。
       const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled");
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
       if (keyStateError) throw new Error(keyStateError.message);
       const enabledKeyIds = new Set(((keyStateRows ?? []) as Array<{ id: string; is_enabled: boolean }>).filter((row) => row.is_enabled).map((row) => row.id));
-      // 显式渠道检查要求渠道开启，但不按该模型供应开关过滤。
       const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean }>)
         .filter((row) => enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id))
+        .filter((row) => row.is_enabled === true)
         .map(({ key_id, model_id }) => ({ key_id, model_id }));
+      const healthClient = (deps.createAdminClient ?? createAdminClient)();
+      const keyFailureClaim = createKeyFailureClaim();
       const modelResults = await mapWithConcurrency(
         targets,
         MODEL_TEST_CONCURRENCY,
-        (target) => testMountedModel(auth.supabase, target),
+        (target) => testMountedModel(auth.supabase, target, { healthClient, keyFailureClaim }),
       );
+      const stateWriteErrors = modelResults
+        .map((result) => result.stateWriteError)
+        .filter((value): value is string => Boolean(value));
       const successCount = modelResults.filter((result) => result.ok).length;
       const failureCount = modelResults.length - successCount;
 
       return NextResponse.json({
         ...await loadAiConfig(auth.supabase),
         keyId,
-        results: modelResults.map(({ modelId, ok, latencyMs, error: modelError, failureDiagnostic }) => ({
+        results: modelResults.map(({ modelId, ok, latencyMs, error: modelError, failureDiagnostic, stateWriteError }) => ({
           modelId,
           ok,
           latencyMs,
           error: modelError,
           failureDiagnostic,
+          stateWriteError: stateWriteError ?? null,
         })),
         total: modelResults.length,
         successCount,
         failureCount,
+        stateWriteError: stateWriteErrors.length > 0 ? stateWriteErrors.join("；") : null,
         emptyResult: modelResults.length === 0,
         allPassed: modelResults.length > 0 && failureCount === 0,
         failedModelIds: modelResults.filter((result) => !result.ok).map((result) => result.modelId),

@@ -1,14 +1,41 @@
 import { extractJsonString, type AiMessage } from "@/lib/ai/client";
 import { buildHaikuVisionBody,parseHaikuVisionResponse,usesHaikuNativeVision } from "@/lib/ai/haiku-vision-transport";
 import { markProviderKeySuccess,markProviderKeyModelSuccess } from "@/lib/ai/provider-routing";
-import { classifyProviderFailure,sanitizeProviderErrorMessage,type ProviderFailureScope } from "@/lib/ai/provider-health";
+import { classifyProviderFailure,isPermanentProviderFailure,sanitizeProviderErrorMessage,type ProviderFailureScope } from "@/lib/ai/provider-health";
 import { describeChannelFailure,type ChannelFailureDiagnostic } from "./failure-diagnostic";
 import { toTrimmedString } from "@/lib/type-guards";
 import { loadAiConfig,type AiConfigClient } from "./config-loader";
 
 function firstOrNull<T>(value:T|T[]|null|undefined) {return Array.isArray(value) ? value[0] ?? null : value ?? null;}
 
-export async function handleTestKey(supabase: AiConfigClient, data: Record<string, unknown>) {
+export async function recordManualProbeFailure(
+  client: AiConfigClient,
+  input: {
+    keyModelId: string;
+    errorScope?: ProviderFailureScope | null;
+    status?: number;
+    message: string;
+  },
+) {
+  // 手动与真实调用共用同一永久失效规则：只有 Key 级明确鉴权失败才永久；模型级失败只休息。
+  const permanentFailure = isPermanentProviderFailure({
+    status: input.status,
+    message: input.message,
+  });
+  const { error } = await client.rpc("record_ai_manual_supply_failure", {
+    supply_id: input.keyModelId,
+    failure_scope: input.errorScope ?? "unknown",
+    permanent_failure: permanentFailure,
+    error_message: input.message,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function handleTestKey(
+  supabase: AiConfigClient,
+  data: Record<string, unknown>,
+  options: { healthClient?: AiConfigClient } = {},
+) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
   if (!keyId) throw new Error("缺少 key_id");
@@ -61,20 +88,35 @@ export async function handleTestKey(supabase: AiConfigClient, data: Record<strin
     await markProviderKeySuccess(supabase, keyId);
     await clearLegacyManualSleep(supabase, keyId);
     if (mounted?.id) await markProviderKeyModelSuccess(supabase, mounted.id);
-    return { ...result, errorScope: null };
+    return { ...result, errorScope: null, stateWriteError: null };
   }
 
-
-  return result;
+  let stateWriteError: string | null = null;
+  if (mounted?.id) {
+    try {
+      await recordManualProbeFailure(options.healthClient ?? supabase, {
+        keyModelId: mounted.id,
+        errorScope: result.errorScope,
+        status: result.status,
+        message: result.message,
+      });
+    } catch (error) {
+      stateWriteError = error instanceof Error ? error.message : "测试失败状态写入失败";
+    }
+  }
+  return { ...result, stateWriteError };
 }
 
-export async function handleTestKeyModel(supabase: AiConfigClient, data: Record<string, unknown>) {
+export async function handleTestKeyModel(
+  supabase: AiConfigClient,
+  data: Record<string, unknown>,
+  options: { recordFailure?: boolean; healthClient?: AiConfigClient } = {},
+) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
   if (!keyId) throw new Error("缺少 key_id");
   if (!modelId) throw new Error("缺少 model_id");
 
-  // 检测范围＝该渠道全部挂载模型（含未勾选、已全站下架的），不按启用位过滤。
   const { data: modelData, error: modelError } = await supabase
     .from("ai_provider_key_models")
     .select("id, key_id, model_id")
@@ -82,26 +124,90 @@ export async function handleTestKeyModel(supabase: AiConfigClient, data: Record<
     .eq("model_id", modelId)
     .maybeSingle();
   if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
+  const supplyId = (modelData as { id: string }).id;
 
   const result = await loadKeyProvider(supabase, keyId);
   const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);
-  // 成功必须洗白，否则测通了界面还挂在故障上；失败一律不写计数，探测不得触发调度熔断。
+  // 成功必须洗白，否则测通了界面还挂在故障上。
   if (probe.ok) {
-    await markProviderKeyModelSuccess(supabase, (modelData as { id: string }).id);
+    await markProviderKeyModelSuccess(supabase, supplyId);
     await markProviderKeySuccess(supabase, keyId);
     await clearLegacyManualSleep(supabase, keyId);
+    return { ...probe, keyModelId: supplyId, stateWriteError: null };
   }
-  return probe;
+
+  let stateWriteError: string | null = null;
+  if (options.recordFailure) {
+    try {
+      await recordManualProbeFailure(options.healthClient ?? supabase, {
+        keyModelId: supplyId,
+        errorScope: probe.errorScope,
+        status: probe.status,
+        message: probe.message,
+      });
+    } catch (error) {
+      stateWriteError = error instanceof Error ? error.message : "测试失败状态写入失败";
+    }
+  }
+  return { ...probe, keyModelId: supplyId, stateWriteError };
 }
 
 type MountedModelTestResult = {
   keyId: string;
   modelId: string;
+  keyModelId: string | null;
   ok: boolean;
   latencyMs: number | null;
   error: string | null;
+  errorScope?: ProviderFailureScope | null;
+  status?: number;
   failureDiagnostic?: ChannelFailureDiagnostic | null;
+  stateWriteError?: string | null;
 };
+
+export type KeyFailureClaim = {
+  claim: (keyId: string) => boolean;
+};
+
+/** 同一次批量检测内的 Key 级失败只认领一次；认领在异步写库前同步完成。 */
+export function createKeyFailureClaim(): KeyFailureClaim {
+  // gate:transient-map 仅在一次批量请求生命周期内使用，随请求返回释放。
+  const claimed = new Set<string>();
+  return {
+    claim(keyId: string) {
+      if (claimed.has(keyId)) return false;
+      claimed.add(keyId);
+      return true;
+    },
+  };
+}
+
+async function recordOneTestFailure(
+  client: AiConfigClient,
+  failure: {
+    keyId: string;
+    keyModelId: string;
+    errorScope?: ProviderFailureScope | null;
+    status?: number;
+    message: string;
+  },
+  keyFailureClaim: KeyFailureClaim,
+): Promise<string | null> {
+  if (failure.errorScope === "key" && !keyFailureClaim.claim(failure.keyId)) {
+    return null;
+  }
+  try {
+    await recordManualProbeFailure(client, {
+      keyModelId: failure.keyModelId,
+      errorScope: failure.errorScope,
+      status: failure.status,
+      message: failure.message,
+    });
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : "测试失败状态写入失败";
+  }
+}
 
 export const MODEL_TEST_CONCURRENCY = 4;
 
@@ -140,32 +246,58 @@ export async function mapWithConcurrency<T, R>(
 export async function testMountedModel(
   supabase: AiConfigClient,
   target: { key_id: string; model_id: string },
+  options: { healthClient?: AiConfigClient; keyFailureClaim?: KeyFailureClaim } = {},
 ): Promise<MountedModelTestResult> {
   try {
     const result = await handleTestKeyModel(supabase, {
       key_id: target.key_id,
       model_id: target.model_id,
     });
+    const keyModelId = "keyModelId" in result ? String(result.keyModelId) : null;
+    let stateWriteError: string | null = null;
+    if (!result.ok && keyModelId) {
+      // 单条失败在本次工作结束前写库；Key 级失败同批只认领一次，不能等整批结束。
+      stateWriteError = await recordOneTestFailure(
+        options.healthClient ?? supabase,
+        {
+          keyId: target.key_id,
+          keyModelId,
+          errorScope: result.errorScope,
+          status: result.status,
+          message: result.message,
+        },
+        options.keyFailureClaim ?? createKeyFailureClaim(),
+      );
+    }
     return {
       keyId: target.key_id,
       modelId: target.model_id,
+      keyModelId,
       ok: result.ok,
       latencyMs: result.ok ? result.latencyMs : null,
       error: result.ok ? null : result.message,
+      errorScope: result.ok ? null : result.errorScope,
+      status: result.ok ? undefined : result.status,
       failureDiagnostic: result.ok ? null : result.failureDiagnostic,
+      stateWriteError,
     };
   } catch (error) {
     return {
       keyId: target.key_id,
       modelId: target.model_id,
+      keyModelId: null,
       ok: false,
       latencyMs: null,
       error: error instanceof Error ? error.message : "模型连通测试失败",
+      errorScope: null,
     };
   }
 }
 
-export async function handleCheckAllInUse(supabase: AiConfigClient) {
+export async function handleCheckAllInUse(
+  supabase: AiConfigClient,
+  options: { healthClient?: AiConfigClient } = {},
+) {
   const before = await loadAiConfig(supabase) as unknown as {
     featureControls: Array<{ group: string; isEnabled: boolean; lifecycleState: string; modelId: string | null }>;
     featureBindings: Array<{ feature_key: string; model_id?: string | null }>;
@@ -196,17 +328,23 @@ export async function handleCheckAllInUse(supabase: AiConfigClient) {
     targets.set(`${model.key_id}\u0000${model.model_id}`, { key_id: model.key_id, model_id: model.model_id });
   }
 
+  const healthClient = options.healthClient ?? supabase;
+  const keyFailureClaim = createKeyFailureClaim();
   const results = await mapWithConcurrency(
     Array.from(targets.values()),
     MODEL_TEST_CONCURRENCY,
-    (target) => testMountedModel(supabase, target),
+    (target) => testMountedModel(supabase, target, { healthClient, keyFailureClaim }),
   );
+  const stateWriteErrors = results
+    .map((result) => result.stateWriteError)
+    .filter((value): value is string => Boolean(value));
   const checkResult = {
     total: results.length,
     successCount: results.filter((result) => result.ok).length,
     failureCount: results.filter((result) => !result.ok).length,
-    results: results.map(({ keyId, modelId, ok, latencyMs, error, failureDiagnostic }) => ({
-      keyId, modelId, ok, latencyMs, message: error, failureDiagnostic: failureDiagnostic ?? null,
+    stateWriteError: stateWriteErrors.length > 0 ? stateWriteErrors.join("；") : null,
+    results: results.map(({ keyId, modelId, ok, latencyMs, error, failureDiagnostic, stateWriteError }) => ({
+      keyId, modelId, ok, latencyMs, message: error, failureDiagnostic: failureDiagnostic ?? null, stateWriteError: stateWriteError ?? null,
     })),
   };
   const latestBundle = await loadAiConfig(supabase);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
-import { buildSyncModelsResponse, cleanupStaleModelsForKey, syncModelsForKey } from "./route";
+import { buildSyncModelsResponse, syncModelsForKey } from "./route";
 
 type Row = Record<string, unknown>;
 type Tables = Record<string, Row[]>;
@@ -111,10 +111,6 @@ function fakeSupabase(tables: Tables, beforeExecute?: (table: string, operation:
       const models = (parameters.p_models ?? []) as Array<{ model_id: string; display_name: string }>;
       const verified = parameters.p_verified === true;
       key.available_models = modelIds;
-      if (verified) {
-        key.invalidated_at = null;
-        key.unhealthy_until = null;
-      }
       for (const model of models) {
         let existing = tables.ai_provider_key_models?.find((row) => row.key_id === keyId && row.model_id === model.model_id);
         if (!existing) {
@@ -129,17 +125,18 @@ function fakeSupabase(tables: Tables, beforeExecute?: (table: string, operation:
         } else if (existing.display_name === model.model_id) {
           existing.display_name = model.display_name;
         }
-        if (verified && modelIds.includes(model.model_id)) {
-          existing.invalidated_at = null;
-          existing.unhealthy_until = null;
-        }
+      }
+      if (verified && modelIds.length > 0) {
+        tables.ai_provider_key_models = (tables.ai_provider_key_models ?? []).filter((row) => (
+          !(row.key_id === keyId && !modelIds.includes(String(row.model_id)))
+        ));
       }
       return { data: null, error: null };
     },
   };
 }
 
-test("服务端真实同步可解除永久封禁，但不伪造成功或清除失败计数", async () => {
+test("服务端真实同步只对齐清单，不解除永久封禁或清冷却", async () => {
   const priorSuccessAt = "2026-11-04T10:00:00.000Z";
   const tables: Tables = {
     ai_provider_keys: [{
@@ -177,12 +174,12 @@ test("服务端真实同步可解除永久封禁，但不伪造成功或清除�
   assert.deepEqual((db.rpcCalls[0]?.parameters.p_models as Array<{ model_id: string }>).map((model) => model.model_id), [
     "model-returned-by-upstream", "new-model",
   ]);
-  assert.equal(tables.ai_provider_keys[0]?.invalidated_at, null);
-  assert.equal(tables.ai_provider_keys[0]?.unhealthy_until, null);
+  assert.equal(tables.ai_provider_keys[0]?.invalidated_at, "2026-11-05T01:00:00.000Z");
+  assert.equal(tables.ai_provider_keys[0]?.unhealthy_until, "2026-11-05T02:00:00.000Z");
   assert.equal(tables.ai_provider_keys[0]?.consecutive_failures, 4);
   assert.equal(tables.ai_provider_keys[0]?.last_success_at, priorSuccessAt);
-  assert.equal(tables.ai_provider_key_models[0]?.invalidated_at, null);
-  assert.equal(tables.ai_provider_key_models[0]?.unhealthy_until, null);
+  assert.equal(tables.ai_provider_key_models[0]?.invalidated_at, "2026-11-05T01:00:00.000Z");
+  assert.equal(tables.ai_provider_key_models[0]?.unhealthy_until, "2026-11-05T02:00:00.000Z");
   assert.equal(tables.ai_provider_key_models[0]?.consecutive_failures, 7);
   assert.equal(tables.ai_provider_key_models[0]?.last_success_at, priorSuccessAt);
   assert.equal(tables.ai_provider_key_models[1]?.is_enabled, false);
@@ -299,26 +296,7 @@ test("同步按真实 model_id 返回别名展示组，自动名可更新而人�
   }]);
 });
 
-test("同步将 429 和参数错误保留为未知，不标为上游已下线", async () => {
-  const tables: Tables = {
-    ai_provider_keys: [{
-      id: "key-1",
-      api_key: "test-only",
-      provider_id: "provider-1",
-      provider: { name: "provider", base_url: "https://provider.test/v1" },
-    }],
-    ai_provider_key_models: [{ id: "stale", key_id: "key-1", model_id: "model-stale", display_name: "Model", is_enabled: false }],
-  };
-  const result = await syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-1", modelIds: ["model-live"] }, async () => (
-    new Response(JSON.stringify({ error: { message: "invalid model parameter" } }), { status: 429 })
-  ));
-
-  assert.deepEqual(result.reconciliation.verifiedUnavailableModelIds, []);
-  assert.deepEqual(result.reconciliation.unknownModelIds, ["model-stale"]);
-  assert.equal(result.reconciliation.status, "unknown");
-});
-
-test("陈旧清理只删已关闭、无业务引用且复验明确不存在的模型", async () => {
+test("服务端真实同步按上游清单撤下旧记录，并如实报告撤下数量", async () => {
   const tables: Tables = {
     ai_provider_keys: [{
       id: "key-1",
@@ -327,41 +305,24 @@ test("陈旧清理只删已关闭、无业务引用且复验明确不存在的�
       provider: { name: "provider", base_url: "https://provider.test/v1" },
     }],
     ai_provider_key_models: [
-      { id: "dead", key_id: "key-1", model_id: "model-dead", is_enabled: false },
-      { id: "enabled", key_id: "key-1", model_id: "model-enabled", is_enabled: true },
-      { id: "referenced", key_id: "key-1", model_id: "model-referenced", is_enabled: false },
-      { id: "available", key_id: "key-1", model_id: "model-available", is_enabled: false },
-      { id: "limited", key_id: "key-1", model_id: "model-limited", is_enabled: false },
+      { id: "live", key_id: "key-1", model_id: "model-live", display_name: "Live", is_enabled: true },
+      { id: "ghost-enabled", key_id: "key-1", model_id: "model-ghost-enabled", display_name: "Ghost", is_enabled: true },
+      { id: "ghost-disabled", key_id: "key-1", model_id: "model-ghost-disabled", display_name: "Ghost 2", is_enabled: false },
     ],
-    ai_feature_bindings: [{ id: "binding", model_id: "model-referenced" }],
   };
-  const fetcher = async (_input: RequestInfo | URL, init?: RequestInit) => {
-    const modelId = (JSON.parse(String(init?.body ?? "{}")) as { model: string }).model;
-    if (modelId === "model-dead" || modelId === "model-enabled" || modelId === "model-referenced") {
-      return new Response("model_not_found", { status: 404 });
-    }
-    if (modelId === "model-available") return new Response("{}", { status: 200 });
-    return new Response("rate limit", { status: 429 });
-  };
+  const result = await syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-1" }, async () => (
+    Response.json({ data: [{ id: "model-live" }, { id: "model-new" }] })
+  ));
 
-  const results = await cleanupStaleModelsForKey(fakeSupabase(tables) as never, {
-    keyId: "key-1",
-    modelIds: ["model-dead", "model-enabled", "model-referenced", "model-available", "model-limited"],
-  }, fetcher);
-
-  assert.deepEqual(results.map(({ modelId, status }) => ({ modelId, status })), [
-    { modelId: "model-dead", status: "removed" },
-    { modelId: "model-enabled", status: "still_enabled" },
-    { modelId: "model-referenced", status: "business_referenced" },
-    { modelId: "model-available", status: "still_available" },
-    { modelId: "model-limited", status: "unknown" },
-  ]);
-  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), [
-    "model-enabled", "model-referenced", "model-available", "model-limited",
-  ]);
+  assert.equal(result.removedCount, 2);
+  assert.deepEqual(result.removedModelIds, ["model-ghost-enabled", "model-ghost-disabled"]);
+  assert.equal(result.removedEnabledCount, 1);
+  assert.deepEqual(result.removedEnabledModelIds, ["model-ghost-enabled"]);
+  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["model-live", "model-new"]);
+  assert.equal(result.allModels.find((model) => model.modelId === "model-new")?.isEnabled, false);
 });
 
-test("上游复验期间新出现业务引用时，服务端二次检查会阻止删除", async () => {
+test("客户端清单不触发撤下，旧记录保持原样", async () => {
   const tables: Tables = {
     ai_provider_keys: [{
       id: "key-1",
@@ -369,20 +330,114 @@ test("上游复验期间新出现业务引用时，服务端二次检查会阻�
       provider_id: "provider-1",
       provider: { name: "provider", base_url: "https://provider.test/v1" },
     }],
-    ai_provider_key_models: [{ id: "race", key_id: "key-1", model_id: "model-race", is_enabled: false }],
-    ai_feature_bindings: [],
+    ai_provider_key_models: [
+      { id: "old", key_id: "key-1", model_id: "model-old", display_name: "Old", is_enabled: true },
+    ],
   };
-  let bindingChecks = 0;
-  const db = fakeSupabase(tables, (table, operation) => {
-    if (table === "ai_feature_bindings" && operation === "select" && ++bindingChecks === 2) {
-      tables.ai_feature_bindings.push({ id: "new-binding", model_id: "model-race" });
-    }
+  const result = await syncModelsForKey(fakeSupabase(tables) as never, {
+    keyId: "key-1",
+    modelIds: ["model-old", "model-new"],
+  }, async () => {
+    throw new Error("客户端清单不应请求上游");
   });
 
-  const results = await cleanupStaleModelsForKey(db as never, { keyId: "key-1", modelIds: ["model-race"] }, async () => (
-    new Response("model_not_found", { status: 404 })
+  assert.equal(result.removedCount, 0);
+  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["model-old", "model-new"]);
+});
+
+test("上游清单为空时不撤下任何记录", async () => {
+  const tables: Tables = {
+    ai_provider_keys: [{
+      id: "key-1",
+      api_key: "test-only",
+      provider_id: "provider-1",
+      provider: { name: "provider", base_url: "https://provider.test/v1" },
+      unhealthy_until: "2026-11-08T01:00:00.000Z",
+      consecutive_failures: 2,
+    }],
+    ai_provider_key_models: [{ id: "old", key_id: "key-1", model_id: "model-old", display_name: "Old", is_enabled: true, unhealthy_until: "2026-11-08T01:00:00.000Z", consecutive_failures: 1 }],
+  };
+  await assert.rejects(
+    () => syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-1" }, async () => Response.json({ data: [] })),
+    /上游未返回可用模型/,
+  );
+  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["model-old"]);
+  assert.equal(tables.ai_provider_keys[0]?.unhealthy_until, "2026-11-08T01:00:00.000Z");
+  assert.equal(tables.ai_provider_keys[0]?.consecutive_failures, 2);
+  assert.equal(tables.ai_provider_key_models[0]?.unhealthy_until, "2026-11-08T01:00:00.000Z");
+  assert.equal(tables.ai_provider_key_models[0]?.consecutive_failures, 1);
+});
+
+test("R2 同步清单不解除调用故障：清单仍含目标时冷却和失效标记保持", async () => {
+  const unhealthyUntil = "2026-11-08T01:00:00.000Z";
+  const invalidatedAt = "2026-11-07T20:00:00.000Z";
+  const tables: Tables = {
+    ai_provider_keys: [{
+      id: "key-1",
+      api_key: "test-only",
+      provider_id: "provider-1",
+      provider: { name: "provider", base_url: "https://provider.test/v1" },
+      invalidated_at: invalidatedAt,
+      unhealthy_until: unhealthyUntil,
+      consecutive_failures: 3,
+      last_error_message: "key failure",
+    }],
+    ai_provider_key_models: [{
+      id: "row-a",
+      key_id: "key-1",
+      model_id: "model-a",
+      display_name: "人工名",
+      is_enabled: true,
+      sort_order: 7,
+      invalidated_at: invalidatedAt,
+      unhealthy_until: unhealthyUntil,
+      consecutive_failures: 2,
+      last_error_message: "model failure",
+    }],
+  };
+
+  const result = await syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-1" }, async () => (
+    Response.json({ data: [{ id: "model-a" }, { id: "model-new" }] })
   ));
 
-  assert.deepEqual(results, [{ modelId: "model-race", status: "business_referenced" }]);
-  assert.equal(tables.ai_provider_key_models.length, 1);
+  const key = tables.ai_provider_keys[0]!;
+  const row = tables.ai_provider_key_models.find((item) => item.id === "row-a")!;
+  assert.equal(result.removedCount, 0);
+  assert.equal(key.invalidated_at, invalidatedAt);
+  assert.equal(key.unhealthy_until, unhealthyUntil);
+  assert.equal(key.consecutive_failures, 3);
+  assert.equal(key.last_error_message, "key failure");
+  assert.equal(row.invalidated_at, invalidatedAt);
+  assert.equal(row.unhealthy_until, unhealthyUntil);
+  assert.equal(row.consecutive_failures, 2);
+  assert.equal(row.last_error_message, "model failure");
+  assert.equal(row.is_enabled, true);
+  assert.equal(row.display_name, "人工名");
+  assert.equal(row.sort_order, 7);
+});
+
+test("R2 上游清单超时或报错时，不删挂载、不动健康", async () => {
+  const unhealthyUntil = "2026-11-08T01:00:00.000Z";
+  const tables: Tables = {
+    ai_provider_keys: [{
+      id: "key-1",
+      api_key: "test-only",
+      provider_id: "provider-1",
+      provider: { name: "provider", base_url: "https://provider.test/v1" },
+      unhealthy_until: unhealthyUntil,
+      consecutive_failures: 2,
+    }],
+    ai_provider_key_models: [{ id: "row-a", key_id: "key-1", model_id: "model-a", is_enabled: true, unhealthy_until: unhealthyUntil, consecutive_failures: 1 }],
+  };
+  await assert.rejects(
+    () => syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-1" }, async () => {
+      throw new Error("上游请求超时");
+    }),
+    /探测模型列表失败/,
+  );
+  assert.equal(tables.ai_provider_keys[0]?.unhealthy_until, unhealthyUntil);
+  assert.equal(tables.ai_provider_keys[0]?.consecutive_failures, 2);
+  assert.equal(tables.ai_provider_key_models[0]?.unhealthy_until, unhealthyUntil);
+  assert.equal(tables.ai_provider_key_models[0]?.consecutive_failures, 1);
+  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["model-a"]);
 });

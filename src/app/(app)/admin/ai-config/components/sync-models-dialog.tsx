@@ -21,7 +21,6 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
-  Trash2,
 } from "lucide-react";
 import { sortSyncGroups } from "@/lib/ai-config/list-order";
 
@@ -58,11 +57,9 @@ export function SyncModelsDialog({
 
   // S8: 上游变动对比
   const [newCount, setNewCount] = useState(0);
-  const [staleModelIds, setStaleModelIds] = useState<string[]>([]);
-  const [cleanupResults, setCleanupResults] = useState<
-    Array<{ modelId: string; status: string; reason?: string }> | null
-  >(null);
-  const [cleaning, setCleaning] = useState(false);
+  const [removedCount, setRemovedCount] = useState(0);
+  const [removedEnabledCount, setRemovedEnabledCount] = useState(0);
+  const [lostBusinesses, setLostBusinesses] = useState<Array<{ key: string; label: string; modelId?: string | null }>>([]);
 
   // 当前渠道正在使用的模型集合
   const currentChannelEnabledModelIds = useMemo(() => {
@@ -78,7 +75,9 @@ export function SyncModelsDialog({
   const handleSync = useCallback(async (targetKeyId: string) => {
     setLoading(true);
     setLoadError(null);
-    setCleanupResults(null);
+    setRemovedCount(0);
+    setRemovedEnabledCount(0);
+    setLostBusinesses([]);
     try {
       const res = await runCommand("sync_key_models", { key_id: targetKeyId });
       if (res.ok) {
@@ -87,7 +86,9 @@ export function SyncModelsDialog({
             allModels?: Array<{ modelId: string; isEnabled: boolean }>;
             modelGroups?: ModelGroupItem[];
             newCount?: number;
-            reconciliation?: { staleInDb?: string[] };
+            removedCount?: number;
+            removedEnabledCount?: number;
+            lostBusinesses?: Array<{ key: string; label: string; modelId?: string | null }>;
           };
         };
 
@@ -102,8 +103,16 @@ export function SyncModelsDialog({
         // 打开时排一次：本渠道在用的在上；勾选/取消时位置不变
         setModelGroups(sortSyncGroups(result?.modelGroups || [], initialSelected));
         setNewCount(result?.newCount ?? 0);
-        setStaleModelIds(result?.reconciliation?.staleInDb ?? []);
+        setRemovedCount(result?.removedCount ?? 0);
+        setRemovedEnabledCount(result?.removedEnabledCount ?? 0);
+        setLostBusinesses(result?.lostBusinesses ?? []);
         setSelectedModelIds(initialSelected);
+        if (result?.removedCount) {
+          feedbackToast.success(`已与上游对齐：自动撤下 ${result.removedCount} 个上游已没有的模型`);
+        }
+        if (result?.lostBusinesses?.length) {
+          feedbackToast.error(`有 ${result.lostBusinesses.length} 个业务因此没有可用渠道，请补充其他渠道`, { duration: 6000 });
+        }
       } else {
         setLoadError(res.error || "获取上游模型失败");
       }
@@ -140,39 +149,6 @@ export function SyncModelsDialog({
       }
     } finally {
       setSaving(false);
-    }
-  };
-
-  // 口径 7: 一键清理已下线模型
-  const handleCleanupStale = async () => {
-    if (!keyId || staleModelIds.length === 0) return;
-    setCleaning(true);
-    try {
-      const res = await runCommand("cleanup_stale_models", {
-        key_id: keyId,
-        model_ids: staleModelIds,
-      });
-
-      if (res.ok) {
-        const body = res.body as {
-          cleanupResult?: Array<{ modelId: string; status: string; reason?: string }>;
-        };
-        const results = body.cleanupResult || [];
-        setCleanupResults(results);
-
-        const removedCount = results.filter((r) => r.status === "removed").length;
-        if (removedCount > 0) {
-          feedbackToast.success(`已清理 ${removedCount} 个已下线模型`);
-          // 重新同步拉取最新状态
-          handleSync(keyId);
-        } else {
-          feedbackToast.warning("未发现可直接清理的模型");
-        }
-      } else {
-        feedbackToast.error(res.error || "清理下线模型失败");
-      }
-    } finally {
-      setCleaning(false);
     }
   };
 
@@ -261,24 +237,12 @@ export function SyncModelsDialog({
                 上游新增 {newCount} 个
               </span>
               <span className="text-[#78716C]">/</span>
-              <span className={staleModelIds.length > 0 ? "text-[#8A6A2F]" : "text-[#78716C]"}>
-                下线 {staleModelIds.length} 个
+              <span className={removedCount > 0 ? "text-[#8A6A2F]" : "text-[#78716C]"}>
+                已自动撤下 {removedCount} 个
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              {staleModelIds.length > 0 && (
-                <Button
-                  size="s"
-                  variant="outline"
-                  disabled={cleaning}
-                  onClick={handleCleanupStale}
-                  className="h-7 gap-1 text-[12px] text-status-danger border-status-danger/30 hover:bg-status-danger/[0.08]"
-                >
-                  <Trash2 className="size-3" />
-                  <span>{cleaning ? "清理中…" : "清理上游已下线模型"}</span>
-                </Button>
-              )}
               <Button
                 size="s"
                 variant="outline"
@@ -292,19 +256,24 @@ export function SyncModelsDialog({
             </div>
           </div>
 
-          {/* 清理结果展示 */}
-          {cleanupResults && cleanupResults.length > 0 && (
-            <div className="rounded-xl border border-[#E2E2DF] bg-[#F7F7F6] p-3 text-[12px] space-y-1">
-              <div className="font-normal text-[#141413]">清理结果：</div>
-              <div className="space-y-1">
-                {cleanupResults.map((r) => (
-                  <div key={r.modelId} className="flex items-center justify-between text-[#78716C]">
-                    <span className="font-mono">{r.modelId}</span>
-                    <span>
-                      {r.status === "removed"
-                        ? "已清理"
-                        : `未清理（${r.reason || r.status}）`}
-                    </span>
+          {/* 上游已移除的在供模型：明确告知，不留历史旧账 */}
+          {removedEnabledCount > 0 && (
+            <div className="text-[12px] text-[#8A6A2F]">
+              其中 {removedEnabledCount} 个原本勾选在供，已随上游最新清单自动从本渠道撤下。
+            </div>
+          )}
+
+          {/* 独苗保护：撤下后业务没有可用渠道，必须醒目提示补渠道 */}
+          {lostBusinesses.length > 0 && (
+            <div className="rounded-xl border border-status-danger/30 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger-text space-y-1">
+              <div className="flex items-center gap-2 font-normal">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>以下业务因此失去了最后一条可用渠道，请补充其他渠道：</span>
+              </div>
+              <div className="pl-6 space-y-0.5">
+                {lostBusinesses.map((business) => (
+                  <div key={business.key}>
+                    {business.label}{business.modelId ? `（${business.modelId}）` : ""}
                   </div>
                 ))}
               </div>

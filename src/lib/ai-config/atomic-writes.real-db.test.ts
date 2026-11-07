@@ -56,12 +56,12 @@ test("第四批真实事务：接入、改名、批选、共享地址和审计�
     await db.query("insert into public.ai_provider_key_models(key_id,model_id,display_name,invalidated_at,consecutive_failures) values($1,$2,$2,now(),1)",[second.keyId,sibling]);
     await db.query("update public.ai_provider_keys set invalidated_at=now(),consecutive_failures=1 where id=$1",[second.keyId]);
     const beforeSync=(await db.query("select last_success_at from public.ai_provider_key_models where key_id=$1 and model_id=$2",[second.keyId,model])).rows[0].last_success_at;
-    const syncArgs=[second.keyId,[model],JSON.stringify([{model_id:model,display_name:"must preserve custom"}])];
+    const syncArgs=[second.keyId,[model,sibling],JSON.stringify([{model_id:model,display_name:"must preserve custom"},{model_id:sibling,display_name:"统一新名"}])];
     await db.query("select public.sync_ai_config_models($1,$2,$3,false)",syncArgs);
     assert.ok((await db.query("select invalidated_at from public.ai_provider_key_models where key_id=$1 and model_id=$2",[second.keyId,model])).rows[0].invalidated_at);
     await db.query("select public.sync_ai_config_models($1,$2,$3,true)",syncArgs);
     const retriable=(await db.query("select invalidated_at,consecutive_failures,last_success_at,display_name from public.ai_provider_key_models where key_id=$1 and model_id=$2",[second.keyId,model])).rows[0];
-    assert.equal(retriable.invalidated_at,null);assert.equal(retriable.consecutive_failures,1);assert.deepEqual(retriable.last_success_at,beforeSync);assert.equal(retriable.display_name,"统一新名");
+    assert.ok(retriable.invalidated_at, "同步清单不能解除失效标记");assert.equal(retriable.consecutive_failures,1);assert.deepEqual(retriable.last_success_at,beforeSync);assert.equal(retriable.display_name,"统一新名");
     assert.ok((await db.query("select invalidated_at from public.ai_provider_key_models where key_id=$1 and model_id=$2",[second.keyId,sibling])).rows[0].invalidated_at);
     await db.query("delete from public.ai_provider_keys where id=$1",[first.keyId]);
     assert.equal((await db.query("select count(*)::int as n from public.ai_provider_key_models where key_id=$1",[first.keyId])).rows[0].n,0);

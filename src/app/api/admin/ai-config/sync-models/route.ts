@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
 import { getModelDisplayName } from "@/lib/ai/model-families";
-import { groupModelIdAliases, isModelConfirmedUnavailable } from "@/lib/ai/model-discovery";
+import { groupModelIdAliases } from "@/lib/ai/model-discovery";
 import { runAiConfigWrite } from "@/lib/ai-config/atomic-write";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -77,56 +77,6 @@ type SyncInput = {
   modelIds?: string[];
 };
 
-type StaleModelCheck = {
-  modelId: string;
-  status: "confirmed_unavailable" | "available" | "unknown";
-  reason: string;
-};
-
-const STALE_MODEL_CHECK_CONCURRENCY = 4;
-
-async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>) {
-  const results = new Array<R>(items.length);
-  let nextIndex = 0;
-  const runWorker = async () => {
-    while (true) {
-      const index = nextIndex;
-      nextIndex += 1;
-      if (index >= items.length) return;
-      results[index] = await worker(items[index]);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, Math.max(items.length, 1)) }, () => runWorker()));
-  return results;
-}
-
-async function checkStaleModel(
-  provider: ProviderInfo | null,
-  apiKey: string | null | undefined,
-  modelId: string,
-  fetcher: typeof fetch,
-): Promise<StaleModelCheck> {
-  if (!provider?.base_url || !apiKey?.trim()) {
-    return { modelId, status: "unknown", reason: "渠道 URL 或 API Key 缺失" };
-  }
-  try {
-    const response = await fetcher(`${provider.base_url.replace(/\/+$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: modelId, messages: [{ role: "user", content: "hi" }], max_tokens: 1, stream: false }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (response.ok) return { modelId, status: "available", reason: `HTTP ${response.status}` };
-    const body = (await response.text().catch(() => "")).slice(0, 300);
-    const modelMissing = isModelConfirmedUnavailable(response.status, body);
-    return modelMissing
-      ? { modelId, status: "confirmed_unavailable", reason: `HTTP ${response.status}` }
-      : { modelId, status: "unknown", reason: `HTTP ${response.status}` };
-  } catch (error) {
-    return { modelId, status: "unknown", reason: error instanceof Error ? error.message : "上游请求失败" };
-  }
-}
-
 export type SyncModelsDeps = {
   requireSystemActor: typeof requireSystemActor;
   createAdminClient?: typeof createAdminClient;
@@ -168,17 +118,24 @@ export async function syncModelsForKey(
 
   const { data: existingModels, error: existingError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, model_id, display_name")
+    .select("id, model_id, display_name, is_enabled")
     .eq("key_id", input.keyId);
   if (existingError) throw syncError(existingError.message);
 
   // gate:transient-map 请求级模型查重索引；调用结束释放，无外部缓存 TTL/容量。
-  const existingMap = new Map(
-    ((existingModels ?? []) as Array<{ id: string; model_id: string; display_name?: string | null }>).map((model) => [model.model_id, model]),
-  );
+  const existingRows = (existingModels ?? []) as Array<{
+    id: string;
+    model_id: string;
+    display_name?: string | null;
+    is_enabled?: boolean;
+  }>;
+  const existingMap = new Map(existingRows.map((model) => [model.model_id, model]));
   const toInsert = targetModelIds.filter((modelId) => !existingMap.has(modelId));
   const insertedModelIds = new Set(toInsert);
-  const modelIdsToWrite = [...new Set([...targetModelIds, ...existingMap.keys()])];
+  // 服务端真实取回上游清单时，只写清单内的模型；清单外旧记录由同一个数据库事务撤下。
+  const modelIdsToWrite = verifiedFromUpstream
+    ? targetModelIds
+    : [...new Set([...targetModelIds, ...existingMap.keys()])];
   await runAiConfigWrite(supabase as Parameters<typeof runAiConfigWrite>[0], "sync_ai_config_models", {
     p_key_id: input.keyId,
     p_available_models: targetModelIds,
@@ -198,15 +155,14 @@ export async function syncModelsForKey(
     display_name: string | null;
     is_enabled: boolean;
   }>;
-  const staleModelIds = finalModelRows
-    .map((model) => model.model_id)
-    .filter((modelId) => !targetModelIds.includes(modelId));
-  const staleChecks = await mapWithConcurrency(
-    staleModelIds,
-    STALE_MODEL_CHECK_CONCURRENCY,
-    (modelId) => checkStaleModel(provider, (keyData as { api_key?: string }).api_key, modelId, fetcher),
-  );
+  // 撤下结果按事务后的真实剩余记录计算；数据库未撤下时如实报告 0，不假装已清。
   const finalModelIds = [...new Set(finalModelRows.map((model) => model.model_id))];
+  const finalModelIdSet = new Set(finalModelIds);
+  const removedRows = verifiedFromUpstream
+    ? existingRows.filter((model) => !finalModelIdSet.has(model.model_id))
+    : [];
+  const removedModelIds = removedRows.map((model) => model.model_id);
+  const removedEnabledModelIds = removedRows.filter((model) => model.is_enabled).map((model) => model.model_id);
   const { data: globalActiveModels, error: globalActiveError } = finalModelIds.length > 0
     ? await supabase
       .from("ai_provider_key_models")
@@ -230,79 +186,11 @@ export async function syncModelsForKey(
     })),
     modelGroups: groupModelIdAliases(targetModelIds),
     newCount: insertedModelIds.size,
-    reconciliation: {
-      status: staleChecks.length > 0 && staleChecks.some((check) => check.status === "unknown") ? "unknown" : "verified",
-      availableModelIds: targetModelIds,
-      candidateModelIds: staleModelIds,
-      verifiedUnavailableModelIds: staleChecks.filter((check) => check.status === "confirmed_unavailable").map((check) => check.modelId),
-      unknownModelIds: staleChecks.filter((check) => check.status === "unknown").map((check) => check.modelId),
-      checks: staleChecks,
-    },
+    removedCount: removedModelIds.length,
+    removedModelIds,
+    removedEnabledCount: removedEnabledModelIds.length,
+    removedEnabledModelIds,
   };
-}
-
-export type StaleModelCleanupResult = {
-  modelId: string;
-  status: "removed" | "still_enabled" | "business_referenced" | "still_available" | "unknown" | "changed";
-  reason?: string;
-};
-
-/** Rechecks upstream availability and business references before deleting disabled stale rows. */
-export async function cleanupStaleModelsForKey(
-  supabase: SyncSupabase,
-  input: { keyId: string; modelIds: string[] },
-  fetcher: typeof fetch = fetch,
-): Promise<StaleModelCleanupResult[]> {
-  const modelIds = [...new Set(input.modelIds.map((id) => toTrimmedString(id)).filter(Boolean))];
-  if (modelIds.length === 0) return [];
-  const { data: key, error: keyError } = await supabase
-    .from("ai_provider_keys")
-    .select("id, api_key, provider_id, provider:ai_providers(name, base_url)")
-    .eq("id", input.keyId)
-    .single();
-  if (keyError || !key) throw syncError(keyError?.message || "密钥不存在", 404);
-  const provider = firstProvider((key as { provider?: ProviderInfo | ProviderInfo[] | null }).provider);
-  const { data: rows, error: rowsError } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, model_id, is_enabled")
-    .eq("key_id", input.keyId)
-    .in("model_id", modelIds);
-  if (rowsError) throw syncError(rowsError.message);
-  const modelRows = (rows ?? []) as Array<{ id: string; model_id: string; is_enabled: boolean }>;
-  if (modelRows.length === 0) return [];
-  const { data: references, error: referencesError } = await supabase
-    .from("ai_feature_bindings")
-    .select("model_id")
-    .in("model_id", modelRows.map((row) => row.model_id));
-  if (referencesError) throw syncError(referencesError.message);
-  const referencedModelIds = new Set(((references ?? []) as Array<{ model_id: string | null }>).map((row) => row.model_id).filter(Boolean));
-  const apiKey = (key as { api_key?: string }).api_key;
-
-  return Promise.all(modelRows.map(async (row): Promise<StaleModelCleanupResult> => {
-    if (row.is_enabled) return { modelId: row.model_id, status: "still_enabled" };
-    if (referencedModelIds.has(row.model_id)) return { modelId: row.model_id, status: "business_referenced" };
-    const checked = await checkStaleModel(provider, apiKey, row.model_id, fetcher);
-    if (checked.status === "unknown") return { modelId: row.model_id, status: "unknown", reason: checked.reason };
-    if (checked.status === "available") return { modelId: row.model_id, status: "still_available", reason: checked.reason };
-
-    const { data: currentReferences, error: currentReferencesError } = await supabase
-      .from("ai_feature_bindings")
-      .select("model_id")
-      .eq("model_id", row.model_id)
-      .limit(1);
-    if (currentReferencesError) throw syncError(currentReferencesError.message);
-    if ((currentReferences ?? []).length > 0) return { modelId: row.model_id, status: "business_referenced" };
-    const { data: deletedRows, error: deleteError } = await supabase
-      .from("ai_provider_key_models")
-      .delete()
-      .eq("id", row.id)
-      .eq("is_enabled", false)
-      .select("id");
-    if (deleteError) throw syncError(deleteError.message);
-    return (deletedRows ?? []).length > 0
-      ? { modelId: row.model_id, status: "removed" }
-      : { modelId: row.model_id, status: "changed" };
-  }));
 }
 
 export async function buildSyncModelsResponse(

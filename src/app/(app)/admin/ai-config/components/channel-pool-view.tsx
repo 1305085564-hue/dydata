@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useAiConfig } from "../hooks/use-ai-config";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useAiConfig, AI_MODEL_BATCH_TIMEOUT_MS, startDetectionRefresh } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { compareChannelModels, compareChannels } from "@/lib/ai-config/list-order";
@@ -21,8 +21,8 @@ import {
 import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
 import { ModelTestFeedback } from "./model-test-feedback";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { formatSleepCountdown, AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
-import type { AvailabilityKeySummary } from "@/lib/ai-config/availability";
+import { formatSleepCountdown, AI_CONFIG_MESSAGES, CHANNEL_IDENTITY_PRESENTATION } from "@/lib/ai-config/presentation";
+import type { AvailabilityChannel, AvailabilityKeySummary } from "@/lib/ai-config/availability";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +31,15 @@ export interface ChannelPoolViewProps {
 }
 
 export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
-  const { bundle, runCommand } = useAiConfig();
+  const { bundle, runCommand, loadData } = useAiConfig();
   const report = useAvailabilityReport(bundle);
+  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped">("idle");
+  const detectionRefreshRef = useRef<{ stop: () => void } | null>(null);
+  const channelTestSeq = useRef(0);
+
+  useEffect(() => () => {
+    detectionRefreshRef.current?.stop();
+  }, []);
 
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
@@ -83,6 +90,19 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
     }
     return map;
   }, [report]);
+
+  // 当前渠道每个供应模型的五态，直接复用同源可用性报告，不另算一套。
+  const modelStateByRowId = useMemo(() => {
+    const map: Record<string, AvailabilityChannel> = {};
+    if (selectedChannel && report?.modelFamilies) {
+      for (const family of report.modelFamilies) {
+        for (const channel of family.channels) {
+          if (channel.keyId === selectedChannel.id) map[channel.keyModelId] = channel;
+        }
+      }
+    }
+    return map;
+  }, [report, selectedChannel]);
 
   const selectedGov = selectedChannel ? keyGovernanceMap[selectedChannel.id] : undefined;
   const failureDiagnostic = selectedChannel?.failureDiagnostic;
@@ -192,37 +212,95 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
     await executeWithConfirm("delete", { id: keyId }, "key", "已删除渠道");
   };
 
-  // 检测此渠道
+  // 检测此渠道：测当前勾选在供的模型，不再盲抽第 1 个挂载模型。
   const handleTestKey = async () => {
     if (!selectedChannel) return;
+    const testedKeyId = selectedChannel.id;
+    const seq = channelTestSeq.current + 1;
+    channelTestSeq.current = seq;
     setIsTestingChannel(true);
     setTestResult(null);
+    setDetectionState("idle");
+    detectionRefreshRef.current?.stop();
+    detectionRefreshRef.current = startDetectionRefresh({
+      loadData,
+      onWindowEnd: () => {
+        if (seq === channelTestSeq.current) setDetectionState("stopped");
+      },
+      onReadError: () => feedbackToast.error("检测中最新状态读取失败，页面可能仍是旧数据。", { duration: 6000 }),
+    });
     try {
-      const res = await runCommand("test_key", { key_id: selectedChannel.id, test_mode: "text" });
+      const res = await runCommand("test_key_all_models", { key_id: testedKeyId }, undefined, AI_MODEL_BATCH_TIMEOUT_MS);
+      detectionRefreshRef.current?.stop();
+      if (seq !== channelTestSeq.current) return;
       if (res.ok) {
-        const body = res.body as Record<string, unknown>;
-        const testRes = body.testResult as
-          | { ok: boolean; latencyMs?: number; message?: string; failureDiagnostic?: ChannelFailureDiagnostic }
-          | undefined;
-        if (testRes) {
-          setTestResult(testRes);
-          if (testRes.ok) feedbackToast.success("渠道检测通过，已恢复能用");
-          else feedbackToast.error(`检测未通过: ${testRes.message || "服务异常"}`);
+        const body = res.body as {
+          total?: number;
+          successCount?: number;
+          failureCount?: number;
+          allPassed?: boolean;
+          stateWriteError?: string | null;
+          results?: Array<{
+            modelId: string;
+            ok: boolean;
+            error?: string | null;
+            failureDiagnostic?: ChannelFailureDiagnostic | null;
+          }>;
+        };
+        const total = body.total ?? 0;
+        const failures = (body.results ?? []).filter((result) => !result.ok);
+        if (total === 0) {
+          setTestResult({ ok: false, message: "该渠道当前没有勾选在供的模型，未执行检测" });
+          feedbackToast.warning("该渠道当前没有勾选在供的模型");
+          return;
+        }
+        const passed = body.allPassed === true || failures.length === 0;
+        const firstFailure = failures[0];
+        const message = passed
+          ? undefined
+          : `共测 ${total} 个在供模型，${failures.length} 个未通过：${failures.map((result) => result.modelId).join("、")}${firstFailure?.error ? `；首个原因：${firstFailure.error}` : ""}`;
+        setTestResult({
+          ok: passed,
+          message,
+          failureDiagnostic: firstFailure?.failureDiagnostic ?? undefined,
+        });
+        if (passed) {
+          feedbackToast.success("渠道检测通过，已恢复能用");
         } else {
-          setTestResult({ ok: true });
-          feedbackToast.success("渠道检测通过");
+          feedbackToast.error(`检测未通过：${firstFailure?.error || "服务异常"}`, { duration: 6000 });
+        }
+        if (body.stateWriteError) {
+          feedbackToast.error(`测试结果未能写入渠道状态：${body.stateWriteError}`, { duration: 6000 });
+        }
+        const finalReadOk = await loadData(true, true);
+        if (!finalReadOk) {
+          feedbackToast.error("最终状态未同步，请点击「重新读取最新状态」。", { duration: 6000 });
         }
       } else {
-        feedbackToast.error(`检测失败: ${res.error || "服务无响应"}`);
+        feedbackToast.error(`检测失败: ${res.error || "服务无响应"}`, { duration: 6000 });
         setTestResult({
           ok: false,
           message: res.error,
           failureDiagnostic: res.testResult as ChannelFailureDiagnostic | undefined,
         });
       }
+    } catch (error) {
+      if (seq === channelTestSeq.current) {
+        setDetectionState("reading");
+        feedbackToast.error(
+          `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，页面会自动读取已落库状态。`,
+          { duration: 6000 },
+        );
+      }
     } finally {
       setIsTestingChannel(false);
     }
+  };
+
+  const handleReloadAfterDetection = async () => {
+    const ok = await loadData(true, true);
+    if (ok) feedbackToast.success("已读取最新状态");
+    else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
   };
 
   // 模型勾选（取消勾选只是关闭，不删除）
@@ -263,7 +341,8 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
             const isEnabled = ch.is_enabled;
             const isInvalid = gov?.identity === "invalid";
             const isSleeping = gov?.identity === "sleeping";
-            const isUsable = gov?.identity === "active" || gov?.identity === "retest";
+            const isRetest = gov?.identity === "retest";
+            const isUsable = gov?.identity === "active";
 
             return (
               <div
@@ -272,15 +351,19 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 tabIndex={0}
                 data-slot="ai-key-item"
                 onClick={() => {
+                  channelTestSeq.current += 1;
                   setSelectedKeyId(ch.id);
                   setEditingField(null);
                   setTestResult(null);
+                  setDetectionState("idle");
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
+                    channelTestSeq.current += 1;
                     setSelectedKeyId(ch.id);
                     setEditingField(null);
                     setTestResult(null);
+                    setDetectionState("idle");
                   }
                 }}
                 className={cn(
@@ -311,6 +394,10 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                   ) : isSleeping ? (
                     <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
                       {AI_CONFIG_MESSAGES["channel.cooling"]}
+                    </span>
+                  ) : isRetest ? (
+                    <span className="rounded-md bg-[#8A6A2F]/10 px-1.5 py-0.5 text-[12px] text-[#8A6A2F]">
+                      {AI_CONFIG_MESSAGES["channel.retest"]}
                     </span>
                   ) : isUsable ? (
                     <span className="rounded-md bg-[#4B6B4E]/10 px-1.5 py-0.5 text-[12px] text-[#4B6B4E]">
@@ -348,6 +435,8 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                         ? "bg-status-danger/[0.10] text-status-danger-text"
                         : selectedGov.identity === "sleeping"
                         ? "bg-[#F1F1F0] text-[#78716C]"
+                        : selectedGov.identity === "retest"
+                        ? "bg-[#8A6A2F]/10 text-[#8A6A2F]"
                         : "bg-[#4B6B4E]/10 text-[#4B6B4E]"
                     )}
                   >
@@ -357,6 +446,8 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                       ? AI_CONFIG_MESSAGES["channel.action_required"]
                       : selectedGov.identity === "sleeping"
                       ? `${AI_CONFIG_MESSAGES["channel.cooling"]} · ${formatSleepCountdown(selectedGov.sleepUntil)}`
+                      : selectedGov.identity === "retest"
+                      ? AI_CONFIG_MESSAGES["channel.retest"]
                       : AI_CONFIG_MESSAGES["channel.usable"]}
                   </span>
                 )}
@@ -412,12 +503,42 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
             />
           )}
 
-          {/* 需要你处理：展示原因 */}
-          {selectedGov?.identity === "invalid" && failureDiagnostic && (
-            <div className="rounded-xl border border-status-danger/30 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger-text space-y-1">
+          {/* 检测未完整收齐：保留说明和手动重新读取入口 */}
+          {detectionState !== "idle" && (
+            <div
+              data-slot="ai-detection-interrupted"
+              className="rounded-xl border border-[#8A6A2F]/30 bg-[#8A6A2F]/[0.04] px-3 py-2 text-[12px] text-[#78716C] flex flex-wrap items-center justify-between gap-2"
+            >
+              <span>
+                {detectionState === "reading"
+                  ? "检测未完整收齐：请求已中断，后台可能仍在完成，正在读取已落库状态…"
+                  : "检测未完整收齐：已停止自动读取，后台可能仍在完成。请手动重新读取最新状态。"}
+              </span>
+              <Button
+                size="s"
+                variant="outline"
+                onClick={handleReloadAfterDetection}
+                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+              >
+                重新读取最新状态
+              </Button>
+            </div>
+          )}
+
+          {/* 需要你处理 / 暂歇 / 待复测：原因常驻，不让人去追气泡 */}
+          {selectedGov && (selectedGov.identity === "invalid" || selectedGov.identity === "sleeping" || selectedGov.identity === "retest") && failureDiagnostic && (
+            <div className={cn(
+              "rounded-xl border p-3 text-[12px] space-y-1",
+              selectedGov.identity === "invalid"
+                ? "border-status-danger/30 bg-status-danger/[0.04] text-status-danger-text"
+                : "border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]",
+            )}>
               <div className="flex items-center gap-2 font-normal">
-                <AlertCircle className="size-4 shrink-0 text-status-danger" />
-                <span>需要你处理：{failureDiagnostic.technical?.message || "渠道连通性异常"}</span>
+                <AlertCircle className={cn("size-4 shrink-0", selectedGov.identity === "invalid" ? "text-status-danger" : "text-[#8A6A2F]")} />
+                <span>
+                  {selectedGov.identity === "invalid" ? "需要你处理：" : "上次失败原因："}
+                  {failureDiagnostic.technical?.message || "渠道连通性异常"}
+                </span>
               </div>
             </div>
           )}
@@ -542,27 +663,42 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                   该渠道尚未配置任何模型。点击上方「同步模型」拉取上游支持的模型。
                 </div>
               ) : (
-                channelModels.map((m) => (
-                  <div
-                    key={m.id}
-                    data-slot="ai-key-model-row"
-                    className="h-9 px-3 py-2 flex items-center gap-2 min-w-0"
-                  >
-                    <Checkbox
-                      checked={m.is_enabled}
-                      onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
-                      className="size-4 rounded-md shrink-0"
-                    />
-                    <span className="font-normal text-[13px] text-[#141413] truncate">
-                      {m.display_name || m.model_id}
-                    </span>
-                    {m.display_name && m.display_name !== m.model_id && (
-                      <span className="text-[12px] font-mono text-[#78716C] truncate">
-                        {m.model_id}
+                channelModels.map((m) => {
+                  const state = modelStateByRowId[m.id];
+                  const presentation = state ? CHANNEL_IDENTITY_PRESENTATION[state.identity] : null;
+                  return (
+                    <div
+                      key={m.id}
+                      data-slot="ai-key-model-row"
+                      className="h-9 px-3 py-2 flex items-center gap-2 min-w-0"
+                    >
+                      <Checkbox
+                        checked={m.is_enabled}
+                        onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
+                        className="size-4 rounded-md shrink-0"
+                      />
+                      <span className="font-normal text-[13px] text-[#141413] truncate">
+                        {m.display_name || m.model_id}
                       </span>
-                    )}
-                  </div>
-                ))
+                      {m.display_name && m.display_name !== m.model_id && (
+                        <span className="text-[12px] font-mono text-[#78716C] truncate">
+                          {m.model_id}
+                        </span>
+                      )}
+                      {presentation && state && (
+                        <span className={cn(
+                          "ml-auto inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px]",
+                          presentation.badgeClass,
+                        )}>
+                          <span className={cn("size-1.5 rounded-full", presentation.dot)} />
+                          {state.identity === "sleeping"
+                            ? `${presentation.label} · ${formatSleepCountdown(state.sleepUntil)}`
+                            : presentation.label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

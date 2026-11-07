@@ -4,7 +4,24 @@ import { NextRequest } from "next/server";
 
 import { buildAiConfigResponse } from "./route";
 import { syncModelsForKey } from "./sync-models/route";
+import { getChannelGovernance } from "@/lib/ai/channel-governance";
 import { actor, configTables, request, type Row } from "./ai-config.behavior.fixture";
+
+async function waitFor(predicate: () => boolean, timeoutMs = 500) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 2));
+  }
+  throw new Error("等待条件超时");
+}
+
+function governanceFor(db: ReturnType<typeof configTables>, rowId: string, keyId: string) {
+  const model = db.tables.ai_provider_key_models.find((row) => row.id === rowId)!;
+  const key = db.tables.ai_provider_keys.find((row) => row.id === keyId)!;
+  const provider = db.tables.ai_providers.find((row) => row.id === key?.provider_id)!;
+  return getChannelGovernance({ model: model as never, key: key as never, provider: provider as never });
+}
 
 test("B8 check_all_in_use 只测已启用业务与默认的开启供应，包含休眠和失效", async () => {
   const sleepUntil = new Date(Date.now() + 30 * 60_000).toISOString();
@@ -60,10 +77,14 @@ test("B8 check_all_in_use 只测已启用业务与默认的开启供应，包含
       { keyId: "key-sleeping", modelId: "default-model", ok: true, latencyMs: false, message: null, diagnosticCategory: null, diagnosticOwner: null },
     ]);
     assert.equal(typeof body.checkResult.results[1].latencyMs, "number");
+    assert.equal(body.checkResult.stateWriteError, null);
     assert.ok(body.availability);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "selected-invalid")?.invalidated_at, invalidSince);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "selected-invalid")?.consecutive_failures, 5);
-    assert.equal(db.tables.ai_provider_keys.find((row) => row.id === "key-invalid")?.consecutive_failures, 3);
+    const failedModel = db.tables.ai_provider_key_models.find((row) => row.id === "selected-invalid");
+    assert.equal(failedModel?.invalidated_at, invalidSince, "模型级失败不升级为永久失效");
+    assert.equal(failedModel?.consecutive_failures, 6, "失败当场计入连续失败");
+    assert.ok(failedModel?.unhealthy_until, "失败当场进入冷却");
+    assert.equal(failedModel?.last_error_message, "HTTP 404: model_not_found");
+    assert.equal(db.tables.ai_provider_keys.find((row) => row.id === "key-invalid")?.consecutive_failures, 3, "模型级失败不连坐整条 Key");
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "default-sleeping")?.consecutive_failures ?? 0, 0);
     assert.equal(db.tables.ai_provider_keys.find((row) => row.id === "key-sleeping")?.manual_sleep_until, null);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "not-selected")?.consecutive_failures, 4);
@@ -204,7 +225,6 @@ test("Haiku 5.5 看图探测走原生 Messages API，并校验识别正文", asy
     db.tables.ai_provider_key_models[0].consecutive_failures = 2;
     db.tables.ai_provider_key_models[0].invalidated_at = stale;
     db.tables.ai_provider_key_models[0].last_error_message = "retain on failed probe";
-    const modelSnapshot = { ...db.tables.ai_provider_key_models[0] };
     const keySnapshot = { ...db.tables.ai_provider_keys[0] };
     responseText = '{"number":"428"}';
     const failed = await runProbe();
@@ -212,8 +232,12 @@ test("Haiku 5.5 看图探测走原生 Messages API，并校验识别正文", asy
     assert.equal(body.testResult.ok, false);
     assert.match(body.testResult.message, /没有正确识别出测试图片中的数字/);
     assert.ok(body.testResult.failureDiagnostic);
-    assert.deepEqual(db.tables.ai_provider_key_models[0], modelSnapshot);
-    assert.deepEqual(db.tables.ai_provider_keys[0], keySnapshot);
+    assert.equal(body.testResult.stateWriteError, null);
+    assert.equal(db.tables.ai_provider_key_models[0].consecutive_failures, 3, "失败当场计入连续失败");
+    assert.ok(db.tables.ai_provider_key_models[0].unhealthy_until, "失败当场进入冷却");
+    assert.equal(db.tables.ai_provider_key_models[0].invalidated_at, stale, "模型级失败不升级为永久失效");
+    assert.equal(db.tables.ai_provider_key_models[0].last_failure_scope, "model");
+    assert.deepEqual(db.tables.ai_provider_keys[0], keySnapshot, "模型级失败不连坐整条 Key");
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -256,19 +280,19 @@ test("B10 test_key_model 的模型错误只写当前模型，且错误响应不�
     assert.equal(body.testResult.errorScope, "model");
     assert.match(body.testResult.message, /model_not_found/);
     assert.equal(body.testResult.message.includes("model-secret"), false);
-    assert.equal(db.tables.ai_provider_key_models[0].consecutive_failures ?? 0, 0);
-    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures ?? 0, 0);
+    assert.equal(body.testResult.stateWriteError, null);
+    assert.equal(db.tables.ai_provider_key_models[0].consecutive_failures, 1, "失败当场计入当前模型");
+    assert.ok(db.tables.ai_provider_key_models[0].unhealthy_until, "失败当场进入短暂冷却");
+    assert.equal(db.tables.ai_provider_key_models[0].last_failure_scope, "model");
+    assert.match(String(db.tables.ai_provider_key_models[0].last_error_message), /model_not_found/);
+    assert.equal(String(db.tables.ai_provider_key_models[0].last_error_message).includes("model-secret"), false);
+    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures ?? 0, 0, "模型级失败不连坐整条 Key");
   } finally {
     globalThis.fetch = previousFetch;
   }
 });
 
-/**
- * 复现 2026-10-10 的伪修复：ae86a6cb 只删了外层 is_enabled 过滤，
- * 内层 handleTestKeyModel 仍拒绝未勾选与已全站下架的模型，
- * 结果这些模型不是被真测，而是被兜成「该渠道未挂载此模型」的假失败。
- */
-test("B11 检测范围含未勾选与已全站下架模型：不得出现假失败，测通必须洗白模型状态", async () => {
+test("B11 检测此渠道只测当前勾选在供的模型，不盲抽第 1 个挂载模型", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "row-live", key_id: "key-1", model_id: "model-live", is_enabled: true },
@@ -277,7 +301,12 @@ test("B11 检测范围含未勾选与已全站下架模型：不得出现假失�
     ],
   });
   const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response("ok", { status: 200 });
+  const requestedModels: string[] = [];
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+    if (payload.model) requestedModels.push(payload.model);
+    return new Response("ok", { status: 200 });
+  };
 
   try {
     const response = await buildAiConfigResponse(request({
@@ -287,22 +316,22 @@ test("B11 检测范围含未勾选与已全站下架模型：不得出现假失�
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(body.total, 3, "三个挂载模型都应进入检测");
-    assert.equal(body.successCount, 3, "上游全部返回 200，不应有失败");
+    assert.equal(body.total, 2, "只测勾选在供的两个模型");
+    assert.equal(body.successCount, 2);
     assert.equal(body.failureCount, 0);
     assert.deepEqual(body.failedModelIds, []);
+    assert.deepEqual(requestedModels.sort(), ["model-live", "model-unshelved"]);
     assert.equal(
-      db.tables.ai_provider_key_models.filter((row) => row.last_success_at !== undefined).length,
-      3,
-      "测通后三条模型记录都要被洗白",
+      db.tables.ai_provider_key_models.find((row) => row.id === "row-draft")?.last_success_at,
+      undefined,
+      "未勾选的模型不参与检测",
     );
-    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures, 0);
   } finally {
     globalThis.fetch = previousFetch;
   }
 });
 
-test("test_key_all_models 会检测当前渠道全部挂载模型并返回失败原因", async () => {
+test("test_key_all_models 会检测当前渠道在供模型并返回失败原因", async () => {
   const db = configTables({
     ai_provider_key_models: [
       { id: "model-good-row", key_id: "key-1", model_id: "model-good", is_enabled: true },
@@ -431,6 +460,7 @@ test("模型探测超时返回 15 秒判定线与可读中文原因，不泄露�
       latencyMs: null,
       error: "上游 15 秒内没有返回任何响应（超时）",
       failureDiagnostic: { category: "provider", owner: "provider", technical: { message: "上游 15 秒内没有返回任何响应（超时）", status: null, requestId: null } },
+      stateWriteError: null,
     }]);
   } finally {
     globalThis.fetch = previousFetch;
@@ -504,7 +534,7 @@ test("C2 批量停用恢复只恢复原来打开的供应", async () => {
   assert.deepEqual(db.tables.ai_provider_key_models.map(row => row.disabled_by_model), [false, false]);
 });
 
-test("C3 同一渠道连点五次检测不改变供给或健康计数", async () => {
+test("C3 同一渠道连点五次检测每次都写冷却，但绝不动供给开关", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true, global_is_enabled: true, consecutive_failures: 2 }],
     ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true, consecutive_failures: 1 }],
@@ -512,66 +542,40 @@ test("C3 同一渠道连点五次检测不改变供给或健康计数", async ()
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response("model unavailable", { status: 400 });
   try {
-    const before = JSON.stringify(db.tables);
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const response = await buildAiConfigResponse(request({ action: "test_key_all_models", data: { key_id: "key-1" } }), actor(db));
       assert.equal(response.status, 200);
       assert.equal((await response.json()).failureCount, 1);
     }
-    assert.equal(JSON.stringify(db.tables), before);
+    const model = db.tables.ai_provider_key_models[0];
+    assert.equal(model.is_enabled, true, "失败不能关掉用户的供应开关");
+    assert.equal(model.consecutive_failures, 7, "每次检测都计入连续失败");
+    assert.ok(model.unhealthy_until, "每次检测都刷新冷却截止时间");
+    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures, 1, "模型级失败不连坐整条 Key");
   } finally {
     globalThis.fetch = previousFetch;
   }
 });
 
-test("C4 同步后只把清单缺失且实测 404 的模型列为已核实，其余保持未知", async () => {
+test("C4 同步以上游清单为准，一次撤下历史旧账并报告在供数量", async () => {
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", priority: 1, is_enabled: true, available_models: ["model-live"] }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang Gemini", api_key: "secret", priority: 1, is_enabled: true, available_models: [] }],
     ai_provider_key_models: [
       { id: "live-row", key_id: "key-1", model_id: "model-live", is_enabled: true },
       { id: "dead-row", key_id: "key-1", model_id: "model-dead", is_enabled: true },
-      { id: "unknown-row", key_id: "key-1", model_id: "model-unknown", is_enabled: true },
+      { id: "unknown-row", key_id: "key-1", model_id: "model-unknown", is_enabled: false },
     ],
   });
-  const result = await syncModelsForKey(db as never, { keyId: "key-1", modelIds: ["model-live"] }, async (_input, init) => {
-    const body = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
-    if (body.model === "model-dead") return new Response("model_not_found", { status: 404 });
-    return new Response("upstream unavailable", { status: 500 });
-  });
-  assert.deepEqual(result.reconciliation.verifiedUnavailableModelIds, ["model-dead"]);
-  assert.deepEqual(result.reconciliation.unknownModelIds, ["model-unknown"]);
-  assert.equal(result.reconciliation.status, "unknown");
-  assert.deepEqual(db.tables.ai_provider_key_models.filter((row) => row.key_id === "key-1").map((row) => row.model_id), ["model-live", "model-dead", "model-unknown"]);
-});
-
-test("C-R2 单渠道幽灵比对并发上限为 4 且仍逐条完成", async () => {
-  const staleModels = Array.from({ length: 21 }, (_, index) => ({
-    id: `stale-row-${index}`,
-    key_id: "key-1",
-    model_id: `stale-model-${index}`,
-    is_enabled: true,
-  }));
-  const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api1 default", api_key: "secret", priority: 1, is_enabled: true }],
-    ai_provider_key_models: staleModels,
-  });
-  let activeRequests = 0;
-  let maxActiveRequests = 0;
-  let requestCount = 0;
-  const fetcher = async () => {
-    requestCount += 1;
-    activeRequests += 1;
-    maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    activeRequests -= 1;
-    return new Response("model_not_found", { status: 404 });
-  };
-
-  const result = await syncModelsForKey(db as never, { keyId: "key-1", modelIds: ["live-model"] }, fetcher);
-  assert.equal(requestCount, 21);
-  assert.ok(maxActiveRequests >= 2, `expected concurrent probes, saw ${maxActiveRequests}`);
-  assert.ok(maxActiveRequests <= 4, `expected a concurrency cap of 4, saw ${maxActiveRequests}`);
-  assert.equal(result.reconciliation.verifiedUnavailableModelIds.length, 21);
+  const result = await syncModelsForKey(db as never, { keyId: "key-1" }, async () => (
+    Response.json({ data: [{ id: "model-live" }, { id: "model-brand-new" }] })
+  ));
+  assert.equal(result.removedCount, 2);
+  assert.deepEqual(result.removedModelIds.sort(), ["model-dead", "model-unknown"]);
+  assert.deepEqual(result.removedEnabledModelIds, ["model-dead"]);
+  assert.deepEqual(
+    db.tables.ai_provider_key_models.filter((row) => row.key_id === "key-1").map((row) => row.model_id).sort(),
+    ["model-brand-new", "model-live"],
+  );
 });
 
 test("C6 收走渠道模型成功后写入操作人、对象和来源审计", async () => {
@@ -616,6 +620,149 @@ test("C8 没有正在使用的可检测供应时 checkResult 返回 0/0", async 
   const response = await buildAiConfigResponse(request({ action: "check_all_in_use" }), actor(db));
   const body = await response.json();
   assert.equal(response.status, 200);
-  assert.deepEqual(body.checkResult, { total: 0, successCount: 0, failureCount: 0, results: [] });
+  assert.deepEqual(body.checkResult, { total: 0, successCount: 0, failureCount: 0, stateWriteError: null, results: [] });
   assert.ok(body.availability);
+});
+
+test("R1 渠道批量检测：A 失败立即落库并退出普通候选，B 未结束时已生效", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "row-a", key_id: "key-1", model_id: "model-a", is_enabled: true },
+      { id: "row-b", key_id: "key-1", model_id: "model-b", is_enabled: true },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  let releaseB: (() => void) | undefined;
+  const bPending = new Promise<void>((resolve) => { releaseB = resolve; });
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+    if (payload.model === "model-a") return new Response("upstream unavailable", { status: 503 });
+    await bPending;
+    return new Response("ok", { status: 200 });
+  };
+
+  try {
+    const responsePromise = buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    await waitFor(() => Boolean(db.tables.ai_provider_key_models.find((row) => row.id === "row-a")?.unhealthy_until));
+
+    const aRow = db.tables.ai_provider_key_models.find((row) => row.id === "row-a")!;
+    const bRow = db.tables.ai_provider_key_models.find((row) => row.id === "row-b")!;
+    assert.equal(aRow.consecutive_failures, 1, "A 失败在工作结束前已写库");
+    assert.match(String(aRow.last_error_message), /503/);
+    assert.equal(governanceFor(db, "row-a", "key-1").identity, "sleeping");
+    assert.equal(governanceFor(db, "row-a", "key-1").isSchedulable, false);
+    assert.equal(bRow.unhealthy_until, undefined, "B 未结束时不能被牵连");
+
+    releaseB!();
+    const response = await responsePromise;
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.total, 2);
+    assert.equal(body.failureCount, 1);
+    assert.equal(aRow.consecutive_failures, 1, "整批结束不得二次写同一失败");
+    assert.equal(bRow.last_success_at !== undefined, true);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("R1 顶部检查一遍：A 失败立即落库，B 未结束时已生效", async () => {
+  const db = configTables({
+    ai_feature_bindings: [
+      { id: "default-binding", feature_key: "default", label: "全局默认", model_id: "model-a", is_enabled: true, lifecycle_state: "active" },
+      { id: "content-binding", feature_key: "content_analysis", label: "内容分析", model_id: "model-b", is_enabled: true, lifecycle_state: "active" },
+    ],
+    ai_provider_key_models: [
+      { id: "row-a", key_id: "key-1", model_id: "model-a", is_enabled: true },
+      { id: "row-b", key_id: "key-1", model_id: "model-b", is_enabled: true },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  let releaseB: (() => void) | undefined;
+  const bPending = new Promise<void>((resolve) => { releaseB = resolve; });
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+    if (payload.model === "model-a") return new Response("upstream unavailable", { status: 503 });
+    await bPending;
+    return new Response("ok", { status: 200 });
+  };
+
+  try {
+    const responsePromise = buildAiConfigResponse(request({ action: "check_all_in_use" }), actor(db));
+    await waitFor(() => Boolean(db.tables.ai_provider_key_models.find((row) => row.id === "row-a")?.unhealthy_until));
+
+    const aRow = db.tables.ai_provider_key_models.find((row) => row.id === "row-a")!;
+    const bRow = db.tables.ai_provider_key_models.find((row) => row.id === "row-b")!;
+    assert.equal(aRow.consecutive_failures, 1);
+    assert.equal(governanceFor(db, "row-a", "key-1").identity, "sleeping");
+    assert.equal(governanceFor(db, "row-a", "key-1").isSchedulable, false);
+    assert.equal(bRow.unhealthy_until, undefined);
+
+    releaseB!();
+    const response = await responsePromise;
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.checkResult.total, 2);
+    assert.equal(body.checkResult.failureCount, 1);
+    assert.equal(aRow.consecutive_failures, 1, "整批结束不得二次写同一失败");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("R1 同一 Key 多模型鉴权失败只记一次 Key 失败，首档仍为 5 分钟", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "row-a", key_id: "key-1", model_id: "model-a", is_enabled: true },
+      { id: "row-b", key_id: "key-1", model_id: "model-b", is_enabled: true },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("invalid api key", { status: 401 });
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+    const keyCalls = db.rpcCalls.filter((call) => call.fn === "record_ai_manual_supply_failure");
+    assert.equal(keyCalls.length, 1, "同批 Key 级失败只写一次");
+    assert.equal(keyCalls[0]?.args.failure_scope, "key");
+    const key = db.tables.ai_provider_keys.find((row) => row.id === "key-1")!;
+    assert.equal(key.consecutive_failures, 1);
+    const cooldownMs = Date.parse(String(key.unhealthy_until)) - Date.now();
+    assert.ok(cooldownMs > 4 * 60_000 && cooldownMs <= 5 * 60_000, "首档仍是 5 分钟");
+    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "row-a")?.consecutive_failures ?? 0, 0);
+    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "row-b")?.consecutive_failures ?? 0, 0);
+    assert.equal(body.failureCount, 2);
+    assert.equal(body.stateWriteError, null);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("R1 状态写入失败如实返回，不假装已生效", async () => {
+  const db = configTables({
+    ai_provider_key_models: [{ id: "row-a", key_id: "key-1", model_id: "model-a", is_enabled: true }],
+  }, { failRpc: "record_ai_manual_supply_failure" });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("upstream unavailable", { status: 503 });
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.match(String(body.stateWriteError), /simulated record_ai_manual_supply_failure RPC failure/);
+    assert.match(String(body.results[0]?.stateWriteError), /simulated/);
+    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "row-a")?.unhealthy_until, undefined);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
 });

@@ -68,3 +68,25 @@ test("临时故障的状态码优先于错误正文中的鉴权或模型字样",
   assert.equal(classifyProviderFailure({status:429,message:"model_not_found in rate limit bucket"}),"model");
   assert.equal(isPermanentProviderFailure({status:429,message:"model_not_found in rate limit bucket"}),false);
 });
+
+test("R3 模型级 404/503/超时只进入可恢复故障，不永久失效", () => {
+  assert.equal(isPermanentProviderFailure({ status: 404, message: "model_not_found" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 400, message: "unsupported model: claude-haiku" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 503, message: "model unavailable" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 503, message: "api_key upstream service failed" }), false);
+  assert.equal(isPermanentProviderFailure({ errorType: "timeout" }), false);
+  assert.equal(isPermanentProviderFailure({ errorType: "network", message: "connection reset" }), false);
+  assert.equal(isPermanentProviderFailure({ errorType: "http_404", message: "model_not_found" }), false);
+});
+
+test("R3 Key 级明确鉴权失败仍永久，额度、限流和临时拦截不升格", () => {
+  assert.equal(isPermanentProviderFailure({ status: 401, message: "invalid api key" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid api key" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "unauthorized" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 400, message: "invalid api key" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "invalid api key: access denied" }), true);
+  assert.equal(isPermanentProviderFailure({ status: 402, message: "insufficient quota" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "insufficient_user_quota" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "Cloudflare 1010" }), false);
+  assert.equal(isPermanentProviderFailure({ status: 403, message: "Forbidden" }), false);
+});

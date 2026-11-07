@@ -3,6 +3,7 @@ import type { ChannelIdentity } from "@/lib/ai/channel-governance";
 /** Stable text keys consumed by the three AI configuration views. */
 export const AI_CONFIG_MESSAGES = {
   "channel.usable": "能用",
+  "channel.retest": "待复测",
   "channel.cooling": "暂时歇着",
   "channel.action_required": "需要你处理",
   "channel.disabled": "已停用",
@@ -19,7 +20,7 @@ export const AI_CONFIG_MESSAGES = {
 export type AiConfigMessageKey = keyof typeof AI_CONFIG_MESSAGES;
 
 export const CHANNEL_MESSAGE_KEYS = {
-  active: "channel.usable", retest: "channel.usable", sleeping: "channel.cooling",
+  active: "channel.usable", retest: "channel.retest", sleeping: "channel.cooling",
   invalid: "channel.action_required", disabled: "channel.disabled",
 } as const;
 
@@ -38,7 +39,7 @@ export const CHANNEL_IDENTITY_PRESENTATION: Record<
     badgeClass: "bg-[#4B6B4E]/10 text-[#4B6B4E]",
   },
   retest: {
-    label: AI_CONFIG_MESSAGES["channel.usable"],
+    label: AI_CONFIG_MESSAGES["channel.retest"],
     dot: "bg-[#8A6A2F]",
     color: "text-[#8A6A2F]",
     badgeClass: "bg-[#8A6A2F]/10 text-[#8A6A2F]",

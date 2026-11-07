@@ -8,16 +8,23 @@ function parseHttpStatus(errorType?: string) {
   return match ? Number(match[1]) : undefined;
 }
 
-/** Permanent rejection needs a successful administrator probe before reuse. */
+const KEY_AUTH_PATTERN = /(?:unauthori[sz]ed|invalid (?:api[_\s-]?key|credential))/i;
+const KEY_TEMPORARY_PATTERN = /(?:quota|billing|余额|额度|Cloudflare|captcha|access denied)/i;
+
+/**
+ * 永久失效只属于 Key 级明确鉴权拒绝。
+ * 模型级 404/503/超时、额度/限流/临时拦截都只进入可恢复冷却；撤下由可信清单同步单独负责。
+ */
 export function isPermanentProviderFailure(input: { status?: number; errorType?: string; message?: string }) {
   const status = input.status ?? parseHttpStatus(input.errorType);
-  if (status === 401) return true;
   if (status === 402 || status === 408 || status === 429) return false;
-  if (status === 403 && /unauthori[sz]ed|invalid (?:api[_\s-]?key|credential)/i.test(input.message ?? "")) return true;
-  if (status === 403 && /quota|billing|余额|额度|Cloudflare|captcha|access denied/i.test(input.message ?? "")) return false;
   if (status !== undefined && status >= 500) return false;
-  const message = `${input.errorType ?? ""} ${input.message ?? ""}`;
-  return /(?:unauthori[sz]ed|model[_\s-]?(?:not[_\s-]?found|unsupported|invalid)|unsupported[_\s-]?model|invalid[_\s-]?model|unknown[_\s-]?model|no such model|does not support (?:the )?model|invalid (?:api[_\s-]?key|credential))/i.test(message);
+  const message = input.message ?? "";
+  if (classifyProviderFailure(input) !== "key") return false;
+  if (status === 401) return true;
+  if (status === 403 && KEY_AUTH_PATTERN.test(message)) return true;
+  if (status === 403 && KEY_TEMPORARY_PATTERN.test(message)) return false;
+  return KEY_AUTH_PATTERN.test(`${input.errorType ?? ""} ${message}`);
 }
 
 export function classifyProviderFailure(input: {

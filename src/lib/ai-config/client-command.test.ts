@@ -18,3 +18,17 @@ test("前端数据层保留409影响名单，只有用户确认后的重发才�
   assert.equal("provider_key_model_id" in bodies[0].data, false);
   assert.equal((await requestAiConfigCommand("update", { id: "key", is_enabled: false, confirm_impact: true }, "key", undefined, fetcher)).ok, true);
 });
+
+test("R4 批量检测显式使用 120 秒预算，普通命令仍走默认 30 秒", async () => {
+  const seen: Array<number | undefined> = [];
+  const fetcher = async (_url: string, _init?: RequestInit, timeoutMs?: number) => {
+    seen.push(timeoutMs);
+    return Response.json({ availability: {} });
+  };
+
+  await requestAiConfigCommand("check_all_in_use", {}, undefined, 120_000, fetcher);
+  await requestAiConfigCommand("test_key_all_models", { key_id: "key-1" }, undefined, 120_000, fetcher);
+  await requestAiConfigCommand("update", { id: "key-1" }, "key", undefined, fetcher);
+
+  assert.deepEqual(seen, [120_000, 120_000, undefined]);
+});

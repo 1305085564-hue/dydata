@@ -9,6 +9,7 @@ export interface CheckResultItem {
   ok: boolean;
   latencyMs?: number | null;
   message?: string | null;
+  stateWriteError?: string | null;
   channelLabel?: string;
   channelName?: string;
   model?: string;
@@ -29,6 +30,7 @@ export interface CheckSummaryProps {
     total: number;
     successCount: number;
     failureCount: number;
+    stateWriteError?: string | null;
     results: CheckResultItem[];
   } | null;
   onDismiss?: () => void;
@@ -39,7 +41,7 @@ export function LastCheckSummaryCard({ checkResult, onDismiss }: CheckSummaryPro
 
   if (!checkResult) return null;
 
-  const { total, successCount, failureCount, results } = checkResult;
+  const { total, successCount, failureCount, results, stateWriteError } = checkResult;
 
   if (total === 0) {
     return (
@@ -93,6 +95,12 @@ export function LastCheckSummaryCard({ checkResult, onDismiss }: CheckSummaryPro
           </button>
         )}
       </div>
+
+      {stateWriteError && (
+        <div className="rounded-md border border-status-danger/20 bg-status-danger/[0.10] px-3 py-2 text-[12px] text-status-danger-text">
+          测试结果未能写入渠道状态：{stateWriteError}
+        </div>
+      )}
 
       {failures.length > 0 && (
         <div className="space-y-2 pt-1 border-t border-[#E2E2DF]/60">

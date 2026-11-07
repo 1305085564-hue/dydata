@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAiConfig } from "../hooks/use-ai-config";
+import { useAiConfig, AI_MODEL_BATCH_TIMEOUT_MS, startDetectionRefresh } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { compareModelFamilies } from "@/lib/ai-config/list-order";
@@ -13,6 +13,7 @@ import { ChannelPoolView } from "./channel-pool-view";
 import { AddKeyDialog } from "./add-key-dialog";
 import { SyncModelsDialog } from "./sync-models-dialog";
 import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -35,7 +36,7 @@ export function modelToggleSuccessMessage(
 }
 
 export function ComputePoolPanel() {
-  const { bundle, runCommand } = useAiConfig();
+  const { bundle, runCommand, loadData } = useAiConfig();
   const report = useAvailabilityReport(bundle);
   const searchParams = useSearchParams();
 
@@ -48,6 +49,10 @@ export function ComputePoolPanel() {
       setViewMode(view);
     }
   }, [searchParams]);
+
+  useEffect(() => () => {
+    detectionRefreshRef.current?.stop();
+  }, []);
 
   const handleViewModeChange = (nextMode: PoolViewMode) => {
     setViewMode(nextMode);
@@ -64,10 +69,13 @@ export function ComputePoolPanel() {
 
   // 检查测试状态
   const [isCheckingAll, setIsCheckingAll] = useState(false);
+  const [detectionState, setDetectionState] = useState<"idle" | "reading" | "stopped">("idle");
+  const detectionRefreshRef = useRef<{ stop: () => void } | null>(null);
   const [checkResult, setCheckResult] = useState<{
     total: number;
     successCount: number;
     failureCount: number;
+    stateWriteError?: string | null;
     results: CheckResultItem[];
   } | null>(null);
 
@@ -86,14 +94,19 @@ export function ComputePoolPanel() {
   const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
   const [testingKeyModelId, setTestingKeyModelId] = useState<string | null>(null);
 
-  // 诊断信息映射表：按 keyModelId 对应
+  // 诊断信息映射表：模型级失败按 keyModelId 对应；key 级失败回落到该渠道下所有模型。
   const diagnosticMap = useMemo(() => {
     const map: Record<string, ChannelFailureDiagnostic> = {};
-    if (bundle?.models) {
-      for (const m of bundle.models) {
-        if (m.failureDiagnostic) {
-          map[m.id] = m.failureDiagnostic;
-        }
+    const keyDiagnostics = new Map<string, ChannelFailureDiagnostic>();
+    for (const key of bundle?.keys ?? []) {
+      if (key.failureDiagnostic) keyDiagnostics.set(key.id, key.failureDiagnostic);
+    }
+    for (const model of bundle?.models ?? []) {
+      if (model.failureDiagnostic) {
+        map[model.id] = model.failureDiagnostic;
+      } else {
+        const keyDiagnostic = keyDiagnostics.get(model.key_id);
+        if (keyDiagnostic) map[model.id] = keyDiagnostic;
       }
     }
     return map;
@@ -142,28 +155,51 @@ export function ComputePoolPanel() {
   // S1: 检查一遍
   const handleCheckAll = async () => {
     setIsCheckingAll(true);
+    setDetectionState("idle");
+    detectionRefreshRef.current?.stop();
+    detectionRefreshRef.current = startDetectionRefresh({
+      loadData,
+      onWindowEnd: () => setDetectionState("stopped"),
+      onReadError: () => feedbackToast.error("检测中最新状态读取失败，页面可能仍是旧数据。", { duration: 6000 }),
+    });
     try {
-      const res = await runCommand("check_all_in_use", {});
-      if (res.ok) {
-        const body = res.body as Record<string, unknown>;
-        const rawCheck = (body.checkResult as Record<string, unknown>) || body;
-        const total = (rawCheck.totalModels as number) ?? (rawCheck.total as number) ?? ((rawCheck.results as unknown[])?.length ?? 0);
-        const successCount = (rawCheck.successCount as number) ?? 0;
-        const failureCount = (rawCheck.failureCount as number) ?? 0;
-        const results = (rawCheck.results as CheckResultItem[]) ?? [];
-
-        setCheckResult({
-          total,
-          successCount,
-          failureCount,
-          results,
-        });
-      } else {
+      const res = await runCommand("check_all_in_use", {}, undefined, AI_MODEL_BATCH_TIMEOUT_MS);
+      detectionRefreshRef.current?.stop();
+      if (!res.ok) {
         feedbackToast.error(res.error || "执行检查失败");
+        return;
       }
+      const body = res.body as Record<string, unknown>;
+      const rawCheck = (body.checkResult as Record<string, unknown>) || body;
+      const total = (rawCheck.totalModels as number) ?? (rawCheck.total as number) ?? ((rawCheck.results as unknown[])?.length ?? 0);
+      const successCount = (rawCheck.successCount as number) ?? 0;
+      const failureCount = (rawCheck.failureCount as number) ?? 0;
+      const results = (rawCheck.results as CheckResultItem[]) ?? [];
+      const stateWriteError = (rawCheck.stateWriteError as string | null) ?? null;
+
+      setCheckResult({ total, successCount, failureCount, results, stateWriteError });
+      if (stateWriteError) {
+        feedbackToast.error(`部分结果未能写入渠道状态：${stateWriteError}`, { duration: 6000 });
+      }
+      const finalReadOk = await loadData(true, true);
+      if (!finalReadOk) {
+        feedbackToast.error("最终状态未同步，请点击「重新读取最新状态」。", { duration: 6000 });
+      }
+    } catch (error) {
+      setDetectionState("reading");
+      feedbackToast.error(
+        `检测未完整收齐：${error instanceof Error ? error.message : "请求中断"}。后台可能仍在完成，页面会自动读取已落库状态。`,
+        { duration: 6000 },
+      );
     } finally {
       setIsCheckingAll(false);
     }
+  };
+
+  const handleReloadAfterDetection = async () => {
+    const ok = await loadData(true, true);
+    if (ok) feedbackToast.success("已读取最新状态");
+    else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
   };
 
   // 陷阱 A: 仅开关该供应
@@ -232,12 +268,15 @@ export function ComputePoolPanel() {
         return;
       }
       const testRes = (res.body as Record<string, unknown>).testResult as
-        | { ok?: boolean; message?: string }
+        | { ok?: boolean; message?: string; stateWriteError?: string | null }
         | undefined;
       if (testRes?.ok) {
         feedbackToast.success("测试通过，已恢复能用");
       } else {
         feedbackToast.error(`测试未通过: ${testRes?.message || "服务未返回测试结果"}`, { duration: 6000 });
+        if (testRes?.stateWriteError) {
+          feedbackToast.error(`测试结果未能写入渠道状态：${testRes.stateWriteError}`, { duration: 6000 });
+        }
       }
     } finally {
       setTestingKeyModelId(null);
@@ -307,6 +346,28 @@ export function ComputePoolPanel() {
         checkResult={checkResult}
         onClearCheckResult={() => setCheckResult(null)}
       />
+
+      {/* 检测未完整收齐：保留说明和手动重新读取入口 */}
+      {detectionState !== "idle" && (
+        <div
+          data-slot="ai-detection-interrupted"
+          className="rounded-xl border border-[#8A6A2F]/30 bg-[#8A6A2F]/[0.04] px-4 py-2 text-[12px] text-[#78716C] flex flex-wrap items-center justify-between gap-2"
+        >
+          <span>
+            {detectionState === "reading"
+              ? "检测未完整收齐：请求已中断，后台可能仍在完成，正在读取已落库状态…"
+              : "检测未完整收齐：已停止自动读取，后台可能仍在完成。请手动重新读取最新状态。"}
+          </span>
+          <Button
+            size="s"
+            variant="outline"
+            onClick={handleReloadAfterDetection}
+            className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+          >
+            重新读取最新状态
+          </Button>
+        </div>
+      )}
 
       {/* 合并后的筛选与视角切换工具行 */}
       <div

@@ -89,24 +89,31 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
       assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3);
       await updateKey({ manual_sleep_until: null });
     });
-    await t.test("失败测试只返回事实，不改健康；成功复测才恢复失效", async () => {
-      const before = await keys();
+    await t.test("失败测试当场写模型级冷却，成功复测才恢复失效", async () => {
+      const tested = (await ordered(modelA)).find((row) => row.key_id === keyIds[0])!;
+      const beforeKey = (await keys()).find((k) => k.id === keyIds[0])!;
       const response = await action("test_key_model", { key_id: keyIds[0], model_id: modelA });
       assert.equal(response.status, 200); const body = await response.json();
       assert.equal(body.testResult.ok, false); assert.equal(body.testResult.failureDiagnostic.owner, "provider");
       assert.equal(body.testResult.failureDiagnostic.technical.requestId, "local-governance-probe");
-      assert.deepEqual(await keys(), before);
-      const oldFailure = new Date(Date.now() - 25 * 3600_000).toISOString();
-      await updateKey({ consecutive_failures: 1, first_failure_at: oldFailure, last_failure_at: oldFailure, unhealthy_until: new Date(Date.now() - 1000).toISOString(), invalidated_at: null });
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3, "单次旧故障且没有新失败证据不判永久失效");
-      await updateKey({ consecutive_failures: 8, last_failure_at: new Date().toISOString(), unhealthy_until: new Date(Date.now() + 60_000).toISOString() });
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2, "有新失败证据时按冷却暂歇");
-      await updateKey({ unhealthy_until: new Date(Date.now() - 1000).toISOString() });
-      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3, "冷却过期后不因旧首败时间自动判死");
+      assert.equal(body.testResult.stateWriteError, null);
+      const failed = (await db.from("ai_provider_key_models").select("*").eq("id", tested.id).single()).data!;
+      assert.equal(failed.consecutive_failures, 1);
+      assert.ok(failed.unhealthy_until, "失败当场进入冷却");
+      assert.equal(failed.invalidated_at, null, "模型级失败不升级为永久失效");
+      assert.equal(failed.is_enabled, true, "失败不能关掉用户的供应开关");
+      const afterKey = (await keys()).find((k) => k.id === keyIds[0])!;
+      assert.equal(afterKey.consecutive_failures, beforeKey.consecutive_failures, "模型级失败不连坐整条 Key");
+      assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 2, "冷却中的供应暂时退出候选");
+      assert.equal((await listRankedProviderKeyModels(db, modelA, { includeSleeping: true })).length, 3);
+
       upstreamStatus = 200;
       assert.equal((await action("test_key_model", { key_id: keyIds[0], model_id: modelA })).status, 200);
-      const restored = (await keys()).find((k) => k.id === keyIds[0])!;
-      assert.equal(restored.first_failure_at, null); assert.equal(restored.invalidated_at, null); assert.equal(restored.consecutive_failures, 0);
+      const restored = (await db.from("ai_provider_key_models").select("*").eq("id", tested.id).single()).data!;
+      assert.equal(restored.first_failure_at, null);
+      assert.equal(restored.invalidated_at, null);
+      assert.equal(restored.consecutive_failures, 0);
+      assert.equal(restored.unhealthy_until, null);
       assert.equal((await listRankedProviderKeyModels(db, modelA)).length, 3);
     });
     await t.test("供应级故障记录按1/5/30/60分钟冷却递增且封顶", async () => {
