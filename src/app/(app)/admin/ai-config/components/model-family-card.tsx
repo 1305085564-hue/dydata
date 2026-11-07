@@ -17,6 +17,20 @@ import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
 import { cn } from "@/lib/utils";
 
+// 沿顺位方向找最近的可调度渠道；起点和目标都必须可调度，休眠/失效/停用的行不参与交换（后端只接受两端都可调度）
+export function findMoveTarget(
+  channels: AvailabilityChannel[],
+  keyModelId: string,
+  direction: -1 | 1,
+): AvailabilityChannel | null {
+  const idx = channels.findIndex((c) => c.keyModelId === keyModelId);
+  if (idx === -1 || !channels[idx].isSchedulable) return null;
+  for (let i = idx + direction; i >= 0 && i < channels.length; i += direction) {
+    if (channels[i].isSchedulable) return channels[i];
+  }
+  return null;
+}
+
 export interface ModelFamilyCardProps {
   family: AvailabilityModelFamily;
   diagnosticMap?: Record<string, ChannelFailureDiagnostic>;
@@ -91,12 +105,9 @@ export function ModelFamilyCard({
   };
 
   const handleMoveOrder = async (keyModelId: string, direction: "up" | "down") => {
-    const idx = sortedChannels.findIndex((c) => c.keyModelId === keyModelId);
-    if (idx === -1) return;
-    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= sortedChannels.length) return;
-    const targetKeyModelId = sortedChannels[targetIdx].keyModelId;
-    await onSwapOrder(family.modelId, keyModelId, targetKeyModelId);
+    const target = findMoveTarget(sortedChannels, keyModelId, direction === "up" ? -1 : 1);
+    if (!target) return;
+    await onSwapOrder(family.modelId, keyModelId, target.keyModelId);
   };
 
   return (
@@ -224,9 +235,8 @@ export function ModelFamilyCard({
           <div className="border-t border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60">
             {/* 1. 主列表：能用 / 歇着 / 需要你处理 */}
             {mainChannels.map((channel) => {
-              const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
-              const canMoveUp = sortedIdx > 0;
-              const canMoveDown = sortedIdx < sortedChannels.length - 1;
+              const canMoveUp = findMoveTarget(sortedChannels, channel.keyModelId, -1) !== null;
+              const canMoveDown = findMoveTarget(sortedChannels, channel.keyModelId, 1) !== null;
 
               return (
                 <ModelChannelRow
@@ -266,9 +276,8 @@ export function ModelFamilyCard({
                 {isShowDisabled && (
                   <div className="border-t border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60">
                     {disabledChannels.map((channel) => {
-                      const sortedIdx = sortedChannels.findIndex((c) => c.keyModelId === channel.keyModelId);
-                      const canMoveUp = sortedIdx > 0;
-                      const canMoveDown = sortedIdx < sortedChannels.length - 1;
+                      const canMoveUp = findMoveTarget(sortedChannels, channel.keyModelId, -1) !== null;
+                      const canMoveDown = findMoveTarget(sortedChannels, channel.keyModelId, 1) !== null;
 
                       return (
                         <ModelChannelRow

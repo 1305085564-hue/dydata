@@ -63,6 +63,13 @@ export function ModelChannelRow({
   const isInvalid = channel.identity === "invalid";
   const isSleeping = channel.identity === "sleeping";
   const isUsable = channel.identity === "active" || channel.identity === "retest";
+  const moveLockReason = !channel.isSchedulable
+    ? isSleeping
+      ? "休眠期间顺位锁定，恢复后可调整"
+      : "该渠道当前不可调度，不能调整顺位"
+    : null;
+  const moveUpTitle = canMoveUp ? "上移顺位" : moveLockReason ?? "没有可交换的可用渠道";
+  const moveDownTitle = canMoveDown ? "下移顺位" : moveLockReason ?? "没有可交换的可用渠道";
 
   const handleStartRename = () => {
     setEditingNameValue(channel.label || "");
@@ -114,8 +121,8 @@ export function ModelChannelRow({
               disabled={!canMoveUp}
               onClick={onMoveUp}
               className="size-6 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
-              title="上移顺位"
-              aria-label="上移顺位"
+              title={moveUpTitle}
+              aria-label={moveUpTitle}
             >
               <ArrowUp className="size-3" />
             </Button>
@@ -125,8 +132,8 @@ export function ModelChannelRow({
               disabled={!canMoveDown}
               onClick={onMoveDown}
               className="size-6 text-[#78716C] hover:text-[#141413] disabled:opacity-30"
-              title="下移顺位"
-              aria-label="下移顺位"
+              title={moveDownTitle}
+              aria-label={moveDownTitle}
             >
               <ArrowDown className="size-3" />
             </Button>
