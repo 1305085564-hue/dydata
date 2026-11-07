@@ -20,6 +20,20 @@ import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnosti
 import type { CheckResultItem } from "./channel-model-test-list";
 import { cn } from "@/lib/utils";
 
+// 恢复模型只说响应能证明的结果：零条不等于本来已开，缺字段也不推断
+export function modelToggleSuccessMessage(
+  enabled: boolean,
+  changedSupplyCount?: number,
+): string {
+  if (!enabled) return "已停用模型";
+  if (changedSupplyCount === undefined) {
+    return "恢复请求已处理；实际开启条数未返回，请查看渠道状态";
+  }
+  return changedSupplyCount > 0
+    ? `已重新开启 ${changedSupplyCount} 条渠道供应`
+    : "本次未恢复任何渠道供应；手动停用的渠道需逐条开启";
+}
+
 export function ComputePoolPanel() {
   const { bundle, runCommand } = useAiConfig();
   const report = useAvailabilityReport(bundle);
@@ -91,11 +105,15 @@ export function ComputePoolPanel() {
       action: string,
       data: Record<string, unknown>,
       entity?: "provider" | "key" | "model" | "feature_binding",
-      successMsg?: string
+      successMsg?: string | ((body: Record<string, unknown>) => string)
     ) => {
+      const showSuccess = (body: Record<string, unknown>) => {
+        if (!successMsg) return;
+        feedbackToast.success(typeof successMsg === "function" ? successMsg(body) : successMsg);
+      };
       const res = await runCommand(action, data, entity);
       if (res.ok) {
-        if (successMsg) feedbackToast.success(successMsg);
+        showSuccess(res.body);
         return res;
       }
 
@@ -106,7 +124,7 @@ export function ComputePoolPanel() {
           onConfirm: async () => {
             const retryRes = await runCommand(action, { ...data, confirm_impact: true }, entity);
             if (retryRes.ok) {
-              if (successMsg) feedbackToast.success(successMsg);
+              showSuccess(retryRes.body);
             } else {
               feedbackToast.error(retryRes.error || "操作失败");
             }
@@ -164,7 +182,14 @@ export function ComputePoolPanel() {
       "set_model_enabled",
       { model_id: modelId, is_enabled: enabled },
       undefined,
-      enabled ? "已恢复模型供应" : "已停用模型"
+      (body) => {
+        const changedSupplyCount = (body.shelfResult as { changedSupplyCount?: unknown } | undefined)
+          ?.changedSupplyCount;
+        return modelToggleSuccessMessage(
+          enabled,
+          typeof changedSupplyCount === "number" ? changedSupplyCount : undefined
+        );
+      }
     );
   };
 

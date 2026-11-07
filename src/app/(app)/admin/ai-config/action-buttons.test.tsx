@@ -5,7 +5,9 @@ import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { CHANNEL_MESSAGE_KEYS } from "@/lib/ai-config/presentation";
-import { findMoveTarget, ModelFamilyCard } from "./components/model-family-card";
+import { channelOrderResetKey, findMoveTarget, ModelFamilyCard } from "./components/model-family-card";
+import { modelToggleSuccessMessage } from "./components/compute-pool-panel";
+import { applyFrozenOrder } from "@/lib/ai-config/list-order";
 import type { AvailabilityChannel, AvailabilityModelFamily } from "@/lib/ai-config/availability";
 
 const computePanelSource = readFileSync(
@@ -197,4 +199,74 @@ test("A: 单条可调度渠道的上下移按钮都不可用", () => {
 
   const onlyRow = rowMarkup(markup, "only 渠道");
   assert.equal(countTitle(onlyRow, "没有可交换的可用渠道"), 2);
+});
+
+test("B: 恢复提示只覆盖响应能证明的结果", () => {
+  assert.equal(modelToggleSuccessMessage(false), "已停用模型");
+  assert.equal(
+    modelToggleSuccessMessage(true, 0),
+    "本次未恢复任何渠道供应；手动停用的渠道需逐条开启",
+  );
+  assert.equal(modelToggleSuccessMessage(true, 2), "已重新开启 2 条渠道供应");
+  assert.equal(
+    modelToggleSuccessMessage(true, undefined),
+    "恢复请求已处理；实际开启条数未返回，请查看渠道状态",
+  );
+  assert.doesNotMatch(modelToggleSuccessMessage(true, 0), /本来就|测试通过|已恢复健康/);
+});
+
+test("B: 渠道顺序标记只在成员或真实顺位变化时失效", () => {
+  const base = [makeChannel("A", "active", 1), makeChannel("B", "retest", 2)];
+  const identityOnlyChange = [
+    makeChannel("A", "sleeping", 1),
+    makeChannel("B", "active", 2),
+  ];
+  assert.equal(channelOrderResetKey(base), channelOrderResetKey(identityOnlyChange));
+  assert.equal(
+    channelOrderResetKey(base),
+    channelOrderResetKey([makeChannel("B", "retest", 2), makeChannel("A", "active", 1)]) ,
+  );
+
+  assert.notEqual(channelOrderResetKey(base), channelOrderResetKey([
+    makeChannel("A", "active", 2),
+    makeChannel("B", "retest", 1),
+  ]));
+  assert.notEqual(channelOrderResetKey(base), channelOrderResetKey([...base, makeChannel("C", "active", 3)]));
+  assert.notEqual(channelOrderResetKey(base), channelOrderResetKey([base[0]]));
+});
+
+test("B: 固定成员在输入顺序变化时保持位置，新增成员排到末尾", () => {
+  const a = makeChannel("A", "active", 1);
+  const b = makeChannel("B", "retest", 2);
+  const compare = (x: AvailabilityChannel, y: AvailabilityChannel) =>
+    x.sortOrder - y.sortOrder || x.keyModelId.localeCompare(y.keyModelId);
+  const ids = [a, b].sort(compare).map((channel) => channel.keyModelId);
+
+  assert.deepEqual(
+    applyFrozenOrder([b, a], ids, (channel) => channel.keyModelId, compare).map((channel) => channel.keyModelId),
+    ["A", "B"],
+  );
+  assert.deepEqual(
+    applyFrozenOrder([b, a, makeChannel("C", "active", 3)], ids, (channel) => channel.keyModelId, compare)
+      .map((channel) => channel.keyModelId),
+    ["A", "B", "C"],
+  );
+});
+
+test("B: 模型卡按真实顺位渲染，不把待复测渠道提到前面", () => {
+  const family = makeFamily([
+    makeChannel("B", "retest", 2),
+    makeChannel("A", "active", 1),
+  ]);
+  const markup = renderToStaticMarkup(<ModelFamilyCard family={family} />);
+  assert.ok(markup.indexOf("A 渠道") < markup.indexOf("B 渠道"));
+});
+
+test("B: 主动调整顺位后按新顺位渲染", () => {
+  const family = makeFamily([
+    makeChannel("A", "active", 2),
+    makeChannel("B", "retest", 1),
+  ]);
+  const markup = renderToStaticMarkup(<ModelFamilyCard family={family} />);
+  assert.ok(markup.indexOf("B 渠道") < markup.indexOf("A 渠道"));
 });

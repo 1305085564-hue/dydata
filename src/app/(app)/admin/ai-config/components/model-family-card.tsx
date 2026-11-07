@@ -15,7 +15,16 @@ import { ModelChannelRow } from "./model-channel-row";
 import { FindChannelsPanel } from "./find-channels-panel";
 import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
+import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { cn } from "@/lib/utils";
+
+// 渠道行顺序只认真实顺位：身份（待复测/休眠等）变化不改标记，不触发重排
+export function channelOrderResetKey(channels: readonly AvailabilityChannel[]): string {
+  return channels
+    .map((channel) => `${channel.keyModelId}:${channel.sortOrder}`)
+    .sort()
+    .join("|");
+}
 
 // 沿顺位方向找最近的可调度渠道；起点和目标都必须可调度，休眠/失效/停用的行不参与交换（后端只接受两端都可调度）
 export function findMoveTarget(
@@ -66,11 +75,20 @@ export function ModelFamilyCard({
   const isChannelsVisible = family.isShelved || channelsExpanded;
 
   const channels = useMemo(() => family.channels ?? [], [family.channels]);
+
+  // 口径 4: 模型内只有一种排队顺序，按真实顺位；测试/身份变化不跳行，成员或顺位变化才重建
+  const frozenChannels = useFrozenOrder(
+    channels,
+    (channel) => channel.keyModelId,
+    (a, b) => a.sortOrder - b.sortOrder || a.keyModelId.localeCompare(b.keyModelId),
+    channelOrderResetKey(channels),
+  );
+
   const schedulableCount = family.schedulableChannelCount;
   const isSingleSupply = schedulableCount === 1;
   const isNoSupply = schedulableCount === 0;
 
-  // 口径 4: 相邻关系按 sortOrder 判断，不按临时恢复数组下标判断
+  // 查找交换对象仍按真实顺位，不用展示快照位置推断相邻关系
   const sortedChannels = useMemo(() => {
     return [...channels].sort((a, b) => a.sortOrder - b.sortOrder);
   }, [channels]);
@@ -79,7 +97,7 @@ export function ModelFamilyCard({
   const { mainChannels, disabledChannels } = useMemo(() => {
     const main: AvailabilityChannel[] = [];
     const disabled: AvailabilityChannel[] = [];
-    for (const ch of channels) {
+    for (const ch of frozenChannels) {
       if (ch.identity === "disabled") {
         disabled.push(ch);
       } else {
@@ -87,7 +105,7 @@ export function ModelFamilyCard({
       }
     }
     return { mainChannels: main, disabledChannels: disabled };
-  }, [channels]);
+  }, [frozenChannels]);
 
   // 如果主列表没有供应，但有已停用供应，默认展开
   const isShowDisabled = disabledExpanded || (mainChannels.length === 0 && disabledChannels.length > 0);
