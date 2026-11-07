@@ -69,11 +69,6 @@ function toYearMonth(dateStr: string): { year: number; month: number } {
   return { year: date.getFullYear(), month: date.getMonth() };
 }
 
-function shiftMonth(value: { year: number; month: number }, delta: number): { year: number; month: number } {
-  const date = new Date(value.year, value.month + delta, 1);
-  return { year: date.getFullYear(), month: date.getMonth() };
-}
-
 const NAV_BUTTON_CLASS =
   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md px-2 py-1.5 text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] cursor-pointer";
 
@@ -199,8 +194,8 @@ export function DatePagination({
           <MonthCalendar
             today={today}
             viewMonth={{ year, month: month + 1 }}
-            onMonthShift={(direction) => setViewMonth(shiftMonth(viewMonth, direction))}
-            canShiftNext={!maxDate || toDateString(year, month + 1, 1) <= maxDate}
+            onMonthShift={(target) => setViewMonth({ year: target.year, month: target.month - 1 })}
+            canShiftNext={(target) => !maxDate || toDateString(target.year, target.month - 1, 1) <= maxDate}
             selectedDates={isRange ? [] : [currentDate]}
             range={isRange ? { start: rangeStart ?? null, end: rangeEnd ?? null } : undefined}
             onSelectDate={pickDate}

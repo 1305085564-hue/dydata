@@ -292,24 +292,6 @@ export function PublishedAtPicker({
     };
   }, [closePicker, isOpen]);
 
-  const handlePrevMonth = () => {
-    if (viewMonth === 0) {
-      setViewYear((y) => y - 1);
-      setViewMonth(11);
-    } else {
-      setViewMonth((m) => m - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (viewMonth === 11) {
-      setViewYear((y) => y + 1);
-      setViewMonth(0);
-    } else {
-      setViewMonth((m) => m + 1);
-    }
-  };
-
   const handleDateClick = (dateStr: string) => {
     onChange(`${dateStr}T${parsed.hour}:${parsed.minute}`);
   };
@@ -374,9 +356,9 @@ export function PublishedAtPicker({
           <MonthCalendar
             today={formatShanghaiDateOnly()}
             viewMonth={{ year: viewYear, month: viewMonth + 1 }}
-            onMonthShift={(d) => {
-              if (d === -1) handlePrevMonth();
-              else handleNextMonth();
+            onMonthShift={(target) => {
+              setViewYear(target.year);
+              setViewMonth(target.month - 1);
             }}
             selectedDates={[parsed.date]}
             onSelectDate={handleDateClick}

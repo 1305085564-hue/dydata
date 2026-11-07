@@ -10,9 +10,9 @@ export const CALENDAR_CARD_CLASS =
 export interface MonthCalendarProps {
   today: string;
   viewMonth: { year: number; month: number };
-  onMonthShift?: (direction: -1 | 1) => void;
+  onMonthShift?: (target: { year: number; month: number }) => void;
   canShiftPrev?: boolean;
-  canShiftNext?: boolean;
+  canShiftNext?: (target: { year: number; month: number }) => boolean;
   selectedDates: string[];
   onSelectDate: (date: string) => void;
   /** 区间范围（起点与终点） */
@@ -32,6 +32,17 @@ export interface MonthCalendarProps {
 }
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+
+/** 以正在看的月份为基准算出翻月目标；对外月份统一 1 基，跨年正确。 */
+export function resolveStepMonthTarget(
+  visibleMonthKey: string,
+  direction: -1 | 1,
+): { year: number; month: number } {
+  const [year, month] = visibleMonthKey.split("-").map(Number);
+  const total = year * 12 + (month - 1) + direction;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+}
+
 const NAV_CLASS =
   "flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:text-[#A8A29E] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors";
 
@@ -48,7 +59,7 @@ export function MonthCalendar({
   viewMonth,
   onMonthShift,
   canShiftPrev = true,
-  canShiftNext = true,
+  canShiftNext,
   selectedDates,
   onSelectDate,
   range,
@@ -230,18 +241,23 @@ export function MonthCalendar({
     return [parts[0] || anchorYear, parts[1] || anchorMonth];
   }, [visibleMonthKey, anchorYear, anchorMonth]);
 
-  // 顶栏上一月 / 下一月微调按钮
+  // 顶栏上一月 / 下一月微调按钮：目标是正在看的月份的下/上一月，按钮边界与处理函数同源
+  const nextTarget = resolveStepMonthTarget(visibleMonthKey, 1);
+  const isNextDisabled = canShiftNext ? !canShiftNext(nextTarget) : false;
   const handleStepMonth = (direction: -1 | 1) => {
-    onMonthShift?.(direction);
-    const currentIndex = months.findIndex((m) => m.key === visibleMonthKey);
-    const targetIndex = currentIndex !== -1 ? currentIndex + direction : -1;
-    if (targetIndex >= 0 && targetIndex < months.length) {
-      const target = months[targetIndex];
-      const el = monthRefs.current[target.key];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        setVisibleMonthKey(target.key);
-      }
+    if (direction === -1 && !canShiftPrev) return;
+    const target = resolveStepMonthTarget(visibleMonthKey, direction);
+    if (direction === 1 && canShiftNext && !canShiftNext(target)) return;
+
+    // 父级记录明确目标，不按自己的旧月份再算一次
+    onMonthShift?.(target);
+
+    // 目标已在长卷中：无论父级年月是否变化都实际跳过去
+    const targetKey = `${target.year}-${String(target.month).padStart(2, "0")}`;
+    const el = monthRefs.current[targetKey];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setVisibleMonthKey(targetKey);
     }
   };
 
@@ -290,7 +306,7 @@ export function MonthCalendar({
         <button
           type="button"
           onClick={() => handleStepMonth(1)}
-          disabled={!canShiftNext}
+          disabled={isNextDisabled}
           className={NAV_CLASS}
           aria-label="下个月"
         >

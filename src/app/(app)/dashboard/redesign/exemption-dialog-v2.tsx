@@ -77,28 +77,6 @@ export function ExemptionDialogV2({
   const [viewYear, setViewYear] = useState(todayYear);
   const [viewMonth, setViewMonth] = useState(todayMonthNumber);
 
-  const canGoNext =
-    viewYear < todayYear || (viewYear === todayYear && viewMonth < todayMonthNumber);
-
-  const handlePrevMonth = () => {
-    if (viewMonth === 1) {
-      setViewYear((y) => y - 1);
-      setViewMonth(12);
-    } else {
-      setViewMonth((m) => m - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (!canGoNext) return;
-    if (viewMonth === 12) {
-      setViewYear((y) => y + 1);
-      setViewMonth(1);
-    } else {
-      setViewMonth((m) => m + 1);
-    }
-  };
-
   // 弹窗打开时加载催交次数（业务闭环）
   useEffect(() => {
     if (!isOpen) {
@@ -197,8 +175,13 @@ export function ExemptionDialogV2({
             <MonthCalendar
               today={today}
               viewMonth={{ year: viewYear, month: viewMonth }}
-              onMonthShift={(direction) => direction === -1 ? handlePrevMonth() : handleNextMonth()}
-              canShiftNext={canGoNext}
+              onMonthShift={(target) => {
+                setViewYear(target.year);
+                setViewMonth(target.month);
+              }}
+              canShiftNext={(target) =>
+                target.year * 12 + target.month - 1 <= todayYear * 12 + todayMonthNumber - 1
+              }
               selectedDates={calendar.selectedDates}
               onSelectDate={calendar.toggleDate}
               isDateDisabled={(date) => !calendar.isAvailable(date)}

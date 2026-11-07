@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MonthCalendar } from "./month-calendar";
+import { MonthCalendar, resolveStepMonthTarget } from "./month-calendar";
+
+test("resolveStepMonthTarget 按月份键跨年计算翻月目标", () => {
+  assert.deepEqual(resolveStepMonthTarget("2026-03", 1), { year: 2026, month: 4 });
+  assert.deepEqual(resolveStepMonthTarget("2026-12", 1), { year: 2027, month: 1 });
+  assert.deepEqual(resolveStepMonthTarget("2026-01", -1), { year: 2025, month: 12 });
+});
 
 test("MonthCalendar 连续渲染包含锚点月份及其前后的连续月份长卷", () => {
   const html = renderToStaticMarkup(
@@ -76,4 +82,35 @@ test("MonthCalendar 包含快速回滚本月的快捷入口（当非本月时）
   // 查看8月时，提供回到本月的快捷按钮
   assert.match(html, /滑动回本月/);
   assert.match(html, /本月/);
+});
+
+test("MonthCalendar 下一月按钮按目标月判断", () => {
+  const limitNovember = (target: { year: number; month: number }) =>
+    target.year * 12 + target.month - 1 <= 2026 * 12 + 10;
+
+  const fromSeptember = renderToStaticMarkup(
+    <MonthCalendar
+      today="2026-11-02"
+      viewMonth={{ year: 2026, month: 9 }}
+      canShiftNext={limitNovember}
+      selectedDates={[]}
+      onSelectDate={() => {}}
+    />
+  );
+  const septemberNext = fromSeptember.match(/<button[^>]*aria-label="下个月"[^>]*>/)?.[0];
+  assert.ok(septemberNext);
+  assert.doesNotMatch(septemberNext, / disabled=""/);
+
+  const fromNovember = renderToStaticMarkup(
+    <MonthCalendar
+      today="2026-11-02"
+      viewMonth={{ year: 2026, month: 11 }}
+      canShiftNext={limitNovember}
+      selectedDates={[]}
+      onSelectDate={() => {}}
+    />
+  );
+  const novemberNext = fromNovember.match(/<button[^>]*aria-label="下个月"[^>]*>/)?.[0];
+  assert.ok(novemberNext);
+  assert.match(novemberNext, / disabled=""/);
 });

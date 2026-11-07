@@ -82,27 +82,6 @@ export function SubmissionCalendar({
 
   const todayDate = useMemo(() => new Date(`${today}T00:00:00`), [today]);
 
-  const canGoNext = useMemo(() => {
-    return (
-      displayDate.getFullYear() < todayDate.getFullYear() ||
-      (displayDate.getFullYear() === todayDate.getFullYear() &&
-        displayDate.getMonth() < todayDate.getMonth())
-    );
-  }, [displayDate, todayDate]);
-
-  const handlePrevMonth = () => {
-    setDisplayDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
-    );
-  };
-
-  const handleNextMonth = () => {
-    if (!canGoNext) return;
-    setDisplayDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
-    );
-  };
-
   const submittedDateSet = useMemo(
     () => new Set(submittedDates),
     [submittedDates],
@@ -122,8 +101,10 @@ export function SubmissionCalendar({
       <MonthCalendar
         today={today}
         viewMonth={{ year: displayDate.getFullYear(), month: displayDate.getMonth() + 1 }}
-        onMonthShift={(direction) => direction === -1 ? handlePrevMonth() : handleNextMonth()}
-        canShiftNext={canGoNext}
+        onMonthShift={(target) => setDisplayDate(new Date(target.year, target.month - 1, 1))}
+        canShiftNext={(target) =>
+          target.year * 12 + target.month - 1 <= todayDate.getFullYear() * 12 + todayDate.getMonth()
+        }
         selectedDates={[...(selectedDate ? [selectedDate] : []), ...selectedDates]}
         onSelectDate={(date) => {
           const state = stateFor(date);
