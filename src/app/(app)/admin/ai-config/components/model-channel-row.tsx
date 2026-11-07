@@ -103,8 +103,7 @@ export function ModelChannelRow({
     <div
       data-slot="ai-channel-row"
       className={cn(
-        "group px-4 py-2 text-[12px] transition-colors",
-        !isInvalid && "md:h-10",
+        "group px-4 py-2 text-[12px] transition-colors md:min-h-10 flex flex-col justify-center",
         !isEnabled
           ? "bg-[#F7F7F6]/60 opacity-70"
           : isInvalid
@@ -277,8 +276,8 @@ export function ModelChannelRow({
 
       {/* 失败原因常驻当前行，不让人去追 6 秒消失的气泡；技术详情可折叠 */}
       {showReason && (
-        <div className="pt-1 text-[12px] space-y-1 md:pl-15">
-          <div className={isInvalid ? "text-status-danger-text" : "text-[#78716C]"}>
+        <div className="pt-1.5 text-[12px] space-y-1 md:pl-[60px]">
+          <div className={cn("break-words [overflow-wrap:anywhere] leading-relaxed", isInvalid ? "text-status-danger-text" : "text-[#78716C]")}>
             原因：{failureDiagnostic?.technical?.message || (isInvalid ? "渠道连通性异常或鉴权失败" : "等待下一次复测验证")}
           </div>
 
@@ -293,16 +292,16 @@ export function ModelChannelRow({
                 <span>技术详情</span>
               </button>
               {showTechnical && (
-                <div className="mt-1 rounded-md bg-[#F1F1F0] p-2 font-mono text-[12px] text-[#1F1E1D] space-y-1">
+                <div className="mt-1 rounded-md bg-[#F1F1F0] p-2 font-mono text-[12px] text-[#1F1E1D] space-y-1 break-words [overflow-wrap:anywhere]">
                   <div>分类: {failureDiagnostic.category}</div>
                   <div>责任方: {failureDiagnostic.owner}</div>
                   {failureDiagnostic.technical?.requestId && (
-                    <div className="flex items-center justify-between">
-                      <span>Request ID: {failureDiagnostic.technical.requestId}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <span className="break-all">Request ID: {failureDiagnostic.technical.requestId}</span>
                       <button
                         type="button"
                         onClick={() => handleCopyRequestId(failureDiagnostic.technical.requestId!)}
-                        className="text-[12px] text-[#78716C] hover:text-[#141413]"
+                        className="text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
                       >
                         {copiedId ? "已复制" : "复制"}
                       </button>
