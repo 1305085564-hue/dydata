@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSystemActor } from "../../ai-channels/_shared";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     await requireSystemActor();
   } catch (error) {
@@ -15,10 +15,12 @@ export async function GET(_request: NextRequest) {
   try {
     const admin = createAdminClient();
 
-    // 1. 存量参考：90 天总数
+    // 1. 存量参考：90 天总数（显式按 90 天窗口过滤，与清理口径一致）
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const { count: totalCount } = await admin
       .from("ocr_recognition_logs")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", ninetyDaysAgo);
 
     // 2. 统计样本：最近 1000 条（不足 1000 条按实际）
     const { data: recent1000, error } = await admin

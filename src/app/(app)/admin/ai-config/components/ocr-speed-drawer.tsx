@@ -261,7 +261,8 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
                   <tbody className="divide-y divide-[#E2E2DF]/60">
                     {logs.map((item) => {
                       const { time, date } = formatShanghaiDateTime(item.created_at);
-                      const isMax = item.channel_name?.toLowerCase().includes("max") ?? false;
+                      // 按独立单词 max 命中（如 "api9 claude (max)"），避免误标 MiniMax 等含 max 子串的渠道
+                      const isMax = /\bmax\b/i.test(item.channel_name ?? "");
                       return (
                         <tr key={item.id} className="hover:bg-[#F7F7F6]/60 transition-colors">
                           <td className="py-2.5 pl-4 pr-2 whitespace-nowrap">

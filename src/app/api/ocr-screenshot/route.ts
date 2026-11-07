@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
-import { AiChannelError, callAi } from "@/lib/ai/client";
-import type { AiMessage } from "@/lib/ai/client";
+import { AiChannelError, callAi, type AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import type { MutationObservation } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
-import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
+import { fetchOcrChannelSettingsRow, resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 import { downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
 import { recordOcrRecognitionLog } from "./ocr-log";
+import { getScreenshotTypeFallbackByAssetRole, hasJsonObject, parseOcrResponse, resolveKnownScreenshotType, type OcrErrorCode, type ParsedScreenshotResponse, type ScreenshotAssetRole, type ScreenshotType } from "./ocr-contract";
 
 // 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
 export {
@@ -34,10 +34,14 @@ export type { OcrScreenshotChannel };
 
 type OcrScreenshotDeps = {
   createClient: typeof createClient;
+  ocrChannelFetcher: typeof fetchOcrChannelSettingsRow;
+  callAi: typeof callAi; recordLog: typeof recordOcrRecognitionLog;
 };
 
 export const defaultOcrScreenshotDeps: OcrScreenshotDeps = {
   createClient,
+  ocrChannelFetcher: fetchOcrChannelSettingsRow,
+  callAi, recordLog: recordOcrRecognitionLog,
 };
 
 // Vercel 函数执行上限：识别走共享渠道，实测偶发 20 秒以上，函数上限声明 60 秒
@@ -105,6 +109,7 @@ async function runVisionOcrAttempt(
   dataUrl: string,
   screenshotType: ScreenshotType,
   timings: Partial<OcrTimings>,
+  callAiImpl: typeof callAi,
 ): Promise<OcrAttempt> {
   const visionDataUrl = await normalizeVisionDataUrl(dataUrl);
   const messages: AiMessage[] = [{
@@ -116,7 +121,7 @@ async function runVisionOcrAttempt(
   }];
 
   const ocrStart = Date.now();
-  const aiResult = await callAi({
+  const aiResult = await callAiImpl({
     messages,
     maxTokens: 1000,
     jsonMode: true,
@@ -217,18 +222,17 @@ export async function buildOcrScreenshotResponse(
       ai_model: logContext.aiModel ?? null,
     });
 
-    // 修正 4 & 6 & 7：在 finish 内直接 await 单行插入，独立 try/catch 包裹，异常完全吞并
-    await recordOcrRecognitionLog({
-      totalMs: timings.total_ms,
-      ocrMs: timings.ocr_ms ?? timings.baidu_ms ?? null,
-      downloadMs: timings.download_ms ?? null,
-      channelName: logContext.aiChannel ?? null,
-      modelId: logContext.aiModel ?? null,
-      screenshotType: logContext.screenshotType ?? null,
-      isSuccess: businessSucceeded,
-      errorCode: errorCode ?? null,
-      userId: userId ?? null,
-    });
+    // 测速台账只记真正进入识别的请求（渠道已解析），401/输入错误不落账；await 插入保证 Vercel 冻结前落库，异常吞并不影响业务回执
+    if (logContext.ocrChannel) {
+      try {
+        await deps.recordLog({
+          totalMs: timings.total_ms, ocrMs: timings.ocr_ms ?? timings.baidu_ms ?? null,
+          downloadMs: timings.download_ms ?? null, channelName: logContext.aiChannel ?? null,
+          modelId: logContext.aiModel ?? null, screenshotType: logContext.screenshotType ?? null,
+          isSuccess: businessSucceeded, errorCode: errorCode ?? null, userId: userId ?? null,
+        });
+      } catch {}
+    }
 
     return appendObservedMutationResult(NextResponse.json({ request_id: observation.requestId, ...body, businessSucceeded }, { status }), observation);
   };
@@ -278,7 +282,7 @@ export async function buildOcrScreenshotResponse(
       screenshotTypeSource: resolvedScreenshotType.source,
     };
 
-    const ocrChannel = await resolveOcrScreenshotChannel();
+    const ocrChannel = await resolveOcrScreenshotChannel(deps.ocrChannelFetcher);
     logContext = { ...logContext, ocrChannel };
 
     try {
@@ -286,7 +290,7 @@ export async function buildOcrScreenshotResponse(
       const attempt =
         ocrChannel === "baidu"
           ? await runBaiduOcrAttempt({ dataUrl, screenshotType, timings })
-          : await runVisionOcrAttempt(dataUrl, screenshotType, timings);
+          : await runVisionOcrAttempt(dataUrl, screenshotType, timings, deps.callAi);
       const parsed = attempt.parsed;
       logContext = {
         ...logContext,

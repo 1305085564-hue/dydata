@@ -15,12 +15,15 @@ export interface OcrLogParams {
 
 /**
  * 记录截图识别耗时与渠道测速台账
- * 异常完全吞并，绝不影响前台截图识别业务回执
+ * 异常完全吞并，绝不影响前台截图识别业务回执；
+ * 客户端返回 error（不抛异常）时同样告警，避免线上静默丢数据无从排查
  */
-export async function recordOcrRecognitionLog(params: OcrLogParams): Promise<void> {
+export async function recordOcrRecognitionLog(
+  params: OcrLogParams,
+  createClientImpl: typeof createAdminClient = createAdminClient,
+): Promise<void> {
   try {
-    const adminClient = createAdminClient();
-    await adminClient.from("ocr_recognition_logs").insert({
+    const { error } = await createClientImpl().from("ocr_recognition_logs").insert({
       duration_ms: params.totalMs,
       ocr_ms: params.ocrMs ?? null,
       download_ms: params.downloadMs ?? null,
@@ -31,6 +34,7 @@ export async function recordOcrRecognitionLog(params: OcrLogParams): Promise<voi
       error_code: params.errorCode ?? null,
       user_id: params.userId ?? null,
     });
+    if (error) console.warn("[ocr_recognition_logs] insert rejected", error);
   } catch (insertError) {
     console.warn("[ocr_recognition_logs] log insertion failed", insertError);
   }
