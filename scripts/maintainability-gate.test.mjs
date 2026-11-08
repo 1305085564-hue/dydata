@@ -366,3 +366,38 @@ as $$ select target_date $$;
     await rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("new code slicing a UTC date from toISOString blocks; marked calendar math passes", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\nexport const today = new Date().toISOString().slice(0, 10);\n");
+    await assertBlocked(fixture, "tracked UTC date slice", /utc-business-date/);
+
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\n// gate:utc-date-ok Date.UTC 纯日历运算\nexport const day = new Date(Date.UTC(2026, 0, 1)).toISOString().split(\"T\")[0];\n");
+    const pass = await runGate(fixture);
+    assert.equal(pass.code, 0, pass.stderr || pass.stdout);
+
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\n");
+    await writeFile(path.join(fixture, "src", "fresh.ts"), "export const d = new Date().toISOString().substring(0, 10);\n");
+    await assertBlocked(fixture, "untracked UTC date slice", /utc-business-date/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("ratchet overflow already in the base blocks only when that file is touched", async () => {
+  const fixture = await createFixture();
+  try {
+    const big = path.join(fixture, "src", "big.ts");
+    await writeLines(big, 600);
+    await writeBaseline(fixture, { "src/big.ts": { maxLines: 550 } });
+    const untouched = await runGate(fixture);
+    assert.equal(untouched.code, 0, untouched.stderr || untouched.stdout);
+    assert.match(untouched.stdout, /超出棘轮上限/);
+
+    await writeLines(big, 599);
+    await assertBlocked(fixture, "touched overflow file", /baseline-ratchet-increase/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});

@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { shiftDateOnly } from "@/lib/loaders/shared";
 import { cn } from "@/lib/utils";
 import type {
   AccountLeaderboardItem,
@@ -795,7 +796,5 @@ function normalizeTag(value: string | null | undefined) {
 }
 
 function shiftDate(dateString: string, days: number) {
-  const date = new Date(`${dateString}T00:00:00`);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split("T")[0];
+  return shiftDateOnly(new Date(`${dateString}T00:00:00+08:00`), days);
 }

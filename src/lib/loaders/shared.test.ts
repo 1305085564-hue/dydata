@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  formatDateOnly,
   formatShanghaiDateOnly,
   getShanghaiYearMonth,
   getSafeAccountDisplayName,
@@ -13,7 +12,6 @@ import {
 
 test("日期工具按日期与上海时区稳定格式化", () => {
   const date = new Date("2026-07-17T16:30:00.000Z");
-  assert.equal(formatDateOnly(date), "2026-07-17");
   assert.equal(formatShanghaiDateOnly(date), "2026-07-18");
   assert.equal(shiftDateOnly(new Date("2026-07-18T00:00:00.000Z"), 0), "2026-07-18");
 });

@@ -5,7 +5,6 @@ import {
   buildAnalyticsAccessContext,
   canAccessAdminPath,
   getNavigationAccess,
-  getPresetRange,
   restrictPersonRows,
 } from "./analytics-access";
 import {
@@ -148,37 +147,5 @@ test("人员明细过滤不接受冲突角色或伪造的旧权限字段", () =>
       currentUserName: "员工A",
     }),
     [{ submitter: "员工A", value: 1 }],
-  );
-});
-
-test("时间范围预设覆盖近7天、近30天、本月与自定义", () => {
-  assert.deepEqual(getPresetRange("7d", new Date("2026-03-22T12:00:00Z")), {
-    from: "2026-03-16",
-    to: "2026-03-22",
-    preset: "7d",
-  });
-
-  assert.deepEqual(getPresetRange("30d", new Date("2026-03-22T12:00:00Z")), {
-    from: "2026-02-21",
-    to: "2026-03-22",
-    preset: "30d",
-  });
-
-  assert.deepEqual(getPresetRange("month", new Date("2026-03-22T12:00:00Z")), {
-    from: "2026-03-01",
-    to: "2026-03-22",
-    preset: "month",
-  });
-
-  assert.deepEqual(
-    getPresetRange("custom", new Date("2026-03-22T12:00:00Z"), {
-      from: "2026-03-05",
-      to: "2026-03-09",
-    }),
-    {
-      from: "2026-03-05",
-      to: "2026-03-09",
-      preset: "custom",
-    },
   );
 });

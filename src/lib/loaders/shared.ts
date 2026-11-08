@@ -1,7 +1,3 @@
-export function formatDateOnly(date: Date) {
-  return date.toISOString().split("T")[0];
-}
-
 export function formatShanghaiDateOnly(date: Date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Shanghai",

@@ -14,8 +14,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["recharts", "lucide-react", "framer-motion"],
   },
+  // 类型错误必须拦住构建：2026-11-07 曾因忽略类型错误把截图识别全量故障推上线。
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   async redirects() {
     return [

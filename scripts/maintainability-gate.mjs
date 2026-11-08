@@ -16,7 +16,7 @@ const allowRawMap = new Set([
 const execFileAsync = promisify(execFile);
 const rawMapPattern = /new\s+(?:globalThis\.)?Map\s*[<(]/;
 const rawMapMatchPattern = /new\s+(?:globalThis\.)?Map\s*[<(]/g;
-const typeCheckNotice = "本门禁不含类型检查（因为构建配置忽略类型错误，绿灯不代表能编译）";
+const typeCheckNotice = "本门禁不含类型检查（类型由 tsc 和生产构建负责）";
 const baselinePath = "scripts/maintainability-baseline.json";
 const blockingLineLimit = 1000;
 const activityLineLimit = 600;
@@ -24,6 +24,10 @@ const activityChangeLimit = 45;
 const routeShrinkLineLimit = 800;
 const baselineLineLimit = 500;
 const migrationRoot = "supabase/migrations";
+// 业务日期必须按北京时间取：toISOString() 切出的是 UTC 日期，北京时间 0-8 点会差一天。
+// 统一用 src/lib/loaders/shared.ts 的 formatShanghaiDateOnly / shiftDateOnly；
+// 确实是对 Date.UTC(...) 做纯日历运算的，在同一行或上一行写 `// gate:utc-date-ok <理由>`。
+const utcDateSlicePattern = /toISOString\(\)\s*\.\s*(?:slice\(\s*0\s*,\s*10\s*\)|substring\(\s*0\s*,\s*10\s*\)|split\(\s*["'`]T["'`]\s*\)\s*\[\s*0\s*\])/;
 
 async function walk(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -80,6 +84,43 @@ function parseAddedRawMapPaths(diff) {
     }
   }
   return paths;
+}
+
+function hasUtcDateMarker(line) {
+  return /\/\/\s*gate:utc-date-ok\s+\S/.test(line);
+}
+
+function isTestPath(relative) {
+  return /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(relative);
+}
+
+// 只看本次新增的行：存量写法不追溯，新代码不准再引入。
+function findAddedUtcDateSlices(diff) {
+  const hits = [];
+  let currentPath = null;
+  let previousAdded = null;
+  for (const line of diff.split(/\r?\n/)) {
+    const header = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (header) { currentPath = header[2]; previousAdded = null; continue; }
+    if (!currentPath || !/^\+[^+]/.test(line)) { if (!line.startsWith("+")) previousAdded = null; continue; }
+    const text = line.slice(1);
+    if (!isTestPath(currentPath) && utcDateSlicePattern.test(text) && !hasUtcDateMarker(text) && !(previousAdded !== null && /^\s*\/\//.test(previousAdded) && hasUtcDateMarker(previousAdded))) {
+      hits.push({ path: currentPath, text: text.trim() });
+    }
+    previousAdded = text;
+  }
+  return hits;
+}
+
+function findUtcDateSlicesInSource(relative, source) {
+  if (isTestPath(relative)) return [];
+  const lines = source.split(/\r?\n/);
+  return lines.flatMap((text, index) => {
+    if (!utcDateSlicePattern.test(text) || hasUtcDateMarker(text)) return [];
+    const previous = index > 0 ? lines[index - 1] : "";
+    if (/^\s*\/\//.test(previous) && hasUtcDateMarker(previous)) return [];
+    return [{ path: relative, text: text.trim() }];
+  });
 }
 
 function hasTransientMapMarker(line, requireCommentLine = false) {
@@ -197,6 +238,7 @@ let files;
 let changedPaths;
 let untrackedPaths;
 let addedRawMapPaths;
+let addedUtcDateSlices;
 let changedMigrationPaths;
 let untrackedMigrationPaths;
 
@@ -218,6 +260,7 @@ try {
   changedMigrationPaths = parseNameLines(changedMigrationOutput);
   untrackedMigrationPaths = parseNameLines(untrackedMigrationOutput);
   addedRawMapPaths = parseAddedRawMapPaths(diff);
+  addedUtcDateSlices = findAddedUtcDateSlices(diff);
   globalThis.maintainabilityContext = {
     activity: parseActivity(activityOutput),
     currentBaseline: parseBaseline(currentBaselineRaw, baselinePath),
@@ -284,6 +327,18 @@ if (process.exitCode !== 2) {
     }
   }
 
+  const utcDateHits = [
+    ...addedUtcDateSlices,
+    ...records.filter((item) => untrackedPaths.has(item.path)).flatMap((item) => findUtcDateSlicesInSource(item.path, item.source)),
+  ];
+  for (const hit of utcDateHits) {
+    allViolations.push({
+      type: "utc-business-date",
+      path: hit.path,
+      detail: `new code slices a UTC date from toISOString(); use formatShanghaiDateOnly/shiftDateOnly or mark // gate:utc-date-ok <reason>: ${hit.text.slice(0, 160)}`,
+    });
+  }
+
   for (const item of records) {
     const needsBaseLines = changedPaths.has(item.path)
       || item.lines > routeShrinkLineLimit
@@ -321,9 +376,13 @@ if (process.exitCode !== 2) {
   allViolations.push(...baselineFileViolations);
 
   const isNewViolation = (item) => {
-    if (item.type === "baseline-file-increase" || item.type === "baseline-ratchet-increase" || item.type === "missing-baseline" || item.type === "migration-function-timezone") return true;
+    if (item.type === "baseline-file-increase" || item.type === "migration-function-timezone" || item.type === "utc-business-date") return true;
+    // 棘轮只拦本次改动到的文件：已经合进基座的超限不拦无关改动（否则门禁对所有人常红、被当噪音放过），
+    // 但会列在 legacyViolations 里；谁再碰这个文件，谁就得先把它压回上限以下。
     return changedPaths.has(item.path) && (
-      item.type === "blocking-file-size"
+      item.type === "baseline-ratchet-increase"
+      || item.type === "missing-baseline"
+      || item.type === "blocking-file-size"
       || item.type === "route-must-shrink"
       || item.type === "unbounded-cache-candidate"
     );
@@ -356,7 +415,7 @@ if (process.exitCode !== 2) {
     violations,
     status: violations.length ? "blocked" : "pass",
     typeCheckNotice,
-    rule: "新增缓存必须声明 TTL、容量、作用域和失效；阻断线以上文件不得继续新增业务逻辑；名单外老文件只能按棘轮下降。",
+    rule: "新增代码不得用 toISOString() 切业务日期；新增缓存必须声明 TTL、容量、作用域和失效；阻断线以上文件不得继续新增业务逻辑；名单外老文件只能按棘轮下降。",
   };
 
   if (reportMode) {
@@ -364,8 +423,12 @@ if (process.exitCode !== 2) {
     if (violations.length) process.exitCode = 1;
   } else {
     console.log(`maintainability gate: note: ${typeCheckNotice}`);
+    const legacy = report.legacyViolations.filter((item) => item.type === "baseline-ratchet-increase" || item.type === "missing-baseline");
+    if (legacy.length) {
+      console.log(`maintainability gate: 基座里已有 ${legacy.length} 个文件超出棘轮上限（不拦本次，改到它们时必须先压回上限）：${legacy.map((item) => item.path).join(", ")}`);
+    }
     if (violations.length) {
-      console.error(JSON.stringify(report, null, 2));
+      console.error(JSON.stringify({ ...report, categories: undefined, splitList: undefined }, null, 2));
       process.exitCode = 1;
     } else {
       console.log("maintainability gate: pass");

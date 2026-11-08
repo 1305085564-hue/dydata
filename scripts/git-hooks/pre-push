@@ -1,0 +1,19 @@
+#!/bin/sh
+# 推送前自动门禁（由 `npm run hooks:install` 安装到 .git/hooks/pre-push）。
+# 只放确定性、不依赖外部服务的检查；真实库测试、角色/浏览器门禁仍按发布流程单独跑。
+# 推送即上线（push main 触发 Vercel），所以这里是最后一道不靠记性的关口。
+# 不要用 --no-verify 跳过；门禁本身误报就修门禁。
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+echo "[pre-push] 1/5 类型检查"
+npx tsc --noEmit --pretty false
+echo "[pre-push] 2/5 单元测试（不含真实库组）"
+npm test --silent > /tmp/dydata-pre-push-test.log 2>&1 || { tail -60 /tmp/dydata-pre-push-test.log; echo "[pre-push] 单元测试失败，完整输出：/tmp/dydata-pre-push-test.log"; exit 1; }
+echo "[pre-push] 3/5 代码检查"
+npm run lint --silent
+echo "[pre-push] 4/5 设计令牌门禁"
+npm run gate:design --silent
+echo "[pre-push] 5/5 可维护性门禁（对比 origin/main）"
+node scripts/maintainability-gate.mjs --base=origin/main
+echo "[pre-push] 全部通过"
