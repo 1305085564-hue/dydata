@@ -30,7 +30,7 @@
 docs/plans/2026-09-15-权限架构改造施工方案-激进版.md
 docs/plans/2026-09-16-项目可维护性提升规划进度书.md
 docs/通用管理/待办清单.md
-docs/业务逻辑/权限与访问控制.md
+docs/系统架构与设计/权限与访问控制.md
 src/app/(app)/admin/actions.ts
 src/app/(app)/admin/modules/modules-content-v3.tsx
 src/app/(app)/admin/modules/modules-permission-entry.test.ts

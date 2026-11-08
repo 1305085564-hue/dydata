@@ -17,8 +17,8 @@
   - 现状: `AGENTS.md:125` 已统一为"默认只 commit；push main 前必须当前轮明确授权并核对 SHA"；`docs/系统架构与设计/工程运行事实.md:99` 同口径。
   - 验证命令: `rg -n "push main|push 前" AGENTS.md README.md docs/系统架构与设计/工程运行事实.md` → 三份口径一致（README 若仍留旧句，一并对齐，属本项收尾）。
 - [x] F-DOC-3（第二回合完成）: 过期计数漂移
-  - 执行记录 2026-09-19: 此前因 `docs/业务逻辑/权限与访问控制.md` 有权限改造在途改动停手；改造落地（`6ec069de`）后解除停手。当天重跑计数 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**，将 `:283` 行"约 61"更正为"约 52"。
-  - 事实: `docs/业务逻辑/权限与访问控制.md:285` 写"约 61 个后台 route"；2026-09-19 实测 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**。
+  - 执行记录 2026-09-19: 此前因 `docs/系统架构与设计/权限与访问控制.md` 有权限改造在途改动停手；改造落地（`6ec069de`）后解除停手。当天重跑计数 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**，将 `:283` 行"约 61"更正为"约 52"。
+  - 事实: `docs/系统架构与设计/权限与访问控制.md:285` 写"约 61 个后台 route"；2026-09-19 实测 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**。
   - 更正范围: 该行改为"约 50+（2026-09-19 实测 52；改权限前须现扫，勿引用静态计数）"。
   - 测试耦合: 无。
   - 验证命令: 执行更正当天重跑计数命令，与文中数字差 ≤5。
@@ -54,7 +54,7 @@
 ## 验收标准
 
 - [ ] `npm test` 通过（兜底，文档批理论上不影响）
-- [ ] `rg -n "约 61" docs/业务逻辑/权限与访问控制.md` 为空
+- [ ] `rg -n "约 61" docs/系统架构与设计/权限与访问控制.md` 为空
 - [ ] `git status --short` 中根级不再出现待判断 loose md / test-h1-rpc 两文件
 - [ ] F-DOC-5 的 gate:static 结果（0 或注明阻断原因）写入待办清单
 

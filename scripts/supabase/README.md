@@ -29,7 +29,7 @@ node --test scripts/supabase/permission-batch-a.test.mjs
 
 演练 SQL 绑定的是**本地**快照，不可直接投产。生产执行前必须另获仅批次 A 的正向及必要回滚授权，读取新鲜只读快照并与已审阅定义、ACL及辅助依赖核对；漂移即停止。先备份恢复点，再从新鲜快照生成绑定包，不得把更换快照当作接受漂移。不在生产执行这些清理、角色写入或故障注入脚本。回滚将重新开放原风险权限，仅为故障恢复，不是安全终态。
 
-本轮证据：[隔离演练](../../docs/reference/2026-11-02-生产Supabase批次A隔离演练.md)。
+本轮证据：[隔离演练](../../docs/archive/2026-11-09-A批文档治理/参考原稿/2026-11-02-生产Supabase批次A隔离演练.md)。
 
 ## 任意日期重验时间锁
 
@@ -50,4 +50,4 @@ node --test scripts/supabase/permission-batch-a.test.mjs scripts/supabase/replay
 DYDATA_SUPABASE_LEADERBOARD_LAB_DIR=/tmp/dydata-supabase-batch-a-rerun-YYYYMMDD node scripts/supabase/rehearse-leaderboard-compat.mjs
 ```
 
-SQL和精确回滚仅输出到本次私有证据目录，**不能直接投产或用于CloudBase**；目标平台身份语义、各角色应用与页面非空结果需另外验收。批次B继续暂缓。11-02结果见[三项修复与验证](../../docs/reference/2026-11-02-迁移适配三项修复与验证.md)。
+SQL和精确回滚仅输出到本次私有证据目录，**不能直接投产或用于CloudBase**；目标平台身份语义、各角色应用与页面非空结果需另外验收。批次B继续暂缓。11-02结果见[三项修复与验证](../../docs/archive/2026-11-09-A批文档治理/参考原稿/2026-11-02-迁移适配三项修复与验证.md)。

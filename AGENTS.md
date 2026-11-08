@@ -93,7 +93,7 @@
 
 | 规则 | 说明 |
 |---|---|
-| 成员实发/应发口径 | 按 `queryDate` 所在月、`daily_reports.user_id` + 作品发布日（`videos.published_at` 的上海自然日，没有才回退 `report_date`）聚合；业务日期一律按上海时区 → [数据口径](docs/业务逻辑/数据口径与计算规则.md) |
+| 成员实发/应发口径 | 按 `queryDate` 所在月、`daily_reports.user_id` + 作品发布日（`videos.published_at` 的上海自然日，没有才回退 `report_date`）聚合；业务日期一律按上海时区 → [数据口径](docs/系统架构与设计/数据口径与计算规则.md) |
 | 改统计口径 | 先用真实数据抽查验证，拿不准不动工；数字对不上直觉，先怀疑口径 |
 | migration 顺序 | 向后兼容（旧代码在新库行为不变）或应用侧已就绪即可先执行；判断不了就停 |
 | 生产库只读 | 有凭据可以直接只读查询，不因为"生产库"三个字就拒绝 |
@@ -120,7 +120,7 @@
 ### 日志、文档、Skill
 
 - 日志统一写 `日志/YYYY-MM-DD.md`，一行一条带时间，写清背景、结果、状态，前缀 [CC]/[CX]/[An]；细节写 `YYYY-MM-DD-补充.md`。
-- 长期事实回写 `docs/业务逻辑/`、`docs/系统架构与设计/`；目录用途与归档 → [文档与维护规范](docs/通用管理/文档与维护规范.md)。不在 AI 私有目录（`.claude/memory/`、`~/.claude/`）维护项目文件副本；一次性临时 `.sql/.json` 不提交，`supabase/migrations/*.sql` 按范围提交。
+- 现行业务和架构回写 `docs/系统架构与设计/`，可复用事实与已拍板决定归 `docs/reference/`。目录用途与归档 → [文档与维护规范](docs/通用管理/文档与维护规范.md)。不在 AI 私有目录（`.claude/memory/`、`~/.claude/`）维护项目文件副本；一次性临时 `.sql/.json` 不提交，`supabase/migrations/*.sql` 按范围提交。
 - Skill 只如实报告实际用到的；分层与接线铁律 → [工程运行事实](docs/系统架构与设计/工程运行事实.md)「多 Agent Skill 接线事实」。
 
 <!-- BEGIN:nextjs-agent-rules -->
