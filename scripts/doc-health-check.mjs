@@ -67,6 +67,34 @@ function markdownLinks(line) {
   return links;
 }
 
+function maskMarkdownTargets(line) {
+  const masked = line.split("");
+  for (let cursor = 0; cursor < line.length;) {
+    const start = line.indexOf("](", cursor);
+    if (start < 0) break;
+    const targetStart = start + 2;
+    let end = targetStart;
+    if (line[end] === "<") {
+      const close = line.indexOf(">", end + 1);
+      if (close >= 0 && line[close + 1] === ")") end = close + 1;
+      else { cursor = targetStart; continue; }
+    } else {
+      let depth = 1;
+      while (end < line.length && depth > 0) {
+        if (line[end] === "\\") { end += 2; continue; }
+        if (line[end] === "(") depth += 1;
+        else if (line[end] === ")") depth -= 1;
+        end += 1;
+      }
+      if (depth !== 0) { cursor = targetStart; continue; }
+      end -= 1;
+    }
+    for (let index = targetStart; index < end; index += 1) masked[index] = " ";
+    cursor = end + 1;
+  }
+  return masked.join("");
+}
+
 function decodeTarget(target) {
   try {
     return decodeURIComponent(target);
@@ -126,22 +154,79 @@ function collectCode(root) {
   const tables = new Set();
   const sqlFunctions = new Set();
   const declarations = new Set();
+  const functionSignatures = new Map();
   const types = new Set();
-  const identifiers = new Set();
 
   for (const { text } of contents) {
-    for (const match of text.matchAll(/\b[A-Za-z_$][\w$]*\b/g)) identifiers.add(match[0]);
     for (const match of text.matchAll(/\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:public|auth)\.)?["`]?([a-z_][a-z\d_]*)/gi)) tables.add(match[1]);
-    for (const match of text.matchAll(/\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(?:public|auth)\.)?["`]?([a-z_][a-z\d_]*)/gi)) sqlFunctions.add(match[1]);
-    for (const match of text.matchAll(/\b(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) declarations.add(match[1]);
-    for (const match of text.matchAll(/\b(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\()/g)) declarations.add(match[1]);
+    for (const match of text.matchAll(/\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(?:public|auth)\.)?["`]?([a-z_][a-z\d_]*)\s*\(([^)]*)\)/gi)) {
+      sqlFunctions.add(match[1]);
+      addSignature(functionSignatures, match[1], match[2]);
+    }
+    for (const match of text.matchAll(/\b(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/g)) {
+      declarations.add(match[1]);
+      addSignature(functionSignatures, match[1], match[2]);
+    }
+    for (const match of text.matchAll(/\b(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:[A-Za-z_$][\w$]*\s*\(\s*(?:async\s*)?)?(?:async\s*)?\(([^)]*)\)\s*=>/g)) {
+      declarations.add(match[1]);
+      addSignature(functionSignatures, match[1], match[2]);
+    }
     for (const match of text.matchAll(/\b(?:export\s+)?(?:type|interface|class|enum)\s+([A-Za-z_$][\w$]*)\b/g)) types.add(match[1]);
   }
-  return { contents, tables, sqlFunctions, declarations, types, identifiers };
+  return { contents, tables, sqlFunctions, declarations, functionSignatures, types };
+}
+
+function splitParameters(parameters) {
+  const result = [];
+  let start = 0;
+  let depth = 0;
+  let quote = null;
+  for (let index = 0; index < parameters.length; index += 1) {
+    const character = parameters[index];
+    if (quote) {
+      if (character === "\\") index += 1;
+      else if (character === quote) quote = null;
+      continue;
+    }
+    if (["'", '"', "`"].includes(character)) quote = character;
+    else if ("([{<".includes(character)) depth += 1;
+    else if (character === ">" && parameters[index - 1] === "=") continue;
+    else if (")]}>".includes(character)) depth -= 1;
+    else if (character === "," && depth === 0) {
+      result.push(parameters.slice(start, index));
+      start = index + 1;
+    }
+  }
+  if (parameters.slice(start).trim()) result.push(parameters.slice(start));
+  return result;
+}
+
+function signatureParameters(parameters) {
+  return splitParameters(parameters).map((parameter) => {
+    const match = /^\s*(?:\.\.\.)?([A-Za-z_$][\w$]*)(\?)?\s*(?::|=|\s+[A-Za-z_$]|$)/.exec(parameter);
+    return match ? {
+      name: match[1],
+      optional: Boolean(match[2]),
+    } : null;
+  });
+}
+
+function addSignature(signatures, name, parameters) {
+  const parsed = signatureParameters(parameters);
+  if (parsed.some((parameter) => parameter === null)) return;
+  const values = signatures.get(name) ?? [];
+  values.push(parsed);
+  signatures.set(name, values);
 }
 
 function findInlineCode(line) {
   return [...line.matchAll(/`+([^`]+)`+/g)].map((match) => match[1].trim());
+}
+
+function documentedSignatures(value) {
+  return [...value.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^()]*)\)/g)]
+    .map((match) => ({ name: match[1], parameters: signatureParameters(match[2]) }))
+    .filter(({ parameters }) => parameters.length > 0 && parameters.every(Boolean));
 }
 
 function pathCandidates(value) {
@@ -208,18 +293,21 @@ function scan(root = ROOT, deep = false) {
           if (!existsSync(absolute)) addIssue(issues, doc, number, "内部链接", target, "指向的文件不存在");
         }
 
-        for (const value of findInlineCode(line)) {
-          for (const candidate of pathCandidates(value)) {
-            const target = fileTarget(candidate);
-            if (!target) continue;
-            const absolute = path.resolve(root, target);
-            const suffix = `/${target.replace(/^\.\//, "")}`;
-            const exists = target.includes("/")
-              ? repoFileSet.has(absolute) || existsSync(absolute) || [...repoFileSet].some((file) => file.endsWith(suffix))
-              : repoBasenames.has(target);
-            const explicitlyHistorical = /(?:已删除|已下线|已退役|不存在|查无此项)/.test(line);
-            if (!exists && !explicitlyHistorical) addIssue(issues, doc, number, "文件路径", candidate, "仓库中找不到该路径");
-          }
+        const filePaths = new Set(findInlineCode(line).flatMap(pathCandidates));
+        const plainText = maskInlineCode(maskMarkdownTargets(line));
+        for (const match of plainText.matchAll(/(?:^|[^\w`])((?:src|scripts|supabase|docs|public|tests?)\/[^\s`<>)\],|]+)/g)) {
+          for (const candidate of pathCandidates(match[1])) filePaths.add(candidate);
+        }
+        for (const candidate of filePaths) {
+          const target = fileTarget(candidate);
+          if (!target) continue;
+          const absolute = path.resolve(root, target);
+          const suffix = `/${target.replace(/^\.\//, "")}`;
+          const exists = target.includes("/")
+            ? repoFileSet.has(absolute) || existsSync(absolute) || [...repoFileSet].some((file) => file.endsWith(suffix))
+            : repoBasenames.has(target);
+          const explicitlyHistorical = /(?:已删除|已下线|已退役|不存在|查无此项)/.test(line);
+          if (!exists && !explicitlyHistorical) addIssue(issues, doc, number, "文件路径", candidate, "仓库中找不到该路径");
         }
       }
 
@@ -228,15 +316,17 @@ function scan(root = ROOT, deep = false) {
         const publicFunction = value.match(/\bpublic\.([a-z][a-z\d_]*)\s*\(/)?.[1]
           ?? value.match(/\bpublic\.([a-z][a-z\d_]*)\b/)?.[1];
         const callName = value.match(/^(?:([a-z][A-Za-z\d_]*)|public\.([a-z][A-Za-z\d_]*))\s*\([^]*\)$/)?.slice(1).find(Boolean);
-        const functionName = publicFunction ?? callName ?? (/(?:数据库函数|SQL 函数|RPC 函数|RPC)/i.test(line)
-          ? value.match(/^([a-z][a-z\d_]*)$/)?.[1]
-          : null);
-        if (functionName && !BUILTIN_FUNCTIONS.has(functionName) && !code.identifiers.has(functionName)) {
+        const sqlFunction = value.match(/\bfunction\s+(?:public\.)?([a-z][a-z\d_]*)\b/i)?.[1];
+        const functionName = publicFunction ?? sqlFunction ?? (callName && !/\([^)]*\b[A-Za-z_$][\w$]*\s*=/.test(value) ? callName : null);
+        if (functionName && !BUILTIN_FUNCTIONS.has(functionName)
+            && !code.declarations.has(functionName) && !code.sqlFunctions.has(functionName)) {
           addIssue(issues, doc, number, "函数名", functionName, "仓库源码/迁移中未找到同名函数；静态匹配可能误报");
         }
 
-        const tableName = value.match(/^(?:public\.)?([a-z][a-z\d_]*)$/)?.[1];
+        const tableName = value.match(/^(?:public\.)?([a-z][a-z\d_]*)(?:\s*\([^)]*\b[A-Za-z_$][\w$]*\s*=\s*[^)]*\))?$/)?.[1]
+          ?? value.match(/^(?:public\.)?([a-z][a-z\d_]*)$/)?.[1];
         const tableContext = tableSection || /(?:数据表|表名|表关系|表\s+|table\s*[:：])/i.test(line)
+          || /\([^)]*\b[A-Za-z_$][\w$]*\s*=\s*[^)]*\)/.test(value)
           || /(?:数据表|表名|表关系|table)/i.test(rows[index - 1]?.line ?? "");
         if (tableName && tableContext && !code.tables.has(tableName)) {
           addIssue(issues, doc, number, "表名", tableName, "迁移源码中未找到同名建表定义；静态匹配可能误报");
@@ -250,11 +340,28 @@ function scan(root = ROOT, deep = false) {
             addIssue(issues, doc, number, "类型定义", typeName, "源码中未找到同名类型声明；静态匹配可能误报");
           }
           const declaredFunction = callName;
-          const signatureContext = /(?:函数|方法|签名|调用|入口|RPC)/i.test(line)
+          const declarationContext = /(?:函数|方法|签名|调用|入口|RPC)/i.test(line)
             || /(?:函数|方法|签名|调用|入口|RPC)/i.test(rows[index - 1]?.line ?? "");
-          if (declaredFunction && signatureContext && !BUILTIN_FUNCTIONS.has(declaredFunction)
+          if (declaredFunction && declarationContext && !BUILTIN_FUNCTIONS.has(declaredFunction)
               && !code.declarations.has(declaredFunction) && !code.sqlFunctions.has(declaredFunction)) {
             addIssue(issues, doc, number, "函数声明", declaredFunction, "源码/迁移中未找到函数声明；方法或生成代码可能误报");
+          }
+          const signatureContext = /(?:函数签名|接口签名|参数列表|函数参数|签名)/i.test(line)
+            || /(?:函数签名|接口签名|参数列表|函数参数|签名)/i.test(rows[index - 1]?.line ?? "")
+            || (/(?:函数|方法|入口|RPC)/i.test(line)
+              && /\b[A-Za-z_$][\w$]*\?\s*(?:,|\))/.test(value));
+          if (signatureContext) {
+            for (const signature of documentedSignatures(value)) {
+              const actual = code.functionSignatures.get(signature.name) ?? [];
+              const matches = actual.some((candidate) => candidate.length === signature.parameters.length
+                && candidate.every((parameter, parameterIndex) => {
+                  const documented = signature.parameters[parameterIndex];
+                  return parameter.name === documented.name && (!documented.optional || parameter.optional);
+                }));
+              if (actual.length && !matches) {
+                addIssue(issues, doc, number, "函数签名", signature.name, "文档参数名/数量或明确标出的可选参数与源码声明不一致；静态匹配可能误报");
+              }
+            }
           }
         }
       }
@@ -264,8 +371,8 @@ function scan(root = ROOT, deep = false) {
 }
 
 function printResult(result, deep) {
-  if (deep) console.log("深度扫描：函数声明与类型定义（可能误报：方法、生成代码和历史迁移无法仅靠静态文本完全判定）");
-  else console.log("基础扫描：链接、文件路径、表名和函数名（可能误报：历史别名或生成文件）");
+  if (deep) console.log(`深度扫描（${result.docs} 份当前依据）：函数声明、文档显式参数签名与类型定义（可能误报：方法、生成代码和历史迁移无法仅靠静态文本完全判定）`);
+  else console.log(`基础扫描（${result.docs} 份当前依据）：链接、文件路径、表名和函数名（可能误报：历史别名或生成文件）`);
   if (result.issues.length === 0) {
     console.log("✅ 文档引用检查通过");
     return;
