@@ -506,3 +506,45 @@ test("话题分类：干货归收藏率侧，复盘与复盘干货归点赞率�
   assert.equal(classifyVideoTopicKind(null), "other");
   assert.equal(classifyVideoTopicKind(undefined), "other");
 });
+
+test("视频状态批量解析：分页批次并发发出，不再逐批串行等待", async () => {
+  const resolvers: Array<() => void> = [];
+  const startedTables: string[] = [];
+  const deferredQuery = (table: string) => {
+    let resolveFn!: (value: { data: Row[]; error: null }) => void;
+    const promise = new Promise<{ data: Row[]; error: null }>((resolve) => {
+      resolveFn = resolve;
+    });
+    const thenable = {
+      order: () => thenable,
+      then: (onFulfilled: (value: { data: Row[]; error: null }) => unknown) => promise.then(onFulfilled),
+    };
+    startedTables.push(table);
+    resolvers.push(() => resolveFn({ data: [], error: null }));
+    return thenable;
+  };
+  const client = {
+    from: (table: string) => ({
+      select: () => ({
+        eq: () => ({ in: () => deferredQuery(table) }),
+        in: () => deferredQuery(table),
+      }),
+    }),
+  } as unknown as SupabaseClient;
+
+  // 301 个 ID → 每个查询 3 批：话题标签、24h 快照、按来源视频查选题，共 9 个请求
+  const videos = Array.from({ length: 301 }, (_, index) => ({ id: `video-${index}`, topic_id: null }));
+  const promise = resolveVideoTopicLibraryStatuses(client, videos);
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.deepEqual(startedTables, [
+    "video_tags", "video_tags", "video_tags",
+    "video_metrics_snapshots", "video_metrics_snapshots", "video_metrics_snapshots",
+    "sub_topics", "sub_topics", "sub_topics",
+  ]);
+
+  for (const resolve of resolvers) resolve();
+  const statuses = await promise;
+  assert.equal(Object.keys(statuses).length, 301);
+});

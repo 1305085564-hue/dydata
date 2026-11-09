@@ -32,7 +32,6 @@
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "seed:roles": "node --env-file-if-exists=.env.ai-test.local node_modules/tsx/dist/cli.mjs scripts/seed-roles-test-data.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
-    "perf:ttfb": "node scripts/measure-ttfb.mjs",
     "analyze": "ANALYZE=true next build",
     "hooks:install": "node scripts/install-git-hooks.mjs"
   },

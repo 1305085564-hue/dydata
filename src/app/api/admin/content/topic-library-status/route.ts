@@ -94,13 +94,20 @@ async function resolveStatusesResponse(
     if (!baseScope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
     const scope = await deps.resolveVideoReviewReadOnlyScope(adminSupabase, baseScope);
 
-    const videoRows: Array<{ id: string; topic_id: string | null }> = [];
+    // 批次间互不依赖（每个 ID 只落在一批），一起发，避免串成多轮数据库往返。
+    const batches: string[][] = [];
     for (let index = 0; index < videoIds.length; index += 150) {
       const batch = videoIds.slice(index, index + 150);
-      const { data, error } = await adminSupabase
+      if (batch.length) batches.push(batch);
+    }
+    const batchResults = await Promise.all(batches.map((batch) =>
+      adminSupabase
         .from("videos")
         .select("id, topic_id, user_id, accounts!inner(profile_id)")
-        .in("id", batch);
+        .in("id", batch),
+    ));
+    const videoRows: Array<{ id: string; topic_id: string | null }> = [];
+    for (const { data, error } of batchResults) {
       if (error) throw new Error(error.message);
       if (data?.length) {
         for (const row of data as Array<{

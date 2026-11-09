@@ -363,15 +363,20 @@ export async function toggleTopicLibrary(
 
 const STATUS_QUERY_BATCH_SIZE = 150;
 
+// 批次本来就互不依赖（每个 ID 只落在一批），串行 await 只是白白多等几个数据库往返。
+// 单次最多 400 个 ID → 最多 3 批，直接并发；合并顺序不影响「每个 ID 取第一条」的去重语义。
 async function selectInBatches<T>(
   ids: string[],
   run: (batch: string[]) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
 ): Promise<T[]> {
-  const rows: T[] = [];
+  const batches: string[][] = [];
   for (let index = 0; index < ids.length; index += STATUS_QUERY_BATCH_SIZE) {
     const batch = ids.slice(index, index + STATUS_QUERY_BATCH_SIZE);
-    if (!batch.length) continue;
-    const { data, error } = await run(batch);
+    if (batch.length) batches.push(batch);
+  }
+  const results = await Promise.all(batches.map((batch) => run(batch)));
+  const rows: T[] = [];
+  for (const { data, error } of results) {
     if (error) throw new Error(error.message);
     if (data?.length) rows.push(...data);
   }
@@ -390,7 +395,10 @@ export async function resolveVideoTopicLibraryStatuses(
   const videoIds = [...new Set(videos.map((video) => video.id).filter(Boolean))];
   if (!videoIds.length) return {};
 
-  const [tagRows, snapshotRows] = await Promise.all([
+  const topicIds = [...new Set(videos.map((video) => video.topic_id).filter((id): id is string => Boolean(id)))];
+
+  // 四组查询只依赖入参 id，彼此不依赖：一起发，避免串成多轮数据库往返。
+  const [tagRows, snapshotRows, topicRows, sourceRows] = await Promise.all([
     selectInBatches<{ video_id: string; tag_value: string }>(videoIds, (batch) =>
       supabase
         .from("video_tags")
@@ -405,6 +413,14 @@ export async function resolveVideoTopicLibraryStatuses(
         .eq("snapshot_type", "24h")
         .in("video_id", batch)
         .order("captured_at", { ascending: false }),
+    ),
+    topicIds.length
+      ? selectInBatches<{ id: string; library_status: string }>(topicIds, (batch) =>
+        supabase.from("sub_topics").select("id, library_status").in("id", batch),
+      )
+      : Promise.resolve([] as Array<{ id: string; library_status: string }>),
+    selectInBatches<{ id: string; library_status: string; source_video_id: string }>(videoIds, (batch) =>
+      supabase.from("sub_topics").select("id, library_status, source_video_id").in("source_video_id", batch),
     ),
   ]);
 
@@ -421,18 +437,9 @@ export async function resolveVideoTopicLibraryStatuses(
     }
   }
 
-  const topicIds = [...new Set(videos.map((video) => video.topic_id).filter((id): id is string => Boolean(id)))];
   const byId = new Map<string, { id: string; library_status: string }>();
-  if (topicIds.length) {
-    const rows = await selectInBatches<{ id: string; library_status: string }>(topicIds, (batch) =>
-      supabase.from("sub_topics").select("id, library_status").in("id", batch),
-    );
-    for (const row of rows) byId.set(row.id, row);
-  }
+  for (const row of topicRows) byId.set(row.id, row);
   const bySourceVideoId = new Map<string, { id: string; library_status: string }>();
-  const sourceRows = await selectInBatches<{ id: string; library_status: string; source_video_id: string }>(videoIds, (batch) =>
-    supabase.from("sub_topics").select("id, library_status, source_video_id").in("source_video_id", batch),
-  );
   for (const row of sourceRows) {
     if (row.source_video_id && !bySourceVideoId.has(row.source_video_id)) {
       bySourceVideoId.set(row.source_video_id, row);
