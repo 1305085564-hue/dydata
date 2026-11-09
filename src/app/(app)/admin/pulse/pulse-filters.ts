@@ -1,6 +1,6 @@
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { VideoMetricsSnapshot } from "@/types";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { getPublishedDateForStats } from "@/lib/date-semantics";
 import {
   DEFAULT_CONTENT_LIST_FILTERS,
   type ContentListFilterValue,
@@ -48,7 +48,7 @@ export type SortDirection = "asc" | "desc";
 
 /** 与作品列表统一按上海发布日归属；无有效发布日的作品不进入日视图。 */
 export function attributionDate(video: { published_at: string | null }): string | null {
-  return getPublishedDateKey(video);
+  return getPublishedDateForStats(video);
 }
 
 export function getShanghaiDateString(date: Date = new Date()): string {

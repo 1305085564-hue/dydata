@@ -5,24 +5,13 @@ import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { getUserPermissions } from "@/lib/permissions";
 import { formatShanghaiDateTime } from "@/lib/日报";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { buildPublishedDateRangeFilter, getPublishedDateForStats } from "@/lib/date-semantics";
 import {
   buildDailyReportWorkbookBuffer,
   type DailyReportExcelRow,
 } from "@/lib/daily-report-excel";
 
 const MAX_EXPORT_ROWS = 10_000;
-
-function publishedDateRangeFilter(from: string | null, to: string | null) {
-  if (!from && !to) return null;
-  const start = from ?? "1900-01-01";
-  const end = to ?? "9999-12-31";
-  const startUtc = new Date(`${start}T00:00:00+08:00`).toISOString();
-  const endDate = new Date(`${end}T00:00:00+08:00`);
-  endDate.setUTCDate(endDate.getUTCDate() + 1);
-  const endUtc = endDate.toISOString();
-  return `and(published_at.is.null,report_date.gte.${start},report_date.lte.${end}),and(published_at.gte.${startUtc},published_at.lt.${endUtc})`;
-}
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -82,7 +71,7 @@ export async function GET(request: NextRequest) {
       : countQuery.eq("user_id", user.id);
   }
 
-  const dateFilter = publishedDateRangeFilter(from, to);
+  const dateFilter = buildPublishedDateRangeFilter(from, to);
   if (dateFilter) countQuery = countQuery.or(dateFilter);
 
   const { count, error: countError } = await countQuery;
@@ -139,7 +128,7 @@ export async function GET(request: NextRequest) {
     if (!pageData || pageData.length === 0) break;
 
     const pageRows = pageData.map((report) => ({
-      日期: getPublishedDateKey(report) ?? "",
+      日期: getPublishedDateForStats(report) ?? "",
       提交人: report.submitter,
       视频标题: report.title,
       "播放量(万)": report.play_count != null ? (report.play_count / 10000).toFixed(2) : "",

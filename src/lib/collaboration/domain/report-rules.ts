@@ -1,4 +1,5 @@
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { shiftDateOnly } from "@/lib/loaders/shared";
+import { getPublishedDateForStats } from "@/lib/date-semantics";
 import { STATS_START_DATE } from "./types";
 import { CALIBER, averagePlayOf } from "@/lib/metrics/caliber";
 import type {
@@ -52,11 +53,7 @@ export function fromStatsStart(rows: CollaborationReport[]) {
 export function getCollaborationWorkDate(
   row: Pick<CollaborationReport, "report_date" | "published_at">,
 ) {
-  if (row.published_at) {
-    const publishedAt = new Date(row.published_at);
-    if (!Number.isNaN(publishedAt.getTime())) return formatShanghaiDateOnly(publishedAt);
-  }
-  return row.report_date;
+  return getPublishedDateForStats(row) ?? row.report_date;
 }
 
 export function roleUserId(row: CollaborationReport, role: "writer" | "editor") {

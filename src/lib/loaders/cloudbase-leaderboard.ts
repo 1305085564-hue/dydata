@@ -1,5 +1,5 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { getPublishedDateForStats } from "@/lib/date-semantics";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { withTimeout } from "@/lib/timeout";
 
@@ -56,7 +56,7 @@ export async function loadCloudBaseLeaderboardRows(
     const unique = new Map(branches.flat().map((row) => [row.id, row]));
     return [...unique.values()].map((row) => ({
       row,
-      date: row.video?.published_at ? formatShanghaiDateOnly(new Date(row.video.published_at)) : row.report_date,
+      date: getPublishedDateForStats({ published_at: row.video?.published_at, report_date: row.report_date }) ?? row.report_date,
     })).sort((a, b) => b.date.localeCompare(a.date) || timestampKey(b.row.created_at).localeCompare(timestampKey(a.row.created_at)))
       .map(({ row, date }) => ({
         account_id: row.account_id, account_name: row.account.name,
