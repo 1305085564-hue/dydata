@@ -95,14 +95,7 @@ function shanghaiDate(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const values = new Map(parts.map((part) => [part.type, part.value])); // gate:transient-map 函数内临时聚合，随调用栈释放
-  return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
+  return formatShanghaiDateOnly(date);
 }
 
 function normalizeMatchText(value: string | null | undefined) {

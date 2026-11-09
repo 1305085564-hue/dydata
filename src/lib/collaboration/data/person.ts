@@ -3,6 +3,7 @@
 import type { PersonDetailData } from "@/app/(app)/admin/collaboration/types";
 import type { CollaborationRoleTab } from "@/app/(app)/admin/collaboration/types";
 import { BoundedTtlCache } from "@/lib/cache-policy";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 // Memory cache to enable instant opening on second click or preloaded hover.
 // The bound prevents a long-lived admin tab from growing without limit.
@@ -19,14 +20,7 @@ const personDataPending = new Map<string, Promise<PersonDetailData>>(); // gate:
 const personDataInvalidationVersion = new Map<string, number>(); // gate:transient-map 请求级失效版本；在途请求结束释放，无外部缓存 TTL/容量。
 
 function shanghaiToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const values = new Map(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value])); // gate:transient-map 函数内临时日期解析，随调用栈释放
-  return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
+  return formatShanghaiDateOnly(new Date());
 }
 
 export function getPersonDataCacheKey(

@@ -1,4 +1,5 @@
 import type { PersonProfileRole } from "@/lib/collaboration/domain/person-profile-rules";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 const ROLE_TABS: Record<PersonProfileRole, string> = {
   talent: "talents", operator: "operators", writer: "writers", editor: "editors",
@@ -28,8 +29,7 @@ export function buildAuthorCollaborationUrl(authorId: string, works: LinkWork[],
   const role = latest?.authorRole;
   if (!role || !Object.hasOwn(ROLE_TABS, role)) return null;
   const time = workTime(latest);
-  const date = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" })
-    .format(Number.isFinite(time) ? new Date(time) : now);
+  const date = formatShanghaiDateOnly(Number.isFinite(time) ? new Date(time) : now);
   const [year, month] = date.split("-");
   const params = new URLSearchParams({ year, month: String(Number(month)), tab: ROLE_TABS[role as PersonProfileRole], personId: authorId });
   params.set("from", "video");

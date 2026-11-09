@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 type ExemptionRequestRow = {
   id: string;
@@ -99,12 +100,7 @@ export async function loadAdminExemptionList(input: {
   // 决策透视舱：轻量聚合申请人当月（自然月）已获批准的请假与免交天数
   const applicantMonthStatsMap = new Map<string, { approved_leave_days: number; approved_waived_days: number }>();
   if (applicantIds.length > 0) {
-    const shanghaiToday = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Shanghai",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
+    const shanghaiToday = formatShanghaiDateOnly(new Date());
     const currentMonthPrefix = shanghaiToday.slice(0, 7); // YYYY-MM
     const currentMonthStart = `${currentMonthPrefix}-01`;
     const yearNum = Number(currentMonthPrefix.slice(0, 4));

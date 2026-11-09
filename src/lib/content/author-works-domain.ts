@@ -2,6 +2,7 @@ import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { ContentListQuery } from "./domain/content-list-query";
 import { DEFAULT_CONTENT_LIST_FILTERS } from "@/app/(app)/admin/content/content-list-filters";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationTone } from "@/lib/evaluation-standards";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 
 export interface AuthorWorksQueryParams {
   userId: string;
@@ -40,19 +41,19 @@ export interface AuthorWorksResponse {
 }
 
 export function buildAuthorQuery(params: AuthorWorksQueryParams, now = new Date()): ContentListQuery {
-  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(now);
+  const today = formatShanghaiDateOnly(now);
   const range = params.timeRange ?? "30d";
   let startDate = "0001-01-01";
   let endDate = "9999-12-31";
   if (range === "30d") {
-    startDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(new Date(now.getTime() - 29 * 86400000));
+    startDate = shiftDateOnly(now, -29);
     endDate = today;
   } else if (range === "thisMonth") {
     startDate = `${today.slice(0, 7)}-01`;
     endDate = today;
   } else if (range === "lastMonth") {
     const first = new Date(`${today.slice(0, 7)}-01T00:00:00+08:00`);
-    endDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(new Date(first.getTime() - 86400000));
+    endDate = shiftDateOnly(first, -1);
     startDate = `${endDate.slice(0, 7)}-01`;
   }
   return {

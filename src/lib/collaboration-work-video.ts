@@ -1,3 +1,5 @@
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+
 export type WorkVideoReport = {
   id: string;
   accountId: string;
@@ -23,15 +25,7 @@ export function getShanghaiBusinessDate(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const values = new Map(parts.map((part) => [part.type, part.value]));
-  return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
+  return formatShanghaiDateOnly(date);
 }
 
 export function buildShanghaiBusinessDayWindow(reportDate: string) {
