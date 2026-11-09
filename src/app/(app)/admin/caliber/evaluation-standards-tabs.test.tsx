@@ -31,6 +31,28 @@ test("平均播放占比好线和差线可编辑并进入保存数据", () => {
   if (parsed.success) assert.deepEqual(parsed.data.avgPlayRatio, { good: 30, poor: 12 });
 });
 
+test("留存四项权重可编辑并要求总和为 100%", () => {
+  const draft = createEvaluationStandardsDraft(DEFAULT_EVALUATION_STANDARDS);
+  draft.retentionWeights.bounceRate2s = "40";
+  draft.retentionWeights.completionRate5s = "25";
+  draft.retentionWeights.avgPlayBundle = "20";
+  draft.retentionWeights.completionRate = "15";
+
+  const parsed = parseEvaluationStandardsDraft(draft);
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.deepEqual(parsed.data.retentionWeights, {
+      bounceRate2s: 40,
+      completionRate5s: 25,
+      avgPlayBundle: 20,
+      completionRate: 15,
+    });
+  }
+  draft.retentionWeights.completionRate = "14";
+  assert.equal(parseEvaluationStandardsDraft(draft).success, false);
+});
+
 test("只读查看以文字显示标准，负责人表单显示可编辑输入框", () => {
   const settings = { standards: DEFAULT_EVALUATION_STANDARDS, updatedAt: null };
   const router = {
@@ -63,10 +85,14 @@ test("只读查看以文字显示标准，负责人表单显示可编辑输入�
 
   assert.match(readOnly, /2 秒跳出率/);
   assert.match(readOnly, /平均播放占比/);
+  assert.match(readOnly, /留存数据权重/);
+  assert.match(readOnly, /均播时长 \+ 平均播放占比/);
   assert.doesNotMatch(readOnly, /<input\b/);
   assert.doesNotMatch(readOnly, /恢复默认/);
   assert.match(editable, /<input\b/);
   assert.match(editable, /平均播放占比好标准/);
+  assert.match(editable, /2 秒跳出率权重/);
+  assert.match(editable, /整体完播率权重/);
   assert.match(editable, /保存标准/);
   assert.match(editable, /恢复默认/);
 });

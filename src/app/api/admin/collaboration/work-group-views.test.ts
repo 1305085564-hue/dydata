@@ -86,9 +86,9 @@ const currentRows: CollaborationReport[] = [
 
 /** 手造的「每视频最新 24h 快照」映射（loader 测试另用原始快照行走真实去重路径）。 */
 const snapshots = new Map<string, VideoSnapshotMetrics>([
-  { videoId: "v-1", playCount: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, followerGain: 200 },
-  { videoId: "v-2", playCount: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, followerGain: 500 },
-  { videoId: "v-4", playCount: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, followerGain: 100 },
+  { videoId: "v-1", playCount: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, followerGain: 200, avgPlayDuration: 40, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 },
+  { videoId: "v-2", playCount: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, followerGain: 500, avgPlayDuration: 40, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 },
+  { videoId: "v-4", playCount: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, followerGain: 100, avgPlayDuration: 40, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 },
 ].map((row) => [row.videoId, row]));
 
 const dataset: CollaborationMonthDataset = {
@@ -183,7 +183,7 @@ test("文案小队质量汇总按全部作品重算，达人与运营保持空�
   assert.equal(viewOf(views, "wg-operator").summary.contentQuality, null);
 });
 
-test("小队质量按显式公司标准重算，不被 60 秒原始数据缓存固化", () => {
+test("小队质量按显式公司标准重算互动与主要指标，不被 60 秒原始数据缓存固化", () => {
   const qualityDataset = {
     ...dataset,
     videoTopicTags: {
@@ -203,8 +203,13 @@ test("小队质量按显式公司标准重算，不被 60 秒原始数据缓存�
 
   const defaults = buildWorkGroupViews(qualityDataset);
   const configured = buildWorkGroupViews(qualityDataset, stricterStandards);
-  assert.equal(viewOf(defaults, "wg-writer").summary.contentQuality?.overallGradeCounts.poor, 0);
-  assert.equal(viewOf(configured, "wg-writer").summary.contentQuality?.overallGradeCounts.poor, 2);
+  const defaultQuality = viewOf(defaults, "wg-writer").summary.contentQuality;
+  const configuredQuality = viewOf(configured, "wg-writer").summary.contentQuality;
+  assert.ok(defaultQuality);
+  assert.ok(configuredQuality);
+  assert.ok((configuredQuality.avgInteractionAchievement ?? 0) < (defaultQuality.avgInteractionAchievement ?? 0));
+  assert.ok((configuredQuality.avgCoreAchievement ?? 0) < (defaultQuality.avgCoreAchievement ?? 0));
+  assert.deepEqual(configuredQuality.overallGradeCounts, { excellent: 1, good: 0, fair: 1, poor: 0 });
 });
 
 test("署名归属与按岗位口径一致：文案含达人账号作品、达人按账号归属、运营只算他人账号", () => {
@@ -356,13 +361,13 @@ function createFakeSupabase(db: Record<string, Array<Record<string, unknown>>>, 
 
 /** 原始快照行（含 72h 噪音与同视频多条 24h），供 loader 走真实去重路径。 */
 const snapshotRows = [
-  { video_id: "v-1", snapshot_type: "24h", captured_at: "2026-09-03T10:00:00Z", play_count: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, follower_gain: 200 },
-  { video_id: "v-2", snapshot_type: "24h", captured_at: "2026-09-04T10:00:00Z", play_count: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, follower_gain: 500 },
+  { video_id: "v-1", snapshot_type: "24h", captured_at: "2026-09-03T10:00:00Z", play_count: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, follower_gain: 200, avg_play_duration: 40, avg_play_ratio: 0.25, bounce_rate_2s: 25, completion_rate_5s: 60, completion_rate: 10 },
+  { video_id: "v-2", snapshot_type: "24h", captured_at: "2026-09-04T10:00:00Z", play_count: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, follower_gain: 500, avg_play_duration: 40, avg_play_ratio: 0.25, bounce_rate_2s: 25, completion_rate_5s: 60, completion_rate: 10 },
   // 72h 快照不该被「按团队」采用（与内容抽屉取数一致）
-  { video_id: "v-3", snapshot_type: "72h", captured_at: "2026-09-06T10:00:00Z", play_count: 9999, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1 },
+  { video_id: "v-3", snapshot_type: "72h", captured_at: "2026-09-06T10:00:00Z", play_count: 9999, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1, avg_play_duration: 20, avg_play_ratio: 0.15, bounce_rate_2s: 35, completion_rate_5s: 50, completion_rate: 5 },
   // v-4 有两条 24h：只取最新一条
-  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T09:00:00Z", play_count: 111, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1 },
-  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T12:00:00Z", play_count: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, follower_gain: 100 },
+  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T09:00:00Z", play_count: 111, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1, avg_play_duration: 20, avg_play_ratio: 0.15, bounce_rate_2s: 35, completion_rate_5s: 50, completion_rate: 5 },
+  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T12:00:00Z", play_count: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, follower_gain: 100, avg_play_duration: 40, avg_play_ratio: 0.25, bounce_rate_2s: 25, completion_rate_5s: 60, completion_rate: 10 },
 ];
 
 test("数据集带出小队归属与快照：恒定查询次数，不随小队数量增长", async () => {

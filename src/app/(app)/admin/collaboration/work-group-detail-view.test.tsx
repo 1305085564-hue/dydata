@@ -205,10 +205,12 @@ test("源码断言：组详情不再复用岗位 Tab 行组件，防止旧列回
   assert.ok(source.includes("formatRate"), "比率格式与组列表同源");
 });
 
-test("文案小队含内容质量数据时：增加「综合良优率」列，非文案组保持8列", () => {
+test("文案小队含留存数据时：增加「留存数据」列，非文案组保持8列", () => {
   const quality = {
     totalCount: 5,
     achievementSampleCount: 4,
+    interactionSampleCount: 5,
+    coreSampleCount: 4,
     ratedCount: 4,
     goodExcellentRate: 0.8,
     overallGradeCounts: { excellent: 2, good: 2, fair: 0, poor: 0 },
@@ -237,7 +239,7 @@ test("文案小队含内容质量数据时：增加「综合良优率」列，�
     "互动率",
     "点赞率",
     "收藏率",
-    "综合良优率",
+    "留存数据",
   ]);
   // 组综合 + 1 个组员行，每行 9 个单元格
   assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
@@ -246,7 +248,7 @@ test("文案小队含内容质量数据时：增加「综合良优率」列，�
   assert.ok(text.includes("80%"));
   assert.ok(text.includes("优2·良2·普0·劣0"));
 
-  // 达人组详情即使有数据也不出综合良优率
+  // 达人组详情即使有数据也不出留存数据列
   const talentHtml = renderDetail({
     summary: summary({ kind: "talent", contentQuality: null }),
     members: [member("u-2", "张达人", { contentQuality: null })],

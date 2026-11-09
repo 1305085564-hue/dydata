@@ -21,7 +21,7 @@ import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import { measureAsync } from "@/lib/perf";
 
 const SNAPSHOT_METRICS_FIELDS =
-  "video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, captured_at";
+  "video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, avg_play_duration, avg_play_ratio, bounce_rate_2s, completion_rate_5s, completion_rate, captured_at";
 /** PostgREST `.in()` 走查询串，批次过大有 URL 长度风险；100 个 UUID 约 4.4KB。 */
 const SNAPSHOT_ID_BATCH_SIZE = 100;
 
@@ -33,6 +33,11 @@ function toSnapshotMetrics(row: {
   shares: number | null;
   favorites: number | null;
   follower_gain: number | null;
+  avg_play_duration: number | null;
+  avg_play_ratio: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
 }): VideoSnapshotMetrics {
   return {
     videoId: row.video_id,
@@ -42,6 +47,11 @@ function toSnapshotMetrics(row: {
     shares: row.shares,
     favorites: row.favorites,
     followerGain: row.follower_gain,
+    avgPlayDuration: row.avg_play_duration,
+    avgPlayRatio: row.avg_play_ratio,
+    bounceRate2s: row.bounce_rate_2s,
+    completionRate5s: row.completion_rate_5s,
+    completionRate: row.completion_rate,
   };
 }
 

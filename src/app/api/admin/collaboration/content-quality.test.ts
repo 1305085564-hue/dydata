@@ -56,6 +56,11 @@ function snapshot(overrides: Partial<VideoSnapshotMetrics> = {}): VideoSnapshotM
     shares: 100,
     favorites: 200,
     followerGain: 0,
+    avgPlayDuration: 40,
+    avgPlayRatio: 0.25,
+    bounceRate2s: 25,
+    completionRate5s: 60,
+    completionRate: 10,
     ...overrides,
   };
 }
@@ -70,10 +75,11 @@ test("规则下发来自 breakout-rating 现行常量，前端不需要复制数
     review: { interaction: BREAKOUT_TARGETS.review.interaction, core: BREAKOUT_TARGETS.review.fourth },
     gradeThresholds: BREAKOUT_GRADE_THRESHOLDS,
     playFloors: { floor: KPI_PLAY_FLOOR, good: KPI_PLAY_GOOD, excellent: KPI_PLAY_EXCELLENT },
+    retentionWeights: { bounceRate2s: 35, completionRate5s: 30, avgPlayBundle: 20, completionRate: 15 },
   });
 });
 
-test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计算", () => {
+test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计算", () => {
   const dry = buildWorkContentQuality(
     report(),
     snapshot(),
@@ -83,6 +89,7 @@ test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计�
   assert.equal(dry.coreMetric, "favoriteRate");
   assert.equal(dry.status, "rated");
   assert.equal(dry.contentGrade, "优");
+  assert.equal(dry.contentAchievement, 100);
   assert.equal(dry.overallGrade, "普", "10000 播放不足 1.5 万，只能封顶为普");
 
   const review = buildWorkContentQuality(
@@ -96,7 +103,7 @@ test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计�
   assert.equal(review.overallGrade, "普");
 });
 
-test("公司达标基准贯通协作作品计算和报表规则，综合档位与播放门槛仍固定", () => {
+test("公司互动和主要指标基准继续下发，留存评级沿用播放门槛", () => {
   const standards = {
     ...DEFAULT_EVALUATION_STANDARDS,
     targets: {
@@ -117,8 +124,9 @@ test("公司达标基准贯通协作作品计算和报表规则，综合档位�
 
   assert.equal(custom.interactionAchievement, 70);
   assert.ok(Math.abs((custom.coreAchievement ?? Number.NaN) - (200 / 3)) < 1e-9);
-  assert.equal(custom.contentGrade, "普", "100/80/60 综合达成率档位不由公司编辑");
-  assert.equal(custom.overallGrade, "普", "播放门槛仍由 5,000/15,000 规则决定");
+  assert.equal(custom.contentGrade, "优", "留存数据使用当前公司好差线和权重");
+  assert.equal(custom.contentAchievement, 100);
+  assert.equal(custom.overallGrade, "优", "播放达到 15,000 后按留存分评级");
   assert.deepEqual(customRules.dryGoods, { interaction: 0.1, core: 0.06 });
   assert.deepEqual(customRules.gradeThresholds, BREAKOUT_GRADE_THRESHOLDS);
   assert.deepEqual(customRules.playFloors, {
@@ -133,7 +141,90 @@ test("公司达标基准贯通协作作品计算和报表规则，综合档位�
     topics([["video-1", "干货"]]),
     standards,
   );
-  assert.equal(summary.overallGradeCounts.fair, 1);
+  assert.equal(summary.overallGradeCounts.excellent, 1);
+});
+
+test("五项留存数据按确认权重计分，均播时长和平均播放占比各占组合项一半", () => {
+  const quality = buildWorkContentQualityFromMetrics(
+    {
+      videoId: "weighted",
+      snapshot: {
+        ...snapshotInputBase,
+        playCount: 15000,
+        bounceRate2s: 25,
+        completionRate5s: 50,
+        avgPlayDuration: 40,
+        avgPlayRatio: 0.15,
+        completionRate: 10,
+      },
+    },
+    topics([["weighted", "复盘"]]),
+  );
+
+  assert.equal(quality.contentAchievement, 60);
+  assert.equal(quality.contentGrade, "普");
+  assert.equal(quality.overallGrade, "普");
+});
+
+test("公司好差线与权重变更立即反映在留存得分", () => {
+  const standards = {
+    ...DEFAULT_EVALUATION_STANDARDS,
+    bounceRate2s: { good: 20, poor: 40 },
+    completionRate5s: { good: 70, poor: 40 },
+    avgPlayDuration: { good: 50, poor: 10 },
+    avgPlayRatio: { good: 40, poor: 10 },
+    completionRate: { good: 20, poor: 0 },
+    retentionWeights: { bounceRate2s: 40, completionRate5s: 30, avgPlayBundle: 20, completionRate: 10 },
+  };
+  const quality = buildWorkContentQualityFromMetrics(
+    {
+      videoId: "custom-standards",
+      snapshot: {
+        ...snapshotInputBase,
+        playCount: 15000,
+        bounceRate2s: 30,
+        completionRate5s: 55,
+        avgPlayDuration: 30,
+        avgPlayRatio: 0.2,
+        completionRate: 7.5,
+      },
+    },
+    topics([["custom-standards", "复盘"]]),
+    standards,
+  );
+
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 47.0833333333) < 1e-8);
+});
+
+test("五项留存数据任一缺失时不生成留存分或评级", () => {
+  const metricKeys = ["bounceRate2s", "completionRate5s", "avgPlayDuration", "avgPlayRatio", "completionRate"] as const;
+
+  for (const key of metricKeys) {
+    const quality = buildWorkContentQualityFromMetrics(
+      { videoId: `missing-${key}`, snapshot: { ...snapshotInputBase, playCount: 15000, [key]: null } },
+      topics([[`missing-${key}`, "复盘"]]),
+    );
+
+    assert.equal(quality.status, "missing_metrics", `${key} 缺失时应显示待处理`);
+    assert.equal(quality.contentAchievement, null, `${key} 缺失时不补算留存分`);
+    assert.equal(quality.contentGrade, null);
+    assert.equal(quality.overallGrade, null);
+  }
+});
+
+test("播放量门槛只影响评级上限，不进入留存总分", () => {
+  const works = [
+    { id: "below-floor", playCount: KPI_PLAY_FLOOR - 1 },
+    { id: "floor", playCount: KPI_PLAY_FLOOR },
+    { id: "below-good", playCount: KPI_PLAY_GOOD - 1 },
+    { id: "good-floor", playCount: KPI_PLAY_GOOD },
+  ].map(({ id, playCount }) => buildWorkContentQualityFromMetrics(
+    { videoId: id, snapshot: { ...snapshotInputBase, playCount } },
+    topics([[id, "复盘"]]),
+  ));
+
+  assert.deepEqual(works.map((work) => work.overallGrade), ["劣", "普", "普", "优"]);
+  assert.ok(works.every((work) => work.contentAchievement === 100));
 });
 
 test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被排除", () => {
@@ -153,13 +244,16 @@ test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被
   );
   assert.equal(summary.totalCount, 3);
   assert.equal(summary.ratedCount, 2);
+  assert.equal(summary.achievementSampleCount, 2);
+  assert.equal(summary.interactionSampleCount, 1, "低播放作品的互动计数越过播放量，互动数据按缺失处理");
+  assert.equal(summary.coreSampleCount, 2);
   assert.equal(summary.overallGradeCounts.poor, 1);
   assert.equal(summary.overallGradeCounts.excellent, 1);
   assert.equal(summary.goodExcellentRate, 0.5);
   assert.equal(summary.unratedReasons.pendingSnapshot, 1);
 });
 
-test("标签读取失败、无快照、缺视频分别保留准确状态，不伪造成 other 或 0", () => {
+test("无快照与缺视频分别保留准确状态，话题读取失败不阻断留存评级", () => {
   const pending = buildWorkContentQuality(report({ video_id: "pending" }), undefined, topics([["pending", null]]));
   assert.equal(pending.status, "pending_snapshot");
   assert.equal(pending.overallGrade, null);
@@ -168,17 +262,22 @@ test("标签读取失败、无快照、缺视频分别保留准确状态，不�
   assert.equal(unlinked.status, "unlinked");
 
   const failed = buildWorkContentQuality(report({ id: "failed", video_id: "failed" }), snapshot({ videoId: "failed" }), topics([], "error"));
-  assert.equal(failed.status, "topic_unavailable");
-  assert.equal(failed.overallGrade, null);
+  assert.equal(failed.status, "rated");
+  assert.equal(failed.overallGrade, "普");
 });
 
-test("共享列表质量映射区分成功但缺标签与标签查询失败", () => {
+test("话题读取失败不阻断独立的留存数据评级", () => {
   const snapshotInput = {
     playCount: 15000,
     likes: 400,
     comments: 100,
     shares: 100,
     favorites: 300,
+    avgPlayDuration: 40,
+    avgPlayRatio: 0.25,
+    bounceRate2s: 25,
+    completionRate5s: 60,
+    completionRate: 10,
   };
   const missingTag = buildContentQualityMap(
     ["missing-tag"],
@@ -193,8 +292,9 @@ test("共享列表质量映射区分成功但缺标签与标签查询失败", ()
     new Map([["failed-tag", snapshotInput]]),
     { state: "error", tags: new Map() },
   ).get("failed-tag");
-  assert.equal(failedTag?.status, "topic_unavailable");
-  assert.equal(failedTag?.overallGrade, null);
+  assert.equal(failedTag?.status, "rated");
+  assert.equal(failedTag?.coreAchievement, null);
+  assert.equal(failedTag?.overallGrade, "优");
 });
 
 test("混合干货与复盘按各自核心指标计算，小队汇总基于作品级结果", () => {
@@ -223,6 +323,11 @@ const snapshotInputBase = {
   comments: 100,
   shares: 100,
   favorites: 200,
+  avgPlayDuration: 40,
+  avgPlayRatio: 0.25,
+  bounceRate2s: 25,
+  completionRate5s: 60,
+  completionRate: 10,
 };
 
 test("buildStaff 文案行显式返回真实质量汇总，剪辑行不新增文案块", () => {
@@ -309,5 +414,6 @@ test("达人个人作品明细使用同一份公司内容质量标准，不再�
   assert.equal(payload.records[0]?.contentQuality?.coreMetric, "favoriteRate");
   assert.equal(payload.records[0]?.contentQuality?.interactionAchievement, 35);
   assert.equal(payload.records[0]?.contentQuality?.coreAchievement, 40);
+  assert.equal(payload.records[0]?.contentQuality?.contentAchievement, 100);
   assert.equal("followerAchievement" in payload.records[0]!, false);
 });

@@ -249,7 +249,7 @@ export function WriterQualityChart({
                   ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
                   : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
               }`}
-              title="点击切换两项内容达成率主折线显隐"
+              title="点击切换留存数据折线显隐"
             >
               <span
                 className="size-1.5 rounded-full"
@@ -257,7 +257,7 @@ export function WriterQualityChart({
                   backgroundColor: visibleMetrics.content ? "#D97757" : "#A8A29E",
                 }}
               />
-              <span>内容达成率</span>
+              <span>留存数据</span>
             </button>
             <button
               type="button"
@@ -267,7 +267,7 @@ export function WriterQualityChart({
                   ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
                   : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
               }`}
-              title="点击切换互动达成率折线显隐"
+              title="点击切换互动数据折线显隐"
             >
               <span
                 className="size-1.5 rounded-full"
@@ -275,7 +275,7 @@ export function WriterQualityChart({
                   backgroundColor: visibleMetrics.interaction ? "#43718E" : "#A8A29E",
                 }}
               />
-              <span>互动达成率</span>
+              <span>互动数据</span>
             </button>
             <button
               type="button"
@@ -285,7 +285,7 @@ export function WriterQualityChart({
                   ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
                   : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
               }`}
-              title="点击切换核心指标达成率折线显隐"
+              title="点击切换主要指标折线显隐"
             >
               <span
                 className="size-1.5 rounded-full"
@@ -293,7 +293,7 @@ export function WriterQualityChart({
                   backgroundColor: visibleMetrics.core ? "#6FAA7D" : "#A8A29E",
                 }}
               />
-              <span>核心达成率</span>
+              <span>主要指标</span>
             </button>
           </div>
         )}
@@ -301,7 +301,7 @@ export function WriterQualityChart({
 
       {state === "error" ? (
         <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#C0685C]">
-          文案内容质量数据加载异常，请稍后刷新重试
+          文案作品评价数据加载异常，请稍后刷新重试
         </div>
       ) : chartData.length === 0 ? (
         <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
@@ -353,7 +353,7 @@ export function WriterQualityChart({
                     <>
                       {visibleMetrics.content && (
                         <span className="text-[#78716C]">
-                          内容达成{" "}
+                          留存数据{" "}
                           <span className="font-normal text-[#D97757]">
                             {hoveredWork.contentAchievement != null
                               ? `${Math.round(hoveredWork.contentAchievement)}%`
@@ -372,7 +372,7 @@ export function WriterQualityChart({
                       )}
                       {visibleMetrics.interaction && (
                         <span className="text-[#78716C]">
-                          互动{" "}
+                          互动数据{" "}
                           <span className="font-normal text-[#43718E]">
                             {hoveredWork.interactionAchievement != null
                               ? `${Math.round(hoveredWork.interactionAchievement)}%`
@@ -382,7 +382,7 @@ export function WriterQualityChart({
                       )}
                       {visibleMetrics.core && (
                         <span className="text-[#78716C]">
-                          核心{" "}
+                          主要指标{" "}
                           <span className="font-normal text-[#6FAA7D]">
                             {hoveredWork.coreAchievement != null
                               ? `${Math.round(hoveredWork.coreAchievement)}%`
@@ -419,39 +419,39 @@ export function WriterQualityChart({
               </div>
             ) : (
               <div className="flex items-center w-full min-w-0">
-                {/* 默认均值带：单行展示，综合良优率无样本显示「—」非「0%」 */}
+                {/* 默认均值带：单行展示，留存数据无样本显示「—」非「0%」 */}
                 <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
                   <span
                     className="text-[#78716C] font-normal shrink-0"
-                    title="文案内容目标：达成率均值使用两项指标完整样本；综合良优率使用综合已评级样本"
+                    title="留存分均值只统计五项留存数据完整作品；良优率只统计已评级作品"
                   >
-                    近30天内容目标
+                    近30天作品数据
                   </span>
                   {summary ? (
                     <>
                       {visibleMetrics.content && summary.avgContentAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          均达成 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
+                          留存均分 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
                         </span>
                       )}
                       {visibleMetrics.interaction && summary.avgInteractionAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          均互动 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
+                          互动数据均值 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
                         </span>
                       )}
                       {visibleMetrics.core && summary.avgCoreAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          均核心 <span className="font-normal text-[#6FAA7D]">{Math.round(summary.avgCoreAchievement)}%</span>
+                          主要指标均值 <span className="font-normal text-[#6FAA7D]">{Math.round(summary.avgCoreAchievement)}%</span>
                         </span>
                       )}
-                      <span className="text-[#78716C] tabular-nums" title="两项指标均完整可计算的作品篇数">
-                        指标完整 <span className="font-normal text-[#1F1E1D]">{summary.achievementSampleCount}</span> 篇
+                      <span className="text-[#78716C] tabular-nums" title="五项留存数据完整且已计算留存分的作品篇数">
+                        留存完整 <span className="font-normal text-[#1F1E1D]">{summary.achievementSampleCount}</span> 篇
                       </span>
                       <span className="text-[#78716C] tabular-nums" title="综合已评级篇数 / 署名作品篇数">
                         已评级 <span className="font-normal text-[#1F1E1D]">{summary.ratedCount}</span>/{summary.totalCount}
                       </span>
                       <span className="text-[#78716C] tabular-nums" title="综合评级为良或优的篇数 ÷ 综合已评级篇数">
-                        综合良优率{" "}
+                        留存良优率{" "}
                         <span className="font-normal text-[#141413]">
                           {summary.ratedCount === 0 || summary.goodExcellentRate === null
                             ? "—"
@@ -569,7 +569,7 @@ export function WriterQualityChart({
                   <Line
                     type="monotone"
                     dataKey="contentAchievement"
-                    name="内容达成率"
+                    name="留存数据"
                     stroke="#D97757"
                     strokeWidth={2}
                     connectNulls={false}
@@ -583,7 +583,7 @@ export function WriterQualityChart({
                   <Line
                     type="monotone"
                     dataKey="interactionAchievement"
-                    name="互动达成率"
+                    name="互动数据"
                     stroke="#43718E"
                     strokeWidth={1.5}
                     strokeDasharray="3 2"
@@ -598,7 +598,7 @@ export function WriterQualityChart({
                   <Line
                     type="monotone"
                     dataKey="coreAchievement"
-                    name="核心达成率"
+                    name="主要指标"
                     stroke="#6FAA7D"
                     strokeWidth={1.5}
                     strokeDasharray="4 2"

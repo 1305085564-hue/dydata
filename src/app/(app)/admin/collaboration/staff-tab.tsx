@@ -197,13 +197,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  互动达成
+                  互动数据
                   {sort.renderSortIcon("avgInteractionAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">互动达成率均值：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">互动数据均值：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
-                    两项指标均完整可计算作品的互动达成率算术平均，不按播放加权。
+                    有互动数据作品的互动指标达成率算术平均，不按播放加权。
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -220,13 +220,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  核心达成
+                  主要指标
                   {sort.renderSortIcon("avgCoreAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">核心指标达成率均值：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">主要指标均值：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
-                    干货按收藏率、复盘及其他按点赞率计算达成率后求平均。
+                    干货按收藏率、复盘及其他按点赞率计算指标达成率后求平均。
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -243,13 +243,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  良优率
+                  留存数据
                   {sort.renderSortIcon("goodExcellentRate")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">综合良优率口径：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">留存数据良优率口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
-                    综合评级为良或优的署名日报篇数 ÷ 综合已评级署名日报篇数。<br />
+                    留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
                     播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接判劣计入分母；无已评级作品时显示「—」。
                   </p>
                 </TooltipContent>
@@ -428,11 +428,11 @@ export function StaffRowCells({
               row.writerQuality.state === "error" ? (
                 <Badge variant="warning" title="质量数据读取异常">异常</Badge>
               ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
-                <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                <span title={`互动数据完整样本：${row.writerQuality.summary.interactionSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无互动数据完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -443,11 +443,11 @@ export function StaffRowCells({
               row.writerQuality.state === "error" ? (
                 <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
               ) : row.writerQuality.summary?.avgCoreAchievement != null ? (
-                <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                <span title={`主要指标完整样本：${row.writerQuality.summary.coreSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无主要指标完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>

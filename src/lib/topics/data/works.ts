@@ -69,7 +69,7 @@ export async function loadSubTopicWorks(
         (pageFrom, pageTo) => {
           let directQuery = supabase
             .from("videos")
-            .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+            .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert, avg_play_duration, avg_play_ratio, bounce_rate_2s, completion_rate_5s, completion_rate)")
             .eq("lifecycle_state", "active")
             .eq("topic_id", id);
           directQuery = directQuery.in("user_id", scope.visibleUserIds);
@@ -94,7 +94,7 @@ export async function loadSubTopicWorks(
   if (siblingIds.length) {
     let similarQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert, avg_play_duration, avg_play_ratio, bounce_rate_2s, completion_rate_5s, completion_rate)")
       .eq("lifecycle_state", "active")
       .in("topic_id", siblingIds);
     similarQuery = similarQuery.in("user_id", scope.visibleUserIds);

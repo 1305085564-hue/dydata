@@ -10,9 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DEFAULT_EVALUATION_STANDARDS,
   EVALUATION_METRICS,
+  RETENTION_WEIGHT_FIELDS,
   parseEvaluationStandards,
   type EvaluationMetric,
   type EvaluationStandards,
+  type RetentionWeightKey,
 } from "@/lib/evaluation-standards";
 
 type TargetKey = keyof EvaluationStandards["targets"];
@@ -21,6 +23,7 @@ type EvaluationStandardsDraft = {
 } & {
   minPlayCount: string;
   targets: Record<TargetKey, string>;
+  retentionWeights: Record<RetentionWeightKey, string>;
 };
 
 export type EvaluationSettingsView = {
@@ -51,6 +54,12 @@ export function createEvaluationStandardsDraft(standards: EvaluationStandards): 
       interactionRate: String(standards.targets.interactionRate),
       followerRate: String(standards.targets.followerRate),
     },
+    retentionWeights: {
+      bounceRate2s: String(standards.retentionWeights.bounceRate2s),
+      completionRate5s: String(standards.retentionWeights.completionRate5s),
+      avgPlayBundle: String(standards.retentionWeights.avgPlayBundle),
+      completionRate: String(standards.retentionWeights.completionRate),
+    },
   };
 }
 
@@ -73,6 +82,12 @@ export function parseEvaluationStandardsDraft(draft: EvaluationStandardsDraft) {
       dryFavoriteRate: draftNumber(draft.targets.dryFavoriteRate),
       interactionRate: draftNumber(draft.targets.interactionRate),
       followerRate: draftNumber(draft.targets.followerRate),
+    },
+    retentionWeights: {
+      bounceRate2s: draftNumber(draft.retentionWeights.bounceRate2s),
+      completionRate5s: draftNumber(draft.retentionWeights.completionRate5s),
+      avgPlayBundle: draftNumber(draft.retentionWeights.avgPlayBundle),
+      completionRate: draftNumber(draft.retentionWeights.completionRate),
     },
   });
 }
@@ -170,6 +185,16 @@ export function EvaluationStandardsTabs({
 
   const updateMinPlayCount = (value: string) => {
     setDraft((current) => ({ ...current, minPlayCount: value }));
+    setValidationError(null);
+    setSaveMessage(null);
+    setSaveError(null);
+  };
+
+  const updateRetentionWeight = (key: RetentionWeightKey, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      retentionWeights: { ...current.retentionWeights, [key]: value },
+    }));
     setValidationError(null);
     setSaveMessage(null);
     setSaveError(null);
@@ -353,6 +378,48 @@ export function EvaluationStandardsTabs({
                   )}
                 </label>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-[14px] text-[#141413]">留存数据权重</h2>
+                <p className="mt-1 text-[12px] text-[#78716C]">留存总分由四项组成，权重合计必须为 100%；均播时长和平均播放占比合并为一项，各取该项的一半。</p>
+              </div>
+              <Table className="min-w-[330px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>留存指标</TableHead>
+                    <TableHead className="text-right">权重</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {RETENTION_WEIGHT_FIELDS.map(({ key, label }) => (
+                    <TableRow key={key}>
+                      <TableHead scope="row" className="text-[14px] text-[#1F1E1D]">{label}</TableHead>
+                      <TableCell className="text-right">
+                        {canEdit ? (
+                          <div className="ml-auto flex w-24 items-center gap-1">
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              autoComplete="off"
+                              maxLength={8}
+                              aria-label={`${label}权重`}
+                              className="text-right tabular-nums"
+                              value={draft.retentionWeights[key]}
+                              disabled={saving}
+                              onChange={(event) => updateRetentionWeight(key, event.target.value)}
+                            />
+                            <span className="shrink-0 text-[12px] text-[#78716C]">%</span>
+                          </div>
+                        ) : (
+                          <span className="tabular-nums">{formatStandard(draftNumber(draft.retentionWeights[key]), "%")}</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
 
             {canEdit ? (

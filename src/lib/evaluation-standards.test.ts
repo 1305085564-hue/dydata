@@ -22,11 +22,15 @@ test("默认标准保持已确认口径，2秒跳出35正常、超过35才差", 
 test("旧公司标准缺少平均播放占比时只补齐新增默认值", () => {
   const legacy = draft() as Partial<ReturnType<typeof draft>>;
   delete legacy.avgPlayRatio;
+  delete legacy.retentionWeights;
 
   const parsed = parseEvaluationStandards(legacy);
 
   assert.equal(parsed.success, true);
-  if (parsed.success) assert.deepEqual(parsed.data.avgPlayRatio, { good: 25, poor: 15 });
+  if (parsed.success) {
+    assert.deepEqual(parsed.data.avgPlayRatio, { good: 25, poor: 15 });
+    assert.deepEqual(parsed.data.retentionWeights, { bounceRate2s: 35, completionRate5s: 30, avgPlayBundle: 20, completionRate: 15 });
+  }
 });
 
 test("修改后的标准决定判断，播放不足和缺值不评优劣", () => {
@@ -51,6 +55,8 @@ test("拒绝重叠区间、越界、非数字及缺项，不把非法保存伪�
     (s: typeof valid) => { s.minPlayCount = -1; },
     (s: typeof valid) => { s.targets.reviewLikeRate = 0; },
     (s: typeof valid) => { s.avgPlayDuration.good = Number.NaN; },
+    (s: typeof valid) => { s.retentionWeights.avgPlayBundle = 21; },
+    (s: typeof valid) => { s.retentionWeights.bounceRate2s = -1; },
   ]) {
     const invalid = draft(); mutate(invalid);
     assert.equal(parseEvaluationStandards(invalid).success, false);

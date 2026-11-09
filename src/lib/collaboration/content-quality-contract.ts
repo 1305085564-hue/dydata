@@ -1,4 +1,5 @@
 import type { BreakoutGrade } from "@/lib/breakout-rating";
+import type { RetentionWeightKey } from "@/lib/evaluation-standards";
 
 /**
  * 话题内容目标标准线（阈值为 0–1 小数，例如 0.035 表示 3.5%）。
@@ -37,6 +38,7 @@ export interface ContentQualityRules {
     good: number;
     excellent: number;
   };
+  retentionWeights: Record<RetentionWeightKey, number>;
 }
 
 /**
@@ -78,9 +80,9 @@ export interface WorkContentQuality {
   interactionAchievement: number | null;
   /** 核心指标达成率（百分数数值：收藏或点赞达成率，不封顶） */
   coreAchievement: number | null;
-  /** 两项平均内容达成率（百分数数值，不封顶） */
+  /** 留存数据加权得分（0～100） */
   contentAchievement: number | null;
-  /** 指标档位（不含播放兜底，仅由两项平均达成率映射） */
+  /** 留存数据档位（不含播放兜底） */
   contentGrade: BreakoutGrade | null;
   /** 综合评级（含播放兜底，overallBreakoutGrade 计算结果） */
   overallGrade: BreakoutGrade | null;
@@ -91,15 +93,20 @@ export interface WorkContentQuality {
 /**
  * 质量汇总统计（月度与近 30 天通用）。
  * 两个明确样本集：
- * 1. 达成率均值样本集：两项指标均完整可计算的作品（achievementSampleCount）；
- * 2. 综合良优率样本集：综合评级非空的作品（ratedCount）。
+ * 1. 留存分均值样本集：五项留存数据都完整的作品（achievementSampleCount）；
+ * 2. 互动数据与主要指标各自使用完整的指标样本；
+ * 3. 综合良优率样本集：综合评级非空的作品（ratedCount）。
  * 当 ratedCount === 0 时，goodExcellentRate 为 null，展示「—」；只有 ratedCount > 0 且良优数为 0 时才为 0。
  */
 export interface ContentQualitySummary {
   /** 署名日报作品总数 */
   totalCount: number;
-  /** 两项指标均完整可计算的作品数（均值分母） */
+  /** 五项留存数据均完整可计算的作品数（留存分均值分母） */
   achievementSampleCount: number;
+  /** 互动数据可计算作品数（互动均值分母） */
+  interactionSampleCount: number;
+  /** 主要指标可计算作品数（主要指标均值分母） */
+  coreSampleCount: number;
   /** 综合评级非空的作品数（良优率分母） */
   ratedCount: number;
   /** 未评级原因计数（仅统计综合评级为空的作品） */
@@ -114,7 +121,7 @@ export interface ContentQualitySummary {
   avgInteractionAchievement: number | null;
   /** 核心指标达成率均值（百分数数值） */
   avgCoreAchievement: number | null;
-  /** 内容达成率均值（百分数数值） */
+  /** 留存数据加权分均值（0～100） */
   avgContentAchievement: number | null;
   /** 综合优/良/普/劣件数计数 */
   overallGradeCounts: {

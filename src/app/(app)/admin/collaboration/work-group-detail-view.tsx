@@ -204,7 +204,7 @@ export function WorkGroupDetailView({
                           sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
                         }`}
                       >
-                        综合良优率
+                        留存数据
                         {renderSortIcon("goodExcellentRate")}
                       </button>
                     </TableHead>

@@ -151,7 +151,7 @@ test("空态与未就绪态不出表格，文案随权限变化", () => {
   assert.equal(emptyManageable.includes("<table"), false, "没有小队时不出表格");
 });
 
-test("文案小队含内容质量数据时：增加「综合良优率」列，达人/运营保持10列", () => {
+test("文案小队含留存数据时：增加「留存数据」列，达人/运营保持10列", () => {
   const writerWithQuality = group({
     id: "wg-w",
     name: "文案一组",
@@ -159,6 +159,8 @@ test("文案小队含内容质量数据时：增加「综合良优率」列，�
     contentQuality: {
       totalCount: 10,
       achievementSampleCount: 8,
+      interactionSampleCount: 9,
+      coreSampleCount: 8,
       ratedCount: 8,
       goodExcellentRate: 0.75,
       overallGradeCounts: { excellent: 3, good: 3, fair: 1, poor: 1 },
@@ -186,7 +188,7 @@ test("文案小队含内容质量数据时：增加「综合良优率」列，�
     "互动率",
     "点赞率",
     "收藏率",
-    "综合良优率",
+    "留存数据",
     "操作",
   ]);
   const textWithQuality = stripTags(htmlWithQuality);

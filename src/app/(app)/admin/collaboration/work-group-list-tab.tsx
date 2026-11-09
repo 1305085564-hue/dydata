@@ -186,7 +186,7 @@ export function WorkGroupListTab({
               {sortableHead("interactionRate", "互动率", "w-[80px]")}
               {sortableHead("likeRate", "点赞率", "w-[80px]")}
               {sortableHead("favoriteRate", "收藏率", "w-[80px]")}
-              {hasWriterQuality && sortableHead("goodExcellentRate", "综合良优率", "w-[90px]")}
+              {hasWriterQuality && sortableHead("goodExcellentRate", "留存数据", "w-[90px]")}
               <TableHead className="py-2 pl-2 pr-4 text-right font-normal text-[#78716C] w-[70px]">
                 操作
               </TableHead>

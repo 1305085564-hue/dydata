@@ -3,6 +3,7 @@ import {
   buildContentQualitySummaryFromWorks,
   buildWorkContentQualityFromMetrics,
   contentQualityRules as sharedContentQualityRules,
+  type ContentQualitySnapshot,
 } from "@/lib/content-quality";
 import type {
   ContentQualityRules,
@@ -31,6 +32,11 @@ function snapshotMetricInput(snapshot: VideoSnapshotMetrics) {
     comments: snapshot.comments,
     shares: snapshot.shares,
     favorites: snapshot.favorites,
+    avgPlayDuration: snapshot.avgPlayDuration ?? null,
+    avgPlayRatio: snapshot.avgPlayRatio ?? null,
+    bounceRate2s: snapshot.bounceRate2s ?? null,
+    completionRate5s: snapshot.completionRate5s ?? null,
+    completionRate: snapshot.completionRate ?? null,
   };
 }
 
@@ -41,7 +47,21 @@ export function buildWorkContentQuality(
   evaluationStandards?: EvaluationStandards,
 ): WorkContentQuality {
   return buildWorkContentQualityFromMetrics(
-    { videoId: row.video_id, snapshot },
+    {
+      videoId: row.video_id,
+      snapshot: snapshot ? {
+        playCount: snapshot.playCount,
+        likes: snapshot.likes,
+        comments: snapshot.comments,
+        shares: snapshot.shares,
+        favorites: snapshot.favorites,
+        avgPlayDuration: snapshot.avgPlayDuration ?? null,
+        avgPlayRatio: snapshot.avgPlayRatio ?? null,
+        bounceRate2s: snapshot.bounceRate2s ?? null,
+        completionRate5s: snapshot.completionRate5s ?? null,
+        completionRate: snapshot.completionRate ?? null,
+      } satisfies ContentQualitySnapshot : undefined,
+    },
     topics,
     evaluationStandards,
   );

@@ -336,7 +336,7 @@ test("选题关联作品卡展示内容质量达成与状态，复盘入口由 c
   assert.match(drawer, /canReviewContent/);
   assert.match(drawer, /getContentQualityStatusText/);
   assert.match(drawer, /BREAKOUT_GRADE_TEXT_CLASS/);
-  assert.match(drawer, /内容达成/);
+  assert.match(drawer, /留存数据/);
   assert.match(drawer, /互动/);
   assert.match(drawer, /q\.coreMetric === "favoriteRate" \? "收藏" : "点赞"/);
   assert.match(drawer, /\/admin\/content\?videoId=\$\{work\.id\}/);

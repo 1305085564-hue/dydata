@@ -105,6 +105,12 @@ export type VideoSnapshotMetrics = {
   shares: number | null;
   favorites: number | null;
   followerGain: number | null;
+  /** 留存数据；真实协作查询显式返回，旧测试夹具可省略。 */
+  avgPlayDuration?: number | null;
+  avgPlayRatio?: number | null;
+  bounceRate2s?: number | null;
+  completionRate5s?: number | null;
+  completionRate?: number | null;
 };
 
 export type ContentQualityTopicContext = {

@@ -52,8 +52,8 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 核心指标</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">达成率表现</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
                         </thead>
@@ -125,7 +125,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                         </span>
                                       )}
                                       <div className="text-[12px] text-[#78716C]">
-                                        互动 {q.interactionAchievement != null ? `${Math.round(q.interactionAchievement)}%` : "—"} · 核心 {q.coreAchievement != null ? `${Math.round(q.coreAchievement)}%` : "—"}
+                                        互动数据 {q.interactionAchievement != null ? `${Math.round(q.interactionAchievement)}%` : "—"} · 主要指标 {q.coreAchievement != null ? `${Math.round(q.coreAchievement)}%` : "—"}
                                       </div>
                                     </div>
                                   ) : (
@@ -174,8 +174,8 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">考核指标</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">达成率表现</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
                         </thead>
@@ -253,7 +253,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                         </span>
                                       )}
                                       <div className="text-[12px] text-[#78716C]">
-                                        互动 {interactionAchievementText} · 核心 {coreAchievementText}
+                                        互动数据 {interactionAchievementText} · 主要指标 {coreAchievementText}
                                       </div>
                                     </div>
                                   ) : (

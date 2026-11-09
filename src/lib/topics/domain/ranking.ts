@@ -60,5 +60,10 @@ export function selectLatest24hSnapshot(value: unknown): ContentQualitySnapshot 
     comments: nullableMetric(snapshot.comments),
     shares: nullableMetric(snapshot.shares),
     favorites: nullableMetric(snapshot.favorites),
+    avgPlayDuration: nullableMetric(snapshot.avg_play_duration),
+    avgPlayRatio: nullableMetric(snapshot.avg_play_ratio),
+    bounceRate2s: nullableMetric(snapshot.bounce_rate_2s),
+    completionRate5s: nullableMetric(snapshot.completion_rate_5s),
+    completionRate: nullableMetric(snapshot.completion_rate),
   };
 }

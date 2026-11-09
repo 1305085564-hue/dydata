@@ -111,7 +111,7 @@ export function BreakdownWorksSection({
                                       className={`font-normal ${BREAKOUT_GRADE_TEXT_CLASS[q.overallGrade]}`}
                                       title={
                                         q.contentAchievement !== null
-                                          ? `内容达成率 ${Math.round(q.contentAchievement)}%`
+                                          ? `留存数据 ${Math.round(q.contentAchievement)}%`
                                           : getContentQualityStatusText(q.status)
                                       }
                                     >
@@ -131,19 +131,19 @@ export function BreakdownWorksSection({
 
                                 {q.contentAchievement !== null && (
                                   <span className="text-[#1F1E1D] font-normal tabular-nums shrink-0">
-                                    内容达成 {Math.round(q.contentAchievement)}%
+                                    留存数据 {Math.round(q.contentAchievement)}%
                                   </span>
                                 )}
 
                                 {q.interactionAchievement !== null && (
                                   <span className="text-[#78716C] font-normal tabular-nums shrink-0">
-                                    互动 {Math.round(q.interactionAchievement)}%
+                                    互动数据 {Math.round(q.interactionAchievement)}%
                                   </span>
                                 )}
 
                                 {q.coreAchievement !== null && (
                                   <span className="text-[#78716C] font-normal tabular-nums shrink-0">
-                                    {q.coreMetric === "favoriteRate" ? "收藏" : "点赞"}{" "}
+                                    主要指标 {q.coreMetric === "favoriteRate" ? "收藏" : "点赞"}{" "}
                                     {Math.round(q.coreAchievement)}%
                                   </span>
                                 )}

@@ -94,7 +94,7 @@ test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1310px / 剪�
   // 列名精简断言
   assert.match(source, /条均播/);
   assert.match(source, /绩效条/);
-  assert.match(source, /良优率/);
+  assert.match(source, /留存数据/);
   // 有效作品与优秀作品带排序能力
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);

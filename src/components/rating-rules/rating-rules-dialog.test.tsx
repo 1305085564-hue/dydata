@@ -5,10 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { RatingRulesContent, RatingRulesDialog } from "./rating-rules-dialog";
-import {
-  BREAKOUT_GRADE_TEXT_CLASS,
-  breakoutTargetsFor,
-} from "@/lib/breakout-rating";
+import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 
 const dialogSource = readFileSync(
@@ -44,27 +41,30 @@ test("作品评级说明内容渲染结果严禁包含四个内部叫法", () =>
   }
 });
 
-test("作品评级说明读取评级标准并动态渲染固定评级规则", () => {
-  assert.match(dialogSource, /breakoutTargetsFor/);
-  assert.equal(breakoutTargetsFor("review").fourth, 0.02);
-  assert.equal(breakoutTargetsFor("dry_goods").fourth, 0.02);
+test("作品评级说明展示互动数据、主要指标和留存数据", () => {
+  assert.match(dialogSource, /互动数据/);
+  assert.match(dialogSource, /主要指标/);
+  assert.match(dialogSource, /留存数据/);
   assert.match(dialogSource, /BREAKOUT_GRADE_THRESHOLDS/);
   assert.match(dialogSource, /KPI_PLAY_FLOOR/);
   assert.match(dialogSource, /KPI_PLAY_GOOD/);
   assert.match(dialogSource, /KPI_PLAY_EXCELLENT/);
-  assert.match(dialogSource, /MAX_PULL_GRADES/);
   assert.match(dialogSource, /BREAKOUT_GRADE_TEXT_CLASS/);
 
   const rendered = renderToStaticMarkup(<RatingRulesContent />);
 
-  // 验证关键动态计算数字在渲染结果中存在
-  assert.match(rendered, /3\.5%/);
+  // 验证现行标准、权重和播放量门槛可见
+  assert.match(rendered, /35%/);
+  assert.match(rendered, /30%/);
+  assert.match(rendered, /20%/);
+  assert.match(rendered, /15%/);
   assert.match(rendered, /2%/);
-  assert.match(rendered, /1%/);
+  assert.match(rendered, /25%/);
+  assert.match(rendered, /15%/);
   assert.match(rendered, /5,000/);
   assert.match(rendered, /1\.5 万/);
-  assert.match(rendered, /80%/);
-  assert.match(rendered, /60%/);
+  assert.match(rendered, /80/);
+  assert.match(rendered, /60/);
   assert.match(rendered, /100%/);
 
   // 验证优良普劣使用了规范颜色类
@@ -79,9 +79,15 @@ test("协作管理页面挂载了作品评级规则入口", () => {
   assert.match(collaborationPageSource, /作品评级规则/);
 });
 
-test("作品评级说明展示服务端传入的团队达标基准", () => {
+test("作品评级说明展示服务端传入的公司留存标准与权重", () => {
   const evaluationStandards = {
     ...DEFAULT_EVALUATION_STANDARDS,
+    bounceRate2s: { good: 22, poor: 38 },
+    completionRate5s: { good: 72, poor: 42 },
+    avgPlayDuration: { good: 52, poor: 12 },
+    avgPlayRatio: { good: 32, poor: 14 },
+    completionRate: { good: 12, poor: 3 },
+    retentionWeights: { bounceRate2s: 40, completionRate5s: 25, avgPlayBundle: 20, completionRate: 15 },
     targets: {
       reviewLikeRate: 4.5,
       dryFavoriteRate: 7.25,
@@ -93,11 +99,15 @@ test("作品评级说明展示服务端传入的团队达标基准", () => {
     <RatingRulesContent evaluationStandards={evaluationStandards} />,
   );
 
-  assert.match(rendered, /6\.5%/);
-  assert.match(rendered, /7\.25%/);
-  assert.match(rendered, /1\.75%/);
-  assert.match(rendered, /复盘达标线/);
-  assert.match(rendered, /干货达标线/);
+  assert.match(rendered, /好 22%，差 38%/);
+  assert.match(rendered, /好 72%，差 42%/);
+  assert.match(rendered, /好 52 秒，差 12 秒/);
+  assert.match(rendered, /好 32%，差 14%/);
+  assert.match(rendered, /40%/);
+  assert.match(rendered, /25%/);
+  assert.match(rendered, /复盘主要指标线 4\.5%/);
+  assert.match(rendered, /干货主要指标线 7\.25%/);
+  assert.match(rendered, /互动数据线 6\.5%/);
   assert.match(collaborationPageSource, /evaluationStandards/);
 });
 
