@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 import { DEFAULT_CONTENT_LIST_FILTERS } from "@/app/(app)/admin/content/content-list-filters";
+import type { VideoMetricsSnapshot } from "@/types";
 import { buildProcessedContentRows } from "./content-list";
 
 test("服务端分页结果不在客户端按当前页缺失的选题状态再次筛空", () => {
@@ -32,4 +33,24 @@ test("服务端分页结果不在客户端按当前页缺失的选题状态再�
 test("列表 hook 将服务端分页标记传给当前页呈现计算", () => {
   const source = readFileSync(resolve(process.cwd(), "src/lib/content/data/content-list.ts"), "utf8");
   assert.match(source, /sortField,\s*sortDir,\s*serverPaginated,\s*\}\);/);
+});
+
+test("作品行保留快照中的平均播放占比原始比例", () => {
+  const video = {
+    id: "video-ratio",
+    user_id: "user-1",
+    account_id: "account-1",
+    video_title: "播放占比作品",
+  } as Parameters<typeof buildProcessedContentRows>[0]["queueRows"][number];
+
+  const rows = buildProcessedContentRows({
+    queueRows: [video],
+    filters: DEFAULT_CONTENT_LIST_FILTERS,
+    playCountById: new Map(),
+    snapshotMap: new Map([["video-ratio", { avg_play_ratio: 0.25 } as VideoMetricsSnapshot]]),
+    sortField: "published_at",
+    sortDir: "desc",
+  });
+
+  assert.equal(rows[0]?.avgPlayRatio, 0.25);
 });

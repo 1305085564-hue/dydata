@@ -10,8 +10,8 @@ import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anom
 import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, MAX_PULL_GRADES, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
-import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
-import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getAvgPlayRatioClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
+import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 function getLowSampleTitle(playCount: number | null | undefined, standards = DEFAULT_EVALUATION_STANDARDS) {
   if (playCount == null || playCount >= standards.minPlayCount) return undefined;
@@ -19,12 +19,13 @@ function getLowSampleTitle(playCount: number | null | undefined, standards = DEF
 }
 
 /** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
-function MetricPercentValue({ value, playCount, normalClassName, standards = DEFAULT_EVALUATION_STANDARDS }: { value: number | null | undefined; playCount?: number | null; normalClassName?: string; standards?: EvaluationStandards }) {
-  const dirty = isImpossibleRatio(value);
+function MetricPercentValue({ value, playCount, normalClassName, standards = DEFAULT_EVALUATION_STANDARDS, avgPlayRatio = false }: { value: number | null | undefined; playCount?: number | null; normalClassName?: string; standards?: EvaluationStandards; avgPlayRatio?: boolean }) {
+  const percentageValue = avgPlayRatio ? avgPlayRatioAsPercentagePoints(value) : value;
+  const dirty = isImpossibleRatio(percentageValue);
   const lowSampleTitle = value != null ? getLowSampleTitle(playCount, standards) : undefined;
   return (
     <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""}`} title={dirty ? describeImpossibleRatio() : lowSampleTitle}>
-      {formatPercentagePoints(value)}
+      {formatPercentagePoints(percentageValue)}
     </span>
   );
 }
@@ -320,7 +321,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         快照全量指标明细
                       </h3>
                       <span className="text-[12px] text-[#78716C] font-normal tabular-nums truncate">
-                        点赞 {formatNumber(snapshot.likes)} · 评论 {formatNumber(snapshot.comments)} · 完播 {formatPercentagePoints(snapshot.completion_rate)} · 均播 {formatDuration(snapshot.avg_play_duration)}
+                        点赞 {formatNumber(snapshot.likes)} · 评论 {formatNumber(snapshot.comments)} · 完播 {formatPercentagePoints(snapshot.completion_rate)} · 均播 {formatDuration(snapshot.avg_play_duration)} · 占比 {formatPercentagePoints(avgPlayRatioAsPercentagePoints(snapshot.avg_play_ratio))}
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -415,6 +416,16 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       >
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
+                      <span className="text-[#1F1E1D]">平均播放占比</span>
+                      <MetricPercentValue
+                        standards={evaluationStandards}
+                        value={snapshot.avg_play_ratio}
+                        playCount={snapshot.play_count}
+                        avgPlayRatio
+                        normalClassName={getAvgPlayRatioClass(snapshot.avg_play_ratio, snapshot.play_count, evaluationStandards)}
+                      />
                     </ListRow>
                   </div>
                 </details>

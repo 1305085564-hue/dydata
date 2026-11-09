@@ -1,6 +1,6 @@
 import type { Video } from "@/types";
 import { isImpossibleRatio } from "@/lib/metric-bounds";
-import { DEFAULT_EVALUATION_STANDARDS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 export type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -122,6 +122,9 @@ export function getCompletionRateClass(value: number | null | undefined, playCou
 }
 export function getAvgPlayDurationClass(value: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS) {
   return metricClass("avgPlayDuration", value, playCount, standards, false);
+}
+export function getAvgPlayRatioClass(value: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS) {
+  return metricClass("avgPlayRatio", avgPlayRatioAsPercentagePoints(value), playCount, standards);
 }
 export function getCoreAchievementClass(achievement: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS, metric: "coreAchievement" | "interactionAchievement" = "coreAchievement"): string {
   const tone = evaluationTone(metric, achievement, playCount, standards);

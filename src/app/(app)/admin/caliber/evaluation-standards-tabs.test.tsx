@@ -20,6 +20,17 @@ test("输入草稿保留字符串，空值不能在保存校验时变成 0", () 
   assert.equal(parsed.success, false);
 });
 
+test("平均播放占比好线和差线可编辑并进入保存数据", () => {
+  const draft = createEvaluationStandardsDraft(DEFAULT_EVALUATION_STANDARDS);
+  draft.avgPlayRatio.good = "30";
+  draft.avgPlayRatio.poor = "12";
+
+  const parsed = parseEvaluationStandardsDraft(draft);
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) assert.deepEqual(parsed.data.avgPlayRatio, { good: 30, poor: 12 });
+});
+
 test("只读查看以文字显示标准，负责人表单显示可编辑输入框", () => {
   const settings = { standards: DEFAULT_EVALUATION_STANDARDS, updatedAt: null };
   const router = {
@@ -51,9 +62,11 @@ test("只读查看以文字显示标准，负责人表单显示可编辑输入�
   );
 
   assert.match(readOnly, /2 秒跳出率/);
+  assert.match(readOnly, /平均播放占比/);
   assert.doesNotMatch(readOnly, /<input\b/);
   assert.doesNotMatch(readOnly, /恢复默认/);
   assert.match(editable, /<input\b/);
+  assert.match(editable, /平均播放占比好标准/);
   assert.match(editable, /保存标准/);
   assert.match(editable, /恢复默认/);
 });

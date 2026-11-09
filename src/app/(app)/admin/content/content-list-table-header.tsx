@@ -152,6 +152,9 @@ export function ContentListTableHeader({
         <span>均播</span>
       </button>
     </th>
+    <th data-col-key="avg_play_ratio" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-sand")}>
+      <span className="font-normal text-[#78716C]">播放占比</span>
+    </th>
     <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-sand")} aria-sort={ariaSortFor("completion_rate")}>
       <button
         aria-label={`按完播排序${sortField === "completion_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}

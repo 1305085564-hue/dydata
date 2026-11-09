@@ -37,6 +37,15 @@ test("均播时长与列表同样按40秒优质、20秒预警，并遵守样本�
   assert.equal(detail.getAvgPlayDurationClass(null, 5000), "text-[#141413]");
 });
 
+test("平均播放占比按0-1快照值转换为百分数，25%为好、15%以内为差", () => {
+  assert.equal(detail.getAvgPlayRatioClass(0.25, 3000), "text-status-danger");
+  assert.equal(detail.getAvgPlayRatioClass(0.15, 3000), "text-status-success");
+  assert.equal(detail.getAvgPlayRatioClass(0.1501, 3000), "text-[#141413]");
+  assert.equal(detail.getAvgPlayRatioClass(0.25, 2999), "text-[#A8A29E]");
+  assert.equal(detail.getAvgPlayRatioClass(null, 3000), "text-[#141413]");
+  assert.match(detail.getAvgPlayRatioClass(1.01, 3000), /text-status-danger/);
+});
+
 test("播放达到3000后指标可显示表现颜色", () => {
   assert.equal(detail.getBounceRate2sClass(25, 3000), "text-status-danger");
   assert.equal(detail.getCompletionRate5sClass(60, 3000), "text-status-danger");

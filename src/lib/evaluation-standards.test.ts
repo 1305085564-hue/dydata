@@ -7,11 +7,26 @@ const draft = () => structuredClone(DEFAULT_EVALUATION_STANDARDS);
 test("默认标准保持已确认口径，2秒跳出35正常、超过35才差", () => {
   const standards = draft();
   assert.equal(standards.minPlayCount, 3000);
+  assert.deepEqual(standards.avgPlayRatio, { good: 25, poor: 15 });
   assert.equal(evaluationTone("bounceRate2s", 25, 3000, standards), "good");
   assert.equal(evaluationTone("bounceRate2s", 35, 3000, standards), "normal");
   assert.equal(evaluationTone("bounceRate2s", 35.1, 3000, standards), "poor");
   assert.equal(evaluationTone("completionRate5s", 60, 3000, standards), "good");
   assert.equal(evaluationTone("completionRate5s", 50, 3000, standards), "poor");
+  assert.equal(evaluationTone("avgPlayRatio", 25, 3000, standards), "good");
+  assert.equal(evaluationTone("avgPlayRatio", 15, 3000, standards), "poor");
+  assert.equal(evaluationTone("avgPlayRatio", 15.01, 3000, standards), "normal");
+  assert.equal(evaluationTone("avgPlayRatio", 25, 2999, standards), "normal");
+});
+
+test("旧公司标准缺少平均播放占比时只补齐新增默认值", () => {
+  const legacy = draft() as Partial<ReturnType<typeof draft>>;
+  delete legacy.avgPlayRatio;
+
+  const parsed = parseEvaluationStandards(legacy);
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) assert.deepEqual(parsed.data.avgPlayRatio, { good: 25, poor: 15 });
 });
 
 test("修改后的标准决定判断，播放不足和缺值不评优劣", () => {

@@ -77,6 +77,7 @@ export function buildProcessedContentRows({
         bounceRate2s: snapshot?.bounce_rate_2s ?? null,
         completionRate5s: snapshot?.completion_rate_5s ?? null,
         avgPlayDuration: snapshot?.avg_play_duration ?? null,
+        avgPlayRatio: snapshot?.avg_play_ratio ?? null,
         completionRate: snapshot?.completion_rate ?? null,
         quality,
         coreMetricRate,

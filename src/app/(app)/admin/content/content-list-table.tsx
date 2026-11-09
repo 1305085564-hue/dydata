@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
-import { DEFAULT_EVALUATION_STANDARDS, EVALUATION_METRICS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, EVALUATION_METRICS, evaluationTone, type EvaluationMetric, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
   HIGHLIGHT_CELL_CLASS,
@@ -46,19 +46,22 @@ function formatPercent(val: number | null | undefined): string {
 function RatioCell({ value, lowSample = false, metricType, achievement, className = "", standards = DEFAULT_EVALUATION_STANDARDS }: {
   value: number | null | undefined;
   lowSample?: boolean;
-  metricType?: "bounce_rate_2s" | "completion_rate_5s" | "completion_rate" | "avg_play_duration";
+  metricType?: "bounce_rate_2s" | "completion_rate_5s" | "completion_rate" | "avg_play_duration" | "avg_play_ratio";
   achievement?: number | null;
   className?: string;
   standards?: EvaluationStandards;
 }) {
   const duration = metricType === "avg_play_duration";
-  const dirty = !duration && isImpossibleRatio(value);
+  const isAvgPlayRatio = metricType === "avg_play_ratio";
+  const percentageValue = isAvgPlayRatio ? avgPlayRatioAsPercentagePoints(value) : value;
+  const dirty = !duration && isImpossibleRatio(percentageValue);
   const metric: EvaluationMetric | undefined = metricType === "bounce_rate_2s" ? "bounceRate2s"
     : metricType === "completion_rate_5s" ? "completionRate5s"
     : metricType === "completion_rate" ? "completionRate"
+    : isAvgPlayRatio ? "avgPlayRatio"
     : duration ? "avgPlayDuration" : achievement != null ? "interactionAchievement" : undefined;
-  const tone = metric ? evaluationTone(metric, metric === "interactionAchievement" ? achievement : value, undefined, standards) : "normal";
-  const text = duration ? (value == null ? "—" : `${value.toFixed(1)}s`) : formatPercent(value);
+  const tone = metric ? evaluationTone(metric, metric === "interactionAchievement" ? achievement : percentageValue, undefined, standards) : "normal";
+  const text = duration ? (value == null ? "—" : `${value.toFixed(1)}s`) : formatPercent(percentageValue);
   let title: string | undefined;
   let color = "";
   if (dirty) {
@@ -156,7 +159,7 @@ export function ContentListTable({
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
-  const dynamicColSpan = isSpacious ? 11 : 15;
+  const dynamicColSpan = isSpacious ? 12 : 16;
   const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
     isCellHighlighted(item, key, highlightRules);
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
@@ -302,7 +305,7 @@ export function ContentListTable({
                     )}
                   </div>
 
-                  {/* 第 4 层：高密度指标矩阵（播放量、涨粉、完播率、互动率、点赞） */}
+                  {/* 第 4 层：高密度指标矩阵；平均播放占比在作品详情中查看 */}
                   <div className="grid grid-cols-5 gap-1 pt-1.5 mt-0.5 border-t border-[#E2E2DF]/50 text-center">
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] text-[#78716C] leading-none mb-1">播放</span>
@@ -525,7 +528,7 @@ export function ContentListTable({
                             </>
                           )}
 
-                          {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
+                          {/* 完播指标 (2s跳出、5s完播、均播、播放占比、完播) */}
                           <td data-col-key="bounce_rate_2s" className={cn("py-2.5 pl-4 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-surface-row-hover/60")}>
                             <RatioCell standards={evaluationStandards} value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
@@ -534,6 +537,9 @@ export function ContentListTable({
                           </td>
                           <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
                             <DurationCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          </td>
+                          <td data-col-key="avg_play_ratio" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-row-hover/60")}>
+                            <RatioCell standards={evaluationStandards} value={item.avgPlayRatio} lowSample={item.lowSample} metricType="avg_play_ratio" />
                           </td>
                           {/* 完播率：单日视图底层带淡雅微型数据条（排除低样本干扰） */}
                           <td data-col-key="completion_rate" className={cn("relative py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
