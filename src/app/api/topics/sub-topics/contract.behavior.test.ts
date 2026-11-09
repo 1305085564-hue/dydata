@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { NextResponse } from "next/server";
 
 import {
   POST as postSubTopics,
@@ -77,6 +78,46 @@ async function bodyOf(response: Response) {
 function assertLayered(body: Record<string, unknown>, label: string) {
   for (const field of LAYERED_FIELDS) assert.ok(field in body, `${label} 缺少 ${field}`);
 }
+
+test("topics/sub-topics 失败路径：鉴权失败透传，非法 JSON / 校验失败 / 写入异常分别 400 与 500", async () => {
+  const denied = await buildSubTopicsResponse(request("POST", {}), {
+    requireActiveTeamContext: async () => ({
+      ok: false,
+      response: NextResponse.json({ error: "未登录" }, { status: 401 }),
+    }) as never,
+    createSubTopic: async () => { throw new Error("鉴权失败不得写入"); },
+  });
+  assert.equal(denied.status, 401);
+  assert.equal((await bodyOf(denied)).error, "未登录");
+
+  const invalidJson = await buildSubTopicsResponse(
+    new Request("http://localhost/api/topics/sub-topics", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    }) as never,
+    {
+      requireActiveTeamContext: async () => context(),
+      createSubTopic: async () => { throw new Error("非法 JSON 不得写入"); },
+    },
+  );
+  assert.equal(invalidJson.status, 400);
+  assert.equal((await bodyOf(invalidJson)).error, "请求体格式不正确");
+
+  const validationFailed = await buildSubTopicsResponse(request("POST", { title: "" }), {
+    requireActiveTeamContext: async () => context(),
+    createSubTopic: async () => ({ ok: false, status: 400, message: "title 为必填项" }),
+  });
+  assert.equal(validationFailed.status, 400);
+  assert.equal((await bodyOf(validationFailed)).error, "title 为必填项");
+
+  const writeThrew = await buildSubTopicsResponse(request("POST", { title: "题目" }), {
+    requireActiveTeamContext: async () => context(),
+    createSubTopic: async () => { throw new Error("db down"); },
+  });
+  assert.equal(writeThrew.status, 500);
+  assert.equal((await bodyOf(writeThrew)).error, "创建选题失败");
+});
 
 const ctx = { params: Promise.resolve({ id: ID }) };
 

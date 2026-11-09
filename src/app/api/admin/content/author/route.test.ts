@@ -15,6 +15,34 @@ function dependencies(visibleUserIds = [userId]) {
   };
   return {deps: deps as never, calls: () => calls};
 }
+test("作者接口失败路径：鉴权、路径权限、资料读取失败与加载异常都有明确响应", async () => {
+  const url = `https://dydata.cc/api/admin/content/author?userId=${userId}`;
+  const base = dependencies().deps as unknown as Record<string, unknown>;
+  const unauth = await buildAuthorWorksResponse(new NextRequest(url), {
+    ...base,
+    requireAdminActor: async () => ({ error: "未登录", status: 401 }),
+  } as never);
+  assert.equal(unauth.status, 401);
+
+  const noPathPermission = await buildAuthorWorksResponse(new NextRequest(url), {
+    ...base,
+    requireAdminActor: async () => ({ actor: { userId: "actor", role: "member", teamId: "team", permissions: {}, dataScope: "team" } }),
+  } as never);
+  assert.equal(noPathPermission.status, 403);
+
+  const profileFailure = await buildAuthorWorksResponse(new NextRequest(url), {
+    ...base,
+    createClient: () => ({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: { message: "db down" } }) }) }) }) }),
+  } as never);
+  assert.equal(profileFailure.status, 502);
+
+  const loaderFailure = await buildAuthorWorksResponse(new NextRequest(url), {
+    ...base,
+    loadWorks: async () => { throw new Error("boom"); },
+  } as never);
+  assert.equal(loaderFailure.status, 500);
+});
+
 test("作者接口拒绝非法参数与范围外作者，不能调用数据加载", async () => {
   for (const query of ["userId=bad", `userId=${userId}&timeRange=no`, `userId=${userId}&pageSize=10001`, `userId=${userId}&sortDir=no`]) {
     const d = dependencies();

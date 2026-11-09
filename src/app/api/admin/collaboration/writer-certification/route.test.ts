@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { buildWriterCertificationResponse } from "./route-core";
 import { buildWriterCertificationRouteResponse } from "./route";
+import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const targetId = "123e4567-e89b-42d3-a456-426614174002";
@@ -54,6 +55,39 @@ function createDeps(overrides: Record<string, unknown> = {}) {
     writeInput: () => writeInput,
   };
 }
+
+test("文案认证失败路径：非对象/非布尔、鉴权、权限范围、目标不存在与依赖异常都有明确响应", async () => {
+  const notObject = await buildWriterCertificationResponse([], createDeps().deps as never);
+  assert.equal(notObject.status, 400);
+  assert.equal((await notObject.json()).error, "请求体必须是对象");
+
+  const notBoolean = await buildWriterCertificationResponse({ userId: targetId, certified: "yes" }, createDeps().deps as never);
+  assert.equal(notBoolean.status, 400);
+  assert.equal((await notBoolean.json()).error, "certified 必须是布尔值");
+
+  const unauth = await buildWriterCertificationResponse({ userId: targetId, certified: true }, createDeps({
+    requireAdminActor: async () => ({ error: "未登录", status: 401 }),
+  }).deps as never);
+  assert.equal(unauth.status, 401);
+
+  const noContext = await buildWriterCertificationResponse({ userId: targetId, certified: true }, createDeps({
+    buildPermissionContextForActor: async () => null,
+  }).deps as never);
+  assert.equal(noContext.status, 403);
+  assert.equal((await noContext.json()).error, "用户权限范围加载失败");
+
+  const missingTarget = await buildWriterCertificationResponse({ userId: targetId, certified: true }, createDeps({
+    loadWriterCertificationTarget: async () => null,
+  }).deps as never);
+  assert.equal(missingTarget.status, 404);
+  assert.equal((await missingTarget.json()).error, "成员不存在");
+
+  const dependencyFailed = await buildWriterCertificationResponse({ userId: targetId, certified: true }, createDeps({
+    loadWriterCertificationTarget: async () => { throw new SupabaseQueryFailure("加载文案认证成员失败", new Error("db down")); },
+  }).deps as never);
+  assert.equal(dependencyFailed.status, 500);
+  assert.equal((await dependencyFailed.json()).error, "加载文案认证成员失败");
+});
 
 test("文案认证拒绝无效请求体", async () => {
   const injected = createDeps();

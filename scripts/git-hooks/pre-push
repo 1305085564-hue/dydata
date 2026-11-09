@@ -6,14 +6,16 @@
 set -e
 cd "$(git rev-parse --show-toplevel)"
 
-echo "[pre-push] 1/5 类型检查"
+echo "[pre-push] 1/6 类型检查"
 npx tsc --noEmit --pretty false
-echo "[pre-push] 2/5 单元测试（不含真实库组）"
+echo "[pre-push] 2/6 单元测试（不含真实库组）"
 npm test --silent > /tmp/dydata-pre-push-test.log 2>&1 || { tail -60 /tmp/dydata-pre-push-test.log; echo "[pre-push] 单元测试失败，完整输出：/tmp/dydata-pre-push-test.log"; exit 1; }
-echo "[pre-push] 3/5 代码检查"
+echo "[pre-push] 3/6 代码检查"
 npm run lint --silent
-echo "[pre-push] 4/5 设计令牌门禁"
+echo "[pre-push] 4/6 设计令牌门禁"
 npm run gate:design --silent
-echo "[pre-push] 5/5 可维护性门禁（对比 origin/main）"
+echo "[pre-push] 5/6 可维护性门禁（对比 origin/main）"
 node scripts/maintainability-gate.mjs --base=origin/main
+echo "[pre-push] 6/6 新增接口失败路径门禁（对比 origin/main）"
+node scripts/api-failure-path-gate.mjs --base=origin/main
 echo "[pre-push] 全部通过"

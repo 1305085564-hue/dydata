@@ -109,6 +109,64 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
 });
 
+test("content list 失败路径：鉴权、权限、回收站权限、游标失效与依赖异常都不伪装成功", async () => {
+  const permissionInfo = {
+    userId: "owner-1", name: "阿禅", dataScope: "team" as const, role: "owner" as const,
+    permissions: { review_content: true }, teamId: null,
+  };
+  const scope = {
+    userId: "owner-1", role: "owner" as const, permissions: { review_content: true },
+    teamId: "team-1", kind: "team" as const, visibleUserIds: ["user-1"],
+  };
+  const baseDeps = {
+    getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
+    getCurrentPermissionContext: async () => ({ permissionInfo, scope }),
+    createAdminClient: () => ({}) as never,
+    loadAdminContentListData: async () => buildContentPayload(),
+  } as const;
+  const actor = {
+    userId: "owner-1", role: "admin" as const, companyRole: "company_owner" as const,
+    permissions: { review_content: true }, name: "阿禅", dataScope: "team" as const, teamId: null,
+  };
+  const url = "https://dydata.cc/api/admin/content/list?view=all&scope=team&teamId=team-1";
+
+  const unauth = await buildAdminContentListResponse(buildRequest(url), {
+    ...baseDeps,
+    requireAdminActor: async () => ({ error: "未登录", status: 401 }) as never,
+  });
+  assert.equal(unauth.status, 401);
+
+  const noPathPermission = await buildAdminContentListResponse(buildRequest(url), {
+    ...baseDeps,
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { ...actor, permissions: {} } }),
+  });
+  assert.equal(noPathPermission.status, 403);
+
+  const noTrashPermission = await buildAdminContentListResponse(buildRequest(url.replace("view=all", "view=trash")), {
+    ...baseDeps,
+    requireAdminActor: async () => ({ supabase: {} as never, actor }),
+  });
+  assert.equal(noTrashPermission.status, 403);
+  assert.equal((await noTrashPermission.json()).error, "无回收站查看权限");
+
+  const staleCursor = await buildAdminContentListResponse(buildRequest(url), {
+    ...baseDeps,
+    requireAdminActor: async () => ({ supabase: {} as never, actor }),
+    loadAdminContentListData: async () => { throw new Error("CONTENT_LIST_CURSOR_STALE"); },
+  });
+  assert.equal(staleCursor.status, 409);
+  assert.equal((await staleCursor.json()).staleCursor, true);
+
+  await assert.rejects(
+    buildAdminContentListResponse(buildRequest(url), {
+      ...baseDeps,
+      requireAdminActor: async () => ({ supabase: {} as never, actor }),
+      loadAdminContentListData: async () => { throw new Error("db down"); },
+    }),
+    /db down/,
+  );
+});
+
 test("content list route fresh=1 回到第一页并禁用所有响应缓存", async () => {
   const adminClient = { kind: "admin-content-client" } as never;
   const permissionInfo = {

@@ -11,7 +11,7 @@ import process from "node:process";
 
 const mode = process.argv[2] ?? "unit";
 const REAL_DB = /\.real-db\.test\.tsx?$/;
-const SCRIPT_TESTS = ["scripts/maintainability-gate.test.mjs", "scripts/screenshot-storage-boundary.test.mjs", "scripts/doc-health-check.test.mjs"];
+const SCRIPT_TESTS = ["scripts/maintainability-gate.test.mjs", "scripts/screenshot-storage-boundary.test.mjs", "scripts/doc-health-check.test.mjs", "scripts/api-failure-path-gate.test.mjs"];
 
 const srcTests = globSync(["src/**/*.test.ts", "src/**/*.test.tsx"]).map((file) => file.split("\\").join("/")).sort();
 // node --test 把参数当通配符解析：路径里的 [id] 会被当成字符集，文件被静默漏跑（假绿）。

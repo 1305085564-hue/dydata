@@ -56,6 +56,45 @@ test("旧 sleep_key/resume_key 动作明确返回 400", async () => {
   }
 });
 
+test("AI 配置失败路径：非法 JSON、探测缺参、批量测试缺 key_id 均返回 400 且不写库", async () => {
+  const deps = {
+    requireSystemActor: async () => ({
+      supabase: { from() { throw new Error("失败路径不得触碰数据库"); } } as never,
+      actor: { userId: "admin-1", role: "owner" } as never,
+    }),
+  };
+  const url = "http://localhost/api/admin/ai-config";
+
+  const invalidJson = await buildAiConfigResponse(
+    new NextRequest(url, { method: "POST", headers: { "content-type": "application/json" }, body: "{" }),
+    deps,
+  );
+  assert.equal(invalidJson.status, 400);
+  assert.equal((await invalidJson.json()).error, "请求体格式不正确");
+
+  const missingProbeParams = await buildAiConfigResponse(
+    new NextRequest(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "probe_provider_models", data: { provider_id: "provider-1" } }),
+    }),
+    deps,
+  );
+  assert.equal(missingProbeParams.status, 400);
+  assert.equal((await missingProbeParams.json()).error, "缺少渠道地址或 api_key");
+
+  const missingKeyId = await buildAiConfigResponse(
+    new NextRequest(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "test_key_all_models", data: {} }),
+    }),
+    deps,
+  );
+  assert.equal(missingKeyId.status, 400);
+  assert.equal((await missingKeyId.json()).error, "缺少 key_id");
+});
+
 const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
 test("更新 AI Key 时空 api_key 不进入写入 patch", () => {

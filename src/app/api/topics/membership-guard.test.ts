@@ -72,6 +72,18 @@ test("active team membership 守卫按身份返回明确结果", async () => {
   }
 });
 
+test("团队范围加载失败时返回 503，不冒充未入团", async () => {
+  const scopeFailed = await requireActiveTeamContext({
+    requireTopicsContext: async () => contextFor("active", "team-alias"),
+    loadTeamScope: async () => { throw new Error("team scope down"); },
+  });
+  assert.equal(scopeFailed.ok, false);
+  if (!scopeFailed.ok) {
+    assert.equal(scopeFailed.response.status, 503);
+    assert.deepEqual(await scopeFailed.response.json(), { error: "团队成员范围加载失败" });
+  }
+});
+
 test("active team membership 守卫不会把未知状态或空 profile 当成 active", async () => {
   for (const profile of [
     { membershipStatus: "pending", teamId: "team-alias" },

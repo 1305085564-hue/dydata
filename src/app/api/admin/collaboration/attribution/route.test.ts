@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { buildAttributionResponse } from "../handlers";
 import { buildAttributionRouteResponse } from "./route";
+import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const reportId = "123e4567-e89b-42d3-a456-426614174010";
@@ -60,6 +61,57 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
     wasUpdateCalled: () => updateCalled,
   };
 }
+
+test("补录失败路径：请求体、鉴权、权限范围、日报不存在、成员超范围与写入异常都有明确响应", async () => {
+  const invalidJson = await buildAttributionResponse(
+    new Request("https://dydata.cc/api/admin/collaboration/attribution", { method: "PATCH", body: "{" }),
+    deps(targetId).value,
+  );
+  assert.equal(invalidJson.status, 400);
+  assert.equal((await invalidJson.json()).error, "请求体不是合法 JSON");
+
+  const invalidPayload = await buildAttributionResponse(
+    new Request("https://dydata.cc/api/admin/collaboration/attribution", {
+      method: "PATCH",
+      body: JSON.stringify({ reportId: "bad" }),
+    }),
+    deps(targetId).value,
+  );
+  assert.equal(invalidPayload.status, 400);
+
+  const unauth = await buildAttributionResponse(request(), {
+    ...deps(targetId).value,
+    requireAdminActor: async () => ({ error: "未登录", status: 401 }),
+  });
+  assert.equal(unauth.status, 401);
+
+  const noContext = await buildAttributionResponse(request(), {
+    ...deps(targetId).value,
+    buildPermissionContextForActor: async () => null,
+  });
+  assert.equal(noContext.status, 403);
+  assert.equal((await noContext.json()).error, "用户权限范围加载失败");
+
+  const missingReport = await buildAttributionResponse(request(), {
+    ...deps(targetId).value,
+    loadAttributionReport: async () => null,
+  });
+  assert.equal(missingReport.status, 404);
+
+  const outOfRangeMember = await buildAttributionResponse(
+    request(),
+    deps(archivedReportOwnerId, false, [actorId, archivedReportOwnerId]).value,
+  );
+  assert.equal(outOfRangeMember.status, 403);
+  assert.equal((await outOfRangeMember.json()).error, "归属成员超出当前可操作范围");
+
+  const dependencyFailed = await buildAttributionResponse(request(), {
+    ...deps(targetId).value,
+    updateAttributionAtomically: async () => { throw new SupabaseQueryFailure("更新岗位归属失败", new Error("db down")); },
+  });
+  assert.equal(dependencyFailed.status, 500);
+  assert.equal((await dependencyFailed.json()).error, "更新岗位归属失败");
+});
 
 test("补录接口拒绝管理员修改自己提交的日报", async () => {
   const injected = deps(actorId);

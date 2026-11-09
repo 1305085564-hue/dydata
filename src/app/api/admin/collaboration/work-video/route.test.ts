@@ -65,6 +65,28 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
   } as never;
 }
 
+test("作品复盘失败路径：参数非法、未登录、依赖异常分别 400 / 401 / 500", async () => {
+  const badId = await buildWorkVideoResponse(
+    new NextRequest("https://dydata.cc/api/admin/collaboration/work-video?reportId=bad"),
+    buildDeps(),
+  );
+  assert.equal(badId.status, 400);
+  assert.equal((await badId.json()).error, "reportId 必须是合法 UUID");
+
+  const unauth = await buildWorkVideoResponse(
+    buildRequest(),
+    buildDeps({ requireAdminContext: async () => ({ error: "未登录", status: 401 }) }),
+  );
+  assert.equal(unauth.status, 401);
+
+  const dependencyFailed = await buildWorkVideoResponse(
+    buildRequest(),
+    buildDeps({ createAdminClient: () => { throw new Error("missing env"); } }),
+  );
+  assert.equal(dependencyFailed.status, 500);
+  assert.equal((await dependencyFailed.json()).error, "打开数据复盘失败");
+});
+
 test("缺少视频复盘权限时，不读取日报或视频，并给出可理解的提示", async () => {
   let reportRead = false;
   const response = await buildWorkVideoResponse(

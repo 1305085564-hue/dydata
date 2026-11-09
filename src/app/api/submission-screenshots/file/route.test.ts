@@ -304,6 +304,23 @@ test("存储故障响应不可缓存且带关联编号，日志不泄露原图�
   assert.doesNotMatch(JSON.stringify(reports), /private\.png|token=|do-not-log|do-not-echo/);
 });
 
+test("截图路径缺少归属目录时直接 400，不触发登录与存储读取", async () => {
+  let authCalled = false;
+  let storageRead = false;
+  const response = await buildSubmissionScreenshotFileResponse(
+    new Request("https://dydata.cc/api/submission-screenshots/file?path=bare.png"),
+    {
+      getUser: async () => { authCalled = true; return { id: "user-1" }; },
+      getVisibleUserIds: async () => ["user-1"],
+      readScreenshot: async () => { storageRead = true; return imageBytes(); },
+    },
+  );
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, "截图路径不正确");
+  assert.equal(authCalled, false);
+  assert.equal(storageRead, false);
+});
+
 test("明确缺失仍返回404且不进入系统故障上报，不以自动恢复掩盖缺图", async () => {
   let reports = 0;
   const response = await buildSubmissionScreenshotFileResponse(

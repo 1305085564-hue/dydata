@@ -85,6 +85,71 @@ test("video-submit 鉴权依赖抛错时不静默成功且只记录一条 thrown
   assert.deepEqual(detail.stages, ["auth"]);
 });
 
+function fakeMemberClient(profileResult: unknown) {
+  return {
+    auth: { getUser: async () => ({ data: { user: { id: "member-1" } } }) },
+    from(table: string) {
+      assert.equal(table, "profiles");
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        single: async () => profileResult,
+        insert() { throw new Error("失败路径不得写入"); },
+        update() { throw new Error("失败路径不得写入"); },
+      };
+      return query;
+    },
+  } as never;
+}
+
+test("video-submit 请求体不是 JSON 时 400，不进入落库", async () => {
+  const deps: VideoSubmitDeps = {
+    ...defaultVideoSubmitDeps,
+    createClient: async () => fakeMemberClient({
+      data: { name: "成员", team_id: "team-1", membership_status: "active" },
+      error: null,
+    }),
+    createAdminClient: () => { throw new Error("失败路径不得写入"); },
+  };
+  const response = await buildVideoSubmitResponse(
+    new NextRequest("http://localhost/api/video-submit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    }),
+    deps,
+  );
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, "请求体格式不正确");
+});
+
+test("video-submit 参数校验失败时 400，不进入落库", async () => {
+  const deps: VideoSubmitDeps = {
+    ...defaultVideoSubmitDeps,
+    createClient: async () => fakeMemberClient({
+      data: { name: "成员", team_id: "team-1", membership_status: "active" },
+      error: null,
+    }),
+    createAdminClient: () => { throw new Error("失败路径不得写入"); },
+  };
+  const response = await buildVideoSubmitResponse(makeRequest(), deps);
+  assert.equal(response.status, 400);
+  assert.equal(typeof (await response.json()).error, "string");
+});
+
+test("video-submit 读取成员资料失败时 500，不伪装成参数错误", async () => {
+  const deps: VideoSubmitDeps = {
+    ...defaultVideoSubmitDeps,
+    createClient: async () => fakeMemberClient({
+      data: null,
+      error: { message: "读取个人资料失败" },
+    }),
+  };
+  const response = await buildVideoSubmitResponse(makeRequest(), deps);
+  assert.equal(response.status, 500);
+  assert.equal((await response.json()).error, "读取个人资料失败");
+});
+
 for (const membership of ["unauthenticated", "archived"] as const) {
   test(`B03 作品提交 ${membership} 在外部 AI 和写入前拒绝`, async () => {
     const counts = { admin: 0, reads: 0, writes: 0, outbound: 0 };

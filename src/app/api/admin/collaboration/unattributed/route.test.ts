@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 
 import { buildUnattributedResponse } from "../handlers";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
+import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const teammateId = "123e4567-e89b-42d3-a456-426614174002";
@@ -52,6 +53,49 @@ const memberScope = {
 function request() {
   return new NextRequest("https://dydata.cc/api/admin/collaboration/unattributed?year=2026&month=9");
 }
+
+test("待补归属失败路径：参数、鉴权、权限范围与依赖异常都有明确响应", async () => {
+  const makeDeps = (overrides: Record<string, unknown> = {}) => ({
+    requireAdminActor: async () => ({
+      supabase: {} as never,
+      actor: { userId: actorId, role: "member" as const, permissions: { view_analytics: true }, name: "组员甲", dataScope: "self" as const },
+    }),
+    buildPermissionContextForActor: async () => ({ permissionInfo: {} as never, scope: { teamId: "company-1", visibleUserIds: [actorId] } as never }),
+    createAdminClient: () => ({}) as never,
+    resolveCollaborationScope: async () => ({ visibleUserIds: [actorId], activeVisibleUserIds: [actorId] }),
+    loadCollaborationMonthDataset: async () => ({ currentRows: [], profiles: [], accounts: [] }),
+    buildUnattributedReports: () => [],
+    ...overrides,
+  }) as never;
+
+  const badMonth = await buildUnattributedResponse(
+    new NextRequest("https://dydata.cc/api/admin/collaboration/unattributed?year=2026&month=13"),
+    makeDeps(),
+  );
+  assert.equal(badMonth.status, 400);
+
+  const unauth = await buildUnattributedResponse(request(), makeDeps({
+    requireAdminActor: async () => ({ error: "无权限", status: 403 }),
+  }));
+  assert.equal(unauth.status, 403);
+
+  const noContext = await buildUnattributedResponse(request(), makeDeps({
+    buildPermissionContextForActor: async () => null,
+  }));
+  assert.equal(noContext.status, 403);
+
+  const dependencyFailed = await buildUnattributedResponse(request(), makeDeps({
+    loadCollaborationMonthDataset: async () => { throw new SupabaseQueryFailure("加载月度数据失败", new Error("db down")); },
+  }));
+  assert.equal(dependencyFailed.status, 500);
+  assert.equal((await dependencyFailed.json()).error, "加载月度数据失败");
+
+  const unexpectedFailed = await buildUnattributedResponse(request(), makeDeps({
+    resolveCollaborationScope: async () => { throw new Error("boom"); },
+  }));
+  assert.equal(unexpectedFailed.status, 500);
+  assert.equal((await unexpectedFailed.json()).error, "加载待补归属作品失败");
+});
 
 test("待补归属弹窗范围与首屏同源：组员放宽为本公司可见成员", async () => {
   const supabase = makeFakeSupabase(companyRows);

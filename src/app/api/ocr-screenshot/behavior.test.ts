@@ -144,6 +144,75 @@ test("识别超时仍落一条失败台账：渠道留空、错误码为 AI_TIME
   assert.equal(logged[0].channelName, null);
 });
 
+test("AI 返回无法解析时明确 500，并把 AI_PARSE_FAILED 写进台账", async () => {
+  const logged: OcrLogParams[] = [];
+  const response = await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG, screenshot_type: "data" }),
+    makeDeps({
+      callAi: async () => ({
+        content: "这不是 JSON", model: "m", channelName: "c", channelId: null,
+        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
+        completionTokens: null, totalTokens: null, elapsedMs: 10,
+      }),
+      recordLog: async (params) => { logged.push(params); },
+    }),
+    observation,
+  );
+  assert.equal(response.status, 500);
+  const body = await response.json() as Record<string, unknown>;
+  assert.equal(body.error_code, "AI_PARSE_FAILED");
+  assert.equal(logged.length, 1);
+  assert.equal(logged[0].errorCode, "AI_PARSE_FAILED");
+});
+
+test("识别不到任何数字时返回 200 + failed，提示走人工确认", async () => {
+  const response = await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG, screenshot_type: "data" }),
+    makeDeps({
+      callAi: async () => ({
+        content: "{}", model: "m", channelName: "c", channelId: null,
+        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
+        completionTokens: null, totalTokens: null, elapsedMs: 10,
+      }),
+    }),
+    observation,
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json() as { data: { slot_status: string; error_code?: string } };
+  assert.equal(body.data.slot_status, "failed");
+  assert.equal(body.data.error_code, "LOW_CONFIDENCE");
+});
+
+test("multipart 上传缺文件或类型不支持时返回 400，不调用 AI", async () => {
+  let aiCalled = false;
+  const deps = makeDeps({
+    callAi: async () => {
+      aiCalled = true;
+      throw new Error("不应调用 AI");
+    },
+  });
+
+  const missingFile = new FormData();
+  const missingResponse = await buildOcrScreenshotResponse(
+    new NextRequest("https://dydata.cc/api/ocr-screenshot", { method: "POST", body: missingFile }),
+    deps,
+    observation,
+  );
+  assert.equal(missingResponse.status, 400);
+  assert.equal((await missingResponse.json() as { error: string }).error, "请上传图片文件");
+
+  const wrongType = new FormData();
+  wrongType.append("file", new Blob(["hello"], { type: "text/plain" }), "note.txt");
+  const wrongTypeResponse = await buildOcrScreenshotResponse(
+    new NextRequest("https://dydata.cc/api/ocr-screenshot", { method: "POST", body: wrongType }),
+    deps,
+    observation,
+  );
+  assert.equal(wrongTypeResponse.status, 400);
+  assert.equal((await wrongTypeResponse.json() as { error: string }).error, "仅支持 jpg、png、webp 图片");
+  assert.equal(aiCalled, false);
+});
+
 test("台账 insert 返回 error（不抛异常）时告警且不影响调用方", async () => {
   const warnings: string[] = [];
   const originalWarn = console.warn;

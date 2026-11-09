@@ -73,6 +73,65 @@ test("视频复盘只读状态接口接受同一 Supabase 项目内其他团队�
   assert.deepEqual((await response.json()).statuses, { [videoId]: { inLibrary: true } });
 });
 
+test("topic-library-status 失败路径：无效 JSON、权限范围为空、查询失败都明确报错", async () => {
+  const scope = {
+    userId: "actor-a", role: "member", permissions: { view_video_review: true },
+    teamId: "team-a", kind: "self", visibleUserIds: ["actor-a"], activeVisibleUserIds: ["actor-a"],
+  };
+  const baseDeps = {
+    requireAdminActor: async () => ({ actor: { userId: "actor-a" }, context: { scope } }) as never,
+    buildDataAccessScope: async () => scope as never,
+    resolveVideoReviewReadOnlyScope: async (_client: unknown, value: unknown) => value,
+    createAdminClient: () => ({}) as never,
+    resolveVideoTopicLibraryStatuses: async () => ({}),
+  };
+
+  const invalidJson = await buildTopicLibraryStatusPostResponse(
+    new NextRequest("https://dydata.cc/api/admin/content/topic-library-status", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    }),
+    baseDeps as never,
+  );
+  assert.equal(invalidJson.status, 400);
+  assert.equal((await invalidJson.json()).error, "请求正文不是有效 JSON");
+
+  const noScope = await buildTopicLibraryStatusPostResponse(
+    new NextRequest("https://dydata.cc/api/admin/content/topic-library-status", {
+      method: "POST",
+      body: JSON.stringify({ videoIds: ["video-1"] }),
+    }),
+    {
+      ...baseDeps,
+      requireAdminActor: async () => ({ actor: { userId: "actor-a" }, context: null }) as never,
+      buildDataAccessScope: async () => null,
+    } as never,
+  );
+  assert.equal(noScope.status, 403);
+
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const queryFailed = await buildTopicLibraryStatusPostResponse(
+      new NextRequest("https://dydata.cc/api/admin/content/topic-library-status", {
+        method: "POST",
+        body: JSON.stringify({ videoIds: ["video-1"] }),
+      }),
+      {
+        ...baseDeps,
+        createAdminClient: () => ({
+          from: () => ({ select: () => ({ in: async () => ({ data: null, error: { message: "db down" } }) }) }),
+        }) as never,
+      } as never,
+    );
+    assert.equal(queryFailed.status, 500);
+    assert.equal((await queryFailed.json()).error, "db down");
+  } finally {
+    console.error = originalError;
+  }
+});
+
 test("topic-library-status 的 GET 和 POST 只要求作品复盘只读权限", async () => {
   const scope = {
     userId: "actor-a",
