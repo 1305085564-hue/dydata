@@ -16,6 +16,7 @@ import { buildPersonPayload } from "@/lib/collaboration/domain/person-rules";
 import type {
   CollaborationAccount,
   CollaborationReport,
+  ContentQualityTopicContext,
   VideoSnapshotMetrics,
 } from "@/lib/collaboration/domain/types";
 import type { PersonDetailData } from "./types";
@@ -249,7 +250,9 @@ function talentPayload(input: {
   reports: CollaborationReport[];
   recordRows?: CollaborationReport[];
   snapshots?: Map<string, VideoSnapshotMetrics>;
+  qualityTopics?: ContentQualityTopicContext;
 }) {
+  const recordRows = input.recordRows ?? [];
   return buildPersonPayload({
     targetUserId: "talent-1",
     year: 2026,
@@ -264,7 +267,11 @@ function talentPayload(input: {
     growthReports: [],
     growthSnapshots: input.snapshots ?? new Map(),
     currentSnapshots: input.snapshots ?? new Map(),
-    recordRows: input.recordRows,
+    recordRows,
+    qualityTopics: input.qualityTopics ?? {
+      state: "ready",
+      tags: new Map(recordRows.flatMap((row) => row.video_id ? [[row.video_id, "复盘"] as const] : [])),
+    },
     today: "2026-09-20",
   });
 }
@@ -281,27 +288,33 @@ test("达人明细按「账号主人」归属：自己名下账号的作品出�
   assert.deepEqual(payload.records.map((rec) => rec.reportId), ["r-mine"]);
 });
 
-test("达人明细综合评级：播放不足 2,000 判劣；播放达标但涨粉未接入 → 不出综合评级（待接入）", () => {
+test("达人作品明细复用内容标准评级：话题选择文案指标，播放门槛与缺数据规则一致", () => {
   const lowPlay = talentReport({ id: "r-low", video_id: "v-low" });
   const okPlay = talentReport({ id: "r-ok", video_id: "v-ok" });
   const snapshots = new Map<string, VideoSnapshotMetrics>([
-    // 播放 1,500 < KPI_PLAY_FLOOR → 直接判劣
-    ["v-low", { videoId: "v-low", playCount: 1500, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 15 }],
-    // 播放 10,000、转粉 1% 达标，但涨粉率未接入 → 综合暂不出（null），达成率仍给出 100%
-    ["v-ok", { videoId: "v-ok", playCount: 10000, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 100 }],
+    // 播放不足 5,000 直接判劣；比率数据齐全时仍按统一规则评级。
+    ["v-low", { videoId: "v-low", playCount: 1500, likes: 1, comments: 1, shares: 1, favorites: 1, followerGain: 15 }],
+    // 复盘作品播放达到 15,000，互动/点赞均有有效数据，综合评级由内容指标决定。
+    ["v-ok", { videoId: "v-ok", playCount: 15000, likes: 450, comments: 100, shares: 100, favorites: 200, followerGain: 100 }],
   ]);
 
   const payload = talentPayload({
     reports: [lowPlay, okPlay],
     recordRows: [lowPlay, okPlay],
     snapshots,
+    qualityTopics: {
+      state: "ready",
+      tags: new Map([["v-low", "干货"], ["v-ok", "复盘"]]),
+    },
   });
   const byId = new Map(payload.records.map((rec) => [rec.reportId, rec]));
 
-  assert.equal(byId.get("r-low")?.overallGrade, "劣", "播放不足门槛必须判劣");
-  assert.equal(byId.get("r-ok")?.followerAchievement, 100, "转粉率 1% 应算出 100% 达成率");
-  assert.equal(byId.get("r-ok")?.followerGrade, "优");
-  assert.equal(byId.get("r-ok")?.overallGrade, null, "涨粉未接入时不出综合评级");
+  assert.equal(byId.get("r-low")?.contentQuality?.coreMetric, "favoriteRate");
+  assert.equal(byId.get("r-low")?.contentQuality?.overallGrade, "劣", "播放不足门槛仍直接判劣");
+  assert.equal(byId.get("r-ok")?.contentQuality?.coreMetric, "likeRate");
+  assert.equal(byId.get("r-ok")?.contentQuality?.status, "rated");
+  assert.equal(byId.get("r-ok")?.contentQuality?.overallGrade, "优");
+  assert.equal("followerAchievement" in byId.get("r-ok")!, false, "达人专属转粉评级不再下发");
 });
 
 test("达人明细未取到快照：达成率与综合评级都不臆造（页面显示待快照）", () => {
@@ -311,9 +324,8 @@ test("达人明细未取到快照：达成率与综合评级都不臆造（页�
   const rec = payload.records[0];
 
   assert.equal(rec?.hasSnapshot, false);
-  assert.equal(rec?.followerAchievement, null);
-  assert.equal(rec?.followerGrade, null);
-  assert.equal(rec?.overallGrade, null);
+  assert.equal(rec?.contentQuality?.status, "pending_snapshot");
+  assert.equal(rec?.contentQuality?.overallGrade, null);
 });
 
 test("达人明细快照已采集但播放量缺失：不拿日报填报值冒充平台播放量判劣", () => {
@@ -328,6 +340,39 @@ test("达人明细快照已采集但播放量缺失：不拿日报填报值冒�
 
   assert.equal(rec?.hasSnapshot, true, "快照行存在");
   assert.equal(rec?.playCount, 1500, "播放量展示列仍回落到日报填报值");
-  assert.equal(rec?.overallGrade, null, "平台播放量缺失时不得出综合评级");
+  assert.equal(rec?.contentQuality?.status, "invalid_play");
+  assert.equal(rec?.contentQuality?.overallGrade, null, "平台播放量缺失时不得出综合评级");
+});
+
+test("达人其他话题沿用点赞指标；参与指标缺失或话题读取失败时不臆造评级", () => {
+  const otherTopic = talentReport({ id: "r-other", video_id: "v-other" });
+  const missingMetrics = talentReport({ id: "r-missing", video_id: "v-missing" });
+  const topicFailure = talentReport({ id: "r-topic-error", video_id: "v-topic-error" });
+  const readyOther = talentPayload({
+    reports: [otherTopic],
+    recordRows: [otherTopic],
+    snapshots: new Map([["v-other", { videoId: "v-other", playCount: 15000, likes: 450, comments: 100, shares: 100, favorites: 0, followerGain: 0 }]]),
+    qualityTopics: { state: "ready", tags: new Map([["v-other", null]]) },
+  }).records[0]?.contentQuality;
+  const missingMetricResult = talentPayload({
+    reports: [missingMetrics],
+    recordRows: [missingMetrics],
+    snapshots: new Map([["v-missing", { videoId: "v-missing", playCount: 15000, likes: null, comments: null, shares: null, favorites: null, followerGain: 0 }]]),
+    qualityTopics: { state: "ready", tags: new Map([["v-missing", "复盘"]]) },
+  }).records[0]?.contentQuality;
+  const topicFailureResult = talentPayload({
+    reports: [topicFailure],
+    recordRows: [topicFailure],
+    snapshots: new Map([["v-topic-error", { videoId: "v-topic-error", playCount: 15000, likes: 450, comments: 100, shares: 100, favorites: 0, followerGain: 0 }]]),
+    qualityTopics: { state: "error", tags: new Map() },
+  }).records[0]?.contentQuality;
+
+  assert.equal(readyOther?.topicKind, "other");
+  assert.equal(readyOther?.coreMetric, "likeRate");
+  assert.equal(missingMetricResult?.status, "missing_metrics");
+  assert.equal(missingMetricResult?.contentAchievement, null);
+  assert.equal(missingMetricResult?.overallGrade, null);
+  assert.equal(topicFailureResult?.status, "topic_unavailable");
+  assert.equal(topicFailureResult?.overallGrade, null);
 });
 

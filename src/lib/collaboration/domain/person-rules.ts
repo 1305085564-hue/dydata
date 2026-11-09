@@ -1,5 +1,4 @@
-import { favoriteRate, followerConversionRate, interactionRate, likeRate } from "@/lib/video-metrics";
-import { breakoutRating, breakoutTargetsFor, overallBreakoutGrade } from "@/lib/breakout-rating";
+import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type {
@@ -279,26 +278,6 @@ export function buildPersonPayload(input: {
         const snapshotPlay = snapshot?.playCount;
         // 展示列：平台快照播放量优先，快照缺播放量时才回落到日报填报值。
         const playCount = snapshotPlay ?? asCount(row.play_count);
-        const followerRate = snapshot
-          ? followerConversionRate({
-              play_count: snapshot.playCount,
-              follower_gain: snapshot.followerGain,
-            })
-          : null;
-        // 转粉率标准线与内容评级同源，禁止在明细里另写数值。
-        const followerRating = breakoutRating(
-          followerRate,
-          breakoutTargetsFor("review", input.evaluationStandards).follower,
-        );
-        // 综合评级与文案同构：转粉 + 涨粉两项取综合。涨粉率算法未接入，第二项暂传 null，
-        // 故播放达标时综合为 null（页面显示「待接入」），播放达标线以下直接判劣。
-        // 播放前置只认平台快照播放量：为空/非法一律不出评级（与内容质量 invalid_play 同义），
-        // 不得拿日报填报值冒充平台数据下结论。
-        const overallGrade =
-          typeof snapshotPlay === "number" && Number.isFinite(snapshotPlay) && snapshotPlay >= 0
-            ? overallBreakoutGrade(snapshotPlay, [followerRating, null])
-            : null;
-
         return {
           reportId: row.id,
           reportDate: getCollaborationWorkDate(row),
@@ -310,9 +289,9 @@ export function buildPersonPayload(input: {
           dataSource: row.data_source ?? null,
           anomaly: resolveReportAnomaly(row, anomalies),
           hasSnapshot: Boolean(snapshot),
-          followerAchievement: followerRating?.achievement ?? null,
-          followerGrade: followerRating?.grade ?? null,
-          overallGrade,
+          contentQuality: input.growthRole === "talents" && input.qualityTopics
+            ? buildWorkContentQuality(row, snapshot, input.qualityTopics, input.evaluationStandards)
+            : undefined,
         };
       })
       .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || a.reportId.localeCompare(b.reportId)),

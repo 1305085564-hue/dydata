@@ -266,7 +266,7 @@ test("个人 payload 同时补月度文案明细、近30日作品质量和规则
   assert.equal(payload.growthWorks[0]?.contentQuality?.coreMetric, "favoriteRate");
 });
 
-test("个人协作明细的转粉目标和作品质量都使用同一份公司标准", () => {
+test("达人个人作品明细使用同一份公司内容质量标准，不再计算转粉评级", () => {
   const standards = {
     ...DEFAULT_EVALUATION_STANDARDS,
     targets: {
@@ -276,7 +276,7 @@ test("个人协作明细的转粉目标和作品质量都使用同一份公司�
       followerRate: 2,
     },
   };
-  const writerRow = report({ id: "configured-writer", video_id: "configured-video" });
+  const talentRow = report({ id: "configured-talent", video_id: "configured-video" });
   const configuredSnapshot = snapshot({
     videoId: "configured-video",
     playCount: 15000,
@@ -287,24 +287,27 @@ test("个人协作明细的转粉目标和作品质量都使用同一份公司�
     followerGain: 150,
   });
   const payload = buildPersonPayload({
-    targetUserId: "writer-1",
+    targetUserId: "owner-1",
     year: 2026,
     month: 9,
-    reports: [writerRow],
-    profile: { id: "writer-1", name: "文案", team_id: "team-1" },
-    profiles: [{ id: "writer-1", name: "文案", team_id: "team-1" }],
+    reports: [talentRow],
+    profile: { id: "owner-1", name: "达人", team_id: "team-1" },
+    profiles: [{ id: "owner-1", name: "达人", team_id: "team-1" }],
     accounts: [{ id: "account-1", name: "账号", profile_id: "owner-1" }],
     videos: [],
-    growthRole: "writers",
-    growthReports: [writerRow],
-    growthSnapshots: new Map([["configured-video", configuredSnapshot]]),
+    growthRole: "talents",
+    growthReports: [],
+    growthSnapshots: new Map(),
     currentSnapshots: new Map([["configured-video", configuredSnapshot]]),
+    recordRows: [talentRow],
     qualityTopics: topics([["configured-video", "干货"]]),
     evaluationStandards: standards,
     today: "2026-09-30",
   });
 
-  assert.equal(payload.records[0]?.followerAchievement, 50);
-  assert.equal(payload.writerQuality?.monthWorks[0]?.contentQuality?.interactionAchievement, 35);
-  assert.equal(payload.writerQuality?.monthWorks[0]?.contentQuality?.coreAchievement, 40);
+  assert.equal(payload.records[0]?.contentQuality?.topicKind, "dry_goods");
+  assert.equal(payload.records[0]?.contentQuality?.coreMetric, "favoriteRate");
+  assert.equal(payload.records[0]?.contentQuality?.interactionAchievement, 35);
+  assert.equal(payload.records[0]?.contentQuality?.coreAchievement, 40);
+  assert.equal("followerAchievement" in payload.records[0]!, false);
 });

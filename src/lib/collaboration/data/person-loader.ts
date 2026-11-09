@@ -132,7 +132,7 @@ export async function loadPersonData(input: {
     ? [...currentRows, ...(talentRecordRows ?? []), ...growthReports]
     : [];
   const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, qualityRows);
-  const qualityTopics = input.role === "writers"
+  const qualityTopics = input.role === "writers" || input.role === "talents"
     ? await loadVideoTopicTags(input.supabase, qualityRows)
     : undefined;
   const profile = mapProfileRow(profileResult.data);
