@@ -12,6 +12,8 @@
     "lint": "eslint",
     "test": "node scripts/run-tests.mjs unit",
     "test:real-db": "node scripts/run-tests.mjs real-db",
+    "doc:scan": "node scripts/doc-health-check.mjs",
+    "doc:scan-deep": "node scripts/doc-health-check.mjs --deep",
     "handoff:check": "node scripts/handoff-checklist.mjs",
     "gate:static": "npm test && npm run test:real-db && npx tsx --test \"scripts/*.test.ts\" && npx tsc --noEmit --pretty false && npm run lint && npm run build && npm run gate:design && npm run gate:maintainability",
     "gate:design": "node scripts/design-token-gate.mjs",

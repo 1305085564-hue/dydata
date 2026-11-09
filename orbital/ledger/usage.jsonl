@@ -1,0 +1,2 @@
+{"ts": "2026-11-07T10:48:44.195074+00:00", "session_id": "dydata_37cd5e2b", "source": "management", "provider": "openai", "model": "gpt-6.1-sol", "uncached_input": 22435, "cache_read": 0, "cache_write": 0, "output": 301}
+{"ts": "2026-11-07T10:49:11.786799+00:00", "session_id": "dydata_37cd5e2b", "source": "management", "provider": "openai", "model": "gpt-6.1-sol", "uncached_input": 160, "cache_read": 28392, "cache_write": 0, "output": 406}
