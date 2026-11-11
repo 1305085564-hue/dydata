@@ -53,8 +53,8 @@ test("异常状态使用统一橙色标记（腰斩已下线，不再单独成�
 });
 
 test("窄屏列表通过表格容器横向滚动查看全部列", () => {
-  assert.match(source, /className="[^"]*overflow-x-auto[^"]*"/);
-  assert.match(source, /min-w-\[960px\]/);
+  assert.match(source, /import \{ Table \} from "@\/components\/ui\/table"/);
+  assert.match(source, /<Table className=\{cn\([\s\S]*?min-w-\[960px\]/);
 });
 
 test("未评级原因短文案与长文案同源，未知状态不等于硬编码待采集", () => {

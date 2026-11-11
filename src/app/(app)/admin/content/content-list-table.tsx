@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Table } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
@@ -229,6 +230,7 @@ export function ContentListTable({
             visibleRows.map((item) => {
               const { video } = item;
               const owner = getContentOwner(video, ownerNames);
+              const accountName = video.accounts?.name;
               const dot = getStatusDot(video);
               const isSelected = selectedVideoId === video.id;
 
@@ -280,8 +282,8 @@ export function ContentListTable({
 
                   {/* 第 3 层：账号与负责人 */}
                   <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] font-normal truncate">
-                    {video.accounts?.name && (
-                      <span className="truncate">@{video.accounts.name}</span>
+                    {accountName && accountName.trim() !== owner.name.trim() && (
+                      <span className="truncate">@{accountName}</span>
                     )}
                     {owner.name && (
                       <span className="shrink-0 text-[#A8A29E]">
@@ -341,11 +343,9 @@ export function ContentListTable({
         </div>
 
         {/* 2. 桌面与平板端表格 (≥768px) - 保持原有 100% 结构与样式无回退 */}
-        <Card
-          className="hidden md:block flex-1 w-full overflow-x-auto p-0 gap-0"
-        >
-              <table className={cn(
-                "w-full text-left border-collapse table-fixed",
+        <Card className="hidden md:block flex-1 w-full p-0 gap-0">
+              <Table className={cn(
+                "text-left border-collapse table-fixed",
                 isSpacious ? "min-w-[960px] xl:min-w-full" : "min-w-[960px] md:min-w-[1080px] lg:min-w-[1160px] xl:min-w-full"
               )}>
                 <colgroup>
@@ -385,7 +385,8 @@ export function ContentListTable({
                   ) : (
                     visibleRows.map((item) => {
                       const { video } = item;
-              const owner = getContentOwner(video, ownerNames);
+                      const owner = getContentOwner(video, ownerNames);
+                      const accountName = video.accounts?.name;
                       const dot = getStatusDot(video);
                       const isSelected = selectedVideoId === video.id;
 
@@ -450,9 +451,9 @@ export function ContentListTable({
                                 >
                                   {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                                 </button>
-                                {video.accounts?.name ? (
+                                {accountName && accountName.trim() !== owner.name.trim() ? (
                                   <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
-                                    · {video.accounts.name}
+                                    · {accountName}
                                   </span>
                                 ) : null}
                                 {owner.name ? (
@@ -592,7 +593,7 @@ export function ContentListTable({
                   )}
 
                 </tbody>
-              </table>
+              </Table>
             </Card>
       </div>
     </TooltipProvider>
