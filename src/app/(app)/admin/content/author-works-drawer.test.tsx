@@ -32,7 +32,7 @@ test("AuthorWorksView 正常渲染创作者档案头部与四项极简画像指�
   assert.match(html, /完播达标数/);
 });
 
-test("ContentListTable 包含责任人名字时渲染查看作者作品的可点击按钮", async () => {
+test("ContentListTable 桌面和移动列表只显示可点击的负责人，账号留在详情入口", async () => {
   const { ContentListTable } = await import("./content-list-table");
   const mockRow = {
     video: {
@@ -84,8 +84,8 @@ test("ContentListTable 包含责任人名字时渲染查看作者作品的可点
     />,
   );
 
-  assert.match(html, /老罗/);
-  assert.match(html, /查看 老罗 的全部作品/);
+  assert.equal(html.match(/title="查看 老罗 的全部作品">老罗<\/button>/g)?.length, 2);
+  assert.doesNotMatch(html, />[^<>]*老罗商业[^<>]*</);
 });
 
 test("AuthorWorksView 在传入受控 selectedVideoId 时支持内嵌渲染作品详情视图", () => {
