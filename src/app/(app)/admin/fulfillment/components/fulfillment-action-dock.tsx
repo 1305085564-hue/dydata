@@ -244,10 +244,10 @@ export function FulfillmentActionDock({
                 <thead>
                   <tr className="border-b border-[#E2E2DF]/60 text-[#78716C]">
                     <th className="w-8 py-2 px-2"></th>
-                    <th className="py-2 px-3 font-normal">成员</th>
-                    <th className="py-2 px-3 font-normal">今日状态</th>
-                    <th className="py-2 px-3 font-normal">连续未发</th>
-                    <th className="py-2 px-3 text-right font-normal">快速操作</th>
+                    <th className="py-2 px-3 font-medium">成员</th>
+                    <th className="py-2 px-3 font-medium">今日状态</th>
+                    <th className="py-2 px-3 font-medium">连续未发</th>
+                    <th className="py-2 px-3 text-right font-medium">快速操作</th>
                   </tr>
                 </thead>
                 <tbody>

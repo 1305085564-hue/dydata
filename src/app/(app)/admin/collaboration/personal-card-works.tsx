@@ -47,14 +47,14 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-medium text-[#78716C] text-left">
                           <tr>
-                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
-                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
-                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
-                            <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
+                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-medium">日期</th>
+                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-medium">账号 / 作品标题</th>
+                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-medium">播放量</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-medium">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-medium">留存数据</th>
+                            <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-medium">综合评级</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -169,14 +169,14 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-medium text-[#78716C] text-left">
                           <tr>
-                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
-                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
-                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
-                            <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
+                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-medium">日期</th>
+                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-medium">账号 / 作品标题</th>
+                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-medium">播放量</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-medium">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-medium">留存数据</th>
+                            <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-medium">综合评级</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -299,13 +299,13 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                   ) : (
                     <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[520px] table-fixed">
-                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-normal text-[#78716C] text-left">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[14px] font-medium text-[#78716C] text-left">
                           <tr>
-                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
-                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
-                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0 font-normal">担任岗位</th>
-                            <th className="py-2.5 px-3 text-right w-[64px] shrink-0 font-normal">状态</th>
+                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-medium">日期</th>
+                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-medium">账号 / 作品标题</th>
+                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-medium">播放量</th>
+                            <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0 font-medium">担任岗位</th>
+                            <th className="py-2.5 px-3 text-right w-[64px] shrink-0 font-medium">状态</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E2E2DF]/60">

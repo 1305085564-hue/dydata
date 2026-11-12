@@ -377,12 +377,12 @@ export function FulfillmentMatrixRoster({
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-surface-row-hover/90 text-[12px]">
                   {/* 左侧第一列：成员身份（紧凑 6 成留白，姓名部门舒展不折行） */}
-                  <th className="sticky left-0 z-20 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky left-0 z-20 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3 py-3 text-left font-medium uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
 
                   {/* 左侧第二列：实发 / 应发、状态徽章与考核天数算式 */}
-                  <th className="sticky left-[104px] z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3.5 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky left-[104px] z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3.5 py-3 text-left font-medium uppercase tracking-wider text-[#78716C]">
                     实发 / 应发 · 算式
                   </th>
 
@@ -398,18 +398,18 @@ export function FulfillmentMatrixRoster({
                     return (
                       <th
                         key={day}
-                        className={`min-w-[26px] py-2.5 text-center text-[12px] font-normal tabular-nums transition-colors duration-150 ${
+                        className={`min-w-[26px] py-2.5 text-center text-[12px] font-medium tabular-nums transition-colors duration-150 ${
                           isFirstDay ? "pl-2.5 pr-0.5" : isLastDay ? "pl-0.5 pr-2.5" : "px-0.5"
                         } ${
                           isColHovered
-                            ? "text-[#D97757] font-normal bg-[#F1F1F0]"
+                            ? "text-[#D97757] font-medium bg-[#F1F1F0]"
                             : isFocused && range === "today"
                               ? "text-[#D97757] bg-[#D97757]/10 rounded-t-md"
                               : isToday
                                 ? "text-[#D97757] bg-[#F1F1F0]"
                                 : isFocused && range === "last7days"
-                                  ? "text-[#141413] font-normal bg-[#F1F1F0]/80"
-                                  : "text-[#78716C] font-normal"
+                                  ? "text-[#141413] font-medium bg-[#F1F1F0]/80"
+                                  : "text-[#78716C] font-medium"
                         }`}
                       >
                         <div className="flex flex-col items-center">

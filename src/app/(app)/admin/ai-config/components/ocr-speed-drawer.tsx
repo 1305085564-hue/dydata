@@ -251,11 +251,11 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
                 <table className="w-full text-left text-[13px]">
                   <thead>
                     <tr className="border-b border-[#E2E2DF] bg-[#FCFCFB] text-[12px] text-[#78716C]">
-                      <th className="py-2.5 pl-4 pr-2 font-normal">时间</th>
-                      <th className="py-2.5 px-2 font-normal">耗时</th>
-                      <th className="py-2.5 px-2 font-normal">渠道与模型</th>
-                      <th className="py-2.5 px-2 font-normal">类型</th>
-                      <th className="py-2.5 pr-4 pl-2 font-normal text-right">状态</th>
+                      <th className="py-2.5 pl-4 pr-2 font-medium">时间</th>
+                      <th className="py-2.5 px-2 font-medium">耗时</th>
+                      <th className="py-2.5 px-2 font-medium">渠道与模型</th>
+                      <th className="py-2.5 px-2 font-medium">类型</th>
+                      <th className="py-2.5 pr-4 pl-2 font-medium text-right">状态</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E2E2DF]/60">

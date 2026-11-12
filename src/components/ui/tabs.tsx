@@ -53,17 +53,26 @@ function TabsList({
   )
 }
 
-function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
+function TabsTrigger({ className, children, ...props }: TabsPrimitive.Tab.Props) {
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-3.5 py-1.5 text-[14px] tracking-tight whitespace-nowrap text-[#1F1E1D] outline-none transition-[color,background-color] duration-150 ease-smooth hover:text-[#141413] hover:bg-[#EBEBE9] group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start focus-visible:ring-1 focus-visible:ring-[#141413]/5 disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:bg-white group-data-[variant=default]/tabs-list:data-active:shadow-input group-data-[variant=default]/tabs-list:data-active:text-[#141413] group-data-[variant=line]/tabs-list:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+        "relative inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-3.5 py-1.5 text-[14px] tracking-tight whitespace-nowrap text-[#1F1E1D] outline-none transition-[color,background-color] duration-150 ease-smooth hover:text-[#141413] hover:bg-[#EBEBE9] group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start focus-visible:ring-1 focus-visible:ring-[#141413]/5 disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:bg-white group-data-[variant=default]/tabs-list:data-active:shadow-input group-data-[variant=default]/tabs-list:data-active:text-[#141413] data-active:font-medium group-data-[variant=line]/tabs-list:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
         "after:absolute after:bg-[#141413] after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100 group-data-[variant=line]/tabs-list:data-active:bg-[#F1F1F0] group-data-[variant=line]/tabs-list:data-active:text-[#141413]",
         className
       )}
       {...props}
-    />
+    >
+      {/* 纯文字标签预留加粗后的宽度，避免切换 tab 时相邻标签位移 */}
+      {typeof children === "string" ? (
+        <span className="weight-reserve" data-weight-text={children}>
+          {children}
+        </span>
+      ) : (
+        children
+      )}
+    </TabsPrimitive.Tab>
   )
 }
 

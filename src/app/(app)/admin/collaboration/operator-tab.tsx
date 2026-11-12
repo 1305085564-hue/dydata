@@ -73,10 +73,10 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
       <TableHead className="w-10 py-2 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="py-2 text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="py-2 text-left font-medium text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         运营姓名
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
@@ -89,7 +89,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           </Tooltip>
         </TooltipProvider>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
@@ -103,7 +103,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
@@ -117,7 +117,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
@@ -131,16 +131,16 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <TableHead key={field} className="py-2 px-2 text-right font-medium text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
         环比
       </TableHead>
     </TableRow>
@@ -266,19 +266,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
           <table className="w-full text-[12px]">
             <thead>
               <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
+                <th className="py-2 px-3 text-[12px] font-medium text-[#78716C]">
                   达人姓名
                 </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
+                <th className="py-2 px-3 text-[12px] font-medium text-[#78716C]">
                   账号名
                 </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
+                <th className="py-2 px-3 text-[12px] font-medium text-[#78716C] text-right">
                   条数
                 </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
+                <th className="py-2 px-3 text-[12px] font-medium text-[#78716C] text-right">
                   总播放
                 </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right pr-4">
+                <th className="py-2 px-3 text-[12px] font-medium text-[#78716C] text-right pr-4">
                   导粉
                 </th>
               </tr>

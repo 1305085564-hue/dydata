@@ -24,7 +24,7 @@ function MemberTableHeader({
 }) {
   return (
     <div
-      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
+      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/60 text-[12px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showCheckboxSlot ? (

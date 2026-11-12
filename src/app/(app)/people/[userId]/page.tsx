@@ -268,12 +268,12 @@ export default async function PersonProfilePage({
       <Section title="成长走势 · 近 6 个月">
         <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
           <table className="w-full min-w-[520px] table-fixed text-[12px]">
-            <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
+            <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-medium text-[#78716C]">
               <tr>
-                <th className="w-[96px] shrink-0 px-3 py-2.5 font-normal">月份</th>
-                <th className="px-3 py-2.5 font-normal">作品数</th>
-                <th className="px-3 py-2.5 font-normal">条均播放</th>
-                <th className="px-3 py-2.5 font-normal">良优率</th>
+                <th className="w-[96px] shrink-0 px-3 py-2.5 font-medium">月份</th>
+                <th className="px-3 py-2.5 font-medium">作品数</th>
+                <th className="px-3 py-2.5 font-medium">条均播放</th>
+                <th className="px-3 py-2.5 font-medium">良优率</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -312,12 +312,12 @@ export default async function PersonProfilePage({
         ) : (
           <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
             <table className="w-full min-w-[520px] table-fixed text-[12px]">
-              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
+              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-medium text-[#78716C]">
                 <tr>
-                  <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
-                  <th className="px-3 py-2.5 font-normal">账号 / 作品标题</th>
-                  <th className="w-[80px] shrink-0 px-2.5 py-2.5 text-right font-normal">播放量</th>
-                  <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-normal">综合评级</th>
+                  <th className="w-[84px] shrink-0 px-3 py-2.5 font-medium">日期</th>
+                  <th className="px-3 py-2.5 font-medium">账号 / 作品标题</th>
+                  <th className="w-[80px] shrink-0 px-2.5 py-2.5 text-right font-medium">播放量</th>
+                  <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-medium">综合评级</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -367,11 +367,11 @@ export default async function PersonProfilePage({
           ) : (
             <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
               <table className="w-full min-w-[420px] table-fixed text-[12px]">
-                <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
+                <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-medium text-[#78716C]">
                   <tr>
-                    <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
-                    <th className="px-3 py-2.5 font-normal">作品标题</th>
-                    <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-normal">状态</th>
+                    <th className="w-[84px] shrink-0 px-3 py-2.5 font-medium">日期</th>
+                    <th className="px-3 py-2.5 font-medium">作品标题</th>
+                    <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-medium">状态</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E2DF]/60">

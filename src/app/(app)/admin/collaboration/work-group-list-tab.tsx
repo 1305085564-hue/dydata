@@ -146,7 +146,7 @@ export function WorkGroupListTab({
   };
 
   const sortableHead = (field: SortField, label: string, width: string) => (
-    <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>
+    <TableHead className={`py-2 px-2 text-right font-medium text-[#78716C] ${width}`}>
       <button
         type="button"
         onClick={() => handleSort(field)}
@@ -166,7 +166,7 @@ export function WorkGroupListTab({
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-              <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
+              <TableHead className="py-2 pl-4 pr-2 text-left font-medium text-[#78716C] w-[180px]">
                 <button
                   type="button"
                   onClick={() => handleSort("name")}
@@ -187,7 +187,7 @@ export function WorkGroupListTab({
               {sortableHead("likeRate", "点赞率", "w-[80px]")}
               {sortableHead("favoriteRate", "收藏率", "w-[80px]")}
               {hasWriterQuality && sortableHead("goodExcellentRate", "留存数据", "w-[90px]")}
-              <TableHead className="py-2 pl-2 pr-4 text-right font-normal text-[#78716C] w-[70px]">
+              <TableHead className="py-2 pl-2 pr-4 text-right font-medium text-[#78716C] w-[70px]">
                 操作
               </TableHead>
             </TableRow>

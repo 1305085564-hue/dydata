@@ -63,12 +63,14 @@ test("字号档位不使用半像素值（依赖即静默失效）", () => {
   }
 });
 
-test("字体栈只用系统字体：sans 优先雅黑 UI，中文衬线钉死中易宋体", () => {
+test("字体栈先 Inter、再 MiSans、最后系统字体，中文衬线仍钉死中易宋体", () => {
   const globals = readSource("src/app/globals.css");
 
-  assert.match(globals, /--font-sans:[^;]*Microsoft YaHei UI/);
-  // Inter 从未加载，两大系统默认均不预装（规范 §1.6）
-  assert.doesNotMatch(globals, /--font-sans:[^;]*\bInter\b/);
+  // 自托管字体在前，系统字体全部保留在后：字体没下完或下载失败时与旧版一致
+  assert.match(
+    globals,
+    /--font-sans:\s*var\(--font-inter\),\s*var\(--font-misans\),\s*-apple-system,\s*BlinkMacSystemFont,\s*'Segoe UI',\s*'PingFang SC',\s*'Microsoft YaHei UI',\s*'Microsoft YaHei',\s*system-ui,\s*sans-serif;/,
+  );
   assert.match(
     globals,
     /--font-serif:\s*"Iowan Old Style", Charter, Georgia, "Songti SC", SimSun, serif;/,
@@ -78,6 +80,20 @@ test("字体栈只用系统字体：sans 优先雅黑 UI，中文衬线钉死中
   assert.doesNotMatch(globals, /--font-display/);
   assert.doesNotMatch(globals, /fonts\.googleapis|fonts\.gstatic/);
   assert.doesNotMatch(globals, /placeholder[^\n]*#78716C/);
+});
+
+test("两款字体自托管在 src/fonts（内容哈希 + 一年缓存），Inter 只认英文数字与英文标点", () => {
+  const layout = readSource("src/app/layout.tsx");
+
+  assert.match(layout, /from "next\/font\/local"/);
+  // 必须放 src/fonts 让 next/font 生成内容哈希文件名；放 public/ 拿不到 immutable 缓存
+  assert.match(layout, /\.\.\/fonts\/Inter-Variable\.woff2/);
+  assert.match(layout, /\.\.\/fonts\/MiSans-Variable\.woff2/);
+  // 只裁到 400–600 三档
+  assert.equal((layout.match(/weight: "400 600"/g) ?? []).length, 2);
+  // 中文引号、省略号、破折号不归 Inter，交给 MiSans
+  assert.match(layout, /prop: "unicode-range",\s*value: "U\+0020-007E, U\+00A0"/);
+  assert.equal((layout.match(/display: "swap"/g) ?? []).length, 2);
 });
 
 test("弹层关闭后残留遮罩不再吞点击：只用 [inert] 态关闭指针，不误伤打开态", () => {

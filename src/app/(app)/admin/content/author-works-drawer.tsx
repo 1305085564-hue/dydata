@@ -326,15 +326,15 @@ export function AuthorWorksView({
           ) : (
             <div className="rounded-xl border border-[#E2E2DF] overflow-hidden divide-y divide-[#E2E2DF]">
               <table className="w-full text-left text-[12px] table-fixed">
-                <thead className="bg-[#F7F7F6] text-[#78716C] font-normal border-b border-[#E2E2DF] select-none">
+                <thead className="bg-[#F7F7F6] text-[#78716C] font-medium border-b border-[#E2E2DF] select-none">
                   <tr>
-                    <th className="py-2 px-3 w-[72px] shrink-0 font-normal">发布日期</th>
-                    <th className="py-2 px-3 min-w-[200px] font-normal">作品标题 / 账号</th>
-                    <th className="py-2 px-2 text-right w-[80px] shrink-0 font-normal">播放量</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">涨粉</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">5s完播</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">互动率</th>
-                    <th className="py-2 px-3 text-center w-[60px] shrink-0 font-normal">评级</th>
+                    <th className="py-2 px-3 w-[72px] shrink-0 font-medium">发布日期</th>
+                    <th className="py-2 px-3 min-w-[200px] font-medium">作品标题 / 账号</th>
+                    <th className="py-2 px-2 text-right w-[80px] shrink-0 font-medium">播放量</th>
+                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-medium">涨粉</th>
+                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-medium">5s完播</th>
+                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-medium">互动率</th>
+                    <th className="py-2 px-3 text-center w-[60px] shrink-0 font-medium">评级</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E2DF] bg-white">
