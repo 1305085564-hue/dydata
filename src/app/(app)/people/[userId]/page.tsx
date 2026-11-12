@@ -13,7 +13,6 @@ import type {
   PersonMonthTrendRow,
   PersonProfileRole,
   PersonProfileWork,
-  PersonStrengthRow,
 } from "@/lib/collaboration/domain/person-profile-rules";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -29,7 +28,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "成员主页 - DYData",
-  description: "成员成长档案：本月表现、近 6 个月走势、擅长题材、代表作与最近状态。",
+  description: "成员成长档案：本月表现、近 6 个月走势、代表作与最近状态。",
 };
 
 const ROLE_LABELS: Record<PersonProfileRole, string> = {
@@ -190,7 +189,7 @@ export default async function PersonProfilePage({
     return <NoticeCard title="未找到成员档案" description="未找到该成员的档案记录。" />;
   }
 
-  const { person, monthSummary, trend, strengths, topWorks, anomalies } = data;
+  const { person, monthSummary, trend, topWorks, anomalies } = data;
   const roleTags = (Object.keys(ROLE_LABELS) as PersonProfileRole[]).filter((role) => person.roles[role]);
   const maxima = {
     reportCount: rowMax(trend.map((row) => row.reportCount)),
@@ -303,41 +302,7 @@ export default async function PersonProfilePage({
         </Card>
       </Section>
 
-      {/* 4. 擅长什么 */}
-      <Section title="擅长什么 · 按题材">
-        {strengths.length === 0 ? (
-          <EmptyRow text="暂无题材创作记录" />
-        ) : (
-          <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
-            <table className="w-full min-w-[480px] table-fixed text-[12px]">
-              <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
-                <tr>
-                  <th className="px-3 py-2.5 font-normal">题材</th>
-                  <th className="w-[96px] shrink-0 px-3 py-2.5 text-right font-normal">作品数</th>
-                  <th className="w-[110px] shrink-0 px-3 py-2.5 text-right font-normal">条均播放</th>
-                  <th className="w-[110px] shrink-0 px-3 py-2.5 text-right font-normal">良优率</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E2DF]/60">
-                {strengths.map((row: PersonStrengthRow) => (
-                  <tr key={row.subject ?? "未标注"}>
-                    <td className="px-3 py-2 text-[#1F1E1D]">{row.subject ?? "未标注"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">{row.reportCount}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">
-                      {formatAvgPlay(row.avgPlay)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">
-                      {formatPercent(row.goodRate)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        )}
-      </Section>
-
-      {/* 5. 代表作 */}
+      {/* 4. 代表作 */}
       <Section
         title="代表作"
         extra={<span className="text-[12px] text-[#78716C]">评级最优的 {topWorks.length} 篇</span>}
@@ -390,7 +355,7 @@ export default async function PersonProfilePage({
         )}
       </Section>
 
-      {/* 6. 最近状态 */}
+      {/* 5. 最近状态 */}
       <Section title="最近状态">
         <div className="space-y-2">
           <div className="flex items-center justify-between">

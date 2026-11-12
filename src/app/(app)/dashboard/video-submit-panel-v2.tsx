@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import type { Video, VideoTagReviewDimension } from "@/types";
+import type { Video } from "@/types";
 import { getExemptionStateForDate, getAllExemptionDates } from "@/lib/豁免";
 import {
   getDashboardSubmittedDates,
@@ -399,12 +399,6 @@ export function VideoSubmitPanelV2({
   const handleSubmitted = useCallback(
     (
       video: Video,
-      aiTags: Array<{
-        tag_dimension: VideoTagReviewDimension;
-        tag_value: string;
-        confidence: number | null;
-        reason: string | null;
-      }>,
       summaryOverride?: TodaySubmissionReportLike | null,
     ) => {
       const nextState = resolvePanelSubmittedState();

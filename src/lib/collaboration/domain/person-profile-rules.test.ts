@@ -5,7 +5,6 @@ import {
   buildMonthSummary,
   buildMonthlyTrend,
   buildRecentAnomalies,
-  buildStrengths,
   buildTopWorks,
   derivePersonRoles,
   type PersonProfileWork,
@@ -25,7 +24,6 @@ function work(reportId: string, overrides: Partial<PersonProfileWork> = {}): Per
     likeRate: 0.05,
     favoriteRate: 0.02,
     overallGrade: null,
-    subject: "干货",
     anomaly: null,
     roles: ["writer"],
     ...overrides,
@@ -126,38 +124,6 @@ test("buildMonthSummary 汇总指标先加总再相除（与 buildPerformanceMet
   assert.equal(summary.interactionRate, 400 / 8000);
   assert.equal(summary.followerConversionRate, 80 / 8000);
   assert.equal(summary.goodRate, 1);
-});
-
-test("buildStrengths 题材分组各组作品数之和等于总数，未标注组排最后", () => {
-  const works = [
-    work("r-1", { subject: "干货" }),
-    work("r-2", { subject: "干货" }),
-    work("r-3", { subject: "复盘" }),
-    work("r-4", { subject: null }),
-    work("r-5", { subject: "干货", overallGrade: "优" }),
-    work("r-6", { subject: null }),
-    work("r-7", { subject: null }),
-    work("r-8", { subject: "复盘" }),
-    work("r-9", { subject: "复盘" }),
-    work("r-10", { subject: "复盘", hasSnapshot: false, playCount: null }),
-    work("r-11", { subject: "干货" }),
-    work("r-12", { subject: "干货" }),
-  ];
-
-  const strengths = buildStrengths(works);
-
-  assert.equal(
-    strengths.reduce((sum, item) => sum + item.reportCount, 0),
-    works.length,
-    "各组作品数之和必须等于作品总数",
-  );
-  assert.deepEqual(strengths.map((item) => item.subject), ["干货", "复盘", null]);
-  assert.equal(strengths.at(-1)?.subject, null, "未标注组排最后");
-  const dry = strengths.find((item) => item.subject === "干货");
-  assert.ok(dry);
-  assert.equal(dry.reportCount, 5);
-  assert.equal(dry.ratedCount, 1);
-  assert.equal(dry.goodRate, 1);
 });
 
 test("buildTopWorks 按 优>良>普>劣>null 排序，同级按播放与日期降序", () => {

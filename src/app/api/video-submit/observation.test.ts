@@ -10,7 +10,7 @@ test("video-submit 观测适配层透传原响应 JSON 和状态", async () => {
     observation.mark("auth");
     observation.mark("validate");
     observation.mark("finalize");
-    return Response.json({ ok: true, video_id: "video-1", ai_tags: [] }, { status: 200 });
+    return Response.json({ ok: true, video_id: "video-1" }, { status: 200 });
   }, {
     createRequestId: () => "123e4567-e89b-42d3-a456-426614174000",
     release: () => "sha-1",
@@ -19,7 +19,7 @@ test("video-submit 观测适配层透传原响应 JSON 和状态", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-dydata-request-id"), "123e4567-e89b-42d3-a456-426614174000");
-  assert.deepEqual(await response.json(), { ok: true, video_id: "video-1", ai_tags: [] });
+  assert.deepEqual(await response.json(), { ok: true, video_id: "video-1" });
   assert.equal(logs[0]?.route, "/api/video-submit");
   assert.equal(logs[0]?.detail?.release, "sha-1");
 });

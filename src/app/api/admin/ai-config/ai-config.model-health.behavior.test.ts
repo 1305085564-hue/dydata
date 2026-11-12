@@ -49,7 +49,7 @@ test("B8 check_all_in_use 只测已启用业务与默认的开启供应，包含
     ai_feature_bindings: [
       { id: "default-binding", feature_key: "default", label: "默认模型", model_id: "default-model", is_enabled: true, lifecycle_state: "active" },
       { id: "selected-binding", feature_key: "content_analysis", label: "内容分析", model_id: "selected-model", is_enabled: true, lifecycle_state: "active" },
-      { id: "paused-binding", feature_key: "video_tag", label: "已关闭功能", model_id: "paused-model", is_enabled: false, lifecycle_state: "active" },
+      { id: "paused-binding", feature_key: "sample_quality_check", label: "已关闭功能", model_id: "paused-model", is_enabled: false, lifecycle_state: "active" },
     ],
   });
   const previousFetch = globalThis.fetch;

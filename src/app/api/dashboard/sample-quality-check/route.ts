@@ -318,7 +318,12 @@ async function loadSampleQualityContext(
           .limit(1)
           .maybeSingle(),
     video
-      ? adminSupabase.from("video_tags").select("tag_dimension, tag_value").eq("video_id", video.id)
+      ? adminSupabase
+          .from("video_tags")
+          .select("tag_dimension, tag_value")
+          .eq("video_id", video.id)
+          .eq("source", "manual")
+          .in("tag_dimension", ["话题", "关键词"])
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -435,7 +440,7 @@ function buildSampleQualityPrompt(context: SampleQualityContext, checkedAt: stri
     `视频：${JSON.stringify(context.video)}`,
     `24h 快照：${JSON.stringify(context.snapshot)}`,
     `OCR 资产：${JSON.stringify(context.ocrAssets)}`,
-    `标签：${JSON.stringify(context.videoTags)}`,
+    `手动标签：${JSON.stringify(context.videoTags)}`,
     `程序已发现的硬规则提示：${JSON.stringify(context.deterministicChecks)}`,
   ].join("\n");
 }

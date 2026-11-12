@@ -280,7 +280,6 @@ function extractSubmissionReceipt(body) {
     reportDate,
     anomalyStatus: typeof body.anomaly_status === "string" ? body.anomaly_status : null,
     storedTopicId: body.video?.topic_id ?? null,
-    aiTagCount: Array.isArray(body.ai_tags) ? body.ai_tags.length : null,
     topicLibraryEntry: library ? {
       outcome: typeof library.outcome === "string" ? library.outcome : null,
       reason: typeof library.reason === "string" ? library.reason : null,
@@ -906,7 +905,7 @@ function initialEvidence(config, runId) {
       pageViews: "The UI may send usage_events page_view on navigation; record each /api/usage-events response RequestId below. The application response does not return usage_events row IDs.",
       reportSubmissionEvents: "The dashboard may send usage_events submit_daily_report after create and edit; record each /api/usage-events response RequestId below. The application response does not return usage_events row IDs.",
       loginAndRefresh: "Password login runs in a fresh browser context per role/domain. Closing the context discards local browser session state; server-side refresh/session expiry behavior is not revoked by this script.",
-      tags: "Submission can create/update AI and manual video_tags rows. Their row IDs are not exposed by current submit/edit-detail responses; identify by the saved videoId during physical cleanup.",
+      tags: "Submission can create/update manual video_tags rows. Their row IDs are not exposed by current submit/edit-detail responses; identify by the saved videoId during physical cleanup.",
       topicLibrary: "The response topic_library_entry is recorded. Classification 复盘 is excluded from automatic topic-library insertion; topic_id must stay null.",
       screenshotStorage: "No screenshot is selected or uploaded; no COS request is intentionally made.",
       profileRows: "Login/read flow is expected to use existing profile rows; no profile creation or role changes are performed by this script.",

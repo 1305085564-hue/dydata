@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { callAiJson } from "@/lib/ai/client";
-import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
-import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
+import { buildManualTagPayload } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
@@ -69,52 +67,6 @@ export function buildPublishedDayWindow(publishedAt: string | null): { start: st
   const shanghai = new Date(ms + 8 * 60 * 60 * 1000);
   const start = Date.UTC(shanghai.getUTCFullYear(), shanghai.getUTCMonth(), shanghai.getUTCDate()) - 8 * 60 * 60 * 1000;
   return { start: new Date(start).toISOString(), end: new Date(start + 24 * 60 * 60 * 1000).toISOString() };
-}
-
-function buildTagPrompt(content: string) {
-  return [
-    "你是抖音视频标签助手。",
-    "请根据视频文案，为该视频选择 3 个标签维度。",
-    "只能从给定枚举中选择，不允许自由发挥，不允许新增标签。",
-    "返回 JSON，对象结构固定为 { \"tags\": [...] }。",
-    "每个标签对象都必须包含 tag_dimension、tag_value、confidence、reason。",
-    "confidence 为 0 到 1 的数字。",
-    "可选维度与枚举：",
-    "1. 题材：大盘复盘 / 板块机会 / 个股拆解 / 情绪周期 / 战法教学 / 风险提醒 / 热点追踪 / 盘前预判",
-    "2. 表达形式：结论先行 / 问答式 / 清单式 / 案例拆解 / 情绪点评 / 故事引入 / 观点输出",
-    "3. CTA类型：关注 / 评论 / 私信 / 看主页 / 进群 / 无明显CTA",
-    "必须且仅返回这 3 个维度，每个维度只返回 1 个标签。",
-    "只返回 JSON，不要 markdown，不要额外解释。",
-    "示例：",
-    JSON.stringify({
-      tags: [
-        { tag_dimension: "题材", tag_value: "大盘复盘", confidence: 0.92, reason: "围绕指数走势与盘面总结展开" },
-        { tag_dimension: "表达形式", tag_value: "结论先行", confidence: 0.83, reason: "开头先给出核心观点" },
-        { tag_dimension: "CTA类型", tag_value: "无明显CTA", confidence: 0.71, reason: "文案中未见明确引导动作" },
-      ],
-    }),
-    "视频文案：",
-    content,
-  ].join("\n");
-}
-
-async function generateAiTags(content: string) {
-  try {
-    const result = await callAiJson(buildTagPrompt(content), { maxTokens: 1200, timeoutMs: 12000, featureKey: "video_tag" });
-    const jsonText = extractJsonFromContent(result.content);
-    if (!jsonText) return [];
-    const parsed = JSON.parse(jsonText) as { tags?: RawAiTagSuggestion[] };
-    return normalizeAiTagSuggestions(Array.isArray(parsed.tags) ? parsed.tags : []);
-  } catch {
-    return [];
-  }
-}
-
-function extractJsonFromContent(content: string): string | null {
-  const start = content.indexOf("{");
-  const end = content.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-  return content.slice(start, end + 1);
 }
 
 export async function rollbackSafely(actions: RollbackAction[]) {
@@ -807,31 +759,6 @@ async function handleVideoSubmit(
         .eq("video_id", persistedVideo.id);
       return { data: (result.data ?? []) as unknown[], error: result.error ? { message: result.error.message } : null };
     },
-    generateAiTags: () => generateAiTags(normalized.content),
-    writeAiTags: async (tags) => {
-      const aiTagPayload = dedupeTagPayloads(
-        tags.map((tag) => ({
-          video_id: persistedVideo.id,
-          tag_dimension: tag.tag_dimension,
-          tag_value: tag.tag_value,
-          source: "ai" as const,
-          confidence: tag.confidence,
-          reason: tag.reason,
-          reviewed_by: null,
-        })),
-      );
-      const aiDimensions = [...new Set(aiTagPayload.map((tag) => tag.tag_dimension))];
-      const { error: deleteError } = await supabase
-        .from("video_tags")
-        .delete()
-        .eq("video_id", persistedVideo.id)
-        .in("tag_dimension", aiDimensions);
-      if (deleteError) return { error: { message: deleteError.message } };
-      const { error: insertError } = aiTagPayload.length
-        ? await supabase.from("video_tags").insert(aiTagPayload)
-        : { error: null };
-      return insertError ? { error: { message: insertError.message } } : {};
-    },
     writeManualTags: async () => {
       const manualTags = buildManualTagPayload({
         videoId: persistedVideo.id,
@@ -863,8 +790,6 @@ async function handleVideoSubmit(
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
     return NextResponse.json({ error: tagResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
-  const aiTags = tagResult.aiTags;
-
   // 导粉话术自 2026-10-27 起并入文案（产品决定）：日报不再单独收集话术，
   // 因此不再写 script_usage_records，也不再在编辑时清空历史使用记录——
   // 老记录的话术使用数据保持原样，不随编辑被删改。
@@ -938,7 +863,6 @@ async function handleVideoSubmit(
     ...submitResponseFields.buildSubmittedDailyReportFields(persistedReport),
     anomaly_status: normalized.anomaly_status,
     video: persistedVideo,
-    ai_tags: aiTags,
     idempotent_video_id: submissionVideoId,
     topic_library_entry: topicLibraryEntry,
   });

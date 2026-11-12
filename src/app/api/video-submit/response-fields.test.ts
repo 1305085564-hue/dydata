@@ -50,3 +50,9 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
     "禁止再把视频 id 当作 reportId 传给 sample-quality-check",
   );
 });
+
+test("日报提交不再生成或返回 AI 视频标签", () => {
+  const routeSource = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(routeSource, /featureKey:\s*["']video_tag["']/);
+  assert.doesNotMatch(routeSource, /generateAiTags|ai_tags/);
+});

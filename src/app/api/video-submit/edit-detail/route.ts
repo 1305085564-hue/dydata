@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from("video_tags")
         .select("tag_dimension, tag_value")
-        .eq("video_id", videoId);
+        .eq("video_id", videoId)
+        .eq("source", "manual");
       return { data, error };
     },
     // 历史责任人档案可能包含已归档成员，RLS 下普通成员读不到，走 service role；

@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { Video, VideoTagReviewDimension } from "@/types";
+import type { Video } from "@/types";
 
 import { type MetricGroupHandle } from "@/components/submission/指标分组区";
 import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
@@ -134,12 +134,6 @@ interface VideoSubmitFormProps {
   onDismissPendingExemption?: () => void;
   onSubmitted: (
     video: Video,
-    aiTags: Array<{
-      tag_dimension: VideoTagReviewDimension;
-      tag_value: string;
-      confidence: number | null;
-      reason: string | null;
-    }>,
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onCancel?: () => void;

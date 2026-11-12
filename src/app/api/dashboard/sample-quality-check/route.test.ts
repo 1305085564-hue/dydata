@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { NextRequest } from "next/server";
 
 import { buildSampleQualityCheckResponse, describeSampleQualityFailure, defaultSampleQualityDeps, POST as postSampleQuality } from "./route";
@@ -182,4 +183,11 @@ test("sample-quality-check POST 真 handler：未登录返回明确失败与分�
   } finally {
     defaultSampleQualityDeps.createClient = original;
   }
+});
+
+test("样本质检只把手动话题和关键词送进标签上下文", () => {
+  const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
+  assert.match(source, /\.eq\("source", "manual"\)/);
+  assert.match(source, /\.in\("tag_dimension", \["话题", "关键词"\]\)/);
+  assert.match(source, /手动标签：/);
 });

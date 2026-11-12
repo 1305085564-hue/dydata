@@ -2,7 +2,7 @@
 
 import type { MutableRefObject } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import type { Video, VideoTagReviewDimension } from "@/types";
+import type { Video } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { parseMetric, resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
@@ -11,7 +11,7 @@ import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types"
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
 
-type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; ai_tags?: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>; error?: string; code?: string };
+type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string };
 type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type SubmitControllerOptions = {
   account: { id: string } | null; userId: string; mode: SubmitPanelMode; today: string;
@@ -21,7 +21,7 @@ export type SubmitControllerOptions = {
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
-  onSubmitted: (video: Video, aiTags: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>, summaryOverride?: TodaySubmissionReportLike | null) => void;
+  onSubmitted: (video: Video, summaryOverride?: TodaySubmissionReportLike | null) => void;
   clearDraft: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
@@ -142,10 +142,6 @@ export function createSubmitController(options: SubmitControllerOptions) {
         throw new Error("提交成功，但返回数据格式不正确");
       }
 
-      const aiTags =
-        !isVideo(payload) && Array.isArray(payload.ai_tags)
-          ? payload.ai_tags
-          : [];
       const summaryOverride = {
         ...createSummaryOverride(account.id, meta, fields, {
           topicTitle: topicTitle ?? null,
@@ -170,7 +166,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
       );
       setSubmittedVideoId(submittedVideo.id);
       setIsSubmitted(true);
-      onSubmitted(submittedVideo, aiTags, summaryOverride);
+      onSubmitted(submittedVideo, summaryOverride);
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
     } catch (error) {

@@ -129,7 +129,7 @@ begin
 
   if p_feature_key is null or p_feature_key not in (
     'content_tools', 'period_insight', 'next_day_review', 'content_analysis',
-    'video_tag', 'content_segment', 'member_ai_suggestion',
+    'content_segment', 'member_ai_suggestion',
     'sample_quality_check', 'ocr_screenshot', 'ocr_screenshot_structure'
   ) then
     raise exception '该功能不支持在业务总控中调整';

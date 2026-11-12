@@ -8,14 +8,12 @@ import {
   buildMonthlyTrend,
   buildPersonProfileWorks,
   buildRecentAnomalies,
-  buildStrengths,
   buildTopWorks,
   derivePersonRoles,
   type PersonMonthSummary,
   type PersonMonthTrendRow,
   type PersonProfileRole,
   type PersonProfileWork,
-  type PersonStrengthRow,
 } from "../domain/person-profile-rules";
 import {
   getCollaborationWorkDate,
@@ -42,7 +40,6 @@ export type PersonProfileData = {
   };
   monthSummary: PersonMonthSummary;
   trend: PersonMonthTrendRow[];
-  strengths: PersonStrengthRow[];
   topWorks: PersonProfileWork[];
   anomalies: PersonProfileWork[];
 };
@@ -85,33 +82,6 @@ function batchesOf(ids: string[]): string[][] {
     batches.push(ids.slice(index, index + ID_BATCH_SIZE));
   }
   return batches;
-}
-
-/** 题材标签（擅长什么用）：每视频取第一条非空，参考 dataset.ts 话题标签的批量写法。 */
-async function loadVideoSubjectTags(
-  supabase: SupabaseClient,
-  rows: CollaborationReport[],
-): Promise<Map<string, string | null>> {
-  const videoIds = unique(rows.map((row) => row.video_id));
-  const tags = new Map<string, string | null>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  if (videoIds.length === 0) return tags;
-  const results = await Promise.all(
-    batchesOf(videoIds).map((batch) =>
-      supabase
-        .from("video_tags")
-        .select("video_id, tag_value")
-        .eq("tag_dimension", "题材")
-        .in("video_id", batch)
-        .then((result) => {
-          assertSupabaseQuerySucceeded(result.error, "读取视频题材标签失败");
-          return (result.data ?? []) as Array<{ video_id: string; tag_value: string | null }>;
-        }),
-    ),
-  );
-  for (const tag of results.flat()) {
-    if (tag.video_id && tag.tag_value && !tags.has(tag.video_id)) tags.set(tag.video_id, tag.tag_value);
-  }
-  return tags;
 }
 
 /** 异常状态：只认 video_id 精确匹配，不做标题/日期三元兜底。 */
@@ -210,11 +180,10 @@ export async function loadPersonProfileData(input: {
     return date >= windowStart && date <= today;
   });
 
-  const [accounts, snapshots, topics, subjects, anomalies, teamName, workGroups] = await Promise.all([
+  const [accounts, snapshots, topics, anomalies, teamName, workGroups] = await Promise.all([
     loadAccounts(supabase, unique(rows.map((row) => row.account_id))),
     loadVideoSnapshotMetrics(supabase, rows),
     loadVideoTopicTags(supabase, rows),
-    loadVideoSubjectTags(supabase, rows),
     loadVideoAnomalyStatuses(supabase, rows),
     teamNamePromise,
     workGroupsPromise,
@@ -226,7 +195,6 @@ export async function loadPersonProfileData(input: {
     accounts,
     snapshots,
     topics,
-    subjects,
     anomalies,
     evaluationStandards: input.evaluationStandards,
   });
@@ -252,7 +220,6 @@ export async function loadPersonProfileData(input: {
     },
     monthSummary: buildMonthSummary(monthWorks, rows, snapshots),
     trend: buildMonthlyTrend(works, today),
-    strengths: buildStrengths(works),
     topWorks: buildTopWorks(works, 5),
     anomalies: buildRecentAnomalies(works),
   };

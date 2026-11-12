@@ -154,7 +154,6 @@ export type SnapshotType = "24h" | "72h";
 export type SubmissionAssetRole = "screenshot_1" | "screenshot_2";
 export type SubmissionFieldSource = "ocr" | "manual";
 export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众" | "话题" | "关键词";
-export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
 export type MarketSentiment = "强" | "中" | "弱";
 export type VideoAssetLevel = "S" | "A" | "B" | "C";
@@ -182,8 +181,6 @@ export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "话题": ["干货", "复盘", "复盘干货", "视频转推"],
   "关键词": [],
 };
-
-export const VIDEO_TAG_REVIEW_DIMENSIONS: VideoTagReviewDimension[] = ["题材", "表达形式", "CTA类型"];
 
 export interface Video {
   id: string;

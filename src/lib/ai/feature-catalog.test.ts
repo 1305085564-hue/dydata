@@ -45,6 +45,7 @@ test("已删除和未注册功能都被总控层拦截，不能静默掉进兜�
     "video_diagnose",
     "admin_assistant",
     "feishu_fulfillment_reminder",
+    "video_tag",
     "unknown_feature",
   ]) {
     assert.deepEqual(resolveAiFeatureAccess(featureKey), {
@@ -61,7 +62,7 @@ test("管理页只保留确认在用的业务功能，不展示半成品或旧�
   assert.ok(groups.business.some((entry) => entry.key === "ocr_screenshot_structure"));
   assert.deepEqual(
     groups.business.filter((entry) =>
-      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "default", "content_rewrite"].includes(entry.key),
+      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "video_tag", "default", "content_rewrite"].includes(entry.key),
     ),
     [],
   );

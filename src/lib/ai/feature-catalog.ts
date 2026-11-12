@@ -16,7 +16,6 @@ const AI_FEATURE_CATALOG: readonly AiFeatureCatalogEntry[] = [
   { key: "period_insight", label: "周期洞察", description: "周报与月报洞察", routing: "binding", group: "business" },
   { key: "next_day_review", label: "次日复盘", description: "批改台的次日复盘", routing: "binding", group: "business" },
   { key: "content_analysis", label: "内容分析", description: "内容分析服务", routing: "binding", group: "business" },
-  { key: "video_tag", label: "视频标签", description: "视频提交时的标签生成", routing: "binding", group: "business" },
   { key: "content_segment", label: "文案拆解", description: "内容分段与文案拆解", routing: "binding", group: "business" },
   { key: "member_ai_suggestion", label: "成员建议", description: "后台成员管理建议", routing: "binding", group: "business" },
   { key: "sample_quality_check", label: "样本质检", description: "仪表盘样本质量检查", routing: "binding", group: "business" },

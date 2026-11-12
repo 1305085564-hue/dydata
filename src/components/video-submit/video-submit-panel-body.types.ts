@@ -8,7 +8,7 @@ import type {
   TodaySubmissionSummary,
 } from "@/lib/dashboard-submission-state";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
-import type { Video, VideoTagReviewDimension } from "@/types";
+import type { Video } from "@/types";
 import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
 
 export type VideoSubmitPanelBodyProps = {
@@ -53,12 +53,6 @@ export type VideoSubmitPanelBodyProps = {
   initialTopicTitle: string | null;
   handleSubmitted: (
     video: Video,
-    aiTags: Array<{
-      tag_dimension: VideoTagReviewDimension;
-      tag_value: string;
-      confidence: number | null;
-      reason: string | null;
-    }>,
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onViewHistory: () => void;

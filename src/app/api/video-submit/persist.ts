@@ -111,13 +111,6 @@ export async function runSubmissionPersistencePipeline(
   return { ok: true };
 }
 
-export type SubmissionTagSuggestion = {
-  tag_dimension: string;
-  tag_value: string;
-  confidence: number | null;
-  reason: string | null;
-};
-
 export type SubmissionTagWriteResult = {
   error?: { message: string } | null;
 };
@@ -125,27 +118,18 @@ export type SubmissionTagWriteResult = {
 /** 标签属于核心日报写入后的可补充步骤，但失败仍必须恢复原标签快照。 */
 export async function persistSubmissionTags(input: {
   loadPrevious: () => Promise<{ data: unknown[]; error?: { message: string } | null }>;
-  generateAiTags: () => Promise<SubmissionTagSuggestion[]>;
-  writeAiTags: (tags: SubmissionTagSuggestion[]) => Promise<SubmissionTagWriteResult>;
   writeManualTags: () => Promise<SubmissionTagWriteResult>;
   restorePrevious: (rows: unknown[]) => Promise<void>;
-}): Promise<{ ok: true; aiTags: SubmissionTagSuggestion[] } | { ok: false; error: { message: string } }> {
+}): Promise<{ ok: true } | { ok: false; error: { message: string } }> {
   const previous = await input.loadPrevious();
   if (previous.error) return { ok: false, error: previous.error };
-
-  const aiTags = await input.generateAiTags();
-  const aiResult = await input.writeAiTags(aiTags);
-  if (aiResult.error) {
-    await input.restorePrevious(previous.data);
-    return { ok: false, error: aiResult.error };
-  }
 
   const manualResult = await input.writeManualTags();
   if (manualResult.error) {
     await input.restorePrevious(previous.data);
     return { ok: false, error: manualResult.error };
   }
-  return { ok: true, aiTags };
+  return { ok: true };
 }
 
 /** 统一把数据库写入异常转换为内部阶段码，路由再负责用户文案。 */

@@ -35,8 +35,6 @@ export type PersonProfileWork = {
   favoriteRate: number | null;
   /** 综合评级（buildWorkContentQuality.overallGrade）；无快照/不可算为 null。 */
   overallGrade: BreakoutGrade | null;
-  /** 题材标签值，无则 null。 */
-  subject: string | null;
   /** videos.anomaly_status；无视频或正常则 null。 */
   anomaly: string | null;
   roles: PersonProfileRole[];
@@ -57,22 +55,12 @@ export type PersonMonthTrendRow = {
   ratedCount: number;
 };
 
-export type PersonStrengthRow = {
-  subject: string | null;
-  reportCount: number;
-  avgPlay: number | null;
-  goodRate: number | null;
-  ratedCount: number;
-};
-
 export type PersonProfileWorkInput = {
   targetUserId: string;
   rows: CollaborationReport[];
   accounts: CollaborationAccount[];
   snapshots: Map<string, VideoSnapshotMetrics>;
   topics: ContentQualityTopicContext;
-  /** 每视频题材标签（video_tags.tag_dimension='题材'，每视频取第一条非空）。 */
-  subjects: Map<string, string | null>;
   /** videos.anomaly_status，按 video_id 精确匹配。 */
   anomalies: Map<string, string | null>;
   evaluationStandards?: EvaluationStandards;
@@ -122,7 +110,6 @@ export function buildPersonProfileWorks(input: PersonProfileWorkInput): PersonPr
       likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
       favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
       overallGrade: buildWorkContentQuality(row, snapshot, input.topics, input.evaluationStandards).overallGrade,
-      subject: (row.video_id ? input.subjects.get(row.video_id) : null) ?? null,
       anomaly: anomaly && anomaly !== "正常" && anomaly !== "normal" ? anomaly : null,
       roles: personWorkRoles(row, input.targetUserId, accountsById),
     };
@@ -186,23 +173,6 @@ export function buildMonthlyTrend(works: PersonProfileWork[], today: string): Pe
     month: range.start.slice(0, 7),
     ...summarizeWorks(works.filter((work) => work.workDate >= range.start && work.workDate <= range.end)),
   }));
-}
-
-/** 按题材分组（null 归「未标注」组，各组作品数之和 = 总作品数）；未标注排最后，其余按作品数降序。 */
-export function buildStrengths(works: PersonProfileWork[]): PersonStrengthRow[] {
-  const groups = new Map<string | null, PersonProfileWork[]>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  for (const work of works) {
-    const bucket = groups.get(work.subject) ?? [];
-    bucket.push(work);
-    groups.set(work.subject, bucket);
-  }
-  return Array.from(groups.entries())
-    .map(([subject, groupWorks]) => ({ subject, ...summarizeWorks(groupWorks) }))
-    .sort((a, b) => {
-      if (a.subject === null && b.subject !== null) return 1;
-      if (a.subject !== null && b.subject === null) return -1;
-      return b.reportCount - a.reportCount || (a.subject ?? "").localeCompare(b.subject ?? "");
-    });
 }
 
 const GRADE_RANK: Record<BreakoutGrade, number> = { 优: 0, 良: 1, 普: 2, 劣: 3 };
