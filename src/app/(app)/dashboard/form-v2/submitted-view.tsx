@@ -90,7 +90,7 @@ export function SubmittedView({
           <p className="text-[14px] text-[#78716C]">
             作品：<span className="font-normal text-[#141413]">{meta.videoTitle || "未命名作品"}</span> · 发布日：<span className="tabular-nums font-normal text-[#141413]">{publishedDate}</span>
           </p>
-          <p className="text-[12px] text-[#A8A29E]">
+          <p className="text-[12px] text-[#78716C]">
             已写入日报与 24 小时数据
             {submittedReportId ? <> · 日报编号 <span className="select-text font-mono text-[#78716C]">{submittedReportId}</span></> : null}
           </p>

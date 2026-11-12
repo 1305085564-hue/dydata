@@ -277,7 +277,7 @@ export function FulfillmentActionDock({
                             {member.userName}
                           </button>
                           {member.teamName && (
-                            <span className="ml-1 text-[12px] text-[#A8A29E]">
+                            <span className="ml-1 text-[12px] text-[#78716C]">
                               · {member.teamName}
                             </span>
                           )}
@@ -295,7 +295,7 @@ export function FulfillmentActionDock({
                               {member.consecutiveMissing} 天
                             </span>
                           ) : (
-                            <span className="text-[#A8A29E]">0 天</span>
+                            <span className="text-[#78716C]">0 天</span>
                           )}
                         </td>
                         <td className="py-2.5 px-3 text-right">

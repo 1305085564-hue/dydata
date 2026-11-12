@@ -78,7 +78,7 @@ export function PersonalCardGrowth({
                         className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                           visibleMetrics.interaction
                             ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
-                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
                         }`}
                         title="点击切换互动率折线显隐"
                       >
@@ -96,7 +96,7 @@ export function PersonalCardGrowth({
                         className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                           visibleMetrics.like
                             ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
-                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
                         }`}
                         title="点击切换点赞率折线显隐"
                       >
@@ -114,7 +114,7 @@ export function PersonalCardGrowth({
                         className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                           visibleMetrics.favorite
                             ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
-                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
                         }`}
                         title="点击切换收藏率折线显隐"
                       >

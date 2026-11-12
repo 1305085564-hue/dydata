@@ -91,13 +91,13 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         )}
                         <span className="font-normal text-[#1F1E1D]">流量曲线</span>
                         {curveScreenshot && (
-                          <span className="text-[12px] text-[#A8A29E]">
+                          <span className="text-[12px] text-[#78716C]">
                             {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
                           </span>
                         )}
                       </div>
                       {curveScreenshot && (
-                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
+                        <span className="text-[12px] text-[#78716C]">点击全屏</span>
                       )}
                     </div>
 
@@ -162,13 +162,13 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         )}
                         <span className="font-normal text-[#1F1E1D]">留存脱落</span>
                         {retentionScreenshot && (
-                          <span className="text-[12px] text-[#A8A29E]">
+                          <span className="text-[12px] text-[#78716C]">
                             {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
                           </span>
                         )}
                       </div>
                       {retentionScreenshot && (
-                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
+                        <span className="text-[12px] text-[#78716C]">点击全屏</span>
                       )}
                     </div>
 

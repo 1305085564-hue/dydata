@@ -159,7 +159,7 @@ export default function HomePage() {
                 <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/40 p-3.5">
                   <div className="flex items-center justify-between text-[12px]">
                     <span className="text-[#78716C]">进行中选题</span>
-                    <span className="text-[12px] text-[#D97757]">今日待制作</span>
+                    <span className="text-[12px] text-[#78716C]">今日待制作</span>
                   </div>
                   <p className="mt-1 text-[13px] text-[#1F1E1D]">
                     《下半年 AI 生产力工具实测对比》

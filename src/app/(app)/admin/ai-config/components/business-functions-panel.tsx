@@ -330,7 +330,7 @@ export function BusinessFunctionsPanel() {
                 {renderBusinessStatus(assuranceMap["default"], modelFamilyNameMap)}
               </TableCell>
               <TableCell className="pr-4 text-right">
-                <span className="text-[12px] text-[#A8A29E]">基石配置</span>
+                <span className="text-[12px] text-[#78716C]">基石配置</span>
               </TableCell>
             </TableRow>
 
@@ -532,7 +532,7 @@ export function BusinessFunctionsPanel() {
               <div key={f.key} className="flex items-center justify-between py-2.5">
                 <div>
                   <span className="text-[13px] text-[#78716C]">{f.label}</span>
-                  <span className="ml-2 font-mono text-[12px] text-[#A8A29E]">{f.key}</span>
+                  <span className="ml-2 font-mono text-[12px] text-[#78716C]">{f.key}</span>
                 </div>
                 <Button
                   variant="outline"

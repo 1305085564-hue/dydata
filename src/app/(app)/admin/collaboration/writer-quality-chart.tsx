@@ -247,7 +247,7 @@ export function WriterQualityChart({
               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                 visibleMetrics.content
                   ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
-                  : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
               }`}
               title="点击切换留存数据折线显隐"
             >
@@ -265,7 +265,7 @@ export function WriterQualityChart({
               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                 visibleMetrics.interaction
                   ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
-                  : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
               }`}
               title="点击切换互动数据折线显隐"
             >
@@ -283,7 +283,7 @@ export function WriterQualityChart({
               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                 visibleMetrics.core
                   ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
-                  : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
               }`}
               title="点击切换主要指标折线显隐"
             >

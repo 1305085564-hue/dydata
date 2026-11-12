@@ -81,7 +81,7 @@ export function WorkbenchNoticeCapsule({
         {renderStatusDot(primaryNotice)}
         <span className="text-[#78716C]">{primaryNotice.title}</span>
         {primaryNotice.description && (
-          <span className="text-[#A8A29E] hidden sm:inline">{primaryNotice.description}</span>
+          <span className="text-[#78716C] hidden sm:inline">{primaryNotice.description}</span>
         )}
 
         {primaryNotice.actions && (
@@ -95,7 +95,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[12px] text-[#A8A29E] hover:text-[#1F1E1D] transition-colors cursor-pointer select-none ml-0.5"
+            className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[12px] text-[#78716C] hover:text-[#1F1E1D] transition-colors cursor-pointer select-none ml-0.5"
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>

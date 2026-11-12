@@ -124,7 +124,7 @@ export function MemberPermissionEditor({
                               "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
                               isChecked
                                 ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#141413] font-normal"
-                                : "bg-transparent border-[#E2E2DF]/60 text-[#A8A29E]"
+                                : "bg-transparent border-[#E2E2DF]/60 text-[#78716C]"
                             )}
                           >
                             <span className="truncate">{label}</span>

@@ -186,7 +186,7 @@ export function ContentListTable({
                   {/* 第 3 层：负责人。账号在作品详情中查看。 */}
                   <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] font-normal truncate">
                     {owner.name && (
-                      <span className="shrink-0 text-[#A8A29E]">
+                      <span className="shrink-0 text-[#78716C]">
                         责任人：
                         {owner.id && onSelectAuthor ? (
                           <button
@@ -351,7 +351,7 @@ export function ContentListTable({
                                   {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                                 </button>
                                 {owner.name ? (
-                                  <span className="shrink-0 text-[12px] text-[#A8A29E] font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
+                                  <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
                                     ·{" "}
                                     {owner.id && onSelectAuthor ? (
                                       <button
@@ -379,7 +379,7 @@ export function ContentListTable({
                               >
                                 <div className=" text-white">{video.video_title || video.content || "未命名视频"}</div>
                                 {video.accounts?.name ? (
-                                  <div className="text-[12px] text-[#A8A29E] mt-0.5">账号：@{video.accounts.name}</div>
+                                  <div className="text-[12px] text-[#78716C] mt-0.5">账号：@{video.accounts.name}</div>
                                 ) : null}
                               </TooltipContent>
                             </Tooltip>

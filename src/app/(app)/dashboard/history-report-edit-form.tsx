@@ -765,7 +765,7 @@ export function HistoryReportEditForm({
         <section className="space-y-2 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
             <div className="text-[14px] font-normal text-[#141413]">历史指标</div>
-            <span className="text-[12px] text-[#A8A29E]">24 小时沉淀数据</span>
+            <span className="text-[12px] text-[#78716C]">24 小时沉淀数据</span>
           </div>
           <div className="space-y-2">
             {METRIC_ROWS.map((fields, rowIdx) => (
@@ -781,7 +781,7 @@ export function HistoryReportEditForm({
                       title={`${field.label}${field.suffix ? `（${field.suffix}）` : ""}`}
                     >
                       {field.label}
-                      {field.suffix ? <span className="text-[12px] text-[#A8A29E] ml-0.5 font-normal">({field.suffix})</span> : null}
+                      {field.suffix ? <span className="text-[12px] text-[#78716C] ml-0.5 font-normal">({field.suffix})</span> : null}
                     </Label>
                     <Input
                       id={`history-${field.key}`}
@@ -807,7 +807,7 @@ export function HistoryReportEditForm({
               <Users className="size-3.5 text-[#78716C]" />
               <span>共创伙伴（可选）</span>
             </div>
-            <span className="text-[12px] text-[#A8A29E]">文案 · 剪辑 · 运营</span>
+            <span className="text-[12px] text-[#78716C]">文案 · 剪辑 · 运营</span>
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">

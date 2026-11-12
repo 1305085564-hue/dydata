@@ -557,11 +557,11 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                               <span>✓</span> 优秀爆款 (+3条)
                             </Badge>
                           ) : quality.billingCount > 0 ? (
-                            <Badge variant="neutral">
+                            <Badge variant="neutral" className="text-[#78716C]">
                               <span>✓</span> 达标 (+1条)
                             </Badge>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
+                            <span className="inline-flex items-center gap-1 text-[#78716C]">
                               未达标 (差 {formatBigNumber(quality.billingGap)})
                             </span>
                           )}

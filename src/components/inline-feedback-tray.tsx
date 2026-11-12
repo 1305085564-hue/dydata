@@ -64,7 +64,7 @@ export function InlineFeedbackTray({
           <span
             className={cn(
               "tabular-nums text-[12px]",
-              isExceeding ? "text-status-danger font-normal" : "text-[#A8A29E]",
+              isExceeding ? "text-status-danger font-normal" : "text-[#78716C]",
             )}
           >
             {feedback.length} / 1000

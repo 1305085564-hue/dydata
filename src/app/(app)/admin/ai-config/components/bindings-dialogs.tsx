@@ -73,7 +73,7 @@ export function BindingDialog({
                   核心
                 </span>
               )}
-              <span className="text-[12px] text-[#A8A29E] font-mono ml-1">
+              <span className="text-[12px] text-[#78716C] font-mono ml-1">
                 key: {control?.key}
               </span>
             </div>
@@ -124,7 +124,7 @@ export function BindingDialog({
                       百度 OCR 提字 + 大模型结构化归位
                     </p>
                   </div>
-                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#A8A29E]">
+                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
                     成本低、字段极准，支持常规文本模型
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export function BindingDialog({
                           value={outputTokenLimit}
                           onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
                         />
-                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-[#A8A29E]">
+                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C]">
                           tokens
                         </span>
                       </div>
@@ -249,7 +249,7 @@ export function BindingDialog({
                           value={contextMessageLimit}
                           onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
                         />
-                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-[#A8A29E]">
+                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C]">
                           轮
                         </span>
                       </div>

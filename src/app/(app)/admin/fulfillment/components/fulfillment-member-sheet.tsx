@@ -369,7 +369,7 @@ export function FulfillmentMemberSheet({
                               </span>
                             )}
                             {record.reason && (
-                              <span className="text-[12px] text-[#A8A29E] max-w-[120px] truncate">
+                              <span className="text-[12px] text-[#78716C] max-w-[120px] truncate">
                                 {record.reason}
                               </span>
                             )}

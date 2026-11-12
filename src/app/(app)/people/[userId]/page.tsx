@@ -291,7 +291,7 @@ export default async function PersonProfilePage({
                   <td className="px-3 py-2">
                     <div className="tabular-nums text-[#1F1E1D]">
                       {formatPercent(row.goodRate)}
-                      <span className="ml-1 text-[12px] text-[#A8A29E]">/ {row.ratedCount} 篇已评级</span>
+                      <span className="ml-1 text-[12px] text-[#78716C]">/ {row.ratedCount} 篇已评级</span>
                     </div>
                     <MiniBar value={row.goodRate} max={maxima.goodRate} />
                   </td>

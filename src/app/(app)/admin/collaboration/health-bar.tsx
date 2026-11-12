@@ -223,7 +223,7 @@ export function HealthBar({
         onClick={handleOpen}
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-normal transition cursor-pointer ${
           isHealthy
-            ? "bg-[#F1F1F0] text-[#A8A29E] hover:bg-[#EBEBE9]/70"
+            ? "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9]/70"
             : "bg-status-warning/10 text-[#78716C] hover:bg-status-warning/15"
         }`}
       >
@@ -366,7 +366,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#A8A29E] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#78716C] font-normal rounded-md">
                                   <SelectValue placeholder="补录文案…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -401,7 +401,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#A8A29E] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#78716C] font-normal rounded-md">
                                   <SelectValue placeholder="补录剪辑…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -436,7 +436,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#A8A29E] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#78716C] font-normal rounded-md">
                                   <SelectValue placeholder="补录运营…" />
                                 </SelectTrigger>
                                 <SelectContent>

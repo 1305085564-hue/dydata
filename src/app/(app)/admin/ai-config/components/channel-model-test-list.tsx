@@ -48,7 +48,7 @@ export function LastCheckSummaryCard({ checkResult, onDismiss }: CheckSummaryPro
       <div className="rounded-xl border border-[#E2E2DF] bg-[#F7F7F6] p-4 text-[12px] text-[#78716C] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>现在没有需要检查的对象</span>
-          <span className="text-[#A8A29E]">（只查已启用业务选中的模型和全局默认打开的供应）</span>
+          <span className="text-[#78716C]">（只查已启用业务选中的模型和全局默认打开的供应）</span>
         </div>
         {onDismiss && (
           <button

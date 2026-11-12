@@ -71,7 +71,7 @@ export function WorkbenchHeader({
                 <span
                   className={cn(
                     "text-[12px] tabular-nums font-mono ml-0.5",
-                    activeTab === "history" ? "text-white/80" : "text-[#A8A29E]",
+                    activeTab === "history" ? "text-white/80" : "text-[#78716C]",
                   )}
                 >
                   {historyApprovals.length}

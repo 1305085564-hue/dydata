@@ -91,7 +91,7 @@ export function FulfillmentStatsOverview({
             <span className="tabular-nums">
               {remainingCount > 0 ? `还差 ${remainingCount.toLocaleString()} 条` : "全队已达标"}
             </span>
-            <span className="text-[12px] text-[#A8A29E]">当月累计</span>
+            <span className="text-[12px] text-[#78716C]">当月累计</span>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export function FulfillmentStatsOverview({
             </p>
           </div>
 
-          <div className="pt-1 text-[12px] text-[#A8A29E]">
+          <div className="pt-1 text-[12px] text-[#78716C]">
             按每人考核天数与实际作品对账
           </div>
         </div>

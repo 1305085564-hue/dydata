@@ -326,7 +326,7 @@ export function ExemptionDialogV2({
                   </div>
 
                   {calendar.selectedDates.length === 0 ? (
-                    <p className="text-[14px] text-[#A8A29E] py-1">
+                    <p className="text-[14px] text-[#78716C] py-1">
                       点击左侧日历勾选需要申请的日期
                     </p>
                   ) : (
@@ -403,7 +403,7 @@ export function ExemptionDialogV2({
                     }
                   />
                   <div className="flex justify-end">
-                    <span className="text-[12px] tabular-nums text-[#A8A29E]">
+                    <span className="text-[12px] tabular-nums text-[#78716C]">
                       {(
                         calendar.exemptionType === "waive" && calendar.selectedDates.length === 1
                           ? calendar.dateReasons[calendar.selectedDates[0]] ?? calendar.reason
