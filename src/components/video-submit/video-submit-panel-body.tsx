@@ -335,7 +335,7 @@ export function VideoSubmitPanelBody({
               {/* 完卷微符与落款寄语 */}
               <div className="flex flex-col items-center justify-center gap-1 pt-1 pb-4 select-none">
                 <ColophonMark className="py-0 gap-2" />
-                <span className="text-[12px] tracking-wider text-[#78716C]">
+                <span className="text-[12px] tracking-wider text-[#A8A29E]">
                   今日创作已立卷 · 数据已妥善入库
                 </span>
               </div>

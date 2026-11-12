@@ -361,7 +361,7 @@ export function AuthorWorksView({
                             {video.video_title || video.content?.slice(0, 40) || "未命名视频"}
                           </div>
                           {video.accounts?.name && (
-                            <div className="text-[12px] text-[#78716C] truncate">
+                            <div className="text-[12px] text-[#A8A29E] truncate">
                               @{video.accounts.name}
                             </div>
                           )}

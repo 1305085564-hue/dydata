@@ -680,7 +680,7 @@ export function FulfillmentMatrixRoster({
               <span className="inline-block size-2.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/60" />
               待确认
             </span>
-            <span className="ml-auto text-[12px] text-[#78716C]">
+            <span className="ml-auto text-[12px] text-[#A8A29E]">
               提示：点击表格内任意方格可快速改判或审批请假
             </span>
           </div>
@@ -721,7 +721,7 @@ export function FulfillmentMatrixRoster({
               条
             </p>
             {hoveredCell.record?.reason && (
-              <p className="text-[12px] text-[#78716C]">
+              <p className="text-[12px] text-[#A8A29E]">
                 备注：{hoveredCell.record.reason}
               </p>
             )}
@@ -776,7 +776,7 @@ export function FulfillmentMatrixRoster({
                   <span className="text-status-warning font-normal">
                     请假申请待批
                   </span>
-                  <span className="text-[#78716C]">
+                  <span className="text-[#A8A29E]">
                     {openMenuCell.record.pendingExemption.exemption_type === "leave"
                       ? "请假"
                       : "免交"}
