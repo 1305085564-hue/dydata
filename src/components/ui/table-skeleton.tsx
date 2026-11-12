@@ -31,7 +31,7 @@ export function TableSkeleton({
               {Array.from({ length: columnCount }).map((_, i) => (
                 <th
                   key={i}
-                  className="h-9 px-3 text-left align-middle text-[12px] font-medium text-[#78716C]"
+                  className="h-9 px-3 text-left align-middle text-[12px] font-normal text-[#78716C]"
                 >
                   <div className="h-3 w-16 animate-pulse-claude rounded-md bg-[#E2E2DF]/60" />
                 </th>

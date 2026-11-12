@@ -166,7 +166,7 @@ export function WorkGroupDetailView({
             <Table>
               <TableHeader>
                 <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-                  <TableHead className="py-2 pl-4 pr-2 text-left font-medium text-[#78716C] w-[120px]">
+                  <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[120px]">
                     <button
                       type="button"
                       onClick={() => handleSort("name")}
@@ -181,7 +181,7 @@ export function WorkGroupDetailView({
                   {DETAIL_COLUMNS.map((column) => (
                     <TableHead
                       key={column.field}
-                      className={`py-2 px-2 text-right font-medium text-[#78716C] ${column.width}`}
+                      className={`py-2 px-2 text-right font-normal text-[#78716C] ${column.width}`}
                     >
                       <button
                         type="button"
@@ -196,7 +196,7 @@ export function WorkGroupDetailView({
                     </TableHead>
                   ))}
                   {hasWriterQuality && (
-                    <TableHead className="py-2 px-2 text-right font-medium text-[#78716C] w-[90px]">
+                    <TableHead className="py-2 px-2 text-right font-normal text-[#78716C] w-[90px]">
                       <button
                         type="button"
                         onClick={() => handleSort("goodExcellentRate")}

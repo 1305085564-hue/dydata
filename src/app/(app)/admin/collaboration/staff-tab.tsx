@@ -95,66 +95,66 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
   const countLabel = "本月篇数";
 
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-medium text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="text-left font-medium text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
-      <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-left font-normal text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
+      <TableHead className="text-left font-normal text-[#78716C] pl-4">负责账号</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "totalPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           总播放
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           条均播
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "reportCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           {countLabel}
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("effectiveCount")}
           title="播放大于500的作品条数"
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "effectiveCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           有效作品
           {sort.renderSortIcon("effectiveCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("excellentCount")}
           title="播放至少30,000，简单计数"
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "excellentCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           优秀作品
@@ -163,7 +163,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
       </TableHead>
       {role === "writer" && (
         <>
-          <TableHead className="text-right font-medium text-[#78716C]">
+          <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
@@ -180,20 +180,20 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             </TooltipProvider>
           </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-            <TableHead key={field} className="text-right font-medium text-[#78716C]">
-              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
+            <TableHead key={field} className="text-right font-normal text-[#78716C]">
+              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
                 {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
               </button>
             </TableHead>
           ))}
-          <TableHead className="text-right font-medium text-[#78716C]">
+          <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
                   onClick={() => sort.onSort("avgInteractionAchievement")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
                     sort.sortField === "avgInteractionAchievement"
-                      ? "text-[#141413] font-medium"
+                      ? "text-[#141413] font-normal"
                       : "hover:text-[#141413]"
                   }`}
                 >
@@ -209,14 +209,14 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </Tooltip>
             </TooltipProvider>
           </TableHead>
-          <TableHead className="text-right font-medium text-[#78716C]">
+          <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
                   onClick={() => sort.onSort("avgCoreAchievement")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
                     sort.sortField === "avgCoreAchievement"
-                      ? "text-[#141413] font-medium"
+                      ? "text-[#141413] font-normal"
                       : "hover:text-[#141413]"
                   }`}
                 >
@@ -232,14 +232,14 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </Tooltip>
             </TooltipProvider>
           </TableHead>
-          <TableHead className="text-right font-medium text-[#78716C] px-1.5">
+          <TableHead className="text-right font-normal text-[#78716C] px-1.5">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
                   onClick={() => sort.onSort("goodExcellentRate")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
                     sort.sortField === "goodExcellentRate"
-                      ? "text-[#141413] font-medium"
+                      ? "text-[#141413] font-normal"
                       : "hover:text-[#141413]"
                   }`}
                 >
@@ -256,7 +256,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </Tooltip>
             </TooltipProvider>
           </TableHead>
-          <TableHead className="text-right font-medium text-[#78716C] pr-6">认证状态</TableHead>
+          <TableHead className="text-right font-normal text-[#78716C] pr-6">认证状态</TableHead>
         </>
       )}
     </TableRow>
@@ -412,7 +412,7 @@ export function StaffRowCells({
                   </div>
                   {row.certifiedByName && (
                     <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded-md border border-[#E2E2DF]/60">
-                      已由 <span className="text-[#141413] font-medium">{row.certifiedByName}</span> 认证生效
+                      已由 <span className="text-[#141413] font-normal">{row.certifiedByName}</span> 认证生效
                     </div>
                   )}
                 </TooltipContent>
@@ -496,12 +496,12 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
             </colgroup>
             <thead>
               <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
-                <th className="px-3 py-2 text-[12px] font-medium text-[#78716C]">日期</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#78716C]">账号</th>
-                <th className="px-3 py-2 text-[12px] font-medium text-[#78716C]">作品</th>
-                <th className="px-3 py-2 text-right text-[12px] font-medium text-[#78716C]">播放</th>
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">日期</th>
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">账号</th>
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">作品</th>
+                <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">播放</th>
                 {role === "writer" && (
-                  <th className="px-3 py-2 text-right text-[12px] font-medium text-[#78716C]">
+                  <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">
                     计费对账
                   </th>
                 )}

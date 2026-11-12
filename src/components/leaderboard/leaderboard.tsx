@@ -482,16 +482,14 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 h-7 text-[12px] rounded-md transition active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
+              "px-3 h-7 text-[12px] font-normal rounded-md transition active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
               active
-                ? "bg-white text-[#141413] shadow-input font-medium"
+                ? "bg-white text-[#141413] shadow-input font-normal"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             )}
             onClick={() => onChange(option.value)}
           >
-            <span className="weight-reserve" data-weight-text={option.label}>
-              {option.label}
-            </span>
+            {option.label}
           </button>
         );
       })}

@@ -15,11 +15,6 @@ const baselinePath = "scripts/design-token-baseline.json";
 
 const VALID_FONT_PX = new Set(["12", "13", "14", "20", "28"]);
 
-// 字重三档：400 正文 / 500 表头·无衬线标题·选中态 / 600 只给品牌标识。
-// 衬线标题一律 400（2026-11-12 拍板），故 font-serif 与 medium/semibold 同现即违规。
-const VALID_FONT_WEIGHT = new Set(["400", "500", "600"]);
-const BRAND_WEIGHT_FILES = new Set(["src/components/navigation/navigation-header.tsx"]);
-
 // 28 色封闭系统：生产代码只允许这 28 个十六进制色（测试夹具除外）。
 const VALID_HEX = new Set([
   "#141413", "#1F1E1D", "#78716C", "#A8A29E", "#FFFFFF", "#FCFCFB",
@@ -54,30 +49,14 @@ const rules = [
   },
   {
     id: "font-weight",
-    label:
-      "字重三档（400 正文 / 500 表头·无衬线标题·选中态 / 600 仅品牌标识；禁 font-bold 及更粗、禁 400/500/600 之外的数值；衬线标题不得加粗；OG 分享图豁免）",
+    label: "字重一档（全站仅 400；OG 分享图豁免）",
     args: [
       "-n",
       "font-(medium|semibold|bold|extrabold|black)|font-\\[[0-9]+\\]|fontWeight|font-weight",
       "src/",
       "-g", "!**/opengraph-image.tsx",
     ],
-    violation: (line, { file }) => {
-      // 衬线标题一律 400：与 medium/semibold 同现即违规
-      if (/font-serif/.test(line) && /font-(medium|semibold)/.test(line)) return true;
-      // 600 只放品牌标识文件
-      if (/font-semibold/.test(line) && !BRAND_WEIGHT_FILES.has(file)) return true;
-      // 比 600 更粗的一律禁止
-      if (/font-(bold|extrabold|black)/.test(line)) return true;
-      // 数值字重只许 400/500/600
-      const numeric = [...line.matchAll(/font-\[(\d+)\]/g)].map((m) => m[1]);
-      if (numeric.some((weight) => !VALID_FONT_WEIGHT.has(weight))) return true;
-      // 内联字重同样只许 400/500/600
-      const inline = [...line.matchAll(/(?:fontWeight|font-weight)\s*[:=]\s*['"]?(\d+)/g)]
-        .map((m) => m[1]);
-      if (inline.some((weight) => !VALID_FONT_WEIGHT.has(weight))) return true;
-      return false;
-    },
+    violation: (line) => !/[:=]\s*['"]?(400|normal)\b/.test(line),
   },
   {
     id: "serif-floor",
@@ -127,7 +106,7 @@ async function runRule(rule) {
     // 剥离 "file:line:" 前缀再判定，防止行号 400 等数字被误读为合规声明
     const file = path.relative(root, line.slice(0, first)).split(path.sep).join("/");
     const content = line.slice(second + 1);
-    if (!rule.violation(content, { match: content, file })) continue;
+    if (!rule.violation(content, { match: content })) continue;
     counts[file] = (counts[file] ?? 0) + 1;
   }
   return counts;

@@ -11,9 +11,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* 自托管字体：Inter 只认英文/数字/英文标点（unicode-range 在 layout.tsx 里声明），
-     中文与中文标点落 MiSans；系统字体全部留在最后，字体未就绪或下载失败时与旧版一致。 */
-  --font-sans: var(--font-inter), var(--font-misans), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
   --font-serif: "Iowan Old Style", Charter, Georgia, "Songti SC", SimSun, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -221,22 +219,6 @@
     border: 1px solid rgba(226, 226, 223, 0.7) !important;
     box-shadow: 0 10px 15px -3px rgba(28, 25, 23, 0.05), 0 4px 6px -4px rgba(28, 25, 23, 0.05) !important;
     color: var(--foreground) !important;
-  }
-}
-
-/* 选中态字重 400→500 会让拉丁字母略微变宽。这里用一份不可见的 500 副本占位
-   （第二行高度压成 0），控件宽度始终按加粗后的宽度算，切换选中项时相邻元素不位移。
-   用法：<span className="weight-reserve" data-weight-text={文字}>{文字}</span> */
-@utility weight-reserve {
-  display: inline-grid;
-  grid-template-rows: 1fr 0;
-
-  &::after {
-    content: attr(data-weight-text) / "";
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    visibility: hidden;
   }
 }
 

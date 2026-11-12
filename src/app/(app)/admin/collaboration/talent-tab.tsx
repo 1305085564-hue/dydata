@@ -66,10 +66,10 @@ export interface TalentColumnSort {
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-      <TableHead className="py-2 pl-4 pr-2 text-left font-medium text-[#78716C] w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("accountCount")}
@@ -81,7 +81,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("accountCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
@@ -93,7 +93,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
@@ -105,7 +105,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
@@ -117,7 +117,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("effectiveCount")}
@@ -130,7 +130,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("effectiveCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("excellentCount")}
@@ -143,7 +143,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("excellentCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("selfHandledCount")}
@@ -156,13 +156,13 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="py-2 px-2 text-right font-medium text-[#78716C]">
+        <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="py-2 pl-4 pr-4 text-left font-medium text-[#78716C]">
+      <TableHead className="py-2 pl-4 pr-4 text-left font-normal text-[#78716C]">
         名下账号
       </TableHead>
     </TableRow>

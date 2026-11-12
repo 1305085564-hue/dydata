@@ -43,7 +43,12 @@
       "src/app/(app)/admin/ai-config/components/channel-model-test-list.tsx": 1,
       "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx": 6
     },
-    "font-weight": {},
+    "font-weight": {
+      "src/lib/design-system-README.md": 3,
+      "src/app/terms/page.tsx": 6,
+      "src/app/privacy/page.tsx": 7,
+      "src/app/(app)/douyin/douyin-accounts-page.tsx": 3
+    },
     "serif-floor": {},
     "rounded": {
       "src/components/submission/截图槽位区.tsx": 1,

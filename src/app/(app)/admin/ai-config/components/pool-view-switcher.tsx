@@ -21,13 +21,11 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-colors cursor-pointer",
           viewMode === "model"
-            ? "bg-[#EBEBE9] text-[#141413] font-medium"
+            ? "bg-[#EBEBE9] text-[#141413]"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0]"
         )}
       >
-        <span className="weight-reserve" data-weight-text="模型视角">
-          模型视角
-        </span>
+        模型视角
       </button>
       <button
         type="button"
@@ -38,13 +36,11 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-colors cursor-pointer",
           viewMode === "channel"
-            ? "bg-[#EBEBE9] text-[#141413] font-medium"
+            ? "bg-[#EBEBE9] text-[#141413]"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0]"
         )}
       >
-        <span className="weight-reserve" data-weight-text="渠道视角">
-          渠道视角
-        </span>
+        渠道视角
       </button>
     </div>
   );

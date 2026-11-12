@@ -64,13 +64,11 @@ export function VideoStatusSegmented({
             className={cn(
               "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[14px] transition cursor-pointer",
               isActive
-                ? "bg-white text-[#1F1E1D] shadow-input font-medium"
+                ? "bg-white text-[#1F1E1D] shadow-input font-normal"
                 : "text-[#78716C] hover:text-[#1F1E1D] font-normal"
             )}
           >
-            <span className="weight-reserve" data-weight-text={option.label}>
-              {option.label}
-            </span>
+            <span>{option.label}</span>
           </button>
         );
 

@@ -63,20 +63,20 @@ export function CollaborationWorkbenchToolbar({
             <button
               type="button"
               onClick={() => onViewChange("roles")}
-              className={`h-7 px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
+              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
                 view === "roles"
-                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input font-medium"
+                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
-              <span className="weight-reserve" data-weight-text="岗位协作管理">岗位协作管理</span>
+              岗位协作管理
             </button>
             <button
               type="button"
               onClick={() => onViewChange("teams")}
-              className={`h-7 px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
+              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
                 view === "teams"
-                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input font-medium"
+                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
@@ -91,9 +91,9 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("talents")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "talents"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input font-medium"
+                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >
@@ -103,9 +103,9 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("operators")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "operators"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input font-medium"
+                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >
@@ -116,9 +116,9 @@ export function CollaborationWorkbenchToolbar({
                   type="button"
                   onClick={() => onTabChange("writers")}
                   title="含已认证但本月还没有产出的文案（另三个页签只计当月有产出者）"
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "writers"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input font-medium"
+                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >
@@ -128,9 +128,9 @@ export function CollaborationWorkbenchToolbar({
                 <button
                   type="button"
                   onClick={() => onTabChange("editors")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     tab === "editors"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input font-medium"
+                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >

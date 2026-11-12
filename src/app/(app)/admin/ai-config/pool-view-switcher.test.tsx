@@ -19,10 +19,10 @@ test("PoolViewSwitcher 正确反映当前选中的视角", () => {
   const modelHtml = renderToStaticMarkup(
     <PoolViewSwitcher viewMode="model" onChange={() => {}} />
   );
-  assert.match(modelHtml, /aria-selected="true"[^>]*>(?:<span[^>]*>)?模型视角/);
+  assert.match(modelHtml, /aria-selected="true"[^>]*>模型视角/);
 
   const channelHtml = renderToStaticMarkup(
     <PoolViewSwitcher viewMode="channel" onChange={() => {}} />
   );
-  assert.match(channelHtml, /aria-selected="true"[^>]*>(?:<span[^>]*>)?渠道视角/);
+  assert.match(channelHtml, /aria-selected="true"[^>]*>渠道视角/);
 });

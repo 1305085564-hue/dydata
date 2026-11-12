@@ -123,7 +123,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                 "relative inline-flex h-8 shrink-0 items-center rounded-md px-1.5 text-[13px] tracking-tight transition-[color,background-color,box-shadow,transform] duration-150 ease-smooth group origin-center select-none lg:px-3 lg:text-[14px]",
                 compactHidden && "hidden lg:inline-flex",
                 isGroupActive
-                  ? "text-[#141413] bg-[#F1F1F0] shadow-input font-medium"
+                  ? "text-[#141413] bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
               )}
             >
@@ -137,9 +137,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                   )}
                 />
               )}
-              <span className="weight-reserve whitespace-nowrap" data-weight-text={group.label}>
-                {group.label}
-              </span>
+              <span className="whitespace-nowrap">{group.label}</span>
             </Link>
           );
         }
@@ -164,7 +162,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                 "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-1.5 text-[13px] tracking-tight transition-[color,background-color,box-shadow,transform] duration-150 ease-smooth group origin-center select-none lg:px-3 lg:text-[14px]",
                 compactHidden && "hidden lg:inline-flex",
                 isGroupActive || isDropdownOpen
-                  ? "text-[#141413] bg-[#F1F1F0] shadow-input font-medium"
+                  ? "text-[#141413] bg-[#F1F1F0] shadow-input"
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
               )}
             >
@@ -179,9 +177,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
                   )}
                 />
               )}
-              <span className="weight-reserve whitespace-nowrap" data-weight-text={group.label}>
-                {group.label}
-              </span>
+              <span className="whitespace-nowrap">{group.label}</span>
               <ChevronDown
                 className={cn(
                   "size-3.5 stroke-[2] opacity-50 transition-[transform,color] duration-150 group-hover:opacity-100",
@@ -248,12 +244,12 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
             className={cn(
               "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-1.5 text-[13px] tracking-tight transition-[color,background-color,box-shadow] duration-150 ease-smooth",
               compactMoreOpen
-                ? "bg-[#F1F1F0] text-[#141413] shadow-input font-medium"
+                ? "bg-[#F1F1F0] text-[#141413] shadow-input"
                 : "text-[#78716C] hover:bg-[#EBEBE9]/80 hover:text-[#141413]",
             )}
           >
             <MoreHorizontal className="size-3.5 stroke-[1.8]" aria-hidden="true" />
-            <span className="weight-reserve" data-weight-text="更多">更多</span>
+            <span>更多</span>
           </button>
 
           {compactMoreOpen && (

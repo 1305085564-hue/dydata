@@ -37,11 +37,11 @@ export function ContentListViewControls({
                 "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-colors cursor-pointer",
                 isViewLoading && "cursor-wait",
                 view === "all"
-                  ? "bg-[#F1F1F0] text-[#141413] font-medium"
+                  ? "bg-[#F1F1F0] text-[#141413]"
                   : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
               )}
             >
-              <span className="weight-reserve" data-weight-text="全部">全部</span>
+              全部
             </button>
             {canManageVideos && (
               <button
@@ -53,11 +53,11 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[14px] transition-colors cursor-pointer",
                   isViewLoading && "cursor-wait",
                   view === "trash"
-                    ? "bg-[#F1F1F0] text-[#141413] font-medium"
+                    ? "bg-[#F1F1F0] text-[#141413]"
                     : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 )}
               >
-                <span className="weight-reserve" data-weight-text="归档">归档</span>
+                归档
               </button>
             )}
             {loadingLabel && (
@@ -84,10 +84,10 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-colors cursor-pointer",
                   isViewLoading && "cursor-wait",
                   metricViewMode === "full"
-                    ? "bg-[#F1F1F0] text-[#141413] font-medium"
+                    ? "bg-[#F1F1F0] text-[#141413]"
                     : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 )}
-              ><span className="weight-reserve" data-weight-text="完整">完整</span></button>
+              >完整</button>
               <button
                 type="button"
                 onClick={() => setMetricViewMode("spacious")}
@@ -97,10 +97,10 @@ export function ContentListViewControls({
                   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-colors cursor-pointer",
                   isViewLoading && "cursor-wait",
                   metricViewMode === "spacious"
-                    ? "bg-[#F1F1F0] text-[#141413] font-medium"
+                    ? "bg-[#F1F1F0] text-[#141413]"
                     : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 )}
-              ><span className="weight-reserve" data-weight-text="宽松">宽松</span></button>
+              >宽松</button>
             </div>
           )}
 

@@ -142,13 +142,11 @@ export function MemberToolbar({
                   className={cn(
                     "transition-colors",
                     memberView === "active"
-                      ? "text-[#141413] font-medium"
+                      ? "text-[#141413] font-normal"
                       : "text-[#78716C] hover:text-[#1F1E1D]"
                   )}
                 >
-                  <span className="weight-reserve" data-weight-text={`在职 ${localProfiles.length}`}>
-                    在职 {localProfiles.length}
-                  </span>
+                  在职 {localProfiles.length}
                 </button>
                 <button
                   type="button"
@@ -163,13 +161,11 @@ export function MemberToolbar({
                   className={cn(
                     "transition-colors",
                     memberView === "archived"
-                      ? "text-[#141413] font-medium"
+                      ? "text-[#141413] font-normal"
                       : "text-[#78716C] hover:text-[#1F1E1D]"
                   )}
                 >
-                  <span className="weight-reserve" data-weight-text={`归档 ${localArchivedProfiles.length}`}>
-                    归档 {localArchivedProfiles.length}
-                  </span>
+                  归档 {localArchivedProfiles.length}
                 </button>
               </div>
 

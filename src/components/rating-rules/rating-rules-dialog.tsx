@@ -68,9 +68,9 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
             <table className="w-full border-collapse text-left text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]">
-                  <th className="py-2 px-3 font-medium w-[120px]">数据</th>
-                  <th className="py-2 px-3 font-medium">计算方式</th>
-                  <th className="py-2 px-3 font-medium text-right">作品评级中的作用</th>
+                  <th className="py-2 px-3 font-normal w-[120px]">数据</th>
+                  <th className="py-2 px-3 font-normal">计算方式</th>
+                  <th className="py-2 px-3 font-normal text-right">作品评级中的作用</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E2DF]/60 text-[#1F1E1D]">
@@ -103,9 +103,9 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
             <table className="w-full border-collapse text-left text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]">
-                  <th className="py-2 px-3 font-medium">留存指标</th>
-                  <th className="py-2 px-3 font-medium">当前标准</th>
-                  <th className="py-2 px-3 font-medium text-right">权重</th>
+                  <th className="py-2 px-3 font-normal">留存指标</th>
+                  <th className="py-2 px-3 font-normal">当前标准</th>
+                  <th className="py-2 px-3 font-normal text-right">权重</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E2DF]/60 text-[#1F1E1D]">
