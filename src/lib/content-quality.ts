@@ -6,6 +6,7 @@ import {
   breakoutAchievement,
   breakoutGrade,
   breakoutTargetsFor,
+  overallBreakoutGrade,
   type BreakoutGrade,
 } from "@/lib/breakout-rating";
 import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
@@ -14,6 +15,7 @@ import type {
   ContentQualityRules,
   ContentQualityStatus,
   ContentQualitySummary,
+  RetentionMetrics,
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
@@ -44,6 +46,7 @@ export type ContentQualityWorkInput = {
 };
 
 export function contentQualityRules(standards?: EvaluationStandards): ContentQualityRules {
+  const evaluation = standards ?? DEFAULT_EVALUATION_STANDARDS;
   const dryGoods = breakoutTargetsFor("dry_goods", standards);
   const review = breakoutTargetsFor("review", standards);
   return {
@@ -61,7 +64,14 @@ export function contentQualityRules(standards?: EvaluationStandards): ContentQua
       good: KPI_PLAY_GOOD,
       excellent: KPI_PLAY_EXCELLENT,
     },
-    retentionWeights: { ...(standards?.retentionWeights ?? DEFAULT_EVALUATION_STANDARDS.retentionWeights) },
+    retentionBands: {
+      bounceRate2s: { ...evaluation.bounceRate2s },
+      completionRate5s: { ...evaluation.completionRate5s },
+      avgPlayDuration: { ...evaluation.avgPlayDuration },
+      avgPlayRatio: { ...evaluation.avgPlayRatio },
+      completionRate: { ...evaluation.completionRate },
+    },
+    retentionWeights: { ...evaluation.retentionWeights },
   };
 }
 
@@ -74,6 +84,7 @@ export function emptyWorkContentQuality(status: ContentQualityStatus): WorkConte
     coreAchievement: null,
     contentAchievement: null,
     contentGrade: null,
+    retentionMetrics: null,
     overallGrade: null,
     status,
   };
@@ -115,6 +126,15 @@ export function buildWorkContentQualityFromMetrics(
   base.interactionAchievement = breakoutAchievement(interaction, targets.interaction);
   base.coreAchievement = breakoutAchievement(core, targets.fourth);
 
+  const retentionMetrics: RetentionMetrics = {
+    bounceRate2s: input.snapshot.bounceRate2s ?? null,
+    completionRate5s: input.snapshot.completionRate5s ?? null,
+    avgPlayDuration: input.snapshot.avgPlayDuration ?? null,
+    avgPlayRatio: avgPlayRatioAsPercentagePoints(input.snapshot.avgPlayRatio) ?? null,
+    completionRate: input.snapshot.completionRate ?? null,
+  };
+  base.retentionMetrics = retentionMetrics;
+
   const evaluation = standards ?? DEFAULT_EVALUATION_STANDARDS;
   const retentionScores = [
     scoreRetentionMetric(input.snapshot.bounceRate2s, evaluation.bounceRate2s, true),
@@ -137,9 +157,19 @@ export function buildWorkContentQualityFromMetrics(
       + completion * (weights.completionRate / 100);
     base.contentGrade = breakoutGrade(base.contentAchievement);
   }
-  base.overallGrade = overallRetentionGrade(play, base.contentAchievement);
+  if (base.interactionAchievement !== null && base.contentAchievement !== null && base.contentGrade !== null) {
+    const interactionGrade = breakoutGrade(base.interactionAchievement);
+    base.overallGrade = interactionGrade
+      ? overallBreakoutGrade(play, [
+          { grade: interactionGrade, achievement: base.interactionAchievement },
+          { grade: base.contentGrade, achievement: base.contentAchievement },
+        ])
+      : null;
+  }
   if (play === 0) base.status = "invalid_play";
-  else if (base.contentAchievement === null) base.status = topicReady ? "missing_metrics" : "topic_unavailable";
+  else if (base.contentAchievement === null || base.interactionAchievement === null) {
+    base.status = topicReady ? "missing_metrics" : "topic_unavailable";
+  }
   else base.status = "rated";
   return base;
 }
@@ -150,22 +180,11 @@ function scoreRetentionMetric(
   lowerIsBetter = false,
 ): number | null {
   if (actual == null || !Number.isFinite(actual)) return null;
-  const score = lowerIsBetter
-    ? ((band.poor - actual) / (band.poor - band.good)) * 100
-    : ((actual - band.poor) / (band.good - band.poor)) * 100;
-  return Math.max(0, Math.min(100, score));
-}
-
-function overallRetentionGrade(
-  playCount: number | null,
-  achievement: number | null,
-): BreakoutGrade | null {
-  if (playCount === null || !Number.isFinite(playCount)) return null;
-  if (achievement === null) return null;
-  if (playCount < KPI_PLAY_FLOOR) return "劣";
-  const grade = breakoutGrade(achievement);
-  if (!grade || playCount >= KPI_PLAY_GOOD) return grade;
-  return grade === "优" || grade === "良" ? "普" : grade;
+  if (lowerIsBetter) {
+    if (actual === 0) return 200;
+    return (band.good / actual) * 100;
+  }
+  return (actual / band.good) * 100;
 }
 
 function incrementGradeCount(

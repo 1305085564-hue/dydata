@@ -188,12 +188,13 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
     "互动率",
     "点赞率",
     "收藏率",
-    "留存数据",
+    "内容质量",
     "操作",
   ]);
   const textWithQuality = stripTags(htmlWithQuality);
-  assert.ok(textWithQuality.includes("75%"));
-  assert.ok(textWithQuality.includes("优3·良3·普1·劣1"));
+  assert.ok(textWithQuality.includes("互动 90%"));
+  assert.ok(textWithQuality.includes("留存 88%"));
+  assert.ok(textWithQuality.includes("良优 75%"));
 
   const nonWriterHtml = renderList([
     group({ id: "wg-t", name: "达人小队", kind: "talent", contentQuality: null }),

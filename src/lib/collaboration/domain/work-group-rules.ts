@@ -90,7 +90,7 @@ export function buildWorkGroupViews(
           userId: member.id,
           name: member.name?.trim() || "未命名成员",
           ...buildPerformanceMetrics(memberRows, snapshots),
-          contentQuality: group.kind === "writer" && dataset.videoTopicTags
+          contentQuality: group.kind !== "operator" && dataset.videoTopicTags
             ? buildContentQualitySummary(
                 memberRows,
                 snapshots,
@@ -111,7 +111,7 @@ export function buildWorkGroupViews(
       group,
       members,
       buildPerformanceMetrics(groupRows, snapshots),
-      group.kind === "writer" && dataset.videoTopicTags
+      group.kind !== "operator" && dataset.videoTopicTags
         ? buildContentQualitySummary(groupRows, snapshots, dataset.videoTopicTags, evaluationStandards)
         : null,
     );

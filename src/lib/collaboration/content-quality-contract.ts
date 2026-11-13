@@ -31,14 +31,53 @@ export interface ContentQualityRules {
     fair: number;
   };
   /**
-   * KPI 播放硬门槛（播放量绝对值，例如 5000/10000/15000）。
+   * KPI 播放硬门槛（播放量绝对值，例如 2000/15000）。
    */
   playFloors: {
     floor: number;
     good: number;
     excellent: number;
   };
+  retentionBands: {
+    bounceRate2s: { good: number; poor: number };
+    completionRate5s: { good: number; poor: number };
+    avgPlayDuration: { good: number; poor: number };
+    avgPlayRatio: { good: number; poor: number };
+    completionRate: { good: number; poor: number };
+  };
   retentionWeights: Record<RetentionWeightKey, number>;
+}
+
+export interface RetentionMetrics {
+  bounceRate2s: number | null;
+  completionRate5s: number | null;
+  avgPlayDuration: number | null;
+  avgPlayRatio: number | null;
+  completionRate: number | null;
+}
+
+export function retentionWarningLabels(
+  metrics: RetentionMetrics | null | undefined,
+  rules: Pick<ContentQualityRules, "retentionBands"> | null | undefined,
+): string[] {
+  if (!metrics || !rules) return [];
+  const warnings: string[] = [];
+  if (metrics.bounceRate2s != null && metrics.bounceRate2s > rules.retentionBands.bounceRate2s.poor) {
+    warnings.push("2 秒跳出率");
+  }
+  if (metrics.completionRate5s != null && metrics.completionRate5s <= rules.retentionBands.completionRate5s.poor) {
+    warnings.push("5 秒完播率");
+  }
+  if (metrics.avgPlayDuration != null && metrics.avgPlayDuration <= rules.retentionBands.avgPlayDuration.poor) {
+    warnings.push("均播时长");
+  }
+  if (metrics.avgPlayRatio != null && metrics.avgPlayRatio < rules.retentionBands.avgPlayRatio.poor) {
+    warnings.push("平均播放占比");
+  }
+  if (metrics.completionRate != null && metrics.completionRate <= rules.retentionBands.completionRate.poor) {
+    warnings.push("整体完播率");
+  }
+  return warnings;
 }
 
 /**
@@ -50,7 +89,7 @@ export type ContentQualityStatus =
   | "unlinked" // 未关联视频（无 video_id）
   | "pending_snapshot" // 数据待采集（没有 24h 快照）
   | "invalid_play" // 播放量为 0 或缺失（不可计算）
-  | "missing_metrics" // 参与项缺失（缺互动/点赞/收藏）
+  | "missing_metrics" // 参与项缺失（缺互动或留存数据）
   | "topic_unavailable"; // 话题分类状态未就绪或读取失败
 
 /** 列表筛选使用的综合评级枚举；unrated 覆盖 overallGrade 为空的真实状态。 */
@@ -80,10 +119,12 @@ export interface WorkContentQuality {
   interactionAchievement: number | null;
   /** 核心指标达成率（百分数数值：收藏或点赞达成率，不封顶） */
   coreAchievement: number | null;
-  /** 留存数据加权得分（0～100） */
+  /** 留存数据加权达成率（百分数，可超过 100） */
   contentAchievement: number | null;
   /** 留存数据档位（不含播放兜底） */
   contentGrade: BreakoutGrade | null;
+  /** 五项留存原始值，平均播放占比已转换为百分数。 */
+  retentionMetrics?: RetentionMetrics | null;
   /** 综合评级（含播放兜底，overallBreakoutGrade 计算结果） */
   overallGrade: BreakoutGrade | null;
   /** 计算可用性状态 */
@@ -94,7 +135,7 @@ export interface WorkContentQuality {
  * 质量汇总统计（月度与近 30 天通用）。
  * 两个明确样本集：
  * 1. 留存分均值样本集：五项留存数据都完整的作品（achievementSampleCount）；
- * 2. 互动数据与主要指标各自使用完整的指标样本；
+ * 2. 互动数据与留存数据各自使用完整的指标样本；
  * 3. 综合良优率样本集：综合评级非空的作品（ratedCount）。
  * 当 ratedCount === 0 时，goodExcellentRate 为 null，展示「—」；只有 ratedCount > 0 且良优数为 0 时才为 0。
  */
@@ -105,7 +146,7 @@ export interface ContentQualitySummary {
   achievementSampleCount: number;
   /** 互动数据可计算作品数（互动均值分母） */
   interactionSampleCount: number;
-  /** 主要指标可计算作品数（主要指标均值分母） */
+  /** 兼容旧接口的核心指标样本数，当前页面不再用于内容质量考核。 */
   coreSampleCount: number;
   /** 综合评级非空的作品数（良优率分母） */
   ratedCount: number;
@@ -119,9 +160,9 @@ export interface ContentQualitySummary {
   };
   /** 互动达成率均值（百分数数值，如 92.4 表示 92.4%） */
   avgInteractionAchievement: number | null;
-  /** 核心指标达成率均值（百分数数值） */
+  /** 兼容旧接口的核心指标达成率均值，当前页面不再用于内容质量考核。 */
   avgCoreAchievement: number | null;
-  /** 留存数据加权分均值（0～100） */
+  /** 留存数据加权达成率均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
   /** 综合优/良/普/劣件数计数 */
   overallGradeCounts: {

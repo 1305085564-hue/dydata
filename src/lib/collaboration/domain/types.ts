@@ -180,7 +180,7 @@ export type WorkGroupPerformanceMetrics = {
 export type WorkGroupMemberRow = {
   userId: string;
   name: string;
-  /** 仅文案小队计算作品级内容质量；达人/运营保持 null。 */
+  /** 文案和达人小队计算作品级内容质量，运营小队保持 null。 */
   contentQuality: ContentQualitySummary | null;
 } & WorkGroupPerformanceMetrics;
 
@@ -195,7 +195,7 @@ export type WorkGroupSummaryRow = {
   /** 可见范围内的小队人数：与 `members` 行数严格相等，不出现「人数 5 / 只出 2 行」。 */
   memberCount: number;
   aggregate: WorkGroupAggregate;
-  /** 仅文案小队计算作品级内容质量；达人/运营保持 null。 */
+  /** 文案和达人小队计算作品级内容质量，运营小队保持 null。 */
   contentQuality: ContentQualitySummary | null;
 };
 

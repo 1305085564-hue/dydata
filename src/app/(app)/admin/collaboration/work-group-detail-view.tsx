@@ -38,6 +38,8 @@ type SortField =
   | "interactionRate"
   | "likeRate"
   | "favoriteRate"
+  | "avgInteractionAchievement"
+  | "avgContentAchievement"
   | "goodExcellentRate";
 
 /** 组详情列：与视频复盘抽屉同源的绩效指标（组综合 + 组员行统一列，不再复用岗位 Tab 列）。 */
@@ -64,10 +66,9 @@ export function WorkGroupDetailView({
   const [sortField, setSortField] = useState<SortField>("totalPlay");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const hasWriterQuality = useMemo(
+  const hasContentQuality = useMemo(
     () =>
-      summary.kind === "writer" &&
-      (summary.contentQuality !== null || members.some((m) => m.contentQuality !== null)),
+      summary.contentQuality !== null || members.some((m) => m.contentQuality !== null),
     [summary, members],
   );
 
@@ -80,6 +81,10 @@ export function WorkGroupDetailView({
       } else if (sortField === "goodExcellentRate") {
         const aVal = a.contentQuality?.goodExcellentRate ?? -1;
         const bVal = b.contentQuality?.goodExcellentRate ?? -1;
+        diff = aVal - bVal;
+      } else if (sortField === "avgInteractionAchievement" || sortField === "avgContentAchievement") {
+        const aVal = a.contentQuality?.[sortField] ?? -1;
+        const bVal = b.contentQuality?.[sortField] ?? -1;
         diff = aVal - bVal;
       } else {
         const aVal = a[sortField] ?? 0;
@@ -195,7 +200,7 @@ export function WorkGroupDetailView({
                       </button>
                     </TableHead>
                   ))}
-                  {hasWriterQuality && (
+                  {hasContentQuality && (
                     <TableHead className="py-2 px-2 text-right font-normal text-[#78716C] w-[90px]">
                       <button
                         type="button"
@@ -204,7 +209,7 @@ export function WorkGroupDetailView({
                           sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
                         }`}
                       >
-                        留存数据
+                        内容质量
                         {renderSortIcon("goodExcellentRate")}
                       </button>
                     </TableHead>
@@ -238,19 +243,27 @@ export function WorkGroupDetailView({
                   <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.favoriteRate)}
                   </TableCell>
-                  {hasWriterQuality && (
+                  {hasContentQuality && (
                     <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {summary.contentQuality ? (
                         <div>
-                          <span className="font-normal text-[#141413]">
-                            {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
-                              ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
-                              : "—"}
-                          </span>
+                          <div className="font-normal text-[#141413]">
+                            互动 {summary.contentQuality.avgInteractionAchievement == null
+                              ? "—"
+                              : `${Math.round(summary.contentQuality.avgInteractionAchievement)}%`}
+                            <span className="mx-1 text-[#A8A29E]">·</span>
+                            留存 {summary.contentQuality.avgContentAchievement == null
+                              ? "—"
+                              : `${Math.round(summary.contentQuality.avgContentAchievement)}%`}
+                          </div>
                           <div
                             className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 署名作品 ${summary.contentQuality.totalCount} 篇\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 署名作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
                           >
+                            良优 {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
+                              ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
+                              : "—"}
+                            <span className="mx-1 text-[#A8A29E]">·</span>
                             优{summary.contentQuality.overallGradeCounts.excellent}·良{summary.contentQuality.overallGradeCounts.good}·普{summary.contentQuality.overallGradeCounts.fair}·劣{summary.contentQuality.overallGradeCounts.poor}
                           </div>
                         </div>
@@ -299,20 +312,28 @@ export function WorkGroupDetailView({
                     <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {formatRate(member.favoriteRate)}
                     </TableCell>
-                    {hasWriterQuality && (
+                    {hasContentQuality && (
                       <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                        {member.contentQuality ? (
+                      {member.contentQuality ? (
                           <div>
-                            <span className="font-normal text-[#141413]">
-                              {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
-                                ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
-                                : "—"}
-                            </span>
+                          <div className="font-normal text-[#141413]">
+                            互动 {member.contentQuality.avgInteractionAchievement == null
+                              ? "—"
+                              : `${Math.round(member.contentQuality.avgInteractionAchievement)}%`}
+                            <span className="mx-1 text-[#A8A29E]">·</span>
+                            留存 {member.contentQuality.avgContentAchievement == null
+                              ? "—"
+                              : `${Math.round(member.contentQuality.avgContentAchievement)}%`}
+                          </div>
                             <div
                               className="text-[12px] text-[#78716C] font-normal"
-                              title={`综合已评级 ${member.contentQuality.ratedCount} / 署名作品 ${member.contentQuality.totalCount} 篇\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${member.contentQuality.ratedCount} / 署名作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
                             >
-                              优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}·劣{member.contentQuality.overallGradeCounts.poor}
+                            良优 {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
+                              ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
+                              : "—"}
+                            <span className="mx-1 text-[#A8A29E]">·</span>
+                            优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}·劣{member.contentQuality.overallGradeCounts.poor}
                             </div>
                           </div>
                         ) : (

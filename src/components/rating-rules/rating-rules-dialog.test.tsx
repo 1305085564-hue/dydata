@@ -41,9 +41,8 @@ test("作品评级说明内容渲染结果严禁包含四个内部叫法", () =>
   }
 });
 
-test("作品评级说明展示互动数据、主要指标和留存数据", () => {
+test("作品评级说明展示互动数据和留存数据", () => {
   assert.match(dialogSource, /互动数据/);
-  assert.match(dialogSource, /主要指标/);
   assert.match(dialogSource, /留存数据/);
   assert.match(dialogSource, /BREAKOUT_GRADE_THRESHOLDS/);
   assert.match(dialogSource, /KPI_PLAY_FLOOR/);
@@ -58,10 +57,10 @@ test("作品评级说明展示互动数据、主要指标和留存数据", () =>
   assert.match(rendered, /30%/);
   assert.match(rendered, /20%/);
   assert.match(rendered, /15%/);
-  assert.match(rendered, /2%/);
+  assert.match(rendered, /3\.5%/);
   assert.match(rendered, /25%/);
   assert.match(rendered, /15%/);
-  assert.match(rendered, /5,000/);
+  assert.match(rendered, /2,000/);
   assert.match(rendered, /1\.5 万/);
   assert.match(rendered, /80/);
   assert.match(rendered, /60/);
@@ -105,9 +104,7 @@ test("作品评级说明展示服务端传入的公司留存标准与权重", ()
   assert.match(rendered, /好 32%，差 14%/);
   assert.match(rendered, /40%/);
   assert.match(rendered, /25%/);
-  assert.match(rendered, /复盘主要指标线 4\.5%/);
-  assert.match(rendered, /干货主要指标线 7\.25%/);
-  assert.match(rendered, /互动数据线 6\.5%/);
+  assert.match(rendered, /互动数据好标准为 6\.5%/);
   assert.match(collaborationPageSource, /evaluationStandards/);
 });
 

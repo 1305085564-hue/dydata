@@ -123,7 +123,7 @@ export function evaluationTone(metric: EvaluationMetric, value: number | null | 
     if (value > band.poor) return "poor";
   } else {
     if (value >= band.good) return "good";
-    if (value <= band.poor) return "poor";
+    if (metric === "avgPlayRatio" ? value < band.poor : value <= band.poor) return "poor";
   }
   return "normal";
 }

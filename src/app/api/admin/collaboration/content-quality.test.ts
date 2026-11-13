@@ -56,7 +56,7 @@ function snapshot(overrides: Partial<VideoSnapshotMetrics> = {}): VideoSnapshotM
     shares: 100,
     favorites: 200,
     followerGain: 0,
-    avgPlayDuration: 40,
+    avgPlayDuration: 45,
     avgPlayRatio: 0.25,
     bounceRate2s: 25,
     completionRate5s: 60,
@@ -75,6 +75,13 @@ test("规则下发来自 breakout-rating 现行常量，前端不需要复制数
     review: { interaction: BREAKOUT_TARGETS.review.interaction, core: BREAKOUT_TARGETS.review.fourth },
     gradeThresholds: BREAKOUT_GRADE_THRESHOLDS,
     playFloors: { floor: KPI_PLAY_FLOOR, good: KPI_PLAY_GOOD, excellent: KPI_PLAY_EXCELLENT },
+    retentionBands: {
+      bounceRate2s: { good: 25, poor: 35 },
+      completionRate5s: { good: 60, poor: 50 },
+      avgPlayDuration: { good: 45, poor: 30 },
+      avgPlayRatio: { good: 25, poor: 20 },
+      completionRate: { good: 10, poor: 5 },
+    },
     retentionWeights: { bounceRate2s: 35, completionRate5s: 30, avgPlayBundle: 20, completionRate: 15 },
   });
 });
@@ -103,7 +110,7 @@ test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计�
   assert.equal(review.overallGrade, "普");
 });
 
-test("公司互动和主要指标基准继续下发，留存评级沿用播放门槛", () => {
+test("公司互动基准继续下发，留存评级沿用播放门槛", () => {
   const standards = {
     ...DEFAULT_EVALUATION_STANDARDS,
     targets: {
@@ -126,7 +133,7 @@ test("公司互动和主要指标基准继续下发，留存评级沿用播放�
   assert.ok(Math.abs((custom.coreAchievement ?? Number.NaN) - (200 / 3)) < 1e-9);
   assert.equal(custom.contentGrade, "优", "留存数据使用当前公司好差线和权重");
   assert.equal(custom.contentAchievement, 100);
-  assert.equal(custom.overallGrade, "优", "播放达到 15,000 后按留存分评级");
+  assert.equal(custom.overallGrade, "良", "综合评级同时受互动达成率和留存分影响");
   assert.deepEqual(customRules.dryGoods, { interaction: 0.1, core: 0.06 });
   assert.deepEqual(customRules.gradeThresholds, BREAKOUT_GRADE_THRESHOLDS);
   assert.deepEqual(customRules.playFloors, {
@@ -141,7 +148,7 @@ test("公司互动和主要指标基准继续下发，留存评级沿用播放�
     topics([["video-1", "干货"]]),
     standards,
   );
-  assert.equal(summary.overallGradeCounts.excellent, 1);
+  assert.equal(summary.overallGradeCounts.good, 1);
 });
 
 test("五项留存数据按确认权重计分，均播时长和平均播放占比各占组合项一半", () => {
@@ -161,9 +168,52 @@ test("五项留存数据按确认权重计分，均播时长和平均播放占�
     topics([["weighted", "复盘"]]),
   );
 
-  assert.equal(quality.contentAchievement, 60);
-  assert.equal(quality.contentGrade, "普");
-  assert.equal(quality.overallGrade, "普");
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 89.8888888889) < 1e-8);
+  assert.equal(quality.contentGrade, "良");
+  assert.equal(quality.overallGrade, "优");
+});
+
+test("冻结公式验算截图样例，留存分允许超过 100%", () => {
+  const quality = buildWorkContentQualityFromMetrics(
+    {
+      videoId: "screenshot-sample",
+      snapshot: {
+        playCount: 68000,
+        likes: 1000,
+        comments: 100,
+        shares: 100,
+        favorites: 300,
+        avgPlayDuration: 56,
+        avgPlayRatio: 0.2302,
+        bounceRate2s: 21.53,
+        completionRate5s: 57.61,
+        completionRate: 14.81,
+      },
+    },
+    topics([["screenshot-sample", "复盘"]]),
+  );
+
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 113.3) < 0.1);
+  assert.equal(quality.contentGrade, "优");
+  assert.equal(quality.overallGrade, "良", "互动达成率与留存分取平均，并保留弱项拉升限制");
+});
+
+test("低值更好的留存指标为 0 时按 200% 计，避免除零", () => {
+  const quality = buildWorkContentQualityFromMetrics(
+    {
+      videoId: "zero-bounce",
+      snapshot: {
+        ...snapshotInputBase,
+        bounceRate2s: 0,
+        playCount: 15000,
+      },
+    },
+    topics([["zero-bounce", "复盘"]]),
+  );
+
+  assert.equal(quality.retentionMetrics?.bounceRate2s, 0);
+  assert.ok((quality.contentAchievement ?? 0) > 130);
+  assert.equal(quality.contentAchievement, 135);
 });
 
 test("公司好差线与权重变更立即反映在留存得分", () => {
@@ -193,7 +243,7 @@ test("公司好差线与权重变更立即反映在留存得分", () => {
     standards,
   );
 
-  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 47.0833333333) < 1e-8);
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 64.9880952381) < 1e-8);
 });
 
 test("五项留存数据任一缺失时不生成留存分或评级", () => {
@@ -210,6 +260,28 @@ test("五项留存数据任一缺失时不生成留存分或评级", () => {
     assert.equal(quality.contentGrade, null);
     assert.equal(quality.overallGrade, null);
   }
+});
+
+test("互动数据缺失时仍保留留存分，但不生成综合评级", () => {
+  const quality = buildWorkContentQualityFromMetrics(
+    {
+      videoId: "missing-interaction",
+      snapshot: {
+        ...snapshotInputBase,
+        likes: null,
+        comments: null,
+        shares: null,
+        favorites: null,
+      },
+    },
+    topics([["missing-interaction", "复盘"]]),
+  );
+
+  assert.equal(quality.status, "missing_metrics");
+  assert.equal(quality.interactionAchievement, null);
+  assert.equal(quality.contentAchievement, 100);
+  assert.equal(quality.contentGrade, "优");
+  assert.equal(quality.overallGrade, null);
 });
 
 test("播放量门槛只影响评级上限，不进入留存总分", () => {
@@ -243,17 +315,17 @@ test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被
     topics([["low", "干货"], ["good", "干货"], ["pending", "干货"]]),
   );
   assert.equal(summary.totalCount, 3);
-  assert.equal(summary.ratedCount, 2);
+  assert.equal(summary.ratedCount, 1);
   assert.equal(summary.achievementSampleCount, 2);
   assert.equal(summary.interactionSampleCount, 1, "低播放作品的互动计数越过播放量，互动数据按缺失处理");
   assert.equal(summary.coreSampleCount, 2);
-  assert.equal(summary.overallGradeCounts.poor, 1);
+  assert.equal(summary.overallGradeCounts.poor, 0);
   assert.equal(summary.overallGradeCounts.excellent, 1);
-  assert.equal(summary.goodExcellentRate, 0.5);
+  assert.equal(summary.goodExcellentRate, 1);
   assert.equal(summary.unratedReasons.pendingSnapshot, 1);
 });
 
-test("无快照与缺视频分别保留准确状态，话题读取失败不阻断留存评级", () => {
+test("无快照与缺视频分别保留准确状态，话题读取失败仍可独立计算留存分", () => {
   const pending = buildWorkContentQuality(report({ video_id: "pending" }), undefined, topics([["pending", null]]));
   assert.equal(pending.status, "pending_snapshot");
   assert.equal(pending.overallGrade, null);
@@ -263,6 +335,7 @@ test("无快照与缺视频分别保留准确状态，话题读取失败不阻�
 
   const failed = buildWorkContentQuality(report({ id: "failed", video_id: "failed" }), snapshot({ videoId: "failed" }), topics([], "error"));
   assert.equal(failed.status, "rated");
+  assert.equal(failed.contentGrade, "优");
   assert.equal(failed.overallGrade, "普");
 });
 
@@ -294,6 +367,7 @@ test("话题读取失败不阻断独立的留存数据评级", () => {
   ).get("failed-tag");
   assert.equal(failedTag?.status, "rated");
   assert.equal(failedTag?.coreAchievement, null);
+  assert.equal(failedTag?.contentGrade, "良");
   assert.equal(failedTag?.overallGrade, "优");
 });
 
@@ -323,7 +397,7 @@ const snapshotInputBase = {
   comments: 100,
   shares: 100,
   favorites: 200,
-  avgPlayDuration: 40,
+  avgPlayDuration: 45,
   avgPlayRatio: 0.25,
   bounceRate2s: 25,
   completionRate5s: 60,

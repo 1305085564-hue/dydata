@@ -167,7 +167,7 @@ test("组综合 = 组内全部署名作品一次聚合，不是成员比率的�
   assert.equal(operator.summary.aggregate.totalPlay, 20000);
 });
 
-test("文案小队质量汇总按全部作品重算，达人与运营保持空值", () => {
+test("文案和达人小队质量汇总按全部作品重算，运营保持空值", () => {
   const views = buildWorkGroupViews({
     ...dataset,
     videoTopicTags: {
@@ -179,11 +179,13 @@ test("文案小队质量汇总按全部作品重算，达人与运营保持空�
   assert.equal(writer.summary.contentQuality?.totalCount, 3);
   assert.equal(writer.summary.contentQuality?.ratedCount, 2, "只有取到 24h 快照的作品进入综合评级分母");
   assert.equal(writer.summary.contentQuality?.overallGradeCounts.poor, 0);
-  assert.equal(viewOf(views, "wg-talent").summary.contentQuality, null);
+  const talent = viewOf(views, "wg-talent").summary.contentQuality;
+  assert.equal(talent?.totalCount, 2);
+  assert.equal(talent?.ratedCount, 1, "达人按账号主人归属，只有 v-2 有完整快照");
   assert.equal(viewOf(views, "wg-operator").summary.contentQuality, null);
 });
 
-test("小队质量按显式公司标准重算互动与主要指标，不被 60 秒原始数据缓存固化", () => {
+test("小队质量按显式公司标准重算互动与留存，不被 60 秒原始数据缓存固化", () => {
   const qualityDataset = {
     ...dataset,
     videoTopicTags: {
@@ -209,7 +211,7 @@ test("小队质量按显式公司标准重算互动与主要指标，不被 60 �
   assert.ok(configuredQuality);
   assert.ok((configuredQuality.avgInteractionAchievement ?? 0) < (defaultQuality.avgInteractionAchievement ?? 0));
   assert.ok((configuredQuality.avgCoreAchievement ?? 0) < (defaultQuality.avgCoreAchievement ?? 0));
-  assert.deepEqual(configuredQuality.overallGradeCounts, { excellent: 1, good: 0, fair: 1, poor: 0 });
+  assert.deepEqual(configuredQuality.overallGradeCounts, { excellent: 0, good: 0, fair: 1, poor: 1 });
 });
 
 test("署名归属与按岗位口径一致：文案含达人账号作品、达人按账号归属、运营只算他人账号", () => {

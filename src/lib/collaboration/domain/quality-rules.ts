@@ -109,6 +109,7 @@ function mapWriterWorkItem(
 
 export function buildPersonWriterQuality(input: {
   targetUserId: string;
+  role?: "writers" | "talents";
   currentRows: CollaborationReport[];
   growthRows: CollaborationReport[];
   accounts: CollaborationAccount[];
@@ -117,7 +118,9 @@ export function buildPersonWriterQuality(input: {
   evaluationStandards?: EvaluationStandards;
 }): PersonWriterQuality {
   const accountsById = accountMap(input.accounts);
-  const monthRows = input.currentRows.filter((row) => row.script_author_user_id === input.targetUserId);
+  const monthRows = input.role === "talents"
+    ? input.currentRows
+    : input.currentRows.filter((row) => row.script_author_user_id === input.targetUserId);
   const monthWorks = monthRows
     .map((row) => mapWriterWorkItem(row, accountsById, input.snapshots, input.topics, input.evaluationStandards))
     .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || b.reportId.localeCompare(a.reportId));

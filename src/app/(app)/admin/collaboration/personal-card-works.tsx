@@ -9,7 +9,7 @@ import type { CollaborationRoleTab, PersonDetailData } from "./types";
 import { formatBigNumber } from "./types";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
-import { getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
+import { getContentQualityStatusText, retentionWarningLabels } from "@/lib/collaboration/content-quality-contract";
 
 interface PersonalCardWorksProps {
   data: PersonDetailData;
@@ -52,7 +52,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题</th>
                             <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
@@ -60,6 +60,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                         <tbody className="divide-y divide-[#E2E2DF]/60">
                           {data.writerQuality.monthWorks.map((work) => {
                             const q = work.contentQuality;
+                            const warnings = retentionWarningLabels(q?.retentionMetrics, data.writerQuality?.rules);
                             const topicText =
                               q?.topicKind === "dry_goods"
                                 ? "干货 · 收藏"
@@ -114,7 +115,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </span>
                                 </td>
                                 <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
-                                  {q?.status === "rated" && q.contentAchievement != null ? (
+                                  {q?.contentAchievement != null ? (
                                     <div>
                                       <span className="font-normal text-[#141413]">
                                         {Math.round(q.contentAchievement)}%
@@ -125,8 +126,13 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                         </span>
                                       )}
                                       <div className="text-[12px] text-[#78716C]">
-                                        互动数据 {q.interactionAchievement != null ? `${Math.round(q.interactionAchievement)}%` : "—"} · 主要指标 {q.coreAchievement != null ? `${Math.round(q.coreAchievement)}%` : "—"}
+                                        互动数据 {q.interactionAchievement != null ? `${Math.round(q.interactionAchievement)}%` : "—"}
                                       </div>
+                                      {warnings.length > 0 && (
+                                        <div className="text-[12px] text-[#C0685C]" title="差线只用于提示，不改变达成率和评级">
+                                          ⚠️ {warnings.join("、")}不合格
+                                        </div>
+                                      )}
                                     </div>
                                   ) : (
                                     <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
@@ -174,7 +180,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
-                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题 / 主要指标</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题</th>
                             <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
@@ -194,8 +200,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                               q?.interactionAchievement != null
                                 ? `${Math.round(q.interactionAchievement)}%`
                                 : "—";
-                            const coreAchievementText =
-                              q?.coreAchievement != null ? `${Math.round(q.coreAchievement)}%` : "—";
+                            const warnings = retentionWarningLabels(q?.retentionMetrics, data.writerQuality?.rules);
 
                             return (
                               <tr
@@ -242,7 +247,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </span>
                                 </td>
                                 <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
-                                  {q?.status === "rated" && q.contentAchievement != null ? (
+                                  {q?.contentAchievement != null ? (
                                     <div>
                                       <span className="font-normal text-[#141413]">
                                         {Math.round(q.contentAchievement)}%
@@ -253,8 +258,13 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                         </span>
                                       )}
                                       <div className="text-[12px] text-[#78716C]">
-                                        互动数据 {interactionAchievementText} · 主要指标 {coreAchievementText}
+                                        互动数据 {interactionAchievementText}
                                       </div>
+                                      {warnings.length > 0 && (
+                                        <div className="text-[12px] text-[#C0685C]" title="差线只用于提示，不改变达成率和评级">
+                                          ⚠️ {warnings.join("、")}不合格
+                                        </div>
+                                      )}
                                     </div>
                                   ) : (
                                     <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">

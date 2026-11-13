@@ -45,7 +45,7 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate"
   | "avgInteractionAchievement"
-  | "avgCoreAchievement"
+  | "avgContentAchievement"
   | "goodExcellentRate";
 
 export type StaffRole = "writer" | "editor";
@@ -213,20 +213,20 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
-                  onClick={() => sort.onSort("avgCoreAchievement")}
+                  onClick={() => sort.onSort("avgContentAchievement")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sort.sortField === "avgCoreAchievement"
+                    sort.sortField === "avgContentAchievement"
                       ? "text-[#141413] font-normal"
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  主要指标
-                  {sort.renderSortIcon("avgCoreAchievement")}
+                  留存分均值
+                  {sort.renderSortIcon("avgContentAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">主要指标均值：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">留存分均值：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
-                    干货按收藏率、复盘及其他按点赞率计算指标达成率后求平均。
+                    五项留存数据完整的作品，按好标准计算达成率后合成留存分，再取作品均值。
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -442,12 +442,12 @@ export function StaffRowCells({
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
                 <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
-              ) : row.writerQuality.summary?.avgCoreAchievement != null ? (
-                <span title={`主要指标完整样本：${row.writerQuality.summary.coreSampleCount} 篇`}>
-                  {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
+              ) : row.writerQuality.summary?.avgContentAchievement != null ? (
+                <span title={`留存数据完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                  {Math.round(row.writerQuality.summary.avgContentAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无主要指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="尚无留存数据完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -623,8 +623,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
       if (field === "avgInteractionAchievement") {
         return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
       }
-      if (field === "avgCoreAchievement") {
-        return row.writerQuality?.summary?.avgCoreAchievement ?? null;
+      if (field === "avgContentAchievement") {
+        return row.writerQuality?.summary?.avgContentAchievement ?? null;
       }
       if (field === "goodExcellentRate") {
         return row.writerQuality?.summary?.goodExcellentRate ?? null;

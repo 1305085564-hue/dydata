@@ -28,19 +28,19 @@ test("不足3000播放的正常比率降灰，脏值仍优先标红，0与缺值
   assert.equal(detail.getCompletionRateClass(undefined, 5000), "text-[#141413]");
 });
 
-test("均播时长与列表同样按40秒优质、20秒预警，并遵守样本门槛", () => {
+test("均播时长与列表同样按45秒优质、30秒预警，并遵守样本门槛", () => {
   assert.equal(typeof detail.getAvgPlayDurationClass, "function");
-  assert.equal(detail.getAvgPlayDurationClass(40, 5000), "text-status-danger");
-  assert.equal(detail.getAvgPlayDurationClass(39.99, 5000), "text-[#141413]");
-  assert.match(detail.getAvgPlayDurationClass(20, 5000), /text-status-success/);
-  assert.equal(detail.getAvgPlayDurationClass(40, 2999), "text-[#A8A29E]");
+  assert.equal(detail.getAvgPlayDurationClass(45, 5000), "text-status-danger");
+  assert.equal(detail.getAvgPlayDurationClass(44.99, 5000), "text-[#141413]");
+  assert.match(detail.getAvgPlayDurationClass(30, 5000), /text-status-success/);
+  assert.equal(detail.getAvgPlayDurationClass(45, 2999), "text-[#A8A29E]");
   assert.equal(detail.getAvgPlayDurationClass(null, 5000), "text-[#141413]");
 });
 
-test("平均播放占比按0-1快照值转换为百分数，25%为好、15%以内为差", () => {
+test("平均播放占比按0-1快照值转换为百分数，25%为好、20%以下为差", () => {
   assert.equal(detail.getAvgPlayRatioClass(0.25, 3000), "text-status-danger");
-  assert.equal(detail.getAvgPlayRatioClass(0.15, 3000), "text-status-success");
-  assert.equal(detail.getAvgPlayRatioClass(0.1501, 3000), "text-[#141413]");
+  assert.equal(detail.getAvgPlayRatioClass(0.19, 3000), "text-status-success");
+  assert.equal(detail.getAvgPlayRatioClass(0.2, 3000), "text-[#141413]");
   assert.equal(detail.getAvgPlayRatioClass(0.25, 2999), "text-[#A8A29E]");
   assert.equal(detail.getAvgPlayRatioClass(null, 3000), "text-[#141413]");
   assert.match(detail.getAvgPlayRatioClass(1.01, 3000), /text-status-danger/);
@@ -50,7 +50,7 @@ test("播放达到3000后指标可显示表现颜色", () => {
   assert.equal(detail.getBounceRate2sClass(25, 3000), "text-status-danger");
   assert.equal(detail.getCompletionRate5sClass(60, 3000), "text-status-danger");
   assert.equal(detail.getCompletionRateClass(10, 3000), "text-status-danger");
-  assert.equal(detail.getAvgPlayDurationClass(40, 3000), "text-status-danger");
+  assert.equal(detail.getAvgPlayDurationClass(45, 3000), "text-status-danger");
 });
 
 test("显示口径：好红差绿，边界与样本下限正确", () => {
@@ -58,7 +58,7 @@ test("显示口径：好红差绿，边界与样本下限正确", () => {
   assert.equal(detail.getBounceRate2sClass(35, 3000), "text-[#141413]");
   assert.equal(detail.getBounceRate2sClass(35.01, 3000), "text-status-success");
   assert.equal(detail.getAvgPlayDurationClass(20, 3000), "text-status-success");
-  assert.equal(detail.getAvgPlayDurationClass(40, 3000), "text-status-danger");
+  assert.equal(detail.getAvgPlayDurationClass(45, 3000), "text-status-danger");
   assert.equal(detail.getCompletionRateClass(5, 3000), "text-status-success");
   assert.equal(detail.getCompletionRateClass(10, 3000), "text-status-danger");
 });

@@ -63,6 +63,13 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
       review: { interaction: 0.032, core: 0.02 },
       gradeThresholds: { excellent: 100, good: 80, fair: 60 },
       playFloors: { floor: 2000, good: 15000, excellent: 15000 },
+      retentionBands: {
+        bounceRate2s: { good: 25, poor: 35 },
+        completionRate5s: { good: 60, poor: 50 },
+        avgPlayDuration: { good: 45, poor: 30 },
+        avgPlayRatio: { good: 25, poor: 20 },
+        completionRate: { good: 10, poor: 5 },
+      },
       retentionWeights: { bounceRate2s: 35, completionRate5s: 30, avgPlayBundle: 20, completionRate: 15 },
     };
 

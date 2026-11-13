@@ -34,7 +34,7 @@ import {
 
 function mapGrowthWorks(
   rows: CollaborationReport[],
-  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots" | "qualityTopics" | "evaluationStandards">,
+  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots" | "qualityTopics" | "evaluationStandards" | "role">,
 ): PersonGrowthWorkItem[] {
   const accountsById = accountMap(input.accounts);
 
@@ -63,7 +63,7 @@ function mapGrowthWorks(
         interactionRate: metricSnapshot ? interactionRate(metricSnapshot) : null,
         likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
         favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
-        contentQuality: input.qualityTopics
+        contentQuality: input.qualityTopics && (input.role === "writers" || input.role === "talents")
           ? buildWorkContentQuality(row, snapshot, input.qualityTopics, input.evaluationStandards)
           : undefined,
       };
@@ -209,7 +209,9 @@ export function buildPersonPayload(input: {
           accounts: input.accounts,
           snapshots: input.growthSnapshots,
           today: growthToday,
-          qualityTopics: input.growthRole === "writers" ? input.qualityTopics : undefined,
+          qualityTopics: input.growthRole === "writers" || input.growthRole === "talents"
+            ? input.qualityTopics
+            : undefined,
           evaluationStandards: input.evaluationStandards,
         })
       : { works: [] as PersonGrowthWorkItem[], summary: null };
@@ -231,9 +233,10 @@ export function buildPersonPayload(input: {
         operatedProfileCount: operator.operatedProfileCount,
       }
     : null;
-  const writerQuality = input.growthRole === "writers" && input.qualityTopics
+  const writerQuality = (input.growthRole === "writers" || input.growthRole === "talents") && input.qualityTopics
     ? buildPersonWriterQuality({
         targetUserId: input.targetUserId,
+        role: input.growthRole,
         currentRows,
         growthRows: input.growthReports ?? [],
         accounts: input.accounts,

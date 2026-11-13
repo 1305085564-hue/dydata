@@ -49,13 +49,14 @@ export function PersonalCardGrowth({
   return (
     <>
               {/* 2. 近 30 天作品质量增长曲线 */}
-              {activeTab === "writers" ? (
+              {activeTab === "writers" || activeTab === "talents" ? (
                 <WriterQualityChart
                   works={data.growthWorks}
                   summary={data.writerQuality?.growthSummary ?? null}
                   rules={data.writerQuality?.rules}
                   state={data.writerQuality?.state ?? "ready"}
                   isQualityReady={Boolean(data.writerQuality)}
+                  roleLabel={roleLabel}
                 />
               ) : (
                 <Card className="p-4 gap-2">

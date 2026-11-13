@@ -90,6 +90,7 @@ export interface WriterQualityChartProps {
   rules?: ContentQualityRules;
   state?: "ready" | "error";
   isQualityReady?: boolean;
+  roleLabel?: string;
 }
 
 export function WriterQualityChart({
@@ -98,6 +99,7 @@ export function WriterQualityChart({
   rules,
   state = "ready",
   isQualityReady = true,
+  roleLabel = "文案",
 }: WriterQualityChartProps) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
   const [hoveredWork, setHoveredWork] = useState<WriterChartWorkPoint | null>(null);
@@ -111,17 +113,15 @@ export function WriterQualityChart({
   const [visibleMetrics, setVisibleMetrics] = useState({
     content: true,
     interaction: true,
-    core: true,
   });
 
-  const toggleMetric = (key: "content" | "interaction" | "core") => {
+  const toggleMetric = (key: "content" | "interaction") => {
     setVisibleMetrics((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const chartData = useMemo<WriterChartWorkPoint[]>(() => {
     return works.map((work, idx) => {
       const q = work.contentQuality;
-      const isRated = q?.status === "rated";
       const status: ContentQualityStatus =
         q?.status ??
         (!work.hasSnapshot
@@ -142,12 +142,12 @@ export function WriterQualityChart({
         topicKind: q?.topicKind ?? null,
         coreMetric: q?.coreMetric ?? null,
         // 达成率：真 0% 正常保留数值 0 并连线，缺失或未评级为 null 断线
-        contentAchievement: isRated && q?.contentAchievement != null ? q.contentAchievement : null,
+        contentAchievement: q?.contentAchievement != null ? q.contentAchievement : null,
         interactionAchievement:
-          isRated && q?.interactionAchievement != null ? q.interactionAchievement : null,
-        coreAchievement: isRated && q?.coreAchievement != null ? q.coreAchievement : null,
-        contentGrade: isRated ? (q?.contentGrade ?? null) : null,
-        overallGrade: isRated ? (q?.overallGrade ?? null) : null,
+          q?.interactionAchievement != null ? q.interactionAchievement : null,
+        coreAchievement: q?.coreAchievement != null ? q.coreAchievement : null,
+        contentGrade: q?.contentGrade ?? null,
+        overallGrade: q?.overallGrade ?? null,
         status,
         // 待采集点（无快照）在基线保留中性点标记，但不连入主折线
         pendingPoint: status === "pending_snapshot" ? 0 : null,
@@ -230,7 +230,7 @@ export function WriterQualityChart({
             近 30 天作品质量增长曲线
           </span>
           <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] shrink-0">
-            文案 · {chartData.length}篇
+            {roleLabel} · {chartData.length}篇
           </span>
           {!isQualityReady && (
             <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#A8A29E] shrink-0">
@@ -277,31 +277,13 @@ export function WriterQualityChart({
               />
               <span>互动数据</span>
             </button>
-            <button
-              type="button"
-              onClick={() => toggleMetric("core")}
-              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                visibleMetrics.core
-                  ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
-                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-              }`}
-              title="点击切换主要指标折线显隐"
-            >
-              <span
-                className="size-1.5 rounded-full"
-                style={{
-                  backgroundColor: visibleMetrics.core ? "#6FAA7D" : "#A8A29E",
-                }}
-              />
-              <span>主要指标</span>
-            </button>
           </div>
         )}
       </div>
 
       {state === "error" ? (
         <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#C0685C]">
-          文案作品评价数据加载异常，请稍后刷新重试
+        {roleLabel}作品评价数据加载异常，请稍后刷新重试
         </div>
       ) : chartData.length === 0 ? (
         <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
@@ -380,16 +362,6 @@ export function WriterQualityChart({
                           </span>
                         </span>
                       )}
-                      {visibleMetrics.core && (
-                        <span className="text-[#78716C]">
-                          主要指标{" "}
-                          <span className="font-normal text-[#6FAA7D]">
-                            {hoveredWork.coreAchievement != null
-                              ? `${Math.round(hoveredWork.coreAchievement)}%`
-                              : "—"}
-                          </span>
-                        </span>
-                      )}
                       {hoveredWork.overallGrade ? (
                         <span className="text-[#78716C]">
                           综合{" "}
@@ -437,11 +409,6 @@ export function WriterQualityChart({
                       {visibleMetrics.interaction && summary.avgInteractionAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
                           互动数据均值 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
-                        </span>
-                      )}
-                      {visibleMetrics.core && summary.avgCoreAchievement != null && (
-                        <span className="text-[#78716C] tabular-nums">
-                          主要指标均值 <span className="font-normal text-[#6FAA7D]">{Math.round(summary.avgCoreAchievement)}%</span>
                         </span>
                       )}
                       <span className="text-[#78716C] tabular-nums" title="五项留存数据完整且已计算留存分的作品篇数">
@@ -594,20 +561,6 @@ export function WriterQualityChart({
                   />
                 )}
 
-                {visibleMetrics.core && (
-                  <Line
-                    type="monotone"
-                    dataKey="coreAchievement"
-                    name="主要指标"
-                    stroke="#6FAA7D"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 2"
-                    connectNulls={false}
-                    isAnimationActive={false}
-                    dot={(props) => renderCustomDot(props, "#6FAA7D", false)}
-                    activeDot={(props) => renderCustomDot(props, "#6FAA7D", true)}
-                  />
-                )}
 
                 {/* 待采集点（无快照中性虚点，不连入折线） */}
                 <Line

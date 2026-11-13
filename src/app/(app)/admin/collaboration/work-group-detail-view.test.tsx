@@ -239,13 +239,14 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
     "互动率",
     "点赞率",
     "收藏率",
-    "留存数据",
+    "内容质量",
   ]);
   // 组综合 + 1 个组员行，每行 9 个单元格
   assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
 
   const text = stripTags(html);
-  assert.ok(text.includes("80%"));
+  assert.ok(text.includes("互动 95%"));
+  assert.ok(text.includes("留存 93%"));
   assert.ok(text.includes("优2·良2·普0·劣0"));
 
   // 达人组详情即使有数据也不出留存数据列

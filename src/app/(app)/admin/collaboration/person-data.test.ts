@@ -292,10 +292,10 @@ test("达人作品明细复用内容标准评级：话题选择文案指标，�
   const lowPlay = talentReport({ id: "r-low", video_id: "v-low" });
   const okPlay = talentReport({ id: "r-ok", video_id: "v-ok" });
   const snapshots = new Map<string, VideoSnapshotMetrics>([
-    // 播放不足 5,000 直接判劣；五项留存数据齐全时仍按统一规则评级。
-    ["v-low", { videoId: "v-low", playCount: 1500, likes: 1, comments: 1, shares: 1, favorites: 1, followerGain: 15, avgPlayDuration: 40, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 }],
-    // 复盘作品播放达到 15,000，五项留存数据齐全，综合评级由留存数据决定。
-    ["v-ok", { videoId: "v-ok", playCount: 15000, likes: 450, comments: 100, shares: 100, favorites: 200, followerGain: 100, avgPlayDuration: 40, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 }],
+    // 播放不足 2,000 直接判劣；五项留存数据齐全时仍按统一规则评级。
+    ["v-low", { videoId: "v-low", playCount: 1500, likes: 1, comments: 1, shares: 1, favorites: 1, followerGain: 15, avgPlayDuration: 45, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 }],
+    // 复盘作品播放达到 15,000，五项留存数据齐全，综合评级由互动和留存共同决定。
+    ["v-ok", { videoId: "v-ok", playCount: 15000, likes: 450, comments: 100, shares: 100, favorites: 200, followerGain: 100, avgPlayDuration: 45, avgPlayRatio: 0.25, bounceRate2s: 25, completionRate5s: 60, completionRate: 10 }],
   ]);
 
   const payload = talentPayload({
