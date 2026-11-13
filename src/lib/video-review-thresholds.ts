@@ -19,7 +19,7 @@ export const VIDEO_REVIEW_RULE_THRESHOLDS = {
     bounce_rate_2s: 25,
     completion_rate_5s: 60,
     completion_rate: 10,
-    avg_play_duration: 45,
+    avg_play_duration: 50,
     avg_play_ratio: 25,
   },
   poor: {

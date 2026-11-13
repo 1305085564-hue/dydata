@@ -133,7 +133,7 @@ export interface WorkContentQuality {
 
 /**
  * 质量汇总统计（月度与近 30 天通用）。
- * 两个明确样本集：
+ * 三个明确样本集：
  * 1. 留存分均值样本集：五项留存数据都完整的作品（achievementSampleCount）；
  * 2. 互动数据与留存数据各自使用完整的指标样本；
  * 3. 综合良优率样本集：综合评级非空的作品（ratedCount）。

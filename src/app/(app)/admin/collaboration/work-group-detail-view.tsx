@@ -217,7 +217,7 @@ export function WorkGroupDetailView({
                 </TableRow>
               </TableHeader>
               <TableBody className="text-[13px]">
-                {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
+                {/* 首行为组综合：组内全部作品一次聚合，比率按合计重算 */}
                 <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/60">
                   <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">
                     组综合
@@ -258,7 +258,7 @@ export function WorkGroupDetailView({
                           </div>
                           <div
                             className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 署名作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
                           >
                             良优 {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
                               ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
@@ -327,7 +327,7 @@ export function WorkGroupDetailView({
                           </div>
                             <div
                               className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${member.contentQuality.ratedCount} / 署名作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${member.contentQuality.ratedCount} / 作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
                             >
                             良优 {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
                               ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
@@ -347,7 +347,7 @@ export function WorkGroupDetailView({
             </Table>
           </Card>
           <p className="px-4 text-[12px] text-[#78716C]">
-            播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月署名作品总数，未同步数据复盘的作品只计入作品数。
+            播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。
           </p>
         </div>
       )}

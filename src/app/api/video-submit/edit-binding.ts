@@ -130,7 +130,7 @@ export async function validateEditSubmissionBinding(
 
 /**
  * 编辑模式由服务端保留数据库中不可编辑指标的原值：
- * follower_loss、homepage_visits、fan_play_ratio、cover_click_rate、avg_play_ratio。
+ * follower_loss、homepage_visits、fan_play_ratio、cover_click_rate。
  * 新建模式继续使用调用方默认口径。
  */
 const PRESERVED_SNAPSHOT_METRIC_FIELDS = [
@@ -138,7 +138,6 @@ const PRESERVED_SNAPSHOT_METRIC_FIELDS = [
   "homepage_visits",
   "fan_play_ratio",
   "cover_click_rate",
-  "avg_play_ratio",
 ] as const;
 
 const EDITABLE_SUBMISSION_METRIC_FIELDS = [
@@ -153,6 +152,7 @@ const EDITABLE_SUBMISSION_METRIC_FIELDS = [
   "completion_rate",
   "bounce_rate_2s",
   "completion_rate_5s",
+  "avg_play_ratio",
 ] as const;
 
 /** 编辑提交把 null 视为“沿用历史值”，避免前端空值覆盖快照或日报。 */

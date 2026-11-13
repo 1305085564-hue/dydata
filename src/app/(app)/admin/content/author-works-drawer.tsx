@@ -435,6 +435,7 @@ export function AuthorWorksView({
               video={activeVideo}
               ownerNames={{[author.id]: author.name}}
               snapshot={activeSnapshot}
+              contentQuality={activeDetail.contentQuality ?? qualityMap[selectedVideoId] ?? null}
               evaluationStandards={activeDetail.evaluationStandards ?? data?.evaluationStandards ?? evaluationStandards}
               topicKind={activeDetail.topicKind}
               topicLibraryStatus={topicLibraryStatuses[activeDetail.video.id]?.status ?? null}

@@ -20,6 +20,7 @@ export type HistoryReportSnapshotMetricInput = {
   follower_gain: number | null;
   follower_convert: number | null;
   avg_play_duration: number | null;
+  avg_play_ratio?: number | null;
   bounce_rate_2s: number | null;
   completion_rate: number | null;
   completion_rate_5s: number | null;
@@ -38,6 +39,7 @@ export function buildHistoryReport24hSnapshotPatch(
     follower_gain: input.follower_gain,
     follower_convert: input.follower_convert,
     avg_play_duration: input.avg_play_duration,
+    avg_play_ratio: input.avg_play_ratio == null ? null : input.avg_play_ratio / 100,
     bounce_rate_2s: input.bounce_rate_2s,
     completion_rate: input.completion_rate,
     completion_rate_5s: input.completion_rate_5s,

@@ -111,6 +111,8 @@ export function buildPersonWriterQuality(input: {
   targetUserId: string;
   role?: "writers" | "talents";
   currentRows: CollaborationReport[];
+  /** 达人月度作品按账号主人归属后的行，由数据层传入。 */
+  recordRows?: CollaborationReport[];
   growthRows: CollaborationReport[];
   accounts: CollaborationAccount[];
   snapshots: Map<string, VideoSnapshotMetrics>;
@@ -118,9 +120,8 @@ export function buildPersonWriterQuality(input: {
   evaluationStandards?: EvaluationStandards;
 }): PersonWriterQuality {
   const accountsById = accountMap(input.accounts);
-  const monthRows = input.role === "talents"
-    ? input.currentRows
-    : input.currentRows.filter((row) => row.script_author_user_id === input.targetUserId);
+  const monthRows = input.recordRows
+    ?? input.currentRows.filter((row) => row.script_author_user_id === input.targetUserId);
   const monthWorks = monthRows
     .map((row) => mapWriterWorkItem(row, accountsById, input.snapshots, input.topics, input.evaluationStandards))
     .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || b.reportId.localeCompare(a.reportId));

@@ -9,7 +9,6 @@ import {
   breakoutRating,
   breakoutTargetsFor,
   hasKnownTopicKind,
-  overallBreakoutGrade,
 } from "@/lib/breakout-rating";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,7 @@ import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/libra
 
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 
 export interface ContentDetailDialogProps {
   evaluationStandards?: EvaluationStandards;
@@ -66,6 +66,8 @@ export interface ContentDetailDialogProps {
   /** 选择作者回调：打开创作者作品流抽屉 */
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  /** 列表或协作入口已经计算好的统一内容质量结果。缺失时不显示综合评级。 */
+  contentQuality?: WorkContentQuality | null;
 }
 
 import { useContentVideoStepShortcut } from "./content-video-navigation";
@@ -96,6 +98,7 @@ export function ContentDetailDialog({
   onSelectAuthor,
   ownerNames,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
+  contentQuality = null,
 }: ContentDetailDialogProps) {
   const {
     isOperating,
@@ -279,11 +282,8 @@ export function ContentDetailDialog({
   const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
   const fourthRating = breakoutTargets ? breakoutRating(fourthSlotValue, breakoutTargets.fourth) : null;
 
-  // 综合只看互动率与第四格的平均达成率，播放封顶；转粉率保留单项标签（口径见数据口径 3.2）
-  const overallGrade = overallBreakoutGrade(snapshot?.play_count, [
-    interactionRating,
-    fourthRating,
-  ]);
+  // 综合评级统一使用上游内容质量结果，详情不再按旧的互动率 + 第四格公式重算。
+  const overallGrade = contentQuality?.overallGrade ?? null;
 
   const innerContent = (
     <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : undefined}>

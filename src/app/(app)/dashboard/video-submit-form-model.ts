@@ -124,6 +124,7 @@ export const METRIC_SUMMARY_LABELS: Record<string, string> = {
   shares: "分享数",
   favorites: "收藏数",
   avg_play_duration: "均播时长",
+  avg_play_ratio: "平均播放占比",
   bounce_rate_2s: "2秒跳出率",
   completion_rate_5s: "5秒完播率",
   completion_rate: "整体完播率",
@@ -151,6 +152,9 @@ export function buildOcrSummary(
     return [
       retentionMetrics?.avg_play_duration != null
         ? `${METRIC_SUMMARY_LABELS.avg_play_duration}：${retentionMetrics.avg_play_duration}秒`
+        : null,
+      retentionMetrics?.avg_play_ratio != null
+        ? `${METRIC_SUMMARY_LABELS.avg_play_ratio}：${retentionMetrics.avg_play_ratio}%`
         : null,
       retentionMetrics?.bounce_rate_2s != null
         ? `${METRIC_SUMMARY_LABELS.bounce_rate_2s}：${retentionMetrics.bounce_rate_2s}%`
@@ -191,6 +195,7 @@ export function createEditableFields(): Record<EditableMetricKey, EditableMetric
     shares: { ...createFieldState(), key: "shares" },
     favorites: { ...createFieldState(), key: "favorites" },
     avg_play_duration: { ...createFieldState(), key: "avg_play_duration" },
+    avg_play_ratio: { ...createFieldState(), key: "avg_play_ratio" },
     bounce_rate_2s: { ...createFieldState(), key: "bounce_rate_2s" },
     completion_rate_5s: { ...createFieldState(), key: "completion_rate_5s" },
     completion_rate: { ...createFieldState(), key: "completion_rate" },

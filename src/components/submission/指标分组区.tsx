@@ -63,6 +63,7 @@ const INTERACTION_ITEMS: MetricItem[] = [
 
 const RETENTION_ITEMS: MetricItem[] = [
   { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_duration },
+  { key: "avg_play_ratio", label: "平均播放占比", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_ratio },
   { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.bounce_rate_2s },
   { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate_5s },
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate },
@@ -93,6 +94,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       shares: null,
       favorites: null,
       avg_play_duration: null,
+      avg_play_ratio: null,
       bounce_rate_2s: null,
       completion_rate_5s: null,
       completion_rate: null,

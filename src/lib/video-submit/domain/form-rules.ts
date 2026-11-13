@@ -121,6 +121,7 @@ export function getSlotRoleForMetric(
   if (
     [
       "avg_play_duration",
+      "avg_play_ratio",
       "bounce_rate_2s",
       "completion_rate_5s",
       "completion_rate",

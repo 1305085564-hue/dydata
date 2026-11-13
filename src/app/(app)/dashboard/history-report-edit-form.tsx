@@ -33,6 +33,7 @@ export interface HistoryReportEditData {
   play_count: number | null;
   completion_rate: string | null;
   avg_play_duration: string | null;
+  avg_play_ratio?: string | null;
   bounce_rate_2s: string | null;
   completion_rate_5s: string | null;
   likes: number | null;
@@ -55,6 +56,7 @@ export type MetricKey =
   | "follower_gain"
   | "follower_convert"
   | "avg_play_duration"
+  | "avg_play_ratio"
   | "bounce_rate_2s"
   | "completion_rate_5s"
   | "completion_rate";
@@ -100,6 +102,7 @@ export function getInitialHistoryReportMetricValues(report: HistoryReportEditDat
     follower_gain: toInputValue(report.follower_gain, "0"),
     follower_convert: toInputValue(report.follower_convert),
     avg_play_duration: stripSuffix(report.avg_play_duration, "秒"),
+    avg_play_ratio: stripSuffix(report.avg_play_ratio, "%"),
     bounce_rate_2s: stripSuffix(report.bounce_rate_2s, "%"),
     completion_rate_5s: stripSuffix(report.completion_rate_5s, "%"),
     completion_rate: stripSuffix(report.completion_rate, "%"),
@@ -159,6 +162,7 @@ export const METRIC_ROWS: Array<MetricFieldConfig[]> = [
   ],
   [
     { key: "avg_play_duration", label: "均播时长", suffix: "秒" },
+    { key: "avg_play_ratio", label: "平均播放占比", suffix: "%" },
     { key: "bounce_rate_2s", label: "2秒跳出率", suffix: "%" },
     { key: "completion_rate_5s", label: "5秒完播率", suffix: "%" },
     { key: "completion_rate", label: "整体完播率", suffix: "%" },

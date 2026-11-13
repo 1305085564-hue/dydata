@@ -7,10 +7,10 @@ import {
 } from "./metric-focus-flow";
 import type { EditableMetricKey } from "@/components/submission/提交状态机";
 
-test("METRIC_TAB_ORDER: 包含 11 个指标且首尾项符合发布规范", () => {
-  assert.equal(METRIC_TAB_ORDER.length, 11);
+test("METRIC_TAB_ORDER: 包含 12 个指标且首尾项符合发布规范", () => {
+  assert.equal(METRIC_TAB_ORDER.length, 12);
   assert.equal(METRIC_TAB_ORDER[0], "play_count");
-  assert.equal(METRIC_TAB_ORDER[10], "completion_rate");
+  assert.equal(METRIC_TAB_ORDER[11], "completion_rate");
 });
 
 test("getNextMetricFocusTarget: 正常指标按顺序跳格到下一个指标", () => {
@@ -21,7 +21,8 @@ test("getNextMetricFocusTarget: 正常指标按顺序跳格到下一个指标", 
   assert.equal(getNextMetricFocusTarget("comments"), "shares");
   assert.equal(getNextMetricFocusTarget("shares"), "favorites");
   assert.equal(getNextMetricFocusTarget("favorites"), "avg_play_duration");
-  assert.equal(getNextMetricFocusTarget("avg_play_duration"), "bounce_rate_2s");
+  assert.equal(getNextMetricFocusTarget("avg_play_duration"), "avg_play_ratio");
+  assert.equal(getNextMetricFocusTarget("avg_play_ratio"), "bounce_rate_2s");
   assert.equal(getNextMetricFocusTarget("bounce_rate_2s"), "completion_rate_5s");
   assert.equal(getNextMetricFocusTarget("completion_rate_5s"), "completion_rate");
 });

@@ -18,6 +18,7 @@ export const VIDEO_24H_METRIC_DEFINITIONS = [
   { dbKey: "follower_loss", apiKey: "followerLoss", formKey: "follower_loss", label: "掉粉", requiredOnCreate: false, nullable: true },
   { dbKey: "follower_convert", apiKey: "followerConvert", formKey: "follower_convert", label: "导粉", requiredOnCreate: false, nullable: true },
   { dbKey: "avg_play_duration", apiKey: "avgPlayDuration", formKey: "avg_play_duration", label: "平均播放时长", requiredOnCreate: false, nullable: true },
+  { dbKey: "avg_play_ratio", apiKey: "avgPlayRatio", formKey: "avg_play_ratio", label: "平均播放占比", requiredOnCreate: false, nullable: true },
   { dbKey: "bounce_rate_2s", apiKey: "bounceRate2s", formKey: "bounce_rate_2s", label: "2秒跳出率", requiredOnCreate: false, nullable: true },
   { dbKey: "completion_rate_5s", apiKey: "completionRate5s", formKey: "completion_rate_5s", label: "5秒完播率", requiredOnCreate: false, nullable: true },
   { dbKey: "completion_rate", apiKey: "completionRate", formKey: "completion_rate", label: "完播率", requiredOnCreate: false, nullable: true },

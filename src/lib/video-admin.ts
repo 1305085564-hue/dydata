@@ -15,6 +15,8 @@ export type Patch24hMetricsInput = {
   follower_gain: number | null;
   follower_loss: number | null;
   follower_convert: number | null;
+  /** 表单和接口使用百分数，快照入库时转换为 0–1 小数。 */
+  avg_play_ratio?: number | null;
 };
 
 export type Patch24hMetricsFormState = Record<keyof Patch24hMetricsInput, string>;
@@ -30,6 +32,7 @@ export function parsePatch24hMetrics(form: Patch24hMetricsFormState): Patch24hMe
     follower_gain: parseNullableMetricInput(form.follower_gain),
     follower_loss: parseNullableMetricInput(form.follower_loss),
     follower_convert: parseNullableMetricInput(form.follower_convert),
+    avg_play_ratio: parseNullableMetricInput(form.avg_play_ratio),
   };
 }
 
@@ -63,7 +66,7 @@ export function build24hSnapshotPayload(
     completion_rate: null,
     bounce_rate_2s: null,
     completion_rate_5s: null,
-    avg_play_ratio: null,
+    avg_play_ratio: metrics.avg_play_ratio == null ? null : metrics.avg_play_ratio / 100,
     vs_previous: null,
     screenshot_urls: screenshotUrl ? [screenshotUrl] : null,
     curve_screenshot_url: null,
@@ -82,6 +85,7 @@ export function build24hSnapshotUpdatePatch(metrics: Patch24hMetricsInput) {
     follower_gain: metrics.follower_gain,
     follower_loss: metrics.follower_loss,
     follower_convert: metrics.follower_convert,
+    avg_play_ratio: metrics.avg_play_ratio == null ? null : metrics.avg_play_ratio / 100,
   };
 }
 

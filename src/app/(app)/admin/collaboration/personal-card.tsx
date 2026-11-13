@@ -390,6 +390,7 @@ export function PersonalCard({
               renderMode="inline"
               video={diagnosisDetail.video}
               snapshot={diagnosisDetail.snapshot}
+              contentQuality={diagnosisDetail.contentQuality ?? null}
               topicKind={diagnosisDetail.topicKind ?? null}
               evaluationStandards={evaluationStandards}
               canOperateLifecycle={canManageVideos}

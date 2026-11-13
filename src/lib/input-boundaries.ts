@@ -35,6 +35,7 @@ const PERCENT_FIELD_LABELS = {
   bounce_rate_2s: "2秒跳出率",
   completion_rate_5s: "5秒完播率",
   completion_rate: "整体完播率",
+  avg_play_ratio: "平均播放占比",
 } as const;
 
 type CountMetricKey = keyof typeof COUNT_FIELD_LABELS;

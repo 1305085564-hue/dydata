@@ -235,7 +235,7 @@ test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
   });
 });
 
-test("跳出回看图只返回 retention_metrics 四个数字指标", () => {
+test("跳出回看图返回五个 retention_metrics 数字指标", () => {
   const result = parseRetentionContent(
     JSON.stringify({
       recognized: true,
@@ -258,12 +258,42 @@ test("跳出回看图只返回 retention_metrics 四个数字指标", () => {
     recognized: true,
     retention_metrics: {
       avg_play_duration: 23.6,
+      avg_play_ratio: null,
       bounce_rate_2s: 41.2,
       completion_rate_5s: 32.8,
       completion_rate: 18.5,
     },
     confidence: 0.78,
   });
+});
+
+test("OCR 平均播放占比按 0–100 百分数保留 23.02、0 和空值语义", () => {
+  const result = parseRetentionContent(JSON.stringify({
+    recognized: true,
+    retention_metrics: {
+      avg_play_duration: "56秒",
+      avg_play_ratio: "23.02%",
+      bounce_rate_2s: "21.53%",
+      completion_rate_5s: "57.61%",
+      completion_rate: "14.81%",
+    },
+  }));
+  assert.equal(result?.recognized, true);
+  assert.equal(result?.retention_metrics.avg_play_ratio, 23.02);
+
+  const zero = parseRetentionContent(JSON.stringify({
+    recognized: true,
+    retention_metrics: { avg_play_ratio: 0 },
+  }));
+  assert.equal(zero?.recognized, true);
+  if (!zero || !zero.recognized) throw new Error("zero ratio should be recognized");
+  assert.equal(zero.retention_metrics.avg_play_ratio, 0);
+
+  const blank = parseRetentionContent(JSON.stringify({
+    recognized: true,
+    retention_metrics: { avg_play_ratio: "" },
+  }));
+  assert.equal(blank, null, "只有空占比且没有其他留存数字时仍视为未识别");
 });
 
 test("视觉模型以字符串返回 confidence 时仍按数字解析", () => {
@@ -339,6 +369,7 @@ test("retention 部分识别也返回待确认结果", () => {
       recognized: true,
       retention_metrics: {
         avg_play_duration: null,
+        avg_play_ratio: null,
         bounce_rate_2s: 41.2,
         completion_rate_5s: null,
         completion_rate: 18.5,

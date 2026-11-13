@@ -302,6 +302,7 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签与责任�
       followerLoss: 1,
       followerConvert: 2,
       avgPlayDuration: 12.5,
+      avgPlayRatio: null,
       bounceRate2s: 20,
       completionRate5s: 45,
       completionRate: 18,

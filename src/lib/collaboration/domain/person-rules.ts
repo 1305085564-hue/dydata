@@ -238,6 +238,9 @@ export function buildPersonPayload(input: {
         targetUserId: input.targetUserId,
         role: input.growthRole,
         currentRows,
+        recordRows: input.growthRole === "talents"
+          ? input.recordRows?.filter((row) => row.report_date >= currentRange.start && row.report_date <= currentRange.end)
+          : undefined,
         growthRows: input.growthReports ?? [],
         accounts: input.accounts,
         snapshots: input.currentSnapshots ?? input.growthSnapshots ?? new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放

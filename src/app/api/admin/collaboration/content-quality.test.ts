@@ -18,6 +18,7 @@ import {
   buildWorkContentQuality,
   contentQualityRules,
 } from "@/lib/collaboration/domain/quality-rules";
+import { retentionWarningLabels } from "@/lib/collaboration/content-quality-contract";
 import {
   buildPersonPayload,
 } from "@/lib/collaboration/domain/person-rules";
@@ -56,7 +57,7 @@ function snapshot(overrides: Partial<VideoSnapshotMetrics> = {}): VideoSnapshotM
     shares: 100,
     favorites: 200,
     followerGain: 0,
-    avgPlayDuration: 45,
+    avgPlayDuration: 50,
     avgPlayRatio: 0.25,
     bounceRate2s: 25,
     completionRate5s: 60,
@@ -78,12 +79,43 @@ test("规则下发来自 breakout-rating 现行常量，前端不需要复制数
     retentionBands: {
       bounceRate2s: { good: 25, poor: 35 },
       completionRate5s: { good: 60, poor: 50 },
-      avgPlayDuration: { good: 45, poor: 30 },
+      avgPlayDuration: { good: 50, poor: 30 },
       avgPlayRatio: { good: 25, poor: 20 },
       completionRate: { good: 10, poor: 5 },
     },
     retentionWeights: { bounceRate2s: 35, completionRate5s: 30, avgPlayBundle: 20, completionRate: 15 },
   });
+});
+
+test("留存差线只生成警告，不改变达成率、留存档位或综合评级", () => {
+  const rules = contentQualityRules();
+  const poor = snapshot({
+    bounceRate2s: 35.01,
+    completionRate5s: 50,
+    avgPlayDuration: 30,
+    avgPlayRatio: 0.1999,
+    completionRate: 5,
+  });
+  const poorQuality = buildWorkContentQuality(report(), poor, topics([["video-1", "复盘"]]));
+
+  assert.deepEqual(retentionWarningLabels(poorQuality.retentionMetrics, rules), [
+    "2 秒跳出率",
+    "5 秒完播率",
+    "均播时长",
+    "平均播放占比",
+    "整体完播率",
+  ]);
+  const calculatedBeforeWarning = {
+    contentAchievement: poorQuality.contentAchievement,
+    contentGrade: poorQuality.contentGrade,
+    overallGrade: poorQuality.overallGrade,
+  };
+  retentionWarningLabels(poorQuality.retentionMetrics, rules);
+  assert.deepEqual({
+    contentAchievement: poorQuality.contentAchievement,
+    contentGrade: poorQuality.contentGrade,
+    overallGrade: poorQuality.overallGrade,
+  }, calculatedBeforeWarning);
 });
 
 test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计算", () => {
@@ -168,7 +200,7 @@ test("五项留存数据按确认权重计分，均播时长和平均播放占�
     topics([["weighted", "复盘"]]),
   );
 
-  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 89.8888888889) < 1e-8);
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 89) < 1e-8);
   assert.equal(quality.contentGrade, "良");
   assert.equal(quality.overallGrade, "优");
 });
@@ -193,7 +225,7 @@ test("冻结公式验算截图样例，留存分允许超过 100%", () => {
     topics([["screenshot-sample", "复盘"]]),
   );
 
-  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 113.3) < 0.1);
+  assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 112.1) < 0.1);
   assert.equal(quality.contentGrade, "优");
   assert.equal(quality.overallGrade, "良", "互动达成率与留存分取平均，并保留弱项拉升限制");
 });
@@ -397,7 +429,7 @@ const snapshotInputBase = {
   comments: 100,
   shares: 100,
   favorites: 200,
-  avgPlayDuration: 45,
+  avgPlayDuration: 50,
   avgPlayRatio: 0.25,
   bounceRate2s: 25,
   completionRate5s: 60,

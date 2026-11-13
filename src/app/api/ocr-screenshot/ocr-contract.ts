@@ -54,6 +54,7 @@ type ParsedOcrResult = {
 
 export type RetentionMetrics = {
   avg_play_duration: number | null;
+  avg_play_ratio: number | null;
   bounce_rate_2s: number | null;
   completion_rate_5s: number | null;
   completion_rate: number | null;
@@ -361,6 +362,7 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
       reason?: unknown;
       retention_metrics?: {
         avg_play_duration?: unknown;
+        avg_play_ratio?: unknown;
         bounce_rate_2s?: unknown;
         completion_rate_5s?: unknown;
         completion_rate?: unknown;
@@ -379,9 +381,10 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
 
     const retentionMetrics: RetentionMetrics = {
       avg_play_duration: normalizeMetricNumber(raw.retention_metrics?.avg_play_duration),
-      bounce_rate_2s: normalizeMetricNumber(raw.retention_metrics?.bounce_rate_2s),
-      completion_rate_5s: normalizeMetricNumber(raw.retention_metrics?.completion_rate_5s),
-      completion_rate: normalizeMetricNumber(raw.retention_metrics?.completion_rate),
+      avg_play_ratio: normalizeMetricNumber(raw.retention_metrics?.avg_play_ratio, 100),
+      bounce_rate_2s: normalizeMetricNumber(raw.retention_metrics?.bounce_rate_2s, 100),
+      completion_rate_5s: normalizeMetricNumber(raw.retention_metrics?.completion_rate_5s, 100),
+      completion_rate: normalizeMetricNumber(raw.retention_metrics?.completion_rate, 100),
     };
 
     const hasAnyMetric = Object.values(retentionMetrics).some((value) => value !== null);
@@ -467,12 +470,13 @@ function normalizeNumber(value: unknown, allowDecimal = false): number | null {
   return null;
 }
 
-function normalizeMetricNumber(value: unknown): number | null {
+function normalizeMetricNumber(value: unknown, max?: number): number | null {
   if (typeof value === "string") {
-    return normalizeNumber(value.replace(/[秒sS]/g, ""), true);
+    value = value.replace(/[秒sS]/g, "");
   }
 
-  return normalizeNumber(value, true);
+  const normalized = normalizeNumber(value, true);
+  return normalized !== null && max !== undefined && (normalized < 0 || normalized > max) ? null : normalized;
 }
 
 function getConfidenceScore(confidence: Record<OcrFieldKey, ConfidenceLevel>) {

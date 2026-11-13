@@ -104,6 +104,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
           follower_loss: 0,
           follower_convert: parseMetricFieldOrNull("follower_convert", fields.follower_convert.value),
           avg_play_duration: parseMetricFieldOrNull("avg_play_duration", fields.avg_play_duration.value),
+          avg_play_ratio: parseMetricFieldOrNull("avg_play_ratio", fields.avg_play_ratio.value),
           bounce_rate_2s: parseMetricFieldOrNull("bounce_rate_2s", fields.bounce_rate_2s.value),
           completion_rate_5s: parseMetricFieldOrNull("completion_rate_5s", fields.completion_rate_5s.value),
           completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),

@@ -9,6 +9,7 @@ export const METRIC_TAB_ORDER: readonly EditableMetricKey[] = [
   "shares",
   "favorites",
   "avg_play_duration",
+  "avg_play_ratio",
   "bounce_rate_2s",
   "completion_rate_5s",
   "completion_rate",

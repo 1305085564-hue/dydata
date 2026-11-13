@@ -7,7 +7,7 @@ import {
 export const EDIT_DETAIL_VIDEO_SELECT =
   "id, account_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_SNAPSHOT_SELECT =
-  "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
+  "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, avg_play_ratio, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
 export const EDIT_DETAIL_REPORT_SELECT =
   "id, user_id, account_id, report_date, video_id, data_source, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";

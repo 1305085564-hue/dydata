@@ -19,6 +19,7 @@ export type EditableMetricKey =
   | "shares"
   | "favorites"
   | "avg_play_duration"
+  | "avg_play_ratio"
   | "bounce_rate_2s"
   | "completion_rate_5s"
   | "completion_rate";
@@ -145,6 +146,7 @@ export function createInitialSubmissionState(
       shares: createField("shares"),
       favorites: createField("favorites"),
       avg_play_duration: createField("avg_play_duration"),
+      avg_play_ratio: createField("avg_play_ratio"),
       bounce_rate_2s: createField("bounce_rate_2s"),
       completion_rate_5s: createField("completion_rate_5s"),
       completion_rate: createField("completion_rate"),

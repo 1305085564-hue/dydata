@@ -30,6 +30,7 @@ export const METRIC_INPUT_TYPE_BY_FIELD = {
   shares: "count",
   favorites: "count",
   avg_play_duration: "duration",
+  avg_play_ratio: "rate",
   bounce_rate_2s: "rate",
   completion_rate_5s: "rate",
   completion_rate: "rate",

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { VideoMetricsSnapshot, ContentReviewReadiness } from "@/types";
 import type { VideoRow } from "@/lib/review-queue";
 import type { VideoTopicKind } from "@/lib/topics/library";
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +20,7 @@ export type CollaborationDiagnosisDetail = {
   reviewReadiness?: Record<string, ContentReviewReadiness> | null;
   /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
   topicKind?: VideoTopicKind | null;
+  contentQuality?: WorkContentQuality | null;
 };
 
 export interface CollaborationDiagnosisContextValue {

@@ -47,6 +47,7 @@ const METRIC_FIELDS = [
   "follower_loss",
   "follower_convert",
   "avg_play_duration",
+  "avg_play_ratio",
   "bounce_rate_2s",
   "completion_rate_5s",
   "completion_rate",
@@ -201,13 +202,13 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
     return { ok: false, error: "编辑提交缺少 24h 指标" };
   }
 
-  const missingMetric = METRIC_FIELDS.find((field) => !hasOwn(payload.metrics as UnknownRecord, field));
+  const missingMetric = METRIC_FIELDS.find((field) => field !== "avg_play_ratio" && !hasOwn(payload.metrics as UnknownRecord, field));
   if (missingMetric) {
     return { ok: false, error: `编辑提交缺少 24h 指标：${missingMetric}` };
   }
   const invalidMetric = METRIC_FIELDS.find((field) => {
     const value = (payload.metrics as UnknownRecord)[field];
-    if (value === null) return false;
+    if (value === null || (field === "avg_play_ratio" && value === undefined)) return false;
     return typeof value !== "number" || !Number.isFinite(value);
   });
   if (invalidMetric) {
@@ -294,6 +295,7 @@ export interface VideoSubmissionEditDetail {
     /** 选填指标：留空即落库为 null（写入侧见 `指标分组区.tsx` 的 optional）。 */
     followerConvert: number | null;
     avgPlayDuration: number | null;
+    avgPlayRatio?: number | null;
     bounceRate2s: number | null;
     completionRate5s: number | null;
     completionRate: number | null;
@@ -345,6 +347,7 @@ export interface VideoSubmissionEditDetailSource {
     follower_loss: number | null;
     follower_convert: number | null;
     avg_play_duration: number | null;
+    avg_play_ratio?: number | null;
     bounce_rate_2s: number | null;
     completion_rate_5s: number | null;
     completion_rate: number | null;
@@ -481,7 +484,7 @@ export function buildVideoSubmissionEditDetail(
   const metricValues: Record<string, number | null> = {};
   for (const [sourceKey, targetKey] of EDIT_METRIC_FIELDS) {
     const value = source.snapshot[sourceKey];
-    if (value === null && isNullableVideo24hMetric(sourceKey)) {
+    if ((value === null || value === undefined) && isNullableVideo24hMetric(sourceKey)) {
       metricValues[targetKey] = null;
       continue;
     }
@@ -551,6 +554,7 @@ export function buildVideoSubmissionEditDetail(
         followerLoss: metricValues.followerLoss as number,
         followerConvert: metricValues.followerConvert,
         avgPlayDuration: metricValues.avgPlayDuration,
+        avgPlayRatio: metricValues.avgPlayRatio,
         bounceRate2s: metricValues.bounceRate2s,
         completionRate5s: metricValues.completionRate5s,
         completionRate: metricValues.completionRate,

@@ -22,11 +22,12 @@ test("24h 指标契约只在一个地方声明必填和可空规则", () => {
     "follower_loss",
     "follower_convert",
     "avg_play_duration",
+    "avg_play_ratio",
     "bounce_rate_2s",
     "completion_rate_5s",
     "completion_rate",
   ]);
-  assert.equal(VIDEO_24H_METRIC_DEFINITIONS.length, 12);
+  assert.equal(VIDEO_24H_METRIC_DEFINITIONS.length, 13);
 });
 
 test("null 与 0 的输入语义不同：空值保留 null，明确输入 0 保留 0", () => {

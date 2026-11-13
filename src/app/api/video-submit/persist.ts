@@ -218,7 +218,7 @@ export function buildSnapshotPayload(
     completion_rate: normalized.metrics.completion_rate,
     bounce_rate_2s: normalized.metrics.bounce_rate_2s,
     completion_rate_5s: normalized.metrics.completion_rate_5s,
-    avg_play_ratio: null,
+    avg_play_ratio: normalized.metrics.avg_play_ratio == null ? null : normalized.metrics.avg_play_ratio / 100,
     vs_previous: normalized.published_at_text || Object.keys(ocrSummary).length || ocrAssets.length
       ? {
           published_at_text: normalized.published_at_text ?? null,

@@ -361,6 +361,7 @@ export function ContentPageClient({
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
+        contentQuality={selectedDetail?.contentQuality ?? data.contentQualityByVideoId?.[selectedVideo.id] ?? null}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
         canPurge={permissionInfo.companyRole === "company_owner"}
         onLifecycleChanged={() => {

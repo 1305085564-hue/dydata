@@ -33,6 +33,7 @@ const METRIC_FIELDS = [
   { key: "follower_gain", label: "涨粉" },
   { key: "follower_loss", label: "掉粉" },
   { key: "follower_convert", label: "导粉" },
+  { key: "avg_play_ratio", label: "平均播放占比" },
 ] as const;
 
 type MetricKey = (typeof METRIC_FIELDS)[number]["key"];
@@ -63,6 +64,7 @@ function createInitialState(snapshot: VideoMetricsSnapshot | null): FormState {
     follower_gain: snapshot?.follower_gain != null ? String(snapshot.follower_gain) : "",
     follower_loss: snapshot?.follower_loss != null ? String(snapshot.follower_loss) : "",
     follower_convert: snapshot?.follower_convert != null ? String(snapshot.follower_convert) : "",
+    avg_play_ratio: snapshot?.avg_play_ratio != null ? String(snapshot.avg_play_ratio * 100) : "",
   };
 }
 
@@ -193,7 +195,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
                   id={`patch-${field.key}`}
                   type="number"
                   min={0}
-                  step="1"
+                  step={field.key === "avg_play_ratio" ? "0.01" : "1"}
                   value={form[field.key]}
                   onChange={(event) => updateField(field.key, event.target.value)}
                   disabled={isPending}

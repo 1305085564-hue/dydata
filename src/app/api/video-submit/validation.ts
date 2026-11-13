@@ -34,6 +34,7 @@ export interface VideoSubmitValidationMetrics {
   follower_loss: number | null;
   follower_convert: number | null;
   avg_play_duration: number | null;
+  avg_play_ratio?: number | null;
   bounce_rate_2s: number | null;
   completion_rate_5s: number | null;
   completion_rate: number | null;
@@ -128,6 +129,7 @@ function normalizeMetrics(value: unknown): VideoSubmitValidationMetrics {
     follower_loss: normalizeInteger(metrics.follower_loss),
     follower_convert: normalizeIntegerOrNull(metrics.follower_convert),
     avg_play_duration: normalizeNumberOrNull(metrics.avg_play_duration),
+    avg_play_ratio: normalizeNumberOrNull(metrics.avg_play_ratio),
     bounce_rate_2s: normalizeNumberOrNull(metrics.bounce_rate_2s),
     completion_rate_5s: normalizeNumberOrNull(metrics.completion_rate_5s),
     completion_rate: normalizeNumberOrNull(metrics.completion_rate),

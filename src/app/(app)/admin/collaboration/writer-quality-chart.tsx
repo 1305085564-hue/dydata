@@ -39,7 +39,6 @@ export interface WriterChartWorkPoint {
   coreMetric: "favoriteRate" | "likeRate" | null;
   contentAchievement: number | null;
   interactionAchievement: number | null;
-  coreAchievement: number | null;
   contentGrade: BreakoutGrade | null;
   overallGrade: BreakoutGrade | null;
   status: ContentQualityStatus;
@@ -145,7 +144,6 @@ export function WriterQualityChart({
         contentAchievement: q?.contentAchievement != null ? q.contentAchievement : null,
         interactionAchievement:
           q?.interactionAchievement != null ? q.interactionAchievement : null,
-        coreAchievement: q?.coreAchievement != null ? q.coreAchievement : null,
         contentGrade: q?.contentGrade ?? null,
         overallGrade: q?.overallGrade ?? null,
         status,

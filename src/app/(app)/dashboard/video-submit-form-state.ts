@@ -264,7 +264,7 @@ export function getVideoSubmissionEditDetailError(
   if (!isRecord(metrics)) return "编辑详情缺少24小时指标，不能安全保存";
   for (const metric of EDIT_DETAIL_METRICS) {
     const metricValue = metrics[metric.apiKey];
-    if (metricValue === null && isNullableVideo24hApiKey(metric.apiKey)) {
+    if ((metricValue === null || (metric.apiKey === "avgPlayRatio" && metricValue === undefined)) && isNullableVideo24hApiKey(metric.apiKey)) {
       continue;
     }
     if (typeof metricValue !== "number" || !Number.isFinite(metricValue)) {
@@ -311,7 +311,7 @@ export function buildVideoSubmissionEditRefill(
   const metrics = {} as Record<EditableMetricName, string>;
   for (const metric of EDIT_DETAIL_METRICS) {
     const metricValue = detail.metrics[metric.apiKey];
-    metrics[metric.formKey] = metricValue === null ? "" : String(metricValue);
+    metrics[metric.formKey] = metricValue == null ? "" : String(metricValue);
   }
 
   const assets: Record<ScreenshotUploadSlotRole, VideoSubmissionEditAsset | null> = {

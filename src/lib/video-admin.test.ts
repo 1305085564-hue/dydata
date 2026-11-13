@@ -72,8 +72,10 @@ test("更新已有 24h 快照只写表单指标，不覆盖截图和留存字段
     follower_gain: 18,
     follower_loss: 2,
     follower_convert: 7,
+    avg_play_ratio: null,
   });
   assert.deepEqual(Object.keys(patch).sort(), [
+    "avg_play_ratio",
     "comments",
     "favorites",
     "follower_convert",
@@ -100,6 +102,7 @@ test("补录更新 patch 保留 null，不把空值改成 0", () => {
     follower_gain: 1,
     follower_loss: null,
     follower_convert: null,
+    avg_play_ratio: null,
   });
 
   assert.equal(patch.likes, null);
@@ -131,6 +134,7 @@ test("补录24h空输入一律解析为 null，明确 0 保留 0，不把未采�
     follower_gain: "",
     follower_loss: "",
     follower_convert: "",
+    avg_play_ratio: "",
   });
 
   assert.deepEqual(metrics, {
@@ -142,6 +146,7 @@ test("补录24h空输入一律解析为 null，明确 0 保留 0，不把未采�
     follower_gain: null,
     follower_loss: null,
     follower_convert: null,
+    avg_play_ratio: null,
   });
 });
 

@@ -13,6 +13,7 @@ export interface NormalizedVideoSubmitMetrics {
   follower_loss: number | null;
   follower_convert: number | null;
   avg_play_duration: number | null;
+  avg_play_ratio?: number | null;
   bounce_rate_2s: number | null;
   completion_rate_5s: number | null;
   completion_rate: number | null;

@@ -114,6 +114,8 @@ export interface AdminContentVideoDetail {
   evaluationStandards?: EvaluationStandards;
   video: VideoRow;
   snapshot: VideoMetricsSnapshot | null;
+  /** 与列表同源的统一内容质量结果。旧详情响应缺字段时按 null 兼容。 */
+  contentQuality?: WorkContentQuality | null;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
   topicKind: VideoTopicKind;
@@ -601,14 +603,36 @@ export async function loadAdminContentVideoDetail({
   const topicTag =
     ((topicTagResult.data ?? []) as Array<{ tag_value: string | null }>)[0]?.tag_value ?? null;
 
+  const evaluationStandards = includeEvaluationStandards && scope.teamId
+    ? (await loadEvaluationSettings(supabase, scope.teamId)).standards
+    : DEFAULT_EVALUATION_STANDARDS;
+  const contentQuality = buildContentQualityRecord(
+    [normalizedVideoId],
+    new Map(snapshot ? [[normalizedVideoId, {
+      playCount: snapshot.play_count,
+      likes: snapshot.likes,
+      comments: snapshot.comments,
+      shares: snapshot.shares,
+      favorites: snapshot.favorites,
+      avgPlayDuration: snapshot.avg_play_duration,
+      avgPlayRatio: snapshot.avg_play_ratio,
+      bounceRate2s: snapshot.bounce_rate_2s,
+      completionRate5s: snapshot.completion_rate_5s,
+      completionRate: snapshot.completion_rate,
+    }]] : []),
+    { state: "ready", tags: new Map([[normalizedVideoId, topicTag]]) },
+    evaluationStandards,
+  )[normalizedVideoId] ?? null;
+
   // 详情与列表同源计算播放涨跌信号，保证同一作品两处口径一致（审计 H1）
   const [videoWithSignal = video] = await loadPlayChangeSignals({ supabase, videos: [video],
     previousCandidateVideos: [video], currentSnapshots: (snapshot ? [snapshot] : []) as PreviousSnapshotRow[] });
 
   return {
-    evaluationStandards: includeEvaluationStandards && scope.teamId ? (await loadEvaluationSettings(supabase, scope.teamId)).standards : DEFAULT_EVALUATION_STANDARDS,
+    evaluationStandards,
     video: videoWithSignal,
     snapshot,
+    contentQuality,
     topicKind: classifyVideoTopicKind(topicTag),
     reviewReadiness: buildReviewReadinessMap({
       videos: [videoWithSignal],

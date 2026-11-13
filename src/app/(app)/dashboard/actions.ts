@@ -140,6 +140,7 @@ export async function submitReport(formData: FormData) {
     bounce_rate_2s: parseNullableMetricInput(formData.get("bounce_rate_2s") as string | null),
     completion_rate: parseNullableMetricInput(formData.get("completion_rate") as string | null),
     completion_rate_5s: parseNullableMetricInput(formData.get("completion_rate_5s") as string | null),
+    avg_play_ratio: parseNullableMetricInput(formData.get("avg_play_ratio") as string | null),
   };
   const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetrics);
   const content = (formData.get("content") as string) || null;

@@ -45,7 +45,7 @@ test("百度错误分类映射到现有 OcrErrorCode 枚举，非 BaiduOcrError 
   assert.equal(mapBaiduErrorToOcrCode(new Error("普通错误")), null);
 });
 
-test("结构化 prompt 按槽位区分：data 要 6 指标，retention 要留存 4 数字，且带 OCR 文字行", () => {
+test("结构化 prompt 按槽位区分：data 要 6 指标，retention 要留存 5 数字，且带 OCR 文字行", () => {
   const lines = ["播放量 3.21万", "点赞 1280"];
 
   const dataPrompt = buildStructurePromptByType("data", lines);
@@ -124,6 +124,7 @@ test("retention 槽位返回嵌套数值契约，与旧通道一致", async () =
     recognized: true,
     retention_metrics: {
       avg_play_duration: 23.6,
+      avg_play_ratio: null,
       bounce_rate_2s: 41.2,
       completion_rate_5s: null,
       completion_rate: 18.5,

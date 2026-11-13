@@ -260,7 +260,7 @@ test("编辑保存只改文案时，不可编辑旧指标全部保持数据库�
   assert.equal(merged.homepage_visits, 320);
   assert.equal(merged.fan_play_ratio, 0.42);
   assert.equal(merged.cover_click_rate, 0.11);
-  assert.equal(merged.avg_play_ratio, 0.66);
+  assert.equal(merged.avg_play_ratio, null, "平均播放占比现在属于可编辑留存指标，空值保留为待采集");
   // 可编辑字段仍来自前端
   assert.equal(merged.play_count, 1200);
   // 新建模式不受影响
@@ -292,7 +292,7 @@ test("编辑保存时数据库旧指标为 null 也必须原样保留，不能�
   assert.equal(merged.homepage_visits, null);
   assert.equal(merged.fan_play_ratio, null);
   assert.equal(merged.cover_click_rate, null);
-  assert.equal(merged.avg_play_ratio, null);
+  assert.equal(merged.avg_play_ratio, 0);
 });
 
 test("编辑时只按岗位豁免未修改的旧责任人，新岗位复用同一归档成员仍必须校验", () => {

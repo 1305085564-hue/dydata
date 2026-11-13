@@ -7,7 +7,7 @@ const draft = () => structuredClone(DEFAULT_EVALUATION_STANDARDS);
 test("默认标准保持已确认口径，差线按各指标边界判断", () => {
   const standards = draft();
   assert.equal(standards.minPlayCount, 3000);
-  assert.deepEqual(standards.avgPlayDuration, { good: 45, poor: 30 });
+  assert.deepEqual(standards.avgPlayDuration, { good: 50, poor: 30 });
   assert.deepEqual(standards.avgPlayRatio, { good: 25, poor: 20 });
   assert.equal(evaluationTone("bounceRate2s", 25, 3000, standards), "good");
   assert.equal(evaluationTone("bounceRate2s", 35, 3000, standards), "normal");

@@ -165,6 +165,7 @@ export async function buildWorkVideoResponse(
         videoId: report.videoId,
         video: detail.video,
         snapshot: detail.snapshot,
+        contentQuality: detail.contentQuality ?? null,
         reviewReadiness: detail.reviewReadiness,
         topicKind: detail.topicKind,
       });
@@ -203,6 +204,7 @@ export async function buildWorkVideoResponse(
       videoId: match.videoId,
       video: detail?.video ?? null,
       snapshot: detail?.snapshot ?? null,
+      contentQuality: detail?.contentQuality ?? null,
       reviewReadiness: detail?.reviewReadiness ?? null,
       topicKind: detail?.topicKind ?? null,
     });

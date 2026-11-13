@@ -160,6 +160,7 @@ export function CollaborationWorkbenchContent({
             }}
             video={diagnosisDetail.video}
             snapshot={diagnosisDetail.snapshot}
+            contentQuality={diagnosisDetail.contentQuality ?? null}
             topicKind={diagnosisDetail.topicKind ?? null}
             evaluationStandards={evaluationStandards}
             canOperateLifecycle={canManageVideos}
