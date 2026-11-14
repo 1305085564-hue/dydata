@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isTrustedWrite } from "@/lib/csrf";
+
 import { isCloudBaseInactiveAccountError, validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError } from "@/lib/cloudbase/core";
 import {
@@ -13,33 +15,10 @@ import { GRANT_COOKIE_NAME, GRANT_COOKIE_PATH } from "@/lib/screenshot-grant";
 
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-function trustedHostCandidates(request: NextRequest) {
-  const hosts = new Set<string>();
-  const add = (value?: string | null) => {
-    if (!value) return;
-    const first = value.split(",")[0]?.trim().toLowerCase();
-    if (first) hosts.add(first);
-  };
-  add(request.nextUrl.host);
-  add(request.headers.get("x-forwarded-host"));
-  add(request.headers.get("host"));
-  for (const configured of [process.env.NEXT_PUBLIC_APP_URL, process.env.APP_URL]) {
-    if (!configured) continue;
-    try { add(new URL(configured).host); } catch { /* 忽略非法配置 */ }
-  }
-  return hosts;
-}
-
+/** 来源校验统一走 src/lib/csrf.ts 的单一实现。 */
 export function isTrustedCloudBaseWrite(request: NextRequest) {
   if (!WRITE_METHODS.has(request.method.toUpperCase())) return true;
-  if (request.headers.get("sec-fetch-site")?.toLowerCase() === "cross-site") return false;
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-  let originHost: string;
-  try { originHost = new URL(origin).host.toLowerCase(); } catch { return false; }
-  // 反代（云托管网关）会改写 Host，nextUrl.host 不再等于公网域名；
-  // 因此按「同站点」比较主机名，而不是比较整个 origin 串。
-  return trustedHostCandidates(request).has(originHost);
+  return isTrustedWrite(request);
 }
 
 export function rejectUntrustedCloudBaseWrite(request: NextRequest) {

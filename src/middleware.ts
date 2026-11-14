@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cutoverMaintenanceResponse, isApplicationMiddlewarePath } from "@/lib/cutover-maintenance";
+import { isTrustedWrite } from "@/lib/csrf";
 
 import { hasCloudBaseAuthCookie, hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
@@ -16,52 +17,6 @@ import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, hasCloudBaseSessionChanged, isCloudBaseBackend, parseCloudBaseSession, serializeCloudBaseSession } from "@/lib/cloudbase/core";
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
-const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-// 飞书回调等外部服务调用的路由，豁免 CSRF 检查
-const CSRF_EXEMPT_PATHS = new Set(["/api/feishu/event"]);
-
-function trustedHostCandidates(request: NextRequest) {
-  const hosts = new Set<string>();
-  const add = (value?: string | null) => {
-    if (!value) return;
-    const first = value.split(",")[0]?.trim().toLowerCase();
-    if (first) hosts.add(first);
-  };
-  add(request.nextUrl.host);
-  add(request.headers.get("x-forwarded-host"));
-  add(request.headers.get("host"));
-  for (const configured of [process.env.NEXT_PUBLIC_APP_URL, process.env.APP_URL]) {
-    if (!configured) continue;
-    try { add(new URL(configured).host); } catch { /* 忽略非法配置 */ }
-  }
-  return hosts;
-}
-
-export function isUntrustedApiWriteRequest(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith("/api/") || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
-    return false;
-  }
-
-  if (CSRF_EXEMPT_PATHS.has(request.nextUrl.pathname)) {
-    return false;
-  }
-
-  const secFetchSite = request.headers.get("sec-fetch-site")?.toLowerCase();
-  if (secFetchSite === "cross-site") {
-    return true;
-  }
-  // 浏览器发起的同源请求，浏览器自己会打上 same-origin，反代改写 Host 也不影响可信判定
-  if (secFetchSite === "same-origin") return false;
-
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-
-  let originHost: string;
-  try { originHost = new URL(origin).host.toLowerCase(); } catch { return true; }
-  // 云托管等反代会改写 Host，nextUrl.host 不再等于公网域名，故按主机名比对而不是整串 origin
-  return !trustedHostCandidates(request).has(originHost);
-}
 
 function createClientFromRequest(request: NextRequest, response: NextResponse) {
   const keepLoggedIn = isKeepLoggedInCookieValue(request.cookies.get(KEEP_LOGGED_IN_COOKIE_NAME)?.value);
@@ -252,7 +207,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: "路径参数格式不正确" }, { status: 400 });
   }
 
-  if (isUntrustedApiWriteRequest(request)) {
+  if (isApiRoute && !isTrustedWrite(request)) {
     return NextResponse.json({ error: "请求来源不可信" }, { status: 403 });
   }
 

@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
+
+// 来源校验只信配置的站点地址；这里与测试请求的 Origin(http://localhost) 对齐。
+process.env.SITE_ORIGIN = "http://localhost";
+
 import { buildEvaluationStandardsResponse } from "./route";
 
 function deps(role = "company_owner", company: string | null = "company-a") {

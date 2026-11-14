@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminServiceClient } from "../fulfillment/_shared";
+import { isTrustedWrite } from "@/lib/csrf";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { canEditEvaluationStandards, parseEvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings, saveEvaluationSettings } from "@/lib/evaluation-standards-store";
@@ -22,8 +23,7 @@ export async function buildEvaluationStandardsResponse(request: Request, deps = 
     const canEdit = canEditEvaluationStandards(auth.actor);
     if (request.method === "GET") return json({ ...await deps.loadEvaluationSettings(auth.supabase, auth.scope.teamId), canEdit });
     if (!canEdit) return json({ error: "只有公司负责人可以修改评价标准" }, 403);
-    const origin = request.headers.get("origin");
-    if (origin && origin !== new URL(request.url).origin) return json({ error: "请求来源不正确" }, 403);
+    if (!isTrustedWrite(request)) return json({ error: "请求来源不正确" }, 403);
     let body: unknown;
     try { body = await request.json(); } catch { return json({ error: "提交内容不是有效的 JSON" }, 400); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "提交内容不正确" }, 400);

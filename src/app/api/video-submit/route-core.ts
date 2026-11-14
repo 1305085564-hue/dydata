@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteOrigin } from "@/lib/csrf";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildManualTagPayload } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
@@ -419,7 +420,7 @@ async function handleVideoSubmit(
   const screenshotAccess = await assertReadableSubmissionScreenshots(
     userId,
     normalized.assets.map((asset) => asset.url),
-    request.nextUrl.origin,
+    getSiteOrigin() ?? request.nextUrl.origin,
   );
   if (!screenshotAccess.ok) {
     return NextResponse.json({ error: screenshotAccess.error }, { status: screenshotAccess.status });
@@ -643,7 +644,7 @@ async function handleVideoSubmit(
     const existingScreenshotAccess = await assertReadableSubmissionScreenshots(
       userId,
       getExistingScreenshotUrls(existingScreenshotFields),
-      request.nextUrl.origin,
+      getSiteOrigin() ?? request.nextUrl.origin,
     );
     if (!existingScreenshotAccess.ok) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
