@@ -107,7 +107,7 @@ function MemberMultiSelect({
         {candidates.length === 0 ? (
           <span className="text-[#78716C] truncate">无可分配成员</span>
         ) : selectedUserIds.length === 0 ? (
-          <span className="text-[#78716C] truncate">选择公司成员...</span>
+          <span className="text-[#78716C] truncate">选择团队成员...</span>
         ) : (
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
             <span className="font-normal shrink-0 text-[12px] bg-[#F1F1F0] text-[#78716C] px-1.5 py-0.5 rounded-md">
@@ -258,8 +258,7 @@ export function WorkGroupManageDrawer({
   const [localGroups, setLocalGroups] = useState<WorkGroupRow[]>(groups);
   const [localRoster, setLocalRoster] = useState<WorkGroupRosterMember[]>(roster);
 
-  // 乐观更新要读「此刻最新」的列表，而不是本次渲染闭包里的旧值：
-  // 否则请求回来时按渲染期快照回滚，会把期间发生的其他变更一起抹掉（B2）。
+  // 乐观更新要读「此刻最新」的列表，而不是本次渲染闭包里的旧值；否则请求回来时按渲染期快照回滚，会把期间发生的其他变更一起抹掉（B2）。
   const groupsRef = useRef<WorkGroupRow[]>(groups);
   const rosterRef = useRef<WorkGroupRosterMember[]>(roster);
 
@@ -391,7 +390,7 @@ export function WorkGroupManageDrawer({
       return;
     }
 
-    // 乐观占位只在知道本公司 team_id 时插入，拿不到就等服务端返回（不留空串、不伪造归属）
+    // 乐观占位只在知道本团队 team_id 时插入，拿不到就等服务端返回（不留空串、不伪造归属）
     const ownTeamId =
       teamId ??
       groupsRef.current.find((g) => g.teamId)?.teamId ??

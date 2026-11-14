@@ -45,7 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <AdminMainArea>
           <PermissionGuard
             moduleTitle={title}
-            requiredRoleLabel={isOwnerOnly ? "企业管理员（公司所有者）" : "组长 · 管理"}
+            requiredRoleLabel={isOwnerOnly ? "团队管理员（团队所有者）" : "组长 · 管理"}
             showApplyButton={!isOwnerOnly}
           />
         </AdminMainArea>

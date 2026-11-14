@@ -156,7 +156,7 @@ export function MemberAlerts({
               </AlertDescription>
             ) : (
               <AlertDescription className="text-[14px] leading-[1.7] text-[#78716C]">
-                有待公司所有者处理的归属异常
+                有待团队所有者处理的归属异常
               </AlertDescription>
             )}
           </Alert>

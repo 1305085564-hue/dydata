@@ -295,7 +295,7 @@ export async function resolveVideoReviewReadOnlyScope(
       supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by"),
     loadWithoutMembership: async () => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by"),
   });
-  assertSupabaseQuerySucceeded(rows.error, "加载公司只读成员范围失败");
+  assertSupabaseQuerySucceeded(rows.error, "加载团队只读成员范围失败");
   const allRows = (rows.data ?? []) as CompanyHistoricalRow[];
   const affiliatedIds = new Set(
     allRows

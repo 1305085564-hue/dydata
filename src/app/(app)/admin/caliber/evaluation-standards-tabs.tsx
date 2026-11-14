@@ -267,7 +267,7 @@ export function EvaluationStandardsTabs({
           <section className="max-w-4xl space-y-5">
             <div className="space-y-3">
               <p className="text-[14px] leading-6 text-[#1F1E1D]">
-                本标准适用于本公司所有账号。保存后将按当前标准重新判断历史作品，原始数据不会改变。
+                本标准适用于本团队所有账号。保存后将按当前标准重新判断历史作品，原始数据不会改变。
               </p>
               <p className="text-[12px] text-[#78716C]">
                 好标准显示为红色，差标准显示为绿色，中间为普通；达到播放量门槛前不判断好坏。{formatUpdatedAt(updatedAt)}。

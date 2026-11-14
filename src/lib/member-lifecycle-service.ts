@@ -395,10 +395,8 @@ export async function transferMemberToTeamWithClient(input: {
   const target = loaded.profile;
   if (input.actor.id === target.id) return operationFailure("transfer_team", "校验", new Error("不能调配自己"));
   const targetRoleResolution = resolveProfileCompanyRole(target.role, target.company_role);
-  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
-    return operationFailure("transfer_team", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
-  }
-  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("transfer_team", "校验", new Error("不能调配公司所有者"));
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return operationFailure("transfer_team", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
+  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("transfer_team", "校验", new Error("不能调配团队所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return operationFailure("transfer_team", "校验", new Error("已归档账号不能调配团队，请先恢复账号"));
   }
@@ -526,7 +524,7 @@ export async function removeMemberFromTeamWithClient(input: {
   if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
     return operationFailure("remove_from_team", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
   }
-  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("remove_from_team", "校验", new Error("不能移出公司所有者"));
+  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("remove_from_team", "校验", new Error("不能移出团队所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return {
       ok: true,

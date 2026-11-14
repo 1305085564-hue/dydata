@@ -54,7 +54,7 @@ export async function saveEvaluationSettings(supabase: SupabaseClient, teamId: s
     value: { standards: parsed.data, previous },
     updated_at: updatedAt,
     updated_by: userId,
-    description: "公司统一评价标准（上一版随记录备份）",
+    description: "团队统一评价标准（上一版随记录备份）",
   };
   const result = await withTimeout(async (signal) => {
     const query = expectedUpdatedAt === null

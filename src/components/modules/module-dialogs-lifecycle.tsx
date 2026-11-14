@@ -172,7 +172,7 @@ export function ModuleDialogsLifecycle({
         description={
           roleChangeConfirm
             ? roleChangeConfirm.targetRole === "admin"
-              ? `即将提升「${roleChangeConfirm.memberName}」为组长。提升后该成员将获得管理层职级，可管理本公司全部成员。确认继续？`
+              ? `即将提升「${roleChangeConfirm.memberName}」为组长。提升后该成员将获得管理层职级，可管理本团队全部成员。确认继续？`
               : `即将调整「${roleChangeConfirm.memberName}」为组员。调整后该成员将失去管理权限，且当前的功能权限配置将被清空。确认继续？`
             : ""
         }

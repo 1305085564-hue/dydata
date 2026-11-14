@@ -211,7 +211,7 @@ export async function renameWorkGroup(
   const loaded = await loadWorkGroup(supabase, input.groupId);
   if (!loaded.ok) return loaded;
   const group = loaded.value;
-  if (group.teamId !== input.actorTeamId) return failure(403, "不能管理其他公司的小队");
+  if (group.teamId !== input.actorTeamId) return failure(403, "不能管理其他团队的小队");
 
   const normalized = normalizeWorkGroupName(input.name);
   if (!normalized.ok) return failure(400, normalized.message);
@@ -269,7 +269,7 @@ export async function deleteWorkGroup(
   const loaded = await loadWorkGroup(supabase, input.groupId);
   if (!loaded.ok) return loaded;
   const group = loaded.value;
-  if (group.teamId !== input.actorTeamId) return failure(403, "不能管理其他公司的小队");
+  if (group.teamId !== input.actorTeamId) return failure(403, "不能管理其他团队的小队");
 
   const { error } = await supabase.from("work_groups").delete().eq("id", group.id);
   if (error) {

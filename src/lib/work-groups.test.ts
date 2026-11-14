@@ -320,7 +320,7 @@ test("分配与取消：跨公司小组、跨公司成员、无团队归属成�
 
   assert.deepEqual(
     resolveWorkGroupAssignment({ actorTeamId: TEAM_A, group: foreignGroup, member: ownMember }),
-    { ok: false, status: 403, message: "不能管理其他公司的小队" },
+    { ok: false, status: 403, message: "不能管理其他团队的小队" },
   );
   assert.deepEqual(
     resolveWorkGroupAssignment({
@@ -328,7 +328,7 @@ test("分配与取消：跨公司小组、跨公司成员、无团队归属成�
       group: ownGroup,
       member: { id: "member-other-team", teamId: TEAM_B, peerGroupId: null, operatorGroupId: null },
     }),
-    { ok: false, status: 403, message: "不能分配其他公司的成员" },
+    { ok: false, status: 403, message: "不能分配其他团队的成员" },
   );
   assert.deepEqual(
     resolveWorkGroupAssignment({
@@ -336,7 +336,7 @@ test("分配与取消：跨公司小组、跨公司成员、无团队归属成�
       group: ownGroup,
       member: { id: "member-archived", teamId: null, peerGroupId: null, operatorGroupId: null },
     }),
-    { ok: false, status: 403, message: "不能分配其他公司的成员" },
+    { ok: false, status: 403, message: "不能分配其他团队的成员" },
   );
   assert.deepEqual(
     resolveWorkGroupAssignment({ actorTeamId: TEAM_A, group: ownGroup, member: null }),
@@ -430,11 +430,11 @@ test("改名与删除：不能碰其他公司的 squad", async () => {
 
   assert.deepEqual(
     await renameWorkGroup(client, { actorId: ACTOR, actorTeamId: TEAM_A, groupId: "group-other-team", name: "新名字" }),
-    { ok: false, status: 403, message: "不能管理其他公司的小队" },
+    { ok: false, status: 403, message: "不能管理其他团队的小队" },
   );
   assert.deepEqual(
     await deleteWorkGroup(client, { actorId: ACTOR, actorTeamId: TEAM_A, groupId: "group-other-team" }),
-    { ok: false, status: 403, message: "不能管理其他公司的小队" },
+    { ok: false, status: 403, message: "不能管理其他团队的小队" },
   );
   assert.equal(db.work_groups.some((row) => row.id === "group-other-team"), true);
   assert.equal(auditRows(db).length, 0);
@@ -559,7 +559,7 @@ test("分配：跨公司成员被拒，成员归属保持原样", async () => {
     userId: "member-other-team",
   });
 
-  assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他公司的成员" });
+  assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他团队的成员" });
   assert.equal(db.profiles.find((row) => row.id === "member-other-team")!.work_peer_group_id, null);
   assert.equal(auditRows(db).length, 0);
 });
@@ -579,7 +579,7 @@ test("批量分配：部分失败如实返回，已成功的人不回滚", async
   assert.equal(result.ok === true && result.value.assignedCount, 1);
   assert.equal(result.ok === true && result.value.skippedCount, 0);
   assert.deepEqual(result.ok === true && result.value.failures, [
-    { userId: "member-other-team", message: "不能分配其他公司的成员" },
+    { userId: "member-other-team", message: "不能分配其他团队的成员" },
   ]);
   assert.deepEqual(result.ok === true && result.value.details, [
     { groupId: "group-writer-1", userId: "member-writer", changed: true, replacedGroupName: null },
@@ -660,7 +660,7 @@ test("批量分配：全员失败返回首个失败，不伪装成功", async ()
     userIds: ["member-other-team", "member-archived"],
   });
 
-  assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他公司的成员" });
+  assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他团队的成员" });
   assert.equal(auditRows(db).length, 0);
 });
 

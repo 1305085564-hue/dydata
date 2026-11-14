@@ -96,7 +96,7 @@ test("规则真的会动手：同槽位换组给出替换计划（不再报错�
   });
   assert.equal(crossCompanyMember.ok, false);
   assert.equal(crossCompanyMember.ok === false && crossCompanyMember.status, 403);
-  assert.equal(crossCompanyMember.ok === false && crossCompanyMember.message, "不能分配其他公司的成员");
+  assert.equal(crossCompanyMember.ok === false && crossCompanyMember.message, "不能分配其他团队的成员");
 
   const crossCompanyGroup = resolveWorkGroupAssignment({
     actorTeamId: "team-a",
@@ -105,7 +105,7 @@ test("规则真的会动手：同槽位换组给出替换计划（不再报错�
   });
   assert.equal(crossCompanyGroup.ok, false);
   assert.equal(crossCompanyGroup.ok === false && crossCompanyGroup.status, 403);
-  assert.equal(crossCompanyGroup.ok === false && crossCompanyGroup.message, "不能管理其他公司的小队");
+  assert.equal(crossCompanyGroup.ok === false && crossCompanyGroup.message, "不能管理其他团队的小队");
 });
 
 test("分配成功提示：发生替换时说明从哪个组挪过来，两个入口共用同一句话", () => {

@@ -365,7 +365,7 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
   );
 
   assert.match(modulesSource, /isArchivedView && canArchiveTarget\(member\)/);
-  assert.match(modulesSource, /可管理本公司全部成员/);
+  assert.match(modulesSource, /可管理本团队全部成员/);
   assert.doesNotMatch(modulesSource, /可管理全公司成员/);
   assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
   assert.match(modulesSource, /<MemberAiDialogs[\s\S]*onConfirm=/);

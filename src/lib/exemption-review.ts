@@ -21,7 +21,7 @@ const SAFE_RPC_MESSAGES = new Map<string, { status: number; message: string }>([
   ["豁免日期不正确", { status: 400, message: "豁免日期不正确" }],
   ["永久豁免必须填写原因", { status: 400, message: "永久豁免必须填写原因" }],
   ["申请人与团队不一致", { status: 409, message: "申请信息已失效，请重新提交" }],
-  ["仅公司所有者可设置不参与考核", { status: 403, message: "仅公司所有者可设置不参与考核" }],
+  ["仅团队所有者可设置不参与考核", { status: 403, message: "仅团队所有者可设置不参与考核" }],
 ]);
 
 function toFailure(error: unknown): ExemptionRpcResult<never> {

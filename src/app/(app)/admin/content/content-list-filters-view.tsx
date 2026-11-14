@@ -52,12 +52,12 @@ export function ContentListFiltersView({
         >
           <SelectTrigger size="sm" variant="borderless" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
             <SelectValue placeholder="选择范围">
-              {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
+              {perspective === "company" ? "全部团队" : (selectedTeamName ?? "选择团队")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {canSwitchPerspective && (
-              <SelectItem value="all_company">全公司</SelectItem>
+              <SelectItem value="all_company">全部团队</SelectItem>
             )}
             {teams.map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>

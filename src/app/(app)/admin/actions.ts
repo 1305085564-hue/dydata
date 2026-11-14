@@ -459,8 +459,7 @@ export async function assignOrphanExemptionMember(
   if (teamResult.error) return { error: "读取目标团队失败" };
   if (!teamResult.data) return { error: "目标团队不存在" };
 
-  // updateMemberTeam 内部会再次读取目标 profile；expectedCurrentTeamId
-  // 防止页面打开后成员先被其他管理员归属，再被旧卡片覆盖。
+  // updateMemberTeam 内部会再次读取目标 profile；expectedCurrentTeamId 防止页面打开后成员先被其他管理员归属，再被旧卡片覆盖。
   const assignment = await updateMemberTeam(normalizedApplicantId, normalizedTeamId, {
     expectedCurrentTeamId: null,
   });
@@ -718,7 +717,7 @@ export async function changeRole(
   const targetRole = resolveTargetRuntimeRole(target);
   if (!targetRole) return { error: "成员角色字段冲突或无效，拒绝操作" };
   if (targetRole === "owner") {
-    return { error: "不能修改其他公司所有者" };
+    return { error: "不能修改其他团队所有者" };
   }
 
   if (

@@ -103,7 +103,7 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
 }
 
 export function evaluationSettingsKey(teamId: string | null | undefined): string {
-  if (!teamId) throw new Error("缺少公司归属，无法读取评价标准");
+  if (!teamId) throw new Error("缺少团队归属，无法读取评价标准");
   return `evaluation_standards:${teamId}`;
 }
 

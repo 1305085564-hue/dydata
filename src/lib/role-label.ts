@@ -10,7 +10,7 @@ export interface RoleLabelOptions {
 export function getRoleLabel(role: unknown, options: RoleLabelOptions = {}) {
   if (options.membershipStatus === "archived" || role === "archived") return "已归档";
   const businessRole = options.companyRole ?? role;
-  if (businessRole === "owner" || businessRole === "company_owner") return "公司所有者";
+  if (businessRole === "owner" || businessRole === "company_owner") return "团队所有者";
   if (businessRole === "admin") return "组长 · 管理";
   return "组员";
 }

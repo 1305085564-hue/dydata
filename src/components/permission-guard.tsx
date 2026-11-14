@@ -38,10 +38,10 @@ export function PermissionGuard({
       if (payload.warning) {
         feedbackToast.error(payload.warning);
       } else {
-        feedbackToast.success("已通知公司管理方，等待处理中。");
+        feedbackToast.success("已通知团队管理方，等待处理中。");
       }
     } catch {
-      feedbackToast.error("申请发送失败，请联系公司所有者或组长。");
+      feedbackToast.error("申请发送失败，请联系团队所有者或组长。");
     } finally {
       setIsApplying(false);
     }
@@ -66,7 +66,7 @@ export function PermissionGuard({
           <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
             {description ||
               (showApplyButton
-                ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有需要，可向公司负责人或组长申请开通对应权限。`
+                ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有需要，可向团队负责人或组长申请开通对应权限。`
                 : `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如需访问，可向管理员申请。`)}
           </p>
         </div>

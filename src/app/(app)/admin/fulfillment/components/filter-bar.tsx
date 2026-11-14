@@ -180,7 +180,7 @@ export function FilterBar({
           className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 px-3 py-1.5 transition hover:bg-white hover:border-[#E2E2DF] hover:shadow-input"
           title={
             feishuEnabled === null && !settingsLoading
-              ? "飞书每日催交由企业管理员在发布管理中统一配置"
+              ? "飞书每日催交由团队管理员在发布管理中统一配置"
               : "每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
           }
         >
@@ -207,7 +207,7 @@ export function FilterBar({
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : feishuEnabled === null ? (
             <span className="text-[12px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#E2E2DF]/60">
-              企业统一配置
+              团队统一配置
             </span>
           ) : (
             <Switch

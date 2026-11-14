@@ -47,7 +47,7 @@ export function resolvePermanentExemptionState(
       isTemporary: false,
       statusText: "已设置不参与考核",
       badgeLabel: "已设置不参与考核",
-      description: target.exempt_reason ? `原因：${target.exempt_reason}` : "已由公司所有者设为永久不参与考核",
+      description: target.exempt_reason ? `原因：${target.exempt_reason}` : "已由团队所有者设为永久不参与考核",
     };
   }
 

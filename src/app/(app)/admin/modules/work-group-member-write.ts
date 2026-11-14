@@ -142,12 +142,12 @@ async function loadTrustedRows(
     ? mapWorkGroupRow(groupResult.data as WorkGroupDbRow)
     : null;
   if (!group || !isWorkGroupKind(group.kind)) return failure(404, "小队不存在");
-  if (group.teamId !== teamId) return failure(403, "不能管理其他公司的小队");
+  if (group.teamId !== teamId) return failure(403, "不能管理其他团队的小队");
 
   const member = memberResult.data as MemberRow | null;
   if (!member) return failure(404, "成员不存在");
   if (member.id !== input.userId) return failure(404, "成员不存在");
-  if (member.team_id !== teamId) return failure(403, "不能调整其他公司的成员");
+  if (member.team_id !== teamId) return failure(403, "不能调整其他团队的成员");
   if (
     member.membership_status !== "active" ||
     (actorRole === "admin" && member.company_role !== "member") ||
@@ -175,7 +175,7 @@ function rpcFailure(error: { code?: string; message?: string } | null, result: R
     case "unauthenticated": return failure(401, "请登录后操作");
     case "forbidden": return failure(403, "无权限调整成员小队");
     case "member_not_assignable": return failure(403, "目标成员不在当前角色可管理的小队范围内");
-    case "group_not_assignable": return failure(403, "不能管理其他公司的小队");
+    case "group_not_assignable": return failure(403, "不能管理其他团队的小队");
     case "group_kind_mismatch": return failure(400, "小队类型与归属位置不匹配");
     default: return failure(500, "成员小队调整失败，请刷新后重试");
   }

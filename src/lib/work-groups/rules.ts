@@ -177,11 +177,11 @@ export function resolveWorkGroupAssignment(input: {
   } | null;
 }): WorkGroupResult<WorkGroupAssignmentPlan> {
   if (input.group.teamId !== input.actorTeamId) {
-    return failure(403, "不能管理其他公司的小队");
+    return failure(403, "不能管理其他团队的小队");
   }
   if (!input.member) return failure(404, "成员不存在");
   if (input.member.teamId !== input.actorTeamId) {
-    return failure(403, "不能分配其他公司的成员");
+    return failure(403, "不能分配其他团队的成员");
   }
 
   const slot = workGroupSlotForKind(input.group.kind);
@@ -222,11 +222,11 @@ export function resolveWorkGroupUnassignment(input: {
   } | null;
 }): WorkGroupResult<WorkGroupAssignmentPlan> {
   if (input.group.teamId !== input.actorTeamId) {
-    return failure(403, "不能管理其他公司的小队");
+    return failure(403, "不能管理其他团队的小队");
   }
   if (!input.member) return failure(404, "成员不存在");
   if (input.member.teamId !== input.actorTeamId) {
-    return failure(403, "不能调整其他公司的成员");
+    return failure(403, "不能调整其他团队的成员");
   }
 
   const slot = workGroupSlotForKind(input.group.kind);

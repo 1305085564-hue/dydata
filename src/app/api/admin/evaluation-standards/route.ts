@@ -18,10 +18,10 @@ export async function buildEvaluationStandardsResponse(request: Request, deps = 
   try {
     const auth = await deps.requireAdminServiceClient();
     if ("response" in auth) return auth.response ?? json({ error: "无权限" }, 403);
-    if (!auth.scope.teamId || !canAccessAdminPath("/admin/caliber", auth.actor.role, auth.actor.permissions)) return json({ error: "无权查看公司评价标准" }, 403);
+    if (!auth.scope.teamId || !canAccessAdminPath("/admin/caliber", auth.actor.role, auth.actor.permissions)) return json({ error: "无权查看团队评价标准" }, 403);
     const canEdit = canEditEvaluationStandards(auth.actor);
     if (request.method === "GET") return json({ ...await deps.loadEvaluationSettings(auth.supabase, auth.scope.teamId), canEdit });
-    if (!canEdit) return json({ error: "只有公司负责人可以修改评价标准" }, 403);
+    if (!canEdit) return json({ error: "只有团队负责人可以修改评价标准" }, 403);
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) return json({ error: "请求来源不正确" }, 403);
     let body: unknown;

@@ -19,7 +19,7 @@ export function getOrphanExemptionReminderMeta(
     badge: `${count} 条`,
     description: canViewDetails
       ? "请前往成员管理处理归属异常申请。"
-      : "有待公司所有者处理的归属异常。",
+      : "有待团队所有者处理的归属异常。",
   };
 }
 

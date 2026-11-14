@@ -96,7 +96,7 @@ export async function requireCompanyOwnerActor() {
   }
 
   if (auth.actor.companyRole !== "company_owner") {
-    return { response: NextResponse.json({ error: "仅公司所有者可设置不参与考核" }, { status: 403 }) };
+    return { response: NextResponse.json({ error: "仅团队所有者可设置不参与考核" }, { status: 403 }) };
   }
 
   const permissionContext = auth.context;

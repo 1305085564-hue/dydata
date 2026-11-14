@@ -26,7 +26,7 @@ test("普通管理员只能看到归属异常计数提示，不包含申请详�
   assert.deepEqual(meta, {
     title: "归属异常",
     badge: "1 条",
-    description: "有待公司所有者处理的归属异常。",
+    description: "有待团队所有者处理的归属异常。",
   });
   assert.doesNotMatch(JSON.stringify(meta), /申请人|团队快照|申请原因/);
 });
