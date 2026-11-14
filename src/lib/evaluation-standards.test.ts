@@ -10,8 +10,8 @@ test("默认标准保持已确认口径，差线按各指标边界判断", () =>
   assert.deepEqual(standards.avgPlayDuration, { good: 50, poor: 30 });
   assert.deepEqual(standards.avgPlayRatio, { good: 25, poor: 20 });
   assert.equal(evaluationTone("bounceRate2s", 25, 3000, standards), "good");
-  assert.equal(evaluationTone("bounceRate2s", 35, 3000, standards), "normal");
-  assert.equal(evaluationTone("bounceRate2s", 35.1, 3000, standards), "poor");
+  assert.equal(evaluationTone("bounceRate2s", 30, 3000, standards), "normal");
+  assert.equal(evaluationTone("bounceRate2s", 30.01, 3000, standards), "poor");
   assert.equal(evaluationTone("completionRate5s", 60, 3000, standards), "good");
   assert.equal(evaluationTone("completionRate5s", 50, 3000, standards), "poor");
   assert.equal(evaluationTone("avgPlayRatio", 25, 3000, standards), "good");
@@ -70,6 +70,28 @@ test("拒绝重叠区间、越界、非数字及缺项，不把非法保存伪�
   }
   assert.equal(parseEvaluationStandards({}).success, false);
   assert.equal(parseEvaluationStandards({ ...valid, teamId: "other-company" }).success, false);
+});
+
+test("好标准不能填 0，差线允许填 0，接近 0 的好标准可以保存", () => {
+  const zeroGood = draft();
+  zeroGood.bounceRate2s.good = 0;
+  const zeroGoodResult = parseEvaluationStandards(zeroGood);
+  assert.equal(zeroGoodResult.success, false);
+  if (!zeroGoodResult.success) assert.match(zeroGoodResult.error, /好标准须大于 0/);
+
+  const tinyGood = draft();
+  tinyGood.bounceRate2s.good = 0.01;
+  assert.equal(parseEvaluationStandards(tinyGood).success, true);
+
+  const zeroPoor = draft();
+  zeroPoor.completionRate.poor = 0;
+  assert.equal(parseEvaluationStandards(zeroPoor).success, true);
+
+  const negativePoor = draft();
+  negativePoor.completionRate.poor = -0.01;
+  const negativePoorResult = parseEvaluationStandards(negativePoor);
+  assert.equal(negativePoorResult.success, false);
+  if (!negativePoorResult.success) assert.match(negativePoorResult.error, /差线须为 0/);
 });
 
 test("公司键隔离，无公司拒绝；负责人可写，普通管理员即使带权限标记也不可写", () => {

@@ -55,8 +55,8 @@ test("播放达到3000后指标可显示表现颜色", () => {
 
 test("显示口径：好红差绿，边界与样本下限正确", () => {
   assert.equal(detail.getBounceRate2sClass(25, 3000), "text-status-danger");
-  assert.equal(detail.getBounceRate2sClass(35, 3000), "text-[#141413]");
-  assert.equal(detail.getBounceRate2sClass(35.01, 3000), "text-status-success");
+  assert.equal(detail.getBounceRate2sClass(30, 3000), "text-[#141413]");
+  assert.equal(detail.getBounceRate2sClass(30.01, 3000), "text-status-success");
   assert.equal(detail.getAvgPlayDurationClass(20, 3000), "text-status-success");
   assert.equal(detail.getAvgPlayDurationClass(50, 3000), "text-status-danger");
   assert.equal(detail.getCompletionRateClass(5, 3000), "text-status-success");

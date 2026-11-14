@@ -77,7 +77,7 @@ test("规则下发来自 breakout-rating 现行常量，前端不需要复制数
     gradeThresholds: BREAKOUT_GRADE_THRESHOLDS,
     playFloors: { floor: KPI_PLAY_FLOOR, good: KPI_PLAY_GOOD, excellent: KPI_PLAY_EXCELLENT },
     retentionBands: {
-      bounceRate2s: { good: 25, poor: 35 },
+      bounceRate2s: { good: 25, poor: 30 },
       completionRate5s: { good: 60, poor: 50 },
       avgPlayDuration: { good: 50, poor: 30 },
       avgPlayRatio: { good: 25, poor: 20 },
@@ -90,7 +90,7 @@ test("规则下发来自 breakout-rating 现行常量，前端不需要复制数
 test("留存差线只生成警告，不改变达成率、留存档位或综合评级", () => {
   const rules = contentQualityRules();
   const poor = snapshot({
-    bounceRate2s: 35.01,
+    bounceRate2s: 30.01,
     completionRate5s: 50,
     avgPlayDuration: 30,
     avgPlayRatio: 0.1999,

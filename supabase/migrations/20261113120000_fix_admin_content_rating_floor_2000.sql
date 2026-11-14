@@ -1,6 +1,7 @@
 -- 评价标准：列表综合评级筛选/排序与留存警告使用服务端传入的公司达标基准。
 -- 兼容：未传evaluationTargets时沿用当前默认值，不改变签名、权限与旧调用行为。
 -- 固定边界：2000/15000 是综合评级播放门槛；5000 及 30/50/30/5 只属于复盘队列异常提醒，不在本函数复用。
+-- 好标准/达标基准为除数，配置为 0 时回退默认值；差线和权重保留配置的 0。
 -- 回滚：恢复 20261028045959_evaluation_standard_rating_targets.sql 的同名函数；system_settings 配置无结构变更。
 create or replace function public.admin_content_list_page(
   p_view text,
@@ -170,17 +171,17 @@ with args as (
   from base b
 ), evaluation_targets as materialized (
   select m.*,
-    coalesce((cfg.filters #>> '{evaluationTargets,interactionRate}')::numeric, 3.5) as interaction_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,interactionRate}')::numeric, 0), 3.5) as interaction_target,
     case when m.topic_kind = 'dry_goods'
-      then coalesce((cfg.filters #>> '{evaluationTargets,dryFavoriteRate}')::numeric, 2.0)
-      else coalesce((cfg.filters #>> '{evaluationTargets,reviewLikeRate}')::numeric, 2.0)
+      then coalesce(nullif((cfg.filters #>> '{evaluationTargets,dryFavoriteRate}')::numeric, 0), 2.0)
+      else coalesce(nullif((cfg.filters #>> '{evaluationTargets,reviewLikeRate}')::numeric, 0), 2.0)
     end as core_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,bounceRate2s,good}')::numeric, 25) as bounce_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,completionRate5s,good}')::numeric, 60) as completion_5s_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayDuration,good}')::numeric, 50) as avg_duration_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayRatio,good}')::numeric, 25) as avg_ratio_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,completionRate,good}')::numeric, 10) as completion_target,
-    coalesce((cfg.filters #>> '{evaluationTargets,bounceRate2s,poor}')::numeric, 35) as bounce_poor_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,bounceRate2s,good}')::numeric, 0), 25) as bounce_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate5s,good}')::numeric, 0), 60) as completion_5s_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayDuration,good}')::numeric, 0), 50) as avg_duration_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayRatio,good}')::numeric, 0), 25) as avg_ratio_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate,good}')::numeric, 0), 10) as completion_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,bounceRate2s,poor}')::numeric, 30) as bounce_poor_target,
     coalesce((cfg.filters #>> '{evaluationTargets,completionRate5s,poor}')::numeric, 50) as completion_5s_poor_target,
     coalesce((cfg.filters #>> '{evaluationTargets,avgPlayDuration,poor}')::numeric, 30) as avg_duration_poor_target,
     coalesce((cfg.filters #>> '{evaluationTargets,avgPlayRatio,poor}')::numeric, 20) as avg_ratio_poor_target,

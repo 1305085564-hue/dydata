@@ -25,7 +25,7 @@ export const VIDEO_REVIEW_RULE_THRESHOLDS = {
     avg_play_ratio: 25,
   },
   poor: {
-    bounce_rate_2s: 35,
+    bounce_rate_2s: 30,
     completion_rate_5s: 50,
     completion_rate: 5,
     avg_play_duration: 30,

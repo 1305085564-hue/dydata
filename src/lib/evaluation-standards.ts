@@ -77,9 +77,9 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
   if (!inRange(standards.minPlayCount, 1e9) || !Number.isInteger(standards.minPlayCount)) return { success: false, error: "播放量门槛须为 0～10 亿的整数" };
   for (const metric of EVALUATION_METRICS) {
     const band = standards[metric.key];
-    if (!isRecord(band) || Object.keys(band).some((key) => key !== "good" && key !== "poor") || !inRange(band.good, metric.max) || !inRange(band.poor, metric.max)) {
-      return { success: false, error: `${metric.label}请填写 0～${metric.max} 的数字` };
-    }
+    if (!isRecord(band) || Object.keys(band).some((key) => key !== "good" && key !== "poor")) return { success: false, error: `${metric.label}请填写好标准和差线` };
+    if (!inRange(band.good, metric.max, true)) return { success: false, error: `${metric.label}的好标准须大于 0 且不超过 ${metric.max}` };
+    if (!inRange(band.poor, metric.max)) return { success: false, error: `${metric.label}的差线须为 0～${metric.max}` };
     if (metric.lowerIsBetter ? band.good >= band.poor : band.good <= band.poor) {
       return { success: false, error: `${metric.label}的好、差标准不能重叠` };
     }
