@@ -245,19 +245,31 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="flex flex-col items-center justify-between gap-4 border-t border-[#E2E2DF] py-10 md:flex-row md:gap-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#141413] text-[#FCFCFB]">
-              <Zap className="size-3 fill-white text-white" />
+        <footer className="border-t border-[#E2E2DF] py-10">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:gap-0">
+            <div className="flex items-center gap-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#141413] text-[#FCFCFB]">
+                <Zap className="size-3 fill-white text-white" />
+              </div>
+              <p className="text-[13px] text-[#1F1E1D]">
+                DYData
+                <span className="ml-1 text-[12px] text-[#78716C]">· 内容团队工作台</span>
+              </p>
             </div>
-            <p className="text-[13px] text-[#1F1E1D]">
-              DYData
-              <span className="ml-1 text-[12px] text-[#78716C]">· 内容团队工作台</span>
+            <p className="text-[12px] text-[#78716C]">
+              专注文档级数据严谨度与创作者体验
             </p>
           </div>
-          <p className="text-[12px] text-[#78716C]">
-            专注文档级数据严谨度与创作者体验
-          </p>
+          <div className="mt-6 text-center">
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] text-[#78716C] hover:underline"
+            >
+              粤ICP备2026181409号
+            </a>
+          </div>
         </footer>
       </main>
     </div>
