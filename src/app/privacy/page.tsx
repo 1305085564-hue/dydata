@@ -38,9 +38,9 @@ export default function PrivacyPage() {
 
           <div className="mt-8 space-y-8 text-[14px] leading-[1.85] text-[#1F1E1D]">
             <section className="space-y-3">
-              <h2 className="text-[14px] font-normal text-[#141413]">一、主体与服务说明</h2>
+              <h2 className="text-[14px] font-normal text-[#141413]">一、服务说明</h2>
               <p>
-                本隐私政策适用于 dydata.cc（以下简称“本网站”）及其提供的“数据分析小站”服务。本网站由个人（杜娓乐）运营和维护，ICP 备案主体为杜娓乐（个人备案）。服务仅供小团队内部成员使用，注册时需选择并申请加入团队，并由团队管理员审批，不是面向公众开放的社区。
+                本隐私政策适用于 dydata.cc（以下简称“本网站”）及其提供的“数据分析小站”服务。本网站是面向小团队内部成员的非公开工具，注册时需选择并申请加入团队，并由团队管理员审批，不是面向公众开放的社区。
               </p>
             </section>
 
