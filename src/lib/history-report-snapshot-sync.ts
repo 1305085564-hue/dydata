@@ -35,14 +35,6 @@ export function preserveExistingHistoryReportAvgPlayRatio(
   return { ...input, avg_play_ratio: existingStoredRatio * 100 };
 }
 
-/** actions.ts 的历史编辑回捞分支统一从快照查询结果进入此处。 */
-export function resolveHistoryReportSnapshotMetricsForSync(
-  input: HistoryReportSnapshotMetricInput,
-  existingSnapshot: { avg_play_ratio?: number | null } | null | undefined,
-): HistoryReportSnapshotMetricInput {
-  return preserveExistingHistoryReportAvgPlayRatio(input, existingSnapshot?.avg_play_ratio);
-}
-
 /** 手稿指标 → 24h 快照字段。刻意不含 follower_loss、截图、vs_previous、留存截图。 */
 export function buildHistoryReport24hSnapshotPatch(
   input: HistoryReportSnapshotMetricInput,

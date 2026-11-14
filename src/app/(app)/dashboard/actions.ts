@@ -31,7 +31,7 @@ import {
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
-  resolveHistoryReportSnapshotMetricsForSync,
+  preserveExistingHistoryReportAvgPlayRatio,
   resolveHistorySnapshotSyncStatus,
   type HistoryReportSnapshotMetricInput,
   type HistorySnapshotSyncStatus,
@@ -236,9 +236,9 @@ export async function submitReport(formData: FormData) {
     if (existingSnapshot.error) {
       return { error: "读取原 24h 快照失败，历史编辑未保存" };
     }
-    snapshotMetricsForSync = resolveHistoryReportSnapshotMetricsForSync(
+    snapshotMetricsForSync = preserveExistingHistoryReportAvgPlayRatio(
       snapshotMetrics,
-      existingSnapshot.data,
+      existingSnapshot.data?.avg_play_ratio,
     );
   }
   const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetricsForSync);

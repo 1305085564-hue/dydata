@@ -278,6 +278,10 @@
     "src/app/(app)/admin/content/content-list-secondary-filters.tsx": {
       "maxLines": 515,
       "category": "source"
+    },
+    "src/app/api/admin/collaboration/content-quality.test.ts": {
+      "maxLines": 551,
+      "category": "test"
     }
   },
   "note": "2026-10-31 阿禅批准重新登记：收编已上线功能（AI配置/创作者作品/指令中心等）与工作台试点的既有规模，棘轮自本值继续只降不升"

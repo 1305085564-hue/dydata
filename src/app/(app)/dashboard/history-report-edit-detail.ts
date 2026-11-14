@@ -78,3 +78,12 @@ export async function fetchHistoryReportEditDetail(
   if (error) throw new Error(error);
   return { kind: "video", detail: payload.detail as VideoSubmissionEditDetail };
 }
+
+/** 编辑详情来自 24h 快照；平均播放占比以 0–1 存储，回填到表单时转换成百分数。 */
+export function applyHistoryEditVideoMetrics<T extends { avg_play_ratio: string }>(
+  current: T,
+  detailMetrics: Pick<VideoSubmissionEditDetail["metrics"], "avgPlayRatio">,
+): T {
+  if (detailMetrics.avgPlayRatio == null || current.avg_play_ratio.trim()) return current;
+  return { ...current, avg_play_ratio: String(detailMetrics.avgPlayRatio * 100) };
+}

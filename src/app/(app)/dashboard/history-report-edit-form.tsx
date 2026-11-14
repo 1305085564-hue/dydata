@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
-import { fetchHistoryReportEditDetail, type HistoryReportEditDetailOutcome } from "./history-report-edit-detail";
+import { applyHistoryEditVideoMetrics, fetchHistoryReportEditDetail, type HistoryReportEditDetailOutcome } from "./history-report-edit-detail";
 import { fetchCachedOperatorMembers, getCachedOperatorMembers, type OperatorMember } from "@/lib/video-submit-workflow/operator-members";
 import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "./video-submit-form-state";
 
@@ -107,15 +107,6 @@ export function getInitialHistoryReportMetricValues(report: HistoryReportEditDat
     completion_rate_5s: stripSuffix(report.completion_rate_5s, "%"),
     completion_rate: stripSuffix(report.completion_rate, "%"),
   };
-}
-
-/** 编辑详情来自 24h 快照；平均播放占比以 0–1 存储，回填到表单时转换成百分数。 */
-export function applyHistoryEditVideoMetrics(
-  current: MetricValues,
-  detailMetrics: Pick<VideoSubmissionEditDetail["metrics"], "avgPlayRatio">,
-): MetricValues {
-  if (detailMetrics.avgPlayRatio == null || current.avg_play_ratio.trim()) return current;
-  return { ...current, avg_play_ratio: String(detailMetrics.avgPlayRatio * 100) };
 }
 
 export function buildHistoryReportEditDraftBaseline(
@@ -808,9 +799,9 @@ export function HistoryReportEditForm({
                       onChange={(event) => updateMetric(field.key, event.target.value)}
                       className="h-8 rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white text-[12px] font-normal tabular-nums shadow-input transition-colors px-2"
                     />
-                    {field.key === "avg_play_ratio" ? (
+                    {field.key === "avg_play_ratio" && (
                       <p className="text-[12px] leading-tight text-[#A8A29E]">留空＝保持原值，不能清空</p>
-                    ) : null}
+                    )}
                   </div>
                 ))}
               </div>

@@ -4,12 +4,12 @@ import test from "node:test";
 import {
   buildHistoryReportEditDraftBaseline,
   getInitialHistoryReportMetricValues,
-  applyHistoryEditVideoMetrics,
   isHistoryEditDetailReady,
   isHistoryReportEditDraftEmpty,
   resolveUnboundHistoryReportEditAssignees,
   type HistoryReportEditData,
 } from "./history-report-edit-form";
+import { applyHistoryEditVideoMetrics } from "./history-report-edit-detail";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildHistoryReport24hSnapshotPatch } from "@/lib/history-report-snapshot-sync";

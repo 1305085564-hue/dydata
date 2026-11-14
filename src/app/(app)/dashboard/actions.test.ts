@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { submitExemptionRequestWithClient } from "./actions";
-import { resolveHistoryReportSnapshotMetricsForSync } from "@/lib/history-report-snapshot-sync";
+import { preserveExistingHistoryReportAvgPlayRatio } from "@/lib/history-report-snapshot-sync";
 
 type RequestRow = Record<string, unknown>;
 
@@ -103,10 +103,10 @@ function snapshotMetricInput(avg_play_ratio: number | null) {
 }
 
 test("历史编辑回捞分支保留已有值、0 值和无快照空值", () => {
-  assert.equal(resolveHistoryReportSnapshotMetricsForSync(snapshotMetricInput(null), { avg_play_ratio: 0.2302 }).avg_play_ratio, 23.02);
-  assert.equal(resolveHistoryReportSnapshotMetricsForSync(snapshotMetricInput(null), { avg_play_ratio: 0 }).avg_play_ratio, 0);
-  assert.equal(resolveHistoryReportSnapshotMetricsForSync(snapshotMetricInput(null), null).avg_play_ratio, null);
-  assert.equal(resolveHistoryReportSnapshotMetricsForSync(snapshotMetricInput(12.5), { avg_play_ratio: 0.2302 }).avg_play_ratio, 12.5);
+  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), 0.2302).avg_play_ratio, 23.02);
+  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), 0).avg_play_ratio, 0);
+  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), null).avg_play_ratio, null);
+  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(12.5), 0.2302).avg_play_ratio, 12.5);
 });
 
 test("V2 豁免提交使用 range 对象契约并原样保存 leave", async () => {
