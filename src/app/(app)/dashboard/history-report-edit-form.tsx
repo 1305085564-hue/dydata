@@ -809,7 +809,7 @@ export function HistoryReportEditForm({
                       className="h-8 rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white text-[12px] font-normal tabular-nums shadow-input transition-colors px-2"
                     />
                     {field.key === "avg_play_ratio" ? (
-                      <p className="text-[11px] leading-tight text-[#A8A29E]">留空＝保持原值，不能清空</p>
+                      <p className="text-[12px] leading-tight text-[#A8A29E]">留空＝保持原值，不能清空</p>
                     ) : null}
                   </div>
                 ))}

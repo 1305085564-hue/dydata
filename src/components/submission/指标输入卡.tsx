@@ -170,7 +170,7 @@ export function MetricInputCard({
           </span>
         )}
       </div>
-      {hint ? <p className="text-[11px] leading-tight text-[#A8A29E]">{hint}</p> : null}
+      {hint ? <p className="text-[12px] leading-tight text-[#A8A29E]">{hint}</p> : null}
     </div>
   );
 }
