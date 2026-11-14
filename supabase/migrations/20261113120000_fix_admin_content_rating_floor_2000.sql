@@ -1,6 +1,6 @@
 -- 评价标准：列表综合评级筛选/排序使用服务端传入的公司达标基准。
 -- 兼容：未传evaluationTargets时沿用3.5%/2%，不改变签名、权限与旧调用行为。
--- 回滚：恢复20261025100000的同名函数；system_settings配置无结构变更。
+-- 回滚：恢复 20261028045959_evaluation_standard_rating_targets.sql 的同名函数；system_settings 配置无结构变更。
 create or replace function public.admin_content_list_page(
   p_view text,
   p_page integer,
@@ -88,6 +88,7 @@ with args as (
     snap.bounce_rate_2s,
     snap.completion_rate_5s,
     snap.avg_play_duration,
+    snap.avg_play_ratio,
     snap.completion_rate,
     case
       when tag.tag_value in ('复盘', '复盘干货') then 'review_excluded'
@@ -160,6 +161,7 @@ with args as (
     case when b.play_count > 0 and b.follower_gain between 0 and b.play_count then b.follower_gain::numeric / b.play_count::numeric * 100 else null end as follower_rate,
     case when b.bounce_rate_2s between 0 and 100 then b.bounce_rate_2s else null end as sortable_bounce_rate,
     case when b.completion_rate_5s between 0 and 100 then b.completion_rate_5s else null end as sortable_completion_rate_5s,
+    case when b.avg_play_ratio between 0 and 1 then b.avg_play_ratio * 100 else null end as sortable_avg_play_ratio,
     case when b.completion_rate between 0 and 100 then b.completion_rate else null end as sortable_completion_rate,
     case when b.topic_tag = '干货' then 'dry_goods'
       when b.topic_tag in ('复盘', '复盘干货') then 'review'
@@ -171,54 +173,82 @@ with args as (
     case when m.topic_kind = 'dry_goods'
       then coalesce(nullif((cfg.filters #>> '{evaluationTargets,dryFavoriteRate}')::numeric, 0), 2.0)
       else coalesce(nullif((cfg.filters #>> '{evaluationTargets,reviewLikeRate}')::numeric, 0), 2.0)
-    end as core_target
+    end as core_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,bounceRate2s,good}')::numeric, 0), 25) as bounce_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate5s,good}')::numeric, 0), 60) as completion_5s_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayDuration,good}')::numeric, 0), 50) as avg_duration_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayRatio,good}')::numeric, 0), 25) as avg_ratio_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate,good}')::numeric, 0), 10) as completion_target,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,bounceRate2s}')::numeric, 0), 35) as bounce_weight,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate5s}')::numeric, 0), 30) as completion_5s_weight,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,avgPlayBundle}')::numeric, 0), 20) as avg_play_bundle_weight,
+    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate}')::numeric, 0), 15) as completion_weight
   from metrics m cross join args cfg
-), ratings as materialized (
+), retention_scores as materialized (
   select m.*,
     case when m.interaction_rate is not null then m.interaction_rate / m.interaction_target * 100 end as interaction_achievement,
     case when m.core_metric_rate is not null then m.core_metric_rate / m.core_target * 100 end as core_achievement,
     case
+      when m.sortable_bounce_rate is null
+        or m.sortable_completion_rate_5s is null
+        or m.avg_play_duration is null
+        or m.sortable_avg_play_ratio is null
+        or m.sortable_completion_rate is null
+      then null
+      else
+        (case when m.sortable_bounce_rate = 0 then 200 else m.bounce_target / m.sortable_bounce_rate * 100 end) * (m.bounce_weight / 100)
+        + (m.sortable_completion_rate_5s / m.completion_5s_target * 100) * (m.completion_5s_weight / 100)
+        + ((m.avg_play_duration / m.avg_duration_target * 100 + m.sortable_avg_play_ratio / m.avg_ratio_target * 100) / 2) * (m.avg_play_bundle_weight / 100)
+        + (m.sortable_completion_rate / m.completion_target * 100) * (m.completion_weight / 100)
+    end as retention_achievement
+  from evaluation_targets m
+), ratings as materialized (
+  select m.*,
+    case
+      when m.interaction_rate is null or m.retention_achievement is null then null
       when m.play_count is not null and m.play_count < 2000 then 0
-      when m.interaction_rate is null or m.core_metric_rate is null then null
       else least(
         case
-          when (m.interaction_rate / m.interaction_target * 100 + m.core_metric_rate / m.core_target * 100) / 2 >= 100 then 3
-          when (m.interaction_rate / m.interaction_target * 100 + m.core_metric_rate / m.core_target * 100) / 2 >= 80 then 2
-          when (m.interaction_rate / m.interaction_target * 100 + m.core_metric_rate / m.core_target * 100) / 2 >= 60 then 1
+          when (m.interaction_rate / m.interaction_target * 100 + m.retention_achievement) / 2 >= 100 then 3
+          when (m.interaction_rate / m.interaction_target * 100 + m.retention_achievement) / 2 >= 80 then 2
+          when (m.interaction_rate / m.interaction_target * 100 + m.retention_achievement) / 2 >= 60 then 1
           else 0
         end,
         least(
-          case when least(m.interaction_rate / m.interaction_target * 100, m.core_metric_rate / m.core_target * 100) >= 100 then 3
-            when least(m.interaction_rate / m.interaction_target * 100, m.core_metric_rate / m.core_target * 100) >= 80 then 2
-            when least(m.interaction_rate / m.interaction_target * 100, m.core_metric_rate / m.core_target * 100) >= 60 then 1 else 0 end + 1,
+          case when least(m.interaction_rate / m.interaction_target * 100, m.retention_achievement) >= 100 then 3
+            when least(m.interaction_rate / m.interaction_target * 100, m.retention_achievement) >= 80 then 2
+            when least(m.interaction_rate / m.interaction_target * 100, m.retention_achievement) >= 60 then 1 else 0 end + 1,
           3
         ),
         case when m.play_count >= 15000 then 3 else 1 end
       )
     end as overall_grade_rank
-  from evaluation_targets m
+  from retention_scores m
 ), derived as materialized (
   select r.*,
     case r.overall_grade_rank when 3 then '优' when 2 then '良' when 1 then '普' when 0 then '劣' else null end as overall_grade,
     case r.overall_grade_rank when 3 then 4 when 2 then 3 when 1 then 2 when 0 then 1 else 0 end as grade_sort_rank,
     case
       when r.sortable_bounce_rate is null then null
-      when r.sortable_bounce_rate >= 30 then 1 else 0 end as bounce_warning,
+      when r.sortable_bounce_rate > 35 then 1 else 0 end as bounce_warning,
     case
       when r.sortable_completion_rate_5s is null then null
-      when r.sortable_completion_rate_5s < 50 then 1 else 0 end as completion_5s_warning,
+      when r.sortable_completion_rate_5s <= 50 then 1 else 0 end as completion_5s_warning,
     case
       when r.avg_play_duration is null then null
-      when r.avg_play_duration < 30 then 1 else 0 end as duration_warning,
+      when r.avg_play_duration <= 30 then 1 else 0 end as duration_warning,
+    case
+      when r.sortable_avg_play_ratio is null then null
+      when r.sortable_avg_play_ratio < 20 then 1 else 0 end as avg_ratio_warning,
     case
       when r.sortable_completion_rate is null then null
-      when r.sortable_completion_rate < 5 then 1 else 0 end as completion_warning
+      when r.sortable_completion_rate <= 5 then 1 else 0 end as completion_warning
   from ratings r
 ), filtered as materialized (
   select d.*,
     case when d.anomaly_bucket in ('deleted', 'limited') then 1000
       when d.anomaly_bucket = 'abnormal' then 100 else 0 end
-      + (coalesce(d.bounce_warning, 0) + coalesce(d.completion_5s_warning, 0) + coalesce(d.duration_warning, 0) + coalesce(d.completion_warning, 0)) * 80
+      + (coalesce(d.bounce_warning, 0) + coalesce(d.completion_5s_warning, 0) + coalesce(d.duration_warning, 0) + coalesce(d.avg_ratio_warning, 0) + coalesce(d.completion_warning, 0)) * 80
       + case when not d.has_content then 20 when not d.has_segments or d.snapshot_id is null then 20 else 0 end as review_priority,
     case (select cfg.sort_field from args cfg)
       when 'published_at' then coalesce(extract(epoch from d.published_at), 0)::numeric
@@ -446,6 +476,7 @@ with args as (
       'bounce_rate_2s', bounce_rate_2s,
       'completion_rate_5s', completion_rate_5s,
       'avg_play_duration', avg_play_duration,
+      'avg_play_ratio', avg_play_ratio,
       'completion_rate', completion_rate
     ) order by id) filter (where snapshot_id is not null), '[]'::jsonb) as snapshots,
     count(*)::integer as returned_rows
@@ -485,7 +516,7 @@ select jsonb_build_object(
     'directReviewVideoId', (select id::text from filtered where anomaly_bucket is not null order by review_priority desc, published_at desc nulls last, id asc limit 1)
   ),
   'diagnostics', jsonb_build_object(
-    'evaluationStandardsVersion', 1,
+    'evaluationStandardsVersion', 2,
     'rowsRead', (select count(*)::integer from base),
     'snapshotRowsRead', (select count(snapshot_id)::integer from base),
     'returnedRows', result_page.returned_rows

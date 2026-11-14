@@ -517,6 +517,11 @@ export function HistoryReportEditForm({
         setVideoEditorId(assignees.videoEditorId);
         setOperatorId(assignees.operatorId);
         setBoundVideoId(outcome.detail.videoId);
+        if (outcome.detail.metrics.avgPlayRatio != null) {
+          setMetrics((current) => current.avg_play_ratio.trim()
+            ? current
+            : { ...current, avg_play_ratio: String(outcome.detail.metrics.avgPlayRatio! * 100) });
+        }
         if (outcome.detail.assigneeProfiles) setHistoricalAssignees(outcome.detail.assigneeProfiles);
         setEditDetailStatus("ready_with_video");
         return;

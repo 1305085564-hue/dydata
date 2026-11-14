@@ -54,6 +54,13 @@ test("历史日报编辑表单会把旧指标转成可编辑输入值", () => {
   });
 });
 
+test("历史日报编辑表单保留已有平均播放占比输入值", () => {
+  assert.equal(
+    getInitialHistoryReportMetricValues(report({ avg_play_ratio: "23.02%" })).avg_play_ratio,
+    "23.02",
+  );
+});
+
 test("历史日报编辑表单按日报独立初始化，避免残留上一条数据", () => {
   const accountA = getInitialHistoryReportMetricValues(report({ account_id: "acc-a", play_count: 999, likes: 50 }));
   const accountB = getInitialHistoryReportMetricValues(report({ account_id: "acc-b", play_count: 1, likes: 1 }));
@@ -110,6 +117,7 @@ test("历史详情四态：无绑定视频仍是可保存状态，只有加载�
   assert.match(source, /setEditDetailStatus\("error"\)/);
   assert.match(source, /setEditDetailStatus\("ready_without_video"\)/);
   assert.match(source, /setEditDetailStatus\("ready_with_video"\)/);
+  assert.match(source, /outcome\.detail\.metrics\.avgPlayRatio/);
 
   assert.equal(isHistoryEditDetailReady("loading"), false);
   assert.equal(isHistoryEditDetailReady("error"), false);

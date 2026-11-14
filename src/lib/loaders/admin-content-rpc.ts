@@ -22,7 +22,17 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor,
       p_sort_dir: query.sortDir,
       p_visible_user_ids: scope.visibleUserIds,
       p_filters: {
-        evaluationTargets: evaluationStandards?.targets,
+        evaluationTargets: evaluationStandards
+          ? {
+              ...evaluationStandards.targets,
+              bounceRate2s: evaluationStandards.bounceRate2s,
+              completionRate5s: evaluationStandards.completionRate5s,
+              avgPlayDuration: evaluationStandards.avgPlayDuration,
+              avgPlayRatio: evaluationStandards.avgPlayRatio,
+              completionRate: evaluationStandards.completionRate,
+              retentionWeights: evaluationStandards.retentionWeights,
+            }
+          : undefined,
         userId: query.filters.userId,
         accountId: query.filters.accountId,
         keyword: query.filters.keyword,

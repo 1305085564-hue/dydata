@@ -269,7 +269,7 @@ test("编辑保存只改文案时，不可编辑旧指标全部保持数据库�
   assert.equal(created.homepage_visits, 0);
 });
 
-test("编辑保存时数据库旧指标为 null 也必须原样保留，不能被前端默认 0 覆盖", () => {
+test("编辑保存时不可编辑旧指标为 null 也必须原样保留，不能被前端默认 0 覆盖", () => {
   const merged = mergePreservedEditSnapshotFields(
     "edit",
     {

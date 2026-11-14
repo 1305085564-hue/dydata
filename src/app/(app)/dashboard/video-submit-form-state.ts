@@ -311,7 +311,11 @@ export function buildVideoSubmissionEditRefill(
   const metrics = {} as Record<EditableMetricName, string>;
   for (const metric of EDIT_DETAIL_METRICS) {
     const metricValue = detail.metrics[metric.apiKey];
-    metrics[metric.formKey] = metricValue == null ? "" : String(metricValue);
+    metrics[metric.formKey] = metricValue == null
+      ? ""
+      : metric.apiKey === "avgPlayRatio"
+        ? String(metricValue * 100)
+        : String(metricValue);
   }
 
   const assets: Record<ScreenshotUploadSlotRole, VideoSubmissionEditAsset | null> = {

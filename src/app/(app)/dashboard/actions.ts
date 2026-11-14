@@ -31,6 +31,7 @@ import {
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
+  preserveExistingHistoryReportAvgPlayRatio,
   resolveHistorySnapshotSyncStatus,
   type HistoryReportSnapshotMetricInput,
   type HistorySnapshotSyncStatus,
@@ -142,7 +143,6 @@ export async function submitReport(formData: FormData) {
     completion_rate_5s: parseNullableMetricInput(formData.get("completion_rate_5s") as string | null),
     avg_play_ratio: parseNullableMetricInput(formData.get("avg_play_ratio") as string | null),
   };
-  const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetrics);
   const content = (formData.get("content") as string) || null;
   const submittedPublishedAt = normalizePublishedAtForStorage(formData.get("published_at"));
 
@@ -223,6 +223,25 @@ export async function submitReport(formData: FormData) {
   const uploadedAt = new Date().toISOString();
   // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id
   const boundVideoId = video_id && isUuidLike(video_id) ? video_id : null;
+
+  // 历史编辑没有改动平均播放占比时，保留已有 24h 快照值，避免空表单把它覆盖成 null。
+  let snapshotMetricsForSync = snapshotMetrics;
+  if (boundVideoId && snapshotMetrics.avg_play_ratio == null) {
+    const existingSnapshot = await createAdminClient()
+      .from("video_metrics_snapshots")
+      .select("avg_play_ratio")
+      .eq("video_id", boundVideoId)
+      .eq("snapshot_type", "24h")
+      .maybeSingle();
+    if (existingSnapshot.error) {
+      return { error: "读取原 24h 快照失败，历史编辑未保存" };
+    }
+    snapshotMetricsForSync = preserveExistingHistoryReportAvgPlayRatio(
+      snapshotMetrics,
+      existingSnapshot.data?.avg_play_ratio,
+    );
+  }
+  const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetricsForSync);
 
   // 带 report_id 的历史手稿编辑走原子 RPC：日报与绑定视频一次事务写完，
   // 不再出现「日报已保存，但视频没同步」的半成功。

@@ -424,6 +424,11 @@ test("导粉数留空的历史记录仍可进入编辑，其余指标仍按必�
   assert.equal(getVideoSubmissionEditDetailError(detail, expected), null);
   assert.equal(buildVideoSubmissionEditRefill(detail).metrics.follower_convert, "");
 
+  assert.equal(
+    buildVideoSubmissionEditRefill({ ...detail, metrics: { ...detail.metrics, avgPlayRatio: 0.2302 } }).metrics.avg_play_ratio,
+    "23.02",
+  );
+
   // 放宽只针对可空集：核心指标缺失依然不能进编辑
   assert.match(
     getVideoSubmissionEditDetailError(

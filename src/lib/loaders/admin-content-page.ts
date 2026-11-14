@@ -1,5 +1,5 @@
 import { buildScopedProfileOptions } from "@/lib/content/content-owner";
-import { DEFAULT_EVALUATION_STANDARDS, hasCustomEvaluationTargets, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { queryAdminContentRpcPage } from "./admin-content-rpc";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -683,7 +683,7 @@ async function loadAdminContentRpcPageData({
 
   const effectiveQuery = bindContentListQueryToEffectiveScope(query, scope.teamId);
   const cursor = decodeContentCursor(effectiveQuery.cursor);
-  const queryFingerprint = JSON.stringify([buildContentQueryFingerprint(effectiveQuery), evaluationStandards.targets]);
+  const queryFingerprint = JSON.stringify([buildContentQueryFingerprint(effectiveQuery), evaluationStandards]);
   if (effectiveQuery.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
     throw new Error("CONTENT_LIST_CURSOR_STALE");
   }
@@ -692,7 +692,7 @@ async function loadAdminContentRpcPageData({
   });
   assertSupabaseQuerySucceeded(result.error, "加载内容分页失败");
   const payload = (result.data ?? {}) as AdminContentRpcPage;
-  if (hasCustomEvaluationTargets(evaluationStandards) && payload.diagnostics?.evaluationStandardsVersion !== 1) {
+  if (payload.diagnostics?.evaluationStandardsVersion !== 2) {
     throw new Error("评价标准与列表筛选版本不一致，请联系负责人");
   }
   if (effectiveQuery.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");

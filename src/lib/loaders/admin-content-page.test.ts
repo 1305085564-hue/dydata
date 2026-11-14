@@ -420,7 +420,7 @@ test("内容分页同时读取作品和成员选项", async () => {
   });
   await new Promise((resolve) => setImmediate(resolve));
   const startedBeforeRpcCompleted = optionsStarted;
-  releaseRpc({ data: { videos: [], snapshots: [] }, error: null });
+  releaseRpc({ data: { videos: [], snapshots: [], diagnostics: { evaluationStandardsVersion: 2 } }, error: null });
   const data = await pending;
   assert.equal(startedBeforeRpcCompleted, true, "成员选项不应等待作品查询");
   assert.deepEqual(data.profiles, [{ id: "user-1", name: "成员" }]);

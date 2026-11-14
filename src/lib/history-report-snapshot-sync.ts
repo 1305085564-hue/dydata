@@ -26,6 +26,15 @@ export type HistoryReportSnapshotMetricInput = {
   completion_rate_5s: number | null;
 };
 
+/** 历史编辑的表单没有改动该字段时，沿用快照原值，避免空表单清空留存数据。 */
+export function preserveExistingHistoryReportAvgPlayRatio(
+  input: HistoryReportSnapshotMetricInput,
+  existingStoredRatio: number | null | undefined,
+): HistoryReportSnapshotMetricInput {
+  if (input.avg_play_ratio != null || existingStoredRatio == null) return input;
+  return { ...input, avg_play_ratio: existingStoredRatio * 100 };
+}
+
 /** 手稿指标 → 24h 快照字段。刻意不含 follower_loss、截图、vs_previous、留存截图。 */
 export function buildHistoryReport24hSnapshotPatch(
   input: HistoryReportSnapshotMetricInput,
