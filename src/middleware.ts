@@ -21,6 +21,23 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 // 飞书回调等外部服务调用的路由，豁免 CSRF 检查
 const CSRF_EXEMPT_PATHS = new Set(["/api/feishu/event"]);
 
+function trustedHostCandidates(request: NextRequest) {
+  const hosts = new Set<string>();
+  const add = (value?: string | null) => {
+    if (!value) return;
+    const first = value.split(",")[0]?.trim().toLowerCase();
+    if (first) hosts.add(first);
+  };
+  add(request.nextUrl.host);
+  add(request.headers.get("x-forwarded-host"));
+  add(request.headers.get("host"));
+  for (const configured of [process.env.NEXT_PUBLIC_APP_URL, process.env.APP_URL]) {
+    if (!configured) continue;
+    try { add(new URL(configured).host); } catch { /* 忽略非法配置 */ }
+  }
+  return hosts;
+}
+
 export function isUntrustedApiWriteRequest(request: NextRequest) {
   if (!request.nextUrl.pathname.startsWith("/api/") || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
     return false;
@@ -30,18 +47,20 @@ export function isUntrustedApiWriteRequest(request: NextRequest) {
     return false;
   }
 
-  if (request.headers.get("sec-fetch-site")?.toLowerCase() === "cross-site") {
+  const secFetchSite = request.headers.get("sec-fetch-site")?.toLowerCase();
+  if (secFetchSite === "cross-site") {
     return true;
   }
+  // 浏览器发起的同源请求，浏览器自己会打上 same-origin，反代改写 Host 也不影响可信判定
+  if (secFetchSite === "same-origin") return false;
 
   const origin = request.headers.get("origin");
   if (!origin) return false;
 
-  try {
-    return new URL(origin).origin !== request.nextUrl.origin;
-  } catch {
-    return true;
-  }
+  let originHost: string;
+  try { originHost = new URL(origin).host.toLowerCase(); } catch { return true; }
+  // 云托管等反代会改写 Host，nextUrl.host 不再等于公网域名，故按主机名比对而不是整串 origin
+  return !trustedHostCandidates(request).has(originHost);
 }
 
 function createClientFromRequest(request: NextRequest, response: NextResponse) {

@@ -1,0 +1,33 @@
+# 注意：scripts / tests / *.ts 不能排除——tsconfig 的 include 覆盖 **/*.ts，
+# 构建时会对 playwright.config.ts 等做类型检查，排除后报 TS2307。
+node_modules
+.next
+.next.*
+.git
+.vercel
+.worktrees
+.claude
+.claude-cache
+.codex
+.trae
+.zcode
+.workbuddy
+.agents
+.commandcode
+.playwright-mcp
+.screenshots
+.acceptance
+docs
+日志
+output
+work
+orbital
+video-intro
+test-results
+skills
+supabase
+*.png
+.env*
+!.env.example
+!.env.production
+tsconfig.tsbuildinfo

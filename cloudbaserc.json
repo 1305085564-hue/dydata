@@ -1,0 +1,7 @@
+{
+  "envId": "dydata-d6g0gd1v37fcddf21",
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "cloudrun": {
+    "name": "dydata"
+  }
+}

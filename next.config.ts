@@ -8,6 +8,10 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  // 2026-11-14 迁移验证：产出 .next/standalone，可脱离 Vercel 用 node server.js 独立启动。
+  // Vercel 构建会忽略该设置，线上行为不变。
+  output: process.env.NEXT_OUTPUT_STANDALONE === "0" ? undefined : "standalone",
+  outputFileTracingRoot: path.join(__dirname),
   turbopack: {
     root: path.join(__dirname),
   },
