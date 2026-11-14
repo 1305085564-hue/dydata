@@ -260,12 +260,20 @@ export default function HomePage() {
               专注文档级数据严谨度与创作者体验
             </p>
           </div>
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-[12px] text-[#78716C]">
+            <Link href="/terms" prefetch={false} className="hover:underline">
+              服务条款
+            </Link>
+            <span>·</span>
+            <Link href="/privacy" prefetch={false} className="hover:underline">
+              隐私政策
+            </Link>
+            <span>·</span>
             <a
               href="https://beian.miit.gov.cn/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[12px] text-[#78716C] hover:underline"
+              className="hover:underline"
             >
               粤ICP备2026181409号
             </a>
