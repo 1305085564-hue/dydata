@@ -66,7 +66,7 @@ test("明确的 0 写入快照为 0，空值写 null，不互相转换", () => {
   assert.equal(patch.completion_rate, null);
 });
 
-test("历史编辑表单为空时沿用已有平均播放占比", () => {
+test("历史编辑回捞已有平均播放占比时保留原值、0 值和无快照空值", () => {
   const input = {
     play_count: 1,
     likes: 1,
@@ -82,10 +82,9 @@ test("历史编辑表单为空时沿用已有平均播放占比", () => {
     completion_rate_5s: null,
   };
 
-  assert.equal(
-    buildHistoryReport24hSnapshotPatch(preserveExistingHistoryReportAvgPlayRatio(input, 0.2302)).avg_play_ratio,
-    0.2302,
-  );
+  assert.equal(buildHistoryReport24hSnapshotPatch(preserveExistingHistoryReportAvgPlayRatio(input, 0.2302)).avg_play_ratio, 0.2302);
+  assert.equal(buildHistoryReport24hSnapshotPatch(preserveExistingHistoryReportAvgPlayRatio(input, 0)).avg_play_ratio, 0);
+  assert.equal(buildHistoryReport24hSnapshotPatch(preserveExistingHistoryReportAvgPlayRatio(input, null)).avg_play_ratio, null);
 });
 
 test("无绑定视频或无 24h 快照时不视为同步失败；有库错误才失败", () => {

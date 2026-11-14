@@ -43,7 +43,7 @@ export async function saveEvaluationSettings(supabase: SupabaseClient, teamId: s
       p_sort_field: "play_count", p_sort_dir: "desc", p_visible_user_ids: [],
       p_filters: { evaluationTargets: parsed.data.targets },
     }).abortSignal(signal), queryOptions);
-    if (probe.error || probe.data?.diagnostics?.evaluationStandardsVersion !== 1) {
+    if (probe.error || probe.data?.diagnostics?.evaluationStandardsVersion !== 2) {
       throw settingsError("达标基准尚未完成数据升级，暂不能保存，请联系负责人");
     }
   }

@@ -68,6 +68,22 @@ test("数据库尚未支持新达标基准时拒绝保存，不能让显示与�
   assert.equal(f.writes(), 0);
 });
 
+test("列表函数版本 2 就绪后允许保存公司达标基准", async () => {
+  const f = fakeDb();
+  const standards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
+  standards.targets.reviewLikeRate = 4;
+  const db = {
+    ...f.db,
+    rpc: () => ({
+      abortSignal: async () => ({ data: { diagnostics: { evaluationStandardsVersion: 2 } }, error: null }),
+    }),
+  };
+
+  const saved = await saveEvaluationSettings(db as never, "a", "owner", standards, null);
+  assert.equal(saved.standards.targets.reviewLikeRate, 4);
+  assert.equal(f.writes(), 1);
+});
+
 test("没有公司归属的个人业务沿用默认判断，不读取其他公司配置", async () => {
   assert.deepEqual(await readEvaluationStandards(null), DEFAULT_EVALUATION_STANDARDS);
 });

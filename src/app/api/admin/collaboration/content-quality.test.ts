@@ -118,6 +118,32 @@ test("留存差线只生成警告，不改变达成率、留存档位或综合�
   }, calculatedBeforeWarning);
 });
 
+test("公司调整留存差线后，页面警告跟随配置变化", () => {
+  const rules = contentQualityRules();
+  const customRules = {
+    ...rules,
+    retentionBands: {
+      ...rules.retentionBands,
+      bounceRate2s: { good: 20, poor: 40 },
+      completionRate5s: { good: 70, poor: 45 },
+      avgPlayDuration: { good: 50, poor: 35 },
+      avgPlayRatio: { good: 30, poor: 15 },
+      completionRate: { good: 15, poor: 4 },
+    },
+  };
+
+  assert.deepEqual(
+    retentionWarningLabels({
+      bounceRate2s: 40.01,
+      completionRate5s: 45,
+      avgPlayDuration: 35,
+      avgPlayRatio: 14.99,
+      completionRate: 4,
+    }, customRules),
+    ["2 秒跳出率", "5 秒完播率", "均播时长", "平均播放占比", "整体完播率"],
+  );
+});
+
 test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计算", () => {
   const dry = buildWorkContentQuality(
     report(),

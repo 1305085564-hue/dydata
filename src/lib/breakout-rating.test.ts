@@ -18,7 +18,7 @@ import {
 } from "./breakout-rating";
 import { DEFAULT_EVALUATION_STANDARDS } from "./evaluation-standards";
 
-test("标准线：干货与复盘阈值数值一致（互动率 3.5%、第四格 2%、转粉率 1%）", () => {
+test("标准线：干货与复盘阈值数值一致（互动率 3.5%、核心指标 2%、转粉率 1%）", () => {
   assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.035);
   assert.equal(BREAKOUT_TARGETS.review.interaction, 0.035);
   assert.equal(BREAKOUT_TARGETS.dry_goods.fourth, 0.02);

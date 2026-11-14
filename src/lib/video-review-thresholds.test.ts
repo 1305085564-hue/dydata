@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { VIDEO_REVIEW_RULE_THRESHOLDS } from "./video-review-thresholds";
+import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "./video-review-thresholds";
 
 /**
  * 这五项是视频复盘的异常判定口径。管理员编辑入口已于 2026-09-26 下线，
@@ -35,6 +35,7 @@ test("视频复盘异常判定规则固定为代码内常量", () => {
 
 test("异常提醒播放门槛仍为 5000，与颜色显示门槛分开", () => {
   assert.equal(VIDEO_REVIEW_RULE_THRESHOLDS.play_count, 5000);
+  assert.equal(VIDEO_REVIEW_COLOR_MIN_PLAY, 3000);
 });
 
 test("比率类警戒线保持 0-100 的有效区间，时长阈值非负", () => {

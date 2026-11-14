@@ -5,6 +5,7 @@ export type EvaluationBand = { good: number; poor: number };
 export type EvaluationMetric = "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" | "coreAchievement" | "interactionAchievement";
 export type RetentionWeightKey = "bounceRate2s" | "completionRate5s" | "avgPlayBundle" | "completionRate";
 export type EvaluationStandards = Record<EvaluationMetric, EvaluationBand> & {
+  /** 指标颜色的样本下限，默认 3000，可按公司配置调整；不改变综合评级 2000/15000 门槛或固定异常提醒 5000。 */
   minPlayCount: number;
   /** 留存总分四项权重，百分数输入且合计必须为 100。均播时长与平均播放占比共用 avgPlayBundle。 */
   retentionWeights: Record<RetentionWeightKey, number>;

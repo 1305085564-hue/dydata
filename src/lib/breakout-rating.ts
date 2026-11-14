@@ -3,7 +3,7 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 /**
  * 爆款标准线（按视频「话题」分类，阈值为小数）。
- * 第四格按话题各取其一（干货收藏率 / 复盘点赞率），但两套阈值数值相同；
+ * 核心指标按话题各取其一（干货收藏率 / 复盘点赞率），但两套阈值数值相同；
  * 互动率与转粉率两套通用。
  * 2026-10-09 调整（阿禅定稿，依据近两月播放≥1.5万作品分布，见
  * docs/archive/2026-11-09-A批文档治理/计划原稿/2026-10-09-复盘干货爆款标准线数据分析与建议.md）：
@@ -14,7 +14,7 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 export interface BreakoutTargets {
   /** 互动率标准线 */
   interaction: number;
-  /** 第四格标准线：干货为收藏率，复盘及其他为点赞率 */
+  /** 核心指标标准线：干货为收藏率，复盘及其他为点赞率 */
   fourth: number;
   /** 转粉率标准线（两套通用） */
   follower: number;
@@ -50,7 +50,7 @@ export interface BreakoutRating {
 /**
  * 话题分类是否「已识别」——只有三种已知分类算已识别。
  * null（状态未取到）与 undefined（调用方未传）都不算：此时不能按复盘口径出数，
- * 否则「还没拿到分类」会被静默当成复盘，第四格显示成点赞率而真假难辨。
+ * 否则「还没拿到分类」会被静默当成复盘，核心指标显示成点赞率而真假难辨。
  */
 export function hasKnownTopicKind(
   topicKind: VideoTopicKind | null | undefined,
@@ -58,7 +58,7 @@ export function hasKnownTopicKind(
   return topicKind === "dry_goods" || topicKind === "review" || topicKind === "other";
 }
 
-/** 该话题对应的标准线；无标签（other）与复盘同口径，与大盘第四格一致 */
+/** 该话题对应的标准线；无标签（other）与复盘同口径，与大盘核心指标一致 */
 export function breakoutTargetsFor(
   topicKind: VideoTopicKind | null | undefined,
   standards?: EvaluationStandards,
@@ -153,7 +153,7 @@ function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
  * 综合评级：一个作品一个总评（优/良/普/劣），与三个单项标签并存。
  *
  * 1. 流量硬门槛：播放 < 2,000 直接判劣，不看指标。
- * 2. 指标综合：互动率与第四格达成率取平均，不封顶、不先取整；转粉率不参与。
+ * 2. 指标综合：互动达成率与留存达成率取平均，不封顶、不先取整；转粉率不参与。
  * 3. 拉分封顶：较差的那一项最多被强项拉高 MAX_PULL_GRADES（当前 1）个档位——
  *    即「要拿优，两项都不能低于良；要拿良，两项都不能低于普」，防止一项极高把另一项的低分抹平。
  * 4. 播放封顶：上面得到的指标档位与播放档位取低，播放只能限制上限，不能抬高评级。
@@ -161,7 +161,7 @@ function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
  *    故播放实际只能封到「普」，能否到良/优由指标档位决定。）
  * 5. 缺数据不臆造：播放未采集，或播放已过门槛但任一参与项缺值 → null（不显示徽章）。
  *
- * 两项依次为互动率、第四格（干货收藏率 / 复盘及其他点赞率），来自 breakoutRating()。
+ * 两项依次为互动达成率、留存达成率，来自 breakoutRating()。
  * 单项评级保持原样（各自显示自己的档位与达成率），只有综合总评受上述约束。
  */
 export function overallBreakoutGrade(
@@ -172,12 +172,12 @@ export function overallBreakoutGrade(
     return null;
   }
   if (playCount < KPI_PLAY_FLOOR) return "劣";
-  const [interaction, fourth] = items;
-  if (!interaction || !fourth) return null;
-  const averageAchievement = (interaction.achievement + fourth.achievement) / 2;
+  const [interaction, retention] = items;
+  if (!interaction || !retention) return null;
+  const averageAchievement = (interaction.achievement + retention.achievement) / 2;
   const metricGrade = breakoutGrade(averageAchievement);
   if (metricGrade === null) return null;
-  const weakerGrade = lowerGrade(interaction.grade, fourth.grade);
+  const weakerGrade = lowerGrade(interaction.grade, retention.grade);
   const pullCap = GRADE_ORDER[
     Math.min(GRADE_ORDER.indexOf(weakerGrade) + MAX_PULL_GRADES, GRADE_ORDER.length - 1)
   ];

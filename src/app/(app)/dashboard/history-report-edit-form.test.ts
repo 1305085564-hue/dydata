@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildHistoryReportEditDraftBaseline,
   getInitialHistoryReportMetricValues,
+  applyHistoryEditVideoMetrics,
   isHistoryEditDetailReady,
   isHistoryReportEditDraftEmpty,
   resolveUnboundHistoryReportEditAssignees,
@@ -11,6 +12,7 @@ import {
 } from "./history-report-edit-form";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { buildHistoryReport24hSnapshotPatch } from "@/lib/history-report-snapshot-sync";
 
 function report(overrides: Partial<HistoryReportEditData> = {}): HistoryReportEditData {
   return {
@@ -54,10 +56,27 @@ test("历史日报编辑表单会把旧指标转成可编辑输入值", () => {
   });
 });
 
-test("历史日报编辑表单保留已有平均播放占比输入值", () => {
+test("历史编辑从视频详情回填平均播放占比并按原值保存", () => {
+  const initial = getInitialHistoryReportMetricValues(report());
+  const filled = applyHistoryEditVideoMetrics(initial, { avgPlayRatio: 0.2302 });
+
+  assert.equal(filled.avg_play_ratio, "23.02");
   assert.equal(
-    getInitialHistoryReportMetricValues(report({ avg_play_ratio: "23.02%" })).avg_play_ratio,
-    "23.02",
+    buildHistoryReport24hSnapshotPatch({
+      play_count: 1,
+      likes: 1,
+      comments: 1,
+      shares: 1,
+      favorites: 1,
+      follower_gain: 1,
+      follower_convert: null,
+      avg_play_duration: null,
+      avg_play_ratio: Number(filled.avg_play_ratio),
+      bounce_rate_2s: null,
+      completion_rate: null,
+      completion_rate_5s: null,
+    }).avg_play_ratio,
+    0.2302,
   );
 });
 
@@ -117,8 +136,6 @@ test("历史详情四态：无绑定视频仍是可保存状态，只有加载�
   assert.match(source, /setEditDetailStatus\("error"\)/);
   assert.match(source, /setEditDetailStatus\("ready_without_video"\)/);
   assert.match(source, /setEditDetailStatus\("ready_with_video"\)/);
-  assert.match(source, /outcome\.detail\.metrics\.avgPlayRatio/);
-
   assert.equal(isHistoryEditDetailReady("loading"), false);
   assert.equal(isHistoryEditDetailReady("error"), false);
   assert.equal(isHistoryEditDetailReady("ready_with_video"), true);

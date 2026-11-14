@@ -49,7 +49,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
       <header className="pb-4 shrink-0 border-b border-[#E2E2DF]/60 text-left">
         <h2 className="font-normal text-[20px] text-[#141413] tracking-tight">作品评级怎么看</h2>
         <p className="text-[13px] text-[#78716C] mt-1.5 font-normal leading-[1.6]">
-          每篇作品发布后，系统会自动评级。作品综合评级由互动数据和留存数据共同决定；转粉率继续作为业绩参考，不参与作品评级。
+          每篇作品发布后，系统会自动评级。作品综合评级由互动达成率和留存达成率共同决定；转粉率继续作为业绩参考，不参与作品评级。
         </p>
       </header>
 
@@ -67,12 +67,12 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
               </thead>
               <tbody className="divide-y divide-[#E2E2DF]/60 text-[#1F1E1D]">
                 <tr>
-                  <td className="py-2.5 px-3 font-normal">互动数据</td>
+                  <td className="py-2.5 px-3 font-normal">互动达成率</td>
                   <td className="py-2.5 px-3">（点赞 + 评论 + 收藏 + 分享）÷ 播放量</td>
                   <td className="py-2.5 px-3 text-right">参与综合评级</td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-normal">留存数据</td>
+                  <td className="py-2.5 px-3 font-normal">留存达成率</td>
                   <td className="py-2.5 px-3">2 秒跳出、5 秒完播、均播时长、平均播放占比、整体完播</td>
                   <td className="py-2.5 px-3 text-right">参与综合评级</td>
                 </tr>
@@ -80,12 +80,12 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
             </table>
           </div>
           <p className="text-[12px] text-[#78716C]">
-            互动数据按（点赞 + 评论 + 收藏 + 分享）÷ 播放量计算。留存数据按五项快照指标合成，缺少任一项时不生成留存分。
+            互动达成率按互动数据相对好标准计算。留存达成率由五项快照指标合成留存分，缺少任一项时不生成留存分。
           </p>
         </section>
 
         <section className="space-y-3">
-          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">二、留存数据如何合成</h3>
+          <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">二、留存分如何合成</h3>
           <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
             <table className="w-full border-collapse text-left text-[12px]">
               <thead>
@@ -131,7 +131,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
           <ol className="list-decimal list-outside pl-5 space-y-2 text-[13px] text-[#1F1E1D]">
             <li>播放量低于 {KPI_PLAY_FLOOR.toLocaleString()}，直接记为劣。</li>
             <li>{KPI_PLAY_FLOOR.toLocaleString()} 至不足 {formatPlayWan(KPI_PLAY_GOOD)}，最高记为普；达到 {formatPlayWan(KPI_PLAY_EXCELLENT)} 以上不再受播放量上限影响。</li>
-            <li>留存数据分按 {BREAKOUT_GRADE_THRESHOLDS.excellent}、{BREAKOUT_GRADE_THRESHOLDS.good}、{BREAKOUT_GRADE_THRESHOLDS.fair} 分为优、良、普、劣。</li>
+            <li>留存分按 {BREAKOUT_GRADE_THRESHOLDS.excellent}、{BREAKOUT_GRADE_THRESHOLDS.good}、{BREAKOUT_GRADE_THRESHOLDS.fair} 分为优、良、普、劣。</li>
             <li>没有完整快照数据时，页面显示待处理状态，不用其他数据代替。</li>
           </ol>
         </section>
@@ -139,7 +139,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
         <section className="space-y-3 pb-2">
           <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">四、互动数据标准</h3>
           <p className="text-[13px] text-[#1F1E1D]">
-            互动数据好标准为 {formatNumber(standards.targets.interactionRate)}%。互动数据和留存数据取平均后确定综合评级，转粉率不进入作品评级。
+            互动数据好标准为 {formatNumber(standards.targets.interactionRate)}%。互动达成率和留存达成率取平均后确定综合评级，转粉率不进入作品评级。
           </p>
           <div className="flex flex-wrap gap-3 text-[12px]">
             {(Object.keys(BREAKOUT_GRADE_TEXT_CLASS) as Array<keyof typeof BREAKOUT_GRADE_TEXT_CLASS>).map((grade) => (

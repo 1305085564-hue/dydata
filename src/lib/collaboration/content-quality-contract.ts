@@ -119,7 +119,7 @@ export interface WorkContentQuality {
   interactionAchievement: number | null;
   /** 核心指标达成率（百分数数值：收藏或点赞达成率，不封顶） */
   coreAchievement: number | null;
-  /** 留存数据加权达成率（百分数，可超过 100） */
+  /** 留存达成率（留存分，百分数，可超过 100） */
   contentAchievement: number | null;
   /** 留存数据档位（不含播放兜底） */
   contentGrade: BreakoutGrade | null;
@@ -162,7 +162,7 @@ export interface ContentQualitySummary {
   avgInteractionAchievement: number | null;
   /** 兼容旧接口的核心指标达成率均值，当前页面不再用于内容质量考核。 */
   avgCoreAchievement: number | null;
-  /** 留存数据加权达成率均值（百分数，可超过 100） */
+  /** 留存分均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
   /** 综合优/良/普/劣件数计数 */
   overallGradeCounts: {

@@ -1,5 +1,6 @@
--- 评价标准：列表综合评级筛选/排序使用服务端传入的公司达标基准。
--- 兼容：未传evaluationTargets时沿用3.5%/2%，不改变签名、权限与旧调用行为。
+-- 评价标准：列表综合评级筛选/排序与留存警告使用服务端传入的公司达标基准。
+-- 兼容：未传evaluationTargets时沿用当前默认值，不改变签名、权限与旧调用行为。
+-- 固定边界：2000/15000 是综合评级播放门槛；5000 及 30/50/30/5 只属于复盘队列异常提醒，不在本函数复用。
 -- 回滚：恢复 20261028045959_evaluation_standard_rating_targets.sql 的同名函数；system_settings 配置无结构变更。
 create or replace function public.admin_content_list_page(
   p_view text,
@@ -169,20 +170,25 @@ with args as (
   from base b
 ), evaluation_targets as materialized (
   select m.*,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,interactionRate}')::numeric, 0), 3.5) as interaction_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,interactionRate}')::numeric, 3.5) as interaction_target,
     case when m.topic_kind = 'dry_goods'
-      then coalesce(nullif((cfg.filters #>> '{evaluationTargets,dryFavoriteRate}')::numeric, 0), 2.0)
-      else coalesce(nullif((cfg.filters #>> '{evaluationTargets,reviewLikeRate}')::numeric, 0), 2.0)
+      then coalesce((cfg.filters #>> '{evaluationTargets,dryFavoriteRate}')::numeric, 2.0)
+      else coalesce((cfg.filters #>> '{evaluationTargets,reviewLikeRate}')::numeric, 2.0)
     end as core_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,bounceRate2s,good}')::numeric, 0), 25) as bounce_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate5s,good}')::numeric, 0), 60) as completion_5s_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayDuration,good}')::numeric, 0), 50) as avg_duration_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,avgPlayRatio,good}')::numeric, 0), 25) as avg_ratio_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,completionRate,good}')::numeric, 0), 10) as completion_target,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,bounceRate2s}')::numeric, 0), 35) as bounce_weight,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate5s}')::numeric, 0), 30) as completion_5s_weight,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,avgPlayBundle}')::numeric, 0), 20) as avg_play_bundle_weight,
-    coalesce(nullif((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate}')::numeric, 0), 15) as completion_weight
+    coalesce((cfg.filters #>> '{evaluationTargets,bounceRate2s,good}')::numeric, 25) as bounce_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,completionRate5s,good}')::numeric, 60) as completion_5s_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayDuration,good}')::numeric, 50) as avg_duration_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayRatio,good}')::numeric, 25) as avg_ratio_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,completionRate,good}')::numeric, 10) as completion_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,bounceRate2s,poor}')::numeric, 35) as bounce_poor_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,completionRate5s,poor}')::numeric, 50) as completion_5s_poor_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayDuration,poor}')::numeric, 30) as avg_duration_poor_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,avgPlayRatio,poor}')::numeric, 20) as avg_ratio_poor_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,completionRate,poor}')::numeric, 5) as completion_poor_target,
+    coalesce((cfg.filters #>> '{evaluationTargets,retentionWeights,bounceRate2s}')::numeric, 35) as bounce_weight,
+    coalesce((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate5s}')::numeric, 30) as completion_5s_weight,
+    coalesce((cfg.filters #>> '{evaluationTargets,retentionWeights,avgPlayBundle}')::numeric, 20) as avg_play_bundle_weight,
+    coalesce((cfg.filters #>> '{evaluationTargets,retentionWeights,completionRate}')::numeric, 15) as completion_weight
   from metrics m cross join args cfg
 ), retention_scores as materialized (
   select m.*,
@@ -230,19 +236,19 @@ with args as (
     case r.overall_grade_rank when 3 then 4 when 2 then 3 when 1 then 2 when 0 then 1 else 0 end as grade_sort_rank,
     case
       when r.sortable_bounce_rate is null then null
-      when r.sortable_bounce_rate > 35 then 1 else 0 end as bounce_warning,
+      when r.sortable_bounce_rate > r.bounce_poor_target then 1 else 0 end as bounce_warning,
     case
       when r.sortable_completion_rate_5s is null then null
-      when r.sortable_completion_rate_5s <= 50 then 1 else 0 end as completion_5s_warning,
+      when r.sortable_completion_rate_5s <= r.completion_5s_poor_target then 1 else 0 end as completion_5s_warning,
     case
       when r.avg_play_duration is null then null
-      when r.avg_play_duration <= 30 then 1 else 0 end as duration_warning,
+      when r.avg_play_duration <= r.avg_duration_poor_target then 1 else 0 end as duration_warning,
     case
       when r.sortable_avg_play_ratio is null then null
-      when r.sortable_avg_play_ratio < 20 then 1 else 0 end as avg_ratio_warning,
+      when r.sortable_avg_play_ratio < r.avg_ratio_poor_target then 1 else 0 end as avg_ratio_warning,
     case
       when r.sortable_completion_rate is null then null
-      when r.sortable_completion_rate <= 5 then 1 else 0 end as completion_warning
+      when r.sortable_completion_rate <= r.completion_poor_target then 1 else 0 end as completion_warning
   from ratings r
 ), filtered as materialized (
   select d.*,

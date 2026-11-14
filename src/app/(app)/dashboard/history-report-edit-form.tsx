@@ -109,6 +109,15 @@ export function getInitialHistoryReportMetricValues(report: HistoryReportEditDat
   };
 }
 
+/** 编辑详情来自 24h 快照；平均播放占比以 0–1 存储，回填到表单时转换成百分数。 */
+export function applyHistoryEditVideoMetrics(
+  current: MetricValues,
+  detailMetrics: Pick<VideoSubmissionEditDetail["metrics"], "avgPlayRatio">,
+): MetricValues {
+  if (detailMetrics.avgPlayRatio == null || current.avg_play_ratio.trim()) return current;
+  return { ...current, avg_play_ratio: String(detailMetrics.avgPlayRatio * 100) };
+}
+
 export function buildHistoryReportEditDraftBaseline(
   report: HistoryReportEditData,
   assignees: HistoryReportEditAssigneeIds = UNASSIGNED_HISTORY_REPORT_EDIT_ASSIGNEES,
@@ -517,11 +526,7 @@ export function HistoryReportEditForm({
         setVideoEditorId(assignees.videoEditorId);
         setOperatorId(assignees.operatorId);
         setBoundVideoId(outcome.detail.videoId);
-        if (outcome.detail.metrics.avgPlayRatio != null) {
-          setMetrics((current) => current.avg_play_ratio.trim()
-            ? current
-            : { ...current, avg_play_ratio: String(outcome.detail.metrics.avgPlayRatio! * 100) });
-        }
+        setMetrics((current) => applyHistoryEditVideoMetrics(current, outcome.detail.metrics));
         if (outcome.detail.assigneeProfiles) setHistoricalAssignees(outcome.detail.assigneeProfiles);
         setEditDetailStatus("ready_with_video");
         return;
@@ -803,6 +808,9 @@ export function HistoryReportEditForm({
                       onChange={(event) => updateMetric(field.key, event.target.value)}
                       className="h-8 rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white text-[12px] font-normal tabular-nums shadow-input transition-colors px-2"
                     />
+                    {field.key === "avg_play_ratio" ? (
+                      <p className="text-[11px] leading-tight text-[#A8A29E]">留空＝保持原值，不能清空</p>
+                    ) : null}
                   </div>
                 ))}
               </div>

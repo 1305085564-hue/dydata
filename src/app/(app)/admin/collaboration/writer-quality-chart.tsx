@@ -333,7 +333,7 @@ export function WriterQualityChart({
                     <>
                       {visibleMetrics.content && (
                         <span className="text-[#78716C]">
-                          留存数据{" "}
+                          留存分{" "}
                           <span className="font-normal text-[#D97757]">
                             {hoveredWork.contentAchievement != null
                               ? `${Math.round(hoveredWork.contentAchievement)}%`
@@ -401,7 +401,7 @@ export function WriterQualityChart({
                     <>
                       {visibleMetrics.content && summary.avgContentAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          留存均分 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
+                          留存分均值 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
                         </span>
                       )}
                       {visibleMetrics.interaction && summary.avgInteractionAchievement != null && (
@@ -534,7 +534,7 @@ export function WriterQualityChart({
                   <Line
                     type="monotone"
                     dataKey="contentAchievement"
-                    name="留存数据"
+                    name="留存分"
                     stroke="#D97757"
                     strokeWidth={2}
                     connectNulls={false}

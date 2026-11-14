@@ -18,32 +18,24 @@ const collaborationPageSource = readFileSync(
   "utf8"
 );
 
-test("作品评级说明组件严禁出现四个内部叫法（达成率/第四格/档位/封顶）", () => {
-  const forbiddenPatterns = ["达成率", "第四格", "档位", "封顶"];
-  for (const forbidden of forbiddenPatterns) {
-    assert.strictEqual(
-      dialogSource.includes(forbidden),
-      false,
-      `源代码中包含禁止出现的内部词汇: ${forbidden}`
-    );
-  }
+test("作品评级说明综合评级使用互动达成率和留存达成率", () => {
+  assert.equal(dialogSource.includes("第四格"), false);
+  assert.match(dialogSource, /互动达成率/);
+  assert.match(dialogSource, /留存达成率/);
+  assert.match(dialogSource, /留存分/);
 });
 
-test("作品评级说明内容渲染结果严禁包含四个内部叫法", () => {
+test("作品评级说明内容渲染结果使用统一的两项名称", () => {
   const rendered = renderToStaticMarkup(<RatingRulesContent />);
-  const forbiddenPatterns = ["达成率", "第四格", "档位", "封顶"];
-  for (const forbidden of forbiddenPatterns) {
-    assert.strictEqual(
-      rendered.includes(forbidden),
-      false,
-      `渲染内容中包含禁止出现的内部词汇: ${forbidden}`
-    );
-  }
+  assert.equal(rendered.includes("第四格"), false);
+  assert.match(rendered, /互动达成率/);
+  assert.match(rendered, /留存达成率/);
+  assert.match(rendered, /留存分/);
 });
 
-test("作品评级说明展示互动数据和留存数据", () => {
+test("作品评级说明展示互动达成率和留存达成率", () => {
   assert.match(dialogSource, /互动数据/);
-  assert.match(dialogSource, /留存数据/);
+  assert.match(dialogSource, /留存达成率/);
   assert.match(dialogSource, /BREAKOUT_GRADE_THRESHOLDS/);
   assert.match(dialogSource, /KPI_PLAY_FLOOR/);
   assert.match(dialogSource, /KPI_PLAY_GOOD/);
