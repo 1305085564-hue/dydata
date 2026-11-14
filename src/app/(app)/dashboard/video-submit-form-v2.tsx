@@ -1270,6 +1270,7 @@ export function VideoSubmitFormV2({
                 {/* 第二轮：标题下完整表单内容统一一层轻缩进，建立标题统领而非只统领第一排 */}
                 <div className="space-y-4 sm:space-y-5 sm:pl-4">
                 <FormV2Workspace
+                  editing={mode === "editToday"}
                   slots={slots}
                   slotsSectionRef={slotsSectionRef}
                   metricsSectionRef={metricsSectionRef}

@@ -15,6 +15,7 @@ import type {
 } from "../video-submit-form-model";
 
 export interface FormV2RightColumnProps {
+  editing?: boolean;
   metricsSectionRef: RefObject<HTMLDivElement | null>;
   issueSummary: ExtendedSubmissionIssueSummary;
   fields: Record<EditableMetricKey, EditableMetricField>;
@@ -41,6 +42,7 @@ export interface FormV2RightColumnProps {
 }
 
 export function FormV2RightColumn({
+  editing = false,
   metricsSectionRef,
   issueSummary,
   fields,
@@ -74,6 +76,7 @@ export function FormV2RightColumn({
         )}
         <指标分组区
           ref={metricsGroupRef}
+          editing={editing}
           fields={fields}
           onFieldChange={updateField}
           onRestoreOcrValue={restoreOcrValue}

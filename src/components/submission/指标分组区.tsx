@@ -25,6 +25,7 @@ export type MetricGroupHandle = {
 
 interface MetricGroupProps {
   fields: Record<string, EditableFieldState>;
+  editing?: boolean;
   confidenceLevels?: Partial<Record<EditableMetricKey, ConfidenceLevel>>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
   onRestoreOcrValue?: (key: EditableMetricKey) => void;
@@ -73,6 +74,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
   function MetricGroupSection(
     {
       fields,
+      editing = false,
       confidenceLevels,
       onFieldChange,
       onRestoreOcrValue,
@@ -318,6 +320,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   animationDelay={index * 120}
                   inputRef={setRef(item.key)}
                   onKeyDown={handleKeyDown(item.key)}
+                  hint={editing && item.key === "avg_play_ratio" ? "留空＝保持原值，不能清空" : undefined}
                 />
               ))}
             </div>

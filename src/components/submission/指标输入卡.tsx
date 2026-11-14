@@ -36,6 +36,7 @@ interface MetricInputCardProps {
   onBlur?: () => void;
   onRestoreOcr?: () => void;
   optional?: boolean;
+  hint?: string;
   animationDelay?: number;
   inputRef?: React.Ref<HTMLInputElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -52,6 +53,7 @@ export function MetricInputCard({
   onBlur,
   onRestoreOcr,
   optional = false,
+  hint,
   inputRef,
   onKeyDown,
 }: MetricInputCardProps) {
@@ -168,6 +170,7 @@ export function MetricInputCard({
           </span>
         )}
       </div>
+      {hint ? <p className="text-[11px] leading-tight text-[#A8A29E]">{hint}</p> : null}
     </div>
   );
 }

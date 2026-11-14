@@ -190,7 +190,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <Badge
                           variant="secondary"
                           className={`bg-[#F1F1F0] text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动达成率与留存分取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；较差一项最多被高项拉高 1 个档位（想拿优两项都不能低于良，想拿良两项都不能低于普）；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制；互动或五项留存数据不完整时不评级`}
+                          title={`综合评级：互动达成率与留存达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；较差一项最多被高项拉高 1 个档位（想拿优两项都不能低于良，想拿良两项都不能低于普）；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制；互动或五项留存数据不完整时不评级`}
                         >
                           综合{overallGrade}
                         </Badge>

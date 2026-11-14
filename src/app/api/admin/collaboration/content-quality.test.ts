@@ -253,7 +253,7 @@ test("冻结公式验算截图样例，留存分允许超过 100%", () => {
 
   assert.ok(Math.abs((quality.contentAchievement ?? Number.NaN) - 112.1) < 0.1);
   assert.equal(quality.contentGrade, "优");
-  assert.equal(quality.overallGrade, "良", "互动达成率与留存分取平均，并保留弱项拉升限制");
+  assert.equal(quality.overallGrade, "良", "互动达成率与留存达成率取平均，并保留弱项拉升限制");
 });
 
 test("低值更好的留存指标为 0 时按 200% 计，避免除零", () => {
