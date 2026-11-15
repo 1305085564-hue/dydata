@@ -780,7 +780,10 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
     videoId: editDraftVideoId,
   });
-  const unknownScreenshotCount = screenshotItems.filter((item) => item.screenshotType === null).length;
+  // 只数「识别完成但判不出类型」的图；在途项类型本来就还没出来，不该提前报「没认出是哪类」。
+  const unknownScreenshotCount = screenshotItems.filter(
+    (item) => item.status === "done" && item.screenshotType === null,
+  ).length;
   const issueSummary = useMemo(
     () => {
       const base = summarizeSubmissionIssues(submissionState, {
@@ -815,7 +818,9 @@ export function VideoSubmitFormV2({
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
   }, [issueSummary]);
-  const allScreenshotsFailed = screenshotsRequired && Object.values(slots).every((slot) => slot.status === "failed" || Boolean(slot.ocrFallback));
+  // 在途槽位不算「没认出来」：上传中/识别中的 ocrFallback 是占位默认值，不代表失败。
+  const allScreenshotsFailed = screenshotsRequired && Object.values(slots).every((slot) =>
+    slot.status !== "uploading" && slot.status !== "recognizing" && (slot.status === "failed" || Boolean(slot.ocrFallback)));
   const formProgress = isSubmitted ? null : resolveFormProgress({ summary: issueSummary, hasStartedFilling, allScreenshotsFailed });
   useEffect(() => {
     onProgressChange?.(formProgress);

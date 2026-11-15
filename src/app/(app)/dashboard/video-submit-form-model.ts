@@ -418,6 +418,11 @@ export function deriveSlotsFromItems(
   return slots;
 }
 
+/** 只数「没被任何展示槽位接住」的在途图；已在两行状态里露出来的不再重复播报。 */
 export function countProcessingScreenshotItems(items: readonly ScreenshotItem[]) {
-  return items.filter((item) => item.status === "uploading" || item.status === "recognizing").length;
+  const slots = deriveSlotsFromItems(items);
+  const visibleItemIds = new Set([slots.screenshot_1.itemId, slots.screenshot_2.itemId]);
+  return items.filter(
+    (item) => (item.status === "uploading" || item.status === "recognizing") && !visibleItemIds.has(item.id),
+  ).length;
 }

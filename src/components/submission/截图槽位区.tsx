@@ -129,7 +129,7 @@ export function SubmissionSlotsSection({
         setDragOverRole(null);
         handleImplicitFiles(extractImageFiles(e.dataTransfer.files));
       }}
-      className="h-[136px]"
+      className="flex h-[136px] flex-col"
     >
       <input
         ref={globalFileInputRef}
@@ -175,7 +175,7 @@ export function SubmissionSlotsSection({
           </span>
         </div>
       ) : (
-        <div className="flex h-full flex-col gap-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
           {SLOT_META.map((item) => {
             const slot = slots[item.role];
             const isEmpty = slot.status === "empty";
@@ -397,7 +397,7 @@ export function SubmissionSlotsSection({
       )}
 
       {processingScreenshotCount > 0 && (
-        <div className="px-2 text-[12px] text-[#78716C]" aria-live="polite">
+        <div className="shrink-0 px-2 text-[12px] text-[#78716C]" aria-live="polite">
           还有 {processingScreenshotCount} 张在识别
         </div>
       )}

@@ -88,8 +88,12 @@ test("在途项和判不出项按 seq 填剩余槽位，并保留手动确认状
   assert.equal(countProcessingScreenshotItems([
     screenshotItem({ id: "uploading", status: "uploading" }),
     screenshotItem({ id: "recognizing", status: "recognizing" }),
-    screenshotItem({ id: "done", status: "done" }),
-  ]), 2);
+  ]), 0, "两张在途图已经占住两个展示位，不再重复播报");
+  assert.equal(countProcessingScreenshotItems([
+    screenshotItem({ id: "data-done", seq: 1 }),
+    screenshotItem({ id: "retention-done", seq: 2, screenshotType: "retention", storageRole: "screenshot_2" }),
+    screenshotItem({ id: "overflow", seq: 3, status: "recognizing", screenshotType: null, assetUrl: null, previewUrl: "blob:overflow" }),
+  ]), 1, "第三张挤不进展示位时才计入「还有 n 张在识别」");
 });
 
 test("编辑回填没有类型时沿用旧槽位约定", () => {
