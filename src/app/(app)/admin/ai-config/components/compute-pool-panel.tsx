@@ -232,13 +232,13 @@ export function ComputePoolPanel() {
     );
   };
 
-  // 行内改名（禁止传 model_id）
-  const handleRenameSupply = async (keyModelId: string, newName: string) => {
+  // 模型显示名改名：字段是模型级，后端一次写该模型的所有供应（入口已挪到模型标题）
+  const handleRenameModel = async (keyModelId: string, newName: string) => {
     await executeWithConfirm(
       "update",
       { id: keyModelId, display_name: newName },
       "model",
-      "已更新渠道供应名称"
+      "已更新模型显示名（此模型所有渠道共用）"
     );
   };
 
@@ -451,7 +451,7 @@ export function ComputePoolPanel() {
                   diagnosticMap={diagnosticMap}
                   onToggleSupply={handleToggleSupply}
                   onToggleModelEnabled={handleToggleModelEnabled}
-                  onRenameSupply={handleRenameSupply}
+                  onRenameModel={handleRenameModel}
                   onSwapOrder={handleSwapOrder}
                   onTestSupply={handleTestSupply}
                   onDeleteSupply={handleDeleteSupply}

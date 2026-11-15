@@ -2,18 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   ChevronDown,
   ChevronRight,
   Plus,
   Power,
   PowerOff,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import type { AvailabilityModelFamily, AvailabilityChannel } from "@/lib/ai-config/availability";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { ModelChannelRow } from "./model-channel-row";
 import { FindChannelsPanel } from "./find-channels-panel";
 import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { cn } from "@/lib/utils";
@@ -45,7 +50,13 @@ export interface ModelFamilyCardProps {
   diagnosticMap?: Record<string, ChannelFailureDiagnostic>;
   onToggleSupply?: (keyModelId: string, enabled: boolean) => Promise<void>;
   onToggleModelEnabled?: (modelId: string, enabled: boolean) => Promise<void>;
-  onRenameSupply?: (keyModelId: string, newName: string) => Promise<void>;
+  /**
+   * 模型显示名是「模型级」字段：一个模型的所有渠道共用一份。
+   * 改名入口只能挂在模型标题上；挂在渠道行会让人以为在改渠道名，
+   * 实际一次保存会把整个模型在库里的显示名一起改掉（历史上正是这样被写成渠道名）。
+   * 服务端 RPC 以任一条供应 id 定位模型，因此这里传第一条供应的 id。
+   */
+  onRenameModel?: (keyModelId: string, newName: string) => Promise<void>;
   onSwapOrder?: (modelId: string, keyModelId: string, targetKeyModelId: string) => Promise<void>;
   onTestSupply?: (keyId: string, modelId: string) => Promise<void>;
   onDeleteSupply?: (keyModelId: string) => Promise<void>;
@@ -59,7 +70,7 @@ export function ModelFamilyCard({
   diagnosticMap = {},
   onToggleSupply = async () => {},
   onToggleModelEnabled = async () => {},
-  onRenameSupply = async () => {},
+  onRenameModel = async () => {},
   onSwapOrder = async () => {},
   onTestSupply = async () => {},
   onDeleteSupply = async () => {},
@@ -75,6 +86,31 @@ export function ModelFamilyCard({
   const isChannelsVisible = family.isShelved || channelsExpanded;
 
   const channels = useMemo(() => family.channels ?? [], [family.channels]);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingNameValue, setEditingNameValue] = useState("");
+  const renameAnchorId = channels[0]?.keyModelId ?? null;
+
+  const handleStartRename = () => {
+    if (!renameAnchorId) return;
+    setEditingNameValue(family.displayName);
+    setIsEditingName(true);
+  };
+
+  const handleSaveRename = async () => {
+    const trimmed = editingNameValue.trim();
+    if (!trimmed) {
+      feedbackToast.error("模型显示名不能为空");
+      return;
+    }
+    if (!renameAnchorId) return;
+    if (trimmed === family.displayName) {
+      setIsEditingName(false);
+      return;
+    }
+    await onRenameModel(renameAnchorId, trimmed);
+    setIsEditingName(false);
+  };
 
   // 口径 4: 模型内只有一种排队顺序，按真实顺位；测试/身份变化不跳行，成员或顺位变化才重建
   const frozenChannels = useFrozenOrder(
@@ -164,9 +200,62 @@ export function ModelFamilyCard({
               )}
             </button>
           )}
-          <span className="font-normal text-[14px] text-[#141413]">
-            {family.displayName}
-          </span>
+          {isEditingName ? (
+            <div className="flex items-center gap-1">
+              <Input
+                value={editingNameValue}
+                onChange={(e) => setEditingNameValue(e.target.value)}
+                className="h-7 w-[200px] text-[13px] border-[#E2E2DF]"
+                placeholder="模型显示名（此模型所有渠道共用）"
+                aria-label="修改模型显示名"
+                autoFocus
+                onKeyDown={(e) => {
+                  // 中文输入法选词回车不能触发保存
+                  if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+                  if (e.key === "Enter") handleSaveRename();
+                  if (e.key === "Escape") setIsEditingName(false);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon-s"
+                onClick={handleSaveRename}
+                className="size-6 text-[#4B6B4E]"
+                title="保存模型显示名"
+                aria-label="保存模型显示名"
+              >
+                <Check className="size-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-s"
+                onClick={() => setIsEditingName(false)}
+                className="size-6 text-[#78716C]"
+                title="取消"
+                aria-label="取消"
+              >
+                <X className="size-3" />
+              </Button>
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1">
+              <span className="font-normal text-[14px] text-[#141413]">
+                {family.displayName}
+              </span>
+              {renameAnchorId && (
+                <Button
+                  variant="ghost"
+                  size="icon-s"
+                  onClick={handleStartRename}
+                  className="size-5 text-[#A8A29E] hover:text-[#141413]"
+                  title="修改模型显示名（此模型所有渠道共用，不改渠道名）"
+                  aria-label="修改模型显示名"
+                >
+                  <Edit2 className="size-2.5" />
+                </Button>
+              )}
+            </span>
+          )}
           <span className="font-mono text-[12px] text-[#78716C]">
             {family.modelId}
           </span>
@@ -278,7 +367,6 @@ export function ModelFamilyCard({
                   onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
                   onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
                   onToggleEnabled={onToggleSupply}
-                  onRename={onRenameSupply}
                   onTest={onTestSupply}
                   onDeleteSupply={onDeleteSupply}
                   failureDiagnostic={diagnosticMap[channel.keyModelId]}
@@ -319,8 +407,7 @@ export function ModelFamilyCard({
                           onMoveUp={() => handleMoveOrder(channel.keyModelId, "up")}
                           onMoveDown={() => handleMoveOrder(channel.keyModelId, "down")}
                           onToggleEnabled={onToggleSupply}
-                          onRename={onRenameSupply}
-                          onTest={onTestSupply}
+                                  onTest={onTestSupply}
                           onDeleteSupply={onDeleteSupply}
                           failureDiagnostic={diagnosticMap[channel.keyModelId]}
                           isTesting={testingKeyModelId === channel.keyModelId}

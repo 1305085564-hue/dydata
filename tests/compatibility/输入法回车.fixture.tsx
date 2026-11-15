@@ -53,7 +53,7 @@ function Fixture() {
     <output>保存次数：{saves}</output>
     <ModelFamilyCard
       family={fixtureFamily}
-      onRenameSupply={async () => { setSaves((count) => count + 1); }}
+      onRenameModel={async () => { setSaves((count) => count + 1); }}
       onSwapOrder={async () => {}}
     />
     {[{ name: "组合输入回车", isComposing: true, keyCode: 13 },

@@ -270,3 +270,29 @@ test("B: 主动调整顺位后按新顺位渲染", () => {
   const markup = renderToStaticMarkup(<ModelFamilyCard family={family} />);
   assert.ok(markup.indexOf("B 渠道") < markup.indexOf("A 渠道"));
 });
+
+test("改名入口只挂在模型标题：渠道行不再能改，避免把模型显示名写成渠道名", () => {
+  const family = makeFamily([makeChannel("A", "active", 1), makeChannel("B", "active", 2)]);
+  const markup = renderToStaticMarkup(<ModelFamilyCard family={family} />);
+
+  // 模型标题上有且只有一个改名入口
+  assert.equal(countTitle(markup, "修改模型显示名（此模型所有渠道共用，不改渠道名）"), 1);
+  // 渠道行不再提供任何改名入口
+  assert.equal(countTitle(markup, "修改渠道供应名称"), 0);
+  // 每行标题（title 属性）里也不应出现改名入口
+  for (const label of ["A 渠道", "B 渠道"]) {
+    assert.equal(countTitle(rowMarkup(markup, label), "修改渠道供应名称"), 0);
+  }
+});
+
+test("模型显示名是模型级字段：渠道行不再持有改名回调，文案如实说明影响范围", () => {
+  // 渠道行一旦重新持有改名回调，就会再次出现“改渠道名把模型名写掉”
+  const rowSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/model-channel-row.tsx"),
+    "utf8",
+  );
+  assert.equal(rowSource.includes("onRename"), false);
+  assert.ok(modelCardSource.includes("onRenameModel(renameAnchorId, trimmed)"));
+  assert.ok(computePanelSource.includes("已更新模型显示名（此模型所有渠道共用）"));
+  assert.equal(computePanelSource.includes("已更新渠道供应名称"), false);
+});

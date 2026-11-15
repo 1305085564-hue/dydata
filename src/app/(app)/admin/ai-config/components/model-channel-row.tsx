@@ -3,15 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import {
   ArrowUp,
   ArrowDown,
   Play,
   Trash2,
-  Edit2,
-  Check,
-  X,
   AlertCircle,
   Clock,
   ChevronDown,
@@ -33,7 +29,6 @@ export interface ModelChannelRowProps {
   onMoveUp: () => Promise<void>;
   onMoveDown: () => Promise<void>;
   onToggleEnabled: (keyModelId: string, enabled: boolean) => Promise<void>;
-  onRename: (keyModelId: string, newName: string) => Promise<void>;
   onTest: (keyId: string, modelId: string) => Promise<void>;
   onDeleteSupply: (keyModelId: string) => Promise<void>;
   failureDiagnostic?: ChannelFailureDiagnostic | null;
@@ -48,14 +43,11 @@ export function ModelChannelRow({
   onMoveUp,
   onMoveDown,
   onToggleEnabled,
-  onRename,
   onTest,
   onDeleteSupply,
   failureDiagnostic,
   isTesting = false,
 }: ModelChannelRowProps) {
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editingNameValue, setEditingNameValue] = useState("");
   const [showTechnical, setShowTechnical] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
@@ -72,21 +64,6 @@ export function ModelChannelRow({
     : null;
   const moveUpTitle = canMoveUp ? "上移顺位" : moveLockReason ?? "没有可交换的可用渠道";
   const moveDownTitle = canMoveDown ? "下移顺位" : moveLockReason ?? "没有可交换的可用渠道";
-
-  const handleStartRename = () => {
-    setEditingNameValue(channel.label || "");
-    setIsEditingName(true);
-  };
-
-  const handleSaveRename = async () => {
-    const trimmed = editingNameValue.trim();
-    if (!trimmed) {
-      feedbackToast.error("名称不能为空");
-      return;
-    }
-    await onRename(channel.keyModelId, trimmed);
-    setIsEditingName(false);
-  };
 
   const handleCopyRequestId = async (requestId: string) => {
     try {
@@ -140,62 +117,16 @@ export function ModelChannelRow({
             </Button>
           </div>
 
-          {/* 渠道名称与接入点 */}
+          {/* 渠道名称与接入点。模型显示名属模型级字段，改名入口在模型标题，这里只读 */}
           <div className="min-w-0 flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-1">
-                <Input
-                  value={editingNameValue}
-                  onChange={(e) => setEditingNameValue(e.target.value)}
-                  className="h-7 text-[12px] border-[#E2E2DF] max-w-[200px]"
-                  placeholder="渠道显示名"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveRename();
-                    if (e.key === "Escape") setIsEditingName(false);
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon-s"
-                  onClick={handleSaveRename}
-                  className="size-6 text-[#4B6B4E]"
-                  title="保存"
-                  aria-label="保存"
-                >
-                  <Check className="size-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-s"
-                  onClick={() => setIsEditingName(false)}
-                  className="size-6 text-[#78716C]"
-                  title="取消"
-                  aria-label="取消"
-                >
-                  <X className="size-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="font-normal text-[13px] text-[#141413] truncate">
-                  {channel.label || channel.providerName}
-                </span>
-                <span className="text-[12px] text-[#78716C] shrink-0">
-                  ({channel.providerName})
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon-s"
-                  onClick={handleStartRename}
-                  className={cn("size-5 text-[#A8A29E] hover:text-[#141413]", REVEAL_ON_HOVER)}
-                  title="修改渠道供应名称"
-                  aria-label="修改渠道供应名称"
-                >
-                  <Edit2 className="size-2.5" />
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="font-normal text-[13px] text-[#141413] truncate">
+                {channel.label || channel.providerName}
+              </span>
+              <span className="text-[12px] text-[#78716C] shrink-0">
+                ({channel.providerName})
+              </span>
+            </div>
           </div>
         </div>
 
