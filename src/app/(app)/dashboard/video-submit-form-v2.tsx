@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Video } from "@/types";
 
 import { type MetricGroupHandle } from "@/components/submission/指标分组区";
+import { 截图对照栏, useCompareRailEnabled } from "@/components/submission/截图对照栏";
 import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
 import {
   WorkbenchNoticeCapsule,
@@ -392,6 +393,9 @@ export function VideoSubmitFormV2({
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
+  // 宽屏对照栏显示哪张：跟随最近聚焦的数字格或点过的小图，失焦后保留不闪回
+  const [compareRole, setCompareRole] = useState<SubmissionSlotRole | null>(null);
+  const compareRailEnabled = useCompareRailEnabled();
   const markManualEdit = useCallback(() => setHasManualEdit(true), [setHasManualEdit]);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
@@ -753,6 +757,7 @@ export function VideoSubmitFormV2({
     setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
     setFocusedRole(null);
+    setCompareRole(null);
   }, [
     account?.id,
     editDetail,
@@ -870,9 +875,11 @@ export function VideoSubmitFormV2({
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
-  // 聚焦某个数字时，对应那张截图的状态行高亮，方便对照原图
+  // 聚焦某个数字时，对应那张截图的状态行高亮，宽屏对照栏切到那张截图
   function handleFieldFocus(key: EditableMetricKey) {
-    setFocusedRole(getSlotRoleForMetric(key));
+    const role = getSlotRoleForMetric(key);
+    setFocusedRole(role);
+    setCompareRole(role);
   }
 
   function handleFieldBlur() {
@@ -1225,9 +1232,9 @@ export function VideoSubmitFormV2({
             initial={false}
             animate={shakeForm ? "animate" : "initial"}
             variants={shakeVariants}
-            className="w-full"
+            className="w-full min-[1100px]:grid min-[1100px]:grid-cols-[minmax(0,48rem)_360px] min-[1100px]:items-start min-[1100px]:gap-6"
           >
-            <div className="max-w-3xl space-y-5 py-0">
+            <div className="max-w-3xl min-w-0 space-y-5 py-0">
               {/* 草稿 / 审批 / 关联选题的微提示：有才出现，状态句只在页头说 */}
               {workbenchNotices.length > 0 && (
                 <div className="flex justify-end">
@@ -1247,6 +1254,7 @@ export function VideoSubmitFormV2({
                 updateSlotsState={updateSlotsState}
                 screenshotsRequired={screenshotsRequired}
                 focusedRole={focusedRole}
+                onPreviewSlot={compareRailEnabled ? setCompareRole : undefined}
                 pulseSlots={pulseSlots}
                 isMoreOpen={isMoreOpen}
                 setIsMoreOpen={setIsMoreOpen}
@@ -1315,6 +1323,17 @@ export function VideoSubmitFormV2({
                 submitButtonLabel={submitButtonLabel}
               />
             </div>
+            {/* 宽屏右栏：截图对照。列宽始终留着，图来了只填内容，表单不位移 */}
+            {compareRailEnabled && (
+              <截图对照栏
+                images={{
+                  screenshot_1: slots.screenshot_1.assetUrl,
+                  screenshot_2: slots.screenshot_2.assetUrl,
+                }}
+                preferredRole={compareRole}
+                onSelectRole={setCompareRole}
+              />
+            )}
           </motion.form>
         </>
       )}

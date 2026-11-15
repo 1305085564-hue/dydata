@@ -28,6 +28,8 @@ export type FormV2WorkspaceProps = Omit<FormV2ResultsSectionProps, "slotProcessi
     updateSlotsState: SlotsUpdater;
     screenshotsRequired: boolean;
     focusedRole: SubmissionSlotRole | null;
+    /** 宽屏有对照栏时：点截图小图让对照栏切到这张 */
+    onPreviewSlot?: (role: SubmissionSlotRole) => void;
     pulseSlots: boolean;
     isMoreOpen: boolean;
     setIsMoreOpen: (open: boolean | ((current: boolean) => boolean)) => void;
@@ -53,6 +55,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     updateSlotsState,
     screenshotsRequired,
     focusedRole,
+    onPreviewSlot,
     pulseSlots,
     isMoreOpen,
     setIsMoreOpen,
@@ -122,6 +125,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           }}
           screenshotsRequired={screenshotsRequired}
           focusedRole={focusedRole}
+          onPreviewSlot={onPreviewSlot}
           pulseEmptySlots={pulseSlots}
         />
         <div className="flex h-6 items-center justify-between gap-3 px-2 text-[12px]">

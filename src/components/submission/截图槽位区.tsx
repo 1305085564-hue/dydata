@@ -38,6 +38,8 @@ interface SubmissionSlotsProps {
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
   pulseEmptySlots?: boolean;
+  /** 宽屏有对照栏时传入：点小图让对照栏切到这张，不开检视器；不传则开检视器 */
+  onPreviewSlot?: (role: SubmissionSlotRole) => void;
 }
 
 const SLOT_META: Array<{ role: SubmissionSlotRole; title: string; shortTitle: string }> = [
@@ -69,6 +71,7 @@ export function SubmissionSlotsSection({
   screenshotsRequired = true,
   focusedRole = null,
   pulseEmptySlots = false,
+  onPreviewSlot,
 }: SubmissionSlotsProps) {
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
   const [dragOverRole, setDragOverRole] = useState<SubmissionSlotRole | null>(null);
@@ -282,18 +285,17 @@ export function SubmissionSlotsSection({
                     data-slot-trigger={item.role}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setInspectingRole(item.role);
+                      if (onPreviewSlot) onPreviewSlot(item.role);
+                      else setInspectingRole(item.role);
                     }}
                     className="group/preview relative size-10 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
-                    title="点击同屏核对原图"
+                    title={onPreviewSlot ? "在右侧对照栏看这张" : "点击同屏核对原图"}
                     aria-label={`同屏核对${item.title}原图`}
                   >
                     <ScreenshotImage
                       src={slot.assetUrl}
                       alt={item.title}
                       variant="thumb"
-                      data-submission-slot-role={item.role}
-                      data-slot-asset-url={slot.assetUrl}
                       className="h-full w-full object-cover"
                     />
                     <span className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/preview:opacity-100">

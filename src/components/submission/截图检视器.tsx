@@ -6,7 +6,7 @@ import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
 /**
  * 同屏免遮挡画中画检视器（硬伤 1 落地）：
- * - 无全局遮罩，桌面端停靠视口左上，移动端底部半屏停靠，右侧表单输入框全程可用；
+ * - 无全局遮罩，桌面端停靠视口右上（表单单栏靠左，少挡输入框），移动端底部半屏停靠，表单输入框全程可用；
  * - Esc / 关闭按钮 / 点击非交互空白区收起，收起后焦点归还触发元素；
  * - 点击 input/textarea/select/label/button/a 等交互元素不视为"图外"，绝不误关。
  */
@@ -79,7 +79,7 @@ export function ScreenshotInspector({
       data-testid={testId}
       role="region"
       aria-label="截图同屏对照视窗"
-      className="fixed inset-x-3 bottom-3 top-auto z-40 h-[52vh] max-h-[calc(100dvh-4rem)] md:inset-auto md:top-20 md:left-6 md:w-[410px] md:h-auto md:max-h-[calc(100dvh-6rem)] rounded-2xl md:rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float ring-1 ring-[#141413]/5 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom md:slide-in-from-top-2 duration-150"
+      className="fixed inset-x-3 bottom-3 top-auto z-40 h-[52vh] max-h-[calc(100dvh-4rem)] md:inset-auto md:top-20 md:right-6 md:w-[410px] md:h-auto md:max-h-[calc(100dvh-6rem)] rounded-2xl md:rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float ring-1 ring-[#141413]/5 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom md:slide-in-from-top-2 duration-150"
     >
       {/* 顶栏：标题 + 附加操作 + 关闭按钮 */}
       <div className="flex items-center justify-between border-b border-[#E2E2DF] bg-[#F1F1F0] px-3.5 py-2.5 select-none">
@@ -114,9 +114,9 @@ export function ScreenshotInspector({
         />
       </div>
 
-      {/* 底部微提示：明确指引右侧输入框可用 */}
+      {/* 底部微提示：明确指引输入框可用 */}
       <div className="border-t border-[#E2E2DF]/60 bg-[#FCFCFB] px-3 py-1.5 text-[12px] text-[#78716C] font-sans flex items-center justify-between">
-        <span>右侧输入框可直接敲字，按 Esc 关闭</span>
+        <span>输入框可直接敲字，按 Esc 关闭</span>
         <button
           type="button"
           onClick={closeAndRestore}

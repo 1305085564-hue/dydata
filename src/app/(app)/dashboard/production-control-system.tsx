@@ -137,7 +137,7 @@ export function ProductionControlSystem({
   }, [router, startRefresh]);
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-5">
+    <div className="max-w-5xl min-[1100px]:max-w-6xl mx-auto flex flex-col gap-5">
       <VideoSubmitPanelV2
         accounts={accounts}
         selectedAccountId={selectedAccountId}

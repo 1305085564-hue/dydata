@@ -16,7 +16,7 @@ export type MetricCellMode = "pending" | "settled" | "doubt" | "missing" | "blan
  * - pending：对应截图还在识别，只占位不画框；
  * - settled：认出来了（或人已改过），以文字呈现，点一下就能改；
  * - doubt：识别置信度为中/低，画成输入框并标「请核对」；
- * - missing：必填但没有值，画成输入框；
+ * - missing：必填但没有值，画成输入框（只靠边框提示，不加字）；
  * - blank：截图还没来、也没有值，只显示「—」。
  */
 export function resolveMetricCellMode(args: {
@@ -100,8 +100,6 @@ export function MetricInputCard({
                 没问题
               </button>
             </>
-          ) : mode === "missing" ? (
-            <span className="text-status-warning-text">没认出，请填</span>
           ) : checkedByHand ? (
             <span className="text-[#78716C]">已核对</span>
           ) : canRestoreOcr ? (
@@ -131,7 +129,7 @@ export function MetricInputCard({
           inputMode="decimal"
           autoComplete="off"
           value={displayValue}
-          placeholder={mode === "missing" ? "填数字" : "—"}
+          placeholder={mode === "missing" ? undefined : "—"}
           onPaste={(e) => {
             const pasted = e.clipboardData.getData("text");
             if (pasted) {
@@ -156,7 +154,7 @@ export function MetricInputCard({
           }}
           onKeyDown={onKeyDown}
           className={cn(
-            "h-9 min-h-[36px] rounded-md px-2 text-left font-sans text-[20px] tabular-nums text-[#141413] transition-colors",
+            "h-9 min-h-[36px] rounded-md px-2 text-left font-sans text-[14px] tabular-nums text-[#141413] transition-colors",
             "placeholder:text-[#A8A29E] focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0",
             isBoxed
               ? "border border-status-warning/50 bg-white shadow-input"
