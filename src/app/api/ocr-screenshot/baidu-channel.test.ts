@@ -59,6 +59,13 @@ test("结构化 prompt 按槽位区分：data 要 6 指标，retention 要留存
   assert.match(retentionPrompt, /completion_rate/);
 });
 
+test("百度自动 prompt 同时要求互动族与留存族字段", () => {
+  const prompt = buildStructurePromptByType(null, ["播放量 3.21万", "整体完播率 18.5%"]);
+  assert.match(prompt, /play_count/);
+  assert.match(prompt, /retention_metrics\.avg_play_duration/);
+  assert.match(prompt, /不要自报截图类型/);
+});
+
 test("百度提字 + 文字模型结构化：输出契约与视觉通道等价（data 槽位）", async () => {
   const timings = makeTimings();
   const result = await runBaiduOcrAttempt(

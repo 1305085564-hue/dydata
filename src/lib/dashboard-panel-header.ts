@@ -1,6 +1,7 @@
 import type { SubmissionDayStatus, SubmitPanelMode } from "@/lib/dashboard-submission-state";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import { isChinaWorkingDay } from "@/lib/工作日";
+import { getExemptionStateForDate, type ExemptionGrantLike, type ExemptionProfileLike } from "@/lib/豁免";
 
 /**
  * 工作台页头的派生逻辑独立成文件：dashboard-submission-state.ts 已过 500 行棘轮线，
@@ -94,25 +95,26 @@ function enumerateMonthDatesUntil(monthPrefix: string, until: string) {
 /**
  * 本月履约摘要：本月已交 x 天，漏 y 天。
  * 已交：本月到今天为止有提交记录的日子（周末交了也算）。
- * 漏交：今天以前的中国工作日（`isChinaWorkingDay`，含调休），没有提交，且不是免交/请假/待审批/缺勤。
- * 与撤掉前的履约条同一口径：休息日免履约，不算漏。
+ * 漏交：今天以前的中国工作日（`isChinaWorkingDay`，含调休），没有提交，且不是已批准免交/请假或待审批。
+ * 管理员认定缺勤仍算漏；长期免交由 `getExemptionStateForDate` 逐日判定。
  */
 export function summarizeMonthFulfillment({
   today,
   submittedDates,
   exemptDates,
-  absentDates,
+  exemptionProfile,
+  exemptionGrants = [],
 }: {
   today: string;
   submittedDates: readonly string[];
   exemptDates: readonly string[];
-  absentDates: readonly string[];
+  absentDates?: readonly string[];
+  exemptionProfile?: ExemptionProfileLike | null;
+  exemptionGrants?: ExemptionGrantLike[];
 }): { submittedCount: number; missedCount: number } {
   const monthPrefix = today.slice(0, 7);
   const submitted = new Set(submittedDates.filter((date) => date.startsWith(monthPrefix)));
-  const excluded = new Set(
-    [...exemptDates, ...absentDates].filter((date) => date.startsWith(monthPrefix)),
-  );
+  const excluded = new Set(exemptDates.filter((date) => date.startsWith(monthPrefix)));
 
   let submittedCount = 0;
   let missedCount = 0;
@@ -121,7 +123,10 @@ export function summarizeMonthFulfillment({
       submittedCount += 1;
       continue;
     }
-    if (date < today && !excluded.has(date) && isWorkingDateKey(date)) missedCount += 1;
+    const exemptionState = exemptionProfile
+      ? getExemptionStateForDate(exemptionProfile, date, exemptionGrants)
+      : null;
+    if (date < today && !excluded.has(date) && !exemptionState?.isExempt && isWorkingDateKey(date)) missedCount += 1;
   }
   return { submittedCount, missedCount };
 }

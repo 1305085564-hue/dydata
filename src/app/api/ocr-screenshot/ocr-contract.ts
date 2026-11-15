@@ -1,3 +1,13 @@
+import {
+  buildAutoRecognizedFields,
+  buildDataClassificationFields,
+  buildDataScreenshotResponse,
+  buildRetentionScreenshotResponse,
+  classifyScreenshotByFields,
+} from "./ocr-response-builders";
+
+export { classifyScreenshotByFields } from "./ocr-response-builders";
+
 /**
  * 截图识别输出契约：类型 + 解析函数（纯函数，无 IO 依赖）。
  * 从 route.ts 抽出供百度通道与视觉通道共用；route.ts 统一再导出保持兼容。
@@ -40,7 +50,7 @@ const OCR_FIELDS: OcrFieldKey[] = [
   "follower_gain",
 ];
 
-type ParsedOcrResult = {
+export type ParsedOcrResult = {
   play_count: number | null;
   likes: number | null;
   comments: number | null;
@@ -85,11 +95,11 @@ type OpenAICompatibleMessageContentBlock = {
 };
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
+export type JsonObject = { [key: string]: JsonValue };
 
 export type ParsedScreenshotResponse = {
   slot_status: "pending_confirm" | "confirmed" | "failed";
-  screenshot_type: ScreenshotType;
+  screenshot_type: ScreenshotType | null;
   confidence_score: number;
   requires_manual_confirmation: boolean;
   recognized_fields: JsonObject | null;
@@ -142,13 +152,6 @@ function normalizePublishedAtRecognition(raw: {
   };
 }
 
-function attachPublishedAtEvidence(target: JsonObject, publishedAt: PublishedAtRecognition) {
-  if (publishedAt.published_at || publishedAt.published_at_text) {
-    Object.assign(target, publishedAt);
-  }
-  return target;
-}
-
 export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
   return normalizeScreenshotTypeInput(assetRole);
 }
@@ -165,19 +168,6 @@ export function resolveKnownScreenshotType(input: {
   screenshotType: ScreenshotType | null;
   assetRole: ScreenshotAssetRole | null;
 }): { type: ScreenshotType; source: "explicit" | "asset_role" } | null {
-  if (input.assetRole) {
-    // 槽位是上传链路的业务事实。即使某个拆分入口误传了显式类型，也不能
-    // 让 screenshot_2 被送进 data prompt，或让 screenshot_1 被送进 retention prompt。
-    const roleType = getScreenshotTypeFallbackByAssetRole(input.assetRole);
-    if (input.screenshotType === roleType) {
-      return { type: input.screenshotType, source: "explicit" };
-    }
-    return {
-      type: roleType,
-      source: "asset_role",
-    };
-  }
-
   if (input.screenshotType) {
     return { type: input.screenshotType, source: "explicit" };
   }
@@ -185,7 +175,7 @@ export function resolveKnownScreenshotType(input: {
   return null;
 }
 
-export function buildNoTextFailedResponse(screenshotType: ScreenshotType): ParsedScreenshotResponse {
+export function buildNoTextFailedResponse(screenshotType: ScreenshotType | null): ParsedScreenshotResponse {
   return {
     slot_status: "failed",
     screenshot_type: screenshotType,
@@ -224,11 +214,33 @@ export function hasJsonObject(content: unknown): boolean {
 
 export function parseOcrResponse(
   content: unknown,
-  screenshotType: ScreenshotTypeInput
+  screenshotType: ScreenshotTypeInput | null | undefined
 ): ParsedScreenshotResponse | null {
   const normalizedType = normalizeScreenshotTypeInput(screenshotType);
   if (!normalizedType) {
-    return null;
+    const dataParsed = parseOcrContent(content);
+    const retentionParsed = parseRetentionContent(content);
+    const classification = classifyScreenshotByFields({
+      ...buildDataClassificationFields(dataParsed),
+      retention_metrics: retentionParsed?.recognized ? retentionParsed.retention_metrics : null,
+    });
+
+    if (classification === "data" && dataParsed) {
+      return buildDataScreenshotResponse(dataParsed, "data", getConfidenceScore(dataParsed.confidence));
+    }
+    if (classification === "retention" && retentionParsed?.recognized) {
+      return buildRetentionScreenshotResponse(retentionParsed, "retention");
+    }
+
+    const recognizedFields = buildAutoRecognizedFields(dataParsed, retentionParsed);
+    if (Object.keys(recognizedFields).length === 0) return null;
+    return {
+      slot_status: "pending_confirm",
+      screenshot_type: null,
+      confidence_score: 0,
+      requires_manual_confirmation: true,
+      recognized_fields: recognizedFields,
+    };
   }
 
   if (normalizedType === "retention") {
@@ -237,31 +249,7 @@ export function parseOcrResponse(
       return null;
     }
 
-    if (!parsed.recognized) {
-      return {
-        slot_status: "failed",
-        screenshot_type: normalizedType,
-        confidence_score: 0,
-        requires_manual_confirmation: true,
-        error_code: "LOW_CONFIDENCE",
-        error: parsed.reason,
-        recognized_fields: null,
-      };
-    }
-
-    const confidenceScore = parsed.confidence ?? 0;
-    return {
-      slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-      screenshot_type: normalizedType,
-      confidence_score: confidenceScore,
-      requires_manual_confirmation: confidenceScore < 0.7,
-    recognized_fields: attachPublishedAtEvidence({
-        recognized: true,
-        retention_metrics: parsed.retention_metrics,
-        confidence: parsed.confidence,
-        ...(parsed.video_title ? { video_title: parsed.video_title } : {}),
-      } as unknown as JsonObject, parsed.publishedAt ?? { published_at: null, published_at_text: null, published_at_confidence: "low" }),
-    };
+    return buildRetentionScreenshotResponse(parsed, normalizedType);
   }
 
   const parsed = parseOcrContent(content);
@@ -269,35 +257,7 @@ export function parseOcrResponse(
     return null;
   }
 
-  const recognizedFields = Object.fromEntries(
-    OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
-  ) as JsonObject;
-  if (parsed.video_title) recognizedFields.video_title = parsed.video_title;
-  attachPublishedAtEvidence(recognizedFields, parsed.publishedAt);
-
-  const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null) || Boolean(parsed.video_title);
-  if (!hasAnyValue) {
-    return {
-      slot_status: "failed",
-      screenshot_type: normalizedType,
-      confidence_score: 0,
-      requires_manual_confirmation: true,
-      error_code: "LOW_CONFIDENCE",
-      error: "图片不清晰或未识别到数据",
-      recognized_fields: null,
-    };
-  }
-
-  const confidenceScore = getConfidenceScore(parsed.confidence);
-
-  return {
-    slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-    screenshot_type: normalizedType,
-    confidence_score: confidenceScore,
-    requires_manual_confirmation: confidenceScore < 0.7,
-    recognized_fields: recognizedFields,
-    confidence: parsed.confidence,
-  };
+  return buildDataScreenshotResponse(parsed, normalizedType, getConfidenceScore(parsed.confidence));
 }
 
 function parseOcrContent(content: unknown): ParsedOcrResult | null {

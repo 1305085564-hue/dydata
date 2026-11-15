@@ -22,7 +22,7 @@ export type OcrTimingsLike = {
 
 export type BaiduOcrAttemptInput = {
   dataUrl: string;
-  screenshotType: ScreenshotType;
+  screenshotType: ScreenshotType | null;
   timings: Partial<OcrTimingsLike> & Record<string, unknown>;
 };
 
@@ -120,12 +120,27 @@ export async function runBaiduOcrAttempt(
   };
 }
 
-export function buildStructurePromptByType(type: ScreenshotType, lines: string[]): string {
+export function buildStructurePromptByType(type: ScreenshotType | null, lines: string[]): string {
   const lineBlock = lines.map((line, index) => `${index + 1}. ${line}`).join("\n");
+  if (!type) return buildAutoStructurePrompt(lineBlock);
   if (type === "retention") {
     return buildRetentionStructurePrompt(lineBlock);
   }
   return buildDataStructurePrompt(lineBlock);
+}
+
+function buildAutoStructurePrompt(lineBlock: string): string {
+  return [
+    "你是抖音数据截图结构化助手。以下是 OCR 从截图中按原始顺序识别出的文字行：",
+    lineBlock,
+    "",
+    "请同时提取互动数据族和完播留存族；不要自报截图类型，严格只返回 JSON。",
+    "互动数据族字段：play_count、likes、comments、shares、favorites、follower_gain。",
+    "完播留存族字段：retention_metrics.avg_play_duration、avg_play_ratio、bounce_rate_2s、completion_rate_5s、completion_rate。",
+    "另加 video_title、published_at、published_at_text、published_at_confidence、confidence。",
+    "找不到的字段返回 null，禁止编造；标题去掉末尾话题；发布时间只能依据明确的‘发布’文字。",
+    "只返回 JSON，不要 markdown，不要解释。",
+  ].join("\n");
 }
 
 function buildDataStructurePrompt(lineBlock: string): string {

@@ -52,7 +52,6 @@ import {
 } from "@/components/submission/填报表单状态";
 import {
   getVideoSubmissionEditDetailError,
-  findNextScreenshotUploadRole,
   getHiddenRoleRestoreLabel,
   resolveAssigneeDisplay,
   resolveVideoSubmitMode,
@@ -68,10 +67,13 @@ import {
   createEditableSlotsFromEditDetail,
   createInitialMeta,
   createMetaFromEditDetail,
-  VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
+  createScreenshotItemsFromEditDetail,
+  deriveSlotsFromItems,
+  countProcessingScreenshotItems,
   type EditableMetricField,
   type FormMetaState,
   type SlotViewState,
+  type ScreenshotItem,
 } from "./video-submit-form-model";
 
 import type {
@@ -94,6 +96,7 @@ import { FormV2SubmitFooter } from "./form-v2/submit-footer";
 import { FormV2Workspace } from "./form-v2/workspace";
 import { SubmittedView } from "./form-v2/submitted-view";
 import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
+import type { UploadHandler } from "./video-submit-form-v2/upload-controller";
 import { createSubmitController } from "./video-submit-form-v2/submit-controller";
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
@@ -162,6 +165,12 @@ export function VideoSubmitFormV2({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const selfLabel = userDisplayName?.trim() || "我";
+  const initialScreenshotItems = useMemo(
+    () => editDetail ? createScreenshotItemsFromEditDetail(editDetail) : [],
+    [editDetail],
+  );
+  const screenshotItemsRef = useRef<ScreenshotItem[]>(initialScreenshotItems);
+  const [screenshotItems, setScreenshotItems] = useState<ScreenshotItem[]>(initialScreenshotItems);
 
   // 表单业务数据统一由 workflow reducer 持有；兼容 setter 适配器让现有渲染与异步流程分阶段迁移。
   const [workflow, dispatchWorkflow] = useReducer(workflowReducer, undefined, () => {
@@ -175,7 +184,9 @@ export function VideoSubmitFormV2({
     return createWorkflowState({
       meta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
-      slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+      slots: initialScreenshotItems.length > 0
+        ? deriveSlotsFromItems(initialScreenshotItems)
+        : editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
       draft: {
         hasManualEdit: editDetail?.dataSource === "manual",
       },
@@ -268,6 +279,17 @@ export function VideoSubmitFormV2({
   if (ocrTasksRef.current == null) {
     ocrTasksRef.current = createOcrTaskRegistry();
   }
+  const updateItemsState = useCallback(
+    (updater: (current: ScreenshotItem[]) => ScreenshotItem[]) => {
+      const nextItems = updater(screenshotItemsRef.current);
+      screenshotItemsRef.current = nextItems;
+      setScreenshotItems(nextItems);
+      const nextSlots = deriveSlotsFromItems(nextItems);
+      slotsRef.current = nextSlots;
+      setSlots(() => nextSlots);
+    },
+    [setSlots],
+  );
   const updateSlotsState = useCallback(
     (
       updater:
@@ -276,6 +298,15 @@ export function VideoSubmitFormV2({
     ) => {
       setSlots((current) => {
         const next = typeof updater === "function" ? updater(current) : updater;
+        const removedItemIds = (Object.keys(current) as SubmissionSlotRole[])
+          .filter((role) => current[role].itemId && next[role].status === "empty" && !next[role].itemId)
+          .map((role) => current[role].itemId as string);
+        if (removedItemIds.length > 0) {
+          for (const itemId of removedItemIds) ocrTasksRef.current?.cancel(itemId);
+          const nextItems = screenshotItemsRef.current.filter((item) => !removedItemIds.includes(item.id));
+          screenshotItemsRef.current = nextItems;
+          setScreenshotItems(nextItems);
+        }
         slotsRef.current = next;
         return next;
       });
@@ -516,10 +547,10 @@ export function VideoSubmitFormV2({
   // 是否已开始填表（传了任意截图、或填了任意指标/标题/文案）。题材有默认值，不算「开始填」。
   // 没开始时首屏只露截图这一步，页头保持「今天还没交」。
   const hasStartedFilling = useMemo(() => {
-    if (Object.values(slots).some((slot) => slot.status !== "empty")) return true;
+    if (screenshotItems.length > 0 || Object.values(slots).some((slot) => slot.status !== "empty")) return true;
     if (Object.values(fields).some((field) => Boolean(field?.value?.trim()))) return true;
     return Boolean(meta.videoTitle.trim() || meta.content.trim());
-  }, [fields, meta.content, meta.videoTitle, slots]);
+  }, [fields, meta.content, meta.videoTitle, screenshotItems.length, slots]);
 
   useEffect(() => {
     if (!isSubmitted) {
@@ -671,6 +702,7 @@ export function VideoSubmitFormV2({
   useEffect(() => () => {
     ocrTasksRef.current?.cancel("screenshot_1");
     ocrTasksRef.current?.cancel("screenshot_2");
+    ocrTasksRef.current?.cancelAll();
   }, []);
 
   // 账号切换时重置
@@ -697,11 +729,18 @@ export function VideoSubmitFormV2({
       nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
     }
 
+    const nextItems = editDetail ? createScreenshotItemsFromEditDetail(editDetail) : [];
+    screenshotItemsRef.current = nextItems;
+    setScreenshotItems(nextItems);
+    const nextSlots = nextItems.length > 0
+      ? deriveSlotsFromItems(nextItems)
+      : createEditableSlots();
+    slotsRef.current = nextSlots;
     dispatchWorkflow({
       type: "draft/restore",
       meta: nextMeta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
-      slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+      slots: nextSlots,
       draft: {
         keywordInput: "",
         hasManualScriptAuthorSelection: false,
@@ -726,6 +765,7 @@ export function VideoSubmitFormV2({
     today,
     userId,
     submittedViewActive,
+    setScreenshotItems,
   ]);
 
   // 提交验证相关计算
@@ -740,16 +780,26 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
     videoId: editDraftVideoId,
   });
+  const unknownScreenshotCount = screenshotItems.filter((item) => item.screenshotType === null).length;
   const issueSummary = useMemo(
-    () =>
-      summarizeSubmissionIssues(submissionState, {
+    () => {
+      const base = summarizeSubmissionIssues(submissionState, {
         topicTag: meta.topicTag,
         anomalyStatus: meta.anomalyStatus,
         videoTitle: meta.videoTitle,
         content: meta.content,
         submissionMode: submitMode,
         publishedAtConfirmed,
-      }),
+      });
+      return {
+        ...base,
+        unclassifiedScreenshotCount: unknownScreenshotCount,
+        totalIssueCount: base.totalIssueCount + (unknownScreenshotCount > 0 ? 1 : 0),
+        canSubmit: base.canSubmit && unknownScreenshotCount === 0,
+        firstIssueAnchor: base.firstIssueAnchor ?? (unknownScreenshotCount > 0 ? "slots" : null),
+        reason: base.reason ?? (unknownScreenshotCount > 0 ? "有一张截图没认出是哪类" : null),
+      };
+    },
     [
       submissionState,
       meta.topicTag,
@@ -758,6 +808,7 @@ export function VideoSubmitFormV2({
       meta.content,
       submitMode,
       publishedAtConfirmed,
+      unknownScreenshotCount,
     ],
   );
   const issueSummaryRef = useRef(issueSummary);
@@ -865,20 +916,35 @@ export function VideoSubmitFormV2({
   });
 
   // OCR 上传、识别与槽位归并由独立 controller 负责。
+  const uploadHandler = useMemo<UploadHandler>(
+    () => createUploadHandler({
+      account,
+      userId,
+      initialSummary,
+      supabase,
+      ocrTasksRef,
+      slotsRef,
+      itemsRef: screenshotItemsRef,
+      blobUrlsRef,
+      updateItemsState,
+      dispatchWorkflow,
+    }),
+    [account, userId, initialSummary, supabase, updateItemsState, dispatchWorkflow],
+  );
   const handleSlotUpload = useCallback(
-    (role: SubmissionSlotRole, file: File, batchStartedAt?: number) => createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow })(role, file, batchStartedAt),
-    [account, userId, initialSummary, supabase, updateSlotsState, dispatchWorkflow],
+    (role: SubmissionSlotRole, file: File, batchStartedAt?: number) => uploadHandler(role, file, batchStartedAt),
+    [uploadHandler],
   );
 
   function handleSlotRetry(role: SubmissionSlotRole) {
     const slot = slots[role];
-    if (
-      !slot.file ||
-      !(slot.status === "failed" || slot.status === "pending_confirm" || slot.ocrFallback)
-    ) {
-      return;
-    }
-    void handleSlotUpload(role, slot.file);
+    if (!slot.itemId || !(slot.status === "failed" || slot.status === "pending_confirm" || slot.ocrFallback)) return;
+    void uploadHandler.retryItem(slot.itemId);
+  }
+
+  function handleScreenshotType(role: SubmissionSlotRole, screenshotType: "data" | "retention") {
+    const itemId = slots[role]?.itemId;
+    if (itemId) void uploadHandler.recognizeType(itemId, screenshotType);
   }
 
   const cancelTimeoutRef = useRef<number | null>(null);
@@ -941,10 +1007,11 @@ export function VideoSubmitFormV2({
     const canAutoResolve2 = slots.screenshot_2.status === "failed" && Boolean(slots.screenshot_2.assetUrl) && hasManualEdit;
 
     if (canAutoResolve1 || canAutoResolve2) {
-      updateSlotsState((curr) => ({
-        ...curr,
-        ...(canAutoResolve1 ? { screenshot_1: { ...curr.screenshot_1, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
-        ...(canAutoResolve2 ? { screenshot_2: { ...curr.screenshot_2, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
+      updateItemsState((current) => current.map((item) => {
+        const shouldResolve = (canAutoResolve1 && slots.screenshot_1.itemId === item.id) || (canAutoResolve2 && slots.screenshot_2.itemId === item.id);
+        return shouldResolve
+          ? { ...item, status: "done", confirmed: true, requiresManualConfirmation: false, ocrFallback: true, error: null }
+          : item;
       }));
     }
 
@@ -1019,29 +1086,14 @@ export function VideoSubmitFormV2({
     }
   }
 
-  // 队列多图上传
+  // 多张图片立即各自上传和识别，不等待前一张完成。
   const handleUnifiedUpload = useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (files.length === 0) return;
-
       const batchStartedAt = Date.now();
-      let uploadedCount = 0;
-      for (const file of files) {
-        const role = findNextScreenshotUploadRole(
-          slotsRef.current,
-          VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
-        );
-        if (!role) break;
-
-        await handleSlotUpload(role, file, batchStartedAt);
-        uploadedCount++;
-      }
-
-      if (uploadedCount < files.length) {
-        toast.warning(`槽位已满，仅上传了前 ${uploadedCount} 张图片`);
-      }
+      for (const file of files) void uploadHandler(null, file, batchStartedAt);
     },
-    [handleSlotUpload],
+    [uploadHandler],
   );
 
   // 快捷键：Ctrl+Enter / Cmd+Enter 快捷提交
@@ -1200,6 +1252,8 @@ export function VideoSubmitFormV2({
                 handleUnifiedUpload={handleUnifiedUpload}
                 setDeleteTargetRole={setDeleteTargetRole}
                 handleSlotRetry={handleSlotRetry}
+                handleScreenshotType={handleScreenshotType}
+                processingScreenshotCount={countProcessingScreenshotItems(screenshotItems)}
                 updateSlotsState={updateSlotsState}
                 screenshotsRequired={screenshotsRequired}
                 focusedRole={focusedRole}

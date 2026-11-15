@@ -19,7 +19,8 @@ test("截图区两张都没传时是一块合并粘贴区，之后换成固定�
   const source = readSource("src/components/submission/截图槽位区.tsx");
   assert.match(source, /className="h-\[136px\]"/, "截图区整块高度固定，切换状态时下方不位移");
   assert.match(source, /aria-label="粘贴或选择截图"/);
-  assert.match(source, /把今天的两张截图粘贴进来/);
+  assert.match(source, /把截图粘贴或拖进来/);
+  assert.match(source, /系统按内容分清互动和完播/);
   // 删除、重传平时隐藏，悬停或聚焦时浮现
   assert.match(source, /sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100/);
 });

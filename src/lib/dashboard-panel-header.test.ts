@@ -40,12 +40,46 @@ test("本月漏交只算今天以前的工作日：周末没交不算漏", () =>
     today: "2026-11-10",
     submittedDates: ["2026-11-02", "2026-11-03", "2026-11-08"],
     exemptDates: ["2026-11-04"],
-    absentDates: [],
+    absentDates: ["2026-11-05"],
   });
   // 已交：2、3、8 日（周末交了也算已交）
   assert.equal(result.submittedCount, 3);
   // 漏交：5、6、9 日；1、7 日是周末，4 日免交，10 日是今天
   assert.equal(result.missedCount, 3);
+});
+
+test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
+  const longTerm = summarizeMonthFulfillment({
+    today: "2026-11-10",
+    submittedDates: [],
+    exemptDates: [],
+    absentDates: ["2026-11-05"],
+    exemptionProfile: {
+      id: "user-1",
+      status: "exempt",
+      exempt_type: "permanent",
+      exempt_start_date: null,
+      exempt_end_date: null,
+      exempt_reason: "长期免交",
+    },
+  });
+  assert.deepEqual(longTerm, { submittedCount: 0, missedCount: 0 });
+
+  const active = summarizeMonthFulfillment({
+    today: "2026-11-10",
+    submittedDates: [],
+    exemptDates: [],
+    absentDates: ["2026-11-05"],
+    exemptionProfile: {
+      id: "user-1",
+      status: "active",
+      exempt_type: null,
+      exempt_start_date: null,
+      exempt_end_date: null,
+      exempt_reason: null,
+    },
+  });
+  assert.equal(active.missedCount, 6);
 });
 
 test("页头副行日期写成「11 月 13 日 周五」", () => {

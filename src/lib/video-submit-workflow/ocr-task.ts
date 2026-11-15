@@ -1,5 +1,3 @@
-import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
-
 type ActiveTask = {
   requestId: number;
   controller: AbortController;
@@ -14,44 +12,42 @@ export type OcrTaskHandle = {
 };
 
 export type OcrTaskRegistry = {
-  begin: (role: SubmissionSlotRole) => OcrTaskHandle;
-  finish: (role: SubmissionSlotRole, requestId: number) => void;
-  cancel: (role: SubmissionSlotRole) => void;
+  begin: (key: string) => OcrTaskHandle;
+  finish: (key: string, requestId: number) => void;
+  cancel: (key: string) => void;
+  cancelAll: () => void;
 };
 
 export function createOcrTaskRegistry(): OcrTaskRegistry {
-  const counters: Record<SubmissionSlotRole, number> = {
-    screenshot_1: 0,
-    screenshot_2: 0,
-  };
-  const active = new Map<SubmissionSlotRole, ActiveTask>();
+  const counters = new Map<string, number>(); // gate:transient-map per-item request counters are bounded by active upload lifetime
+  const active = new Map<string, ActiveTask>(); // gate:transient-map active OCR tasks are cleared on finish, cancel, or cancelAll
 
-  function cancel(role: SubmissionSlotRole) {
-    active.get(role)?.controller.abort();
-    active.delete(role);
+  function cancel(key: string) {
+    active.get(key)?.controller.abort();
+    active.delete(key);
   }
 
-  function begin(role: SubmissionSlotRole): OcrTaskHandle {
-    cancel(role);
-    const requestId = counters[role] + 1;
-    counters[role] = requestId;
+  function begin(key: string): OcrTaskHandle {
+    cancel(key);
+    const requestId = (counters.get(key) ?? 0) + 1;
+    counters.set(key, requestId);
     const task: ActiveTask = {
       requestId,
       controller: new AbortController(),
       assetUrl: null,
     };
-    active.set(role, task);
+    active.set(key, task);
 
     return {
       requestId,
       signal: task.controller.signal,
       bindAsset(assetUrl) {
-        if (active.get(role)?.requestId === requestId) {
+        if (active.get(key)?.requestId === requestId) {
           task.assetUrl = assetUrl;
         }
       },
       isCurrent(assetUrl) {
-        const current = active.get(role);
+        const current = active.get(key);
         if (!current || current.requestId !== requestId || task.controller.signal.aborted) {
           return false;
         }
@@ -60,10 +56,14 @@ export function createOcrTaskRegistry(): OcrTaskRegistry {
     };
   }
 
-  function finish(role: SubmissionSlotRole, requestId: number) {
-    const current = active.get(role);
-    if (current?.requestId === requestId) active.delete(role);
+  function finish(key: string, requestId: number) {
+    const current = active.get(key);
+    if (current?.requestId === requestId) active.delete(key);
   }
 
-  return { begin, finish, cancel };
+  function cancelAll() {
+    for (const key of active.keys()) cancel(key);
+  }
+
+  return { begin, finish, cancel, cancelAll };
 }

@@ -25,6 +25,8 @@ export type FormV2WorkspaceProps = Omit<FormV2ResultsSectionProps, "slotProcessi
     handleUnifiedUpload: (files: File[]) => void;
     setDeleteTargetRole: (role: SubmissionSlotRole | null) => void;
     handleSlotRetry: (role: SubmissionSlotRole) => void;
+    handleScreenshotType?: (role: SubmissionSlotRole, screenshotType: "data" | "retention") => void;
+    processingScreenshotCount?: number;
     updateSlotsState: SlotsUpdater;
     screenshotsRequired: boolean;
     focusedRole: SubmissionSlotRole | null;
@@ -50,6 +52,8 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     handleUnifiedUpload,
     setDeleteTargetRole,
     handleSlotRetry,
+    handleScreenshotType,
+    processingScreenshotCount,
     updateSlotsState,
     screenshotsRequired,
     focusedRole,
@@ -87,6 +91,8 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           onUploadFiles={handleUnifiedUpload}
           onDelete={(role) => setDeleteTargetRole(role)}
           onRetry={handleSlotRetry}
+          onConfirmType={handleScreenshotType}
+          processingScreenshotCount={processingScreenshotCount}
           onManualFill={(role) => {
             updateSlotsState((current) => {
               const hasUploadedScreenshot = Boolean(current[role].assetUrl);

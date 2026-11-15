@@ -7,6 +7,7 @@ import {
   getScreenshotTypeByAssetRole,
   getScreenshotTypeFallbackByAssetRole,
   hasJsonObject,
+  classifyScreenshotByFields,
   parseOcrResponse,
   parseRetentionContent,
   normalizeVisionDataUrl,
@@ -32,14 +33,14 @@ test("截图类型由槽位直接决定，不再跑 AI 分类", () => {
   assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
 });
 
-test("有截图槽位时按槽位决定识别类型", () => {
+test("没有显式类型时进入自动识别，显式类型优先", () => {
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_1" }),
-    { type: "data", source: "asset_role" },
+    null,
   );
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_2" }),
-    { type: "retention", source: "asset_role" },
+    null,
   );
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: "data", assetRole: "screenshot_1" }),
@@ -47,25 +48,43 @@ test("有截图槽位时按槽位决定识别类型", () => {
   );
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: "data", assetRole: "screenshot_2" }),
-    { type: "retention", source: "asset_role" },
+    { type: "data", source: "explicit" },
   );
   assert.equal(resolveKnownScreenshotType({ screenshotType: null, assetRole: null }), null);
 });
 
-test("曲线形态识别已下线：curve 别名不再产出识别结果", () => {
+test("曲线形态识别已下线：curve 别名不再产出类型结果", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      recognized: true,
+      curve_pattern: "二次起量",
+      first_peak_position: "前段",
+      drop_severity: "medium",
+      tail_strength: "high",
+      confidence: 0.86,
+    }),
+    "traffic_curve",
+  );
+  assert.equal(result?.screenshot_type, null);
+  assert.equal(result?.slot_status, "pending_confirm");
+});
+
+test("自动分类只按两组字段计数：达到两项且不打平才归位", () => {
   assert.equal(
-    parseOcrResponse(
-      JSON.stringify({
-        recognized: true,
-        curve_pattern: "二次起量",
-        first_peak_position: "前段",
-        drop_severity: "medium",
-        tail_strength: "high",
-        confidence: 0.86,
-      }),
-      "traffic_curve"
-    ),
-    null
+    classifyScreenshotByFields({ play_count: 0, likes: 12, retention_metrics: null }),
+    "data",
+  );
+  assert.equal(
+    classifyScreenshotByFields({ retention_metrics: { avg_play_duration: 0, completion_rate: 68 } }),
+    "retention",
+  );
+  assert.equal(
+    classifyScreenshotByFields({ play_count: 100, retention_metrics: { completion_rate: 60 } }),
+    null,
+  );
+  assert.equal(
+    classifyScreenshotByFields({ play_count: 100, likes: 20, retention_metrics: { completion_rate: 60, completion_rate_5s: 50 } }),
+    null,
   );
 });
 

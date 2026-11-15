@@ -345,31 +345,6 @@ export function buildVideoSubmissionEditRefill(
 }
 
 export type ScreenshotUploadSlotRole = "screenshot_1" | "screenshot_2";
-export type ScreenshotUploadSlotLike = { status: string };
-
-export const SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
-  "screenshot_1",
-  "screenshot_2",
-];
-
-export function findNextScreenshotUploadRole(
-  slots: Record<ScreenshotUploadSlotRole, ScreenshotUploadSlotLike>,
-  order: ScreenshotUploadSlotRole[] = SCREENSHOT_UPLOAD_SLOT_ORDER,
-): ScreenshotUploadSlotRole | null {
-  return order.find((role) => {
-    const status = slots[role]?.status;
-    return status === "empty" || status === "failed";
-  }) ?? null;
-}
-
-export function shouldRequestScreenshotReplacement(
-  slots: Record<ScreenshotUploadSlotRole, { assetUrl?: string | null; previewUrl?: string | null }>,
-  fileCount: number,
-) {
-  return fileCount === 1 && SCREENSHOT_UPLOAD_SLOT_ORDER.every((role) =>
-    Boolean(slots[role]?.assetUrl || slots[role]?.previewUrl),
-  );
-}
 
 export type HistoricalAssigneeProfile = {
   userId: string;

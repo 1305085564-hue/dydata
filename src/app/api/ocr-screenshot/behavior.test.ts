@@ -93,6 +93,34 @@ test("截图识别全链路成功：真实渠道名与耗时写入测速台账",
   assert.ok(typeof logged[0].ocrMs === "number" && logged[0].ocrMs! >= 0);
 });
 
+test("不带截图类型时走一次自动提示，并返回自动判定来源", async () => {
+  let prompt = "";
+  const response = await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG }),
+    makeDeps({
+      callAi: async ({ messages }) => {
+        const content = messages[0]?.content;
+        const first = Array.isArray(content) ? content[0] : null;
+        prompt = first?.type === "text" ? first.text : String(content ?? "");
+        return {
+          content: OCR_JSON, model: "m", channelName: "vision", channelId: null,
+          providerKeyModelId: null, providerKeyId: null, promptTokens: null,
+          completionTokens: null, totalTokens: null, elapsedMs: 10,
+        };
+      },
+    }),
+    observation,
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json() as Record<string, unknown>;
+  assert.equal(body.screenshot_type, "data");
+  assert.equal(body.screenshot_type_source, "auto");
+  assert.equal((body.data as Record<string, unknown>).screenshot_type, "data");
+  assert.match(prompt, /retention_metrics/);
+  assert.match(prompt, /不要自报截图类型/);
+});
+
 test("未登录与输入错误不写测速台账（只记真正进入识别的请求）", async () => {
   const logged: OcrLogParams[] = [];
   const recordLog = async (params: OcrLogParams) => { logged.push(params); };

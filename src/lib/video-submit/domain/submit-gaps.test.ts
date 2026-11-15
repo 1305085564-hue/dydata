@@ -27,6 +27,15 @@ test("还差什么：按缺项汇总拼出按钮文字，顺序与状态机一�
   assert.equal(gaps[0].anchor, "slots");
 });
 
+test("类型未确认时增加截图缺口，并阻止进入可提交状态", () => {
+  const withUnknown = { ...summary({}), unclassifiedScreenshotCount: 1 };
+  assert.deepEqual(listSubmitGaps(withUnknown).map((gap) => gap.label), ["有一张截图没认出是哪类"]);
+  assert.equal(
+    resolveFormProgress({ summary: { ...withUnknown, canSubmit: true }, hasStartedFilling: true, allScreenshotsFailed: false }),
+    "filling",
+  );
+});
+
 test("表单进度：只差文案时页头说「还差一步」，齐了说「可以交了」", () => {
   assert.equal(resolveFormProgress({ summary: summary({ missingRequiredSlots: ["screenshot_1", "screenshot_2"], missingRequiredMeta: ["videoTitle", "content"] }), hasStartedFilling: false, allScreenshotsFailed: false }), "notStarted");
   assert.equal(resolveFormProgress({ summary: summary({ missingRequiredMeta: ["content"] }), hasStartedFilling: true, allScreenshotsFailed: false }), "onlyContent");

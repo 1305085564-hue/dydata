@@ -36,6 +36,7 @@ export type FormMetaState = {
 };
 
 export type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
+  itemId?: string;
   fileName?: string;
   error?: string | null;
   assetUrl?: string | null;
@@ -49,6 +50,33 @@ export type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   recognizedFields?: Record<string, unknown> | null;
   ocrSummary?: string[];
   ocrFallback?: boolean;
+};
+
+export type ScreenshotItemStatus = "uploading" | "recognizing" | "done" | "failed";
+
+export type ScreenshotItem = {
+  id: string;
+  seq: number;
+  file: File | null;
+  status: ScreenshotItemStatus;
+  screenshotType: "data" | "retention" | null;
+  recognizedFields: Record<string, unknown> | null;
+  assetUrl: string | null;
+  previewUrl: string | null;
+  bucket: string | null;
+  path: string | null;
+  storageRole: SubmissionSlotRole;
+  fileName?: string;
+  error?: string | null;
+  confidenceScore?: number | null;
+  requiresManualConfirmation: boolean;
+  confirmed: boolean;
+  ocrSummary?: string[];
+  ocrFallback?: boolean;
+  startedAt?: number;
+  phaseStartedAt?: number;
+  finishedAt?: number;
+  batchStartedAt?: number;
 };
 
 export const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
@@ -283,11 +311,113 @@ export function createEditableSlotsFromEditDetail(
       previewUrl: asset.url,
       file: null,
       fileName: "已保存截图",
-      screenshotType: asset.screenshotType,
+      screenshotType: resolveEditScreenshotType(asset.screenshotType, role),
       recognizedFields: asset.recognizedFields,
       ocrSummary: buildOcrSummary(asset.screenshotType, asset.recognizedFields),
       ocrFallback: !asset.confirmed,
     };
   }
   return slots;
+}
+
+export function createScreenshotItemsFromEditDetail(
+  detail: VideoSubmissionEditDetail,
+): ScreenshotItem[] {
+  const refill = buildVideoSubmissionEditRefill(detail);
+  return VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER.flatMap((role, index) => {
+    const asset = refill.assets[role];
+    if (!asset) return [];
+    const screenshotType = resolveEditScreenshotType(asset.screenshotType, role);
+    return [{
+      id: `legacy-${role}`,
+      seq: index + 1,
+      file: null,
+      status: "done" as const,
+      screenshotType,
+      recognizedFields: asset.recognizedFields,
+      assetUrl: asset.url,
+      previewUrl: asset.url,
+      bucket: null,
+      path: null,
+      storageRole: role,
+      fileName: "已保存截图",
+      confidenceScore: asset.confidenceScore,
+      requiresManualConfirmation: !asset.confirmed,
+      confirmed: asset.confirmed,
+      ocrSummary: buildOcrSummary(screenshotType, asset.recognizedFields),
+      ocrFallback: !asset.confirmed,
+    }];
+  });
+}
+
+function resolveEditScreenshotType(
+  screenshotType: VideoSubmissionEditDetail["assets"][number]["screenshotType"],
+  role: SubmissionSlotRole,
+): "data" | "retention" {
+  if (screenshotType === "data" || screenshotType === "retention") return screenshotType;
+  return role === "screenshot_2" ? "retention" : "data";
+}
+
+function slotFromScreenshotItem(item: ScreenshotItem, role: SubmissionSlotRole): SlotViewState {
+  const hasAsset = Boolean(item.assetUrl || item.previewUrl);
+  const status = item.status === "failed" && hasAsset
+    ? "pending_confirm"
+    : item.status === "done"
+      ? item.screenshotType && !item.requiresManualConfirmation ? "confirmed" : "pending_confirm"
+      : item.status;
+  return {
+    role,
+    required: true,
+    status,
+    confidenceScore: item.confidenceScore ?? null,
+    requiresManualConfirmation: item.requiresManualConfirmation || item.screenshotType === null,
+    confirmed: item.confirmed && item.screenshotType !== null,
+    itemId: item.id,
+    fileName: item.fileName,
+    error: item.error ?? null,
+    assetUrl: item.assetUrl,
+    previewUrl: item.previewUrl,
+    file: item.file,
+    startedAt: item.startedAt,
+    phaseStartedAt: item.phaseStartedAt,
+    finishedAt: item.finishedAt,
+    batchStartedAt: item.batchStartedAt,
+    screenshotType: item.screenshotType,
+    recognizedFields: item.recognizedFields,
+    ocrSummary: item.ocrSummary,
+    ocrFallback: item.ocrFallback || item.screenshotType === null,
+  };
+}
+
+/** 以加入序号派生两个展示槽位；展示槽位永远不反过来决定图片类型。 */
+export function deriveSlotsFromItems(
+  items: readonly ScreenshotItem[],
+): Record<SubmissionSlotRole, SlotViewState> {
+  const slots = createEditableSlots();
+  const assigned = new Set<string>();
+  for (const [role, type] of [["screenshot_1", "data"], ["screenshot_2", "retention"]] as const) {
+    const current = items
+      .filter((item) => item.status === "done" && item.screenshotType === type)
+      .sort((a, b) => b.seq - a.seq)[0];
+    if (current) {
+      slots[role] = slotFromScreenshotItem(current, role);
+      assigned.add(current.id);
+    }
+  }
+
+  const pending = items
+    .filter((item) => !assigned.has(item.id) && (item.screenshotType === null || item.status === "uploading" || item.status === "recognizing" || item.status === "failed"))
+    .sort((a, b) => a.seq - b.seq);
+  for (const role of VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER) {
+    if (slots[role].status !== "empty") continue;
+    const next = pending.shift();
+    if (!next) continue;
+    slots[role] = slotFromScreenshotItem(next, role);
+    assigned.add(next.id);
+  }
+  return slots;
+}
+
+export function countProcessingScreenshotItems(items: readonly ScreenshotItem[]) {
+  return items.filter((item) => item.status === "uploading" || item.status === "recognizing").length;
 }

@@ -5,18 +5,8 @@ import { Trash2, Eye, RefreshCw, Loader2, Image as ImageIcon } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
+import { extractClipboardImageFiles } from "./截图粘贴";
 import { ScreenshotInspector } from "./截图检视器";
-import { shouldRequestScreenshotReplacement } from "@/app/(app)/dashboard/video-submit-form-state";
 import { getUploadProgress } from "@/lib/video-submit-workflow/upload-progress";
 
 interface SubmissionSlotsProps {
@@ -34,6 +24,8 @@ interface SubmissionSlotsProps {
       phaseStartedAt?: number;
       finishedAt?: number;
       batchStartedAt?: number;
+      itemId?: string;
+      screenshotType?: "data" | "curve" | "retention" | null;
     }
   >;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
@@ -41,6 +33,8 @@ interface SubmissionSlotsProps {
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
   onManualFill?: (role: SubmissionSlotRole) => void;
+  onConfirmType?: (role: SubmissionSlotRole, screenshotType: "data" | "retention") => void;
+  processingScreenshotCount?: number;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
   pulseEmptySlots?: boolean;
@@ -70,6 +64,8 @@ export function SubmissionSlotsSection({
   onDelete,
   onRetry,
   onManualFill,
+  onConfirmType,
+  processingScreenshotCount = 0,
   screenshotsRequired = true,
   focusedRole = null,
   pulseEmptySlots = false,
@@ -77,8 +73,6 @@ export function SubmissionSlotsSection({
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
   const [dragOverRole, setDragOverRole] = useState<SubmissionSlotRole | null>(null);
   const globalFileInputRef = useRef<HTMLInputElement>(null);
-  const latestSlotsRef = useRef(slots);
-  const [pendingReplacementFile, setPendingReplacementFile] = useState<File | null>(null);
   const slotInputRefs = useRef<Record<SubmissionSlotRole, HTMLInputElement | null>>({
     screenshot_1: null,
     screenshot_2: null,
@@ -100,22 +94,14 @@ export function SubmissionSlotsSection({
   }, [hasActiveSlots]);
   const uploadProgress = getUploadProgress(slots, now);
 
-  useEffect(() => {
-    latestSlotsRef.current = slots;
-  }, [slots]);
-
   const handleImplicitFiles = (files: File[]) => {
     if (files.length === 0) return;
-    if (shouldRequestScreenshotReplacement(latestSlotsRef.current, files.length)) {
-      setPendingReplacementFile(files[0]);
-      return;
-    }
     onUploadFiles(files);
   };
 
   useEffect(() => {
     const handleDocumentPaste = (event: ClipboardEvent) => {
-      if (event.defaultPrevented || isEditablePasteTarget(event.target)) return;
+      if (event.defaultPrevented) return;
       const files = extractClipboardImageFiles(event.clipboardData?.items);
       if (files.length === 0) return;
       event.preventDefault();
@@ -179,10 +165,10 @@ export function SubmissionSlotsSection({
           )}
         >
           <div className="font-serif text-[20px] leading-tight text-[#141413]">
-            {screenshotsRequired ? "把今天的两张截图粘贴进来" : "作品异常时截图可以不交"}
+            {screenshotsRequired ? "把截图粘贴或拖进来" : "作品异常时截图可以不交"}
           </div>
           <div className="text-[12px] text-[#78716C] truncate hidden sm:block">
-            按 ⌘V / Ctrl+V 粘贴，或直接拖进来；系统会认出哪张是互动、哪张是完播
+            一张一张、一次两张都行，系统按内容分清互动和完播
           </div>
           <span className="inline-flex min-h-[44px] sm:min-h-0 h-8 items-center rounded-md bg-[#D97757] px-4 text-[14px] text-white">
             选择截图
@@ -219,7 +205,9 @@ export function SubmissionSlotsSection({
                   ? slot.error || "未识别到图片内容，请点击重新上传"
                   : slot.ocrFallback
                     ? slot.error ? `${slot.error} · 数字请手填` : "这张没认出来，数字请手填"
-                    : isWarning
+                    : slot.screenshotType === null && hasImage
+                      ? "没认出类型，请选择互动或完播"
+                      : isWarning
                       ? slot.error ? `${slot.error} · 请核对下方数字` : "已识别，有几项请核对"
                       : "已识别";
 
@@ -362,6 +350,30 @@ export function SubmissionSlotsSection({
                         手填
                       </button>
                     )}
+                    {!isProcessing && slot.screenshotType === null && onConfirmType && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onConfirmType(item.role, "data");
+                          }}
+                          className="inline-flex h-7 items-center rounded-md border border-[#E2E2DF] px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
+                        >
+                          这是互动
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onConfirmType(item.role, "retention");
+                          }}
+                          className="inline-flex h-7 items-center rounded-md border border-[#E2E2DF] px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
+                        >
+                          这是完播
+                        </button>
+                      </div>
+                    )}
                     {!isProcessing && (
                       <button
                         type="button"
@@ -381,6 +393,12 @@ export function SubmissionSlotsSection({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {processingScreenshotCount > 0 && (
+        <div className="px-2 text-[12px] text-[#78716C]" aria-live="polite">
+          还有 {processingScreenshotCount} 张在识别
         </div>
       )}
 
@@ -406,36 +424,6 @@ export function SubmissionSlotsSection({
         />
       )}
 
-      <Dialog
-        open={pendingReplacementFile !== null}
-        onOpenChange={(open) => !open && setPendingReplacementFile(null)}
-      >
-        <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
-          <DialogHeader>
-            <DialogTitle>这张要替换哪张？</DialogTitle>
-            <DialogDescription>选好后会直接覆盖对应截图，并重新上传和识别。</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-start">
-            {SLOT_META.map((s, index) => (
-              <Button
-                key={s.role}
-                type="button"
-                variant={index === 0 ? "outline" : "default"}
-                onClick={() => {
-                  const file = pendingReplacementFile;
-                  setPendingReplacementFile(null);
-                  if (file) onSelectFile(s.role, file);
-                }}
-              >
-                {s.shortTitle}
-              </Button>
-            ))}
-            <Button type="button" variant="ghost" onClick={() => setPendingReplacementFile(null)}>
-              取消
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
