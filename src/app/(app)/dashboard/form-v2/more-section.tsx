@@ -43,7 +43,7 @@ export interface FormV2MoreSectionProps {
 
 function Chips<T extends string>({ options, value, onPick }: { options: readonly T[]; value: string; onPick: (next: T) => void }) {
   return (
-    <div className="flex items-center rounded-xl bg-[#F1F1F0] p-0.5 sm:h-7">
+    <div className="inline-flex w-fit items-center rounded-xl bg-[#F1F1F0] p-0.5 sm:h-7">
       {options.map((option) => (
         <button
           key={option}

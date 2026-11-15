@@ -110,9 +110,9 @@ export function RoleItemRow({
   onResetSelf,
 }: RoleItemRowProps) {
   return (
-    <div className="flex items-center justify-between gap-2 py-0.5">
+    <div className="flex items-center gap-2 py-0.5">
       {/* 左侧岗位 */}
-      <span className="text-[12px] font-normal text-[#78716C] select-none">
+      <span className="w-8 shrink-0 text-[12px] font-normal text-[#78716C] select-none">
         {label}
       </span>
 
