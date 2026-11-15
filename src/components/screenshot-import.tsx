@@ -179,6 +179,8 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
 
     const formData = new FormData();
     formData.append("file", file);
+    // 补 24 小时只回填互动截图上的六个数字，固定按互动识别；识别接口不再接受不带类型的请求
+    formData.append("screenshot_type", "data");
 
     try {
       const response = await fetch("/api/ocr-screenshot", {

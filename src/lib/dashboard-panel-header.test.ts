@@ -40,7 +40,6 @@ test("本月漏交只算今天以前的工作日：周末没交不算漏", () =>
     today: "2026-11-10",
     submittedDates: ["2026-11-02", "2026-11-03", "2026-11-08"],
     exemptDates: ["2026-11-04"],
-    absentDates: ["2026-11-05"],
   });
   // 已交：2、3、8 日（周末交了也算已交）
   assert.equal(result.submittedCount, 3);
@@ -53,7 +52,6 @@ test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
     today: "2026-11-10",
     submittedDates: [],
     exemptDates: [],
-    absentDates: ["2026-11-05"],
     exemptionProfile: {
       id: "user-1",
       status: "exempt",
@@ -69,7 +67,6 @@ test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
     today: "2026-11-10",
     submittedDates: [],
     exemptDates: [],
-    absentDates: ["2026-11-05"],
     exemptionProfile: {
       id: "user-1",
       status: "active",

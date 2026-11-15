@@ -72,9 +72,11 @@ test("工作台表单单栏自上而下：截图 → 识别结果 → 文案 →
   assert.ok(order.every((index) => index > 0), "四段都必须在工作区里");
   assert.deepEqual([...order].sort((a, b) => a - b), order, "四段顺序必须是截图 → 识别结果 → 文案 → 更多");
   assert.ok(pageSource.indexOf("<FormV2Workspace") < pageSource.indexOf("<FormV2SubmitFooter"), "提交区在最后");
-  // 步骤条把整条路摊开，且两张截图都没来时只露截图这一步
+  // 步骤条把整条路摊开；两张截图齐之前只露截图这一步，齐过就保持展开（删掉一张也不收回）
   assert.match(workspace, /SUBMIT_STEPS\.map/);
-  assert.match(workspace, /const showDetails = editing \|\| hasStartedFilling \|\| manualEntry \|\| !screenshotsRequired;/);
+  assert.match(workspace, /const showDetails = editing \|\| slotsExpanded \|\| manualEntry \|\| !screenshotsRequired;/);
+  assert.match(workspace, /if \(bothSlotsFilled && !slotsExpanded\) setSlotsExpanded\(true\);/);
+  assert.doesNotMatch(workspace, /setSlotsExpanded\(false\)/);
   // 「上传时间」系统自己记，人不需要看
   assert.doesNotMatch(source, /上传时间/);
   // 表单内不再重复说状态：今日状态只在页头说一次

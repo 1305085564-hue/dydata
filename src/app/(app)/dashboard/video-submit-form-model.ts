@@ -59,7 +59,8 @@ export type ScreenshotItem = {
   seq: number;
   file: File | null;
   status: ScreenshotItemStatus;
-  screenshotType: "data" | "retention" | null;
+  /** 由放入的槽位决定（见 SCREENSHOT_TYPE_BY_SLOT），识别结果不改它。 */
+  screenshotType: "data" | "retention";
   recognizedFields: Record<string, unknown> | null;
   assetUrl: string | null;
   previewUrl: string | null;
@@ -363,15 +364,15 @@ function slotFromScreenshotItem(item: ScreenshotItem, role: SubmissionSlotRole):
   const status = item.status === "failed" && hasAsset
     ? "pending_confirm"
     : item.status === "done"
-      ? item.screenshotType && !item.requiresManualConfirmation ? "confirmed" : "pending_confirm"
+      ? item.requiresManualConfirmation ? "pending_confirm" : "confirmed"
       : item.status;
   return {
     role,
     required: true,
     status,
     confidenceScore: item.confidenceScore ?? null,
-    requiresManualConfirmation: item.requiresManualConfirmation || item.screenshotType === null,
-    confirmed: item.confirmed && item.screenshotType !== null,
+    requiresManualConfirmation: item.requiresManualConfirmation,
+    confirmed: item.confirmed,
     itemId: item.id,
     fileName: item.fileName,
     error: item.error ?? null,
@@ -385,44 +386,40 @@ function slotFromScreenshotItem(item: ScreenshotItem, role: SubmissionSlotRole):
     screenshotType: item.screenshotType,
     recognizedFields: item.recognizedFields,
     ocrSummary: item.ocrSummary,
-    ocrFallback: item.ocrFallback || item.screenshotType === null,
+    ocrFallback: item.ocrFallback,
   };
 }
 
-/** 以加入序号派生两个展示槽位；展示槽位永远不反过来决定图片类型。 */
+/** 类型判定的唯一来源：槽位。互动槽恒为 data，留存槽恒为 retention，不看识别结果。 */
+export const SCREENSHOT_TYPE_BY_SLOT: Record<SubmissionSlotRole, "data" | "retention"> = {
+  screenshot_1: "data",
+  screenshot_2: "retention",
+};
+
+/** 每个槽位只展示放进这个槽位的最新一张；图不会因为识别结果在槽位间搬运。 */
 export function deriveSlotsFromItems(
   items: readonly ScreenshotItem[],
 ): Record<SubmissionSlotRole, SlotViewState> {
   const slots = createEditableSlots();
-  const assigned = new Set<string>();
-  for (const [role, type] of [["screenshot_1", "data"], ["screenshot_2", "retention"]] as const) {
-    const current = items
-      .filter((item) => item.status === "done" && item.screenshotType === type)
-      .sort((a, b) => b.seq - a.seq)[0];
-    if (current) {
-      slots[role] = slotFromScreenshotItem(current, role);
-      assigned.add(current.id);
-    }
-  }
-
-  const pending = items
-    .filter((item) => !assigned.has(item.id) && (item.screenshotType === null || item.status === "uploading" || item.status === "recognizing" || item.status === "failed"))
-    .sort((a, b) => a.seq - b.seq);
   for (const role of VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER) {
-    if (slots[role].status !== "empty") continue;
-    const next = pending.shift();
-    if (!next) continue;
-    slots[role] = slotFromScreenshotItem(next, role);
-    assigned.add(next.id);
+    const current = items
+      .filter((item) => item.storageRole === role)
+      .sort((a, b) => b.seq - a.seq)[0];
+    if (current) slots[role] = slotFromScreenshotItem(current, role);
   }
   return slots;
 }
 
-/** 只数「没被任何展示槽位接住」的在途图；已在两行状态里露出来的不再重复播报。 */
-export function countProcessingScreenshotItems(items: readonly ScreenshotItem[]) {
-  const slots = deriveSlotsFromItems(items);
-  const visibleItemIds = new Set([slots.screenshot_1.itemId, slots.screenshot_2.itemId]);
-  return items.filter(
-    (item) => (item.status === "uploading" || item.status === "recognizing") && !visibleItemIds.has(item.id),
-  ).length;
+/**
+ * 一批新图（粘贴 / 拖入 / 多选）按列表顺序填空槽：先互动、后留存。
+ * 放不下的不收，返回张数交给调用方明确提示，不悄悄顶掉已有的图。
+ */
+export function allocateScreenshotSlots(
+  items: readonly ScreenshotItem[],
+  fileCount: number,
+): { roles: SubmissionSlotRole[]; overflow: number } {
+  const occupied = new Set(items.map((item) => item.storageRole));
+  const free = VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER.filter((role) => !occupied.has(role));
+  const roles = free.slice(0, Math.max(0, fileCount));
+  return { roles, overflow: Math.max(0, fileCount - roles.length) };
 }

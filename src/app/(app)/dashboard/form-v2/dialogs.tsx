@@ -14,13 +14,11 @@ import { Label } from "@/components/ui/label";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import type { SlotViewState } from "../video-submit-form-model";
 import { createEditableSlots } from "../video-submit-form-model";
-import type { OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 import type { FormMetaState } from "../video-submit-form-model";
 
 export interface FormV2DialogsProps {
   deleteTargetRole: SubmissionSlotRole | null;
   setDeleteTargetRole: (role: SubmissionSlotRole | null) => void;
-  ocrTasksRef: RefObject<OcrTaskRegistry | null>;
   slots: Record<SubmissionSlotRole, SlotViewState>;
   blobUrlsRef: RefObject<Set<string>>;
   updateSlotsState: (
@@ -42,7 +40,6 @@ export interface FormV2DialogsProps {
 export function FormV2Dialogs({
   deleteTargetRole,
   setDeleteTargetRole,
-  ocrTasksRef,
   slots,
   blobUrlsRef,
   updateSlotsState,
@@ -81,7 +78,6 @@ export function FormV2Dialogs({
               variant="destructive"
               onClick={() => {
                 if (!deleteTargetRole) return;
-                ocrTasksRef.current?.cancel(deleteTargetRole);
                 const targetSlot = slots[deleteTargetRole];
                 if (
                   targetSlot.previewUrl &&

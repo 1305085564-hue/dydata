@@ -93,32 +93,52 @@ test("截图识别全链路成功：真实渠道名与耗时写入测速台账",
   assert.ok(typeof logged[0].ocrMs === "number" && logged[0].ocrMs! >= 0);
 });
 
-test("不带截图类型时走一次自动提示，并返回自动判定来源", async () => {
-  let prompt = "";
-  const response = await buildOcrScreenshotResponse(
-    makeRequest({ image: PNG }),
-    makeDeps({
-      callAi: async ({ messages }) => {
-        const content = messages[0]?.content;
-        const first = Array.isArray(content) ? content[0] : null;
-        prompt = first?.type === "text" ? first.text : String(content ?? "");
-        return {
-          content: OCR_JSON, model: "m", channelName: "vision", channelId: null,
-          providerKeyModelId: null, providerKeyId: null, promptTokens: null,
-          completionTokens: null, totalTokens: null, elapsedMs: 10,
-        };
-      },
-    }),
-    observation,
-  );
+function promptCapturingDeps(prompts: string[], logged: OcrLogParams[] = []) {
+  return makeDeps({
+    callAi: async ({ messages }) => {
+      const content = messages[0]?.content;
+      const first = Array.isArray(content) ? content[0] : null;
+      prompts.push(first?.type === "text" ? first.text : String(content ?? ""));
+      return {
+        content: OCR_JSON, model: "m", channelName: "vision", channelId: null,
+        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
+        completionTokens: null, totalTokens: null, elapsedMs: 10,
+      };
+    },
+    recordLog: async (params) => { logged.push(params); },
+  });
+}
 
-  assert.equal(response.status, 200);
-  const body = await response.json() as Record<string, unknown>;
-  assert.equal(body.screenshot_type, "data");
-  assert.equal(body.screenshot_type_source, "auto");
-  assert.equal((body.data as Record<string, unknown>).screenshot_type, "data");
-  assert.match(prompt, /retention_metrics/);
-  assert.match(prompt, /不要自报截图类型/);
+test("不带截图类型直接 400：不猜类型、不调模型、不落测速台账", async () => {
+  const prompts: string[] = [];
+  const logged: OcrLogParams[] = [];
+  for (const body of [{ image: PNG }, { image: PNG, asset_role: "screenshot_1" }, { image: PNG, screenshot_type: "auto" }]) {
+    const response = await buildOcrScreenshotResponse(makeRequest(body), promptCapturingDeps(prompts, logged), observation);
+    assert.equal(response.status, 400);
+    const payload = await response.json() as Record<string, unknown>;
+    assert.equal(payload.businessSucceeded, false);
+    assert.match(String(payload.error), /screenshot_type/);
+  }
+  assert.equal(prompts.length, 0);
+  assert.equal(logged.length, 0);
+});
+
+test("显式类型只发单族提示词，返回来源为 explicit", async () => {
+  const prompts: string[] = [];
+  const dataResponse = await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG, screenshot_type: "data" }), promptCapturingDeps(prompts), observation,
+  );
+  const dataBody = await dataResponse.json() as Record<string, unknown>;
+  assert.equal(dataBody.screenshot_type, "data");
+  assert.equal(dataBody.screenshot_type_source, "explicit");
+  await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG, screenshot_type: "retention" }), promptCapturingDeps(prompts), observation,
+  );
+  assert.equal(prompts.length, 2, "每张图只调一次模型");
+  assert.match(prompts[0], /play_count/);
+  assert.doesNotMatch(prompts[0], /retention_metrics/);
+  assert.match(prompts[1], /retention_metrics/);
+  assert.doesNotMatch(prompts[1], /play_count/);
 });
 
 test("未登录与输入错误不写测速台账（只记真正进入识别的请求）", async () => {

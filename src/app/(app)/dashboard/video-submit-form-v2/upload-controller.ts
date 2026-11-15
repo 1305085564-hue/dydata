@@ -9,6 +9,7 @@ import { applyOcrMetricValues } from "@/components/submission/填报表单状态
 import {
   buildOcrSummary,
   deriveSlotsFromItems,
+  SCREENSHOT_TYPE_BY_SLOT,
   type ScreenshotItem,
   type SlotViewState,
 } from "../video-submit-form-model";
@@ -34,22 +35,21 @@ type OcrApiPayload = {
   };
   error?: string;
   error_code?: string;
-  screenshot_type_source?: "explicit" | "asset_role" | "auto" | "auto_unknown";
+  screenshot_type_source?: "explicit" | "asset_role";
   timings?: { download_ms?: number; ocr_ms?: number; parse_ms?: number; total_ms: number };
 };
 
-/** 默认自动模式；只有“这是互动/这是完播”重试时才显式传类型。 */
+/** 识别请求永远显式带类型；类型只由槽位决定（互动槽 data、留存槽 retention）。 */
 export function buildOcrStorageRequestBody(input: {
   bucket: string;
   path: string;
   role: SubmissionSlotRole;
-  screenshotType?: "data" | "retention";
 }) {
   return {
     bucket: input.bucket,
     path: input.path,
     asset_role: input.role,
-    ...(input.screenshotType ? { screenshot_type: input.screenshotType } : {}),
+    screenshot_type: SCREENSHOT_TYPE_BY_SLOT[input.role],
   } as const;
 }
 
@@ -67,28 +67,16 @@ export type UploadControllerOptions = {
 };
 
 export type UploadHandler = ((
-  preferredRole: SubmissionSlotRole | null,
+  role: SubmissionSlotRole,
   file: File,
   batchStartedAt?: number,
 ) => Promise<void>) & {
   retryItem: (itemId: string) => Promise<void>;
-  recognizeType: (itemId: string, screenshotType: "data" | "retention") => Promise<void>;
 };
 
 function nextItemId(seq: number) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `screenshot-${seq}-${Date.now()}`;
-}
-
-function resolveStorageRole(
-  items: readonly ScreenshotItem[],
-  preferredRole: SubmissionSlotRole | null,
-): SubmissionSlotRole {
-  if (preferredRole) return preferredRole;
-  const slots = deriveSlotsFromItems(items);
-  if (slots.screenshot_1.status === "empty") return "screenshot_1";
-  if (slots.screenshot_2.status === "empty") return "screenshot_2";
-  return items.length % 2 === 0 ? "screenshot_1" : "screenshot_2";
 }
 
 function revokePreview(item: ScreenshotItem, blobUrlsRef: MutableRefObject<Set<string>>) {
@@ -119,7 +107,6 @@ export function createUploadHandler({
     itemId: string;
     bucket: string;
     path: string;
-    screenshotType?: "data" | "retention";
     ocrTask: ReturnType<OcrTaskRegistry["begin"]>;
     uploadMs?: number;
   }) => {
@@ -131,7 +118,6 @@ export function createUploadHandler({
         bucket: input.bucket,
         path: input.path,
         role: input.item.storageRole,
-        screenshotType: input.screenshotType,
       })),
       signal: input.ocrTask.signal,
     });
@@ -164,44 +150,27 @@ export function createUploadHandler({
     }
 
     const resolvedError = data.error_code ? resolveOcrErrorMessage(data.error_code) : data.error ? toOcrErrorMessage(data.error) : null;
-    const nextType = data.screenshot_type;
-    const before = itemsRef.current;
-    updateItemsState((current) => {
-      let next = current.map((candidate) => candidate.id === input.itemId ? {
-        ...candidate,
-        status: (data.slot_status === "failed" ? "failed" : "done") as ScreenshotItem["status"],
-        screenshotType: nextType,
-        recognizedFields,
-        confidenceScore: data.confidence_score,
-        requiresManualConfirmation: data.requires_manual_confirmation || data.slot_status === "failed" || nextType === null,
-        confirmed: data.slot_status === "confirmed" && !data.requires_manual_confirmation && nextType !== null,
-        finishedAt: Date.now(),
-        error: data.slot_status === "failed" ? (resolvedError ?? OCR_FAIL_MESSAGE) : resolvedError,
-        ocrSummary: buildOcrSummary(nextType, recognizedFields),
-        ocrFallback: data.slot_status === "failed" || nextType === null,
-        bucket: input.bucket,
-        path: input.path,
-      } : candidate);
-      if (nextType) {
-        const currentSeq = next.find((item) => item.id === input.itemId)?.seq ?? 0;
-        next = next.filter((candidate) => candidate.id === input.itemId || candidate.screenshotType !== nextType || candidate.seq >= currentSeq);
-      }
-      return next;
-    });
+    // 类型跟着槽位走，不采信识别结果里的类型
+    const targetRole = input.item.storageRole;
+    const slotType = SCREENSHOT_TYPE_BY_SLOT[targetRole];
+    updateItemsState((current) => current.map((candidate) => candidate.id === input.itemId ? {
+      ...candidate,
+      status: (data.slot_status === "failed" ? "failed" : "done") as ScreenshotItem["status"],
+      screenshotType: slotType,
+      recognizedFields,
+      confidenceScore: data.confidence_score,
+      requiresManualConfirmation: data.requires_manual_confirmation || data.slot_status === "failed",
+      confirmed: data.slot_status === "confirmed" && !data.requires_manual_confirmation,
+      finishedAt: Date.now(),
+      error: data.slot_status === "failed" ? (resolvedError ?? OCR_FAIL_MESSAGE) : resolvedError,
+      ocrSummary: buildOcrSummary(slotType, recognizedFields),
+      ocrFallback: data.slot_status === "failed",
+      bucket: input.bucket,
+      path: input.path,
+    } : candidate));
 
-    const after = itemsRef.current;
-    const removedOlderCount = before.filter(
-      (candidate) => !after.some((nextItem) => nextItem.id === candidate.id),
-    ).length;
-    for (const removed of before) {
-      if (!after.some((candidate) => candidate.id === removed.id)) revokePreview(removed, blobUrlsRef);
-    }
-    if (removedOlderCount > 0 && nextType) {
-      feedbackToast.success(`已换成新的${nextType === "data" ? "互动" : "完播"}截图`);
-    }
-    const visibleSlots = deriveSlotsFromItems(after);
-    const targetRole = nextType === "data" ? "screenshot_1" : nextType === "retention" ? "screenshot_2" : null;
-    if (targetRole && visibleSlots[targetRole].itemId === input.itemId) {
+    const visibleSlots = deriveSlotsFromItems(itemsRef.current);
+    if (visibleSlots[targetRole].itemId === input.itemId) {
       dispatchWorkflow({
         type: "ocr/commit",
         hasManualEdit: false,
@@ -218,45 +187,33 @@ export function createUploadHandler({
     if (data.slot_status === "failed") feedbackToast.warning("截图已留存，部分指标请直接在右侧/下方核对或补全");
   };
 
-  const runRecognition = async (
-    itemId: string,
-    options: { screenshotType?: "data" | "retention"; upload?: boolean },
-  ) => {
+  // 每次都重新上传再识别：首次放图和「重新识别」走同一条路
+  const runRecognition = async (itemId: string) => {
     const item = itemsRef.current.find((candidate) => candidate.id === itemId);
     if (!item || !account) return;
     const ocrTask = ocrTasksRef.current!.begin(item.id);
     const startedAt = item.startedAt ?? Date.now();
-    let phase: "upload" | "ocr" = options.upload ? "upload" : "ocr";
+    let phase: "upload" | "ocr" = "upload";
     let uploadedAssetUrl: string | null = item.assetUrl;
     let uploadedPreviewUrl: string | null = item.previewUrl;
-    let bucket = item.bucket;
-    let path = item.path;
 
-    updateItem(item.id, (current) => ({ ...current, status: options.upload ? "uploading" : "recognizing", error: null, startedAt, phaseStartedAt: options.upload ? startedAt : Date.now(), finishedAt: undefined }));
+    updateItem(item.id, (current) => ({ ...current, status: "uploading", error: null, startedAt, phaseStartedAt: startedAt, finishedAt: undefined }));
     try {
-      let uploadMs: number | undefined;
-      if (options.upload) {
-        if (!item.file) throw new Error("截图文件已失效，请重新选择");
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user && !userId) throw new Error("登录状态已失效，请刷新页面后重试");
-        const uploadStart = performance.now();
-        const uploaded = await uploadSubmissionScreenshot({ accountId: account.id, role: item.storageRole, file: item.file, signal: ocrTask.signal });
-        uploadMs = Math.round(performance.now() - uploadStart);
-        uploadedAssetUrl = uploaded.url;
-        bucket = uploaded.bucket;
-        path = uploaded.path;
-        ocrTask.bindAsset(uploaded.url);
-        if (!ocrTask.isCurrent(uploaded.url)) return;
-        phase = "ocr";
-        updateItem(item.id, (current) => ({ ...current, status: "recognizing", assetUrl: uploaded.url, bucket, path, phaseStartedAt: Date.now(), error: null }));
-        uploadedPreviewUrl = item.previewUrl;
-      }
+      if (!item.file) throw new Error("截图文件已失效，请重新选择");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user && !userId) throw new Error("登录状态已失效，请刷新页面后重试");
+      const uploadStart = performance.now();
+      const uploaded = await uploadSubmissionScreenshot({ accountId: account.id, role: item.storageRole, file: item.file, signal: ocrTask.signal });
+      const uploadMs = Math.round(performance.now() - uploadStart);
+      uploadedAssetUrl = uploaded.url;
+      const { bucket, path } = uploaded;
+      ocrTask.bindAsset(uploaded.url);
+      if (!ocrTask.isCurrent(uploaded.url)) return;
+      phase = "ocr";
+      updateItem(item.id, (current) => ({ ...current, status: "recognizing", assetUrl: uploaded.url, bucket, path, phaseStartedAt: Date.now(), error: null }));
+      uploadedPreviewUrl = item.previewUrl;
       if (!bucket || !path) throw new Error("截图地址已失效，请重新上传");
-      if (!options.upload) {
-        ocrTask.bindAsset(uploadedAssetUrl ?? "");
-        if (!ocrTask.isCurrent(uploadedAssetUrl ?? "")) return;
-      }
-      await requestOcr({ item: { ...item, assetUrl: uploadedAssetUrl ?? item.assetUrl, storageRole: item.storageRole }, itemId, bucket, path, screenshotType: options.screenshotType, ocrTask, uploadMs });
+      await requestOcr({ item: { ...item, assetUrl: uploadedAssetUrl }, itemId, bucket, path, ocrTask, uploadMs });
     } catch (error) {
       if (!ocrTask.isCurrent(uploadedAssetUrl ?? undefined)) return;
       const message = phase === "upload" ? toScreenshotUploadErrorMessage(error) : toOcrErrorMessage(error);
@@ -266,25 +223,30 @@ export function createUploadHandler({
     }
   };
 
-  const addFile = async (preferredRole: SubmissionSlotRole | null, file: File, batchStartedAt?: number) => {
+  /** 把图放进指定槽位：同槽旧图立即换掉（取消它的识别），类型按槽位定，不等识别结果。 */
+  const addFile = async (role: SubmissionSlotRole, file: File, batchStartedAt?: number) => {
     if (!account) {
       feedbackToast.error("请先选择提交账号");
       return;
+    }
+    const replaced = itemsRef.current.filter((candidate) => candidate.storageRole === role);
+    for (const old of replaced) {
+      ocrTasksRef.current?.cancel(old.id);
+      revokePreview(old, blobUrlsRef);
     }
     const seq = Math.max(0, ...itemsRef.current.map((item) => item.seq)) + 1;
     const previewUrl = URL.createObjectURL(file);
     blobUrlsRef.current.add(previewUrl);
     const item: ScreenshotItem = {
-      id: nextItemId(seq), seq, file, status: "uploading", screenshotType: null, recognizedFields: null, assetUrl: null, previewUrl, bucket: null, path: null,
-      storageRole: resolveStorageRole(itemsRef.current, preferredRole), fileName: file.name, error: null, confidenceScore: null, requiresManualConfirmation: false, confirmed: false,
+      id: nextItemId(seq), seq, file, status: "uploading", screenshotType: SCREENSHOT_TYPE_BY_SLOT[role], recognizedFields: null, assetUrl: null, previewUrl, bucket: null, path: null,
+      storageRole: role, fileName: file.name, error: null, confidenceScore: null, requiresManualConfirmation: false, confirmed: false,
       startedAt: Date.now(), phaseStartedAt: Date.now(), batchStartedAt: batchStartedAt ?? Date.now(),
     };
-    updateItemsState((current) => [...current, item]);
-    await runRecognition(item.id, { upload: true });
+    updateItemsState((current) => [...current.filter((candidate) => candidate.storageRole !== role), item]);
+    await runRecognition(item.id);
   };
 
-  const handler = ((preferredRole: SubmissionSlotRole | null, file: File, batchStartedAt?: number) => addFile(preferredRole, file, batchStartedAt)) as UploadHandler;
-  handler.retryItem = async (itemId) => runRecognition(itemId, { upload: true });
-  handler.recognizeType = async (itemId, screenshotType) => runRecognition(itemId, { screenshotType, upload: false });
+  const handler = ((role: SubmissionSlotRole, file: File, batchStartedAt?: number) => addFile(role, file, batchStartedAt)) as UploadHandler;
+  handler.retryItem = async (itemId) => runRecognition(itemId);
   return handler;
 }

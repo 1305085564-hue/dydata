@@ -69,7 +69,7 @@ import {
   createMetaFromEditDetail,
   createScreenshotItemsFromEditDetail,
   deriveSlotsFromItems,
-  countProcessingScreenshotItems,
+  allocateScreenshotSlots,
   type EditableMetricField,
   type FormMetaState,
   type SlotViewState,
@@ -780,29 +780,16 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
     videoId: editDraftVideoId,
   });
-  // 只数「识别完成但判不出类型」的图；在途项类型本来就还没出来，不该提前报「没认出是哪类」。
-  const unknownScreenshotCount = screenshotItems.filter(
-    (item) => item.status === "done" && item.screenshotType === null,
-  ).length;
   const issueSummary = useMemo(
-    () => {
-      const base = summarizeSubmissionIssues(submissionState, {
+    () =>
+      summarizeSubmissionIssues(submissionState, {
         topicTag: meta.topicTag,
         anomalyStatus: meta.anomalyStatus,
         videoTitle: meta.videoTitle,
         content: meta.content,
         submissionMode: submitMode,
         publishedAtConfirmed,
-      });
-      return {
-        ...base,
-        unclassifiedScreenshotCount: unknownScreenshotCount,
-        totalIssueCount: base.totalIssueCount + (unknownScreenshotCount > 0 ? 1 : 0),
-        canSubmit: base.canSubmit && unknownScreenshotCount === 0,
-        firstIssueAnchor: base.firstIssueAnchor ?? (unknownScreenshotCount > 0 ? "slots" : null),
-        reason: base.reason ?? (unknownScreenshotCount > 0 ? "有一张截图没认出是哪类" : null),
-      };
-    },
+      }),
     [
       submissionState,
       meta.topicTag,
@@ -811,7 +798,6 @@ export function VideoSubmitFormV2({
       meta.content,
       submitMode,
       publishedAtConfirmed,
-      unknownScreenshotCount,
     ],
   );
   const issueSummaryRef = useRef(issueSummary);
@@ -945,11 +931,6 @@ export function VideoSubmitFormV2({
     const slot = slots[role];
     if (!slot.itemId || !(slot.status === "failed" || slot.status === "pending_confirm" || slot.ocrFallback)) return;
     void uploadHandler.retryItem(slot.itemId);
-  }
-
-  function handleScreenshotType(role: SubmissionSlotRole, screenshotType: "data" | "retention") {
-    const itemId = slots[role]?.itemId;
-    if (itemId) void uploadHandler.recognizeType(itemId, screenshotType);
   }
 
   const cancelTimeoutRef = useRef<number | null>(null);
@@ -1091,12 +1072,19 @@ export function VideoSubmitFormV2({
     }
   }
 
-  // 多张图片立即各自上传和识别，不等待前一张完成。
+  // 粘贴 / 拖入 / 多选：按列表顺序填空槽（先互动、后留存），各自立即上传识别，不等前一张。
+  // 两槽都有图时不顶任何一张；一次超过空槽数的部分不收，并明确告诉用户。
   const handleUnifiedUpload = useCallback(
     (files: File[]) => {
       if (files.length === 0) return;
+      const { roles, overflow } = allocateScreenshotSlots(screenshotItemsRef.current, files.length);
+      if (roles.length === 0) {
+        feedbackToast.warning("要点开想替换的那张卡片再选图");
+        return;
+      }
       const batchStartedAt = Date.now();
-      for (const file of files) void uploadHandler(null, file, batchStartedAt);
+      roles.forEach((role, index) => void uploadHandler(role, files[index], batchStartedAt));
+      if (overflow > 0) feedbackToast.warning(`截图只收两张，多出的 ${overflow} 张没上传`);
     },
     [uploadHandler],
   );
@@ -1218,7 +1206,6 @@ export function VideoSubmitFormV2({
           <FormV2Dialogs
             deleteTargetRole={deleteTargetRole}
             setDeleteTargetRole={setDeleteTargetRole}
-            ocrTasksRef={ocrTasksRef}
             slots={slots}
             blobUrlsRef={blobUrlsRef}
             updateSlotsState={updateSlotsState}
@@ -1257,13 +1244,10 @@ export function VideoSubmitFormV2({
                 handleUnifiedUpload={handleUnifiedUpload}
                 setDeleteTargetRole={setDeleteTargetRole}
                 handleSlotRetry={handleSlotRetry}
-                handleScreenshotType={handleScreenshotType}
-                processingScreenshotCount={countProcessingScreenshotItems(screenshotItems)}
                 updateSlotsState={updateSlotsState}
                 screenshotsRequired={screenshotsRequired}
                 focusedRole={focusedRole}
                 pulseSlots={pulseSlots}
-                hasStartedFilling={hasStartedFilling}
                 isMoreOpen={isMoreOpen}
                 setIsMoreOpen={setIsMoreOpen}
                 hiddenRoleRestoreLabel={hiddenRoleRestoreLabel}

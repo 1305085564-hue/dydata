@@ -25,13 +25,10 @@ export type FormV2WorkspaceProps = Omit<FormV2ResultsSectionProps, "slotProcessi
     handleUnifiedUpload: (files: File[]) => void;
     setDeleteTargetRole: (role: SubmissionSlotRole | null) => void;
     handleSlotRetry: (role: SubmissionSlotRole) => void;
-    handleScreenshotType?: (role: SubmissionSlotRole, screenshotType: "data" | "retention") => void;
-    processingScreenshotCount?: number;
     updateSlotsState: SlotsUpdater;
     screenshotsRequired: boolean;
     focusedRole: SubmissionSlotRole | null;
     pulseSlots: boolean;
-    hasStartedFilling: boolean;
     isMoreOpen: boolean;
     setIsMoreOpen: (open: boolean | ((current: boolean) => boolean)) => void;
   };
@@ -40,8 +37,9 @@ const SLOT_ROLES: SubmissionSlotRole[] = ["screenshot_1", "screenshot_2"];
 
 /**
  * 单栏自上而下：截图 → 识别结果 → 文案 → 更多。视线顺序 = 做事顺序。
- * 两张截图都没来时只露截图这一步（示意稿状态①）；截图一进来，下方整体出现，
- * 识别中的格子先占位，之后状态切换都不再改变高度。
+ * 两张截图没齐时只露截图这一步（第一张进来后粘贴区只换提示语）；第二张一进来，
+ * 截图区换成两张卡片、下方整体出现，识别在后台继续。展开后删掉一张也不收回。
+ * 另外两种入口照旧直接展开：「没有截图，直接手填」、编辑已交记录；作品异常不要求截图，也直接展开。
  */
 export function FormV2Workspace(props: FormV2WorkspaceProps) {
   const {
@@ -52,13 +50,10 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     handleUnifiedUpload,
     setDeleteTargetRole,
     handleSlotRetry,
-    handleScreenshotType,
-    processingScreenshotCount,
     updateSlotsState,
     screenshotsRequired,
     focusedRole,
     pulseSlots,
-    hasStartedFilling,
     isMoreOpen,
     setIsMoreOpen,
     editing = false,
@@ -68,6 +63,10 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     updateMeta,
   } = props;
   const [manualEntry, setManualEntry] = useState(false);
+  const bothSlotsFilled = SLOT_ROLES.every((role) => slots[role].status !== "empty");
+  // 只看槽位里有没有图，不等识别结果；一旦两槽齐过就保持展开
+  const [slotsExpanded, setSlotsExpanded] = useState(bothSlotsFilled);
+  if (bothSlotsFilled && !slotsExpanded) setSlotsExpanded(true);
 
   const slotProcessing = Object.fromEntries(
     SLOT_ROLES.map((role) => [role, slots[role].status === "uploading" || slots[role].status === "recognizing"]),
@@ -78,7 +77,12 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
       manualEntry || !screenshotsRequired || Boolean(slots[role].ocrFallback) || (slots[role].status !== "empty" && !slotProcessing[role]),
     ]),
   ) as Record<SubmissionSlotRole, boolean>;
-  const showDetails = editing || hasStartedFilling || manualEntry || !screenshotsRequired;
+  const showDetails = editing || slotsExpanded || manualEntry || !screenshotsRequired;
+  // 截图区何时换成两张卡片：两槽齐过；编辑已交记录且有图；只有留存槽有图（如恢复的旧草稿），没有对应提示语，直接给卡片
+  const anySlotFilled = SLOT_ROLES.some((role) => slots[role].status !== "empty");
+  const showSlotCards = slotsExpanded
+    || (editing && anySlotFilled)
+    || (slots.screenshot_1.status === "empty" && slots.screenshot_2.status !== "empty");
   const currentStep = resolveSubmitStep(issueSummary);
   const moreOpen = isMoreOpen || (hasAttemptedSubmit && issueSummary.topicTagMissing);
 
@@ -91,8 +95,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           onUploadFiles={handleUnifiedUpload}
           onDelete={(role) => setDeleteTargetRole(role)}
           onRetry={handleSlotRetry}
-          onConfirmType={handleScreenshotType}
-          processingScreenshotCount={processingScreenshotCount}
+          showCards={showSlotCards}
           onManualFill={(role) => {
             updateSlotsState((current) => {
               const hasUploadedScreenshot = Boolean(current[role].assetUrl);

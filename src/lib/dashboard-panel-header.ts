@@ -108,7 +108,6 @@ export function summarizeMonthFulfillment({
   today: string;
   submittedDates: readonly string[];
   exemptDates: readonly string[];
-  absentDates?: readonly string[];
   exemptionProfile?: ExemptionProfileLike | null;
   exemptionGrants?: ExemptionGrantLike[];
 }): { submittedCount: number; missedCount: number } {

@@ -5,9 +5,7 @@ import { readFileSync } from "node:fs";
 
 import {
   getScreenshotTypeByAssetRole,
-  getScreenshotTypeFallbackByAssetRole,
   hasJsonObject,
-  classifyScreenshotByFields,
   parseOcrResponse,
   parseRetentionContent,
   normalizeVisionDataUrl,
@@ -27,13 +25,7 @@ test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映
   assert.equal(getScreenshotTypeByAssetRole("unknown"), null);
 });
 
-test("截图类型由槽位直接决定，不再跑 AI 分类", () => {
-  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_1"), "data");
-  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_2"), "retention");
-  assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
-});
-
-test("没有显式类型时进入自动识别，显式类型优先", () => {
+test("只认显式类型：没给类型时不按槽位名或内容兜底（路由据此返回 400）", () => {
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_1" }),
     null,
@@ -53,7 +45,7 @@ test("没有显式类型时进入自动识别，显式类型优先", () => {
   assert.equal(resolveKnownScreenshotType({ screenshotType: null, assetRole: null }), null);
 });
 
-test("曲线形态识别已下线：curve 别名不再产出类型结果", () => {
+test("曲线形态识别已下线：curve 别名不再产出任何识别结果", () => {
   const result = parseOcrResponse(
     JSON.stringify({
       recognized: true,
@@ -65,27 +57,7 @@ test("曲线形态识别已下线：curve 别名不再产出类型结果", () =>
     }),
     "traffic_curve",
   );
-  assert.equal(result?.screenshot_type, null);
-  assert.equal(result?.slot_status, "pending_confirm");
-});
-
-test("自动分类只按两组字段计数：达到两项且不打平才归位", () => {
-  assert.equal(
-    classifyScreenshotByFields({ play_count: 0, likes: 12, retention_metrics: null }),
-    "data",
-  );
-  assert.equal(
-    classifyScreenshotByFields({ retention_metrics: { avg_play_duration: 0, completion_rate: 68 } }),
-    "retention",
-  );
-  assert.equal(
-    classifyScreenshotByFields({ play_count: 100, retention_metrics: { completion_rate: 60 } }),
-    null,
-  );
-  assert.equal(
-    classifyScreenshotByFields({ play_count: 100, likes: 20, retention_metrics: { completion_rate: 60, completion_rate_5s: 50 } }),
-    null,
-  );
+  assert.equal(result, null);
 });
 
 test("overview OCR 返回待确认结果结构", () => {

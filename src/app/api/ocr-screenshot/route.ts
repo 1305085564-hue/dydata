@@ -16,9 +16,7 @@ import { hasJsonObject, parseOcrResponse, resolveKnownScreenshotType, type OcrEr
 // 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
 export {
   getScreenshotTypeByAssetRole,
-  getScreenshotTypeFallbackByAssetRole,
   hasJsonObject,
-  classifyScreenshotByFields,
   parseOcrResponse,
   parseRetentionContent,
   resolveKnownScreenshotType,
@@ -57,8 +55,8 @@ type ImagePayloadSuccess = {
   downloadMs?: number;
 };
 
-type ScreenshotTypeSource = "explicit" | "asset_role" | "auto" | "auto_unknown";
-type ResolvedScreenshotType = { type: ScreenshotType | null; source: ScreenshotTypeSource };
+type ScreenshotTypeSource = "explicit" | "asset_role";
+type ResolvedScreenshotType = { type: ScreenshotType; source: ScreenshotTypeSource };
 type ImagePayloadError = { error: string; errorCode?: OcrErrorCode; status?: number };
 
 type OcrTimings = {
@@ -109,7 +107,7 @@ function getAiErrorCode(error: unknown): OcrErrorCode {
 
 export async function runVisionOcrAttempt(
   dataUrl: string,
-  screenshotType: ScreenshotType | null,
+  screenshotType: ScreenshotType,
   timings: Partial<OcrTimings>,
   callAiImpl: typeof callAi,
 ): Promise<OcrAttempt> {
@@ -278,6 +276,15 @@ export async function buildOcrScreenshotResponse(
     timings.download_ms = imagePayload.downloadMs ?? 0;
     const dataUrl = imagePayload.dataUrl;
     const resolvedScreenshotType = resolveScreenshotType(imagePayload);
+    if (!resolvedScreenshotType) {
+      // 类型只由调用方的槽位决定，服务端不再按内容猜；没给类型就是调用方的错，不进识别、不落测速台账
+      return await finish(
+        { error: "缺少截图类型：screenshot_type 必须是 data 或 retention" },
+        400,
+        "bad_request",
+        user.id,
+      );
+    }
     const screenshotType = resolvedScreenshotType.type;
     logContext = {
       ...logContext,
@@ -317,9 +324,7 @@ export async function buildOcrScreenshotResponse(
       }
 
       const parsedScreenshotType = parsed.screenshot_type;
-      const responseSource = resolvedScreenshotType.source === "auto"
-        ? (parsedScreenshotType ? "auto" : "auto_unknown")
-        : resolvedScreenshotType.source;
+      const responseSource = resolvedScreenshotType.source;
       logContext = {
         ...logContext,
         screenshotType: parsedScreenshotType,
@@ -519,19 +524,11 @@ function inferMimeTypeFromPath(path: string): string {
   }
 }
 
-function resolveScreenshotType(imagePayload: ImagePayloadSuccess): ResolvedScreenshotType {
-  const known = resolveKnownScreenshotType({
+function resolveScreenshotType(imagePayload: ImagePayloadSuccess): ResolvedScreenshotType | null {
+  return resolveKnownScreenshotType({
     screenshotType: imagePayload.screenshotType,
     assetRole: imagePayload.assetRole,
   });
-  if (known) {
-    return known;
-  }
-
-  return {
-    type: null,
-    source: "auto",
-  };
 }
 
 function normalizeScreenshotType(value: unknown): ScreenshotType | null {

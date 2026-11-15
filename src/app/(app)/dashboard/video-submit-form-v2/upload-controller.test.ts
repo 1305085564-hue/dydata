@@ -59,13 +59,13 @@ function screenshotUploadResponse(role: SubmissionSlotRole) {
   return jsonResponse({ data: { bucket: "submission-screenshots", path, url: `/api/submission-screenshots/file?path=${encodeURIComponent(path)}` } });
 }
 
-test("默认 OCR 请求不携带槽位类型，显式重试才携带类型", () => {
+test("识别请求永远显式带类型：互动槽 data、留存槽 retention", () => {
   assert.deepEqual(
     buildOcrStorageRequestBody({ bucket: "submission-screenshots", path: "a.png", role: "screenshot_1" }),
-    { bucket: "submission-screenshots", path: "a.png", asset_role: "screenshot_1" },
+    { bucket: "submission-screenshots", path: "a.png", asset_role: "screenshot_1", screenshot_type: "data" },
   );
   assert.deepEqual(
-    buildOcrStorageRequestBody({ bucket: "submission-screenshots", path: "b.png", role: "screenshot_2", screenshotType: "retention" }),
+    buildOcrStorageRequestBody({ bucket: "submission-screenshots", path: "b.png", role: "screenshot_2" }),
     { bucket: "submission-screenshots", path: "b.png", asset_role: "screenshot_2", screenshot_type: "retention" },
   );
 });
@@ -88,9 +88,9 @@ test("识别失败时清单保留图片并转待确认", async () => {
   assert.equal(harness.slotsRef.current.screenshot_1.status, "pending_confirm");
 });
 
-test("自动识别为完播时按内容派生到完播槽，图片不在槽位间搬运", async () => {
+test("类型跟着槽位走：互动槽的图即使识别结果报成完播也留在互动槽", async () => {
   const harness = createUploadHarness();
-  const file = new File(["image"], "retention.png", { type: "image/png" });
+  const file = new File(["image"], "data.png", { type: "image/png" });
   let ocrBody: Record<string, unknown> | null = null;
   await withUploadMocks(async (url, init) => {
     if (url === "/api/submission-screenshots") return screenshotUploadResponse("screenshot_1");
@@ -102,15 +102,58 @@ test("自动识别为完播时按内容派生到完播槽，图片不在槽位�
           screenshot_type: "retention",
           confidence_score: 0.95,
           requires_manual_confirmation: false,
-          recognized_fields: { retention_metrics: { avg_play_duration: 20, completion_rate: 50 } },
+          recognized_fields: { play_count: 100, likes: 10 },
         },
       });
     }
     throw new Error(`unexpected request: ${url}`);
   }, () => harness.handle("screenshot_1", file));
 
-  assert.equal((ocrBody as Record<string, unknown> | null)?.screenshot_type, undefined);
-  assert.equal(harness.slotsRef.current.screenshot_2.screenshotType, "retention");
-  assert.equal(harness.slotsRef.current.screenshot_2.file, file);
-  assert.equal(harness.slotsRef.current.screenshot_1.status, "empty");
+  assert.equal((ocrBody as Record<string, unknown> | null)?.screenshot_type, "data");
+  assert.equal(harness.slotsRef.current.screenshot_1.screenshotType, "data");
+  assert.equal(harness.slotsRef.current.screenshot_1.file, file);
+  assert.equal(harness.slotsRef.current.screenshot_1.status, "confirmed");
+  assert.equal(harness.slotsRef.current.screenshot_2.status, "empty");
+});
+
+test("点哪张换哪张：同槽新图立即替换旧图，旧图的识别被取消，另一槽不动", async () => {
+  const harness = createUploadHarness();
+  const first = new File(["a"], "first.png", { type: "image/png" });
+  const second = new File(["b"], "second.png", { type: "image/png" });
+  const retention = new File(["c"], "retention.png", { type: "image/png" });
+  const ocrTypes: unknown[] = [];
+  let releaseFirst: (() => void) | null = null;
+  let firstAborted = false;
+  await withUploadMocks(async (url, init) => {
+    if (url === "/api/submission-screenshots") return screenshotUploadResponse("screenshot_1");
+    if (url === "/api/ocr-screenshot") {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      ocrTypes.push(body.screenshot_type);
+      if (body.screenshot_type === "data" && ocrTypes.filter((type) => type === "data").length === 1) {
+        // 第一张一直识别不完，模拟用户在识别途中换图
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+          init?.signal?.addEventListener("abort", () => { firstAborted = true; resolve(); });
+        });
+      }
+      return jsonResponse({
+        data: { slot_status: "confirmed", screenshot_type: body.screenshot_type, confidence_score: 1, requires_manual_confirmation: false, recognized_fields: { play_count: 1 } },
+      });
+    }
+    throw new Error(`unexpected request: ${url}`);
+  }, async () => {
+    const pending = harness.handle("screenshot_1", first);
+    await harness.handle("screenshot_2", retention);
+    while (!ocrTypes.includes("data")) await new Promise((resolve) => setTimeout(resolve, 0));
+    await harness.handle("screenshot_1", second);
+    (releaseFirst as (() => void) | null)?.();
+    await pending;
+  });
+
+  assert.equal(firstAborted, true, "旧图的识别请求被取消");
+  assert.equal(harness.itemsRef.current.length, 2, "互动槽只剩新图");
+  assert.equal(harness.slotsRef.current.screenshot_1.file, second);
+  assert.equal(harness.slotsRef.current.screenshot_2.file, retention);
+  assert.ok(ocrTypes.includes("retention"));
+  assert.ok(ocrTypes.filter((type) => type === "data").length >= 2);
 });

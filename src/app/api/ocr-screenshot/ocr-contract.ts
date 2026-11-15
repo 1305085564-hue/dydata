@@ -1,12 +1,7 @@
 import {
-  buildAutoRecognizedFields,
-  buildDataClassificationFields,
   buildDataScreenshotResponse,
   buildRetentionScreenshotResponse,
-  classifyScreenshotByFields,
 } from "./ocr-response-builders";
-
-export { classifyScreenshotByFields } from "./ocr-response-builders";
 
 /**
  * 截图识别输出契约：类型 + 解析函数（纯函数，无 IO 依赖）。
@@ -99,7 +94,7 @@ export type JsonObject = { [key: string]: JsonValue };
 
 export type ParsedScreenshotResponse = {
   slot_status: "pending_confirm" | "confirmed" | "failed";
-  screenshot_type: ScreenshotType | null;
+  screenshot_type: ScreenshotType;
   confidence_score: number;
   requires_manual_confirmation: boolean;
   recognized_fields: JsonObject | null;
@@ -119,7 +114,7 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
     case "retention":
       return "retention";
     // curve / traffic_curve 类型识别已下线，不再映射为任何识别类型。
-    // screenshot_1 / screenshot_2 由 getScreenshotTypeFallbackByAssetRole 按槽位决定类型。
+    // screenshot_1 / screenshot_2 是槽位名，不是识别类型；调用方必须显式传 screenshot_type。
     default:
       return null;
   }
@@ -156,14 +151,6 @@ export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType
   return normalizeScreenshotTypeInput(assetRole);
 }
 
-export function getScreenshotTypeFallbackByAssetRole(assetRole: unknown): ScreenshotType {
-  if (assetRole === "screenshot_2") {
-    return "retention";
-  }
-
-  return "data";
-}
-
 export function resolveKnownScreenshotType(input: {
   screenshotType: ScreenshotType | null;
   assetRole: ScreenshotAssetRole | null;
@@ -175,7 +162,7 @@ export function resolveKnownScreenshotType(input: {
   return null;
 }
 
-export function buildNoTextFailedResponse(screenshotType: ScreenshotType | null): ParsedScreenshotResponse {
+export function buildNoTextFailedResponse(screenshotType: ScreenshotType): ParsedScreenshotResponse {
   return {
     slot_status: "failed",
     screenshot_type: screenshotType,
@@ -214,33 +201,12 @@ export function hasJsonObject(content: unknown): boolean {
 
 export function parseOcrResponse(
   content: unknown,
-  screenshotType: ScreenshotTypeInput | null | undefined
+  screenshotType: ScreenshotTypeInput
 ): ParsedScreenshotResponse | null {
+  // 只按显式类型解析；认不出的类型别名（如已下线的曲线类型）不产出任何结果
   const normalizedType = normalizeScreenshotTypeInput(screenshotType);
   if (!normalizedType) {
-    const dataParsed = parseOcrContent(content);
-    const retentionParsed = parseRetentionContent(content);
-    const classification = classifyScreenshotByFields({
-      ...buildDataClassificationFields(dataParsed),
-      retention_metrics: retentionParsed?.recognized ? retentionParsed.retention_metrics : null,
-    });
-
-    if (classification === "data" && dataParsed) {
-      return buildDataScreenshotResponse(dataParsed, "data", getConfidenceScore(dataParsed.confidence));
-    }
-    if (classification === "retention" && retentionParsed?.recognized) {
-      return buildRetentionScreenshotResponse(retentionParsed, "retention");
-    }
-
-    const recognizedFields = buildAutoRecognizedFields(dataParsed, retentionParsed);
-    if (Object.keys(recognizedFields).length === 0) return null;
-    return {
-      slot_status: "pending_confirm",
-      screenshot_type: null,
-      confidence_score: 0,
-      requires_manual_confirmation: true,
-      recognized_fields: recognizedFields,
-    };
+    return null;
   }
 
   if (normalizedType === "retention") {

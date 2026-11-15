@@ -1,20 +1,9 @@
 import type { ScreenshotType } from "./ocr-contract";
 
-export function buildPromptByType(type: ScreenshotType | null): string {
-  if (!type) return buildAutoPrompt();
+/** 每张图只按调用方显式给出的单类提示词识别；类型由前端槽位决定，这里不猜。 */
+export function buildPromptByType(type: ScreenshotType): string {
   if (type === "retention") return buildRetentionPrompt();
   return buildPrompt();
-}
-
-function buildAutoPrompt(): string {
-  return [
-    "你是抖音数据截图 OCR 助手。请同时识别互动数据族和完播留存族，严格只返回 JSON，不要自报截图类型。",
-    "互动数据族字段：play_count、likes、comments、shares、favorites、follower_gain。",
-    "完播留存族字段：retention_metrics 下的 avg_play_duration、avg_play_ratio、bounce_rate_2s、completion_rate_5s、completion_rate。",
-    "另加 video_title、published_at、published_at_text、published_at_confidence、confidence。",
-    "无法确定的字段返回 null；标题去掉末尾话题；发布时间只能依据明确的‘发布’文字，不能从趋势图横轴推断。",
-    "只返回 JSON，不要 markdown，不要解释。",
-  ].join("\n");
 }
 
 function buildPrompt(): string {

@@ -27,9 +27,7 @@ type GapSummary = Pick<
   | "missingRequiredMeta"
   | "topicTagMissing"
   | "publishedAtUnconfirmed"
-> & {
-  unclassifiedScreenshotCount?: number;
-};
+>;
 
 const slotNames = (roles: SubmissionSlotRole[]) =>
   roles.map((role) => SUBMIT_SLOT_LABELS[role] ?? "截图").join("、");
@@ -44,9 +42,6 @@ export function listSubmitGaps(summary: GapSummary): SubmitGap[] {
   }
   if (summary.failedRequiredSlots.length > 0) {
     gaps.push({ key: "failed", label: `处理${slotNames(summary.failedRequiredSlots)}`, anchor: "slots" });
-  }
-  if ((summary.unclassifiedScreenshotCount ?? 0) > 0) {
-    gaps.push({ key: "screenshotType", label: "有一张截图没认出是哪类", anchor: "slots" });
   }
   if (summary.missingRequiredMetrics.length > 0) {
     gaps.push({ key: "metrics", label: `${summary.missingRequiredMetrics.length} 项数字`, anchor: "metrics" });

@@ -347,7 +347,6 @@ export function VideoSubmitPanelV2({
         exemptionGrants: userExemptionGrants,
       }),
     [
-      absentDates,
       allExemptionDateBuckets.leaveDates,
       allExemptionDateBuckets.waiveDates,
       localPendingExemptionDates,

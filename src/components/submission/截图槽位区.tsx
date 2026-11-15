@@ -33,8 +33,8 @@ interface SubmissionSlotsProps {
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
   onManualFill?: (role: SubmissionSlotRole) => void;
-  onConfirmType?: (role: SubmissionSlotRole, screenshotType: "data" | "retention") => void;
-  processingScreenshotCount?: number;
+  /** true 时显示两张卡片；false 时显示大粘贴区（两张没齐前）。由工作区按「两槽齐过 / 编辑」决定 */
+  showCards: boolean;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
   pulseEmptySlots?: boolean;
@@ -53,9 +53,10 @@ function extractImageFiles(fileList: FileList | null): File[] {
 }
 
 /**
- * 截图区：全页唯一的大入口。
- * 两张都没传时是一块合并的粘贴区（系统按识别类型自动归位）；传了任意一张后，
- * 换成两行固定高度的状态行（上传中 / 识别中 / 已识别 / 需手填），整块高度不变，下方不位移。
+ * 截图区：全页唯一的大入口。类型只由位置定：第一张是互动、第二张是留存。
+ * 两张没齐时是一块大粘贴区，提示语只看槽位里有没有图（不等识别）：
+ * 空 →「把互动截图粘贴或拖进来」；互动已有 →「请再上传留存截图」。
+ * 齐了换成两张固定高度的卡片：点卡片空白处换这一张，点小图看大图。整块高度不变，下方不位移。
  */
 export function SubmissionSlotsSection({
   slots,
@@ -64,8 +65,7 @@ export function SubmissionSlotsSection({
   onDelete,
   onRetry,
   onManualFill,
-  onConfirmType,
-  processingScreenshotCount = 0,
+  showCards,
   screenshotsRequired = true,
   focusedRole = null,
   pulseEmptySlots = false,
@@ -111,7 +111,7 @@ export function SubmissionSlotsSection({
     return () => document.removeEventListener("paste", handleDocumentPaste);
   }, [onUploadFiles]);
 
-  const allEmpty = SLOT_META.every((item) => slots[item.role].status === "empty");
+  const dataReceived = slots.screenshot_1.status !== "empty";
   const openGlobalPicker = () => globalFileInputRef.current?.click();
 
   return (
@@ -144,7 +144,7 @@ export function SubmissionSlotsSection({
         }}
       />
 
-      {allEmpty ? (
+      {!showCards ? (
         <div
           role="button"
           tabIndex={0}
@@ -165,10 +165,14 @@ export function SubmissionSlotsSection({
           )}
         >
           <div className="font-serif text-[20px] leading-tight text-[#141413]">
-            {screenshotsRequired ? "把截图粘贴或拖进来" : "作品异常时截图可以不交"}
+            {!screenshotsRequired
+              ? "作品异常时截图可以不交"
+              : dataReceived
+                ? "请再上传留存截图"
+                : "把互动截图粘贴或拖进来"}
           </div>
           <div className="text-[12px] text-[#78716C] truncate hidden sm:block">
-            一张一张、一次两张都行，系统按内容分清互动和完播
+            {dataReceived ? "互动截图已收到" : "一次传两张时，请按互动、留存的顺序上传"}
           </div>
           <span className="inline-flex min-h-[44px] sm:min-h-0 h-8 items-center rounded-md bg-[#D97757] px-4 text-[14px] text-white">
             选择截图
@@ -205,24 +209,21 @@ export function SubmissionSlotsSection({
                   ? slot.error || "未识别到图片内容，请点击重新上传"
                   : slot.ocrFallback
                     ? slot.error ? `${slot.error} · 数字请手填` : "这张没认出来，数字请手填"
-                    : slot.screenshotType === null && hasImage
-                      ? "没认出类型，请选择互动或完播"
-                      : isWarning
+                    : isWarning
                       ? slot.error ? `${slot.error} · 请核对下方数字` : "已识别，有几项请核对"
                       : "已识别";
 
             return (
               <div
                 key={item.role}
-                role={isEmpty ? "button" : undefined}
-                tabIndex={isEmpty ? 0 : undefined}
-                aria-label={isEmpty ? `${item.title}截图，点击选择文件` : undefined}
-                title={isEmpty ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : undefined}
-                onClick={() => {
-                  if (isEmpty) slotInputRefs.current[item.role]?.click();
-                }}
+                role="button"
+                tabIndex={0}
+                aria-label={isEmpty ? `${item.title}截图，点击选择文件` : `${item.title}截图，点击换一张`}
+                title={isEmpty ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : "点击换一张；点小图看大图"}
+                onClick={() => slotInputRefs.current[item.role]?.click()}
                 onKeyDown={(e) => {
-                  if (!isEmpty) return;
+                  // 只响应卡片本身，卡片里的小图、删除等按钮各管各的
+                  if (e.target !== e.currentTarget) return;
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     slotInputRefs.current[item.role]?.click();
@@ -246,12 +247,12 @@ export function SubmissionSlotsSection({
                   else if (files.length > 1) onUploadFiles(files);
                 }}
                 className={cn(
-                  "group relative flex min-h-0 flex-1 items-center gap-3 rounded-xl border px-3 transition-colors",
+                  "group relative flex min-h-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-3 transition-colors",
                   isEmpty
                     ? pulseEmptySlots
-                      ? "cursor-pointer border-dashed border-[#D97757]/60 bg-[#D97757]/[0.04]"
-                      : "cursor-pointer border-dashed border-[#D6D3D1] bg-white hover:border-[#78716C]/60"
-                    : "border-[#E2E2DF] bg-white",
+                      ? "border-dashed border-[#D97757]/60 bg-[#D97757]/[0.04]"
+                      : "border-dashed border-[#D6D3D1] bg-white hover:border-[#78716C]/60"
+                    : "border-[#E2E2DF] bg-white hover:border-[#78716C]/60",
                   dragOverRole === item.role && "border-[#78716C] bg-[#EBEBE9]",
                   focusedRole === item.role && "border-[#78716C]/80 bg-[#F7F7F6]",
                   isError && "border-status-danger/40 bg-status-danger/[0.04]",
@@ -264,6 +265,7 @@ export function SubmissionSlotsSection({
                   type="file"
                   accept={ACCEPT}
                   className="hidden"
+                  onClick={(e) => e.stopPropagation()}
                   onChange={(e) => {
                     const files = extractImageFiles(e.target.files);
                     if (files.length > 0) onSelectFile(item.role, files[0]);
@@ -350,30 +352,6 @@ export function SubmissionSlotsSection({
                         手填
                       </button>
                     )}
-                    {!isProcessing && slot.screenshotType === null && onConfirmType && (
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onConfirmType(item.role, "data");
-                          }}
-                          className="inline-flex h-7 items-center rounded-md border border-[#E2E2DF] px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
-                        >
-                          这是互动
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onConfirmType(item.role, "retention");
-                          }}
-                          className="inline-flex h-7 items-center rounded-md border border-[#E2E2DF] px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
-                        >
-                          这是完播
-                        </button>
-                      </div>
-                    )}
                     {!isProcessing && (
                       <button
                         type="button"
@@ -393,12 +371,6 @@ export function SubmissionSlotsSection({
               </div>
             );
           })}
-        </div>
-      )}
-
-      {processingScreenshotCount > 0 && (
-        <div className="shrink-0 px-2 text-[12px] text-[#78716C]" aria-live="polite">
-          还有 {processingScreenshotCount} 张在识别
         </div>
       )}
 

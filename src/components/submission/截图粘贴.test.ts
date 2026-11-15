@@ -3,10 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-import {
-  extractClipboardImageFiles,
-  isEditablePasteTarget,
-} from "./截图粘贴";
+import { extractClipboardImageFiles } from "./截图粘贴";
 
 test("首页粘贴时只提取剪贴板里的图片", () => {
   const image = new File(["image"], "clipboard.png", { type: "image/png" });
@@ -18,13 +15,6 @@ test("首页粘贴时只提取剪贴板里的图片", () => {
   assert.deepEqual(files, [image]);
 });
 
-test("文案和输入控件保留自己的粘贴行为", () => {
-  assert.equal(isEditablePasteTarget({ tagName: "TEXTAREA" }), true);
-  assert.equal(isEditablePasteTarget({ tagName: "INPUT" }), true);
-  assert.equal(isEditablePasteTarget({ tagName: "DIV", isContentEditable: true }), true);
-  assert.equal(isEditablePasteTarget({ tagName: "DIV" }), false);
-});
-
 test("截图组件在首页范围监听粘贴，不再要求先点中截图卡", () => {
   const source = readFileSync(
     resolve(process.cwd(), "src/components/submission/截图槽位区.tsx"),
@@ -34,6 +24,8 @@ test("截图组件在首页范围监听粘贴，不再要求先点中截图卡",
   assert.match(source, /document\.addEventListener\("paste"/);
   assert.match(source, /document\.removeEventListener\("paste"/);
   assert.doesNotMatch(source, /<div\s+onPaste=/);
+  // 光标在文案框里粘贴图片也要被截图区收走（文案框不收图，跳过就等于丢图）
+  assert.doesNotMatch(source, /isEditablePasteTarget|event\.target/);
 });
 
 test("空截图卡悬停时轻提示可直接粘贴", () => {

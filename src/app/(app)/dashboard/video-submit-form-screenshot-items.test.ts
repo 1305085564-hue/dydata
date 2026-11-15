@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  countProcessingScreenshotItems,
+  allocateScreenshotSlots,
   createScreenshotItemsFromEditDetail,
   deriveSlotsFromItems,
 } from "./video-submit-form-model";
@@ -62,12 +62,12 @@ function screenshotItem(overrides: Partial<ScreenshotItem> = {}): ScreenshotItem
   };
 }
 
-test("截图清单按 seq 取每类最新一张，数组顺序不影响派生槽位", () => {
+test("槽位只展示放进这个槽位的最新一张，识别结果不让图在槽位间搬运", () => {
   const slots = deriveSlotsFromItems([
     screenshotItem({ id: "retention-old", seq: 2, screenshotType: "retention", storageRole: "screenshot_2" }),
-    screenshotItem({ id: "data-new", seq: 4, storageRole: "screenshot_2" }),
+    screenshotItem({ id: "data-new", seq: 4, storageRole: "screenshot_1" }),
     screenshotItem({ id: "data-old", seq: 1, storageRole: "screenshot_1" }),
-    screenshotItem({ id: "retention-new", seq: 5, screenshotType: "retention", storageRole: "screenshot_1" }),
+    screenshotItem({ id: "retention-new", seq: 5, screenshotType: "retention", storageRole: "screenshot_2" }),
   ]);
   assert.equal(slots.screenshot_1.itemId, "data-new");
   assert.equal(slots.screenshot_1.screenshotType, "data");
@@ -75,25 +75,31 @@ test("截图清单按 seq 取每类最新一张，数组顺序不影响派生槽
   assert.equal(slots.screenshot_2.screenshotType, "retention");
 });
 
-test("在途项和判不出项按 seq 填剩余槽位，并保留手动确认状态", () => {
+test("在途图直接占住自己的槽位，另一槽保持空", () => {
   const slots = deriveSlotsFromItems([
-    screenshotItem({ id: "data-done", seq: 1 }),
-    screenshotItem({ id: "unknown", seq: 2, screenshotType: null, confirmed: false, requiresManualConfirmation: true }),
-    screenshotItem({ id: "processing", seq: 3, status: "recognizing", screenshotType: null, assetUrl: null, previewUrl: "blob:processing" }),
+    screenshotItem({ id: "processing", seq: 1, status: "recognizing", assetUrl: null, previewUrl: "blob:processing", confirmed: false }),
   ]);
-  assert.equal(slots.screenshot_1.itemId, "data-done");
-  assert.equal(slots.screenshot_2.itemId, "unknown");
-  assert.equal(slots.screenshot_2.status, "pending_confirm");
-  assert.equal(slots.screenshot_2.screenshotType, null);
-  assert.equal(countProcessingScreenshotItems([
-    screenshotItem({ id: "uploading", status: "uploading" }),
-    screenshotItem({ id: "recognizing", status: "recognizing" }),
-  ]), 0, "两张在途图已经占住两个展示位，不再重复播报");
-  assert.equal(countProcessingScreenshotItems([
-    screenshotItem({ id: "data-done", seq: 1 }),
-    screenshotItem({ id: "retention-done", seq: 2, screenshotType: "retention", storageRole: "screenshot_2" }),
-    screenshotItem({ id: "overflow", seq: 3, status: "recognizing", screenshotType: null, assetUrl: null, previewUrl: "blob:overflow" }),
-  ]), 1, "第三张挤不进展示位时才计入「还有 n 张在识别」");
+  assert.equal(slots.screenshot_1.itemId, "processing");
+  assert.equal(slots.screenshot_1.status, "recognizing");
+  assert.equal(slots.screenshot_2.status, "empty");
+});
+
+test("一批新图按顺序填空槽：第一张互动、第二张留存，多出的不收", () => {
+  assert.deepEqual(allocateScreenshotSlots([], 1), { roles: ["screenshot_1"], overflow: 0 });
+  assert.deepEqual(allocateScreenshotSlots([], 2), { roles: ["screenshot_1", "screenshot_2"], overflow: 0 });
+  assert.deepEqual(allocateScreenshotSlots([], 3), { roles: ["screenshot_1", "screenshot_2"], overflow: 1 });
+  // 第一张还在识别时再粘贴：进留存槽，不等识别结果
+  const inFlight = [screenshotItem({ id: "data", status: "recognizing" })];
+  assert.deepEqual(allocateScreenshotSlots(inFlight, 1), { roles: ["screenshot_2"], overflow: 0 });
+  assert.deepEqual(allocateScreenshotSlots(inFlight, 2), { roles: ["screenshot_2"], overflow: 1 });
+  // 两槽已齐：不顶任何一张
+  const full = [
+    screenshotItem({ id: "data" }),
+    screenshotItem({ id: "retention", seq: 2, screenshotType: "retention", storageRole: "screenshot_2" }),
+  ];
+  assert.deepEqual(allocateScreenshotSlots(full, 1), { roles: [], overflow: 1 });
+  // 主页面删掉互动那张后再粘贴：补回互动槽
+  assert.deepEqual(allocateScreenshotSlots([full[1]], 1), { roles: ["screenshot_1"], overflow: 0 });
 });
 
 test("编辑回填没有类型时沿用旧槽位约定", () => {
