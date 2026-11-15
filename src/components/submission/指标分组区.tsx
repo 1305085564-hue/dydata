@@ -211,7 +211,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
             {summaryText}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-4">
           {cells.map(({ item, field, mode }) => (
             <指标输入卡
               key={item.key}

@@ -78,7 +78,7 @@ export function MetricInputCard({
   const checkedByHand = Boolean(field.manuallyEdited) && Boolean(field.ocrValue) && field.value === field.ocrValue;
 
   return (
-    <div className="flex h-[64px] min-w-0 flex-col justify-between" title={hint}>
+    <div className="flex min-w-0 flex-col gap-1" title={hint}>
       <div className="flex h-5 items-center justify-between gap-1 px-2">
         <Label
           htmlFor={`metric-${field.key}`}

@@ -79,7 +79,7 @@ export function FormV2ResultsSection({
         />
       </div>
 
-      <div className="space-y-1 pt-1">
+      <div className="space-y-1">
         <div className="flex h-9 items-center gap-3 px-2">
           <Label htmlFor="video_title" className="w-16 shrink-0 text-[12px] font-normal text-[#78716C]">
             视频标题
