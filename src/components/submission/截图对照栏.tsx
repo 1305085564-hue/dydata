@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole } from "./提交状态机";
 
-/** 宽屏才放对照栏：1200 = 外框 1152 + 两侧留白 48，保证表单仍是原来的 768 宽、不被对照栏挤窄；窄屏核对时点截图卡片的小图开检视器 */
-export const COMPARE_RAIL_MEDIA_QUERY = "(min-width: 1200px)";
+/** 宽屏才放对照栏。外框保持 1024、表单 768 靠左（占四分之三）；对照栏 360 + 间距 24 伸进外框右侧的页边留白，需要 (视口 - 1024) / 2 + 768 + 384 + 24 <= 视口，即视口 >= 1328。窄于此不放栏，核对时点截图卡片的小图开检视器 */
+export const COMPARE_RAIL_MEDIA_QUERY = "(min-width: 1330px)";
 
 function subscribeRailQuery(onChange: () => void) {
   const media = window.matchMedia(COMPARE_RAIL_MEDIA_QUERY);

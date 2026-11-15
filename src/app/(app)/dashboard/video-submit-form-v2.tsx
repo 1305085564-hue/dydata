@@ -1232,7 +1232,7 @@ export function VideoSubmitFormV2({
             initial={false}
             animate={shakeForm ? "animate" : "initial"}
             variants={shakeVariants}
-            className="w-full min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,48rem)_360px] min-[1200px]:items-start min-[1200px]:gap-6"
+            className="w-full min-[1330px]:grid min-[1330px]:grid-cols-[48rem_360px] min-[1330px]:items-start min-[1330px]:gap-6"
           >
             <div className="max-w-3xl min-w-0 space-y-5 py-0">
               {/* 草稿 / 审批 / 关联选题的微提示：有才出现，状态句只在页头说 */}
@@ -1323,7 +1323,7 @@ export function VideoSubmitFormV2({
                 submitButtonLabel={submitButtonLabel}
               />
             </div>
-            {/* 宽屏右栏：截图对照。列宽始终留着，图来了只填内容，表单不位移 */}
+            {/* 宽屏右栏：截图对照。外框不放宽，栏伸进右侧页边留白；表单宽度和位置跟没有栏时一样 */}
             {compareRailEnabled && (
               <截图对照栏
                 images={{
