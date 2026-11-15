@@ -11,6 +11,7 @@ const source = [
   "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
   "src/components/video-submit/video-submit-panel-toolbar.tsx",
   "src/components/video-submit/video-submit-panel-body.tsx",
+  "src/components/video-submit/today-submitted-card.tsx",
   "src/components/video-submit/video-submit-panel-history-dialog.tsx",
   "src/components/video-submit/video-submit-panel-exemption-dialog.tsx",
   "src/lib/dashboard-panel-header.ts",
@@ -107,9 +108,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
     /今日创作立卷/,
     "表单内严禁出现重复的大粗标「今日创作立卷」",
   );
-  assert.match(
-    formSource,
-    /<SectionHeading as="h2">/,
-    "表单工作区章节标题必须走 SectionHeading（章节定名 18px/500/#141413）",
-  );
+  // 4. 同一状态只在一处说：表单不再自带「创作表达录入 / 修改今日作品」章节标题，状态句只在页头
+  assert.doesNotMatch(formSource, /<SectionHeading as="h2">/, "表单内不得再自带状态标题");
+  // 5. 交完后的落款寄语保留人文语气（《Claude设计哲学》§2.3 例外的另一半）
+  assert.match(source, /今日创作已立卷 · 数据已妥善入库/);
 });

@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
-import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submission/提交状态机";
+import { REQUIRED_METRIC_KEYS, type EditableMetricKey, type SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
-import { 指标输入卡 } from "@/components/submission/指标输入卡";
+import { 指标输入卡, resolveMetricCellMode } from "@/components/submission/指标输入卡";
 import {
   isInteractionExceedingPlayCount,
   type ConfidenceLevel,
@@ -27,6 +27,10 @@ interface MetricGroupProps {
   fields: Record<string, EditableFieldState>;
   editing?: boolean;
   confidenceLevels?: Partial<Record<EditableMetricKey, ConfidenceLevel>>;
+  /** 每张截图是否还在上传/识别：识别中的格子只占位，不画框 */
+  slotProcessing: Record<SubmissionSlotRole, boolean>;
+  /** 每张截图对应的必填格是否该画成输入框（截图已处理完、转手填、编辑或异常提交） */
+  inputsOpen: Record<SubmissionSlotRole, boolean>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
   onRestoreOcrValue?: (key: EditableMetricKey) => void;
   onFocusField?: (key: EditableMetricKey) => void;
@@ -76,6 +80,8 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       fields,
       editing = false,
       confidenceLevels,
+      slotProcessing,
+      inputsOpen,
       onFieldChange,
       onRestoreOcrValue,
       onFocusField,
@@ -237,94 +243,65 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       favorites: fields.favorites?.value ?? null,
     });
 
+    const items = [
+      ...CORE_ITEMS,
+      ...INTERACTION_ITEMS,
+      ...RETENTION_ITEMS.map((item) => ({ ...item, optional: retentionOptional })),
+    ];
+    const cells = items.map((item) => {
+      const field = fields[item.key];
+      const confidenceLevel = field?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null;
+      const role = getSlotRoleForMetric(item.key);
+      const mode = resolveMetricCellMode({
+        field,
+        confidenceLevel,
+        // 只有状态机认定的必填项才画成「请填」框，和提交按钮的「还差」同一来源
+        optional: !REQUIRED_METRIC_KEYS.includes(item.key),
+        slotProcessing: slotProcessing[role],
+        inputsOpen: editing || inputsOpen[role],
+      });
+      return { item, field, mode };
+    });
+    const recognizedCount = cells.filter(({ field }) => Boolean(field?.ocrValue)).length;
+    const toCheckCount = cells.filter(({ mode }) => mode === "doubt" || mode === "missing").length;
+    const pendingCount = cells.filter(({ mode }) => mode === "pending").length;
+    const summaryText = showInteractionWarning
+      ? "互动数加起来超过了播放量，请核对一遍"
+      : pendingCount > 0
+        ? "正在识别截图里的数字…"
+        : toCheckCount > 0
+          ? `${items.length} 项认出 ${recognizedCount} 项，${toCheckCount} 项请核对`
+          : recognizedCount > 0
+            ? `${items.length} 项已全部核对`
+            : "数字填在下面，点一下就能改";
+
     return (
-      <motion.div variants={itemVariants} className="flex h-full flex-col lg:space-y-2">
-        {/* 数据矩阵：核心3项 + 互动4项 + 完播4项 */}
-        <div className="flex flex-1 flex-col gap-2 sm:gap-3">
-          
-          {/* 1. 核心数据网格 (移动端两列，桌面端统一4列以实现三行竖向对齐，右侧自然留空) */}
-          <div>
-            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 sm:gap-2 lg:gap-3">
-              {CORE_ITEMS.map((item, index) => (
-                <指标输入卡
-                  key={item.key}
-                  label={item.label}
-                  field={fields[item.key]}
-                  confidenceLevel={fields[item.key]?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null}
-                  step={item.step}
-                  suffix={item.suffix}
-                  optional={item.optional}
-                  metricType={item.metricType}
-                  onChange={(value) => handleFieldChange(item.key, value)}
-                  onRestoreOcr={
-                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
-                  }
-                  onFocus={() => handleFocus(item.key)}
-                  onBlur={() => handleBlur(item.key)}
-                  animationDelay={index * 120}
-                  inputRef={setRef(item.key)}
-                  onKeyDown={handleKeyDown(item.key)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 2. 互动数据网格 (移动端两列，桌面端4列) */}
-          <div>
-            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 sm:gap-2 lg:gap-3">
-              {INTERACTION_ITEMS.map((item, index) => (
-                <指标输入卡
-                  key={item.key}
-                  label={item.label}
-                  field={fields[item.key]}
-                  confidenceLevel={fields[item.key]?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null}
-                  metricType={item.metricType}
-                  onChange={(value) => handleFieldChange(item.key, value)}
-                  onRestoreOcr={
-                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
-                  }
-                  onFocus={() => handleFocus(item.key)}
-                  onBlur={() => handleBlur(item.key)}
-                  animationDelay={(CORE_ITEMS.length + index) * 120}
-                  inputRef={setRef(item.key)}
-                  onKeyDown={handleKeyDown(item.key)}
-                />
-              ))}
-            </div>
-            {showInteractionWarning && (
-              <div className="mt-1 pl-0.5 text-[12px] font-normal text-status-warning transition-opacity duration-150">
-                互动数据总和超过了播放量，请核对一遍
-              </div>
-            )}
-          </div>
-
-          {/* 3. 完播留存网格 (移动端两列，桌面端4列) */}
-          <div>
-            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 sm:gap-2 lg:gap-3">
-              {RETENTION_ITEMS.map((item, index) => (
-                <指标输入卡
-                  key={item.key}
-                  label={item.label}
-                  field={fields[item.key]}
-                  confidenceLevel={fields[item.key]?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null}
-                  step={item.step}
-                  suffix={item.suffix}
-                  optional={retentionOptional}
-                  metricType={item.metricType}
-                  onChange={(value) => handleFieldChange(item.key, value)}
-                  onRestoreOcr={
-                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
-                  }
-                  onFocus={() => handleFocus(item.key)}
-                  onBlur={() => handleBlur(item.key)}
-                  animationDelay={index * 120}
-                  inputRef={setRef(item.key)}
-                  onKeyDown={handleKeyDown(item.key)}
-                  hint={editing && item.key === "avg_play_ratio" ? "留空＝保持原值，不能清空" : undefined}
-                />
-              ))}
-            </div>
-          </div>
+      <motion.div variants={itemVariants} className="space-y-2">
+        <div className="flex h-5 items-center gap-2 px-2 text-[12px]">
+          <span className="text-[#1F1E1D]">识别结果</span>
+          <span className={showInteractionWarning || toCheckCount > 0 ? "text-status-warning-text" : "text-[#78716C]"}>
+            {summaryText}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4">
+          {cells.map(({ item, field, mode }) => (
+            <指标输入卡
+              key={item.key}
+              label={item.label}
+              field={field}
+              mode={mode}
+              suffix={item.suffix}
+              optional={item.optional}
+              metricType={item.metricType}
+              onChange={(value) => handleFieldChange(item.key, value)}
+              onRestoreOcr={onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined}
+              onFocus={() => handleFocus(item.key)}
+              onBlur={() => handleBlur(item.key)}
+              inputRef={setRef(item.key)}
+              onKeyDown={handleKeyDown(item.key)}
+              hint={editing && item.key === "avg_play_ratio" ? "留空＝保持原值，不能清空" : undefined}
+            />
+          ))}
         </div>
 
         {/* 跟随放大镜（桌面端指标核对浮动预览） */}

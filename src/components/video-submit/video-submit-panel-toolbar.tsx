@@ -5,7 +5,7 @@ import { CalendarDays, FilePenLine, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
-import type { PanelHeaderStatus } from "@/lib/dashboard-panel-header";
+import { formatHeaderDate, type PanelHeaderStatus } from "@/lib/dashboard-panel-header";
 import type { ExemptionDateBuckets } from "@/lib/豁免";
 import { cn } from "@/lib/utils";
 import { useExitMotion } from "@/hooks/use-exit-motion";
@@ -62,6 +62,9 @@ export function VideoSubmitPanelToolbar({
                 <span className="truncate">{headerStatus.text}</span>
               </h1>
 
+              <div className="flex max-w-full flex-wrap items-center gap-x-1 text-[14px] text-[#78716C]">
+              <span className="tabular-nums">{formatHeaderDate(activeBizDate)}</span>
+              <span aria-hidden>·</span>
               <div className="relative inline-flex max-w-full items-center" ref={calendarPopoverRef}>
                 <button
                   type="button"
@@ -108,6 +111,7 @@ export function VideoSubmitPanelToolbar({
                     </div>
                   </div>
                 )}
+              </div>
               </div>
             </div>
 

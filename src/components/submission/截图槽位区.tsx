@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
+import { Trash2, Eye, RefreshCw, Loader2, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -42,36 +41,28 @@ interface SubmissionSlotsProps {
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
   onManualFill?: (role: SubmissionSlotRole) => void;
-  issueCount?: number;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
-  highlightedOcrIndex?: number | null;
   pulseEmptySlots?: boolean;
 }
 
-const SLOT_META: Array<{
-  role: SubmissionSlotRole;
-  title: string;
-  shortTitle: string;
-  description: string;
-  required: boolean;
-}> = [
-  {
-    role: "screenshot_1",
-    title: "互动数据",
-    shortTitle: "互动截图",
-    description: "播放 · 点赞 · 评论 · 转发；含标题和发布时间",
-    required: true,
-  },
-  {
-    role: "screenshot_2",
-    title: "完播留存",
-    shortTitle: "完播截图",
-    description: "均播时长 · 完播率 · 留存；含标题和发布时间",
-    required: true,
-  },
+const SLOT_META: Array<{ role: SubmissionSlotRole; title: string; shortTitle: string }> = [
+  { role: "screenshot_1", title: "互动数据", shortTitle: "互动截图" },
+  { role: "screenshot_2", title: "完播留存", shortTitle: "完播截图" },
 ];
 
+const ACCEPT = ".jpg,.jpeg,.png,.webp";
+
+function extractImageFiles(fileList: FileList | null): File[] {
+  if (!fileList) return [];
+  return Array.from(fileList).filter((file) => file.type.startsWith("image/"));
+}
+
+/**
+ * 截图区：全页唯一的大入口。
+ * 两张都没传时是一块合并的粘贴区（系统按识别类型自动归位）；传了任意一张后，
+ * 换成两行固定高度的状态行（上传中 / 识别中 / 已识别 / 需手填），整块高度不变，下方不位移。
+ */
 export function SubmissionSlotsSection({
   slots,
   onSelectFile,
@@ -81,7 +72,6 @@ export function SubmissionSlotsSection({
   onManualFill,
   screenshotsRequired = true,
   focusedRole = null,
-  highlightedOcrIndex = null,
   pulseEmptySlots = false,
 }: SubmissionSlotsProps) {
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
@@ -101,27 +91,14 @@ export function SubmissionSlotsSection({
 
   const [now, setNow] = useState(() => Date.now());
   const hasActiveSlots = Object.values(slots).some(
-    (s) => s.status === "uploading" || s.status === "recognizing"
+    (s) => s.status === "uploading" || s.status === "recognizing",
   );
   useEffect(() => {
     if (!hasActiveSlots) return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, [hasActiveSlots]);
-
   const uploadProgress = getUploadProgress(slots, now);
-
-  const extractImageFiles = (fileList: FileList | null): File[] => {
-    if (!fileList) return [];
-    const files: File[] = [];
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      if (file.type.startsWith("image/")) {
-        files.push(file);
-      }
-    }
-    return files;
-  };
 
   useEffect(() => {
     latestSlotsRef.current = slots;
@@ -136,27 +113,20 @@ export function SubmissionSlotsSection({
     onUploadFiles(files);
   };
 
-  const handleGlobalFiles = (fileList: FileList | null) => {
-    const files = extractImageFiles(fileList);
-    if (files.length > 0) {
-      onUploadFiles(files);
-    }
-  };
-
   useEffect(() => {
     const handleDocumentPaste = (event: ClipboardEvent) => {
       if (event.defaultPrevented || isEditablePasteTarget(event.target)) return;
-
       const files = extractClipboardImageFiles(event.clipboardData?.items);
       if (files.length === 0) return;
-
       event.preventDefault();
       handleImplicitFiles(files);
     };
-
     document.addEventListener("paste", handleDocumentPaste);
     return () => document.removeEventListener("paste", handleDocumentPaste);
   }, [onUploadFiles]);
+
+  const allEmpty = SLOT_META.every((item) => slots[item.role].status === "empty");
+  const openGlobalPicker = () => globalFileInputRef.current?.click();
 
   return (
     <div
@@ -165,9 +135,7 @@ export function SubmissionSlotsSection({
         setIsDragOverGlobal(true);
       }}
       onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setIsDragOverGlobal(false);
-        }
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOverGlobal(false);
       }}
       onDrop={(e) => {
         e.preventDefault();
@@ -175,377 +143,247 @@ export function SubmissionSlotsSection({
         setDragOverRole(null);
         handleImplicitFiles(extractImageFiles(e.dataTransfer.files));
       }}
-      className={cn(
-        "flex flex-col h-full rounded-xl transition duration-200",
-        isDragOverGlobal
-          ? "border-2 border-dashed border-[#D97757]/60 bg-[#D97757]/[0.02] ring-1 ring-[#D97757]/15 shadow-input p-1.5"
-          : ""
-      )}
+      className="h-[136px]"
     >
-      {/* 隐藏的全局多图选择 input */}
       <input
         ref={globalFileInputRef}
         type="file"
         multiple
-        accept=".jpg,.jpeg,.png,.webp"
+        accept={ACCEPT}
         className="hidden"
         onChange={(e) => {
-          handleGlobalFiles(e.target.files);
+          const files = extractImageFiles(e.target.files);
+          if (files.length > 0) onUploadFiles(files);
           e.target.value = "";
         }}
       />
 
-      {/* 两个槽位在移动端横向并排，在桌面端垂直排布 */}
-      <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-col lg:justify-between flex-1 min-h-0">
-        {SLOT_META.map((item) => {
-          const slot = slots[item.role];
-          const slotProgress = uploadProgress[item.role];
-          const isUploading = slot.status === "uploading";
-          const isRecognizing = slot.status === "recognizing";
-          const isProcessing = isUploading || isRecognizing;
-          const isLongWaiting = Boolean(slotProgress?.isLongWaiting || (isProcessing && uploadProgress.isLongWaiting));
-          // 只要有图，哪怕 OCR 解析有缺失或置信度不高，也归为待核对，绝不亮红灯误导用户重传
-          const hasImage = Boolean(slot.assetUrl || slot.previewUrl);
-          const isWarning =
-            hasImage &&
-            (slot.status === "pending_confirm" ||
-              Boolean(slot.ocrFallback) ||
-              ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed"));
-          // 仅在完全没有成功上传图片或无图可用时才算真正错误
-          const isError = slot.status === "failed" && !hasImage;
-          const isSuccess = (slot.status === "confirmed" || (slot.status === "pending_confirm" && !slot.ocrFallback)) && !isWarning && !isError;
-          const shouldShowManualFill =
-            Boolean(onManualFill) &&
-            (isError || slot.ocrFallback || slot.status === "pending_confirm" || slot.status === "failed");
-          const canRetry =
-            Boolean(onRetry) &&
-            Boolean(slot.assetUrl) &&
-            Boolean((slot as { file?: File | null }).file) &&
-            !isProcessing &&
-            (isError || slot.ocrFallback || slot.status === "pending_confirm" || slot.status === "failed");
-          const isSlotDragTarget = dragOverRole === item.role;
-          const isFocused = focusedRole === item.role;
+      {allEmpty ? (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="粘贴或选择截图"
+          title="点击选择，或直接粘贴截图（⌘V / Ctrl+V）"
+          onClick={openGlobalPicker}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openGlobalPicker();
+            }
+          }}
+          className={cn(
+            "flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 text-center transition-colors",
+            isDragOverGlobal || pulseEmptySlots
+              ? "border-[#D97757]/60 bg-[#D97757]/[0.04]"
+              : "border-[#D6D3D1] bg-white hover:border-[#78716C]/60",
+          )}
+        >
+          <div className="font-serif text-[20px] leading-tight text-[#141413]">
+            {screenshotsRequired ? "把今天的两张截图粘贴进来" : "作品异常时截图可以不交"}
+          </div>
+          <div className="text-[12px] text-[#78716C] truncate hidden sm:block">
+            按 ⌘V / Ctrl+V 粘贴，或直接拖进来；系统会认出哪张是互动、哪张是完播
+          </div>
+          <span className="inline-flex min-h-[44px] sm:min-h-0 h-8 items-center rounded-md bg-[#D97757] px-4 text-[14px] text-white">
+            选择截图
+          </span>
+        </div>
+      ) : (
+        <div className="flex h-full flex-col gap-2">
+          {SLOT_META.map((item) => {
+            const slot = slots[item.role];
+            const isEmpty = slot.status === "empty";
+            const isUploading = slot.status === "uploading";
+            const isRecognizing = slot.status === "recognizing";
+            const isProcessing = isUploading || isRecognizing;
+            const hasImage = Boolean(slot.assetUrl || slot.previewUrl);
+            // 只要有图，哪怕识别有缺失，也归为待核对，不亮红灯误导用户重传
+            const isError = slot.status === "failed" && !hasImage;
+            const isWarning =
+              hasImage &&
+              (slot.status === "pending_confirm" ||
+                Boolean(slot.ocrFallback) ||
+                ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed"));
+            const needsAction = isError || Boolean(slot.ocrFallback) || slot.status === "pending_confirm" || slot.status === "failed";
+            const canRetry = Boolean(onRetry) && Boolean(slot.assetUrl) && Boolean((slot as { file?: File | null }).file) && !isProcessing && needsAction;
+            const elapsed = Math.max(1, Math.round((uploadProgress[item.role]?.elapsedMs ?? 0) / 1000));
+            const isLongWaiting = Boolean(uploadProgress[item.role]?.isLongWaiting);
 
-          return (
-            <div
-              key={item.role}
-              role={slot.status === "empty" ? "button" : undefined}
-              tabIndex={slot.status === "empty" ? 0 : undefined}
-              aria-label={slot.status === "empty" ? `${item.title}截图，点击选择文件` : undefined}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragOverRole(item.role);
-              }}
-              onDragLeave={(e) => {
-                e.stopPropagation();
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setDragOverRole(null);
-                }
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragOverRole(null);
-                const files = extractImageFiles(e.dataTransfer.files);
-                if (files.length === 1) {
-                  onSelectFile(item.role, files[0]);
-                } else if (files.length > 1) {
-                  onUploadFiles(files);
-                }
-              }}
-              title={slot.status === "empty" ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : undefined}
-              className={cn(
-                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition duration-300",
-                slot.status === "empty"
-                  ? pulseEmptySlots
-                    ? "border-[#D97757]/50 bg-[#D97757]/[0.03] ring-1 ring-[#D97757]/15 cursor-pointer shadow-input"
-                    : "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-input"
-                  : "border-[#E2E2DF] bg-white shadow-input",
-                isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
-                isFocused && "border-[#78716C]/80 ring-2 ring-[#78716C]/20 bg-[#EBEBE9]/40",
-                isError && "border-status-danger/40 bg-status-danger/[0.06]"
-              )}
-              onClick={() => {
-                if (slot.status === "empty") {
-                  slotInputRefs.current[item.role]?.click();
-                }
-              }}
-              onKeyDown={(e) => {
-                if (slot.status !== "empty") return;
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  slotInputRefs.current[item.role]?.click();
-                }
-              }}
-            >
-              {/* 隐藏的单槽位 input */}
-              <input
-                ref={(el) => {
-                  slotInputRefs.current[item.role] = el;
+            const statusText = isUploading
+              ? "上传中…"
+              : isRecognizing
+                ? isLongWaiting
+                  ? `识别中，已等 ${elapsed} 秒，可以先填文案`
+                  : "识别中…"
+                : isError
+                  ? slot.error || "未识别到图片内容，请点击重新上传"
+                  : slot.ocrFallback
+                    ? slot.error ? `${slot.error} · 数字请手填` : "这张没认出来，数字请手填"
+                    : isWarning
+                      ? slot.error ? `${slot.error} · 请核对下方数字` : "已识别，有几项请核对"
+                      : "已识别";
+
+            return (
+              <div
+                key={item.role}
+                role={isEmpty ? "button" : undefined}
+                tabIndex={isEmpty ? 0 : undefined}
+                aria-label={isEmpty ? `${item.title}截图，点击选择文件` : undefined}
+                title={isEmpty ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : undefined}
+                onClick={() => {
+                  if (isEmpty) slotInputRefs.current[item.role]?.click();
                 }}
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp"
-                className="hidden"
-                onChange={(e) => {
-                  const files = extractImageFiles(e.target.files);
-                  if (files.length > 0) {
-                    onSelectFile(item.role, files[0]);
+                onKeyDown={(e) => {
+                  if (!isEmpty) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    slotInputRefs.current[item.role]?.click();
                   }
-                  e.target.value = "";
                 }}
-              />
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverRole(item.role);
+                }}
+                onDragLeave={(e) => {
+                  e.stopPropagation();
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverRole(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverRole(null);
+                  const files = extractImageFiles(e.dataTransfer.files);
+                  if (files.length === 1) onSelectFile(item.role, files[0]);
+                  else if (files.length > 1) onUploadFiles(files);
+                }}
+                className={cn(
+                  "group relative flex min-h-0 flex-1 items-center gap-3 rounded-xl border px-3 transition-colors",
+                  isEmpty
+                    ? pulseEmptySlots
+                      ? "cursor-pointer border-dashed border-[#D97757]/60 bg-[#D97757]/[0.04]"
+                      : "cursor-pointer border-dashed border-[#D6D3D1] bg-white hover:border-[#78716C]/60"
+                    : "border-[#E2E2DF] bg-white",
+                  dragOverRole === item.role && "border-[#78716C] bg-[#EBEBE9]",
+                  focusedRole === item.role && "border-[#78716C]/80 bg-[#F7F7F6]",
+                  isError && "border-status-danger/40 bg-status-danger/[0.04]",
+                )}
+              >
+                <input
+                  ref={(el) => {
+                    slotInputRefs.current[item.role] = el;
+                  }}
+                  type="file"
+                  accept={ACCEPT}
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = extractImageFiles(e.target.files);
+                    if (files.length > 0) onSelectFile(item.role, files[0]);
+                    e.target.value = "";
+                  }}
+                />
 
-              {slot.status === "empty" ? (
-                /* 空槽位态：发丝下沉微槽与暖墨单线图标，弱化未上传视觉重量 */
-                <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
-                  <div className="flex items-center justify-between gap-1 sm:gap-2">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className={cn(
-                        "flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-md sm:rounded-xl transition-colors",
-                        pulseEmptySlots
-                          ? "bg-[#D97757]/[0.08] text-[#C46A4D]"
-                          : "bg-[#EBEBE9] text-[#78716C] group-hover:text-[#141413] group-hover:bg-[#E4E4E1]"
-                      )}>
-                        <UploadCloud className={cn(
-                          "size-4 sm:size-4.5 lg:size-5 stroke-[1.5]",
-                          pulseEmptySlots
-                            ? "stroke-[#C46A4D]"
-                            : "stroke-[#78716C] group-hover:stroke-[#141413]"
-                        )} />
-                      </div>
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="text-[12px] sm:text-[14px] font-normal text-[#1F1E1D] leading-tight truncate">
-                          <span className="lg:hidden">{item.shortTitle}</span>
-                          <span className="hidden lg:inline">{item.title}截图</span>
-                          {!screenshotsRequired && (
-                            <span className="ml-1 rounded-full bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#78716C]">
-                              选填
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[12px] sm:text-[12px] text-[#78716C] truncate hidden sm:block">
-                          {!screenshotsRequired ? "异常提交可不带截图" : item.description}
-                        </div>
-                      </div>
-                    </div>
-                    {item.role === "screenshot_1" && (
+                {slot.assetUrl ? (
+                  <button
+                    ref={(el) => {
+                      triggerRefs.current[item.role] = el;
+                    }}
+                    type="button"
+                    data-slot-trigger={item.role}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspectingRole(item.role);
+                    }}
+                    className="group/preview relative size-10 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
+                    title="点击同屏核对原图"
+                    aria-label={`同屏核对${item.title}原图`}
+                  >
+                    <ScreenshotImage
+                      src={slot.assetUrl}
+                      alt={item.title}
+                      variant="thumb"
+                      data-submission-slot-role={item.role}
+                      data-slot-asset-url={slot.assetUrl}
+                      className="h-full w-full object-cover"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/preview:opacity-100">
+                      <Eye className="size-3 text-white" />
+                    </span>
+                  </button>
+                ) : (
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[#F1F1F0] text-[#78716C]">
+                    {isProcessing ? <Loader2 className="size-4 animate-spin" /> : <ImageIcon className="size-4 stroke-[1.5]" />}
+                  </span>
+                )}
+
+                <div className="min-w-0 flex-1" aria-live="polite">
+                  <div className="text-[14px] text-[#1F1E1D] truncate">{item.shortTitle}</div>
+                  <div
+                    className={cn(
+                      "text-[12px] truncate",
+                      isError ? "text-status-danger" : isWarning || slot.ocrFallback ? "text-status-warning-text" : "text-[#78716C]",
+                    )}
+                    title={slot.error ?? undefined}
+                  >
+                    {isEmpty
+                      ? screenshotsRequired
+                        ? "还差这张 · 点击选择，或直接粘贴"
+                        : "作品异常时可以不交"
+                      : statusText}
+                  </div>
+                </div>
+
+                {!isEmpty && (
+                  <div className="flex shrink-0 items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    {canRetry && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          globalFileInputRef.current?.click();
+                          onRetry?.(item.role);
                         }}
-                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
-                        title="选择多张截图自动分流"
+                        aria-label={`重新识别${item.shortTitle}`}
+                        title="重新识别"
+                        className="inline-flex size-9 sm:size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
                       >
-                        <Plus className="size-3 stroke-[2.5]" />
-                        <span>多选</span>
+                        <RefreshCw className="size-3.5" />
                       </button>
                     )}
-                  </div>
-                </div>
-              ) : (
-                /* 已上传/识别中/已识别/失败态 */
-                <div className="flex h-full flex-col justify-between">
-                  {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
-                  <div className="flex items-center justify-between gap-1 pb-0.5">
-                    <div className="flex items-center gap-1 min-w-0" aria-live="polite">
-                      <span className="text-[12px] font-normal text-[#1F1E1D] truncate">
-                        {item.shortTitle}
-                      </span>
-                      {isUploading ? (
-                        <Badge variant="warning" className="gap-0.5">
-                          <Loader2 className="size-2.5 animate-spin stroke-[2]" />
-                          上传中
-                        </Badge>
-                      ) : isRecognizing ? (
-                        <Badge variant="warning" className="gap-0.5">
-                          <Loader2 className="size-2.5 animate-spin stroke-[2]" />
-                          识别中
-                        </Badge>
-                      ) : isSuccess ? (
-                        <Badge variant="neutral" className="gap-0.5 text-[#78716C] before:bg-status-success">
-                          已识别
-                        </Badge>
-                      ) : isWarning ? (
-                        <Badge variant="warning" className="gap-0.5">
-                          待核对
-                        </Badge>
-                      ) : (
-                        <Badge variant="neutral" className="gap-0.5 bg-status-danger-bg text-status-danger-text before:bg-status-danger">
-                          失败
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* 操作按钮 */}
-                    <div className="flex items-center gap-0.5 lg:gap-1 shrink-0">
-                      {canRetry && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRetry?.(item.role);
-                          }}
-                          aria-label={`重新识别${item.shortTitle}`}
-                          className="hidden sm:inline-flex sm:size-5.5 items-center justify-center rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#1F1E1D] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                          title="重新识别"
-                        >
-                          <RefreshCw className="size-2.5" />
-                        </button>
-                      )}
-                      {shouldShowManualFill && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onManualFill?.(item.role);
-                          }}
-                          aria-label={`手动填写${item.shortTitle}指标`}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded-md bg-white px-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                        >
-                          手输
-                        </button>
-                      )}
-                      {!isProcessing && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(item.role);
-                          }}
-                          aria-label={`删除${item.shortTitle}`}
-                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-status-danger transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                          title="删除截图"
-                        >
-                          <Trash2 className="size-2.5 stroke-[1.6]" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 中间内容：缩略图 + 描述 */}
-                  <div className="flex items-center gap-2 my-0.5 min-w-0">
-                    {slot.assetUrl ? (
+                    {onManualFill && needsAction && (
                       <button
-                        ref={(el) => {
-                          triggerRefs.current[item.role] = el;
-                        }}
                         type="button"
-                        data-slot-trigger={item.role}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setInspectingRole(item.role);
+                          onManualFill(item.role);
                         }}
-                        className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] shadow-input transition-transform hover:scale-105 outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20 cursor-pointer"
-                        title="点击同屏免遮挡核对原图"
-                        aria-label={`同屏核对${item.title}原图`}
+                        aria-label={`手动填写${item.shortTitle}指标`}
+                        className="inline-flex min-h-[44px] sm:min-h-0 h-7 items-center rounded-md px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
                       >
-                        <ScreenshotImage
-                          src={slot.assetUrl}
-                          alt={item.title}
-                          variant="thumb"
-                          data-submission-slot-role={item.role}
-                          data-slot-asset-url={slot.assetUrl}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity">
-                          <Eye className="size-2.5 sm:size-3 text-white stroke-[2]" />
-                        </div>
+                        手填
                       </button>
-                    ) : (
-                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-md bg-[#F1F1F0] text-[#78716C]">
-                        <ImageIcon className="size-3.5 sm:size-4 lg:size-4.5 stroke-[1.5]" />
-                      </div>
                     )}
-
-                    {slot.ocrSummary && slot.ocrSummary.length > 0 && !isProcessing ? (
-                      <div className="min-w-0 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 justify-items-start">
-                        {slot.ocrSummary.slice(0, 4).map((line, index) => {
-                          const colonIndex = line.indexOf("：");
-                          const label = colonIndex !== -1 ? line.slice(0, colonIndex) : line;
-                          const val = colonIndex !== -1 ? line.slice(colonIndex + 1) : "";
-                          const isHighlighted = isFocused && highlightedOcrIndex === index;
-                          return (
-                            <div
-                              key={`${item.role}-${line}-${index}`}
-                              className={cn(
-                                "inline-flex items-baseline gap-1 text-[12px] rounded px-1.5 py-0.5 transition-colors leading-tight min-w-0 max-w-full",
-                                isHighlighted
-                                  ? "bg-[#F1F1F0] ring-1 ring-[#E2E2DF] text-[#141413]"
-                                  : "bg-[#F1F1F0]/70 text-[#1F1E1D]"
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "text-[12px] font-normal shrink-0",
-                                  isHighlighted ? "text-[#1F1E1D]" : "text-[#78716C]"
-                                )}
-                              >
-                                {label}
-                              </span>
-                              <span className="tabular-nums font-normal truncate">
-                                {val}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[12px] font-normal text-[#1F1E1D] leading-tight">
-                          {isProcessing ? (
-                            isLongWaiting ? (
-                              <div className="text-[12px] text-[#8A6A2F]">
-                                <span className="lg:hidden">
-                                  正在识别（{Math.max(1, Math.round((slotProgress?.elapsedMs ?? 0) / 1000))}s），可先填指标…
-                                </span>
-                                <span className="hidden lg:inline">
-                                  正在识别第 {item.role === "screenshot_1" ? "1" : "2"} 张（已等待 {Math.max(1, Math.round((slotProgress?.elapsedMs ?? 0) / 1000))} 秒），耗时较长，您可先填写右侧其他指标…
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="truncate">
-                                {isUploading ? "截图上传中…" : <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>}
-                              </div>
-                            )
-                          ) : (
-                            <div className="truncate">
-                              {slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
-                          {item.description}
-                        </div>
-                      </div>
+                    {!isProcessing && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(item.role);
+                        }}
+                        aria-label={`删除${item.shortTitle}`}
+                        title="删除截图"
+                        className="inline-flex size-9 sm:size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-status-danger cursor-pointer"
+                      >
+                        <Trash2 className="size-3.5 stroke-[1.6]" />
+                      </button>
                     )}
                   </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-                  {/* 底栏：核对提示与引导说明 */}
-                  {(isWarning || isError || slot.ocrFallback) && (
-                    <div className={cn(
-                      "text-[12px] leading-tight mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
-                      isError ? "text-status-danger" : "text-[#78716C]"
-                    )} title={slot.error ?? undefined}>
-                      {isError ? (
-                        slot.error || "未识别到图片内容，请点击重新上传"
-                      ) : slot.error ? (
-                        <><span className="lg:hidden">{slot.error}</span><span className="hidden lg:inline">{slot.error} · 请核对右侧指标</span></>
-                      ) : (
-                        <><span className="lg:hidden">已就位，请核对右侧指标</span><span className="hidden lg:inline">截图已就位，请核对右侧指标</span></>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 硬伤 1 落地：同屏免遮挡画中画检视器（共享组件，归档回执缩略图同源复用） */}
       {inspectingRole && slots[inspectingRole]?.assetUrl && (
         <ScreenshotInspector
           url={slots[inspectingRole]!.assetUrl!}
@@ -559,7 +397,7 @@ export function SubmissionSlotsSection({
               key={s.role}
               type="button"
               onClick={() => setInspectingRole(s.role)}
-              className="rounded-md border border-[#E2E2DF] bg-white px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 transition-colors cursor-pointer"
+              className="rounded-md border border-[#E2E2DF] bg-white px-2 py-0.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
               title={`切换查看${s.shortTitle}`}
             >
               看{s.shortTitle.slice(0, 2)}
@@ -575,38 +413,24 @@ export function SubmissionSlotsSection({
         <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
             <DialogTitle>这张要替换哪张？</DialogTitle>
-            <DialogDescription>
-              选好后会直接覆盖对应截图，并重新上传和识别。
-            </DialogDescription>
+            <DialogDescription>选好后会直接覆盖对应截图，并重新上传和识别。</DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-start">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const file = pendingReplacementFile;
-                setPendingReplacementFile(null);
-                if (file) onSelectFile("screenshot_1", file);
-              }}
-            >
-              互动截图
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => {
-                const file = pendingReplacementFile;
-                setPendingReplacementFile(null);
-                if (file) onSelectFile("screenshot_2", file);
-              }}
-            >
-              完播截图
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPendingReplacementFile(null)}
-            >
+            {SLOT_META.map((s, index) => (
+              <Button
+                key={s.role}
+                type="button"
+                variant={index === 0 ? "outline" : "default"}
+                onClick={() => {
+                  const file = pendingReplacementFile;
+                  setPendingReplacementFile(null);
+                  if (file) onSelectFile(s.role, file);
+                }}
+              >
+                {s.shortTitle}
+              </Button>
+            ))}
+            <Button type="button" variant="ghost" onClick={() => setPendingReplacementFile(null)}>
               取消
             </Button>
           </DialogFooter>

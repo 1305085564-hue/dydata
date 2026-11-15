@@ -309,8 +309,9 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   const submitFormV2 = [
     "src/app/(app)/dashboard/video-submit-form-v2.tsx",
     "src/app/(app)/dashboard/form-v2/dialogs.tsx",
-    "src/app/(app)/dashboard/form-v2/left-column.tsx",
-    "src/app/(app)/dashboard/form-v2/right-column.tsx",
+    "src/app/(app)/dashboard/form-v2/results-section.tsx",
+    "src/app/(app)/dashboard/form-v2/content-section.tsx",
+    "src/app/(app)/dashboard/form-v2/more-section.tsx",
     "src/app/(app)/dashboard/form-v2/role-controls.tsx",
     "src/app/(app)/dashboard/form-v2/role-picker.tsx",
     "src/app/(app)/dashboard/form-v2/submit-footer.tsx",

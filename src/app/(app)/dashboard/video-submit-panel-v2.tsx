@@ -34,13 +34,9 @@ import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-s
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 
+import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
+
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
-
-
-
-
-
-
 
 /**
  * VideoSubmitPanel V2 - Claude 设计系统改造版
@@ -125,6 +121,7 @@ export function VideoSubmitPanelV2({
   const [localHasPendingExemption, setLocalHasPendingExemption] = useState(hasPendingExemption);
   const [localPendingExemptionDates, setLocalPendingExemptionDates] = useState(pendingExemptionDates);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(false);
+  const [formProgress, setFormProgress] = useState<FormProgress | null>(null);
 
   useEffect(() => {
     let nextDismissed = false;
@@ -322,8 +319,9 @@ export function VideoSubmitPanelV2({
         today,
         primaryMode,
         dayStatus: activeDateStatus,
+        formProgress,
       }),
-    [activeBizDate, activeDateStatus, primaryMode, today],
+    [activeBizDate, activeDateStatus, formProgress, primaryMode, today],
   );
 
   // 同一状态只在一处说：请假事由并入页头副行，不再单起一行
@@ -504,7 +502,6 @@ export function VideoSubmitPanelV2({
   const isActivityLoading = !activityData && !activityError;
   const historyReports = activityData?.history ?? history;
 
-
   return (
     <>
       <div className="space-y-5 sm:space-y-7">
@@ -564,6 +561,7 @@ export function VideoSubmitPanelV2({
           initialTopicId={initialTopicId}
           initialTopicTitle={initialTopicTitle}
           handleSubmitted={handleSubmitted}
+          onFormProgressChange={setFormProgress}
           activeDateReports={activeDateReports}
           selectedReportId={selectedReportId}
           setSelectedReportId={setSelectedReportId}

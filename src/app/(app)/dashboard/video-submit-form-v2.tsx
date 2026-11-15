@@ -11,20 +11,12 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { SectionHeading } from "@/components/ui/section-heading";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Video } from "@/types";
 
@@ -56,7 +48,6 @@ import {
   isInteractionExceedingPlayCount,
   restoreOcrFieldValue,
   summarizeSubmissionIssues,
-  syncPublishedAtAndText,
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
 import {
@@ -65,7 +56,6 @@ import {
   getHiddenRoleRestoreLabel,
   resolveAssigneeDisplay,
   resolveVideoSubmitMode,
-  preserveBizDateWhenPublishedAtChanges,
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
@@ -78,7 +68,6 @@ import {
   createEditableSlotsFromEditDetail,
   createInitialMeta,
   createMetaFromEditDetail,
-  METRIC_SUMMARY_LABELS,
   VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
   type EditableMetricField,
   type FormMetaState,
@@ -102,7 +91,6 @@ import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-
 import { FormV2Dialogs } from "./form-v2/dialogs";
 import { FormV2RolePicker } from "./form-v2/role-picker";
 import { FormV2SubmitFooter } from "./form-v2/submit-footer";
-import { VideoStatusSegmented } from "./form-v2/role-controls";
 import { FormV2Workspace } from "./form-v2/workspace";
 import { SubmittedView } from "./form-v2/submitted-view";
 import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
@@ -110,6 +98,7 @@ import { createSubmitController } from "./video-submit-form-v2/submit-controller
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
+import { resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -140,6 +129,8 @@ interface VideoSubmitFormProps {
   onRequestEdit?: (target: { reportId: string | null; reportDate: string }) => void;
   onViewHistory?: () => void;
   onViewVideo?: (videoId: string) => void;
+  /** 表单进度回传给页头状态句（还差一步 / 可以交了），卸载时回 null */
+  onProgressChange?: (progress: FormProgress | null) => void;
 }
 
 /**
@@ -166,6 +157,7 @@ export function VideoSubmitFormV2({
   onRequestEdit,
   onViewHistory,
   onViewVideo,
+  onProgressChange,
 }: VideoSubmitFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -369,9 +361,6 @@ export function VideoSubmitFormV2({
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
-  const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(
-    null,
-  );
   const markManualEdit = useCallback(() => setHasManualEdit(true), [setHasManualEdit]);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
@@ -494,6 +483,7 @@ export function VideoSubmitFormV2({
     }, 1500);
   }, []);
 
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [pulseSlots, setPulseSlots] = useState(false);
   const pulseSlotsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -523,13 +513,13 @@ export function VideoSubmitFormV2({
   const [, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
-  // 是否已开始填表（上传了任意截图、或填写了任意指标/标题/文案/选题标签）：空表初开时不展示整排缺项，填表过程中常驻提示
+  // 是否已开始填表（传了任意截图、或填了任意指标/标题/文案）。题材有默认值，不算「开始填」。
+  // 没开始时首屏只露截图这一步，页头保持「今天还没交」。
   const hasStartedFilling = useMemo(() => {
     if (Object.values(slots).some((slot) => slot.status !== "empty")) return true;
     if (Object.values(fields).some((field) => Boolean(field?.value?.trim()))) return true;
-    if (meta.videoTitle.trim() || meta.content.trim() || meta.topicTag) return true;
-    return false;
-  }, [fields, meta.content, meta.topicTag, meta.videoTitle, slots]);
+    return Boolean(meta.videoTitle.trim() || meta.content.trim());
+  }, [fields, meta.content, meta.videoTitle, slots]);
 
   useEffect(() => {
     if (!isSubmitted) {
@@ -774,23 +764,25 @@ export function VideoSubmitFormV2({
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
   }, [issueSummary]);
+  const allScreenshotsFailed = screenshotsRequired && Object.values(slots).every((slot) => slot.status === "failed" || Boolean(slot.ocrFallback));
+  const formProgress = isSubmitted ? null : resolveFormProgress({ summary: issueSummary, hasStartedFilling, allScreenshotsFailed });
+  useEffect(() => {
+    onProgressChange?.(formProgress);
+  }, [formProgress, onProgressChange]);
+  useEffect(() => () => onProgressChange?.(null), [onProgressChange]);
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
     submissionMode: submitMode,
     publishedAtConfirmed,
   });
   const canActuallySubmit = issueSummary.canSubmit;
-  const hasSlotIssues =
-    issueSummary.missingRequiredSlots.length > 0 ||
-    issueSummary.processingRequiredSlots.length > 0 ||
-    issueSummary.failedRequiredSlots.length > 0;
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
-      ? "确认补交立卷"
-      : initialSummary
+      ? "补交"
+      : mode === "editToday" || initialSummary
         ? "保存修改"
-        : "确认提交立卷";
+        : "提交";
 
   function updateMeta<Key extends keyof FormMetaState>(
     key: Key,
@@ -813,20 +805,6 @@ export function VideoSubmitFormV2({
 
   }
 
-  function updatePublishedAt(nextPublishedAt: string) {
-    const synced = syncPublishedAtAndText({
-      nextPublishedAt,
-      nextPublishedAtText: meta.publishedAtText,
-      changedField: "published_at",
-    });
-    setMeta((current) => ({
-      ...current,
-      bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),
-      publishedAt: synced.publishedAt,
-      publishedAtText: synced.publishedAtText,
-    }));
-  }
-
   const scrollToIssueAnchor = useCallback((
     anchor: "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null,
   ) => {
@@ -845,31 +823,18 @@ export function VideoSubmitFormV2({
             : anchor === "topicTag"
               ? topicTagSectionRef.current
               : null;
+    if (anchor === "topicTag") setIsMoreOpen(true);
 
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
+  // 聚焦某个数字时，对应那张截图的状态行高亮，方便对照原图
   function handleFieldFocus(key: EditableMetricKey) {
-    const nextFocusedRole = getSlotRoleForMetric(key);
-    setFocusedRole(nextFocusedRole);
-
-    const slot = slots[nextFocusedRole];
-    if (!slot?.ocrSummary) {
-      setHighlightedOcrIndex(null);
-      return;
-    }
-
-    // 摘要行格式固定为 `${METRIC_SUMMARY_LABELS[key]}：${值}`（生成端同源），
-    // 必须按「标签 + 全角冒号」前缀精确匹配：旧实现用短词 includes 会让
-    // 「整体完播率」被同一行里的「5秒完播率」抢先命中，且「5s完播」匹配不上中文写法。
-    const prefix = `${METRIC_SUMMARY_LABELS[key]}：`;
-    const idx = slot.ocrSummary.findIndex((line) => line.startsWith(prefix));
-    setHighlightedOcrIndex(idx >= 0 ? idx : null);
+    setFocusedRole(getSlotRoleForMetric(key));
   }
 
   function handleFieldBlur() {
     setFocusedRole(null);
-    setHighlightedOcrIndex(null);
   }
 
   // 用户手改过的字段不被二次识别覆盖；未手改的字段按最新识别结果刷新，并留存 OCR 原值供恢复。
@@ -1218,106 +1183,64 @@ export function VideoSubmitFormV2({
             variants={shakeVariants}
             className="w-full"
           >
-            <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 py-0">
-              {/* 主工作区 - Claude 设计系统 */}
-              <div className="space-y-4 sm:space-y-5">
-                {/* 头部：状态 + 提示微胶囊 + 日期（试点：撤发丝线，靠组间距与下方上传区分界） */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <SectionHeading as="h2">
-                      {mode === "editToday"
-                        ? meta.bizDate !== today
-                          ? `修改历史作品 · ${meta.bizDate}`
-                          : `修改今日作品 · ${meta.bizDate}`
-                        : isBackfillMode
-                          ? `创作纪事补录 (${meta.bizDate})`
-                          : "创作表达录入"}
-                    </SectionHeading>
-                    <VideoStatusSegmented
-                      value={meta.anomalyStatus}
-                      onChange={(value) => updateMeta("anomalyStatus", value)}
-                    />
-                    {meta.anomalyStatus === "abnormal" && (
-                      <Select
-                        value={meta.punishType || "限流"}
-                        onValueChange={(value) => updateMeta("punishType", value || undefined)}
-                      >
-                        <SelectTrigger className="h-6 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] font-normal text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10">
-                          <SelectValue>{meta.punishType || "限流"}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float min-w-28">
-                          <SelectItem value="限流">限流</SelectItem>
-                          <SelectItem value="删稿">删稿</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    {/* 右上角：草稿 / 审批微提示 */}
-                    {workbenchNotices.length > 0 && (
-                      <WorkbenchNoticeCapsule notices={workbenchNotices} />
-                    )}
-
-                    {meta.bizDate !== today && (
-                      <div className="text-[12px] text-[#78716C] tabular-nums">
-                        归属：{meta.bizDate}
-                      </div>
-                    )}
-                  </div>
+            <div className="max-w-3xl space-y-5 py-0">
+              {/* 草稿 / 审批 / 关联选题的微提示：有才出现，状态句只在页头说 */}
+              {workbenchNotices.length > 0 && (
+                <div className="flex justify-end">
+                  <WorkbenchNoticeCapsule notices={workbenchNotices} />
                 </div>
+              )}
 
-                {/* 第二轮：标题下完整表单内容统一一层轻缩进，建立标题统领而非只统领第一排 */}
-                <div className="space-y-4 sm:space-y-5 sm:pl-4">
-                <FormV2Workspace
-                  editing={mode === "editToday"}
-                  slots={slots}
-                  slotsSectionRef={slotsSectionRef}
-                  metricsSectionRef={metricsSectionRef}
-                  handleSlotUpload={handleSlotUpload}
-                  handleUnifiedUpload={handleUnifiedUpload}
-                  setDeleteTargetRole={setDeleteTargetRole}
-                  handleSlotRetry={handleSlotRetry}
-                  updateSlotsState={updateSlotsState}
-                  screenshotsRequired={screenshotsRequired}
-                  focusedRole={focusedRole}
-                  highlightedOcrIndex={highlightedOcrIndex}
-                  pulseSlots={pulseSlots}
-                  hiddenRoleRestoreLabel={hiddenRoleRestoreLabel}
-                  showAllRoles={showAllRoles}
-                  hasAnyVisibleRole={hasAnyVisibleRole}
-                  isScriptAuthorVisible={isScriptAuthorVisible}
-                  isVideoEditorVisible={isVideoEditorVisible}
-                  isOperatorVisible={isOperatorVisible}
-                  resolveRoleDisplay={resolveRoleDisplay}
-                  meta={meta}
-                  loadOperatorMembers={loadOperatorMembers}
-                  setSelectingRole={setSelectingRole}
-                  hideRole={hideRole}
-                  topicTagSectionRef={topicTagSectionRef}
-                  updateMeta={updateMeta}
-                  publishedAtSectionRef={publishedAtSectionRef}
-                  updatePublishedAt={updatePublishedAt}
-                  issueSummary={issueSummary}
-                  publishedAtUnconfirmedReason={PUBLISHED_AT_UNCONFIRMED_REASON}
-                  fields={fields}
-                  metricsGroupRef={metricsGroupRef}
-                  updateField={updateField}
-                  restoreOcrValue={restoreOcrValue}
-                  handleFieldFocus={handleFieldFocus}
-                  handleFieldBlur={handleFieldBlur}
-                  hasAttemptedSubmit={hasAttemptedSubmit}
-                  hasSlotIssues={hasSlotIssues}
-                  metaSectionRef={metaSectionRef}
-                  metaVideoTitleRef={metaVideoTitleRef}
-                  selectedTopicId={selectedTopicId}
-                  selectedTopicTitle={selectedTopicTitle}
-                  handleSelectTopic={handleSelectTopic}
-                  handlePasteContent={handlePasteContent}
-                  isPastedFeedback={isPastedFeedback}
-                  contentTextareaRef={contentTextareaRef}
-                />
-              </div>
+              <FormV2Workspace
+                editing={mode === "editToday"}
+                slots={slots}
+                slotsSectionRef={slotsSectionRef}
+                metricsSectionRef={metricsSectionRef}
+                handleSlotUpload={handleSlotUpload}
+                handleUnifiedUpload={handleUnifiedUpload}
+                setDeleteTargetRole={setDeleteTargetRole}
+                handleSlotRetry={handleSlotRetry}
+                updateSlotsState={updateSlotsState}
+                screenshotsRequired={screenshotsRequired}
+                focusedRole={focusedRole}
+                pulseSlots={pulseSlots}
+                hasStartedFilling={hasStartedFilling}
+                isMoreOpen={isMoreOpen}
+                setIsMoreOpen={setIsMoreOpen}
+                hiddenRoleRestoreLabel={hiddenRoleRestoreLabel}
+                showAllRoles={showAllRoles}
+                hasAnyVisibleRole={hasAnyVisibleRole}
+                roleVisible={{
+                  script_author: isScriptAuthorVisible,
+                  video_editor: isVideoEditorVisible,
+                  operator: isOperatorVisible,
+                }}
+                resolveRoleDisplay={resolveRoleDisplay}
+                meta={meta}
+                loadOperatorMembers={loadOperatorMembers}
+                setSelectingRole={setSelectingRole}
+                hideRole={hideRole}
+                topicTagSectionRef={topicTagSectionRef}
+                updateMeta={updateMeta}
+                publishedAtSectionRef={publishedAtSectionRef}
+                issueSummary={issueSummary}
+                publishedAtUnconfirmedReason={PUBLISHED_AT_UNCONFIRMED_REASON}
+                fields={fields}
+                metricsGroupRef={metricsGroupRef}
+                updateField={updateField}
+                restoreOcrValue={restoreOcrValue}
+                handleFieldFocus={handleFieldFocus}
+                handleFieldBlur={handleFieldBlur}
+                hasAttemptedSubmit={hasAttemptedSubmit}
+                metaSectionRef={metaSectionRef}
+                metaVideoTitleRef={metaVideoTitleRef}
+                selectedTopicId={selectedTopicId}
+                selectedTopicTitle={selectedTopicTitle}
+                handleSelectTopic={handleSelectTopic}
+                handlePasteContent={handlePasteContent}
+                isPastedFeedback={isPastedFeedback}
+                contentTextareaRef={contentTextareaRef}
+              />
 
               <FormV2RolePicker
                 selectingRole={selectingRole}
@@ -1335,10 +1258,7 @@ export function VideoSubmitFormV2({
 
               <FormV2SubmitFooter
                 canActuallySubmit={canActuallySubmit}
-                hasAttemptedSubmit={hasAttemptedSubmit || hasStartedFilling}
                 issueSummary={issueSummary}
-                scrollToIssueAnchor={scrollToIssueAnchor}
-                triggerSlotsPulse={triggerSlotsPulse}
                 isSubmitted={isSubmitted}
                 lastSavedAt={lastSavedAt}
                 appealRequired={appealRequired}
@@ -1351,7 +1271,6 @@ export function VideoSubmitFormV2({
                 isSubmitting={isSubmitting}
                 submitButtonLabel={submitButtonLabel}
               />
-                </div>
             </div>
           </motion.form>
         </>

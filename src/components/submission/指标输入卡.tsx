@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,26 +9,40 @@ import { cleanMetricInputValue, type MetricInputType } from "@/lib/dashboard-log
 import type { SubmissionFieldState } from "./提交状态机";
 import { canRestoreOcrValue, type ConfidenceLevel } from "./填报表单状态";
 
-function getConfidenceDotProps(level: ConfidenceLevel | null | undefined) {
-  if (level === "high") {
-    return { color: "bg-current text-status-success", tooltip: "AI 高置信识别" };
+export type MetricCellMode = "pending" | "settled" | "doubt" | "missing" | "blank";
+
+/**
+ * 一格指标的呈现方式（空输入框是最贵的注意力）：
+ * - pending：对应截图还在识别，只占位不画框；
+ * - settled：认出来了（或人已改过），以文字呈现，点一下就能改；
+ * - doubt：识别置信度为中/低，画成输入框并标「请核对」；
+ * - missing：必填但没有值，画成输入框；
+ * - blank：截图还没来、也没有值，只显示「—」。
+ */
+export function resolveMetricCellMode(args: {
+  field: Pick<SubmissionFieldState, "value" | "source"> & { manuallyEdited?: boolean };
+  confidenceLevel: ConfidenceLevel | null | undefined;
+  optional: boolean;
+  slotProcessing: boolean;
+  inputsOpen: boolean;
+}): MetricCellMode {
+  const hasValue = Boolean(args.field.value.trim());
+  if (args.slotProcessing && !hasValue) return "pending";
+  if (hasValue) {
+    const unsure = args.field.source === "ocr" && (args.confidenceLevel === "low" || args.confidenceLevel === "medium");
+    return unsure ? "doubt" : "settled";
   }
-  if (level === "medium") {
-    return { color: "bg-current text-status-warning", tooltip: "AI 识别，建议核对" };
-  }
-  if (level === "low") {
-    return { color: "bg-current text-status-danger", tooltip: "AI 识别置信度较低，请务必核对" };
-  }
-  return null;
+  if (!args.optional && args.inputsOpen) return "missing";
+  return "blank";
 }
 
 interface MetricInputCardProps {
   label: string;
   field: SubmissionFieldState & {
     ocrValue?: string | null;
+    manuallyEdited?: boolean;
   };
-  confidenceLevel?: ConfidenceLevel | null;
-  step?: string;
+  mode: MetricCellMode;
   suffix?: string;
   metricType?: MetricInputType;
   onChange: (value: string) => void;
@@ -37,7 +51,6 @@ interface MetricInputCardProps {
   onRestoreOcr?: () => void;
   optional?: boolean;
   hint?: string;
-  animationDelay?: number;
   inputRef?: React.Ref<HTMLInputElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -45,7 +58,7 @@ interface MetricInputCardProps {
 export function MetricInputCard({
   label,
   field,
-  confidenceLevel,
+  mode,
   suffix,
   metricType = "count",
   onChange,
@@ -57,67 +70,60 @@ export function MetricInputCard({
   inputRef,
   onKeyDown,
 }: MetricInputCardProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [showRestoreTooltip, setShowRestoreTooltip] = useState(false);
   const localRef = useRef<HTMLInputElement>(null);
   const inputEl = inputRef ?? localRef;
   const displayValue = field.value;
-  const confidenceProps = getConfidenceDotProps(confidenceLevel);
   const canRestoreOcr = Boolean(onRestoreOcr) && canRestoreOcrValue(field);
+  const isBoxed = mode === "doubt" || mode === "missing";
+  const checkedByHand = Boolean(field.manuallyEdited) && Boolean(field.ocrValue) && field.value === field.ocrValue;
 
   return (
-    <div className="space-y-1 transition-colors min-w-0">
-      <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Label
-            htmlFor={`metric-${field.key}`}
-            className="font-normal text-[#78716C] text-[12px] truncate select-none cursor-pointer"
-          >
-            {label}
-            {optional && (
-              <span className="ml-1 font-normal opacity-60 text-[12px]">可选</span>
-            )}
-          </Label>
-          {field.source === "ocr" && confidenceProps ? (
-            <div
-              className="relative flex items-center"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
-              <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-input shrink-0", confidenceProps.color)} />
-              {showTooltip ? (
-                <div className="absolute left-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
-                  {confidenceProps.tooltip}
-                </div>
-              ) : null}
-            </div>
+    <div className="flex h-[64px] min-w-0 flex-col justify-between" title={hint}>
+      <div className="flex h-5 items-center justify-between gap-1 px-2">
+        <Label
+          htmlFor={`metric-${field.key}`}
+          className="min-w-0 truncate text-[12px] font-normal text-[#78716C] select-none cursor-pointer"
+        >
+          {label}
+          {suffix ? `（${suffix}）` : ""}
+          {optional && mode === "blank" ? <span className="ml-1 opacity-70">可不填</span> : null}
+        </Label>
+        <div className="flex shrink-0 items-center gap-1 text-[12px]">
+          {mode === "doubt" ? (
+            <>
+              <span className="text-status-warning-text">请核对</span>
+              <button
+                type="button"
+                onClick={() => onChange(field.value)}
+                className="text-[#78716C] underline-offset-2 hover:text-[#141413] hover:underline cursor-pointer"
+              >
+                没问题
+              </button>
+            </>
+          ) : mode === "missing" ? (
+            <span className="text-status-warning-text">没认出，请填</span>
+          ) : checkedByHand ? (
+            <span className="text-[#78716C]">已核对</span>
+          ) : canRestoreOcr ? (
+            <>
+              <span className="text-[#78716C]">已改</span>
+              <button
+                type="button"
+                aria-label={`恢复${label}的识别值`}
+                title={`恢复识别值 ${field.ocrValue}`}
+                onClick={() => onRestoreOcr?.()}
+                className="flex items-center rounded-md p-0.5 text-[#78716C] hover:text-[#D97757] cursor-pointer"
+              >
+                <RotateCcw className="size-3" />
+              </button>
+            </>
           ) : null}
         </div>
-
-        {canRestoreOcr ? (
-          <div
-            className="relative flex items-center"
-            onMouseEnter={() => setShowRestoreTooltip(true)}
-            onMouseLeave={() => setShowRestoreTooltip(false)}
-          >
-            <button
-              type="button"
-              aria-label={`恢复${label}的识别值`}
-              onClick={() => onRestoreOcr?.()}
-              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer"
-            >
-              <RotateCcw className="size-3" />
-            </button>
-            {showRestoreTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
-                {`恢复识别值 ${field.ocrValue}`}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
-      <div className="relative">
+      {mode === "pending" ? (
+        <div className="flex h-9 items-center px-2 text-[14px] text-[#A8A29E]">识别中…</div>
+      ) : (
         <Input
           id={`metric-${field.key}`}
           ref={inputEl as React.RefObject<HTMLInputElement>}
@@ -125,6 +131,7 @@ export function MetricInputCard({
           inputMode="decimal"
           autoComplete="off"
           value={displayValue}
+          placeholder={mode === "missing" ? "填数字" : "—"}
           onPaste={(e) => {
             const pasted = e.clipboardData.getData("text");
             if (pasted) {
@@ -135,11 +142,7 @@ export function MetricInputCard({
               }
             }
           }}
-          onChange={(event) => {
-            const raw = event.target.value;
-            const cleaned = cleanMetricInputValue(raw, metricType);
-            onChange(cleaned);
-          }}
+          onChange={(event) => onChange(cleanMetricInputValue(event.target.value, metricType))}
           onFocus={(e) => {
             e.currentTarget.select();
             onFocus?.();
@@ -147,30 +150,20 @@ export function MetricInputCard({
           onBlur={() => {
             if (displayValue) {
               const cleaned = cleanMetricInputValue(displayValue, metricType);
-              if (cleaned !== displayValue) {
-                onChange(cleaned);
-              }
+              if (cleaned !== displayValue) onChange(cleaned);
             }
             onBlur?.();
           }}
           onKeyDown={onKeyDown}
           className={cn(
-            "h-9 min-h-[36px] rounded-md bg-white text-[#1F1E1D] tabular-nums text-right font-sans transition duration-150",
-            "border border-[#E2E2DF] shadow-input",
-            "hover:border-[#78716C]/40 text-[14px]",
-            "focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
-            "pl-2.5 sm:pl-3",
-            suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",
+            "h-9 min-h-[36px] rounded-md px-2 text-left font-sans text-[20px] tabular-nums text-[#141413] transition-colors",
+            "placeholder:text-[#A8A29E] focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0",
+            isBoxed
+              ? "border border-status-warning/50 bg-white shadow-input"
+              : "border border-transparent bg-transparent shadow-none hover:bg-[#F1F1F0]",
           )}
         />
-        {/* 后缀单位 (如 % 或 秒) */}
-        {suffix && (
-          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C] tabular-nums font-sans select-none">
-            {suffix}
-          </span>
-        )}
-      </div>
-      {hint ? <p className="text-[12px] leading-tight text-[#A8A29E]">{hint}</p> : null}
+      )}
     </div>
   );
 }

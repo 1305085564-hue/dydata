@@ -15,13 +15,16 @@ const readSource = (path: string) =>
 const source = [
   "src/app/(app)/dashboard/video-submit-form-v2.tsx",
   "src/app/(app)/dashboard/form-v2/dialogs.tsx",
-  "src/app/(app)/dashboard/form-v2/left-column.tsx",
-  "src/app/(app)/dashboard/form-v2/right-column.tsx",
+  "src/app/(app)/dashboard/form-v2/results-section.tsx",
+  "src/app/(app)/dashboard/form-v2/content-section.tsx",
+  "src/app/(app)/dashboard/form-v2/more-section.tsx",
   "src/app/(app)/dashboard/form-v2/role-controls.tsx",
   "src/app/(app)/dashboard/form-v2/role-picker.tsx",
   "src/app/(app)/dashboard/form-v2/submit-footer.tsx",
   "src/app/(app)/dashboard/form-v2/submitted-view.tsx",
   "src/app/(app)/dashboard/form-v2/workspace.tsx",
+  // 「还差什么」的唯一出口：按钮与页头状态句共用
+  "src/lib/video-submit/domain/submit-gaps.ts",
 ].map(readSource).join("\n");
 
 const pageSource = readSource(
@@ -59,34 +62,33 @@ const breakdownDrawerSource = readFileSync(
   "utf8",
 );
 
-test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与文案卡共同向下伸展", () => {
-  assert.match(
-    source,
-    /lg:grid-cols-\[290px_minmax\(0,1fr\)\][^\"]*items-start/,
-  );
-  assert.doesNotMatch(source, /lg:grid-cols-\[320px_1fr\]/);
-  // 2026-09-28 起：lg 把两栏各拆成上下两半（栏容器退化为 lg:contents），中缝由一条通栏发丝线切分
-  assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:contents"/);
-  assert.match(
-    source,
-    /className="flex min-w-0 flex-col gap-3 lg:gap-5 lg:col-start-1 lg:row-start-3"/,
-  );
-  assert.match(source, /space-y-2[^\"]*lg:flex-1/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-4 lg:contents"/);
-  assert.match(
-    source,
-    /className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-2 lg:row-start-3"/,
-  );
-  // 通栏线是 lg 唯一的分组线：两个分组的块自身在 lg 必须去掉边框
-  assert.match(source, /hidden lg:block lg:col-span-2 lg:row-start-2[^\"]*h-px bg-\[#E2E2DF\]\/60/);
-  assert.match(source, /pt-2\.5 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
-  assert.match(source, /pt-3 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
-  // 2026-10-31 试点裁决为"留"：文案区裸落底纸，白托盘退役（阿禅看图确认）
-  assert.match(source, /flex flex-col min-h-0 transition-colors/);
-  assert.doesNotMatch(source, /flex flex-col min-h-0[^\"]*bg-white/);
-  assert.doesNotMatch(source, /lg:justify-between/);
+test("工作台表单单栏自上而下：截图 → 识别结果 → 文案 → 更多 → 提交", () => {
+  // 2026-11-15 重排：两栏网格退役，视线顺序 = 做事顺序
+  assert.doesNotMatch(source, /lg:grid-cols-\[290px_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(source, /lg:contents/);
+  const workspace = readSource("src/app/(app)/dashboard/form-v2/workspace.tsx");
+  const jsx = workspace.slice(workspace.indexOf("  return ("));
+  const order = ["<截图槽位区", "<FormV2ResultsSection", "<FormV2ContentSection", "<FormV2MoreSection"].map((tag) => jsx.indexOf(tag));
+  assert.ok(order.every((index) => index > 0), "四段都必须在工作区里");
+  assert.deepEqual([...order].sort((a, b) => a - b), order, "四段顺序必须是截图 → 识别结果 → 文案 → 更多");
+  assert.ok(pageSource.indexOf("<FormV2Workspace") < pageSource.indexOf("<FormV2SubmitFooter"), "提交区在最后");
+  // 步骤条把整条路摊开，且两张截图都没来时只露截图这一步
+  assert.match(workspace, /SUBMIT_STEPS\.map/);
+  assert.match(workspace, /const showDetails = editing \|\| hasStartedFilling \|\| manualEntry \|\| !screenshotsRequired;/);
+  // 「上传时间」系统自己记，人不需要看
+  assert.doesNotMatch(source, /上传时间/);
+  // 表单内不再重复说状态：今日状态只在页头说一次
+  assert.doesNotMatch(pageSource, /创作表达录入|创作纪事补录|确认提交立卷|确认补交立卷/);
 });
-
+test("提交区吸底在整行上，按钮自己说还差什么", () => {
+  const footer = readSource("src/app/(app)/dashboard/form-v2/submit-footer.tsx");
+  assert.match(footer, /<div className="sticky bottom-\[var\(--app-bottom-offset,0px\)\]/);
+  assert.doesNotMatch(footer, /md:static/);
+  assert.match(footer, /listSubmitGaps\(issueSummary\)/);
+  assert.match(footer, /`还差：\$\{gaps\.map\(\(gap\) => gap\.label\)\.join\("、"\)\}`/);
+  assert.doesNotMatch(footer, /待补全/);
+  assert.match(pageSource, /isBackfillMode\s*\?\s*"补交"[\s\S]*"保存修改"[\s\S]*: "提交"/);
+});
 test("dashboard V2 的团队分工使用内联分段器常态呈现题材与形式", () => {
   assert.match(source, /题材标签/);
   assert.match(source, /视频形式/);
@@ -153,13 +155,14 @@ test("dashboard V2 灰态提交按钮仍走 triggerSubmit 给出问题反馈", (
 
 test("dashboard V2 提交按钮包含快捷键提示并一次展示全部可处理缺项", () => {
   assert.match(source, /title="⌘\/Ctrl\+Enter 提交"/);
-  assert.match(source, /issueSummary\.missingRequiredSlots\.length > 0/);
-  assert.match(source, /issueSummary\.processingRequiredSlots\.length > 0/);
-  assert.match(source, /issueSummary\.failedRequiredSlots\.length > 0/);
-  assert.match(source, /issueSummary\.missingRequiredMetrics\.length > 0/);
-  assert.match(source, /issueSummary\.missingRequiredMeta\.includes\("videoTitle"\)/);
-  assert.match(source, /issueSummary\.missingRequiredMeta\.includes\("content"\)/);
-  assert.match(source, /issueSummary\.topicTagMissing/);
+  assert.match(source, /summary\.missingRequiredSlots\.length > 0/);
+  assert.match(source, /summary\.processingRequiredSlots\.length > 0/);
+  assert.match(source, /summary\.failedRequiredSlots\.length > 0/);
+  assert.match(source, /summary\.missingRequiredMetrics\.length > 0/);
+  assert.match(source, /summary\.missingRequiredMeta\.includes\("videoTitle"\)/);
+  assert.match(source, /summary\.missingRequiredMeta\.includes\("content"\)/);
+  assert.match(source, /summary\.topicTagMissing/);
+  assert.match(source, /summary\.publishedAtUnconfirmed/);
 });
 
 test("dashboard V2 指标完成后先到标题，标题回车再到文案", () => {
@@ -175,7 +178,7 @@ test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时�
     pageSource,
     /accountId:\s*account\?\.id \?\? null,[\s\S]*today,[\s\S]*mode,[\s\S]*videoId:\s*editDetail\?\.videoId \?\? null/,
   );
-  assert.match(source, /已自动保存 \{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}/);
+  assert.match(source, /`已自动保存 \$\{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\$\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}`/);
 });
 
 test("V2 截图错误文案保持 screenshot_1 互动、screenshot_2 完播", () => {

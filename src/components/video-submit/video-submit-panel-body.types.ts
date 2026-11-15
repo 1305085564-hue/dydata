@@ -9,6 +9,7 @@ import type {
 } from "@/lib/dashboard-submission-state";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
 import type { Video } from "@/types";
+import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
 
 export type VideoSubmitPanelBodyProps = {
@@ -57,4 +58,5 @@ export type VideoSubmitPanelBodyProps = {
   ) => void;
   onViewHistory: () => void;
   onViewVideo: (videoId: string) => void;
+  onFormProgressChange: (progress: FormProgress | null) => void;
 };

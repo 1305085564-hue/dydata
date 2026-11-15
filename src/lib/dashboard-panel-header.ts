@@ -1,4 +1,6 @@
 import type { SubmissionDayStatus, SubmitPanelMode } from "@/lib/dashboard-submission-state";
+import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
+import { isChinaWorkingDay } from "@/lib/工作日";
 
 /**
  * 工作台页头的派生逻辑独立成文件：dashboard-submission-state.ts 已过 500 行棘轮线，
@@ -14,20 +16,29 @@ export interface PanelHeaderStatus {
 
 /**
  * 页头那句状态（工作台唯一主声部）。
- * 纯派生：不改状态机，只把既有 primaryMode / activeDateStatus 翻成一句大白话。
+ * 纯派生：不改状态机，只把既有 primaryMode / activeDateStatus 翻成一句大白话；
+ * 今天还没交、表单已挂载时，再按表单进度（`resolveFormProgress`，源自缺项汇总）往前走。
  */
 export function resolvePanelHeaderStatus({
   activeBizDate,
   today,
   primaryMode,
   dayStatus,
+  formProgress = null,
 }: {
   activeBizDate: string;
   today: string;
   primaryMode: SubmitPanelMode;
   dayStatus: Pick<SubmissionDayStatus, "state">;
+  formProgress?: FormProgress | null;
 }): PanelHeaderStatus {
   const isToday = activeBizDate === today;
+
+  if (isToday && primaryMode === "create" && dayStatus.state === "unsubmitted") {
+    if (formProgress === "ready") return { text: "可以交了", tone: "pending" };
+    if (formProgress === "onlyContent") return { text: "还差一步：粘贴文案", tone: "pending" };
+    if (formProgress === "ocrFailed") return { text: "这次没认出来，数字请手填", tone: "pending" };
+  }
 
   if (primaryMode === "editToday") {
     return { text: `修改 · ${activeBizDate}`, tone: "edit" };
@@ -54,6 +65,20 @@ export function resolvePanelHeaderStatus({
   }
 }
 
+function isWorkingDateKey(dateKey: string) {
+  return isChinaWorkingDay(new Date(`${dateKey}T12:00:00+08:00`));
+}
+
+const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+/** 页头副行的日期：「11 月 13 日 周五」。只做日历换算，不涉及时区。 */
+export function formatHeaderDate(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map((part) => Number(part));
+  if (!year || !month || !day) return dateKey;
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return `${month} 月 ${day} 日 ${WEEKDAY_LABELS[weekday]}`;
+}
+
 function enumerateMonthDatesUntil(monthPrefix: string, until: string) {
   const dates: string[] = [];
   const [year, month] = monthPrefix.split("-").map((part) => Number(part));
@@ -68,8 +93,9 @@ function enumerateMonthDatesUntil(monthPrefix: string, until: string) {
 
 /**
  * 本月履约摘要：本月已交 x 天，漏 y 天。
- * 口径（自然日）：只有「有提交记录」算已交；今天以前、无提交、且不是免交/请假/待审批/缺勤的日期算漏交；
- * 今天不算漏。免交与请假两头都不计，和月历格子同一套判定。
+ * 已交：本月到今天为止有提交记录的日子（周末交了也算）。
+ * 漏交：今天以前的中国工作日（`isChinaWorkingDay`，含调休），没有提交，且不是免交/请假/待审批/缺勤。
+ * 与撤掉前的履约条同一口径：休息日免履约，不算漏。
  */
 export function summarizeMonthFulfillment({
   today,
@@ -95,7 +121,7 @@ export function summarizeMonthFulfillment({
       submittedCount += 1;
       continue;
     }
-    if (date < today && !excluded.has(date)) missedCount += 1;
+    if (date < today && !excluded.has(date) && isWorkingDateKey(date)) missedCount += 1;
   }
   return { submittedCount, missedCount };
 }
