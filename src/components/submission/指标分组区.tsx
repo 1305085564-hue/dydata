@@ -56,6 +56,7 @@ const CORE_ITEMS: MetricItem[] = [
   { key: "play_count", label: "播放量", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.play_count },
   { key: "follower_gain", label: "涨粉数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.follower_gain },
   { key: "follower_convert", label: "导粉数", step: "1", optional: true, metricType: METRIC_INPUT_TYPE_BY_FIELD.follower_convert },
+  { key: "avg_play_ratio", label: "平均播放占比", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_ratio },
 ];
 
 const INTERACTION_ITEMS: MetricItem[] = [
@@ -67,7 +68,6 @@ const INTERACTION_ITEMS: MetricItem[] = [
 
 const RETENTION_ITEMS: MetricItem[] = [
   { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_duration },
-  { key: "avg_play_ratio", label: "平均播放占比", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_ratio },
   { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.bounce_rate_2s },
   { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate_5s },
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate },
@@ -172,7 +172,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
     });
 
     const items = [
-      ...CORE_ITEMS,
+      ...CORE_ITEMS.map((item) => (item.key === "avg_play_ratio" ? { ...item, optional: retentionOptional } : item)),
       ...INTERACTION_ITEMS,
       ...RETENTION_ITEMS.map((item) => ({ ...item, optional: retentionOptional })),
     ];

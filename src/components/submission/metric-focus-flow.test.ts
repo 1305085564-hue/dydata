@@ -16,13 +16,13 @@ test("METRIC_TAB_ORDER: 包含 12 个指标且首尾项符合发布规范", () =
 test("getNextMetricFocusTarget: 正常指标按顺序跳格到下一个指标", () => {
   assert.equal(getNextMetricFocusTarget("play_count"), "follower_gain");
   assert.equal(getNextMetricFocusTarget("follower_gain"), "follower_convert");
-  assert.equal(getNextMetricFocusTarget("follower_convert"), "likes");
+  assert.equal(getNextMetricFocusTarget("follower_convert"), "avg_play_ratio");
+  assert.equal(getNextMetricFocusTarget("avg_play_ratio"), "likes");
   assert.equal(getNextMetricFocusTarget("likes"), "comments");
   assert.equal(getNextMetricFocusTarget("comments"), "shares");
   assert.equal(getNextMetricFocusTarget("shares"), "favorites");
   assert.equal(getNextMetricFocusTarget("favorites"), "avg_play_duration");
-  assert.equal(getNextMetricFocusTarget("avg_play_duration"), "avg_play_ratio");
-  assert.equal(getNextMetricFocusTarget("avg_play_ratio"), "bounce_rate_2s");
+  assert.equal(getNextMetricFocusTarget("avg_play_duration"), "bounce_rate_2s");
   assert.equal(getNextMetricFocusTarget("bounce_rate_2s"), "completion_rate_5s");
   assert.equal(getNextMetricFocusTarget("completion_rate_5s"), "completion_rate");
 });

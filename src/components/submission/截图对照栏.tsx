@@ -61,18 +61,20 @@ export function ScreenshotCompareRail({
   const zoomAnchorRef = useRef<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
 
-  // 放大后把点的那一处对到视窗中央
+  // 放大后水平始终靠左（手机截图关键信息全在左侧，避免裁掉左边缘），纵向对准点击位置
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
     const anchor = zoomAnchorRef.current;
     if (!viewport) return;
     if (!zoomed) {
       viewport.scrollLeft = 0;
+      viewport.scrollTop = 0;
       return;
     }
+    // 水平靠左，不把左侧内容裁出视窗
+    viewport.scrollLeft = 0;
     if (!anchor) return;
-    viewport.scrollLeft = anchor.x * viewport.scrollWidth - viewport.clientWidth / 2;
-    viewport.scrollTop = anchor.y * viewport.scrollHeight - viewport.clientHeight / 2;
+    viewport.scrollTop = Math.max(0, anchor.y * viewport.scrollHeight - viewport.clientHeight / 2);
     zoomAnchorRef.current = null;
   }, [zoomed]);
 
