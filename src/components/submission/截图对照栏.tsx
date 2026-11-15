@@ -53,12 +53,14 @@ export function ScreenshotCompareRail({
   const role = resolveCompareRole(images, preferredRole);
   const url = role ? images[role] : null;
   const [zoomed, setZoomed] = useState(false);
+  const [activeUrl, setActiveUrl] = useState(url);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // 换图自动恢复常规尺寸
-  useEffect(() => {
+  // 换图自动恢复常规尺寸（render 期重置，避免 effect 级联渲染）
+  if (activeUrl !== url) {
+    setActiveUrl(url);
     setZoomed(false);
-  }, [url]);
+  }
 
   // Esc 键缩回常规尺寸
   useEffect(() => {
