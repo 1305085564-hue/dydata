@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole } from "./提交状态机";
 
-/** 宽屏才放对照栏；窄屏没有右侧留白，核对时点截图卡片的小图开检视器 */
-export const COMPARE_RAIL_MEDIA_QUERY = "(min-width: 1100px)";
+/** 宽屏才放对照栏：1200 = 外框 1152 + 两侧留白 48，保证表单仍是原来的 768 宽、不被对照栏挤窄；窄屏核对时点截图卡片的小图开检视器 */
+export const COMPARE_RAIL_MEDIA_QUERY = "(min-width: 1200px)";
 
 function subscribeRailQuery(onChange: () => void) {
   const media = window.matchMedia(COMPARE_RAIL_MEDIA_QUERY);
