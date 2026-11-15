@@ -1226,6 +1226,13 @@ export function VideoSubmitFormV2({
           />
 
           {/* 主表单 */}
+          {/* 草稿 / 审批 / 关联选题的微提示：有才出现，位于表单网格上方，保证左右两列顶端绝对对齐 */}
+          {workbenchNotices.length > 0 && (
+            <div className="mb-2 flex max-w-3xl justify-end">
+              <WorkbenchNoticeCapsule notices={workbenchNotices} />
+            </div>
+          )}
+
           <motion.form
             id="video-submit-form-v2"
             onSubmit={handleSubmit}
@@ -1235,12 +1242,6 @@ export function VideoSubmitFormV2({
             className="w-full min-[1330px]:grid min-[1330px]:grid-cols-[48rem_360px] min-[1330px]:items-start min-[1330px]:gap-6"
           >
             <div className="max-w-3xl min-w-0 space-y-5 py-0">
-              {/* 草稿 / 审批 / 关联选题的微提示：有才出现，状态句只在页头说 */}
-              {workbenchNotices.length > 0 && (
-                <div className="flex justify-end">
-                  <WorkbenchNoticeCapsule notices={workbenchNotices} />
-                </div>
-              )}
 
               <FormV2Workspace
                 editing={mode === "editToday"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole } from "./提交状态机";
@@ -36,12 +36,10 @@ export function resolveCompareRole(
   return ROLE_META.find(({ role }) => Boolean(images[role]))?.role ?? null;
 }
 
-const ZOOM = 2;
-const DRAG_THRESHOLD_PX = 4;
-
 /**
  * 截图对照栏：宽屏时常驻在表单右侧，吸顶，按聚焦的数字格切换互动 / 留存截图。
- * 点图在栏内「看全图 ↔ 放大 2 倍」，放大后可拖动；不另开浮层，不挡表单。
+ * 常规状态 360px 宽，图片 100% 完整呈现整行指标；
+ * 点击放大时视窗展开为 520px 高清大图，图片依然 100% 完整无裁切，按 Esc 或再点一下缩回。
  */
 export function ScreenshotCompareRail({
   images,
@@ -54,77 +52,54 @@ export function ScreenshotCompareRail({
 }) {
   const role = resolveCompareRole(images, preferredRole);
   const url = role ? images[role] : null;
-  const [zoomState, setZoomState] = useState<{ url: string | null; zoomed: boolean }>({ url: null, zoomed: false });
-  // 换图就回到全图
-  const zoomed = zoomState.zoomed && zoomState.url === url;
+  const [zoomed, setZoomed] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const zoomAnchorRef = useRef<{ x: number; y: number } | null>(null);
-  const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
 
-  // 放大后水平始终靠左（手机截图关键信息全在左侧，避免裁掉左边缘），纵向对准点击位置
-  useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const anchor = zoomAnchorRef.current;
-    if (!viewport) return;
-    if (!zoomed) {
-      viewport.scrollLeft = 0;
-      viewport.scrollTop = 0;
-      return;
-    }
-    // 水平靠左，不把左侧内容裁出视窗
-    viewport.scrollLeft = 0;
-    if (!anchor) return;
-    viewport.scrollTop = Math.max(0, anchor.y * viewport.scrollHeight - viewport.clientHeight / 2);
-    zoomAnchorRef.current = null;
+  // 换图自动恢复常规尺寸
+  useEffect(() => {
+    setZoomed(false);
+  }, [url]);
+
+  // Esc 键缩回常规尺寸
+  useEffect(() => {
+    if (!zoomed) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setZoomed(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [zoomed]);
 
   if (!role || !url) return null;
   const available = ROLE_META.filter((item) => Boolean(images[item.role]));
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const viewport = viewportRef.current;
-    if (!viewport || e.button !== 0) return;
-    dragRef.current = { x: e.clientX, y: e.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, moved: false };
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const viewport = viewportRef.current;
-    const drag = dragRef.current;
-    if (!viewport || !drag || !zoomed) return;
-    const dx = e.clientX - drag.x;
-    const dy = e.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-    if (!drag.moved) viewport.setPointerCapture(e.pointerId);
-    drag.moved = true;
-    viewport.scrollLeft = drag.left - dx;
-    viewport.scrollTop = drag.top - dy;
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const viewport = viewportRef.current;
-    const drag = dragRef.current;
-    dragRef.current = null;
-    if (!viewport || !drag) return;
-    if (viewport.hasPointerCapture(e.pointerId)) viewport.releasePointerCapture(e.pointerId);
-    if (drag.moved) return;
-    if (!zoomed) {
-      const rect = viewport.getBoundingClientRect();
-      zoomAnchorRef.current = {
-        x: (e.clientX - rect.left + viewport.scrollLeft) / viewport.scrollWidth,
-        y: (e.clientY - rect.top + viewport.scrollTop) / viewport.scrollHeight,
-      };
-    }
-    setZoomState({ url, zoomed: !zoomed });
+  const toggleZoom = () => {
+    setZoomed((prev) => !prev);
   };
 
   return (
     <aside
       aria-label="截图对照"
       data-testid="screenshot-compare-rail"
-      className="sticky top-[calc(var(--app-top-offset,64px)+1rem)] flex max-h-[calc(100dvh-var(--app-top-offset,64px)-2rem)] flex-col overflow-hidden rounded-xl border border-[#E2E2DF] bg-white"
+      className={cn(
+        "sticky top-[calc(var(--app-top-offset,64px)+1rem)] flex h-[calc(100dvh-var(--app-top-offset,64px)-1.5rem)] min-h-[680px] max-h-[960px] flex-col overflow-hidden rounded-xl border border-[#E2E2DF] bg-white transition-all duration-200",
+        zoomed
+          ? "w-[520px] -translate-x-[160px] z-30 shadow-claude-float ring-1 ring-[#141413]/10"
+          : "w-full",
+      )}
     >
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[#E2E2DF] px-3">
-        <span className="text-[12px] text-[#78716C]">截图对照</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] text-[#78716C]">截图对照</span>
+          {zoomed ? (
+            <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
+              大图模式 · 按 Esc 缩回
+            </span>
+          ) : null}
+        </div>
         <div role="tablist" aria-label="切换对照截图" className="flex items-center gap-1">
           {available.map((item) => (
             <button
@@ -148,23 +123,18 @@ export function ScreenshotCompareRail({
         ref={viewportRef}
         role="button"
         tabIndex={0}
-        aria-label={zoomed ? "缩回全图" : "放大截图"}
-        title={zoomed ? "拖动查看，点一下缩回全图" : "点一下放大"}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          dragRef.current = null;
-        }}
+        aria-label={zoomed ? "缩回常规尺寸" : "放大截图查看"}
+        title={zoomed ? "点击缩回常规尺寸 (Esc)" : "点击放大看完整大图"}
+        onClick={toggleZoom}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setZoomState({ url, zoomed: !zoomed });
+            toggleZoom();
           }
         }}
         className={cn(
-          "min-h-0 flex-1 overflow-auto overscroll-contain bg-[#F1F1F0] outline-none select-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[#141413]/20",
-          zoomed ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in",
+          "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F1F1F0] outline-none select-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[#141413]/20",
+          zoomed ? "cursor-zoom-out" : "cursor-zoom-in",
         )}
       >
         <ScreenshotImage
@@ -172,14 +142,22 @@ export function ScreenshotCompareRail({
           alt={`${ROLE_META.find((item) => item.role === role)?.label ?? ""}截图对照`}
           variant="stage"
           draggable={false}
-          style={{ width: zoomed ? `${ZOOM * 100}%` : "100%" }}
-          className="block h-auto max-w-none"
+          className="block h-auto w-full max-w-none"
           placeholderClassName="min-h-[200px] w-full"
         />
       </div>
 
-      <div className="flex h-8 shrink-0 items-center border-t border-[#E2E2DF] px-3 text-[12px] text-[#78716C]">
-        {zoomed ? "拖动查看，点一下缩回全图" : "点图放大"}
+      <div className="flex h-8 shrink-0 items-center justify-between border-t border-[#E2E2DF] px-3 text-[12px] text-[#78716C]">
+        <span>{zoomed ? "大图视图 · 滚动查看整张" : "点击放大看完整大图"}</span>
+        {zoomed ? (
+          <button
+            type="button"
+            onClick={toggleZoom}
+            className="text-[12px] text-[#78716C] hover:text-[#141413] hover:underline cursor-pointer"
+          >
+            缩回常规
+          </button>
+        ) : null}
       </div>
     </aside>
   );
