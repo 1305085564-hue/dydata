@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { __internal, loadDashboardPageData } from "./dashboard-page";
+import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
+
+const todayDate = formatShanghaiDateOnly();
+const yesterdayDate = shiftDateOnly(new Date(`${todayDate}T00:00:00+08:00`), -1);
 
 type QueryCall = {
   table: string;
@@ -397,11 +401,11 @@ test("审批通过和拒绝通知都能到达首屏页面数据契约", async ()
         request_status: requestStatus,
         exemption_type: "temporary",
         exemption_category: requestStatus === "approved" ? "waive" : "leave",
-        start_date: "2026-05-01",
-        end_date: "2026-05-01",
+        start_date: todayDate,
+        end_date: todayDate,
         reason: "测试原因",
-        reviewed_at: "2026-05-02T01:00:00Z",
-        created_at: "2026-05-01T01:00:00Z",
+        reviewed_at: `${todayDate}T01:00:00Z`,
+        created_at: `${todayDate}T01:00:00Z`,
       },
     });
 
@@ -424,16 +428,16 @@ test("部分批准（整单仍 pending）也能到达通知，并带逐日结果
         request_status: "pending",
         exemption_type: "range",
         exemption_category: "waive",
-        start_date: "2026-05-01",
-        end_date: "2026-05-02",
+        start_date: yesterdayDate,
+        end_date: todayDate,
         reason: "两天豁免",
         reviewed_at: null,
-        created_at: "2026-04-30T01:00:00Z",
+        created_at: `${yesterdayDate}T01:00:00Z`,
       },
     ],
     reviewNoticeDetails: [
-      { request_id: "request-partial", request_date: "2026-05-01", status: "approved", feedback: null, reviewed_by: "admin-1", reviewed_at: "2026-05-01T02:00:00Z" },
-      { request_id: "request-partial", request_date: "2026-05-02", status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
+      { request_id: "request-partial", request_date: yesterdayDate, status: "approved", feedback: null, reviewed_by: "admin-1", reviewed_at: `${yesterdayDate}T02:00:00Z` },
+      { request_id: "request-partial", request_date: todayDate, status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
     ],
   });
 
@@ -443,8 +447,28 @@ test("部分批准（整单仍 pending）也能到达通知，并带逐日结果
   assert.equal(result.userExemptionReviewNotice?.request_status, "pending");
   assert.deepEqual(
     result.userExemptionReviewNotice?.daily_results?.map((d) => [d.date, d.status]),
-    [["2026-05-01", "approved"], ["2026-05-02", "pending"]],
+    [[yesterdayDate, "approved"], [todayDate, "pending"]],
   );
+});
+
+test("涉及日期全部早于今天的审批通知不再出现", async () => {
+  const supabase = createSupabaseMock({}, {
+    reviewNotice: {
+      id: "request-expired",
+      request_status: "approved",
+      exemption_type: "single",
+      exemption_category: "leave",
+      start_date: "2026-10-05",
+      end_date: "2026-10-05",
+      reason: "旧请假",
+      reviewed_at: "2026-10-05T02:00:00Z",
+      created_at: "2026-10-05T01:00:00Z",
+    },
+  });
+
+  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
+
+  assert.equal(result.userExemptionReviewNotice, null);
 });
 
 test("全部日期仍 pending 的申请不产生审批通知", async () => {

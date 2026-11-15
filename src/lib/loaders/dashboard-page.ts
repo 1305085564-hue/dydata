@@ -8,6 +8,7 @@ import {
   getDashboardSubmittedDates,
   isDashboardReport,
 } from "@/lib/dashboard-submission-state";
+import { dropExpiredExemptionNotice } from "@/lib/dashboard-panel-header";
 import {
   getPendingExemptionDatesFromRequests,
   type ExemptionGrantLike,
@@ -379,9 +380,7 @@ async function loadLatestExemptionReviewNotice(
   try {
     const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", fallback.data.id).order("request_date", { ascending: true });
     if (!details.error) dailyResults = (details.data ?? []).map((row) => ({ date: row.request_date, status: row.status, feedback: row.feedback, reviewed_by: row.reviewed_by, reviewed_at: row.reviewed_at }));
-  } catch {
-    dailyResults = undefined;
-  }
+  } catch { dailyResults = undefined; }
   return {
     ...(fallback.data as Omit<UserExemptionReviewNotice, "exemption_category">),
     exemption_category: "waive",
@@ -568,7 +567,7 @@ export async function loadDashboardPageData({
     pendingExemptionDates,
     absentDates,
     absentReasons,
-    userExemptionReviewNotice,
+    userExemptionReviewNotice: dropExpiredExemptionNotice(userExemptionReviewNotice, today),
     userExemptionProfile,
     userExemptionGrants,
   };

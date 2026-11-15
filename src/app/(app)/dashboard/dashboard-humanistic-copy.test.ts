@@ -13,6 +13,7 @@ const source = [
   "src/components/video-submit/video-submit-panel-body.tsx",
   "src/components/video-submit/video-submit-panel-history-dialog.tsx",
   "src/components/video-submit/video-submit-panel-exemption-dialog.tsx",
+  "src/lib/dashboard-panel-header.ts",
 ]
   .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
   .join("\n");
@@ -23,8 +24,9 @@ const exemptionSource = readFileSync(
 const serifClass = ["font", "serif"].join("-");
 
 test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () => {
-  assert.match(source, /创作立卷 · 表达纪事/);
-  assert.match(source, /PageEpigraph pageKey="workbench"/);
+  assert.match(source, /今天还没交/);
+  assert.match(source, /本月已交 \{monthFulfillment\.submittedCount\} 天，漏 \{monthFulfillment\.missedCount\} 天/);
+  assert.match(source, /resolvePanelHeaderStatus\(/);
   assert.match(source, /from "@\/components\/ui\/card"/);
   assert.match(source, /<Card\b/);
   const bannedColors = [
@@ -83,8 +85,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     source,
-    /<div className="space-y-1">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?PageEpigraph pageKey="workbench"/,
-    "大标题与副标必须保持 space-y-1 呼吸间距",
+    /<div className="space-y-1 min-w-0">[\s\S]*?\{headerStatus\.text\}[\s\S]*?本月已交 \{monthFulfillment\.submittedCount\} 天/,
+    "状态句与本月履约行必须保持 space-y-1 呼吸间距",
   );
 
   // 2. 全局衬线字体回退栈严禁混入黑体

@@ -16,6 +16,7 @@ import {
   type TodaySubmissionReportLike,
 } from "@/lib/dashboard-submission-state";
 import { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
+import { resolvePanelHeaderStatus, summarizeMonthFulfillment } from "@/lib/dashboard-panel-header";
 import {
   resolvePanelDateSelection,
   resolvePanelRequestedMode,
@@ -31,9 +32,7 @@ import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-pan
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
-import { MonthlyFulfillmentStrip } from "./components/monthly-fulfillment-strip";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import { cn } from "@/lib/utils";
 
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
 
@@ -275,17 +274,6 @@ export function VideoSubmitPanelV2({
     );
   }, [activeBizDate, allReportRowsIncludingOverrides, selectedAccountId]);
 
-  const submittedCountByDate = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const report of allReportRowsIncludingOverrides) {
-      if (selectedAccountId && report.account_id !== selectedAccountId) continue;
-      const dateKey = getPublishedDateKey(report);
-      if (!dateKey) continue;
-      counts[dateKey] = (counts[dateKey] ?? 0) + 1;
-    }
-    return counts;
-  }, [allReportRowsIncludingOverrides, selectedAccountId]);
-
   const activeDateReport = useMemo(() => {
     return activeDateReports.find((report) => report.id === selectedReportId)
       ?? activeDateReports[0]
@@ -325,6 +313,48 @@ export function VideoSubmitPanelV2({
         activeDateStatus,
       }),
     [activeBizDate, activeDateReport, activeDateStatus, primarySummary, requestedMode, today],
+  );
+
+  const headerStatus = useMemo(
+    () =>
+      resolvePanelHeaderStatus({
+        activeBizDate,
+        today,
+        primaryMode,
+        dayStatus: activeDateStatus,
+      }),
+    [activeBizDate, activeDateStatus, primaryMode, today],
+  );
+
+  // 同一状态只在一处说：请假事由并入页头副行，不再单起一行
+  const headerExemptionReason = useMemo(
+    () =>
+      activeExemptionState.isExempt && activeExemptionState.category === "leave"
+        ? activeExemptionState.reason?.trim() || null
+        : null,
+    [activeExemptionState.category, activeExemptionState.isExempt, activeExemptionState.reason],
+  );
+
+  const monthFulfillment = useMemo(
+    () =>
+      summarizeMonthFulfillment({
+        today,
+        submittedDates: submittedDatesIncludingActivity,
+        exemptDates: [
+          ...allExemptionDateBuckets.waiveDates,
+          ...allExemptionDateBuckets.leaveDates,
+          ...localPendingExemptionDates,
+        ],
+        absentDates,
+      }),
+    [
+      absentDates,
+      allExemptionDateBuckets.leaveDates,
+      allExemptionDateBuckets.waiveDates,
+      localPendingExemptionDates,
+      submittedDatesIncludingActivity,
+      today,
+    ],
   );
 
   useEffect(() => {
@@ -479,7 +509,9 @@ export function VideoSubmitPanelV2({
     <>
       <div className="space-y-5 sm:space-y-7">
         <VideoSubmitPanelToolbar
-          primaryMode={primaryMode}
+          headerStatus={headerStatus}
+          monthFulfillment={monthFulfillment}
+          exemptionReason={headerExemptionReason}
           isCalendarOpen={isCalendarOpen}
           setIsCalendarOpen={setIsCalendarOpen}
           calendarPopoverRef={calendarPopoverRef}
@@ -494,47 +526,6 @@ export function VideoSubmitPanelV2({
           setIsExemptionDialogOpen={setIsExemptionDialogOpen}
           setIsHistoryOpen={setIsHistoryOpen}
         />
-        {/* 履约工具带 - 第三轮：撤浅底卡片，靠共享起点与紧凑行距继续成组，降低视觉优先级 */}
-        <div className="space-y-1">
-          <MonthlyFulfillmentStrip
-            today={today}
-            activeBizDate={activeBizDate}
-            submittedDates={submittedDatesIncludingActivity}
-            submittedCountByDate={submittedCountByDate}
-            waiveDates={allExemptionDateBuckets.waiveDates}
-            leaveDates={allExemptionDateBuckets.leaveDates}
-            pendingDates={localPendingExemptionDates}
-            absentDates={absentDates}
-            absentReasons={absentReasons}
-            onSelectDate={selectBizDate}
-          />
-          {selectedAccount && shouldShowBlockedStateCard ? (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded-full",
-                  activeDateStatus.state === "waive"
-                    ? "bg-status-success/10 text-status-success"
-                    : "bg-status-warning/10 text-status-warning",
-                )}
-              >
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    activeDateStatus.state === "waive" ? "bg-current text-status-success" : "bg-current text-status-warning",
-                  )}
-                />
-              </span>
-              <span className="text-[14px] font-normal text-[#1F1E1D]">
-                {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态 · ${activeBizDate}`}
-              </span>
-              <span className="text-[14px] text-[#78716C]">{activeDateStatus.description}</span>
-              {activeExemptionState.reason && (
-                <span className="text-[14px] text-[#78716C]">事由：{activeExemptionState.reason}</span>
-              )}
-            </div>
-          ) : null}
-        </div>
         <VideoSubmitPanelBody
           formAnchorRef={formAnchorRef}
           shouldShowForm={shouldShowForm}
