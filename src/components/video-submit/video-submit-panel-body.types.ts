@@ -54,7 +54,7 @@ export type VideoSubmitPanelBodyProps = {
   initialTopicId: string | null;
   initialTopicTitle: string | null;
   handleSubmitted: (
-    video: Video,
+    video: Video | null,
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onViewHistory: () => void;

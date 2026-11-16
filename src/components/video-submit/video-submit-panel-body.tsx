@@ -9,6 +9,7 @@ import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
 import { WorkbenchNoticeBar, buildExemptionReviewNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
 import { cn } from "@/lib/utils";
 import { getPublishedDateKey } from "@/lib/date-semantics";
+import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 
 import type { VideoSubmitPanelBodyProps } from "./video-submit-panel-body.types";
 
@@ -272,6 +273,7 @@ export function VideoSubmitPanelBody({
                 onViewVideo={onViewVideo}
                 onProgressChange={onFormProgressChange}
                 onCancel={() => {
+                  clearBrowserAppealSuccessSession(selectedAccount.id, today);
                   clearSubmittedEditTarget();
                   setSubmittedViewActive(false);
                   setRequestedMode(null);
@@ -280,6 +282,7 @@ export function VideoSubmitPanelBody({
                   }
                 }}
                 onRequestEdit={(target) => {
+                  clearBrowserAppealSuccessSession(selectedAccount.id, today);
                   setSubmittedViewActive(false);
                   onRequestEditSubmittedReport(target);
                   setRequestedMode("editToday");

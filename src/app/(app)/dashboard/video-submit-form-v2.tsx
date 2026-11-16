@@ -103,6 +103,10 @@ import { useAssigneeController } from "./video-submit-form-v2/assignee-controlle
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
+import {
+  hasBrowserAppealSuccessSession,
+  markBrowserAppealSuccessSession,
+} from "@/lib/video-submit/domain/appeal-success-session";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -126,7 +130,7 @@ interface VideoSubmitFormProps {
   isExemptionPending?: boolean;
   onDismissPendingExemption?: () => void;
   onSubmitted: (
-    video: Video,
+    video: Video | null,
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onCancel?: () => void;
@@ -342,7 +346,9 @@ export function VideoSubmitFormV2({
   const [uiState, dispatchUi] = useReducer(
     submissionUiReducer,
     undefined,
-    createSubmissionUiState,
+    () => createSubmissionUiState({
+      isSubmitted: hasBrowserAppealSuccessSession(account?.id ?? "", initialBizDate ?? today),
+    }),
   );
   const [submittedReportDate, setSubmittedReportDate] = useState<string | null>(null);
   const updateUi = useCallback(
@@ -650,11 +656,13 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate);
+      onSubmitted(null);
       feedbackToast.success("补交申请已通过，数据已自动提交");
     } catch {
       // 暂时的网络失败留给下一次轮询或页面聚焦处理。
     }
-  }, [account, appealStatus, clearDraft, meta.bizDate, pauseSaving, setAppealResultReason, setAppealStatus, setIsSubmitted]);
+  }, [account, appealStatus, clearDraft, meta.bizDate, onSubmitted, pauseSaving, setAppealResultReason, setAppealStatus, setIsSubmitted]);
 
   useEffect(() => {
     if (appealStatus !== "pending") return;
@@ -1077,7 +1085,7 @@ export function VideoSubmitFormV2({
   });
 
   const retryAppealResume = useCallback(async () => {
-    if (!appealId || isAppealResuming) return;
+    if (!account || !appealId || isAppealResuming) return;
     setIsAppealResuming(true);
     try {
       const result = await resumeAppeal(appealId);
@@ -1091,11 +1099,13 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate);
+      onSubmitted(null);
       feedbackToast.success("补交数据已自动提交");
     } finally {
       setIsAppealResuming(false);
     }
-  }, [appealId, clearDraft, isAppealResuming, pauseSaving, resumeAppeal, setAppealResultReason, setAppealStatus, setIsSubmitted]);
+  }, [account, appealId, clearDraft, isAppealResuming, meta.bizDate, onSubmitted, pauseSaving, resumeAppeal, setAppealResultReason, setAppealStatus, setIsSubmitted]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
