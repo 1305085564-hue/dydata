@@ -129,3 +129,57 @@ test("排行榜支持传入放宽后的 visibleUserIds（数据管理团队/全�
     "组员B的号",
   ]);
 });
+
+test("排行榜支持传入 year/month 查询指定历史月份，并严格过滤掉后续月份记录", async () => {
+  const leaderboardCalls: Array<Record<string, unknown>> = [];
+  const response = await buildDashboardLeaderboardResponse({
+    supabase: {
+      from() {
+        return queryResult({ data: [], error: null });
+      },
+      rpc(_name: string, args: Record<string, unknown>) {
+        leaderboardCalls.push(args);
+        return Promise.resolve({
+          data: [
+            { profile_id: "user-1", account_name: "9月初作品", report_date: "2026-09-01" },
+            { profile_id: "user-1", account_name: "9月末作品", report_date: "2026-09-30" },
+            { profile_id: "user-1", account_name: "10月作品", report_date: "2026-10-01" },
+          ],
+          error: null,
+        });
+      },
+    } as never,
+    userId: "user-1",
+    permissionContext,
+    year: 2026,
+    month: 9,
+    now: new Date("2026-11-17T00:00:00.000Z"),
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(leaderboardCalls, [{ since_date: "2026-09-01" }]);
+  const payload = await response.json();
+  assert.deepEqual(
+    payload.leaderboardData.map((d: { account_name: string }) => d.account_name),
+    ["9月初作品", "9月末作品"],
+  );
+});
+
+test("排行榜传入非法 year/month 时返回 400", async () => {
+  const response = await buildDashboardLeaderboardResponse({
+    supabase: {
+      from() {
+        return queryResult({ data: [], error: null });
+      },
+      rpc() {
+        return Promise.resolve({ data: [], error: null });
+      },
+    } as never,
+    userId: "user-1",
+    permissionContext,
+    year: 2026,
+    month: 13,
+  });
+
+  assert.equal(response.status, 400);
+});

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert } from "@/components/ui/alert";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews } from "./types";
 import type { WriterCandidateRow } from "./writer-tab";
-import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
+import { partitionWriterCandidates, type TabKey } from "@/lib/collaboration/domain/workbench-state";
 
 interface CollaborationWorkbenchToolbarProps {
   year: number; month: number;
@@ -25,19 +25,10 @@ export function CollaborationWorkbenchToolbar({
   year, month, monthOptions, currentMonthValue, view, tab, summary, isOwnerOrTeamAdmin, loadFailed, canManageWorkGroups, hasActiveGroupDetail, resolvedWorkGroupViews, talents, operators, writerStaff, writerCandidates = [], editorStaff, onMonthChange, onViewChange, onTabChange, onOpenManageDrawer, onLeaderboardOpen,
 }: CollaborationWorkbenchToolbarProps) {
 
-  const writerCount = useMemo(() => {
-    if (!writerCandidates || writerCandidates.length === 0) {
-      return writerStaff.length;
-    }
-    const existingIds = new Set(writerStaff.map((w) => w.userId));
-    let supplemental = 0;
-    for (const candidate of writerCandidates) {
-      if (!existingIds.has(candidate.userId)) {
-        supplemental++;
-      }
-    }
-    return writerStaff.length + supplemental;
-  }, [writerStaff, writerCandidates]);
+  const { activeWriterCount: writerCount } = useMemo(
+    () => partitionWriterCandidates(writerStaff, writerCandidates),
+    [writerStaff, writerCandidates],
+  );
   return (
     <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -58,7 +49,7 @@ export function CollaborationWorkbenchToolbar({
               </Select>
             </div>
           </div>
-          {/* 一级视图切换：岗位协作管理 ↔ 小组协作管理 */}
+          {/* 一级视图切换：按岗位 ↔ 按小队 */}
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
             <button
               type="button"
@@ -69,7 +60,7 @@ export function CollaborationWorkbenchToolbar({
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
-              岗位协作管理
+              按岗位
             </button>
             <button
               type="button"
@@ -80,7 +71,7 @@ export function CollaborationWorkbenchToolbar({
                   : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
               }`}
             >
-              小组协作管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
+              按小队 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
             </button>
           </div>
 

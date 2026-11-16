@@ -19,6 +19,14 @@ export interface SummaryData {
   unattributed: number;
 }
 
+export interface CollaborationOverviewStats {
+  month: number;
+  total: number;
+  totalPlay: number;
+  goodExcellentRate: number | null;
+  restrictToSelf?: boolean;
+}
+
 export interface OperatorAccount {
   accountId: string;
   accountName: string;

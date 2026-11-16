@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import {
+  partitionWriterCandidates,
+  pinCurrentUserFirst,
+  ROLE_ZERO_OUTPUT_RULE_TEXT,
+} from "@/lib/collaboration/domain/workbench-state";
+import { buildCollaborationEpigraph } from "@/components/editorial/page-epigraph-copy";
 
 const source = [
   "src/app/(app)/admin/collaboration/collaboration-workbench.tsx",
@@ -45,7 +51,7 @@ test("数据管理使用月份选择器，不再显示两侧翻月按钮", () =>
   assert.doesNotMatch(toolbarSource, /aria-label="上一月"|aria-label="下一月"/);
 });
 
-test("Toolbar 文案徽标数与 WriterTab 实际渲染行数完全对齐，候选与已有成员按 userId 去重", () => {
+test("Toolbar 文案徽标数只计已认证与本月有产出成员，未认证零产出候选折叠在 WriterTab 表底", () => {
   const toolbarSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
     "utf8",
@@ -55,47 +61,71 @@ test("Toolbar 文案徽标数与 WriterTab 实际渲染行数完全对齐，候�
     "utf8",
   );
 
-  // 1. 源码契约：Toolbar 使用 writerCount，且通过 Set(writerStaff.map(w => w.userId)) 进行去重增量计算
+  // 1. 源码契约：Toolbar 与 WriterTab 共用 partitionWriterCandidates 唯一来源
   assert.match(toolbarSource, /文案 \(\{writerCount\}\)/);
-  assert.match(toolbarSource, /const existingIds = new Set\(writerStaff\.map\(\(w\) => w\.userId\)\);/);
-  assert.match(toolbarSource, /!existingIds\.has\(candidate\.userId\)/);
+  assert.match(toolbarSource, /partitionWriterCandidates\(writerStaff, writerCandidates\)/);
+  assert.match(writerTabSource, /partitionWriterCandidates\(\s*rows,\s*candidates,\s*\)/);
+  assert.match(writerTabSource, /查看未认证候选人 \(\$\{uncertifiedRows\.length\}\)/);
 
-  // 2. 源码契约：WriterTab 使用相同去重集合与字段逻辑
-  assert.match(writerTabSource, /const existingUserIds = new Set\(rows\.map\(\(r\) => r\.userId\)\);/);
-  assert.match(writerTabSource, /!existingUserIds\.has\(candidate\.userId\)/);
-
-  // 3. 逻辑等价性实测断言：使用 mock 数据验证两处去重算法产出的总数 100% 相等
+  // 2. 行为实测：5 名在岗/有产出文案 + 25 名未认证零产出候选 → 页签为 5，折叠候选为 25
   const mockWriterStaff = [
-    { userId: "user-1", name: "张三", reportCount: 5 },
-    { userId: "user-2", name: "李四", reportCount: 3 },
+    { userId: "u1", name: "文案1", reportCount: 6 },
+    { userId: "u2", name: "文案2", reportCount: 4 },
+    { userId: "u3", name: "文案3", reportCount: 2 },
+    { userId: "u4", name: "已认证零产出A", reportCount: 0 },
   ];
   const mockCandidates = [
-    { userId: "user-2", name: "李四", certified: true }, // 重复项：已在 writerStaff 中
-    { userId: "user-3", name: "王五", certified: false }, // 新增项：未在 writerStaff 中
-    { userId: "user-4", name: "赵六", certified: false }, // 新增项：未在 writerStaff 中
+    { userId: "u2", name: "文案2", certified: true }, // 已在 writerStaff 中，不重复计
+    { userId: "u5", name: "新认证零产出B", certified: true }, // 已认证增量 → 计入主表
+    ...Array.from({ length: 25 }, (_, idx) => ({
+      userId: `cand-${idx + 1}`,
+      name: `候选${idx + 1}`,
+      certified: false,
+    })),
   ];
 
-  // 模拟 Toolbar 计算
-  const existingIds = new Set(mockWriterStaff.map((w) => w.userId));
-  let toolbarSupplemental = 0;
-  for (const c of mockCandidates) {
-    if (!existingIds.has(c.userId)) toolbarSupplemental++;
-  }
-  const simulatedToolbarCount = mockWriterStaff.length + toolbarSupplemental;
+  const partitioned = partitionWriterCandidates(mockWriterStaff, mockCandidates);
+  assert.equal(partitioned.activeWriterCount, 5, "页签数字只显示 5 名已认证/有产出文案");
+  assert.equal(partitioned.uncertifiedCandidates.length, 25, "25 名未认证零产出候选折叠在表底");
+});
 
-  // 模拟 WriterTab 计算
-  const existingUserIds = new Set(mockWriterStaff.map((r) => r.userId));
-  const writerTabSupplemental: Array<{ userId: string; name: string }> = [];
-  for (const candidate of mockCandidates) {
-    if (!existingUserIds.has(candidate.userId)) {
-      writerTabSupplemental.push({ userId: candidate.userId, name: candidate.name });
-    }
-  }
-  const simulatedAllRows = [...mockWriterStaff, ...writerTabSupplemental];
+test("个人档案抽屉先展示所选月份作品明细，再展示近 30 天增长曲线", () => {
+  const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
+  const worksIdx = cardSource.indexOf("<PersonalCardWorks");
+  const metricsIdx = cardSource.indexOf("<PersonalCardMetrics");
+  assert.ok(worksIdx > 0 && metricsIdx > worksIdx, "PersonalCardWorks 必须排在 PersonalCardMetrics 之前");
+});
 
-  // 断言：去重后总数一致，且严格剔除重复项
-  assert.equal(simulatedToolbarCount, simulatedAllRows.length, "Toolbar 计数必须严格等于 WriterTab allRows.length");
-  assert.equal(simulatedToolbarCount, 4, "2 名既有人员 + 2 名唯一样本 = 4（李四不重复计入）");
+test("组员视角支持本人行置顶标识与零产出规则提示", () => {
+  const ordered = pinCurrentUserFirst(
+    [{ userId: "u-a" }, { userId: "u-self" }, { userId: "u-b" }],
+    "u-self",
+  );
+  assert.deepEqual(ordered.map((r) => r.userId), ["u-self", "u-a", "u-b"]);
+  for (const key of ["talents", "operators", "writers", "editors"] as const) {
+    assert.match(ROLE_ZERO_OUTPUT_RULE_TEXT[key], /你本月暂无计入该岗位的作品（统计规则：/);
+  }
+});
+
+test("页头导语直接播报当月大盘结论（产出篇数、总播放、综合良优率），不再重复播报待补责任人", () => {
+  const epigraph = buildCollaborationEpigraph({
+    month: 11,
+    total: 128,
+    totalPlay: 3_400_000,
+    goodExcellentRate: 0.62,
+  });
+  assert.ok(epigraph);
+  assert.match(epigraph, /11月全团产出 128 篇/);
+  assert.match(epigraph, /总播放 340(\.0)?万/);
+  assert.match(epigraph, /综合良优率 62%/);
+  assert.doesNotMatch(epigraph, /待补/);
+});
+
+test("账号排行弹窗接收主页面 year/month，区分历史月份排行与当月实时排行", () => {
+  const leaderboardDialogSource = readFileSync(new URL("./leaderboard-dialog.tsx", import.meta.url), "utf8");
+  assert.match(leaderboardDialogSource, /实时账号排行/);
+  assert.match(leaderboardDialogSource, /\$\{month\}月账号排行/);
+  assert.match(source, /<LeaderboardDialog[\s\S]*?year=\{year\}[\s\S]*?month=\{month\}/);
 });
 
 test("数据管理抽屉只给组员渲染查看能力：选题库联动回调一律不传", () => {

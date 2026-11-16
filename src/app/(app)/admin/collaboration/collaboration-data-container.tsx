@@ -9,12 +9,13 @@ import { buildCollaborationPageData } from "@/lib/collaboration/domain/aggregate
 import { buildContentQualitySummary } from "@/lib/collaboration/domain/quality-rules";
 import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
 import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
-import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
+import { asCount, fromStatsStart, getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
 import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { measureAsync } from "@/lib/perf";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type {
+  CollaborationOverviewStats,
   OperatorRow,
   StaffRow,
   SummaryData,
@@ -87,6 +88,7 @@ export async function CollaborationDataContainer({
   // 配合 page.tsx 把 Suspense key 收窄到只随年月、工作台 handler 用 history.replaceState 镜像地址栏，
   // 切「岗位↔小组/四页签/进组」既不再重挂露骨架、也不再触发多余的服务端重渲染；翻月才走服务端重取。
   let summary: SummaryData | null = null;
+  let overviewStats: CollaborationOverviewStats | null = null;
   let operators: OperatorRow[] = [];
   let talents: TalentRow[] = [];
   let writerStaff: StaffRow[] = [];
@@ -141,8 +143,9 @@ export async function CollaborationDataContainer({
     // 认证候选只服务文案页签，但为让切到文案时即时呈现，组长/所有者首屏一并加载（组员不加载）。
     // 单独容错：这份数据只影响文案「可认证零产出候选」，失败时降级为不显示候选，
     // 不能连带把达人/运营/小组视图一起拖成空白。
-    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row]));
-    const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() };
+    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row])); // gate:transient-map 函数内临时索引，随调用栈释放
+    const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() }; // gate:transient-map 空标签回退，随调用栈释放
+    const snapshots = dataset.videoSnapshots ?? new Map(); // gate:transient-map 空快照回退，随调用栈释放
     writerCandidates = candidates.map((candidate) => {
       const existing = rowsByUserId.get(candidate.userId);
       if (existing?.writerQuality) return { ...candidate, writerQuality: existing.writerQuality };
@@ -151,7 +154,7 @@ export async function CollaborationDataContainer({
         writerQuality: {
           state: qualityTopics.state,
           summary: qualityTopics.state === "ready"
-            ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics, evaluationStandards)
+            ? buildContentQualitySummary([], snapshots, qualityTopics, evaluationStandards)
             : null,
         },
       };
@@ -160,6 +163,26 @@ export async function CollaborationDataContainer({
     workGroupViews = buildWorkGroupViews(dataset, evaluationStandards);
     workGroupRawGroups = dataset.workGroups?.groups ?? [];
     workGroupRoster = dataset.workGroups?.roster ?? [];
+
+    const scopedRows = fromStatsStart(dataset.currentRows);
+    const totalPlay = scopedRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
+    const overallQuality =
+      qualityTopics.state === "ready"
+        ? buildContentQualitySummary(
+            scopedRows,
+            snapshots,
+            qualityTopics,
+            evaluationStandards,
+          )
+        : null;
+    overviewStats = {
+      month,
+      total: summary.total,
+      totalPlay,
+      goodExcellentRate:
+        overallQuality && overallQuality.ratedCount > 0 ? overallQuality.goodExcellentRate : null,
+      restrictToSelf,
+    };
   } catch {
     loadFailed = true;
   }
@@ -179,12 +202,15 @@ export async function CollaborationDataContainer({
       actorTeamId={context.scope.teamId}
       evaluationStandards={evaluationStandards}
       summary={summary}
+      overviewStats={overviewStats}
       operators={operators}
       talents={talents}
       writerStaff={writerStaff}
       editorStaff={editorStaff}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       canManageVideos={canManageVideos}
+      currentUserId={context.scope.userId}
+      restrictToSelf={restrictToSelf}
       loadFailed={loadFailed}
       writerCandidates={writerCandidates}
     />

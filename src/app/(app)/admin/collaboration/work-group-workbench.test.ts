@@ -44,28 +44,30 @@ const modulesContentSource = [
   readFileSync(new URL("../../../../components/modules/member-inspector-exemption.tsx", import.meta.url), "utf8"),
 ].join("\n");
 
-test("P3.1: 协作管理具备岗位与小组双模式分段切换，进组/切模式用 history.replaceState 镜像 URL（免服务端重取、不污染历史）", () => {
-  assert.match(workbenchSource, /岗位协作管理/);
-  assert.match(workbenchSource, /小组协作管理/);
+test("P3.1: 协作管理具备按岗位与按小队双模式切换，进组用 pushState 保留返回栈、切模式用 replaceState 免服务端重取", () => {
+  assert.match(workbenchSource, /按岗位/);
+  assert.match(workbenchSource, /按小队/);
   assert.match(workbenchSource, /handleViewChange/);
   assert.match(workbenchSource, /handleSelectGroup/);
   assert.match(workbenchSource, /handleBackToGroupList/);
 
-  // 页内切换数据首屏已全备，镜像地址栏用 history.replaceState（不入栈、不触发服务端重渲染），
-  // 而非 router.replace（那会每次切换重跑整页服务端取数、地址栏滞后）。
+  // 切模式用 history.replaceState（不入栈、不触发服务端重渲染）
   const handleViewChangeBody =
     workbenchSource.match(/const handleViewChange = \(nextView: "roles" \| "teams"\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
   assert.match(handleViewChangeBody, /history\.replaceState\(/);
   assert.doesNotMatch(handleViewChangeBody, /router\.replace\(/);
   assert.doesNotMatch(handleViewChangeBody, /router\.push\(/);
 
+  // 进组详情用 history.pushState 压入历史栈，浏览器返回键通过 popstate 回到小队列表而不踢出模块
   const handleSelectGroupBody =
     workbenchSource.match(/const handleSelectGroup = \(groupId: string\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(handleSelectGroupBody, /history\.replaceState\(/);
+  assert.match(handleSelectGroupBody, /history\.pushState\(/);
   assert.doesNotMatch(handleSelectGroupBody, /router\.replace\(/);
+  assert.match(collaborationWorkbenchSource, /setSelectedGroupId\(nextView === "teams" \? nextGroupId : null\)/);
 
   const handleBackToGroupListBody =
     workbenchSource.match(/const handleBackToGroupList = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+  assert.match(handleBackToGroupListBody, /history\.back\(\)/);
   assert.match(handleBackToGroupListBody, /history\.replaceState\(/);
   assert.doesNotMatch(handleBackToGroupListBody, /router\.replace\(/);
 });

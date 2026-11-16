@@ -88,9 +88,9 @@ test("岗位表格已移除主表最近作品列，作品明细下沉至展开�
   assert.match(source, /TableCell className="w-10 px-2 py-2 sticky/);
 });
 
-test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1310px / 剪辑 695px），3字列/4字列规整化且有效优秀作品带箭头", () => {
-  assert.match(source, /writer:\s*"min-w-\[1310px\]"/);
-  assert.match(source, /editor:\s*"min-w-\[695px\]"/);
+test("岗位表格采用自适应文本列宽（min-w-[90px] w-auto）与紧凑总宽，减少笔记本横向滚动", () => {
+  assert.match(source, /writer:\s*"min-w-\[1180px\]"/);
+  assert.match(source, /editor:\s*"min-w-\[665px\]"/);
   // 列名精简断言
   assert.match(source, /条均播/);
   assert.match(source, /绩效条/);
@@ -98,27 +98,29 @@ test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1310px / 剪�
   // 有效作品与优秀作品带排序能力
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
-  // 列宽断言
-  assert.match(source, /<col className="w-\[90px\]" \/>/);  // 姓名90px
-  assert.match(source, /<col className="w-\[85px\]" \/>/);  // 4字列85px
-  assert.match(source, /<col className="w-\[150px\]" \/>/); // 负责账号150px
-  assert.match(source, /<col className="w-\[80px\]" \/>/);  // 3字列80px
-  assert.match(source, /<col className="w-\[75px\]" \/>/);  // 良优率75px
-  assert.match(source, /<col className="w-\[130px\]" \/>/); // 认证状态130px
+  // 文本列 min-w w-auto 自适应 + 数字列规整
+  assert.match(source, /<col className="min-w-\[90px\] w-auto" \/>/);
+  assert.match(source, /<col className="min-w-\[120px\] w-auto" \/>/);
+  assert.match(source, /<col className="w-\[80px\]" \/>/);
+  assert.match(source, /<col className="w-\[82px\]" \/>/);
+  assert.match(source, /<col className="w-\[75px\]" \/>/);
+  assert.match(source, /<col className="min-w-\[96px\] w-auto" \/>/);
 });
 
-test("达人与运营表格统一落地紧凑列宽、colgroup与py-2单行高度标准", () => {
+test("达人与运营表格统一落地自适应文本列宽、colgroup与py-2单行高度标准", () => {
   const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
 
   // 达人表规范断言
-  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1335px\]"/);
+  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1190px\]"/);
+  assert.match(talentSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(talentSource, /<TalentTableColGroup \/>/);
-  assert.match(talentSource, /<TableCell className="py-2 pl-4 pr-2 sticky left-0/);
+  assert.match(talentSource, /sticky left-0/);
 
   // 运营表规范断言
-  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[875px\]"/);
+  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[840px\]"/);
+  assert.match(operatorSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(operatorSource, /<Table className=\{`\$\{OPERATOR_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(operatorSource, /<OperatorTableColGroup \/>/);
   assert.match(operatorSource, /flex size-6 items-center justify-center/);

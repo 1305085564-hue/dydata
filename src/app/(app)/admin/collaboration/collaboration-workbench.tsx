@@ -13,6 +13,7 @@ import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 import {
+  type CollaborationOverviewStats,
   type OperatorRow,
   type StaffRow,
   type SummaryData,
@@ -27,6 +28,7 @@ import {
   buildCollaborationUrl,
   COLLABORATION_BASE_PATH,
   pickActiveGroupDetail,
+  resolveCollaborationView,
 } from "@/lib/collaboration/work-group-navigation";
 import {
   CollaborationDiagnosisContext,
@@ -47,12 +49,15 @@ interface CollaborationWorkbenchProps {
   actorTeamId?: string | null;
   evaluationStandards: EvaluationStandards;
   summary: SummaryData | null;
+  overviewStats?: CollaborationOverviewStats | null;
   operators: OperatorRow[];
   talents: TalentRow[];
   writerStaff: StaffRow[];
   editorStaff: StaffRow[];
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
+  currentUserId?: string | null;
+  restrictToSelf?: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
   writerCandidates?: WriterCandidateRow[];
@@ -72,25 +77,29 @@ export function CollaborationWorkbench({
   actorTeamId = null,
   evaluationStandards,
   summary,
+  overviewStats = null,
   operators,
   talents,
   writerStaff,
   editorStaff,
   isOwnerOrTeamAdmin,
   canManageVideos,
+  currentUserId = null,
+  restrictToSelf = false,
   loadFailed = false,
   writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
-  usePublishPageEpigraph("collaboration", buildCollaborationEpigraph(summary));
+  usePublishPageEpigraph("collaboration", buildCollaborationEpigraph(overviewStats ?? summary));
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [view, setView] = useState<"roles" | "teams">(defaultView);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(defaultPersonId);
-  // 档案抽屉是否由本页压入历史节点：关闭时据此决定「回退消费」还是「改写地址」，见 handleSelectPerson。
+  // 档案抽屉与小队详情是否由本页压入历史节点：关闭/返回时据此决定「回退消费」还是「改写地址」。
   const personEntryPushedRef = useRef(false);
+  const groupEntryPushedRef = useRef(false);
   const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
@@ -271,11 +280,22 @@ export function CollaborationWorkbench({
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${search}`);
   }, [year, month, view, tab, selectedGroupId]);
 
-  // 地址栏是抽屉开合的唯一真相：浏览器前进/后退时把 URL 里的 personId 同步回状态。
-  // 本页其余状态（页签/视图/小队）只改写地址不留节点，因此这里只会被抽屉节点触发。
+  // 地址栏是小队详情与档案抽屉的唯一真相：浏览器前进/后退时从 URL 恢复状态，保留月份与视图上下文。
   useEffect(() => {
     const handlePopState = () => {
-      setSelectedPersonId(new URLSearchParams(window.location.search).get("personId"));
+      const params = new URLSearchParams(window.location.search);
+      const nextView = resolveCollaborationView(params.get("view"));
+      const nextGroupId = params.get("groupId")?.trim() || null;
+      const nextPersonId = params.get("personId")?.trim() || null;
+      const rawTab = params.get("tab");
+      setView(nextView);
+      setSelectedGroupId(nextView === "teams" ? nextGroupId : null);
+      setSelectedPersonId(nextPersonId);
+      if (rawTab && ["talents", "operators", "writers", "editors"].includes(rawTab)) {
+        setTab(rawTab as TabKey);
+      }
+      if (!nextPersonId) personEntryPushedRef.current = false;
+      if (!nextGroupId || nextView !== "teams") groupEntryPushedRef.current = false;
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -297,16 +317,27 @@ export function CollaborationWorkbench({
 
   const handleViewChange = (nextView: "roles" | "teams") => {
     setView(nextView);
+    if (nextView === "roles") {
+      setSelectedGroupId(null);
+      groupEntryPushedRef.current = false;
+    }
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab, personId: selectedPersonId })}`);
   };
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
-    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId, personId: selectedPersonId })}`);
+    window.history.pushState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId, personId: selectedPersonId })}`);
+    groupEntryPushedRef.current = true;
   };
 
   const handleBackToGroupList = () => {
     setSelectedGroupId(null);
+    if (groupEntryPushedRef.current && !personEntryPushedRef.current) {
+      groupEntryPushedRef.current = false;
+      window.history.back();
+      return;
+    }
+    groupEntryPushedRef.current = false;
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", personId: selectedPersonId })}`);
   };
 
@@ -435,6 +466,8 @@ export function CollaborationWorkbench({
         editorStaff={editorStaff}
         writerCandidates={writerCandidates}
         isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+        currentUserId={currentUserId}
+        restrictToSelf={restrictToSelf}
         loadFailed={loadFailed}
         onBackToGroupList={handleBackToGroupList}
         onOpenManageDrawer={(groupId) => {

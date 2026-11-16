@@ -50,16 +50,17 @@ interface CollaborationWorkbenchContentProps {
   canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null; evaluationStandards: EvaluationStandards;
   manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number;
   diagnosisDetail: CollaborationDiagnosisDetail | null; openingReportId: string | null; leaderboardDialogOpen: boolean; summary: SummaryData | null;
-  talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; editorStaff: StaffRow[]; writerCandidates: WriterCandidateRow[]; isOwnerOrTeamAdmin: boolean; loadFailed: boolean;
+  talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; editorStaff: StaffRow[]; writerCandidates: WriterCandidateRow[]; isOwnerOrTeamAdmin: boolean; currentUserId?: string | null; restrictToSelf?: boolean; loadFailed: boolean;
   onBackToGroupList: () => void; onOpenManageDrawer: (groupId: string | null) => void; onSelectGroup: (id: string) => void; onSelectPerson: (id: string | null) => void;
   onLeaderboardChange: (open: boolean) => void; onCloseDiagnosis: () => void; onLifecycleChanged: () => void; onCloseManageDrawer: () => void;
   onGroupsChange: (groups: WorkGroupRow[]) => void; onRosterChange: (roster: WorkGroupRosterMember[]) => void;
 }
 
 export function CollaborationWorkbenchContent({
-  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
+  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
 }: CollaborationWorkbenchContentProps) {
   const evaluationStandardsKey = JSON.stringify(evaluationStandards);
+  const isMemberViewer = Boolean(currentUserId && (!isOwnerOrTeamAdmin || restrictToSelf));
   return (
     <>
         {/* Tab / View Content 区域 */}
@@ -70,6 +71,7 @@ export function CollaborationWorkbenchContent({
             <WorkGroupDetailView
               detail={activeGroupDetail}
               canManage={canManageWorkGroups}
+              currentUserId={currentUserId}
               onBack={onBackToGroupList}
               onOpenManageDrawer={(groupId) => {
                 onOpenManageDrawer(groupId);
@@ -99,12 +101,16 @@ export function CollaborationWorkbenchContent({
         ) : tab === "talents" ? (
           <TalentTab
             talents={talents}
+            currentUserId={currentUserId}
+            isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
         ) : tab === "operators" ? (
           <OperatorTab
             operators={operators}
+            currentUserId={currentUserId}
+            isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
@@ -113,6 +119,8 @@ export function CollaborationWorkbenchContent({
             rows={writerStaff}
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
+            currentUserId={currentUserId}
+            isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
@@ -121,6 +129,8 @@ export function CollaborationWorkbenchContent({
             rows={editorStaff}
             role="editor"
             isLoading={false}
+            currentUserId={currentUserId}
+            isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
           />
@@ -131,6 +141,8 @@ export function CollaborationWorkbenchContent({
         <LeaderboardDialog
           open={leaderboardDialogOpen}
           onOpenChange={onLeaderboardChange}
+          year={year}
+          month={month}
         />
 
         {/* 个人档案卡对话框（内嵌作品诊断子视图，支持单抽屉视口平滑长宽） */}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { ListRow } from "@/components/ui/list-row";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
+import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type { AccountLeaderboardRow } from "@/types";
 
@@ -17,18 +18,32 @@ interface LeaderboardApiResponse {
   error?: string;
 }
 
-export function LeaderboardTab() {
+export function LeaderboardTab({
+  year,
+  month,
+}: {
+  year?: number;
+  month?: number;
+} = {}) {
   const [data, setData] = useState<AccountLeaderboardRow[] | null>(null);
   const [ownAccountIds, setOwnAccountIds] = useState<string[]>([]);
   const [ownContentDirections, setOwnContentDirections] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const monthScope = useMemo(
+    () => (year !== undefined && month !== undefined ? getMonthRange(year, month) : null),
+    [year, month],
+  );
+
   const fetchLeaderboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/dashboard/leaderboard", {
+      const endpoint = monthScope
+        ? `/api/dashboard/leaderboard?year=${monthScope.year}&month=${monthScope.month}`
+        : "/api/dashboard/leaderboard";
+      const res = await fetch(endpoint, {
         headers: { "Cache-Control": "no-cache" },
       });
       if (!res.ok) {
@@ -44,7 +59,7 @@ export function LeaderboardTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [monthScope]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -135,7 +150,8 @@ export function LeaderboardTab() {
       data={data ?? []}
       ownAccountIds={ownAccountIds}
       ownContentDirections={ownContentDirections}
-      currentDate={formatShanghaiDateOnly()}
+      currentDate={monthScope ? monthScope.end : formatShanghaiDateOnly()}
+      monthScope={monthScope ?? undefined}
       defaultRange="week"
       defaultCompact={true}
     />

@@ -47,3 +47,51 @@ export function generateMonthOptions() {
 
   return options;
 }
+
+/**
+ * 拆分文案名单：
+ * - activeWriters：已在 writerStaff 中（已认证或本月有产出）+ 候选里已认证但尚未入列的成员
+ * - uncertifiedCandidates：未在 writerStaff 中且未认证的零产出候选成员（默认折叠在表底）
+ * Toolbar 徽标计数与 WriterTab 默认主表行数同源，杜绝两边口径漂移。
+ */
+export function partitionWriterCandidates<
+  TStaff extends { userId: string },
+  TCandidate extends { userId: string; certified: boolean },
+>(writerStaff: TStaff[], candidates: TCandidate[] = []) {
+  const existingUserIds = new Set(writerStaff.map((w) => w.userId));
+  const certifiedSupplemental: TCandidate[] = [];
+  const uncertifiedCandidates: TCandidate[] = [];
+
+  for (const candidate of candidates) {
+    if (existingUserIds.has(candidate.userId)) continue;
+    if (candidate.certified) {
+      certifiedSupplemental.push(candidate);
+    } else {
+      uncertifiedCandidates.push(candidate);
+    }
+  }
+
+  return {
+    activeWriterCount: writerStaff.length + certifiedSupplemental.length,
+    certifiedSupplemental,
+    uncertifiedCandidates,
+  };
+}
+
+/** 当前登录用户本人在表格中存在时，稳定置顶到第一行，其余行保持原有排序。 */
+export function pinCurrentUserFirst<T extends { userId: string }>(
+  rows: T[],
+  currentUserId?: string | null,
+): T[] {
+  if (!currentUserId) return rows;
+  const selfIndex = rows.findIndex((row) => row.userId === currentUserId);
+  if (selfIndex <= 0) return rows;
+  return [rows[selfIndex], ...rows.slice(0, selfIndex), ...rows.slice(selfIndex + 1)];
+}
+
+export const ROLE_ZERO_OUTPUT_RULE_TEXT: Record<TabKey, string> = {
+  talents: "你本月暂无计入该岗位的作品（统计规则：按名下绑定账号在本月发布的作品统计）",
+  operators: "你本月暂无计入该岗位的作品（统计规则：仅统计为他人孵化、负责账号的跨账号作品，自营账号归入达人）",
+  writers: "你本月暂无计入该岗位的作品（统计规则：统计本人本月署名文案的作品；管理员认证后计入文案绩效）",
+  editors: "你本月暂无计入该岗位的作品（统计规则：仅统计为他人账号协同剪辑的作品，自营账号剪辑不计入）",
+};

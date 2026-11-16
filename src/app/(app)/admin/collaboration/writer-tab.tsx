@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StaffTab } from "./staff-tab";
 import type { StaffRow, ContentQualitySummary } from "./types";
+import { partitionWriterCandidates } from "@/lib/collaboration/domain/workbench-state";
 
 export type WriterCandidateRow = {
   userId: string;
@@ -11,71 +12,103 @@ export type WriterCandidateRow = {
   writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null } | null;
 };
 
+function candidateToStaffRow(candidate: WriterCandidateRow): StaffRow {
+  return {
+    userId: candidate.userId,
+    name: candidate.name,
+    reportCount: 0,
+    followerConversionRate: null,
+    interactionRate: null,
+    effectiveCount: 0,
+    excellentCount: 0,
+    billingCount: null,
+    certifiedByName: candidate.certified ? "已认证" : null,
+    isCertified: candidate.certified,
+    totalPlay: 0,
+    avgPlay: 0,
+    selfHandledCount: 0,
+    involvedAccounts: [],
+    involvedAccountTotal: 0,
+    recentWorks: [],
+    works: [],
+    writerQuality: candidate.writerQuality ?? null,
+  };
+}
+
 export function WriterTab({
   rows,
   candidates,
   canCertify,
+  currentUserId,
+  isMemberViewer = false,
   onSelectPerson,
   onPrefetchPerson,
 }: {
   rows: StaffRow[];
   candidates: WriterCandidateRow[];
   canCertify: boolean;
+  currentUserId?: string | null;
+  isMemberViewer?: boolean;
   onSelectPerson: (id: string) => void;
   onPrefetchPerson: (id: string) => void;
 }) {
-  // 合并候选成员中尚未在 rows 里的成员（作为 0 作品行补齐），
-  // 一张表纵览全员，产出成员排前，零产出成员排后，随时可认证
-  const allRows = useMemo(() => {
-    const existingUserIds = new Set(rows.map((r) => r.userId));
-    const supplemental: StaffRow[] = [];
+  const [showCandidates, setShowCandidates] = useState(false);
 
-    for (const candidate of candidates) {
-      if (!existingUserIds.has(candidate.userId)) {
-        supplemental.push({
-          userId: candidate.userId,
-          name: candidate.name,
-          reportCount: 0,
-          followerConversionRate: null,
-          interactionRate: null,
-          effectiveCount: 0,
-          excellentCount: 0,
-          billingCount: null,
-          certifiedByName: candidate.certified ? "已认证" : null,
-          isCertified: candidate.certified,
-          totalPlay: 0,
-          avgPlay: 0,
-          selfHandledCount: 0,
-          involvedAccounts: [],
-          involvedAccountTotal: 0,
-          recentWorks: [],
-          works: [],
-          writerQuality: candidate.writerQuality ?? null,
-        });
-      }
-    }
-
-    const merged = [...rows, ...supplemental];
-    return merged.sort((a, b) => {
+  const { activeRows, uncertifiedRows } = useMemo(() => {
+    const { certifiedSupplemental, uncertifiedCandidates } = partitionWriterCandidates(
+      rows,
+      candidates,
+    );
+    const mergedActive = [...rows, ...certifiedSupplemental.map(candidateToStaffRow)].sort((a, b) => {
       if (b.reportCount !== a.reportCount) return b.reportCount - a.reportCount;
       const aCert = a.isCertified ? 1 : 0;
       const bCert = b.isCertified ? 1 : 0;
       if (bCert !== aCert) return bCert - aCert;
       return a.name.localeCompare(b.name, "zh-CN");
     });
+    const folded = uncertifiedCandidates
+      .map(candidateToStaffRow)
+      .sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+    return { activeRows: mergedActive, uncertifiedRows: folded };
   }, [rows, candidates]);
 
-  const certifiableUserIds = useMemo(() => {
-    return canCertify ? candidates.map((c) => c.userId) : [];
-  }, [canCertify, candidates]);
+  const visibleRows = useMemo(
+    () => (showCandidates ? [...activeRows, ...uncertifiedRows] : activeRows),
+    [activeRows, uncertifiedRows, showCandidates],
+  );
+
+  const certifiableUserIds = useMemo(
+    () => (canCertify ? candidates.map((c) => c.userId) : []),
+    [canCertify, candidates],
+  );
 
   return (
-    <StaffTab
-      rows={allRows}
-      role="writer"
-      onSelectPerson={onSelectPerson}
-      onPrefetchPerson={onPrefetchPerson}
-      certifiableUserIds={certifiableUserIds}
-    />
+    <div className="space-y-2">
+      <StaffTab
+        rows={visibleRows}
+        role="writer"
+        currentUserId={currentUserId}
+        isMemberViewer={isMemberViewer}
+        onSelectPerson={onSelectPerson}
+        onPrefetchPerson={onPrefetchPerson}
+        certifiableUserIds={certifiableUserIds}
+      />
+      {uncertifiedRows.length > 0 && (
+        <div className="px-1">
+          <button
+            type="button"
+            onClick={() => setShowCandidates((prev) => !prev)}
+            className="inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] font-normal text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors cursor-pointer"
+          >
+            <span className="tabular-nums">{showCandidates ? "[-]" : "[+]"}</span>
+            <span>
+              {showCandidates
+                ? `收起未认证候选人 (${uncertifiedRows.length})`
+                : `查看未认证候选人 (${uncertifiedRows.length})`}
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

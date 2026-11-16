@@ -14,6 +14,8 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
+import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
+import { SelfMemberBadge } from "./member-self-hint";
 import { WorkGroupKindBadge, formatRate } from "./work-group-list-tab";
 import {
   formatBigNumber,
@@ -23,6 +25,7 @@ import {
 interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;
   canManage?: boolean;
+  currentUserId?: string | null;
   onBack: () => void;
   onOpenManageDrawer?: (groupId: string) => void;
   onSelectPerson: (userId: string) => void;
@@ -56,6 +59,7 @@ const DETAIL_COLUMNS: Array<{ field: SortField; label: string; width: string }> 
 export function WorkGroupDetailView({
   detail,
   canManage = false,
+  currentUserId = null,
   onBack,
   onOpenManageDrawer,
   onSelectPerson,
@@ -93,8 +97,8 @@ export function WorkGroupDetailView({
       }
       return sortOrder === "desc" ? -diff : diff;
     });
-    return list;
-  }, [members, sortField, sortOrder]);
+    return pinCurrentUserFirst(list, currentUserId);
+  }, [members, sortField, sortOrder, currentUserId]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -273,13 +277,15 @@ export function WorkGroupDetailView({
                     </TableCell>
                   )}
                 </TableRow>
-                {sorted.map((member) => (
+                {sorted.map((member) => {
+                  const isSelf = Boolean(currentUserId && member.userId === currentUserId);
+                  return (
                   <TableRow
                     key={member.userId}
                     tabIndex={0}
                     role="button"
                     aria-label={`查看${member.name}的档案卡`}
-                    className="border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer"
+                    className={`border-b border-[#E2E2DF]/60 ${isSelf ? "bg-[#F7F7F6]" : ""} hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer`}
                     onClick={() => onSelectPerson(member.userId)}
                     onMouseEnter={() => onPrefetchPerson?.(member.userId)}
                     onKeyDown={(e) => {
@@ -287,8 +293,11 @@ export function WorkGroupDetailView({
                     }}
                   >
                     <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">
-                      <span className="truncate max-w-[140px] inline-block align-middle font-normal text-[#141413]">
-                        {member.name}
+                      <span className="inline-flex items-center max-w-full">
+                        <span className="truncate max-w-[140px] inline-block align-middle font-normal text-[#141413]">
+                          {member.name}
+                        </span>
+                        {isSelf && <SelfMemberBadge />}
                       </span>
                     </TableCell>
                     <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
@@ -342,7 +351,8 @@ export function WorkGroupDetailView({
                       </TableCell>
                     )}
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </Card>

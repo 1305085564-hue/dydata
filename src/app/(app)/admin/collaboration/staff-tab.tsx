@@ -22,8 +22,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { ListRow } from "@/components/ui/list-row";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
+import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
+import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import { formatBigNumber, type StaffRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
@@ -32,6 +34,8 @@ interface StaffTabProps {
   certifiableUserIds?: string[];
   role: "writer" | "editor";
   isLoading?: boolean;
+  currentUserId?: string | null;
+  isMemberViewer?: boolean;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
 }
@@ -52,8 +56,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1310px]",
-  editor: "min-w-[695px]",
+  writer: "min-w-[1180px]",
+  editor: "min-w-[665px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -68,22 +72,22 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
   return (
     <colgroup>
       <col className="w-10" />
-      <col className="w-[90px]" />
-      <col className="w-[150px]" />
+      <col className="min-w-[90px] w-auto" />
+      <col className="min-w-[120px] w-auto" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
+      <col className="w-[82px]" />
+      <col className="w-[82px]" />
+      <col className="w-[82px]" />
       {role === "writer" && (
         <>
-          <col className="w-[80px]" />
-          <col className="w-[80px]" />
-          <col className="w-[80px]" />
-          <col className="w-[85px]" />
-          <col className="w-[85px]" />
+          <col className="w-[76px]" />
+          <col className="w-[78px]" />
+          <col className="w-[78px]" />
+          <col className="w-[82px]" />
+          <col className="w-[82px]" />
           <col className="w-[75px]" />
-          <col className="w-[130px]" />
+          <col className="min-w-[96px] w-auto" />
         </>
       )}
     </colgroup>
@@ -292,21 +296,10 @@ function WriterCertificationCell({
 
 /** 单人数据行：只出单元格，行容器（是否可点、键盘行为）由调用方决定。 */
 export function StaffRowCells({
-  row,
-  role,
-  isExpanded,
-  onToggleExpand,
-  onSelectPerson,
-  onPrefetchPerson,
-  certifiableUserIds = [],
+  row, role, isSelf = false, isExpanded, onToggleExpand, onSelectPerson, onPrefetchPerson, certifiableUserIds = [],
 }: {
-  row: StaffRow;
-  role: StaffRole;
-  isExpanded: boolean;
-  onToggleExpand: (userId: string) => void;
-  onSelectPerson: (userId: string) => void;
-  onPrefetchPerson?: (userId: string) => void;
-  certifiableUserIds?: string[];
+  row: StaffRow; role: StaffRole; isSelf?: boolean; isExpanded: boolean;
+  onToggleExpand: (userId: string) => void; onSelectPerson: (userId: string) => void; onPrefetchPerson?: (userId: string) => void; certifiableUserIds?: string[];
 }) {
   const displayedAccounts = row.involvedAccounts.slice(0, 2).map((a) => a.accountName).join("、");
   const extraCount = row.involvedAccountTotal - Math.min(row.involvedAccounts.length, 2);
@@ -314,7 +307,7 @@ export function StaffRowCells({
 
   return (
     <>
-      <TableCell className="w-10 px-2 py-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
+      <TableCell className="w-10 px-2 py-2 sticky left-0 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10">
         <button
           type="button"
           onClick={() => onToggleExpand(row.userId)}
@@ -326,22 +319,18 @@ export function StaffRowCells({
           {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </button>
       </TableCell>
-      <TableCell className="text-left font-normal pl-4 py-2 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal pl-4 py-2 sticky left-10 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onSelectPerson(row.userId);
-          }}
+          onClick={(event) => { event.stopPropagation(); onSelectPerson(row.userId); }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className="hover:underline transition-colors cursor-pointer"
+          className="inline-flex items-center hover:underline transition-colors cursor-pointer"
         >
-          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${
-            isZero ? "text-[#78716C]" : "text-[#141413]"
-          }`}>
+          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${isZero ? "text-[#78716C]" : "text-[#141413]"}`}>
             {row.name}
           </span>
+          {isSelf && <SelfMemberBadge />}
         </button>
       </TableCell>
       <TableCell className="text-left py-2 pl-4 text-[#1F1E1D] overflow-hidden">
@@ -586,94 +575,74 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
   );
 }
 
-export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPerson, certifiableUserIds = [] }: StaffTabProps) {
+export function StaffTab({ rows, role, isLoading, currentUserId = null, isMemberViewer = false, onSelectPerson, onPrefetchPerson, certifiableUserIds = [] }: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
+  const tabKey = role === "writer" ? "writers" : "editors";
 
   const [sortField, setSortField] = useState<SortField>("reportCount");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
 
   const toggleExpand = (userId: string) => {
-    setExpandedUserIds((previous) =>
-      previous.has(userId) ? new Set() : new Set([userId]),
-    );
+    setExpandedUserIds((previous) => (previous.has(userId) ? new Set() : new Set([userId])));
   };
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
-    } else {
-      setSortField(field);
-      setSortOrder("desc");
-    }
+    if (sortField === field) setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    else { setSortField(field); setSortOrder("desc"); }
   };
 
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1" />;
-    }
-    return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#141413] ml-1" />
-    ) : (
-      <ArrowUp className="size-3 text-[#141413] ml-1" />
-    );
+    if (sortField !== field) return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1" />;
+    return sortOrder === "desc" ? <ArrowDown className="size-3 text-[#141413] ml-1" /> : <ArrowUp className="size-3 text-[#141413] ml-1" />;
   };
 
   const sortedRows = useMemo(() => {
     const getSortValue = (row: StaffRow, field: SortField): number | null => {
-      if (field === "avgInteractionAchievement") {
-        return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
-      }
-      if (field === "avgContentAchievement") {
-        return row.writerQuality?.summary?.avgContentAchievement ?? null;
-      }
-      if (field === "goodExcellentRate") {
-        return row.writerQuality?.summary?.goodExcellentRate ?? null;
-      }
+      if (field === "avgInteractionAchievement") return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
+      if (field === "avgContentAchievement") return row.writerQuality?.summary?.avgContentAchievement ?? null;
+      if (field === "goodExcellentRate") return row.writerQuality?.summary?.goodExcellentRate ?? null;
       return row[field] ?? null;
     };
-
     const list = [...rows];
     list.sort((left, right) => {
       const valLeft = getSortValue(left, sortField);
       const valRight = getSortValue(right, sortField);
-      // null 置后，真实 0 正常参与排序
       if (valLeft === null && valRight === null) return 0;
       if (valLeft === null) return 1;
       if (valRight === null) return -1;
       const diff = valRight - valLeft;
       return sortOrder === "desc" ? diff : -diff;
     });
-    return list;
-  }, [rows, sortField, sortOrder]);
+    return pinCurrentUserFirst(list, currentUserId);
+  }, [rows, sortField, sortOrder, currentUserId]);
+
+  const showSelfZeroHint = Boolean(
+    isMemberViewer && currentUserId && !rows.some((r) => r.userId === currentUserId && r.reportCount > 0),
+  );
 
   if (isLoading) {
     return (
       <Card className="p-4 gap-3">
         <Skeleton className="h-10 w-full rounded-xl" />
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-12 w-full rounded-xl" />
-        ))}
+        {Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-12 w-full rounded-xl" />)}
       </Card>
     );
   }
 
   if (rows.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <EmptyState
-          illustration={
-            role === "writer" ? (
-              <DeskStudyIllustration size={96} />
-            ) : (
-              <CompassConstellationIllustration size={96} />
-            )
-          }
-          title={`本月暂无${roleLabel}岗位记录`}
-          description={role === "writer"
-            ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常结算文案绩效。"
-            : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
-        />
+      <div className="space-y-3">
+        {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
+        <div className="py-16 text-center">
+          <EmptyState
+            illustration={role === "writer" ? <DeskStudyIllustration size={96} /> : <CompassConstellationIllustration size={96} />}
+            title={`本月暂无${roleLabel}岗位记录`}
+            description={role === "writer"
+              ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常结算文案绩效。"
+              : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
+          />
+        </div>
       </div>
     );
   }
@@ -681,6 +650,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   return (
     <TooltipProvider>
       <div className="space-y-2">
+      {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
       <Card className="overflow-hidden p-0 gap-0">
         <Table className={`${STAFF_TABLE_MIN_WIDTH[role]} table-fixed`}>
           <StaffTableColGroup role={role} />
@@ -690,13 +660,17 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           <TableBody className="text-[13px]">
             {sortedRows.map((row) => {
               const isExpanded = expandedUserIds.has(row.userId);
-
+              const isSelf = Boolean(currentUserId && row.userId === currentUserId);
               return (
                 <Fragment key={row.userId}>
-                <TableRow className={`group transition-colors ${isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]"}`}>
+                <TableRow
+                  data-self={isSelf ? "true" : undefined}
+                  className={`group transition-colors data-[self=true]:bg-[#F7F7F6] ${isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]"}`}
+                >
                   <StaffRowCells
                     row={row}
                     role={role}
+                    isSelf={isSelf}
                     isExpanded={isExpanded}
                     onToggleExpand={toggleExpand}
                     onSelectPerson={onSelectPerson}

@@ -30,6 +30,7 @@ interface LeaderboardProps {
   ownAccountIds: string[];
   ownContentDirections?: string[];
   currentDate: string;
+  monthScope?: { year: number; month: number; start: string; end: string };
   defaultRange?: LeaderboardRange;
   defaultCompact?: boolean;
 }
@@ -77,6 +78,7 @@ export function Leaderboard({
   ownAccountIds,
   ownContentDirections = [],
   currentDate,
+  monthScope,
   defaultRange = "week",
   defaultCompact = true,
 }: LeaderboardProps) {
@@ -87,12 +89,8 @@ export function Leaderboard({
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   function handleSortClick(key: MetricKey) {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
+    if (key === sortKey) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else { setSortKey(key); setSortDir("desc"); }
   }
 
   const normalizedOwnDirections = useMemo(
@@ -101,23 +99,20 @@ export function Leaderboard({
   );
 
   const rangeStart = useMemo(() => {
+    if (monthScope) return monthScope.start;
     if (range === "today") return currentDate;
     if (range === "week") return shiftDate(currentDate, -6);
     return shiftDate(currentDate, -29);
-  }, [currentDate, range]);
+  }, [currentDate, monthScope, range]);
+
+  const rangeEnd = monthScope ? monthScope.end : currentDate;
 
   const baseRows = useMemo(
-    () =>
-      data.filter(
-        (row) => row.report_date >= rangeStart && row.report_date <= currentDate
-      ),
-    [currentDate, data, rangeStart]
+    () => data.filter((row) => row.report_date >= rangeStart && row.report_date <= rangeEnd),
+    [data, rangeEnd, rangeStart]
   );
 
-  const progressByAccount = useMemo(
-    () => buildProgressMap(data, currentDate),
-    [currentDate, data]
-  );
+  const progressByAccount = useMemo(() => buildProgressMap(data, rangeEnd), [data, rangeEnd]);
 
   const { items, emptyMessage } = useMemo(() => {
     const filteredRows =
@@ -196,11 +191,17 @@ export function Leaderboard({
           />
           {/* 结构呼吸微竖线 */}
           <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
-          <SegmentedControl
-            options={RANGE_OPTIONS}
-            value={range}
-            onChange={(value) => setRange(value as LeaderboardRange)}
-          />
+          {monthScope ? (
+            <span className="px-2.5 text-[12px] text-[#78716C] tabular-nums">
+              {monthScope.year} 年 {monthScope.month} 月全月
+            </span>
+          ) : (
+            <SegmentedControl
+              options={RANGE_OPTIONS}
+              value={range}
+              onChange={(value) => setRange(value as LeaderboardRange)}
+            />
+          )}
         </FilterBar>
         <Button
           type="button"
@@ -748,26 +749,16 @@ function getMetricValue(item: AccountLeaderboardItem, key: MetricKey): number {
 
 function formatMetric(item: AccountLeaderboardItem, key: MetricKey) {
   switch (key) {
-    case "views":
-      return formatLargeNumber(item.views);
-    case "followerGain":
-      return item.followerGain.toLocaleString("zh-CN");
-    case "followerConvert":
-      return item.followerConvert.toLocaleString("zh-CN");
-    case "likes":
-      return formatLargeNumber(item.likes);
-    case "comments":
-      return formatLargeNumber(item.comments);
-    case "shares":
-      return formatLargeNumber(item.shares);
-    case "favorites":
-      return formatLargeNumber(item.favorites);
-    case "watchDuration":
-      return item.watchDuration === null ? "—" : `${item.watchDuration.toFixed(1)}秒`;
-    case "bounceRate":
-      return item.bounceRate === null ? "—" : `${item.bounceRate.toFixed(1)}%`;
-    case "completionRate5s":
-      return item.completionRate5s === null ? "—" : `${item.completionRate5s.toFixed(1)}%`;
+    case "views": return formatLargeNumber(item.views);
+    case "followerGain": return item.followerGain.toLocaleString("zh-CN");
+    case "followerConvert": return item.followerConvert.toLocaleString("zh-CN");
+    case "likes": return formatLargeNumber(item.likes);
+    case "comments": return formatLargeNumber(item.comments);
+    case "shares": return formatLargeNumber(item.shares);
+    case "favorites": return formatLargeNumber(item.favorites);
+    case "watchDuration": return item.watchDuration === null ? "—" : `${item.watchDuration.toFixed(1)}秒`;
+    case "bounceRate": return item.bounceRate === null ? "—" : `${item.bounceRate.toFixed(1)}%`;
+    case "completionRate5s": return item.completionRate5s === null ? "—" : `${item.completionRate5s.toFixed(1)}%`;
   }
 }
 

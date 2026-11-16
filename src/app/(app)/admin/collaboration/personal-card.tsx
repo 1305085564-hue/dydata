@@ -343,11 +343,17 @@ export function PersonalCard({
                 <Skeleton className="h-20 w-full rounded-xl" />
                 <Skeleton className="h-20 w-full rounded-xl" />
               </div>
-              <Skeleton className="h-44 w-full rounded-xl" />
               <Skeleton className="h-60 w-full rounded-xl" />
+              <Skeleton className="h-44 w-full rounded-xl" />
             </div>
           ) : data ? (
             <>
+              <PersonalCardWorks
+                data={data}
+                activeTab={activeTab}
+                diagnosisContext={diagnosisContext}
+              />
+
               <PersonalCardMetrics
                 data={data}
                 activeTab={activeTab}
@@ -360,12 +366,6 @@ export function PersonalCard({
                 onHoverWork={handleHoverWork}
                 diagnosisContext={diagnosisContext}
                 onClearHover={() => setHoveredWork(null)}
-              />
-
-              <PersonalCardWorks
-                data={data}
-                activeTab={activeTab}
-                diagnosisContext={diagnosisContext}
               />
 
               {/* 完卷微符 */}

@@ -28,11 +28,15 @@ import {
 } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
+import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
+import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import { formatBigNumber, formatMomChange, type OperatorRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
 interface OperatorTabProps {
   operators: OperatorRow[];
+  currentUserId?: string | null;
+  isMemberViewer?: boolean;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
 }
@@ -40,22 +44,22 @@ interface OperatorTabProps {
 type SortField =
   "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
 
-export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[875px]";
+export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[840px]";
 
 export function OperatorTableColGroup() {
   return (
     <colgroup>
       <col className="w-10" />
-      <col className="w-[90px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
+      <col className="min-w-[90px] w-auto" />
+      <col className="w-[82px]" />
+      <col className="w-[82px]" />
       <col className="w-[80px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
+      <col className="w-[82px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
-      <col className="w-[80px]" />
+      <col className="w-[78px]" />
+      <col className="w-[78px]" />
+      <col className="w-[78px]" />
     </colgroup>
   );
 }
@@ -150,12 +154,14 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
 /** 单人数据行：只出单元格，行容器由调用方决定（组详情行整行可点开档案）。 */
 export function OperatorRowCells({
   row,
+  isSelf = false,
   isExpanded,
   onToggleExpand,
   onSelectPerson,
   onPrefetchPerson,
 }: {
   row: OperatorRow;
+  isSelf?: boolean;
   isExpanded: boolean;
   onToggleExpand: (userId: string) => void;
   onSelectPerson: (userId: string) => void;
@@ -167,7 +173,7 @@ export function OperatorRowCells({
 
   return (
     <>
-      <TableCell className="w-10 px-2 py-2 text-center sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
+      <TableCell className="w-10 px-2 py-2 text-center sticky left-0 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10">
         {canExpand ? (
           <button
             type="button"
@@ -196,7 +202,7 @@ export function OperatorRowCells({
           <div className="size-6" />
         )}
       </TableCell>
-      <TableCell className="text-left font-normal py-2 px-2 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal py-2 px-2 sticky left-10 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -205,13 +211,14 @@ export function OperatorRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className="hover:underline transition-colors cursor-pointer"
+          className="inline-flex items-center hover:underline transition-colors cursor-pointer"
         >
           <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${
             isZero ? "text-[#78716C]" : "text-[#141413]"
           }`}>
             {row.name}
           </span>
+          {isSelf && <SelfMemberBadge />}
         </button>
       </TableCell>
       <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -318,6 +325,8 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
 
 export function OperatorTab({
   operators,
+  currentUserId = null,
+  isMemberViewer = false,
   onSelectPerson,
   onPrefetchPerson,
 }: OperatorTabProps) {
@@ -361,23 +370,33 @@ export function OperatorTab({
       const diff = valRight - valLeft;
       return sortOrder === "desc" ? diff : -diff;
     });
-    return list;
-  }, [operators, sortField, sortOrder]);
+    return pinCurrentUserFirst(list, currentUserId);
+  }, [operators, sortField, sortOrder, currentUserId]);
+
+  const showSelfZeroHint = Boolean(
+    isMemberViewer &&
+      currentUserId &&
+      !operators.some((r) => r.userId === currentUserId && r.reportCount > 0),
+  );
 
   if (operators.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <EmptyState
-          illustration={<DeskStudyIllustration size={96} />}
-          title="本月暂无跨账号协同记录"
-          description="这里展示成员跨账号协作的作品表现；自营账号作品在达人专栏查看。"
-        />
+      <div className="space-y-3">
+        {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
+        <div className="py-16 text-center">
+          <EmptyState
+            illustration={<DeskStudyIllustration size={96} />}
+            title="本月暂无跨账号协同记录"
+            description="这里展示成员跨账号协作的作品表现；自营账号作品在达人专栏查看。"
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
+    {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
     <Card className="overflow-hidden p-0 gap-0">
       <Table className={`${OPERATOR_TABLE_MIN_WIDTH} table-fixed`}>
         <OperatorTableColGroup />
@@ -388,11 +407,13 @@ export function OperatorTab({
           {sortedOperators.map((op) => {
             const canExpand = op.accounts.length > 0;
             const isExpanded = canExpand && expandedUserIds.has(op.userId);
+            const isSelf = Boolean(currentUserId && op.userId === currentUserId);
 
             return (
               <Fragment key={op.userId}>
                 <TableRow
-                  className={`group transition-colors ${
+                  data-self={isSelf ? "true" : undefined}
+                  className={`group transition-colors data-[self=true]:bg-[#F7F7F6] ${
                     isExpanded
                       ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]"
                       : "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60"
@@ -400,6 +421,7 @@ export function OperatorTab({
                 >
                   <OperatorRowCells
                     row={op}
+                    isSelf={isSelf}
                     isExpanded={isExpanded}
                     onToggleExpand={toggleExpand}
                     onSelectPerson={onSelectPerson}

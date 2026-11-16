@@ -13,12 +13,16 @@ import {
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
+import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
+import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
 interface TalentTabProps {
   talents: TalentRow[];
+  currentUserId?: string | null;
+  isMemberViewer?: boolean;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson: (userId: string) => void;
 }
@@ -34,25 +38,25 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate";
 
-export const TALENT_TABLE_MIN_WIDTH = "min-w-[1335px]";
+export const TALENT_TABLE_MIN_WIDTH = "min-w-[1190px]";
 
 export function TalentTableColGroup() {
   return (
     <colgroup>
-      <col className="w-[90px]" />
-      <col className="w-[80px]" />
-      <col className="w-[85px]" />
-      <col className="w-[80px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
-      <col className="w-[85px]" />
+      <col className="min-w-[90px] w-auto" />
+      <col className="w-[72px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
-      <col className="w-[90px]" />
-      <col className="w-[90px]" />
-      <col className="w-[90px]" />
-      <col className="w-[220px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+      <col className="w-[76px]" />
+      <col className="w-[76px]" />
+      <col className="w-[82px]" />
+      <col className="w-[82px]" />
+      <col className="w-[88px]" />
+      <col className="min-w-[140px] w-auto" />
     </colgroup>
   );
 }
@@ -69,7 +73,7 @@ export interface TalentColumnSort {
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-      <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] min-w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
@@ -179,16 +183,19 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
 }
 
 /** 单人数据行：只出单元格，行容器由调用方决定（岗位 Tab 行不可整行点，组详情行可整行点）。 */
-export function TalentRowCells({ row }: { row: TalentRow }) {
+export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf?: boolean }) {
   const isZero = row.reportCount === 0;
 
   return (
     <>
-      <TableCell className="py-2 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <span className={`text-[14px] font-normal truncate block hover:text-[#D97757] transition-colors ${
-          isZero ? "text-[#78716C]" : "text-[#141413]"
-        }`}>
-          {row.name}
+      <TableCell className={`py-2 pl-4 pr-2 sticky left-0 ${isSelf ? "bg-[#F7F7F6]" : "bg-white"} group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]`}>
+        <span className="inline-flex items-center max-w-full">
+          <span className={`text-[14px] font-normal truncate hover:text-[#D97757] transition-colors ${
+            isZero ? "text-[#78716C]" : "text-[#141413]"
+          }`}>
+            {row.name}
+          </span>
+          {isSelf && <SelfMemberBadge />}
         </span>
       </TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -237,6 +244,8 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
 
 export function TalentTab({
   talents,
+  currentUserId = null,
+  isMemberViewer = false,
   onSelectPerson,
   onPrefetchPerson,
 }: TalentTabProps) {
@@ -251,17 +260,26 @@ export function TalentTab({
       const diff = sortOrder === "desc" ? right - left : left - right;
       return diff || a.name.localeCompare(b.name, "zh-CN");
     });
-    return list;
-  }, [talents, sortField, sortOrder]);
+    return pinCurrentUserFirst(list, currentUserId);
+  }, [talents, sortField, sortOrder, currentUserId]);
+
+  const showSelfZeroHint = Boolean(
+    isMemberViewer &&
+      currentUserId &&
+      !talents.some((r) => r.userId === currentUserId && r.reportCount > 0),
+  );
 
   if (talents.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <EmptyState
-          illustration={<CompassConstellationIllustration size={96} />}
-          title="本月暂无达人作品记录"
-          description="有自营或出镜账号的成员，作品与数据会汇总在这里。"
-        />
+      <div className="space-y-3">
+        {showSelfZeroHint && <MemberZeroOutputBanner tab="talents" />}
+        <div className="py-16 text-center">
+          <EmptyState
+            illustration={<CompassConstellationIllustration size={96} />}
+            title="本月暂无达人作品记录"
+            description="有自营或出镜账号的成员，作品与数据会汇总在这里。"
+          />
+        </div>
       </div>
     );
   }
@@ -288,6 +306,7 @@ export function TalentTab({
 
   return (
     <div className="space-y-2">
+      {showSelfZeroHint && <MemberZeroOutputBanner tab="talents" />}
       <Card className="overflow-hidden p-0 gap-0">
       <Table className={`${TALENT_TABLE_MIN_WIDTH} table-fixed`}>
         <TalentTableColGroup />
@@ -295,13 +314,15 @@ export function TalentTab({
           <TalentHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
         </TableHeader>
         <TableBody className="text-[13px]">
-          {sorted.map((row) => (
+          {sorted.map((row) => {
+            const isSelf = Boolean(currentUserId && row.userId === currentUserId);
+            return (
             <TableRow
               key={row.userId}
               tabIndex={0}
               role="button"
               aria-label={`查看${row.name}的个人档案`}
-              className="group border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer"
+              className={`group border-b border-[#E2E2DF]/60 ${isSelf ? "bg-[#F7F7F6]" : ""} hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer`}
               onClick={() => onSelectPerson(row.userId)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -314,9 +335,10 @@ export function TalentTab({
               onMouseEnter={() => onPrefetchPerson(row.userId)}
               onFocus={() => onPrefetchPerson(row.userId)}
             >
-              <TalentRowCells row={row} />
+              <TalentRowCells row={row} isSelf={isSelf} />
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
       </Card>

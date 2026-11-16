@@ -12,6 +12,7 @@ import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
 import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 import { loadCloudBaseLeaderboardRows } from "@/lib/loaders/cloudbase-leaderboard";
+import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 
 type DashboardPermissionContext = {
   scope: {
@@ -24,6 +25,8 @@ export async function buildDashboardLeaderboardResponse({
   userId,
   permissionContext,
   visibleUserIds,
+  year,
+  month,
   now = new Date(),
   cloudBase = isCloudBaseBackend(),
 }: {
@@ -31,13 +34,20 @@ export async function buildDashboardLeaderboardResponse({
   userId: string;
   permissionContext: DashboardPermissionContext;
   visibleUserIds?: string[];
+  year?: number;
+  month?: number;
   now?: Date;
   cloudBase?: boolean;
 }) {
   if (!permissionContext) {
     return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
   }
-  const monthAgo = shiftDateOnly(now, -30);
+  const hasMonthFilter = year !== undefined || month !== undefined;
+  const monthRange = hasMonthFilter ? getMonthRange(Number(year), Number(month)) : null;
+  if (hasMonthFilter && !monthRange) {
+    return NextResponse.json({ error: "year 或 month 参数不正确" }, { status: 400 });
+  }
+  const sinceDate = monthRange ? monthRange.start : shiftDateOnly(now, -30);
   const effectiveVisibleUserIds = visibleUserIds ?? permissionContext.scope.visibleUserIds;
 
   try {
@@ -48,8 +58,8 @@ export async function buildDashboardLeaderboardResponse({
         .eq("profile_id", userId)
         .order("created_at", { ascending: true }),
       cloudBase
-        ? loadCloudBaseLeaderboardRows(supabase, monthAgo, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
-        : supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
+        ? loadCloudBaseLeaderboardRows(supabase, sinceDate, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
+        : supabase.rpc("get_leaderboard_rows", { since_date: sinceDate }),
     ]));
 
     assertSupabaseQuerySucceeded(accountsResult.error, "读取排行榜账号失败");
@@ -64,11 +74,19 @@ export async function buildDashboardLeaderboardResponse({
       )
     );
 
+    const visibleRows = filterLeaderboardByVisibleUsers(
+      leaderboardResult.data ?? [],
+      effectiveVisibleUserIds
+    );
+    const scopedRows = monthRange
+      ? visibleRows.filter((row) => {
+          const reportDate = String((row as { report_date?: unknown }).report_date ?? "").slice(0, 10);
+          return reportDate >= monthRange.start && reportDate <= monthRange.end;
+        })
+      : visibleRows;
+
     return NextResponse.json({
-      leaderboardData: filterLeaderboardByVisibleUsers(
-        leaderboardResult.data ?? [],
-        effectiveVisibleUserIds
-      ),
+      leaderboardData: scopedRows,
       accountIds,
       ownContentDirections,
     });
@@ -107,11 +125,17 @@ export async function GET(request: Request) {
       }
     }
 
+    const searchParams = new URL(request.url).searchParams;
+    const rawYear = searchParams.get("year");
+    const rawMonth = searchParams.get("month");
+    const hasMonthParams = rawYear !== null || rawMonth !== null;
+
     return buildDashboardLeaderboardResponse({
       supabase: adminClient,
       userId: user.id,
       permissionContext,
       visibleUserIds,
+      ...(hasMonthParams ? { year: Number(rawYear), month: Number(rawMonth) } : {}),
     });
   });
 }
