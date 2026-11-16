@@ -28,7 +28,6 @@ export function useContentListState(props: ContentListProps) {
     canSwitchPerspective = false,
     canManageVideos = false,
     canReviewContent = true,
-    onDirectReview,
   } = props;
 
   const searchParams = useSearchParams();
@@ -340,7 +339,6 @@ export function useContentListState(props: ContentListProps) {
     canSwitchPerspective,
     canManageVideos,
     canReviewContent,
-    onDirectReview,
     profiles,
     PLAY_BUCKETS,
     CUSTOM_PLAY_BUCKET_KEY,

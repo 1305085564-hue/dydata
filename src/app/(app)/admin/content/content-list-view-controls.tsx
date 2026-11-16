@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
-type ContentListViewControlsProps = Pick<ContentListProps, "view" | "onViewChange" | "canManageVideos" | "onDirectReview" | "isViewLoading"> &
+type ContentListViewControlsProps = Pick<ContentListProps, "view" | "onViewChange" | "canManageVideos" | "isViewLoading"> &
   Pick<ContentListState, "metricViewMode" | "setMetricViewMode" | "filters" | "toggleOnlyAnomaly" | "anomalyCountForTime"> & {
     className?: string;
   };
@@ -12,7 +12,6 @@ export function ContentListViewControls({
   view,
   onViewChange,
   canManageVideos,
-  onDirectReview,
   isViewLoading = false,
   metricViewMode,
   setMetricViewMode,
@@ -104,45 +103,25 @@ export function ContentListViewControls({
             </div>
           )}
 
-          {/* 3. 分隔线 (当在正常全量视图时) */}
-          {view === "all" && <div className="hidden sm:block h-4 w-px bg-[#E2E2DF] mx-0.5" />}
-
-          {/* 4. 异常快捷开关 (仅在正常全部视图下呈现) */}
-          {view === "all" && (
-            <div className="inline-flex items-center gap-1">
+          {/* 3. 分隔线 & 单一纯过滤开关：只看异常 (N)（异常数为 0 且未激活时隐藏） */}
+          {view === "all" && (anomalyCountForTime > 0 || filters.onlyAnomaly) && (
+            <>
+              <div className="hidden sm:block h-4 w-px bg-[#E2E2DF] mx-0.5" />
               <button
                 type="button"
                 onClick={toggleOnlyAnomaly}
+                aria-pressed={filters.onlyAnomaly}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] transition cursor-pointer select-none",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[14px] tabular-nums transition cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger shadow-input"
-                    : anomalyCountForTime > 0
-                      ? "border border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input"
-                      : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413] shadow-input"
+                    : "border border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input"
                 )}
-                title="点击仅看异常作品（按当前时间范围实时统计）；点右侧数字查看最需关注异常详情"
+                title={filters.onlyAnomaly ? "点击取消仅看异常" : "点击仅看异常作品（删稿 / 限流 / 异常）"}
               >
-                <span>异常</span>
+                <span>只看异常 ({anomalyCountForTime})</span>
               </button>
-
-              {anomalyCountForTime > 0 && onDirectReview && (
-                <button
-                  type="button"
-                  onClick={onDirectReview}
-                  title="直接打开当前时间范围内最需关注的异常视频"
-                  aria-label={`查看最需关注异常详情（${anomalyCountForTime} 条）`}
-                  className={cn(
-                    "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-normal transition-colors cursor-pointer",
-                    filters.onlyAnomaly
-                      ? "bg-[#EBEBE9] text-ink-body hover:bg-[#E2E2DF]"
-                      : "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9]"
-                  )}
-                >
-                  {anomalyCountForTime}
-                </button>
-              )}
-            </div>
+            </>
           )}
         </div>
 

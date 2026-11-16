@@ -42,9 +42,43 @@ test("视频复盘列表支持完整/宽松指标视图切换，评级与留存�
   assert.match(source, /data-col-key="overall_grade"/);
 });
 
-test("视频复盘列表空态占位单元格支持动态跨列（宽松11列/完整15列）", () => {
-  assert.match(source, /dynamicColSpan/);
+test("视频复盘列表空态占位单元格支持动态跨列（宽松13列/完整17列）", () => {
+  assert.match(source, /dynamicColSpan = isSpacious \? 13 : 17/);
   assert.match(source, /colSpan=\{dynamicColSpan\}/);
+});
+
+test("桌面端表头与表体第14-16列严格对齐为 互动率 → 留存达成 → 评级，且补齐悬停列联动", () => {
+  const header = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/content-list-table-header.tsx"), "utf8");
+  const table = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/content-list-table.tsx"), "utf8");
+
+  const headerOrder = [...header.matchAll(/<th\b[^>]*data-col-key="([^"]+)"/g)].map((m) => m[1]);
+  const bodyOrder = [...table.matchAll(/<td\b[^>]*data-col-key="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(headerOrder, bodyOrder, "表头与表体列顺序必须完全一致");
+  assert.equal(headerOrder.length, 17);
+  assert.deepEqual(headerOrder.slice(-4), [
+    "interaction_rate",
+    "retention_achievement",
+    "overall_grade",
+    "published_at",
+  ]);
+  assert.match(header, /hoveredColKey === "retention_achievement"/);
+  assert.match(header, /hoveredColKey === "overall_grade"/);
+  assert.match(table, /hoveredColKey === "retention_achievement"/);
+  assert.match(table, /hoveredColKey === "overall_grade"/);
+});
+
+test("详情播放卡片对齐综合评级播放门槛且不再硬编码10万爆款文案", () => {
+  const metrics = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/detail/content-detail-metrics.tsx"), "utf8");
+  const dialog = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/content-detail-dialog.tsx"), "utf8");
+  const evidence = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/detail/content-detail-evidence.tsx"), "utf8");
+
+  assert.doesNotMatch(metrics, /爆款层级/);
+  assert.match(metrics, /已过 1\.5 万线（评级不封顶）/);
+  assert.match(metrics, /不足 2 千（直接判普）/);
+  assert.doesNotMatch(dialog, /ID:\s*\{video/);
+  assert.doesNotMatch(dialog, /<Flame\b/);
+  assert.doesNotMatch(evidence, /手机端截图|电脑端宽图|>点击全屏</);
+  assert.doesNotMatch(evidence, /group-hover:scale-\[1\.01\]/);
 });
 
 test("异常状态使用统一橙色标记（腰斩已下线，不再单独成标记）", () => {

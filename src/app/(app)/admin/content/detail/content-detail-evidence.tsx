@@ -1,6 +1,6 @@
 "use client";
 
-import { Columns2, ChevronDown, Monitor, Smartphone, Maximize2, ZoomIn } from "lucide-react";
+import { Columns2, ChevronDown, Maximize2, ZoomIn } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
@@ -82,23 +82,8 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                   }`}
                 >
                   <div>
-                    <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1">
-                        {curveScreenshot && (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? (
-                          <Monitor className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <Smartphone className="size-3.5 text-[#78716C]" />
-                        )}
-                        <span className="font-normal text-[#1F1E1D]">流量曲线</span>
-                        {curveScreenshot && (
-                          <span className="text-[12px] text-[#78716C]">
-                            {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
-                          </span>
-                        )}
-                      </div>
-                      {curveScreenshot && (
-                        <span className="text-[12px] text-[#78716C]">点击全屏</span>
-                      )}
+                    <div className="mb-2 flex items-center text-[12px]">
+                      <span className="font-normal text-[#1F1E1D]">流量曲线</span>
                     </div>
 
                     {curveScreenshot && screenshotGrantReady ? (
@@ -108,7 +93,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -127,7 +112,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                             }
                           }}
                           onError={() => handleImageError?.(curveScreenshot.url)}
-                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
+                          className={`w-full object-contain ${
                             effectiveLayout === "stacked"
                               ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
                                 ? "max-h-[440px]"
@@ -135,12 +120,9 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                               : "max-h-[540px]"
                           }`}
                         />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <span>流量曲线截图</span>
-                          <span className="flex items-center gap-1 font-normal">
-                            <ZoomIn className="size-3.5" />
-                            点击全屏放大
-                          </span>
+                        <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                          <ZoomIn className="size-3.5 text-[#78716C]" />
+                          <span>全屏查看</span>
                         </div>
                       </button>
                     ) : curveScreenshot ? pending : (
@@ -153,23 +135,8 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1">
-                        {retentionScreenshot && (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? (
-                          <Monitor className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <Smartphone className="size-3.5 text-[#78716C]" />
-                        )}
-                        <span className="font-normal text-[#1F1E1D]">留存脱落</span>
-                        {retentionScreenshot && (
-                          <span className="text-[12px] text-[#78716C]">
-                            {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
-                          </span>
-                        )}
-                      </div>
-                      {retentionScreenshot && (
-                        <span className="text-[12px] text-[#78716C]">点击全屏</span>
-                      )}
+                    <div className="mb-2 flex items-center text-[12px]">
+                      <span className="font-normal text-[#1F1E1D]">留存脱落</span>
                     </div>
 
                     {retentionScreenshot && screenshotGrantReady ? (
@@ -179,7 +146,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -198,7 +165,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                             }
                           }}
                           onError={() => handleImageError?.(retentionScreenshot.url)}
-                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
+                          className={`w-full object-contain ${
                             effectiveLayout === "stacked"
                               ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
                                 ? "max-h-[440px]"
@@ -206,12 +173,9 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                               : "max-h-[540px]"
                           }`}
                         />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <span>留存脱落截图</span>
-                          <span className="flex items-center gap-1 font-normal">
-                            <ZoomIn className="size-3.5" />
-                            点击全屏放大
-                          </span>
+                        <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                          <ZoomIn className="size-3.5 text-[#78716C]" />
+                          <span>全屏查看</span>
                         </div>
                       </button>
                     ) : retentionScreenshot ? pending : (

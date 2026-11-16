@@ -29,8 +29,12 @@ test("表头暴露 aria-sort：读屏与键盘用户能知道当前按哪列、�
   }
   const ariaSortCount = (header.match(/aria-sort=\{ariaSortFor\(/g) ?? []).length;
   const sortableCount = sortableFields.length;
-  // 当前完整列集：状态、标题/账号按设计不排序，其余列可排序。
-  assert.ok(sortableCount >= 12, `可排序列数量异常：${sortableCount}`);
+  // 当前完整列集：状态、标题/账号按设计不排序，其余 15 列全部可排序（含播放占比、留存达成、评级）。
+  assert.equal(sortableCount, 15, `可排序列数量应为 15：实际 ${sortableCount}`);
+  assert.equal(ariaSortCount, 15);
+  assert.ok(sortableFields.includes("avg_play_ratio"), "播放占比应支持排序");
+  assert.ok(sortableFields.includes("retention_achievement"), "留存达成应支持排序");
+  assert.ok(sortableFields.includes("overall_grade"), "评级应支持排序");
 });
 
 test("排序进 URL：深链/刷新/分享后排序不变（审计 M1）", () => {

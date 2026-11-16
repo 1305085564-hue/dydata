@@ -3,7 +3,7 @@
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, Flame, X } from "lucide-react";
+import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { breakoutRating, breakoutTargetsFor } from "@/lib/breakout-rating";
 
@@ -256,6 +256,34 @@ export function ContentDetailDialog({
 
   const overallGrade = contentQuality?.overallGrade ?? null;
 
+  const confirmBanner = !video ? null
+    : showConfirmTrash ? {
+        action: "trash" as const,
+        iconClass: "text-status-warning",
+        message: "确认移入回收站？该作品将隐藏，关联的成员绩效日报将同步作废。",
+        cancelLabel: "暂保留",
+        confirmLabel: isOperating ? "正在移入..." : "确认移入",
+        variant: "destructive" as const,
+      }
+    : showConfirmPurge ? {
+        action: "purge" as const,
+        iconClass: "text-status-danger",
+        message: "确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。",
+        cancelLabel: "暂保留",
+        confirmLabel: isOperating ? "正在删除..." : "彻底删除",
+        variant: "destructive" as const,
+      }
+    : showConfirmRestore ? {
+        action: "restore" as const,
+        iconClass: "text-status-success",
+        message: "确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。",
+        cancelLabel: "暂不恢复",
+        confirmLabel: isOperating ? "正在恢复..." : "确认恢复",
+        variant: "secondary" as const,
+        confirmClassName: "bg-status-success/10 text-status-success hover:bg-status-success/20",
+      }
+    : null;
+
   const innerContent = (
     <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : undefined}>
       <SheetHeader className="relative py-3 pr-12">
@@ -277,12 +305,9 @@ export function ContentDetailDialog({
                   <span className="shrink-0 text-[#A8A29E]">·</span>
                 </>
               )}
-              <span className="flex items-center gap-1 text-[#1F1E1D] font-normal shrink-0">
-                <Flame className="size-3.5 text-[#D97757]" />
+              <span className="text-[#78716C] font-normal shrink-0">
                 {titlePrefix} · 作品诊断
               </span>
-              <span className="shrink-0 text-[#A8A29E]">·</span>
-              <span className="tabular-nums shrink-0">ID: {video?.id.slice(0, 8)}</span>
             </div>
 
             {video && onStepVideo && (
@@ -313,8 +338,20 @@ export function ContentDetailDialog({
               </div>
             )}
 
+            {video?.video_url && (
+              <a
+                href={video.video_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors shrink-0"
+              >
+                <ExternalLink className="size-3.5" />
+                打开源视频网页
+              </a>
+            )}
+
             {video && canOperate && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {video.lifecycle_state !== "trashed" && shouldShowPatch24hButton(video, snapshot) ? (
                   <Button
                     type="button"
@@ -387,89 +424,25 @@ export function ContentDetailDialog({
           </div>
         </SheetHeader>
 
-        {showConfirmTrash && video && (
+        {confirmBanner && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-status-warning shrink-0" />
-              <span>确认移入回收站？该作品将隐藏，关联的成员绩效日报将同步作废。</span>
+              <AlertTriangle className={`size-4 shrink-0 ${confirmBanner.iconClass}`} />
+              <span>{confirmBanner.message}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="secondary"
-                size="s"
-                onClick={clearConfirmation}
-                disabled={isOperating}
-              >
-                暂保留
+              <Button type="button" variant="secondary" size="s" onClick={clearConfirmation} disabled={isOperating}>
+                {confirmBanner.cancelLabel}
               </Button>
               <Button
                 type="button"
-                variant="destructive"
+                variant={confirmBanner.variant}
                 size="s"
-                onClick={() => handleLifecycleAction("trash")}
+                onClick={() => handleLifecycleAction(confirmBanner.action)}
                 disabled={isOperating}
+                className={confirmBanner.confirmClassName}
               >
-                {isOperating ? "正在移入..." : "确认移入"}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {showConfirmPurge && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-status-danger shrink-0" />
-              <span>确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="secondary"
-                size="s"
-                onClick={clearConfirmation}
-                disabled={isOperating}
-              >
-                暂保留
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="s"
-                onClick={() => handleLifecycleAction("purge")}
-                disabled={isOperating}
-              >
-                {isOperating ? "正在删除..." : "彻底删除"}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {showConfirmRestore && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-status-success shrink-0" />
-              <span>确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="secondary"
-                size="s"
-                onClick={clearConfirmation}
-                disabled={isOperating}
-              >
-                暂不恢复
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="s"
-                onClick={() => handleLifecycleAction("restore")}
-                disabled={isOperating}
-                className="bg-status-success/10 text-status-success hover:bg-status-success/20"
-              >
-                {isOperating ? "正在恢复..." : "确认恢复"}
+                {confirmBanner.confirmLabel}
               </Button>
             </div>
           </div>

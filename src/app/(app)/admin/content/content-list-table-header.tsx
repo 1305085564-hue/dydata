@@ -152,8 +152,16 @@ export function ContentListTableHeader({
         <span>均播</span>
       </button>
     </th>
-    <th data-col-key="avg_play_ratio" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-sand")}>
-      <span className="font-normal text-[#78716C]">播放占比</span>
+    <th data-col-key="avg_play_ratio" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-sand")} aria-sort={ariaSortFor("avg_play_ratio")}>
+      <button
+        aria-label={`按播放占比排序${sortField === "avg_play_ratio" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("avg_play_ratio")}
+        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        {renderSortIndicator("avg_play_ratio")}
+        <span>播放占比</span>
+      </button>
     </th>
     <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-sand")} aria-sort={ariaSortFor("completion_rate")}>
       <button
@@ -179,8 +187,28 @@ export function ContentListTableHeader({
       </button>
     </th>
 
-    <th data-col-key="retention_achievement" className="font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap">留存达成</th>
-    <th data-col-key="overall_grade" className="font-normal py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap" aria-sort={ariaSortFor("overall_grade")}>评级</th>
+    <th data-col-key="retention_achievement" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "retention_achievement" && "bg-surface-sand")} aria-sort={ariaSortFor("retention_achievement")}>
+      <button
+        aria-label={`按留存达成排序${sortField === "retention_achievement" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("retention_achievement")}
+        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        {renderSortIndicator("retention_achievement")}
+        <span>留存达成</span>
+      </button>
+    </th>
+    <th data-col-key="overall_grade" className={cn("font-normal py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-surface-sand")} aria-sort={ariaSortFor("overall_grade")}>
+      <button
+        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        type="button"
+        onClick={() => handleSort("overall_grade")}
+        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+      >
+        {renderSortIndicator("overall_grade")}
+        <span>评级</span>
+      </button>
+    </th>
 
     {/* 发布时间 */}
     <th data-col-key="published_at" className={cn("font-normal py-2 px-1 text-right w-[67px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-surface-sand")} aria-sort={ariaSortFor("published_at")}>

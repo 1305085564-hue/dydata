@@ -6,24 +6,15 @@ import { toast } from "sonner";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ContentList } from "./content-list";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
-import { buildSnapshotMap, getPriorityScore, pickDirectReviewTarget } from "@/lib/review-queue";
-import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import {
   type ContentView,
   useContentPageQuery,
 } from "./content-page-query";
 import { useContentTopicLibrary } from "./content-topic-library";
 import { buildStepContentVideoNavigation, resolveContentVideoPosition } from "./content-video-navigation";
-import { getContentReviewOnboardingStepThree } from "./content-review-onboarding";
 
 const ContentDetailDialog = dynamic(
   () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
@@ -111,7 +102,6 @@ export function ContentPageClient({
     refreshList,
   });
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>(
     directVideoDetail ? { [directVideoDetail.video.id]: directVideoDetail } : {},
   );
@@ -198,63 +188,6 @@ export function ContentPageClient({
       });
     return () => { cancelled = true; };
   }, [detailRequestAttempt, selectedLoadedDetail, selectedVideoId, view]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        if (!localStorage.getItem("content-review-onboarding-seen")) {
-          setShowOnboarding(true);
-        }
-      } catch {
-        // ignore
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  const handleDismissOnboarding = useCallback(() => {
-    try {
-      localStorage.setItem("content-review-onboarding-seen", "true");
-    } catch {
-      // ignore
-    }
-    setShowOnboarding(false);
-  }, []);
-
-  // 优先分唯一来源是库侧 getPriorityScore()：客户端不再维护第二套分值，
-  // 否则「最需关注 / 直接去盘」的顺序与列表优先队列不一致（历史 bug）
-  const prioritySnapshots = useMemo(() => buildSnapshotMap(data.snapshots), [data.snapshots]);
-
-  const anomalyVideos = useMemo(() => {
-    if (!videosWithLibraryStatus.length) return [];
-    return videosWithLibraryStatus
-      // 异常口径与提醒条分桶共用同一个分类函数：进队列 = 能归入某个桶，
-      // 这样「提醒条总数」与「各桶相加」在构造上就一致，不会一个 68 一个 69
-      .filter((video) => classifyVideoAnomalyBucket(video) !== null)
-      .map((video) => ({
-        video,
-        score: getPriorityScore(video, prioritySnapshots.get(video.id), data.reviewReadiness[video.id]),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .map((item) => item.video);
-  }, [videosWithLibraryStatus, prioritySnapshots, data.reviewReadiness]);
-
-  // Direct Review handler：优先跳当前列表中最需关注的异常作品
-  // 靶子口径：昨天发布的异常作品优先（这个按钮的用法是早上盘昨天的稿），
-  // 昨天没有异常时回退到存量最需关注——以前直接取 anomalyVideos[0]，
-  // 队列不限时间范围，优先级最高的历史老稿（如 5 月的）常年霸占靶子
-  const handleDirectReview = useCallback(() => {
-    if (data.summary.directReviewVideoId) {
-      openVideo(data.summary.directReviewVideoId);
-      return;
-    }
-    const targetVideo = pickDirectReviewTarget(anomalyVideos) ?? data.videos[0];
-    if (targetVideo) {
-      openVideo(targetVideo.id);
-    } else {
-      toast.info("当前列表暂无可复盘的作品");
-    }
-  }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, openVideo]);
 
   const reviewVideos = videosWithLibraryStatus;
   const videoPosition = resolveContentVideoPosition({
@@ -431,7 +364,6 @@ export function ContentPageClient({
             availableCounts={data.availableCounts ?? []}
             onQueryChange={handleQueryChange}
             canReviewContent={permissionInfo.permissions.review_content === true}
-            onDirectReview={handleDirectReview}
             onSelectVideoId={(videoId) => {
               if (videoId) openVideo(videoId);
               else closeVideo();
@@ -454,60 +386,6 @@ export function ContentPageClient({
       canViewCollaboration={canAccessAdminPath("/admin/collaboration", permissionInfo.role, permissionInfo.permissions)}
       onWorksChanged={() => { setLoadedDetails({}); void loadData(view, perspective, teamId, { fresh: true }); }}
     />
-    {/* 首次引导弹窗：走共享 ui/dialog.tsx，与全站弹层一致地拿到 Esc 关闭、
-        role=dialog + aria-labelledby、焦点陷阱与背景滚动锁定（此前是本站唯一自绘浮层）。 */}
-    <Dialog
-      open={showOnboarding}
-      onOpenChange={(open) => {
-        if (!open) handleDismissOnboarding();
-      }}
-    >
-      <DialogContent className="sm:max-w-md" showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-[20px]" aria-hidden="true">👋</span>
-            欢迎使用数据复盘工作台
-          </DialogTitle>
-        </DialogHeader>
-        <p className="text-[14px] text-[#1F1E1D] leading-relaxed">
-          复盘页按天组织：打开就停在最近有作品的一天，你可以逐日回看：
-        </p>
-        <ol className="space-y-2 text-[14px] text-[#1F1E1D]">
-          <li className="flex items-start gap-2">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-status-danger/10 text-status-danger font-normal text-[12px]">
-              1
-            </span>
-            <span>
-              <strong>挑一天来复盘</strong>：打开日历选日期，或点左右箭头逐日切换；日历上能看到每天的作品条数。
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#D97757]/10 text-[#D97757] font-normal text-[12px]">
-              2
-            </span>
-            <span>
-              <strong>看作品与指标</strong>：单日默认按播放量从高到低排，点开作品看完整指标、截图和原视频。
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-status-info/10 text-status-info font-normal text-[12px]">
-              3
-            </span>
-            <span>
-              <strong>{permissionInfo.permissions.review_content ? "复盘处理" : "查看证据"}</strong>：
-              {getContentReviewOnboardingStepThree(permissionInfo.permissions.review_content === true)}
-            </span>
-          </li>
-        </ol>
-        <Button
-          size="l"
-          onClick={handleDismissOnboarding}
-          className="w-full mt-2"
-        >
-          知道了，开始复盘
-        </Button>
-      </DialogContent>
-    </Dialog>
   </>
   );
 }

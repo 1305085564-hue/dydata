@@ -35,7 +35,6 @@ export interface ContentListProps {
   /** 与 availableDates 同序的每日条数，供日期翻页器显示当日条数 */
   availableCounts?: Array<{ d: string; c: number }>;
   canReviewContent?: boolean;
-  onDirectReview?: () => void;
   /** 视图切换（全部↔归档）等整表取数是否在进行中：用于给出「正在加载X…」反馈，
    *  避免长耗时操作期间用户以为点了没反应（2026-10-11 审计 H2）。 */
   isViewLoading?: boolean;
@@ -59,10 +58,12 @@ export type SortField =
   | "bounce_rate_2s"
   | "completion_rate_5s"
   | "avg_play_duration"
-  | "completion_rate";
+  | "avg_play_ratio"
+  | "completion_rate"
+  | "retention_achievement";
 
 /** 各列「第一次点表头」应该先看到什么，按指标语义定死，不再一律降序：
- *  - 越高越好的比率/时长（5s 完播、完播、互动率、均播时长）：默认升序 → 最差在前
+ *  - 越高越好的比率/时长/达成率（5s 完播、播放占比、完播、互动率、均播时长、留存达成）：默认升序 → 最差在前
  *  - 越高越差的比率（2s 跳出）：默认降序 → 最差在前
  *  - 体量类计数与时间（播放量、点赞…、发布时间、评级）：默认降序 → 最大/最新/最优秀在前（通用预期）
  *  这样同一套 UI 里「降序」不再有时代表最差、有时代表最好。 */
@@ -79,7 +80,9 @@ export const DEFAULT_SORT_DIR: Record<SortField, "asc" | "desc"> = {
   bounce_rate_2s: "desc",
   completion_rate_5s: "asc",
   avg_play_duration: "asc",
+  avg_play_ratio: "asc",
   completion_rate: "asc",
+  retention_achievement: "asc",
 };
 
 export const DEFAULT_PAGE_SIZE = 20;

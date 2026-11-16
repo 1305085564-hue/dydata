@@ -1,4 +1,4 @@
-import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { useMemo } from "react";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
@@ -98,6 +98,7 @@ type SortableContentRow = {
   bounceRate2s?: number | null;
   completionRate5s?: number | null;
   avgPlayDuration?: number | null;
+  avgPlayRatio?: number | null;
   completionRate?: number | null;
 };
 
@@ -167,9 +168,17 @@ export function compareContentRows(
       valA = a.avgPlayDuration ?? null;
       valB = b.avgPlayDuration ?? null;
       break;
+    case "avg_play_ratio":
+      valA = toSortableRatio(avgPlayRatioAsPercentagePoints(a.avgPlayRatio));
+      valB = toSortableRatio(avgPlayRatioAsPercentagePoints(b.avgPlayRatio));
+      break;
     case "completion_rate":
       valA = toSortableRatio(a.completionRate);
       valB = toSortableRatio(b.completionRate);
+      break;
+    case "retention_achievement":
+      valA = a.quality?.contentAchievement ?? null;
+      valB = b.quality?.contentAchievement ?? null;
       break;
     default:
       valA = a.publishedTime;

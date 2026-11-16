@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { DEFAULT_CONTENT_LIST_FILTERS } from "@/app/(app)/admin/content/content-list-filters";
 import type { VideoMetricsSnapshot } from "@/types";
-import { buildProcessedContentRows } from "./content-list";
+import { buildProcessedContentRows, compareContentRows } from "./content-list";
 
 test("服务端分页结果不在客户端按当前页缺失的选题状态再次筛空", () => {
   const video = {
@@ -53,4 +53,19 @@ test("作品行保留快照中的平均播放占比原始比例", () => {
   });
 
   assert.equal(rows[0]?.avgPlayRatio, 0.25);
+});
+
+test("单日客户端排序支持播放占比与留存达成（缺失值始终垫底）", () => {
+  const low = { publishedTime: 1, avgPlayRatio: 0.12, quality: { contentAchievement: 65 } } as Parameters<typeof compareContentRows>[0];
+  const high = { publishedTime: 2, avgPlayRatio: 0.34, quality: { contentAchievement: 120 } } as Parameters<typeof compareContentRows>[0];
+  const missing = { publishedTime: 3, avgPlayRatio: null, quality: null } as Parameters<typeof compareContentRows>[0];
+
+  assert.deepEqual(
+    [high, missing, low].sort((a, b) => compareContentRows(a, b, "avg_play_ratio", "asc")).map((r) => r.publishedTime),
+    [1, 2, 3],
+  );
+  assert.deepEqual(
+    [low, missing, high].sort((a, b) => compareContentRows(a, b, "retention_achievement", "desc")).map((r) => r.publishedTime),
+    [2, 1, 3],
+  );
 });

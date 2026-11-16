@@ -10,9 +10,10 @@ import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { resolveEffectiveDates } from "./content-list-filters";
 import {
-  buildContentEditorialEpigraph,
-  DEFAULT_CONTENT_EPIGRAPH,
-  setContentEditorialEpigraph,
+  ContentEditorialEpigraph,
+  resetContentEditorialEpigraph,
+  setContentEditorialEpigraphState,
+  summarizeContentEpigraph,
 } from "./content-editorial-epigraph";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
@@ -113,12 +114,22 @@ export function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
+  const { updateFilter, toggleOnlyAnomaly } = state;
   useEffect(() => {
-    setContentEditorialEpigraph(buildContentEditorialEpigraph(visibleRows));
+    const snapshot = summarizeContentEpigraph(visibleRows, {
+      anomalyCount: state.anomalyCountForTime,
+      isExcellentActive: state.filters.qualityGrade === "excellent",
+      isAnomalyActive: state.filters.onlyAnomaly,
+    });
+    setContentEditorialEpigraphState(snapshot, {
+      onToggleExcellent: () =>
+        updateFilter("qualityGrade", state.filters.qualityGrade === "excellent" ? "all" : "excellent"),
+      onToggleAnomaly: toggleOnlyAnomaly,
+    });
     return () => {
-      setContentEditorialEpigraph(DEFAULT_CONTENT_EPIGRAPH);
+      resetContentEditorialEpigraph();
     };
-  }, [visibleRows]);
+  }, [state.anomalyCountForTime, state.filters.onlyAnomaly, state.filters.qualityGrade, toggleOnlyAnomaly, updateFilter, visibleRows]);
 
   /** 区间模式下自选起止日期 */
   const handleRangeChange = useCallback((start: string, end: string) => {
@@ -150,6 +161,11 @@ export function ContentList(props: ContentListProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
+      {/* 手机端保留精简实时摘要行（桌面端由 AdminWorkspaceLayout 页头承载） */}
+      <div className="md:hidden text-[13px] leading-[1.40]">
+        <ContentEditorialEpigraph />
+      </div>
+
       {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
       <ContentListToolbar {...props} {...state} dateNav={dateNav} />
 

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Table } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
@@ -22,7 +23,6 @@ import {
   RatioCell,
   formatCompactDate,
   formatCount,
-  formatPercent,
   formatTimeOfDay,
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
@@ -63,38 +63,10 @@ export function ContentListTable({
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
-  const dynamicColSpan = isSpacious ? 12 : 16;
+  const dynamicColSpan = isSpacious ? 13 : 17;
   const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
     isCellHighlighted(item, key, highlightRules);
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
-
-  // 播放量与完播率最大值（供单日视图微型数据条作为相对比例基准）
-  const maxPlayCount = React.useMemo(() => {
-    let max = 1;
-    for (const row of visibleRows) {
-      if (row.playCount && row.playCount > max) max = row.playCount;
-    }
-    return max;
-  }, [visibleRows]);
-
-  // 完播率基准排除 lowSample 行，避免个位数超低播放的高完播孤值压扁整列爆款
-  const maxCompletionRate = React.useMemo(() => {
-    let max = 1;
-    for (const row of visibleRows) {
-      if (!row.lowSample && row.completionRate && row.completionRate > max && row.completionRate <= 100) {
-        max = row.completionRate;
-      }
-    }
-    // 兜底：如果全部作品均为 lowSample，回退到全局最大值避免除以 1
-    if (max === 1) {
-      for (const row of visibleRows) {
-        if (row.completionRate && row.completionRate > max && row.completionRate <= 100) {
-          max = row.completionRate;
-        }
-      }
-    }
-    return max;
-  }, [visibleRows]);
 
   // 抽屉切片联动：当前打开的作品如果不在视口内，平滑滚动至可视区；抽屉关闭时自动清除
   React.useEffect(() => {
@@ -148,14 +120,20 @@ export function ContentListTable({
                       : "hover:bg-[#F7F7F6] active:bg-[#EBEBE9]"
                   )}
                 >
-                  {/* 第 1 层：状态徽标 + 发布日期 */}
+                  {/* 第 1 层：状态徽标 + 综合评级 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <Badge variant={dot.variant} className="shrink-0 text-[12px] px-1.5 py-0.5">
                         {dot.label}
                       </Badge>
-
-
+                      {item.quality?.overallGrade && (
+                        <Badge
+                          variant="secondary"
+                          className={cn("shrink-0 bg-[#F1F1F0] text-[12px] px-1.5 py-0.5", BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade])}
+                        >
+                          综合{item.quality.overallGrade}
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -374,7 +352,7 @@ export function ContentListTable({
                                 side="top"
                                 align="start"
                                 sideOffset={4}
-                                className="max-w-md p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-lg text-left pointer-events-none z-50 text-[12px] leading-relaxed"
+                                className="max-w-md p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left pointer-events-none z-50 text-[12px] leading-relaxed"
                               >
                                 <div className="text-[#141413]">{video.video_title || video.content || "未命名视频"}</div>
                                 {video.accounts?.name ? (
@@ -384,18 +362,9 @@ export function ContentListTable({
                             </Tooltip>
                           </td>
 
-                          {/* 播放量：核心视觉锚点，保持 14px 定名墨，单日视图底层带淡雅微型数据条 */}
-                          <td data-col-key="play_count" className={cn("relative py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
-                            {isSingleDay && item.playCount && item.playCount > 0 ? (
-                              <div
-                                aria-hidden="true"
-                                className="absolute inset-y-1 right-1 rounded-md bg-status-info/[0.08] pointer-events-none"
-                                style={{ width: `calc(${Math.min((item.playCount / maxPlayCount) * 100, 100).toFixed(1)}% - 8px)` }}
-                              />
-                            ) : null}
-                            <span className="relative z-10">
-                              <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
-                            </span>
+                          {/* 播放量：核心视觉锚点，保持 14px 定名墨 */}
+                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[14px] text-[#141413] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-surface-row-hover/60")}>
+                            <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                           </td>
 
                           {/* 涨粉 */}
@@ -434,30 +403,31 @@ export function ContentListTable({
                           <td data-col-key="avg_play_ratio" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-row-hover/60")}>
                             <RatioCell standards={evaluationStandards} value={item.avgPlayRatio} lowSample={item.lowSample} metricType="avg_play_ratio" />
                           </td>
-                          {/* 完播率：单日视图底层带淡雅微型数据条（排除低样本干扰） */}
-                          <td data-col-key="completion_rate" className={cn("relative py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
-                            {isSingleDay && item.completionRate && item.completionRate > 0 ? (
-                              <div
-                                aria-hidden="true"
-                                className="absolute inset-y-1 right-1 rounded-md bg-[#141413]/[0.06] pointer-events-none"
-                                style={{ width: `calc(${Math.min((item.completionRate / maxCompletionRate) * 100, 100).toFixed(1)}% - 8px)` }}
-                              />
-                            ) : null}
-                            <span className="relative z-10">
-                              <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
-                            </span>
+                          {/* 完播率 */}
+                          <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
+                            <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
-                          <td data-col-key="retention_achievement" className="py-2.5 px-2 text-right tabular-nums whitespace-nowrap">
-                            {item.quality?.contentAchievement == null ? "—" : `${Math.round(item.quality.contentAchievement)}%`}
-                            {item.quality?.retentionCalculation === "avg_play_duration_only" ? <span className="ml-1 text-[11px] text-[#78716C]">均播折算</span> : item.quality?.retentionCalculation === "avg_play_ratio_only" ? <span className="ml-1 text-[11px] text-[#78716C]">占比折算</span> : null}
-                          </td>
-                          <td data-col-key="overall_grade" className="py-2.5 px-2 text-right whitespace-nowrap">
-                            {item.quality?.overallGrade ?? "—"}
-                          </td>
-
+                          {/* 互动率 */}
                           <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-row-hover/60")}>
                             <RatioCell standards={evaluationStandards} value={item.interactionRate} achievement={item.quality?.interactionAchievement} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          </td>
+
+                          {/* 留存达成 */}
+                          <td data-col-key="retention_achievement" className={cn("py-2.5 px-2 text-right tabular-nums whitespace-nowrap transition-colors", hoveredColKey === "retention_achievement" && "bg-surface-row-hover/60")}>
+                            {item.quality?.contentAchievement == null ? "—" : `${Math.round(item.quality.contentAchievement)}%`}
+                            {item.quality?.retentionCalculation === "avg_play_duration_only" ? <span className="ml-1 text-[12px] text-[#78716C]">均播折算</span> : item.quality?.retentionCalculation === "avg_play_ratio_only" ? <span className="ml-1 text-[12px] text-[#78716C]">占比折算</span> : null}
+                          </td>
+
+                          {/* 综合评级 */}
+                          <td data-col-key="overall_grade" className={cn("py-2.5 px-2 text-right whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-surface-row-hover/60")}>
+                            {item.quality?.overallGrade ? (
+                              <span className={BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}>
+                                {item.quality.overallGrade}
+                              </span>
+                            ) : (
+                              <span className="text-[#A8A29E]">—</span>
+                            )}
                           </td>
 
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}

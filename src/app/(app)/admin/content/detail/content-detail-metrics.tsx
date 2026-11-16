@@ -1,5 +1,5 @@
 import { getContentOwner } from "@/lib/content/content-owner";
-import { ExternalLink, Play, Layers, UserCheck, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
+import { Play, Layers, UserCheck, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
@@ -13,6 +13,14 @@ import type { WorkContentQuality } from "@/lib/collaboration/content-quality-con
 import type { VideoRow } from "@/lib/content/domain/detail";
 import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getAvgPlayRatioClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
 import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+
+function getPlayThresholdLabel(playCount: number | null | undefined): string {
+  if (playCount == null || !Number.isFinite(playCount)) return "暂无播放数据";
+  if (playCount >= KPI_PLAY_EXCELLENT) return "已过 1.5 万线（评级不封顶）";
+  if (playCount >= KPI_PLAY_GOOD) return "未满 1.5 万线（最高评良）";
+  if (playCount >= KPI_PLAY_FLOOR) return "未满 5 千线（最高评普）";
+  return "不足 2 千（直接判普）";
+}
 
 function getLowSampleTitle(playCount: number | null | undefined, standards = DEFAULT_EVALUATION_STANDARDS) {
   if (playCount == null || playCount >= standards.minPlayCount) return undefined;
@@ -105,7 +113,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
               <section className="space-y-5">
                 {/* 1.1 视频元信息 header */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF]/60 pb-4">
+                <div className="border-b border-[#E2E2DF]/60 pb-4">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {video.lifecycle_state === "trashed" && (
@@ -161,18 +169,6 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       </span>
                     </div>
                   </div>
-
-                  {video.video_url && (
-                    <a
-                      href={video.video_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors shrink-0 shadow-input"
-                    >
-                      <ExternalLink className="size-3.5 text-[#D97757]" />
-                      打开源视频网页
-                    </a>
-                  )}
                 </div>
 
                 {/* 1.2 爆款数据核心大盘 (融于同卡内) */}
@@ -211,9 +207,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         className="mt-1.5"
                       />
                       <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
-                        {snapshot?.play_count && snapshot.play_count >= 100000
-                          ? "🔥 爆款层级"
-                          : "日常播放"}
+                        {getPlayThresholdLabel(snapshot?.play_count)}
                       </div>
                     </div>
 
@@ -268,7 +262,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>留存达成</span>
-                        <span className="text-[11px] text-[#78716C]">按快照计算</span>
+                        <span className="text-[12px] text-[#78716C]">按快照计算</span>
                       </div>
                       <Metric
                         settleKey="content-detail:retention-achievement"
