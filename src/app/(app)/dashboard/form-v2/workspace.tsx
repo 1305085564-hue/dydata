@@ -81,13 +81,23 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     ]),
   ) as Record<SubmissionSlotRole, boolean>;
   const showDetails = editing || slotsExpanded || manualEntry || !screenshotsRequired;
-  // 截图区何时换成两张卡片：两槽齐过；编辑已交记录且有图；只有留存槽有图（如恢复的旧草稿），没有对应提示语，直接给卡片
+  // 截图区何时换成两张卡片：任一槽有图（让首张图能单独替换/删除/检视）；两槽齐过；编辑态
   const anySlotFilled = SLOT_ROLES.some((role) => slots[role].status !== "empty");
-  const showSlotCards = slotsExpanded
-    || (editing && anySlotFilled)
-    || (slots.screenshot_1.status === "empty" && slots.screenshot_2.status !== "empty");
+  const showSlotCards = slotsExpanded || anySlotFilled || editing;
+  const [inspectingRole, setInspectingRole] = useState<SubmissionSlotRole | null>(null);
   const currentStep = resolveSubmitStep(issueSummary);
   const moreOpen = isMoreOpen || (hasAttemptedSubmit && issueSummary.topicTagMissing);
+
+  const handleOpenNarrowInspector = !onPreviewSlot && anySlotFilled
+    ? () => {
+        const target = (focusedRole && (slots[focusedRole]?.assetUrl || slots[focusedRole]?.previewUrl))
+          ? focusedRole
+          : (slots.screenshot_1?.assetUrl || slots.screenshot_1?.previewUrl)
+            ? "screenshot_1"
+            : "screenshot_2";
+        setInspectingRole(target);
+      }
+    : undefined;
 
   return (
     <div className="space-y-5">
@@ -99,6 +109,8 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           onDelete={(role) => setDeleteTargetRole(role)}
           onRetry={handleSlotRetry}
           showCards={showSlotCards}
+          inspectingRole={inspectingRole}
+          onInspectRole={setInspectingRole}
           onManualFill={(role) => {
             updateSlotsState((current) => {
               const hasUploadedScreenshot = Boolean(current[role].assetUrl);
@@ -187,7 +199,12 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
 
       {showDetails && (
         <>
-          <FormV2ResultsSection {...props} slotProcessing={slotProcessing} inputsOpen={inputsOpen} />
+          <FormV2ResultsSection
+            {...props}
+            slotProcessing={slotProcessing}
+            inputsOpen={inputsOpen}
+            onInspectScreenshot={handleOpenNarrowInspector}
+          />
           <FormV2ContentSection {...props} contentMissing={issueSummary.missingRequiredMeta.includes("content")} />
           <FormV2MoreSection
             {...props}

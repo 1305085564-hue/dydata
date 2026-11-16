@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Eye } from "lucide-react";
 
 import { itemVariants } from "@/lib/animations";
 import { REQUIRED_METRIC_KEYS, type EditableMetricKey, type SubmissionSlotRole } from "@/components/submission/提交状态机";
@@ -45,6 +46,7 @@ interface MetricGroupProps {
   onBlurField?: (key: EditableMetricKey) => void;
   anomalyStatus?: string;
   onCompleteMetrics?: () => void;
+  onInspectScreenshot?: () => void;
 }
 
 import {
@@ -96,6 +98,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       onBlurField,
       anomalyStatus,
       onCompleteMetrics,
+      onInspectScreenshot,
     },
     ref,
   ) {
@@ -216,11 +219,25 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
 
     return (
       <motion.div variants={itemVariants} className="space-y-2">
-        <div className="flex h-5 items-center gap-2 px-2 text-[12px]">
-          <span className="text-[#1F1E1D]">识别结果</span>
-          <span className={showInteractionWarning || toCheckCount > 0 ? "text-status-warning-text" : "text-[#78716C]"}>
-            {summaryText}
-          </span>
+        <div className="flex h-5 items-center justify-between px-2 text-[12px]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[#1F1E1D]">识别结果</span>
+            <span className={showInteractionWarning || toCheckCount > 0 ? "text-status-warning-text" : "text-[#78716C]"}>
+              {summaryText}
+            </span>
+          </div>
+          {onInspectScreenshot ? (
+            <button
+              type="button"
+              onClick={onInspectScreenshot}
+              className="flex shrink-0 items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+              title="打开同屏截图对照"
+              aria-label="打开同屏截图对照"
+            >
+              <Eye className="size-3.5 stroke-[1.6]" />
+              <span>对照原图</span>
+            </button>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-4">
           {cells.map(({ item, field, mode }) => (

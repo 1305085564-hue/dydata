@@ -40,6 +40,9 @@ interface SubmissionSlotsProps {
   pulseEmptySlots?: boolean;
   /** 宽屏有对照栏时传入：点小图让对照栏切到这张，不开检视器；不传则开检视器 */
   onPreviewSlot?: (role: SubmissionSlotRole) => void;
+  /** 可由外层受控的检视槽位 */
+  inspectingRole?: SubmissionSlotRole | null;
+  onInspectRole?: (role: SubmissionSlotRole | null) => void;
 }
 
 const SLOT_META: Array<{ role: SubmissionSlotRole; title: string; shortTitle: string }> = [
@@ -72,6 +75,8 @@ export function SubmissionSlotsSection({
   focusedRole = null,
   pulseEmptySlots = false,
   onPreviewSlot,
+  inspectingRole: controlledInspectingRole,
+  onInspectRole,
 }: SubmissionSlotsProps) {
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
   const [dragOverRole, setDragOverRole] = useState<SubmissionSlotRole | null>(null);
@@ -80,7 +85,9 @@ export function SubmissionSlotsSection({
     screenshot_1: null,
     screenshot_2: null,
   });
-  const [inspectingRole, setInspectingRole] = useState<SubmissionSlotRole | null>(null);
+  const [internalInspectingRole, setInternalInspectingRole] = useState<SubmissionSlotRole | null>(null);
+  const inspectingRole = controlledInspectingRole !== undefined ? controlledInspectingRole : internalInspectingRole;
+  const setInspectingRole = onInspectRole || setInternalInspectingRole;
   const triggerRefs = useRef<Record<SubmissionSlotRole, HTMLButtonElement | null>>({
     screenshot_1: null,
     screenshot_2: null,
@@ -276,7 +283,7 @@ export function SubmissionSlotsSection({
                   }}
                 />
 
-                {slot.assetUrl ? (
+                {slot.assetUrl || slot.previewUrl ? (
                   <button
                     ref={(el) => {
                       triggerRefs.current[item.role] = el;
@@ -293,7 +300,7 @@ export function SubmissionSlotsSection({
                     aria-label={`同屏核对${item.title}原图`}
                   >
                     <ScreenshotImage
-                      src={slot.assetUrl}
+                      src={(slot.assetUrl || slot.previewUrl)!}
                       alt={item.title}
                       variant="thumb"
                       className="h-full w-full object-cover"
@@ -376,14 +383,14 @@ export function SubmissionSlotsSection({
         </div>
       )}
 
-      {inspectingRole && slots[inspectingRole]?.assetUrl && (
+      {inspectingRole && (slots[inspectingRole]?.assetUrl || slots[inspectingRole]?.previewUrl) && (
         <ScreenshotInspector
-          url={slots[inspectingRole]!.assetUrl!}
+          url={(slots[inspectingRole]!.assetUrl || slots[inspectingRole]!.previewUrl)!}
           label={`${SLOT_META.find((s) => s.role === inspectingRole)?.shortTitle || "截图"} · 同屏核对`}
           onClose={() => setInspectingRole(null)}
           onReturnFocus={() => triggerRefs.current[inspectingRole]?.focus()}
           extraActions={SLOT_META.filter(
-            (s) => s.role !== inspectingRole && Boolean(slots[s.role]?.assetUrl),
+            (s) => s.role !== inspectingRole && Boolean(slots[s.role]?.assetUrl || slots[s.role]?.previewUrl),
           ).map((s) => (
             <button
               key={s.role}
