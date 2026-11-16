@@ -26,7 +26,7 @@ export interface ContentListFilterValue {
   playMin: string;
   /** 仅当 playBucket === "custom" 时生效，开区间上界（不含） */
   playMax: string;
-  /** 评级筛选（全站综合评级档位，列表展示简化为单字）：all / excellent / good / fair / poor / unrated */
+  /** 评级筛选：all / excellent / good / fair / unrated */
   qualityGrade: ContentQualityGradeFilter;
   /** 快速开关：只看待处理异常 */
   onlyAnomaly: boolean;
@@ -204,8 +204,6 @@ export function filterContentVideos<T extends FilterableContentVideo>(
         if (quality.overallGrade !== "良") return false;
       } else if (filters.qualityGrade === "fair") {
         if (quality.overallGrade !== "普") return false;
-      } else if (filters.qualityGrade === "poor") {
-        if (quality.overallGrade !== "劣") return false;
       } else if (filters.qualityGrade === "unrated") {
         if (quality.overallGrade !== null) return false;
       }
@@ -233,7 +231,6 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
     rawGrade === "excellent" ||
     rawGrade === "good" ||
     rawGrade === "fair" ||
-    rawGrade === "poor" ||
     rawGrade === "unrated"
       ? rawGrade
       : "all";
@@ -451,9 +448,6 @@ export function getSecondaryFilterSummary(
         break;
       case "fair":
         parts.push("普");
-        break;
-      case "poor":
-        parts.push("劣");
         break;
       case "unrated":
         parts.push("未评级");

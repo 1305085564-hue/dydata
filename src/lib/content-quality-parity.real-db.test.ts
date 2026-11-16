@@ -49,8 +49,6 @@ function nullableNumber(value: unknown): number | null {
 function evaluationTargets(standards: EvaluationStandards) {
   return {
     interactionRate: standards.targets.interactionRate,
-    reviewLikeRate: standards.targets.reviewLikeRate,
-    dryFavoriteRate: standards.targets.dryFavoriteRate,
     bounceRate2s: standards.bounceRate2s,
     completionRate5s: standards.completionRate5s,
     avgPlayDuration: standards.avgPlayDuration,
@@ -116,6 +114,7 @@ select coalesce(jsonb_agg(jsonb_build_object(
   'interactionAchievement', interaction_achievement,
   'coreAchievement', core_achievement,
   'retentionAchievement', retention_achievement,
+  'retentionCalculation', retention_calculation,
   'retentionGrade', case
     when retention_achievement >= ${BREAKOUT_GRADE_THRESHOLDS.excellent} then '优'
     when retention_achievement >= ${BREAKOUT_GRADE_THRESHOLDS.good} then '良'
@@ -250,6 +249,7 @@ test("前后端内容质量评级在本地 RPC 上逐项对账", async () => {
       const database = projected.rows[0].payload.find((row) => row.id === videoId);
       assert.ok(database, `${fixture.name} 数据库对账投影未返回夹具作品`);
       assertClose(`${fixture.name}.retentionAchievement`, nullableNumber(database.retentionAchievement), frontend.contentAchievement);
+      assert.equal(database.retentionCalculation, frontend.retentionCalculation, `${fixture.name} 留存折算方式不一致`);
       assertClose(`${fixture.name}.interactionAchievement`, nullableNumber(database.interactionAchievement), frontend.interactionAchievement);
       assert.equal(database.retentionGrade, frontend.contentGrade, `${fixture.name} 留存档位不一致`);
       assert.equal(database.overallGrade, frontend.overallGrade, `${fixture.name} 综合评级不一致`);
@@ -271,7 +271,6 @@ test("前后端内容质量评级在本地 RPC 上逐项对账", async () => {
         ["excellent", "优"],
         ["good", "良"],
         ["fair", "普"],
-        ["poor", "劣"],
         ["unrated", null],
       ];
       for (const [gradeFilter, grade] of gradeFilters) {

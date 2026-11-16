@@ -113,7 +113,8 @@ export async function loadVideoTopicTags(
     }
     return { state: "ready", tags };
   } catch {
-    return { state: "error", tags: new Map() }; // gate:transient-map 函数内临时聚合，随调用栈释放
+    // 话题只用于展示，不应阻断互动/留存质量计算；保留作品键并按 other 口径继续计算。
+    return { state: "ready", tags }; // gate:transient-map 函数内临时聚合，随调用栈释放
   }
 }
 

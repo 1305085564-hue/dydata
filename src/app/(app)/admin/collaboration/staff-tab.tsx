@@ -220,13 +220,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  留存分均值
+                  留存数据
                   {sort.renderSortIcon("avgContentAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">留存分均值：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">留存数据均值：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
-                    五项留存数据完整的作品，按好标准计算达成率后合成留存分，再取作品均值。
+                    播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -243,14 +243,14 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  留存数据
+                  良优率
                   {sort.renderSortIcon("goodExcellentRate")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">留存数据良优率口径：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">良优率口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
                     留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
-                    播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接判劣计入分母；无已评级作品时显示「—」。
+                    播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -428,7 +428,7 @@ export function StaffRowCells({
               row.writerQuality.state === "error" ? (
                 <Badge variant="warning" title="质量数据读取异常">异常</Badge>
               ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
-                <span title={`互动数据完整样本：${row.writerQuality.summary.interactionSampleCount} 篇`}>
+                <span className={row.writerQuality.summary.interactionSampleCount < 3 ? "text-[#A8A29E]" : ""} title={`互动数据样本 ${row.writerQuality.summary.interactionSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
                 </span>
               ) : (
@@ -443,7 +443,7 @@ export function StaffRowCells({
               row.writerQuality.state === "error" ? (
                 <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
               ) : row.writerQuality.summary?.avgContentAchievement != null ? (
-                <span title={`留存数据完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                <span className={row.writerQuality.summary.achievementSampleCount < 3 ? "text-[#A8A29E]" : ""} title={`留存数据样本 ${row.writerQuality.summary.achievementSampleCount} 篇`}>
                   {Math.round(row.writerQuality.summary.avgContentAchievement)}%
                 </span>
               ) : (
@@ -458,8 +458,9 @@ export function StaffRowCells({
               row.writerQuality.state === "error" ? (
                 <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
               ) : row.writerQuality.summary && row.writerQuality.summary.ratedCount > 0 && row.writerQuality.summary.goodExcellentRate != null ? (
-                <span title={`综合已评级 ${row.writerQuality.summary.ratedCount} 篇 / 署名作品 ${row.writerQuality.summary.totalCount} 篇`}>
+                <span className={row.writerQuality.summary.ratedCount < 3 ? "text-[#A8A29E]" : ""} title={`良优率分母 ${row.writerQuality.summary.ratedCount} 篇`}>
                   {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
+                  <span className="ml-1 text-[11px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span>
                 </span>
               ) : (
                 <span className="text-[#A8A29E]" title="尚无可评级作品或参评样本">—</span>

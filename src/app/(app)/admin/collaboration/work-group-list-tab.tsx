@@ -250,13 +250,13 @@ export function WorkGroupListTab({
                         </div>
                         <div
                           className="text-[12px] text-[#78716C] font-normal"
-                          title={`综合已评级 ${group.contentQuality.ratedCount} / 作品 ${group.contentQuality.totalCount} 篇\n良优率 ${group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${group.contentQuality.overallGradeCounts.excellent} · 良 ${group.contentQuality.overallGradeCounts.good} · 普 ${group.contentQuality.overallGradeCounts.fair} · 劣 ${group.contentQuality.overallGradeCounts.poor}`}
+                          title={`综合已评级 ${group.contentQuality.ratedCount} / 作品 ${group.contentQuality.totalCount} 篇\n良优率 ${group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${group.contentQuality.overallGradeCounts.excellent} · 良 ${group.contentQuality.overallGradeCounts.good} · 普 ${group.contentQuality.overallGradeCounts.fair}`}
                         >
                           良优 {group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null
                             ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%`
                             : "—"}
                           <span className="mx-1 text-[#A8A29E]">·</span>
-                          优{group.contentQuality.overallGradeCounts.excellent}·良{group.contentQuality.overallGradeCounts.good}·普{group.contentQuality.overallGradeCounts.fair}·劣{group.contentQuality.overallGradeCounts.poor}
+                          优{group.contentQuality.overallGradeCounts.excellent}·良{group.contentQuality.overallGradeCounts.good}·普{group.contentQuality.overallGradeCounts.fair}
                         </div>
                       </div>
                     ) : (

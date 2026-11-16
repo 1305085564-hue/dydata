@@ -9,6 +9,7 @@ import { isImpossibleRatio, describeImpossibleRatio } from "@/lib/metric-bounds"
 import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anomaly";
 import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import type { VideoRow } from "@/lib/content/domain/detail";
 import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getAvgPlayRatioClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
 import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
@@ -59,12 +60,13 @@ export interface ContentDetailMetricsProps {
   interactionRating: BreakoutRating | null;
   fourthRating: BreakoutRating | null;
   overallGrade: BreakoutGrade | null;
+  contentQuality?: WorkContentQuality | null;
   hasAvailableScreenshots?: boolean;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
-export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
+export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, contentQuality = null, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
   const owner = onSelectAuthor || ownerNames
     ? getContentOwner(video, ownerNames)
     : { id: video.user_id, name: video.profiles.name };
@@ -190,14 +192,14 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <Badge
                           variant="secondary"
                           className={`bg-[#F1F1F0] text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动达成率与留存达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；较差一项最多被高项拉高 1 个档位（想拿优两项都不能低于良，想拿良两项都不能低于普）；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制；互动或五项留存数据不完整时不评级`}
+                          title={`综合评级：互动达成率与留存达成率取平均，按 ≥100% 优 / ≥80% 良 / 其余普落档；想拿优两项都要 ≥80%，想拿良两项都要 ≥60%；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 直接评普，低于 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，低于 ${KPI_PLAY_EXCELLENT.toLocaleString()} 最高良；互动或留存数据不完整时不评级`}
                         >
                           综合{overallGrade}
                         </Badge>
                       )}
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
-                      {!hasTopicKind && "话题未识别，暂不评级 · "}
+                      {!hasTopicKind && "话题暂未识别，评级按互动与留存数据 · "}
                       抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
                     </span>
                   </div>
@@ -250,28 +252,28 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     {/* 互动率 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>互动率</span>
+                        <span>互动达成</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
                       </div>
                       <Metric
                         settleKey="content-detail:interaction-rate"
-                        value={formatPercent(interaction)}
+                        value={formatAchievement(contentQuality?.interactionAchievement)}
                         className="mt-1.5"
                       />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>赞/评/藏/转</span>
                         <BreakoutGradeTag
                           rating={interactionRating}
-                          metricLabel="互动率"
+                          metricLabel="互动达成"
                           targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""}
                         />
                       </div>
                     </div>
 
-                    {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
+                    {/* 留存达成：点赞率和收藏率保留在快照明细中作参考 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>{fourthSlotLabel}</span>
+                        <span>留存达成</span>
                         {fourthSlotIsFavorite ? (
                           <Bookmark className="size-3.5 text-[#78716C]" />
                         ) : (
@@ -280,27 +282,14 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       </div>
                       <Metric
                         settleKey="content-detail:fourth-rate"
-                        value={formatPercent(fourthSlotValue)}
+                        value={formatAchievement(contentQuality?.contentAchievement)}
                         className="mt-1.5"
                       />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
-                          {hasTopicKind ? (
-                            <>
-                              {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
-                              <span className="tabular-nums font-normal text-[#1F1E1D]">
-                                {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
-                              </span>
-                            </>
-                          ) : (
-                            "话题标签缺失"
-                          )}
+                          {contentQuality?.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : contentQuality?.retentionCalculation === "avg_play_ratio_only" ? "按占比折算" : "五项加权"}
                         </span>
-                        <BreakoutGradeTag
-                          rating={fourthRating}
-                          metricLabel={fourthSlotLabel}
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.fourth) : ""}
-                        />
+                        <span className="shrink-0 tabular-nums text-[#78716C]">{contentQuality?.contentGrade ?? "—"}</span>
                       </div>
                     </div>
                   </div>

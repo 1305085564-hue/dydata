@@ -374,15 +374,11 @@ const CONTENT_QUALITY_STATUSES: readonly ContentQualityStatus[] = [
   "missing_metrics",
   "topic_unavailable",
 ];
-const CONTENT_QUALITY_GRADES: readonly BreakoutGrade[] = ["优", "良", "普", "劣"];
+const CONTENT_QUALITY_GRADES: readonly BreakoutGrade[] = ["优", "良", "普"];
 const CONTENT_QUALITY_TOPIC_KINDS: readonly NonNullable<WorkContentQuality["topicKind"]>[] = [
   "dry_goods",
   "review",
   "other",
-];
-const CONTENT_QUALITY_CORE_METRICS: readonly NonNullable<WorkContentQuality["coreMetric"]>[] = [
-  "favoriteRate",
-  "likeRate",
 ];
 
 /**
@@ -396,11 +392,11 @@ function parseWorkContentQuality(value: unknown): WorkContentQuality | null {
   if (!status) return null;
   return {
     topicKind: CONTENT_QUALITY_TOPIC_KINDS.find((candidate) => candidate === value.topicKind) ?? null,
-    coreMetric: CONTENT_QUALITY_CORE_METRICS.find((candidate) => candidate === value.coreMetric) ?? null,
     snapshotPlayCount: nullableNumber(value.snapshotPlayCount),
     interactionAchievement: nullableNumber(value.interactionAchievement),
-    coreAchievement: nullableNumber(value.coreAchievement),
+    interactionValue: nullableNumber(value.interactionValue),
     contentAchievement: nullableNumber(value.contentAchievement),
+    retentionCalculation: value.retentionCalculation === "average" || value.retentionCalculation === "avg_play_duration_only" || value.retentionCalculation === "avg_play_ratio_only" ? value.retentionCalculation : null,
     contentGrade: CONTENT_QUALITY_GRADES.find((candidate) => candidate === value.contentGrade) ?? null,
     overallGrade: CONTENT_QUALITY_GRADES.find((candidate) => candidate === value.overallGrade) ?? null,
     status,

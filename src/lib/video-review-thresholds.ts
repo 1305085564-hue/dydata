@@ -6,7 +6,7 @@
  * 修改入口：管理中心 → 数据口径 → 评价标准；仅公司负责人可保存。
  */
 /** 指标表现颜色的默认样本下限，与异常提醒和综合评级的播放门槛分别维护。 */
-export const VIDEO_REVIEW_COLOR_MIN_PLAY = 3000;
+export const VIDEO_REVIEW_COLOR_MIN_PLAY = 5000;
 
 export const VIDEO_REVIEW_RULE_THRESHOLDS = {
   bounce_rate_2s: 30,

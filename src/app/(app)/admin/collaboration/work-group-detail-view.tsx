@@ -258,13 +258,13 @@ export function WorkGroupDetailView({
                           </div>
                           <div
                             className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair}`}
                           >
                             良优 {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
                               ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
                               : "—"}
                             <span className="mx-1 text-[#A8A29E]">·</span>
-                            优{summary.contentQuality.overallGradeCounts.excellent}·良{summary.contentQuality.overallGradeCounts.good}·普{summary.contentQuality.overallGradeCounts.fair}·劣{summary.contentQuality.overallGradeCounts.poor}
+                            优{summary.contentQuality.overallGradeCounts.excellent}·良{summary.contentQuality.overallGradeCounts.good}·普{summary.contentQuality.overallGradeCounts.fair}
                           </div>
                         </div>
                       ) : (
@@ -327,13 +327,13 @@ export function WorkGroupDetailView({
                           </div>
                             <div
                               className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${member.contentQuality.ratedCount} / 作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
+                            title={`综合已评级 ${member.contentQuality.ratedCount} / 作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair}`}
                             >
                             良优 {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
                               ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
                               : "—"}
                             <span className="mx-1 text-[#A8A29E]">·</span>
-                            优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}·劣{member.contentQuality.overallGradeCounts.poor}
+                            优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}
                             </div>
                           </div>
                         ) : (

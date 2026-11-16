@@ -19,11 +19,10 @@ import { cn } from "@/lib/utils";
 /**
  * 参考线色值：严格从项目单一来源 BREAKOUT_GRADE_TEXT_CLASS 动态派生，杜绝在组件中复制硬编码十六进制
  */
-const GRADE_REFERENCE_HEX_COLORS: Record<BreakoutGrade, string> = {
+const GRADE_REFERENCE_HEX_COLORS: Partial<Record<BreakoutGrade, string>> = {
   优: BREAKOUT_GRADE_TEXT_CLASS["优"].replace(/^text-\[(.*)\]$/, "$1"),
   良: BREAKOUT_GRADE_TEXT_CLASS["良"].replace(/^text-\[(.*)\]$/, "$1"),
   普: BREAKOUT_GRADE_TEXT_CLASS["普"].replace(/^text-\[(.*)\]$/, "$1"),
-  劣: BREAKOUT_GRADE_TEXT_CLASS["劣"].replace(/^text-\[(.*)\]$/, "$1"),
 };
 
 export interface WriterChartWorkPoint {
@@ -36,7 +35,6 @@ export interface WriterChartWorkPoint {
   playCount: number;
   hasSnapshot: boolean;
   topicKind: "dry_goods" | "review" | "other" | null;
-  coreMetric: "favoriteRate" | "likeRate" | null;
   contentAchievement: number | null;
   interactionAchievement: number | null;
   contentGrade: BreakoutGrade | null;
@@ -139,7 +137,6 @@ export function WriterQualityChart({
         playCount: work.playCount,
         hasSnapshot: work.hasSnapshot,
         topicKind: q?.topicKind ?? null,
-        coreMetric: q?.coreMetric ?? null,
         // 达成率：真 0% 正常保留数值 0 并连线，缺失或未评级为 null 断线
         contentAchievement: q?.contentAchievement != null ? q.contentAchievement : null,
         interactionAchievement:
@@ -210,12 +207,10 @@ export function WriterQualityChart({
   };
 
   // 话题标签文案
-  const getTopicLabel = (topicKind: string | null, coreMetric: string | null) => {
-    if (topicKind === "dry_goods") return "干货 · 收藏";
-    if (topicKind === "review") return "复盘 · 点赞";
-    if (topicKind === "other") return "其他 · 点赞";
-    if (coreMetric === "favoriteRate") return "干货 · 收藏";
-    if (coreMetric === "likeRate") return "复盘 · 点赞";
+  const getTopicLabel = (topicKind: string | null) => {
+    if (topicKind === "dry_goods") return "干货";
+    if (topicKind === "review") return "复盘";
+    if (topicKind === "other") return "其他";
     return "未识别话题";
   };
 
@@ -320,7 +315,7 @@ export function WriterQualityChart({
                     {hoveredWork.title || "未命名作品"}
                   </span>
                   <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
-                    {getTopicLabel(hoveredWork.topicKind, hoveredWork.coreMetric)}
+                    {getTopicLabel(hoveredWork.topicKind)}
                   </span>
                 </div>
 

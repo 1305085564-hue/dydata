@@ -21,11 +21,11 @@ export type HighlightFieldKey =
   | "shares"
   | "favorites"
   | "interactionRate"
-  | "coreMetricRate"
   | "bounceRate2s"
   | "completionRate5s"
   | "avgPlayDuration"
   | "completionRate";
+export type LegacyHighlightValueRow = Record<string, number | null>;
 
 export interface HighlightFieldMeta {
   key: HighlightFieldKey;
@@ -38,9 +38,8 @@ export interface HighlightFieldMeta {
   step: number;
 }
 
-/** 顺序与表格列顺序对齐：核心指标 → 互动率 → 计数列 → 完播组 */
+/** 顺序与表格列顺序对齐。 */
 export const HIGHLIGHT_FIELDS: readonly HighlightFieldMeta[] = [
-  { key: "coreMetricRate", label: "核心指标", unit: "%", isRatio: true, step: 0.1 },
   { key: "interactionRate", label: "互动率", unit: "%", isRatio: true, step: 0.1 },
   { key: "playCount", label: "播放", unit: "次", isRatio: false, step: 1 },
   { key: "followerGain", label: "涨粉", unit: "次", isRatio: false, step: 1 },

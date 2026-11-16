@@ -267,12 +267,6 @@ export function ContentListSecondaryFilters({
                   普
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
-                  value="poor"
-                  className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
-                >
-                  劣
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
                   value="unrated"
                   className="cursor-pointer py-1.5 px-2 text-[14px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >

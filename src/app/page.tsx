@@ -234,7 +234,7 @@ export default function HomePage() {
                   作品异常归因
                 </SectionHeading>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
-                  将播放流失、完播率等核心指标与文案分段、历史基线联动排查。帮助管理者一眼定位低效作品的问题根源，提供扎实的诊断证据。
+                  将播放流失、完播率等关键数据与文案分段、历史基线联动排查。帮助管理者一眼定位低效作品的问题根源，提供扎实的诊断证据。
                 </p>
               </div>
               <div className="mt-6 border-t border-[#E2E2DF]/60 pt-3 text-[12px] font-normal text-status-info">

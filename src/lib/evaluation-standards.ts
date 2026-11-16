@@ -2,15 +2,15 @@ import { BREAKOUT_TARGETS } from "@/lib/breakout-rating";
 import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 
 export type EvaluationBand = { good: number; poor: number };
-export type EvaluationMetric = "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" | "coreAchievement" | "interactionAchievement";
+export type EvaluationMetric = "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" | "interactionAchievement" | "coreAchievement";
 export type RetentionWeightKey = "bounceRate2s" | "completionRate5s" | "avgPlayBundle" | "completionRate";
 export type EvaluationStandards = Record<EvaluationMetric, EvaluationBand> & {
-  /** 指标颜色的样本下限，默认 3000，可按公司配置调整；不改变综合评级 2000/15000 门槛或固定异常提醒 5000。 */
+  /** 指标颜色的样本下限，默认 5000，可按公司配置调整。 */
   minPlayCount: number;
   /** 留存总分四项权重，百分数输入且合计必须为 100。均播时长与平均播放占比共用 avgPlayBundle。 */
   retentionWeights: Record<RetentionWeightKey, number>;
-  /** 百分数输入，2 表示 2%。 */
-  targets: { reviewLikeRate: number; dryFavoriteRate: number; interactionRate: number; followerRate: number };
+  /** 百分数输入，2 表示 2%。点赞、收藏、转粉仅作参考标准。 */
+  targets: { interactionRate: number; followerRate: number; reviewLikeRate?: number; dryFavoriteRate?: number };
 };
 
 export const EVALUATION_METRICS: ReadonlyArray<{ key: EvaluationMetric; label: string; unit: string; lowerIsBetter?: boolean; max: number }> = [
@@ -19,7 +19,6 @@ export const EVALUATION_METRICS: ReadonlyArray<{ key: EvaluationMetric; label: s
   { key: "avgPlayDuration", label: "均播时长", unit: "秒", max: 86400 },
   { key: "avgPlayRatio", label: "平均播放占比", unit: "%", max: 100 },
   { key: "completionRate", label: "整体完播率", unit: "%", max: 100 },
-  { key: "coreAchievement", label: "核心指标达成率", unit: "%", max: 10000 },
   { key: "interactionAchievement", label: "互动率达成率", unit: "%", max: 10000 },
 ];
 
@@ -45,11 +44,9 @@ export const DEFAULT_EVALUATION_STANDARDS: EvaluationStandards = {
   avgPlayDuration: { good: VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_duration, poor: VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_duration },
   avgPlayRatio: { good: VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_ratio, poor: VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_ratio },
   completionRate: { good: VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate, poor: VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate },
-  coreAchievement: { good: 100, poor: 60 },
   interactionAchievement: { good: 100, poor: 60 },
+  coreAchievement: { good: 100, poor: 60 },
   targets: {
-    reviewLikeRate: BREAKOUT_TARGETS.review.fourth * 100,
-    dryFavoriteRate: BREAKOUT_TARGETS.dry_goods.fourth * 100,
     interactionRate: Number((BREAKOUT_TARGETS.review.interaction * 100).toFixed(6)),
     followerRate: BREAKOUT_TARGETS.review.follower * 100,
   },
@@ -72,11 +69,20 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
   const standards = Object.prototype.hasOwnProperty.call(standardsWithRatio, "retentionWeights")
     ? standardsWithRatio
     : { ...standardsWithRatio, retentionWeights: DEFAULT_RETENTION_WEIGHTS };
-  const expected = new Set(["minPlayCount", "targets", "retentionWeights", ...EVALUATION_METRICS.map(({ key }) => key)]);
-  if (Object.keys(standards).some((key) => !expected.has(key))) return { success: false, error: "包含未知的评价标准" };
-  if (!inRange(standards.minPlayCount, 1e9) || !Number.isInteger(standards.minPlayCount)) return { success: false, error: "播放量门槛须为 0～10 亿的整数" };
+  const expected = new Set(["minPlayCount", "targets", "retentionWeights", ...EVALUATION_METRICS.map(({ key }) => key), "coreAchievement"]);
+  // 历史记录可带旧字段；读取时丢弃，保存返回的新结构不再包含它们。
+  const legacyFree = Object.fromEntries(Object.entries(standards).filter(([key]) => key !== "coreAchievement"));
+  if (Object.keys(legacyFree).some((key) => !expected.has(key))) return { success: false, error: "包含未知的评价标准" };
+  const targetRecord = isRecord(standards.targets) ? standards.targets : {};
+  const cleanTargets = {
+    interactionRate: targetRecord.interactionRate,
+    followerRate: targetRecord.followerRate,
+  };
+  const normalized: Record<string, unknown> = { ...legacyFree, targets: cleanTargets };
+  delete normalized.coreAchievement;
+  if (!inRange(normalized.minPlayCount, 1e9) || !Number.isInteger(normalized.minPlayCount)) return { success: false, error: "播放量门槛须为 0～10 亿的整数" };
   for (const metric of EVALUATION_METRICS) {
-    const band = standards[metric.key];
+    const band = normalized[metric.key];
     if (!isRecord(band) || Object.keys(band).some((key) => key !== "good" && key !== "poor")) return { success: false, error: `${metric.label}请填写好标准和差线` };
     if (!inRange(band.good, metric.max, true)) return { success: false, error: `${metric.label}的好标准须大于 0 且不超过 ${metric.max}` };
     if (!inRange(band.poor, metric.max)) return { success: false, error: `${metric.label}的差线须为 0～${metric.max}` };
@@ -84,7 +90,7 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
       return { success: false, error: `${metric.label}的好、差标准不能重叠` };
     }
   }
-  const retentionWeights = standards.retentionWeights;
+  const retentionWeights = normalized.retentionWeights;
   const retentionWeightKeys = RETENTION_WEIGHT_FIELDS.map(({ key }) => key);
   if (
     !isRecord(retentionWeights)
@@ -94,12 +100,12 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
   ) {
     return { success: false, error: "留存数据权重必须是 0～100 的数字，且合计为 100%" };
   }
-  const targets = standards.targets;
-  const targetKeys = Object.keys(DEFAULT_EVALUATION_STANDARDS.targets);
+  const targets = normalized.targets;
+  const targetKeys = ["interactionRate", "followerRate"];
   if (!isRecord(targets) || Object.keys(targets).some((key) => !targetKeys.includes(key)) || targetKeys.some((key) => !inRange(targets[key], 100, true))) {
     return { success: false, error: "达标基准须大于 0 且不超过 100%" };
   }
-  return { success: true, data: structuredClone(standards) as EvaluationStandards };
+  return { success: true, data: structuredClone(normalized) as EvaluationStandards };
 }
 
 export function evaluationSettingsKey(teamId: string | null | undefined): string {
@@ -118,7 +124,8 @@ export function canEditEvaluationStandards(identity: { companyRole?: string | nu
 
 export function evaluationTone(metric: EvaluationMetric, value: number | null | undefined, playCount: number | null | undefined, standards: EvaluationStandards): "good" | "poor" | "normal" {
   if (value == null || !Number.isFinite(value) || (playCount != null && playCount < standards.minPlayCount)) return "normal";
-  const band = standards[metric];
+  const band = standards[metric] ?? DEFAULT_EVALUATION_STANDARDS[metric];
+  if (!band) return "normal";
   if (metric === "bounceRate2s") {
     if (value <= band.good) return "good";
     if (value > band.poor) return "poor";

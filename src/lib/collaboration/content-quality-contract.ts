@@ -8,8 +8,6 @@ import type { RetentionWeightKey } from "@/lib/evaluation-standards";
 export interface TopicQualityTargets {
   /** 互动率标准线 */
   interaction: number;
-  /** 核心指标标准线：干货为收藏率，复盘及其他为点赞率 */
-  core: number;
 }
 
 /**
@@ -98,8 +96,8 @@ export type ContentQualityGradeFilter =
   | "excellent"
   | "good"
   | "fair"
-  | "poor"
-  | "unrated";
+  | "unrated"
+  | "poor";
 
 /**
  * 单篇作品内容质量目标与评级详情。
@@ -111,16 +109,20 @@ export type ContentQualityGradeFilter =
 export interface WorkContentQuality {
   /** 话题分类：dry_goods 干货 / review 复盘 / other 其他 / null 尚未识别 */
   topicKind: "dry_goods" | "review" | "other" | null;
-  /** 核心关注指标：干货为 favoriteRate，复盘及其他为 likeRate */
-  coreMetric: "favoriteRate" | "likeRate" | null;
   /** 最新 24h 快照播放量原值 */
   snapshotPlayCount: number | null;
   /** 互动达成率（百分数数值：如 88.5 表示 88.5%，不封顶） */
   interactionAchievement: number | null;
-  /** 核心指标达成率（百分数数值：收藏或点赞达成率，不封顶） */
-  coreAchievement: number | null;
+  /** 原始互动值 = (赞 + 评论 + 收藏 + 转发) / 播放，0–1 小数。 */
+  interactionValue?: number | null;
+  /** @deprecated 兼容旧接口读取。 */
+  coreMetric?: "favoriteRate" | "likeRate" | null;
+  /** @deprecated 兼容旧接口读取。 */
+  coreAchievement?: number | null;
   /** 留存达成率（留存分，百分数，可超过 100） */
   contentAchievement: number | null;
+  /** 留存组合项实际采用的折算方式。 */
+  retentionCalculation?: "average" | "avg_play_duration_only" | "avg_play_ratio_only" | null;
   /** 留存数据档位（不含播放兜底） */
   contentGrade: BreakoutGrade | null;
   /** 五项留存原始值，平均播放占比已转换为百分数。 */
@@ -146,8 +148,6 @@ export interface ContentQualitySummary {
   achievementSampleCount: number;
   /** 互动数据可计算作品数（互动均值分母） */
   interactionSampleCount: number;
-  /** 兼容旧接口的核心指标样本数，当前页面不再用于内容质量考核。 */
-  coreSampleCount: number;
   /** 综合评级非空的作品数（良优率分母） */
   ratedCount: number;
   /** 未评级原因计数（仅统计综合评级为空的作品） */
@@ -156,20 +156,23 @@ export interface ContentQualitySummary {
     pendingSnapshot: number;
     invalidPlay: number;
     missingMetrics: number;
-    topicUnavailable: number;
+    topicUnavailable?: number;
   };
   /** 互动达成率均值（百分数数值，如 92.4 表示 92.4%） */
   avgInteractionAchievement: number | null;
-  /** 兼容旧接口的核心指标达成率均值，当前页面不再用于内容质量考核。 */
-  avgCoreAchievement: number | null;
   /** 留存分均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
-  /** 综合优/良/普/劣件数计数 */
+  /** @deprecated 兼容旧接口读取。 */
+  avgCoreAchievement?: number | null;
+  /** @deprecated 兼容旧接口读取。 */
+  coreSampleCount?: number;
+  /** 综合优/良/普件数计数 */
   overallGradeCounts: {
     excellent: number;
     good: number;
     fair: number;
-    poor: number;
+    /** 旧接口兼容；新计算不产生劣。 */
+    poor?: number;
   };
   /** 综合良优率（0–1 小数，例如 0.65 表示 65%）；无参评样本时为 null */
   goodExcellentRate: number | null;

@@ -40,7 +40,7 @@ async function login(page: Page) {
 }
 
 test.describe("文案内容质量三入口真实浏览器验收", () => {
-  test("① /admin/content 视频复盘列表：表头存在综合评级与核心指标列，且次级筛选「综合评级」有效", async ({ page }) => {
+  test("① /admin/content 视频复盘列表：表头存在综合评级与留存达成列，且次级筛选有效", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("content-review-onboarding-seen", "true");
     });
@@ -56,9 +56,9 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     const table = page.locator("table").first();
     await expect(table).toBeVisible({ timeout: 30_000 });
 
-    // 表头存在「综合评级」「核心指标」两列
+    // 表头存在「综合评级」「留存达成」两列
     await expect(table.locator("thead").getByText("综合评级")).toBeVisible();
-    await expect(table.locator("thead").getByText("核心指标")).toBeVisible();
+    await expect(table.locator("thead").getByText("留存达成")).toBeVisible();
 
     // 新版筛选栏重构（b1b04a6d）：评级已收敛至次级「筛选」下拉菜单下的「综合评级」级联子菜单
     const filterButton = page.getByRole("button", { name: "筛选", exact: true });
@@ -122,14 +122,13 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     const rateText = (await qualityCell.locator("span").first().textContent())?.trim() ?? "";
     const detailText = (await qualityCell.locator("div").first().textContent())?.trim() ?? "";
 
-    const match = detailText.match(/优(\d+)·良(\d+)·普(\d+)·劣(\d+)/);
-    expect(match, "文案组必须包含优良普劣明细").not.toBeNull();
+    const match = detailText.match(/优(\d+)·良(\d+)·普(\d+)/);
+    expect(match, "文案组必须包含优良普明细").not.toBeNull();
     if (match) {
       const excellent = parseInt(match[1], 10);
       const good = parseInt(match[2], 10);
       const fair = parseInt(match[3], 10);
-      const poor = parseInt(match[4], 10);
-      const ratedCount = excellent + good + fair + poor;
+      const ratedCount = excellent + good + fair;
       expect(ratedCount, "已评级总数必须大于0").toBeGreaterThan(0);
 
       const calculatedRate = `${Math.round(((excellent + good) / ratedCount) * 100)}%`;

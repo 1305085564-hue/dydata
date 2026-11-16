@@ -126,7 +126,8 @@ export function getAvgPlayDurationClass(value: number | null | undefined, playCo
 export function getAvgPlayRatioClass(value: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS) {
   return metricClass("avgPlayRatio", avgPlayRatioAsPercentagePoints(value), playCount, standards);
 }
-export function getCoreAchievementClass(achievement: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS, metric: "coreAchievement" | "interactionAchievement" = "coreAchievement"): string {
-  const tone = evaluationTone(metric, achievement, playCount, standards);
+/** @deprecated 兼容旧调用方；产品页面不再显示该字段。 */
+export function getCoreAchievementClass(achievement: number | null | undefined, playCount?: number | null, standards = DEFAULT_EVALUATION_STANDARDS): string {
+  const tone = evaluationTone("interactionAchievement", achievement, playCount, standards);
   return tone === "good" ? "text-status-danger" : tone === "poor" ? "text-status-success" : "";
 }

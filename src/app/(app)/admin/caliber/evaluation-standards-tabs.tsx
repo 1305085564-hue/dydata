@@ -19,10 +19,11 @@ import {
 
 type TargetKey = keyof EvaluationStandards["targets"];
 type EvaluationStandardsDraft = {
-  [Metric in EvaluationMetric]: { good: string; poor: string };
+  [Metric in Exclude<EvaluationMetric, "coreAchievement">]: { good: string; poor: string };
 } & {
+  coreAchievement?: { good: string; poor: string };
   minPlayCount: string;
-  targets: Record<TargetKey, string>;
+  targets: Partial<Record<TargetKey, string>> & Pick<Record<TargetKey, string>, "interactionRate" | "followerRate">;
   retentionWeights: Record<RetentionWeightKey, string>;
 };
 
@@ -32,8 +33,6 @@ export type EvaluationSettingsView = {
 };
 
 const targetFields: ReadonlyArray<{ key: TargetKey; label: string }> = [
-  { key: "reviewLikeRate", label: "复盘点赞率" },
-  { key: "dryFavoriteRate", label: "干货收藏率" },
   { key: "interactionRate", label: "互动率" },
   { key: "followerRate", label: "转粉率" },
 ];
@@ -46,11 +45,8 @@ export function createEvaluationStandardsDraft(standards: EvaluationStandards): 
     avgPlayDuration: { good: String(standards.avgPlayDuration.good), poor: String(standards.avgPlayDuration.poor) },
     avgPlayRatio: { good: String(standards.avgPlayRatio.good), poor: String(standards.avgPlayRatio.poor) },
     completionRate: { good: String(standards.completionRate.good), poor: String(standards.completionRate.poor) },
-    coreAchievement: { good: String(standards.coreAchievement.good), poor: String(standards.coreAchievement.poor) },
     interactionAchievement: { good: String(standards.interactionAchievement.good), poor: String(standards.interactionAchievement.poor) },
     targets: {
-      reviewLikeRate: String(standards.targets.reviewLikeRate),
-      dryFavoriteRate: String(standards.targets.dryFavoriteRate),
       interactionRate: String(standards.targets.interactionRate),
       followerRate: String(standards.targets.followerRate),
     },
@@ -68,18 +64,15 @@ function draftNumber(value: string): number {
 }
 
 export function parseEvaluationStandardsDraft(draft: EvaluationStandardsDraft) {
-  return parseEvaluationStandards({
+    return parseEvaluationStandards({
     minPlayCount: draftNumber(draft.minPlayCount),
     bounceRate2s: { good: draftNumber(draft.bounceRate2s.good), poor: draftNumber(draft.bounceRate2s.poor) },
     completionRate5s: { good: draftNumber(draft.completionRate5s.good), poor: draftNumber(draft.completionRate5s.poor) },
     avgPlayDuration: { good: draftNumber(draft.avgPlayDuration.good), poor: draftNumber(draft.avgPlayDuration.poor) },
     avgPlayRatio: { good: draftNumber(draft.avgPlayRatio.good), poor: draftNumber(draft.avgPlayRatio.poor) },
     completionRate: { good: draftNumber(draft.completionRate.good), poor: draftNumber(draft.completionRate.poor) },
-    coreAchievement: { good: draftNumber(draft.coreAchievement.good), poor: draftNumber(draft.coreAchievement.poor) },
-    interactionAchievement: { good: draftNumber(draft.interactionAchievement.good), poor: draftNumber(draft.interactionAchievement.poor) },
+    interactionAchievement: { good: draftNumber(draft.interactionAchievement?.good ?? ""), poor: draftNumber(draft.interactionAchievement?.poor ?? "") },
     targets: {
-      reviewLikeRate: draftNumber(draft.targets.reviewLikeRate),
-      dryFavoriteRate: draftNumber(draft.targets.dryFavoriteRate),
       interactionRate: draftNumber(draft.targets.interactionRate),
       followerRate: draftNumber(draft.targets.followerRate),
     },
@@ -294,7 +287,7 @@ export function EvaluationStandardsTabs({
                           {metric.label}
                         </TableHead>
                         {(["good", "poor"] as const).map((band) => {
-                          const value = draft[metric.key][band];
+                          const value = draft[metric.key]?.[band] ?? "";
                           return (
                             <TableCell key={band} className="text-right">
                               {canEdit ? (
@@ -328,7 +321,7 @@ export function EvaluationStandardsTabs({
             <div className="space-y-3">
               <div>
                 <h2 className="text-[14px] text-[#141413]">达标基准与判断门槛</h2>
-                <p className="mt-1 text-[12px] text-[#78716C]">基准代表达成 100%；复盘看点赞率，干货看收藏率。基准须大于 0 且不超过 100%。</p>
+                <p className="mt-1 text-[12px] text-[#78716C]">互动率和转粉率保留作参考，不参与综合评级。基准须大于 0 且不超过 100%。</p>
               </div>
               <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                 {targetFields.map(({ key, label }) => (
@@ -350,7 +343,7 @@ export function EvaluationStandardsTabs({
                       </div>
                     ) : (
                       <span className="block min-h-8 py-1 text-[14px] tabular-nums text-[#1F1E1D]">
-                        {formatStandard(draftNumber(draft.targets[key]), "%")}
+                        {formatStandard(draftNumber(draft.targets[key] ?? ""), "%")}
                       </span>
                     )}
                   </label>

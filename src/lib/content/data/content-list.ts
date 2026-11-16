@@ -52,16 +52,6 @@ export function buildProcessedContentRows({
       const lowSample = playCount != null && playCount < evaluationStandards.minPlayCount;
 
       const quality = contentQualityByVideoId?.[video.id] ?? null;
-      const isDryGoods = quality?.topicKind === "dry_goods" || quality?.coreMetric === "favoriteRate";
-      const coreMetricRate = isDryGoods
-        ? (playCount && playCount > 0 && favorites != null ? (favorites / playCount) * 100 : null)
-        : (playCount && playCount > 0 && likes != null ? (likes / playCount) * 100 : null);
-      const coreMetricTopicText = isDryGoods
-        ? "干货"
-        : quality?.topicKind === "review"
-          ? "复盘"
-          : null;
-
       return {
         video,
         snapshot,
@@ -80,8 +70,6 @@ export function buildProcessedContentRows({
         avgPlayRatio: snapshot?.avg_play_ratio ?? null,
         completionRate: snapshot?.completion_rate ?? null,
         quality,
-        coreMetricRate,
-        coreMetricTopicText,
       };
     });
 
@@ -100,7 +88,6 @@ export function buildProcessedContentRows({
 type SortableContentRow = {
   publishedTime: number;
   quality?: WorkContentQuality | null;
-  coreMetricRate?: number | null;
   playCount?: number | null;
   followerGain?: number | null;
   likes?: number | null;
@@ -134,17 +121,12 @@ export function compareContentRows(
         if (g === "优") return 4;
         if (g === "良") return 3;
         if (g === "普") return 2;
-        if (g === "劣") return 1;
-        return 0;
+        return 1;
       };
       valA = rank(a.quality?.overallGrade);
       valB = rank(b.quality?.overallGrade);
       break;
     }
-    case "core_metric":
-      valA = toSortableRatio(a.coreMetricRate);
-      valB = toSortableRatio(b.coreMetricRate);
-      break;
     case "play_count":
       valA = a.playCount ?? null;
       valB = b.playCount ?? null;

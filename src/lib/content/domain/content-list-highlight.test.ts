@@ -22,7 +22,6 @@ import {
 
 function makeRow(overrides: Partial<HighlightValueRow> = {}): HighlightValueRow {
   const base: HighlightValueRow = {
-    coreMetricRate: null,
     interactionRate: null,
     playCount: null,
     followerGain: null,
@@ -38,10 +37,10 @@ function makeRow(overrides: Partial<HighlightValueRow> = {}): HighlightValueRow 
   return { ...base, ...overrides };
 }
 
-test("高亮字段覆盖 12 个数值列且键名唯一", () => {
-  assert.equal(HIGHLIGHT_FIELDS.length, 12);
+test("高亮字段覆盖现有数值列且键名唯一", () => {
+  assert.equal(HIGHLIGHT_FIELDS.length, 11);
   const keys = HIGHLIGHT_FIELDS.map((f) => f.key);
-  assert.equal(new Set(keys).size, 12);
+  assert.equal(new Set(keys).size, 11);
 });
 
 test("命中判断：含下限不含上限；空值永不命中", () => {

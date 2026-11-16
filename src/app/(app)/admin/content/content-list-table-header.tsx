@@ -167,21 +167,6 @@ export function ContentListTableHeader({
       </button>
     </th>
 
-    {/* 4. 核心指标（放在互动率前面） */}
-    <th data-col-key="core_metric" className={cn("font-normal py-2 px-2 text-right w-[80px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "core_metric" && "bg-surface-sand")} aria-sort={ariaSortFor("core_metric")}>
-      <button
-        title="右上角有星号为复盘，无星号为干货"
-        aria-label={`核心指标：右上角有星号为复盘，无星号为干货。按核心指标排序${sortField === "core_metric" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("core_metric")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("core_metric")}
-        <span>核心指标</span>
-      </button>
-    </th>
-
-    {/* 5. 互动率（放在核心指标后面，宽度 58px 不变） */}
     <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-sand")} aria-sort={ariaSortFor("interaction_rate")}>
       <button
         aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
@@ -193,6 +178,9 @@ export function ContentListTableHeader({
         <span>互动率</span>
       </button>
     </th>
+
+    <th data-col-key="retention_achievement" className="font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap">留存达成</th>
+    <th data-col-key="overall_grade" className="font-normal py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap" aria-sort={ariaSortFor("overall_grade")}>评级</th>
 
     {/* 发布时间 */}
     <th data-col-key="published_at" className={cn("font-normal py-2 px-1 text-right w-[67px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-surface-sand")} aria-sort={ariaSortFor("published_at")}>

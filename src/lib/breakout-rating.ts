@@ -14,7 +14,7 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 export interface BreakoutTargets {
   /** 互动率标准线 */
   interaction: number;
-  /** 核心指标标准线：干货为收藏率，复盘及其他为点赞率 */
+  /** 兼容历史配置读取的参考标准线；不参与综合评级。 */
   fourth: number;
   /** 转粉率标准线（两套通用） */
   follower: number;
@@ -27,6 +27,7 @@ export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> =
   review: { interaction: 0.035, fourth: 0.02, follower: 0.01 },
 };
 
+/** 劣仅作为旧数据/旧测试输入兼容值；所有新计算永不返回。 */
 export type BreakoutGrade = "优" | "良" | "普" | "劣";
 /**
  * 纯文字状态色（优藕紫、良陈玫、普深苔橄榄、劣深青瓷，小字下清晰扎实）
@@ -38,7 +39,7 @@ export const BREAKOUT_GRADE_TEXT_CLASS: Record<BreakoutGrade, string> = {
   优: "text-[#7E5C99]", // 藕紫
   良: "text-[#A85A6B]", // 陈玫
   普: "text-[#6F6B2F]", // 深苔橄榄
-  劣: "text-[#2F6F66]", // 深青瓷
+  劣: "text-[#2F6F66]",
 };
 
 export interface BreakoutRating {
@@ -66,9 +67,9 @@ export function breakoutTargetsFor(
   if (standards) {
     return {
       interaction: standards.targets.interactionRate / 100,
-      fourth: (topicKind === "dry_goods"
-        ? standards.targets.dryFavoriteRate
-        : standards.targets.reviewLikeRate) / 100,
+      fourth: topicKind === "dry_goods"
+        ? (standards.targets.dryFavoriteRate ?? BREAKOUT_TARGETS.dry_goods.fourth * 100) / 100
+        : (standards.targets.reviewLikeRate ?? BREAKOUT_TARGETS.review.fourth * 100) / 100,
       follower: standards.targets.followerRate / 100,
     };
   }
@@ -89,7 +90,7 @@ export function breakoutAchievement(
   return (actual / target) * 100;
 }
 
-/** 评级：≥100 优、≥80 良、≥60 普、<60 劣 */
+/** 评级：≥100 优、≥80 良，其余普。三档评级不再产生劣。 */
 export function breakoutGrade(
   achievement: number | null | undefined,
 ): BreakoutGrade | null {
@@ -102,8 +103,7 @@ export function breakoutGrade(
   }
   if (achievement >= BREAKOUT_GRADE_THRESHOLDS.excellent) return "优";
   if (achievement >= BREAKOUT_GRADE_THRESHOLDS.good) return "良";
-  if (achievement >= BREAKOUT_GRADE_THRESHOLDS.fair) return "普";
-  return "劣";
+  return "普";
 }
 
 /** 单项评级；无实际值或标准非法时返回 null（不渲染标签） */
@@ -119,11 +119,11 @@ export function breakoutRating(
 
 /**
  * KPI 综合评级播放门槛（口径见 docs/系统架构与设计/数据口径与计算规则.md 3.2）：
- * 播放 < 2,000 直接判劣；≥ 2,000 封顶普；≥ 15,000 不设上限（能否到良/优由指标档位决定）。
+ * 播放 < 2,000 直接判普；5,000 以下最高普，5,000–14,999 最高良，15,000 以上不封顶。
  * 2026-11-13 调整（阿禅）：普线 5,000 → 2,000；良线与优线同为 15,000。
  */
 export const KPI_PLAY_FLOOR = 2000;
-export const KPI_PLAY_GOOD = 15000;
+export const KPI_PLAY_GOOD = 5000;
 export const KPI_PLAY_EXCELLENT = 15000;
 
 /** 达成率档位阈值（百分数），供内容质量后端下发给展示层。 */
@@ -134,7 +134,7 @@ export const BREAKOUT_GRADE_THRESHOLDS = {
 } as const;
 
 /** 档位从低到高，用于播放档位与指标综合档位取低 */
-const GRADE_ORDER: readonly BreakoutGrade[] = ["劣", "普", "良", "优"];
+const GRADE_ORDER: readonly BreakoutGrade[] = ["普", "良", "优"];
 
 /**
  * 强项最多能把较差项拉高的档位数（2026-10-12 阿禅定稿，防过度偏科）：
@@ -150,15 +150,12 @@ function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
 }
 
 /**
- * 综合评级：一个作品一个总评（优/良/普/劣），与三个单项标签并存。
+ * 综合评级：一个作品一个总评（优/良/普），与两个单项标签并存。
  *
- * 1. 流量硬门槛：播放 < 2,000 直接判劣，不看指标。
+ * 1. 流量硬门槛：播放为 0 或无效时未评级；播放 < 2,000 直接判普，不看指标。
  * 2. 指标综合：互动达成率与留存达成率取平均，不封顶、不先取整；转粉率不参与。
- * 3. 拉分封顶：较差的那一项最多被强项拉高 MAX_PULL_GRADES（当前 1）个档位——
- *    即「要拿优，两项都不能低于良；要拿良，两项都不能低于普」，防止一项极高把另一项的低分抹平。
- * 4. 播放封顶：上面得到的指标档位与播放档位取低，播放只能限制上限，不能抬高评级。
- *    （播放档位：≥ 15,000 优，其余普；良线与优线同为 15,000，
- *    故播放实际只能封到「普」，能否到良/优由指标档位决定。）
+ * 3. 偏科保护：要拿优两项都需 ≥80%，要拿良两项都需 ≥60%。
+ * 4. 播放封顶：指标档位与播放档位取低，播放只能限制上限，不能抬高评级。
  * 5. 缺数据不臆造：播放未采集，或播放已过门槛但任一参与项缺值 → null（不显示徽章）。
  *
  * 两项依次为互动达成率、留存达成率，来自 breakoutRating()。
@@ -171,17 +168,19 @@ export function overallBreakoutGrade(
   if (playCount === null || playCount === undefined || !Number.isFinite(playCount)) {
     return null;
   }
-  if (playCount < KPI_PLAY_FLOOR) return "劣";
+  if (playCount <= 0) return null;
+  if (playCount < KPI_PLAY_FLOOR) return "普";
   const [interaction, retention] = items;
   if (!interaction || !retention) return null;
   const averageAchievement = (interaction.achievement + retention.achievement) / 2;
   const metricGrade = breakoutGrade(averageAchievement);
   if (metricGrade === null) return null;
-  const weakerGrade = lowerGrade(interaction.grade, retention.grade);
-  const pullCap = GRADE_ORDER[
-    Math.min(GRADE_ORDER.indexOf(weakerGrade) + MAX_PULL_GRADES, GRADE_ORDER.length - 1)
-  ];
-  const cappedMetricGrade = lowerGrade(metricGrade, pullCap);
+  const weakAchievement = Math.min(interaction.achievement, retention.achievement);
+  const cappedMetricGrade = weakAchievement < BREAKOUT_GRADE_THRESHOLDS.fair
+    ? "普"
+    : weakAchievement < BREAKOUT_GRADE_THRESHOLDS.good
+      ? lowerGrade(metricGrade, "良")
+      : metricGrade;
   const playGrade: BreakoutGrade = playCount >= KPI_PLAY_EXCELLENT
     ? "优"
     : playCount >= KPI_PLAY_GOOD ? "良" : "普";

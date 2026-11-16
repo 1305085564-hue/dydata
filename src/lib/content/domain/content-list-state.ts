@@ -245,8 +245,6 @@ export function useContentListState(props: ContentListProps) {
         return "良";
       case "fair":
         return "普";
-      case "poor":
-        return "劣";
       case "unrated":
         return "未评级";
       default:

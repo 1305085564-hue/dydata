@@ -156,6 +156,8 @@ export type TalentRow = {
   hitCount: number;
   selfHandledCount: number;
   accounts: TalentAccount[];
+  writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null };
+  qualitySummary?: ContentQualitySummary | null;
 };
 
 /**

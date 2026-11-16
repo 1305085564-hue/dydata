@@ -31,6 +31,13 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                       共 {data.writerQuality?.monthWorks?.length ?? 0} 篇作品
                     </span>
                   </div>
+                  {data.writerQuality?.monthSummary ? (
+                    <div className="grid grid-cols-3 gap-2 text-[12px]">
+                      <span>互动数据 <strong>{data.writerQuality.monthSummary.avgInteractionAchievement == null ? "—" : `${Math.round(data.writerQuality.monthSummary.avgInteractionAchievement)}%`}</strong></span>
+                      <span>留存数据 <strong>{data.writerQuality.monthSummary.avgContentAchievement == null ? "—" : `${Math.round(data.writerQuality.monthSummary.avgContentAchievement)}%`}</strong></span>
+                      <span>良优率 <strong>{data.writerQuality.monthSummary.goodExcellentRate == null ? "—" : `${Math.round(data.writerQuality.monthSummary.goodExcellentRate * 100)}% (${data.writerQuality.monthSummary.ratedCount}/${data.writerQuality.monthSummary.totalCount}篇)`}</strong></span>
+                    </div>
+                  ) : null}
 
                   {!data.writerQuality ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
@@ -53,7 +60,8 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
                             <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
+                            <th className="py-2.5 px-2.5 text-right w-[100px] shrink-0 font-normal">互动</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存达成</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
                         </thead>
@@ -115,30 +123,11 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </span>
                                 </td>
                                 <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
-                                  {q?.contentAchievement != null ? (
-                                    <div>
-                                      <span className="font-normal text-[#141413]">
-                                        {Math.round(q.contentAchievement)}%
-                                      </span>
-                                      {q.contentGrade && (
-                                        <span className={`ml-1 font-normal ${BREAKOUT_GRADE_TEXT_CLASS[q.contentGrade]}`}>
-                                          ({q.contentGrade})
-                                        </span>
-                                      )}
-                                      <div className="text-[12px] text-[#78716C]">
-                                        互动数据 {q.interactionAchievement != null ? `${Math.round(q.interactionAchievement)}%` : "—"}
-                                      </div>
-                                      {warnings.length > 0 && (
-                                        <div className="text-[12px] text-[#C0685C]" title="差线只用于提示，不改变达成率和评级">
-                                          ⚠️ {warnings.join("、")}不合格
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-                                      {getContentQualityStatusText(q?.status ?? "pending_snapshot")}
-                                    </span>
-                                  )}
+                                  {q?.interactionValue == null ? "—" : `${(q.interactionValue * 100).toFixed(2)}%`}
+                                  {q?.interactionAchievement != null ? <div className="text-[11px] text-[#78716C]">达成 {Math.round(q.interactionAchievement)}%</div> : null}
+                                </td>
+                                <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
+                                  {q?.contentAchievement != null ? <><span>{Math.round(q.contentAchievement)}%</span>{q.retentionCalculation && q.retentionCalculation !== "average" ? <span className="ml-1 text-[11px] text-[#78716C]">({q.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : "按占比折算"})</span> : null}{warnings.length > 0 ? <div className="text-[12px] text-[#C0685C]">{warnings.join("、")}不合格</div> : null}</> : <span className="text-[#A8A29E]">{getContentQualityStatusText(q?.status ?? "pending_snapshot")}</span>}
                                 </td>
                                 <td className="py-2 px-3 text-right whitespace-nowrap">
                                   {q?.overallGrade ? (
@@ -181,7 +170,8 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                             <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
                             <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
                             <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">话题</th>
-                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存数据</th>
+                            <th className="py-2.5 px-2.5 text-right w-[100px] shrink-0 font-normal">互动</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">留存达成</th>
                             <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
                           </tr>
                         </thead>
@@ -247,30 +237,11 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </span>
                                 </td>
                                 <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
-                                  {q?.contentAchievement != null ? (
-                                    <div>
-                                      <span className="font-normal text-[#141413]">
-                                        {Math.round(q.contentAchievement)}%
-                                      </span>
-                                      {q.contentGrade && (
-                                        <span className={`ml-1 font-normal ${BREAKOUT_GRADE_TEXT_CLASS[q.contentGrade]}`}>
-                                          ({q.contentGrade})
-                                        </span>
-                                      )}
-                                      <div className="text-[12px] text-[#78716C]">
-                                        互动数据 {interactionAchievementText}
-                                      </div>
-                                      {warnings.length > 0 && (
-                                        <div className="text-[12px] text-[#C0685C]" title="差线只用于提示，不改变达成率和评级">
-                                          ⚠️ {warnings.join("、")}不合格
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-                                      {getContentQualityStatusText(q?.status ?? "pending_snapshot")}
-                                    </span>
-                                  )}
+                                  {q?.interactionValue == null ? "—" : `${(q.interactionValue * 100).toFixed(2)}%`}
+                                  {interactionAchievementText !== "—" ? <div className="text-[11px] text-[#78716C]">达成 {interactionAchievementText}</div> : null}
+                                </td>
+                                <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
+                                  {q?.contentAchievement != null ? <><span>{Math.round(q.contentAchievement)}%</span>{q.retentionCalculation && q.retentionCalculation !== "average" ? <span className="ml-1 text-[11px] text-[#78716C]">({q.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : "按占比折算"})</span> : null}{warnings.length > 0 ? <div className="text-[12px] text-[#C0685C]">{warnings.join("、")}不合格</div> : null}</> : <span className="text-[#A8A29E]">{getContentQualityStatusText(q?.status ?? "pending_snapshot")}</span>}
                                 </td>
                                 <td className="py-2 px-3 text-right whitespace-nowrap">
                                   {q?.overallGrade ? (

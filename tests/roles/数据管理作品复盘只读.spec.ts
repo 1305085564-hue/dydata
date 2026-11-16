@@ -203,7 +203,7 @@ test("组长侧不回归：/admin/content 与数据管理抽屉都照常打开",
   expect(response.status()).toBe(200);
 
   // 综合评级不变式（2026-09-30 cff799ac 口径改版后）：
-  // 综合徽章出现 ⟺ ①互动率与第四格单项标签齐全（转粉率已退出综合），或 ②播放不足 5 千硬门槛判劣。
+  // 综合徽章出现 ⟺ ①互动与留存数据齐全，或 ②播放不足 2000 直接评普。
   // 单项标签计数用 title 前缀精确匹配，避免把综合徽章自身的 title（也含「达成率」字样）算进去。
   const panel = drawer(page);
   const overallBadge = panel.locator('span[title^="综合评级"]');
@@ -212,14 +212,12 @@ test("组长侧不回归：/admin/content 与数据管理抽屉都照常打开",
 
   if (overallCount === 1) {
     const interactionReady = await panel.locator('span[title^="互动率达成率"]').count();
-    const fourthReady = await panel
-      .locator('span[title^="收藏率达成率"], span[title^="点赞率达成率"]')
-      .count();
+    const fourthReady = await panel.locator('span[title^="留存达成率"]').count();
     const badgeText = await overallBadge.first().innerText();
-    const hardFloorPoor = badgeText.includes("劣") && interactionReady === 0 && fourthReady === 0;
+    const hardFloorPoor = badgeText.includes("普") && interactionReady === 0 && fourthReady === 0;
     expect(
       (interactionReady === 1 && fourthReady === 1) || hardFloorPoor,
-      "综合徽章只允许「互动+第四格齐全」或「播放不足5千硬门槛判劣（缺数据不臆造，不出伪达标）」两种形态",
+      "综合徽章只允许「互动+留存齐全」或「播放不足2000直接评普（缺数据不臆造）」两种形态",
     ).toBe(true);
   }
 });

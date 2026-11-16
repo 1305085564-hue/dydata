@@ -7,6 +7,7 @@ import type {
   TalentAccount,
   TalentRow,
   VideoSnapshotMetrics,
+  ContentQualityTopicContext,
 } from "./types";
 import {
   accountMap,
@@ -20,6 +21,7 @@ import {
 } from "./report-rules";
 import { averagePlayOf } from "@/lib/metrics/caliber";
 import { buildOperators, buildStaff, pickRateMetrics } from "./role-metrics";
+import { buildContentQualitySummary } from "./quality-rules";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export function buildCollaborationPageData(
@@ -37,7 +39,7 @@ export function buildCollaborationPageData(
     dataset.videoSnapshots,
   );
   const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
-  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows, dataset.videoSnapshots);
+  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows, dataset.videoSnapshots, dataset.videoTopicTags, evaluationStandards);
   const staff = staffRole
     ? buildStaff(
         dataset.currentRows,
@@ -64,6 +66,8 @@ export function buildTalents(
   accounts: CollaborationAccount[],
   historyRows: CollaborationReport[] = rows,
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
+  qualityTopics: ContentQualityTopicContext = { state: "error", tags: new Map() },
+  evaluationStandards?: EvaluationStandards,
 ): TalentRow[] {
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
@@ -113,8 +117,13 @@ export function buildTalents(
         hitCount: countHits(talentRows, fromStatsStart(historyRows)),
         selfHandledCount: talentRows.filter(isSelfHandled).length,
         accounts: talentAccounts,
+        writerQuality: {
+          state: qualityTopics.state,
+          summary: qualityTopics.state === "ready" ? buildContentQualitySummary(talentRows, snapshots, qualityTopics, evaluationStandards) : null,
+        },
+        qualitySummary: qualityTopics.state === "ready" ? buildContentQualitySummary(talentRows, snapshots, qualityTopics, evaluationStandards) : null,
       };
     })
-    .filter((row): row is TalentRow => row !== null)
+    .filter((row): row is NonNullable<typeof row> => row !== null)
     .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
 }

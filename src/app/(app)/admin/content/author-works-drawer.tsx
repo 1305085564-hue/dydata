@@ -383,8 +383,6 @@ export function AuthorWorksView({
                             <span className="text-[#4B6B4E]">优</span>
                           ) : grade === "良" ? (
                             <span className="text-[#43718E]">良</span>
-                          ) : grade === "劣" ? (
-                            <span className="text-[#C0685C]">劣</span>
                           ) : (
                             <span className="text-[#78716C]">普</span>
                           )}

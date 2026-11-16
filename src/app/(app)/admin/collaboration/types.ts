@@ -178,6 +178,7 @@ export interface TalentRow {
   hitCount: number;
   selfHandledCount: number;
   accounts: TalentAccount[];
+  qualitySummary?: import("@/lib/collaboration/content-quality-contract").ContentQualitySummary | null;
 }
 
 export function formatBigNumber(val: number | null | undefined): string {

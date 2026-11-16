@@ -6,7 +6,7 @@ import { test, expect, type Page } from "@playwright/test";
  * 覆盖：
  * 1. 旧「近 6 个月协同产量趋势」柱状图确实不在了，换成增长曲线；
  * 2. 文案分支（writers）与非文案分支（editors 等）正确区分：
- *    - 文案分支展示两项内容达成率、互动达成率与核心达成率三颗胶囊；
+ *    - 文案分支展示互动、留存与综合评级三项信息；
  *    - 非文案分支保留互动率、点赞率、收藏率三颗原始比率胶囊与加权均值口径说明；
  * 3. 行情带在「默认均值」与「巡检作品」两态下高度死锁 32px（划入划出下方图表零抖动）；
  * 4. 点击数据点/行情带就地直出右侧视频诊断大抽屉。
@@ -83,7 +83,7 @@ test("档案卡增长曲线：文案岗位新指标图表与行情带死锁 32px
   // 2. 右上角文案专属三颗胶囊开关
   await expect(card.getByTitle("点击切换两项内容达成率主折线显隐")).toHaveCount(1);
   await expect(card.getByTitle("点击切换互动达成率折线显隐")).toHaveCount(1);
-  await expect(card.getByTitle("点击切换核心指标达成率折线显隐")).toHaveCount(1);
+  await expect(card.getByText("留存达成")).toHaveCount(1);
   const ticker = card.locator("div.h-8").first();
   await expect(ticker).toBeVisible();
 

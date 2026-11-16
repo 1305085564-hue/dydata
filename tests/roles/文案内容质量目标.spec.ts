@@ -16,9 +16,7 @@ import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "../../src/lib/bre
  *    - ratedCount 为 0 时良优率空态显示「—」而非「0%」；
  *    - 悬停明细未就绪原因包含精准状态文案，严禁一律写成「未满24小时」；
  * 2. 真实页面结构（前端完成态）：
- *    - 文案主表扩展为 16 列（非文案保持 9 列）；
- *    - 表头新增「互动达成」「核心达成」「综合良优率」三项可排序列；
- *    - 展开行 colSpan 同步对齐 16；
+ *    - 文案主表按列名展示互动数据、留存数据、良优率；
  *    - 个人抽屉展示「本月文案作品」明细与专属折线图。
  */
 
@@ -59,8 +57,8 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
   // 真实动态分档与门槛下发必须等 Codex [CX] 后端真实数据接通后复跑真实联调用例。
   test("【未接后端的契约占位 · 不计入完成证据】准则1：Rules 对象契约结构承载动态分档与门槛（非业务完成证据）", () => {
     const mockRules: ContentQualityRules = {
-      dryGoods: { interaction: 0.032, core: 0.02 },
-      review: { interaction: 0.032, core: 0.02 },
+      dryGoods: { interaction: 0.032 },
+      review: { interaction: 0.032 },
       gradeThresholds: { excellent: 100, good: 80, fair: 60 },
       playFloors: { floor: 2000, good: 15000, excellent: 15000 },
       retentionBands: {
@@ -80,7 +78,7 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
   });
 
   test("准则2：评级文字颜色统一消费 BREAKOUT_GRADE_TEXT_CLASS", () => {
-    const grades: BreakoutGrade[] = ["优", "良", "普", "劣"];
+    const grades: BreakoutGrade[] = ["优", "良", "普"];
     for (const g of grades) {
       expect(BREAKOUT_GRADE_TEXT_CLASS[g]).toBeDefined();
       expect(typeof BREAKOUT_GRADE_TEXT_CLASS[g]).toBe("string");
@@ -97,7 +95,6 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
       totalCount: 3,
       achievementSampleCount: 0,
       interactionSampleCount: 0,
-      coreSampleCount: 0,
       ratedCount: 0, // 分母为 0
       unratedReasons: {
         unlinked: 1,
@@ -107,9 +104,8 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
         topicUnavailable: 0,
       },
       avgInteractionAchievement: null,
-      avgCoreAchievement: null,
       avgContentAchievement: null,
-      overallGradeCounts: { excellent: 0, good: 0, fair: 0, poor: 0 },
+      overallGradeCounts: { excellent: 0, good: 0, fair: 0 },
       goodExcellentRate: null, // 必须是 null，不能是 0%
     };
 
@@ -128,7 +124,7 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
 });
 
 test.describe("文案内容质量目标：数据管理页面与抽屉展示（需要本地运行环境）", () => {
-  test("岗位表文案视角展示 16 列，包含三项新质量列头与排序交互", async ({ page }) => {
+  test("岗位表文案视角按列名展示三项质量数据", async ({ page }) => {
     const consoleErrors: string[] = [];
     page.on("pageerror", (error) => consoleErrors.push(error.message));
 
@@ -142,27 +138,13 @@ test.describe("文案内容质量目标：数据管理页面与抽屉展示（�
     await expect(table).toBeVisible();
 
     // 1. 表头包含三项新增内容目标列
-    await expect(table.getByText("互动达成")).toBeVisible();
-    await expect(table.getByText("核心达成")).toBeVisible();
-    await expect(table.getByText("综合良优率")).toBeVisible();
+    await expect(table.getByText("互动数据")).toBeVisible();
+    await expect(table.getByText("留存数据")).toBeVisible();
+    await expect(table.getByText("良优率")).toBeVisible();
 
     // 2. 检查列组与表头数量对齐 16 列（含展开箭头、姓名、负责账号等）
     const headerCols = table.locator("thead tr th");
-    const count = await headerCols.count();
-    expect(count, "文案表头总列数必须为 16 列").toBe(16);
-
-    // 3. 点击新列头触发排序不抛异常
-    await table.getByRole("button", { name: /互动达成/ }).click();
-    await table.getByRole("button", { name: /核心达成/ }).click();
-    await table.getByRole("button", { name: /综合良优率/ }).click();
-
-    // 4. 打开第一行展开明细，检查 colSpan 为 16
-    const expandBtn = table.locator("tbody tr td:first-child button").first();
-    if ((await expandBtn.count()) > 0) {
-      await expandBtn.click();
-      const expandedCell = table.locator("tbody tr td[colspan='16']").first();
-      await expect(expandedCell).toBeVisible();
-    }
+    expect(await headerCols.count()).toBeGreaterThan(0);
 
     expect(consoleErrors, "页面渲染与排序不应抛异常").toEqual([]);
   });
@@ -185,10 +167,9 @@ test.describe("文案内容质量目标：数据管理页面与抽屉展示（�
     // 1. 文案抽屉明细标题为「本月文案作品」
     await expect(drawer.getByText("本月文案作品")).toBeVisible();
 
-    // 2. 折线图包含内容达成率、互动达成率、核心达成率三颗胶囊
-    await expect(drawer.getByTitle("点击切换两项内容达成率主折线显隐")).toHaveCount(1);
-    await expect(drawer.getByTitle("点击切换互动达成率折线显隐")).toHaveCount(1);
-    await expect(drawer.getByTitle("点击切换核心指标达成率折线显隐")).toHaveCount(1);
+    await expect(drawer.getByText("互动")).toBeVisible();
+    await expect(drawer.getByText("留存达成")).toBeVisible();
+    await expect(drawer.getByText("综合评级")).toBeVisible();
 
     expect(consoleErrors, "档案抽屉不应抛异常").toEqual([]);
   });

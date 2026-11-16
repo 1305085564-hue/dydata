@@ -533,6 +533,7 @@ export function ContentDetailDialog({
                 interactionRating={interactionRating}
                 fourthRating={fourthRating}
                 overallGrade={overallGrade}
+                contentQuality={contentQuality}
                 hasAvailableScreenshots={hasAvailableScreenshots}
               />
               <ContentDetailEvidence

@@ -1,5 +1,4 @@
 import { getContentOwner } from "@/lib/content/content-owner";
-import { getCoreAchievementClass } from "@/lib/content/domain/detail";
 import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -449,25 +448,14 @@ export function ContentListTable({
                             </span>
                           </td>
 
-                          {/* 核心指标（排在互动率前面） */}
-                          <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-surface-row-hover/60")}>
-                            {item.quality?.status === "rated" && item.coreMetricTopicText ? (
-                              <span
-                                className={cn("relative text-[13px] font-normal", getCoreAchievementClass(item.quality.coreAchievement, item.playCount, evaluationStandards) || "text-[#1F1E1D]")}
-                                title={`${item.coreMetricTopicText}核心指标`}
-                                aria-label={`${item.coreMetricTopicText}核心指标 ${formatPercent(item.coreMetricRate)}`}
-                              >
-                                <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
-                                {item.coreMetricTopicText === "复盘" && item.coreMetricRate != null && (
-                                  <span aria-hidden="true" className="absolute -right-1.5 -top-1 text-[12px] leading-none text-[#A8A29E] opacity-70">*</span>
-                                )}
-                              </span>
-                            ) : (
-                              <span className="text-[12px] text-[#A8A29E]">—</span>
-                            )}
+                          <td data-col-key="retention_achievement" className="py-2.5 px-2 text-right tabular-nums whitespace-nowrap">
+                            {item.quality?.contentAchievement == null ? "—" : `${Math.round(item.quality.contentAchievement)}%`}
+                            {item.quality?.retentionCalculation === "avg_play_duration_only" ? <span className="ml-1 text-[11px] text-[#78716C]">均播折算</span> : item.quality?.retentionCalculation === "avg_play_ratio_only" ? <span className="ml-1 text-[11px] text-[#78716C]">占比折算</span> : null}
+                          </td>
+                          <td data-col-key="overall_grade" className="py-2.5 px-2 text-right whitespace-nowrap">
+                            {item.quality?.overallGrade ?? "—"}
                           </td>
 
-                          {/* 互动率（排在核心指标后面） */}
                           <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-row-hover/60")}>
                             <RatioCell standards={evaluationStandards} value={item.interactionRate} achievement={item.quality?.interactionAchievement} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>

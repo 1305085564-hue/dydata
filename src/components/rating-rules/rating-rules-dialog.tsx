@@ -39,7 +39,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
   const standards = evaluationStandards ?? DEFAULT_EVALUATION_STANDARDS;
   const retentionWeight = (key: keyof EvaluationStandards["retentionWeights"]) =>
     formatNumber(standards.retentionWeights[key]) + "%";
-  const retentionBand = (key: EvaluationMetric, unit: string) => {
+  const retentionBand = (key: Exclude<EvaluationMetric, "coreAchievement">, unit: string) => {
     const band = standards[key];
     return "好 " + formatNumber(band.good) + unit + "，差 " + formatNumber(band.poor) + unit;
   };
@@ -129,9 +129,9 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
         <section className="space-y-3">
           <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">三、作品等级如何确定</h3>
           <ol className="list-decimal list-outside pl-5 space-y-2 text-[13px] text-[#1F1E1D]">
-            <li>播放量低于 {KPI_PLAY_FLOOR.toLocaleString()}，直接记为劣。</li>
+            <li>播放量低于 {KPI_PLAY_FLOOR.toLocaleString()}，直接评为普。</li>
             <li>{KPI_PLAY_FLOOR.toLocaleString()} 至不足 {formatPlayWan(KPI_PLAY_GOOD)}，最高记为普；达到 {formatPlayWan(KPI_PLAY_EXCELLENT)} 以上不再受播放量上限影响。</li>
-            <li>留存分按 {BREAKOUT_GRADE_THRESHOLDS.excellent}、{BREAKOUT_GRADE_THRESHOLDS.good}、{BREAKOUT_GRADE_THRESHOLDS.fair} 分为优、良、普、劣。</li>
+            <li>留存分按 {BREAKOUT_GRADE_THRESHOLDS.excellent}、{BREAKOUT_GRADE_THRESHOLDS.good}、{BREAKOUT_GRADE_THRESHOLDS.fair} 分为优、良、普。</li>
             <li>没有完整快照数据时，页面显示待处理状态，不用其他数据代替。</li>
           </ol>
         </section>
