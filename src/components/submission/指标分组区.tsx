@@ -22,6 +22,15 @@ export type MetricGroupHandle = {
   focusMetric: (key: EditableMetricKey) => void;
 };
 
+export function resolveMetricToCheckCount(
+  cells: Array<{ key: EditableMetricKey; mode: ReturnType<typeof resolveMetricCellMode>; value: string }>,
+) {
+  return cells.filter(({ key, mode, value }) => {
+    if (mode === "doubt" || mode === "missing") return true;
+    return mode === "blank" && REQUIRED_METRIC_KEYS.includes(key) && !value.trim();
+  }).length;
+}
+
 interface MetricGroupProps {
   fields: Record<string, EditableFieldState>;
   editing?: boolean;
@@ -191,17 +200,19 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       return { item, field, mode };
     });
     const recognizedCount = cells.filter(({ field }) => Boolean(field?.ocrValue)).length;
-    const toCheckCount = cells.filter(({ mode }) => mode === "doubt" || mode === "missing").length;
+    const toCheckCount = resolveMetricToCheckCount(
+      cells.map(({ item, field, mode }) => ({ key: item.key, mode, value: field?.value ?? "" })),
+    );
     const pendingCount = cells.filter(({ mode }) => mode === "pending").length;
     const summaryText = showInteractionWarning
       ? "互动数加起来超过了播放量，请核对一遍"
-      : pendingCount > 0
-        ? "正在识别截图里的数字…"
-        : toCheckCount > 0
-          ? `${items.length} 项认出 ${recognizedCount} 项，${toCheckCount} 项请核对`
-          : recognizedCount > 0
-            ? `${items.length} 项已全部核对`
-            : "数字填在下面，点一下就能改";
+        : pendingCount > 0
+          ? "正在识别截图里的数字…"
+          : toCheckCount > 0 && recognizedCount > 0
+            ? `${items.length} 项认出 ${recognizedCount} 项，${toCheckCount} 项请核对`
+            : recognizedCount > 0
+              ? `${items.length} 项已全部核对`
+              : "数字填在下面，点一下就能改";
 
     return (
       <motion.div variants={itemVariants} className="space-y-2">

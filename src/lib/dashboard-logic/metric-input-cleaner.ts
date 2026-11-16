@@ -47,9 +47,9 @@ export function cleanMetricInputValue(
 
   let input = normalizeFullWidthNumbers(rawInput.trim());
 
-  // 1. 拦截负数：业务指标均不允许为负数，检测到负号直接剔除负号
+  // 1. 拦截负数：业务指标均不允许为负数，避免把负数静默改成正数
   if (input.startsWith("-") || input.includes("-")) {
-    input = input.replace(/-/g, "");
+    return "";
   }
 
   // 2. 去除千分位逗号（半角与全角逗号均已被标准化为 ,）
@@ -111,6 +111,11 @@ export function cleanMetricInputValue(
         return String(Math.round(num * 100000000));
       }
     }
+  }
+
+  // 6. 只接受纯数字（允许输入过程中的小数点），拒绝字母和科学计数法。
+  if (!/^\d*(?:\.\d*)?$/.test(input)) {
+    return "";
   }
 
   return input;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { buildVideoSubmitDraftKey, resolveVideoSubmitCreateDraftStorageKey, type VideoSubmitDraftMode } from "@/lib/video-submit-draft-key";
@@ -25,6 +25,27 @@ export type DraftControllerOptions = {
   hasInitialSummary: boolean;
   dispatchWorkflow: (action: WorkflowAction) => void;
 };
+
+export function resolveDraftPromptState(input: {
+  hasDraft: boolean;
+  isSubmitted: boolean;
+  submittedViewActive: boolean;
+  hasInitialSummary: boolean;
+  promptDismissed: boolean;
+  lastSavedAt: Date | null;
+}) {
+  const showDraftBanner =
+    input.hasDraft &&
+    !input.isSubmitted &&
+    !input.submittedViewActive &&
+    !input.hasInitialSummary &&
+    !input.promptDismissed;
+
+  return {
+    showDraftBanner,
+    displayLastSavedAt: showDraftBanner ? null : input.lastSavedAt,
+  };
+}
 
 export function useVideoSubmitDraftController(options: DraftControllerOptions) {
   const {
@@ -61,13 +82,14 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       videoId: editDraftVideoId,
     });
   }, [accountId, createDraftStorageKey, draftMode, editDraftVideoId, today, userId, workflow.meta.bizDate]);
+  const [dismissedDraftKey, setDismissedDraftKey] = useState<string | null>(null);
 
   const draftData: VideoSubmitDraftData = useMemo(
     () => serializeVideoSubmitDraft(workflow),
     [workflow],
   );
 
-  const { hasDraft, restoreDraft, clearDraft, pauseSaving, resumeSaving, lastSavedAt } =
+  const { hasDraft, hasStoredDraft, restoreDraft, clearDraft, pauseSaving, resumeSaving, lastSavedAt } =
     useFormDraft<VideoSubmitDraftData>(
       draftKey,
       draftData,
@@ -78,8 +100,14 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       },
     );
 
-  const showDraftBanner =
-    hasDraft && !isSubmitted && !submittedViewActive && !hasInitialSummary;
+  const draftPromptState = resolveDraftPromptState({
+    hasDraft: hasStoredDraft,
+    isSubmitted,
+    submittedViewActive,
+    hasInitialSummary,
+    promptDismissed: dismissedDraftKey === draftKey,
+    lastSavedAt,
+  });
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft();
@@ -118,11 +146,13 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
         hasManualEdit: draft.hasManualEdit ?? false,
       },
     });
-  }, [dispatchWorkflow, restoreDraft, userId]);
+    setDismissedDraftKey(draftKey);
+  }, [dispatchWorkflow, draftKey, restoreDraft, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
-  }, [clearDraft]);
+    setDismissedDraftKey(draftKey);
+  }, [clearDraft, draftKey]);
 
   return {
     hasDraft,
@@ -130,8 +160,8 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     clearDraft,
     pauseSaving,
     resumeSaving,
-    lastSavedAt,
-    showDraftBanner,
+    lastSavedAt: draftPromptState.displayLastSavedAt,
+    showDraftBanner: draftPromptState.showDraftBanner,
     handleRestoreDraft,
     handleDiscardDraft,
   };

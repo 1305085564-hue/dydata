@@ -48,6 +48,7 @@ function isDraftEmpty<T>(data: T): boolean {
 
 export interface UseFormDraftReturn<T> {
   hasDraft: boolean;
+  hasStoredDraft: boolean;
   restoreDraft: () => T | null;
   clearDraft: () => void;
   pauseSaving: () => void;
@@ -85,6 +86,7 @@ export function useFormDraft<T>(
   options: UseFormDraftOptions<T> = {}
 ): UseFormDraftReturn<T> {
   const [hasDraft, setHasDraft] = useState(false);
+  const [hasStoredDraft, setHasStoredDraft] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const lastSavedRef = useRef<T | null>(null);
   const formDataRef = useRef(formData);
@@ -104,6 +106,7 @@ export function useFormDraft<T>(
           const entry = JSON.parse(raw) as DraftEntry<T>;
           if (entry?.data && entry.savedAt && !isEmpty(entry.data)) {
             setHasDraft(true);
+            setHasStoredDraft(true);
             setLastSavedAt(new Date(entry.savedAt));
             return;
           }
@@ -111,6 +114,7 @@ export function useFormDraft<T>(
         // 旧脏数据 / 空草稿 / 不存在 → 一律视为无草稿，并清掉脏 key
         localStorage.removeItem(key);
         setHasDraft(false);
+        setHasStoredDraft(false);
         setLastSavedAt(null);
       } catch {
         // JSON 解析失败 → 清掉坏 key，避免长期卡住
@@ -120,6 +124,7 @@ export function useFormDraft<T>(
           // ignore
         }
         setHasDraft(false);
+        setHasStoredDraft(false);
         setLastSavedAt(null);
       }
     }
@@ -211,6 +216,7 @@ export function useFormDraft<T>(
     }
     lastSavedRef.current = null;
     setHasDraft(false);
+    setHasStoredDraft(false);
     setLastSavedAt(null);
   }, [key]);
 
@@ -224,6 +230,7 @@ export function useFormDraft<T>(
 
   return {
     hasDraft,
+    hasStoredDraft,
     restoreDraft,
     clearDraft,
     pauseSaving,

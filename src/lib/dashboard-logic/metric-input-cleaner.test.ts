@@ -9,6 +9,12 @@ test("基础数字原样返回", () => {
   assert.equal(cleanMetricInputValue(""), "");
 });
 
+test("无效字符和负数不会进入指标值", () => {
+  assert.equal(cleanMetricInputValue("abc"), "");
+  assert.equal(cleanMetricInputValue("1e9"), "");
+  assert.equal(cleanMetricInputValue("-123"), "");
+});
+
 test("千分位逗号自动消除", () => {
   assert.equal(cleanMetricInputValue("12,345"), "12345");
   assert.equal(cleanMetricInputValue("1,234,567"), "1234567");
@@ -45,17 +51,17 @@ test("时长单位秒及冒号格式自动计算秒数（仅限 duration 字段�
 });
 
 test("百分比或计数字段贴入 1:20 绝不误转为 80", () => {
-  assert.equal(cleanMetricInputValue("1:20", "rate"), "1:20");
-  assert.equal(cleanMetricInputValue("1:20", "count"), "1:20");
-  // 百分比字段贴入 1.2w 也绝不转成 12000
-  assert.equal(cleanMetricInputValue("1.2w", "rate"), "1.2w");
+  assert.equal(cleanMetricInputValue("1:20", "rate"), "");
+  assert.equal(cleanMetricInputValue("1:20", "count"), "");
+  // 百分比字段贴入 1.2w 不能作为数字进入表单
+  assert.equal(cleanMetricInputValue("1.2w", "rate"), "");
 });
 
-test("负数被彻底剔除负号，杜绝负数落库", () => {
-  assert.equal(cleanMetricInputValue("-123", "count"), "123");
-  assert.equal(cleanMetricInputValue("-1.2w", "count"), "12000");
-  assert.equal(cleanMetricInputValue("-35.5%", "rate"), "35.5");
-  assert.equal(cleanMetricInputValue("-50", "rate"), "50");
+test("负数输入被拒绝，避免把负数静默改成正数", () => {
+  assert.equal(cleanMetricInputValue("-123", "count"), "");
+  assert.equal(cleanMetricInputValue("-1.2w", "count"), "");
+  assert.equal(cleanMetricInputValue("-35.5%", "rate"), "");
+  assert.equal(cleanMetricInputValue("-50", "rate"), "");
 });
 
 test("全角数字自动转为半角", () => {

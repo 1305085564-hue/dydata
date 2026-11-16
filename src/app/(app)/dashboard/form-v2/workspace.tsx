@@ -142,7 +142,29 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
               </li>
             ))}
           </ol>
-          {!showDetails && (
+          {manualEntry ? (
+            <div className="flex shrink-0 items-center gap-2 text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => setManualEntry(false)}
+                className="hover:text-[#141413] hover:underline cursor-pointer"
+              >
+                返回上传截图
+              </button>
+              <span aria-hidden className="text-[#A8A29E]">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualEntry(false);
+                  updateMeta("anomalyStatus", "abnormal");
+                  setIsMoreOpen(true);
+                }}
+                className="hover:text-[#141413] hover:underline cursor-pointer"
+              >
+                作品被限流或删了
+              </button>
+            </div>
+          ) : !showDetails && (
             <div className="flex shrink-0 items-center gap-2 text-[#78716C]">
               <button type="button" onClick={() => setManualEntry(true)} className="hover:text-[#141413] hover:underline cursor-pointer">
                 没有截图，直接手填
