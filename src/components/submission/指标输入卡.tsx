@@ -121,7 +121,10 @@ export function MetricInputCard({
       </div>
 
       {mode === "pending" ? (
-        <div className="flex h-9 items-center px-2 text-[14px] text-[#A8A29E]">识别中…</div>
+        <div className="flex h-9 items-center gap-2 px-2 text-[14px] text-[#A8A29E]">
+          <span className="h-4 w-12 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
+          <span className="text-[12px] text-[#A8A29E]">识别中…</span>
+        </div>
       ) : (
         <Input
           id={`metric-${field.key}`}

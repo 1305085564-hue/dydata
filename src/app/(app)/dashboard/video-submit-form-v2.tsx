@@ -102,7 +102,7 @@ import { createSubmitController } from "./video-submit-form-v2/submit-controller
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
-import { resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
+import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -515,7 +515,7 @@ export function VideoSubmitFormV2({
   const focusWithHighlight = useCallback((el: HTMLElement | null) => {
     if (!el) return;
     el.focus();
-    const highlightClasses = ["ring-2", "ring-[#141413]/40", "ring-offset-1"];
+    const highlightClasses = ["ring-2", "ring-status-danger/70", "ring-offset-1"];
     el.classList.add(...highlightClasses);
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
@@ -581,7 +581,7 @@ export function VideoSubmitFormV2({
     }
   }, [isSubmitted]);
 
-  const { clearDraft, pauseSaving, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
+  const { clearDraft, pauseSaving, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft, handleUndoDiscard } = useVideoSubmitDraftController({
     userId,
     accountId: account?.id ?? null,
     today,
@@ -593,6 +593,22 @@ export function VideoSubmitFormV2({
     hasInitialSummary: Boolean(initialSummary),
     dispatchWorkflow,
   });
+
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const confirmDiscardDraft = useCallback(() => {
+    setDiscardConfirmOpen(false);
+    handleDiscardDraft();
+    feedbackToast.success("已丢弃草稿", {
+      duration: 5000,
+      action: {
+        label: "撤销",
+        onClick: () => {
+          handleUndoDiscard();
+          feedbackToast.success("已恢复草稿");
+        },
+      },
+    });
+  }, [handleDiscardDraft, handleUndoDiscard]);
 
   useEffect(() => {
     if (appealStatus !== "idle" || deadlinePrecheck.decision !== "requires_appeal") return;
@@ -687,19 +703,18 @@ export function VideoSubmitFormV2({
         title: "未交草稿",
         description: undefined,
         actions: (
-          <div className="inline-flex items-center gap-1 shrink-0">
+          <div className="inline-flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors cursor-pointer"
+              className="inline-flex min-h-[32px] sm:min-h-0 sm:h-6 items-center rounded-md bg-[#141413] px-2.5 py-1 text-[12px] font-normal text-white hover:bg-[#141413]/90 transition-colors cursor-pointer select-none shadow-input"
             >
               恢复
             </button>
-            <span className="text-[#A8A29E]" aria-hidden="true">·</span>
             <button
               type="button"
-              onClick={handleDiscardDraft}
-              className="text-[#78716C] hover:text-status-danger transition-colors cursor-pointer"
+              onClick={() => setDiscardConfirmOpen(true)}
+              className="inline-flex min-h-[32px] sm:min-h-0 sm:h-6 items-center px-1.5 py-1 text-[12px] text-[#78716C] hover:text-status-danger transition-colors cursor-pointer select-none"
             >
               丢弃
             </button>
@@ -747,7 +762,6 @@ export function VideoSubmitFormV2({
     return items;
   }, [
     dismissedReviewNotice,
-    handleDiscardDraft,
     handleDismissReviewNotice,
     handleRestoreDraft,
     initialTopicId,
@@ -1219,6 +1233,10 @@ export function VideoSubmitFormV2({
       } else if (issueSummaryRef.current.missingRequiredSlots.length > 0) {
         triggerSlotsPulse();
       }
+      const gaps = listSubmitGaps(issueSummaryRef.current);
+      if (gaps.length > 0) {
+        feedbackToast.warning(`还差 ${gaps.length} 项，第一个是 ${gaps[0].label}`);
+      }
       return;
     }
 
@@ -1456,6 +1474,16 @@ export function VideoSubmitFormV2({
             setInteractionConfirm((prev) => ({ ...prev, open: false }));
           }
         }}
+      />
+      <ConfirmDialog
+        open={discardConfirmOpen}
+        title="确定丢弃未保存的草稿？"
+        description="丢弃后将清除已填写的指标数值、标题文案与截图缓存。可在 5 秒内通过底部提示撤销。"
+        confirmText="确定丢弃"
+        cancelText="保留草稿"
+        destructive
+        onConfirm={confirmDiscardDraft}
+        onOpenChange={setDiscardConfirmOpen}
       />
     </>
   );

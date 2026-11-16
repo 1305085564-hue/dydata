@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { buildVideoSubmitDraftKey, resolveVideoSubmitCreateDraftStorageKey, type VideoSubmitDraftMode } from "@/lib/video-submit-draft-key";
@@ -149,10 +149,65 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     setDismissedDraftKey(draftKey);
   }, [dispatchWorkflow, draftKey, restoreDraft, userId]);
 
+  const lastDiscardedDraftRef = useRef<VideoSubmitDraftData | null>(null);
+
   const handleDiscardDraft = useCallback(() => {
+    const draft = restoreDraft();
+    if (draft) {
+      lastDiscardedDraftRef.current = draft;
+    }
     clearDraft();
     setDismissedDraftKey(draftKey);
-  }, [clearDraft, draftKey]);
+  }, [clearDraft, draftKey, restoreDraft]);
+
+  const handleUndoDiscard = useCallback(() => {
+    const draft = lastDiscardedDraftRef.current;
+    if (!draft) return;
+
+    dispatchWorkflow({
+      type: "draft/restore",
+      meta: {
+        ...draft.meta,
+        scriptAuthorUserId:
+          draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
+        videoEditorUserId:
+          draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
+        operatorUserId:
+          draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+        roleOverrides: draft.meta.roleOverrides ?? [],
+      },
+      fields: draft.fields,
+      slots: {
+        screenshot_1: {
+          ...draft.slots.screenshot_1,
+          file: null,
+          previewUrl: null,
+        },
+        screenshot_2: {
+          ...draft.slots.screenshot_2,
+          file: null,
+          previewUrl: null,
+        },
+      },
+      draft: {
+        keywordInput: draft.keywordInput ?? "",
+        hasManualScriptAuthorSelection:
+          draft.hasManualScriptAuthorSelection ?? false,
+        hasManualOperatorSelection: draft.hasManualOperatorSelection ?? false,
+        hasManualEdit: draft.hasManualEdit ?? false,
+      },
+    });
+
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ data: draft, savedAt: new Date().toISOString() }),
+      );
+    } catch {
+      // ignore
+    }
+    setDismissedDraftKey(null);
+  }, [dispatchWorkflow, draftKey, userId]);
 
   return {
     hasDraft,
@@ -164,5 +219,6 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     showDraftBanner: draftPromptState.showDraftBanner,
     handleRestoreDraft,
     handleDiscardDraft,
+    handleUndoDiscard,
   };
 }

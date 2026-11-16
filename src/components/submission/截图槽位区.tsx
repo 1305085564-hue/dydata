@@ -214,7 +214,7 @@ export function SubmissionSlotsSection({
               : isRecognizing
                 ? isLongWaiting
                   ? `识别中，已等 ${elapsed} 秒，可以先填文案`
-                  : "识别中…"
+                  : `正在提取数字（已等 ${elapsed} 秒）…`
                 : isError
                   ? slot.error || "未识别到图片内容，请点击重新上传"
                   : slot.ocrFallback
@@ -305,9 +305,15 @@ export function SubmissionSlotsSection({
                       variant="thumb"
                       className="h-full w-full object-cover"
                     />
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/preview:opacity-100">
-                      <Eye className="size-3 text-white" />
-                    </span>
+                    {isProcessing ? (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[0.5px]">
+                        <Loader2 className="size-4 animate-spin text-white" />
+                      </span>
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/preview:opacity-100">
+                        <Eye className="size-3 text-white" />
+                      </span>
+                    )}
                   </button>
                 ) : (
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[#F1F1F0] text-[#78716C]">
