@@ -8,6 +8,7 @@ import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submiss
 import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填报表单状态";
 import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
 import { normalizePublishedAtInputValue } from "@/lib/日报";
+import { resolvePublishedAtSource } from "@/lib/published-at-source";
 import { cn } from "@/lib/utils";
 import type { EditableMetricField, FormMetaState } from "../video-submit-form-model";
 
@@ -61,6 +62,7 @@ export function FormV2ResultsSection({
     ? normalizePublishedAtInputValue(meta.publishedAt).replace("T", " ") || meta.publishedAtText
     : null;
   const editablePublishedAtValue = normalizePublishedAtInputValue(meta.publishedAt);
+  const ocrPublishedAtValue = normalizePublishedAtInputValue(meta.ocrPublishedAt);
 
   return (
     <div className="space-y-3">
@@ -118,7 +120,7 @@ export function FormV2ResultsSection({
                 const value = event.target.value;
                 updateMeta("publishedAt", value);
                 updateMeta("publishedAtText", value.replace("T", " "));
-                updateMeta("publishedAtSource", value === editablePublishedAtValue && meta.publishedAtSource === "ocr" ? "ocr" : value ? "manual" : null);
+                updateMeta("publishedAtSource", resolvePublishedAtSource(value, ocrPublishedAtValue));
               }}
               className="h-9 min-h-0 flex-1 rounded-md border border-status-warning/50 bg-white px-2 font-sans text-[14px] text-[#141413] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
             />

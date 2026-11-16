@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { resolvePublishedAtSource } from "@/lib/published-at-source";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -22,7 +23,8 @@ test("发布时间可修改并把来源与 OCR 原值带入审批链路", () => 
   const appealCard = read("src/components/command-hub/fulfillment-appeal-card.tsx");
 
   assert.match(resultsSection, /aria-label=\{publishedConfirmed \? "修改发布时间" : "手填发布时间"\}/);
-  assert.match(resultsSection, /updateMeta\("publishedAtSource", value === editablePublishedAtValue/);
+  assert.equal(resolvePublishedAtSource("2026-11-10T10:00", "2026-11-10T10:00"), "ocr");
+  assert.equal(resolvePublishedAtSource("2026-11-10T11:00", "2026-11-10T10:00"), "manual");
   assert.match(submitController, /publishedAtSource: meta\.publishedAtSource/);
   assert.match(submitController, /ocrPublishedAtText: meta\.ocrPublishedAtText/);
   assert.match(appealCard, /触发原因：/);
