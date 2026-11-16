@@ -20,7 +20,15 @@ export function hasAppealSuccessSession(
   recordDate: string,
 ) {
   if (!storage || !accountId || !recordDate) return false;
-  return storage.getItem(getAppealSuccessKey(accountId, recordDate)) === "1";
+  const value = storage.getItem(getAppealSuccessKey(accountId, recordDate));
+  if (!value) return false;
+  if (value === "1") return true;
+  try {
+    JSON.parse(value) as AppealSuccessSession;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function markAppealSuccessSession(
