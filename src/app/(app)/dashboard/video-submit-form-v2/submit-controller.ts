@@ -10,7 +10,6 @@ import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshot
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
-import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 
 type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string; reason?: string; appealId?: string };
 type Setter<T> = (next: T | ((current: T) => T)) => void;
@@ -114,24 +113,6 @@ export function createSubmitController(options: SubmitControllerOptions) {
           completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
         },
       });
-      const deadline = resolveVideoSubmitDeadline({
-        mode: mode === "editToday" ? "edit" : "create",
-        publishedAt: submitMeta.publishedAt,
-        businessDate: meta.bizDate,
-        publishedAtConfirmed: isPublishedAtConfirmed(meta.publishedAtText),
-        publishedAtSource: meta.publishedAtSource,
-      });
-      if (deadline.decision === "requires_appeal") {
-        pendingSubmissionPayloadRef.current = submissionPayload;
-        setAppealRequired(true);
-        setAppealReason(
-          deadline.reason === "manual_published_at"
-            ? "发布时间由成员手工填写，需要补交审批"
-            : "超过 72 小时，需要补交数据",
-        );
-        setIsAppealDialogOpen(true);
-        return;
-      }
       const response = await fetch("/api/video-submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
