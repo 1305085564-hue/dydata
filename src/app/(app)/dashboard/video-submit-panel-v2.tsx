@@ -549,6 +549,11 @@ export function VideoSubmitPanelV2({
           activeDateReport={activeDateReport}
           requestedEditBizDate={submittedEditTarget?.reportDate ?? null}
           onRequestEditSubmittedReport={setSubmittedEditTarget}
+          onCreateAnother={() => {
+            setSubmittedEditTarget(null);
+            setSubmittedViewActive(false);
+            setRequestedMode("createAnother");
+          }}
           clearSubmittedEditTarget={() => setSubmittedEditTarget(null)}
           setRequestedMode={setRequestedMode}
           shouldShowEditDetailLoading={shouldShowEditDetailLoading}

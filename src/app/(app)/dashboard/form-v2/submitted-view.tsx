@@ -35,6 +35,7 @@ export interface SubmittedViewProps {
   qualityCheck: SubmissionUiState["qualityCheck"];
   onRequestEdit?: (target: { reportId: string | null; reportDate: string }) => void;
   onCancel?: () => void;
+  onCreateAnother?: () => void;
   handleQualityCheck: () => void;
   handleFixIssue: (issue: SubmissionQualityIssue) => void;
   onViewHistory?: () => void;
@@ -54,6 +55,7 @@ export function SubmittedView({
   qualityCheck,
   onRequestEdit,
   onCancel,
+  onCreateAnother,
   handleQualityCheck,
   handleFixIssue,
   onViewVideo,
@@ -100,6 +102,22 @@ export function SubmittedView({
       </Card>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-2 text-[14px]">
+        {onCreateAnother ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHasUserInteracted(true);
+              setIsSubmitted(false);
+              setSubmittedReportId(null);
+              setQualityCheck({ data: null, loading: false });
+              onCreateAnother();
+            }}
+            className="text-[#1F1E1D] hover:text-[#141413] hover:underline cursor-pointer"
+          >
+            再交一条
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={(e) => {

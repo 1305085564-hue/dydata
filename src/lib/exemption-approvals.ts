@@ -108,6 +108,9 @@ export interface ExemptionRequest {
   account_name?: string | null;
   rejection_reason?: string | null;
   resumePending?: boolean | null;
+  published_at_source?: "ocr" | "manual" | null;
+  ocr_published_at_text?: string | null;
+  appeal_trigger_reason?: "expired" | "manual_published_at" | null;
   daily_items?: Array<{
     id: string;
     request_id: string;

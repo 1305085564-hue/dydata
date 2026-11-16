@@ -10,8 +10,9 @@ import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshot
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 
-type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string };
+type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string; reason?: string; appealId?: string };
 type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type SubmitControllerOptions = {
   account: { id: string } | null; userId: string; mode: SubmitPanelMode; today: string;
@@ -19,14 +20,14 @@ export type SubmitControllerOptions = {
   editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; topicTitle?: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
-  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
+  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setAppealStatus: Setter<"idle" | "pending" | "resume_pending" | "approved" | "rejected">; setAppealId: Setter<string | null>; setAppealResultReason: Setter<string | null>; setAppealReason: Setter<string>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
   onSubmitted: (video: Video, summaryOverride?: TodaySubmissionReportLike | null) => void;
-  clearDraft: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
+  clearDraft: () => void; pauseDraftSaving: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setAppealStatus, setAppealId, setAppealResultReason, setAppealReason, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, pauseDraftSaving, scrollToIssueAnchor } = options;
   const { meta, fields, slots, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
@@ -80,6 +81,9 @@ export function createSubmitController(options: SubmitControllerOptions) {
         content: normalizeOptionalText(meta.content),
         publishedAt: submitMeta.publishedAt,
         publishedAtText: normalizeOptionalText(meta.publishedAtText),
+        publishedAtSource: meta.publishedAtSource,
+        ocrPublishedAt: meta.ocrPublishedAt,
+        ocrPublishedAtText: meta.ocrPublishedAtText,
         anomalyStatus: meta.anomalyStatus,
         punishType: submitMeta.punishType,
         platformNotice: submitMeta.platformNotice,
@@ -110,6 +114,24 @@ export function createSubmitController(options: SubmitControllerOptions) {
           completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
         },
       });
+      const deadline = resolveVideoSubmitDeadline({
+        mode: mode === "editToday" ? "edit" : "create",
+        publishedAt: submitMeta.publishedAt,
+        businessDate: meta.bizDate,
+        publishedAtConfirmed: isPublishedAtConfirmed(meta.publishedAtText),
+        publishedAtSource: meta.publishedAtSource,
+      });
+      if (deadline.decision === "requires_appeal") {
+        pendingSubmissionPayloadRef.current = submissionPayload;
+        setAppealRequired(true);
+        setAppealReason(
+          deadline.reason === "manual_published_at"
+            ? "发布时间由成员手工填写，需要补交审批"
+            : "超过 72 小时，需要补交数据",
+        );
+        setIsAppealDialogOpen(true);
+        return;
+      }
       const response = await fetch("/api/video-submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -121,6 +143,11 @@ export function createSubmitController(options: SubmitControllerOptions) {
         if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
           pendingSubmissionPayloadRef.current = submissionPayload;
           setAppealRequired(true);
+          setAppealReason(
+            payload.reason === "manual_published_at"
+              ? "发布时间由成员手工填写，需要补交审批"
+              : "超过 72 小时，需要补交数据",
+          );
         }
         if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
           // 发布时间在左栏「更多设置」内，锚点必须与状态机的 firstIssueAnchor 同源，
@@ -167,6 +194,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
       );
       setSubmittedVideoId(submittedVideo.id);
       setIsSubmitted(true);
+      pauseDraftSaving();
       onSubmitted(submittedVideo, summaryOverride);
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
@@ -197,9 +225,12 @@ export function createSubmitController(options: SubmitControllerOptions) {
           submissionPayload: pendingSubmissionPayloadRef.current,
         }),
       });
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as { error?: string; appeal?: { id?: string }; appealId?: string };
       if (!response.ok) throw new Error(payload.error || "补交申请提交失败");
       setAppealRequired(false);
+      setAppealStatus("pending");
+      setAppealId(typeof payload.appeal?.id === "string" ? payload.appeal.id : typeof payload.appealId === "string" ? payload.appealId : null);
+      setAppealResultReason(null);
       setIsAppealDialogOpen(false);
       feedbackToast.success("补交申请已提交，请等待管理人员审批");
     } catch (error) {
@@ -209,6 +240,16 @@ export function createSubmitController(options: SubmitControllerOptions) {
     }
   }
 
+  async function resumeAppeal(appealId: string) {
+    const response = await fetch("/api/admin/fulfillment/appeals/resume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appealId }),
+    });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    return { ok: response.ok, error: payload.error ?? null };
+  }
 
-  return { executeSubmit, requestLateSubmission, handleConfirmAppeal };
+
+  return { executeSubmit, requestLateSubmission, handleConfirmAppeal, resumeAppeal };
 }

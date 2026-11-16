@@ -61,6 +61,9 @@ export function buildVideoSubmitPayload(input: {
   content: string | null;
   publishedAt: string | null;
   publishedAtText: string | null;
+  publishedAtSource?: "ocr" | "manual" | null;
+  ocrPublishedAt?: string | null;
+  ocrPublishedAtText?: string | null;
   anomalyStatus: string;
   punishType: string | null;
   platformNotice: string | null;
@@ -88,6 +91,9 @@ export function buildVideoSubmitPayload(input: {
     content: input.content,
     published_at: input.publishedAt,
     published_at_text: input.publishedAtText,
+    published_at_source: input.publishedAtSource,
+    ocr_published_at: input.ocrPublishedAt,
+    ocr_published_at_text: input.ocrPublishedAtText,
     anomaly_status: input.anomalyStatus,
     punish_type: input.punishType,
     platform_notice: input.platformNotice,

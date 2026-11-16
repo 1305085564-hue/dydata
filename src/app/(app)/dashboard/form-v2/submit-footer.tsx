@@ -13,7 +13,12 @@ export interface FormV2SubmitFooterProps {
   isSubmitted: boolean;
   lastSavedAt: Date | null;
   appealRequired: boolean;
+  appealStatus: "idle" | "pending" | "resume_pending" | "approved" | "rejected";
+  appealResultReason: string | null;
+  appealPrecheckRequired: boolean;
   requestLateSubmission: () => void;
+  retryAppealResume: () => void;
+  isAppealResuming: boolean;
   isAppealSubmitting: boolean;
   isBackfillMode: boolean;
   submittedViewActive: boolean;
@@ -34,7 +39,12 @@ export function FormV2SubmitFooter({
   isSubmitted,
   lastSavedAt,
   appealRequired,
+  appealStatus,
+  appealResultReason,
+  appealPrecheckRequired,
   requestLateSubmission,
+  retryAppealResume,
+  isAppealResuming,
   isAppealSubmitting,
   isBackfillMode,
   submittedViewActive,
@@ -49,6 +59,13 @@ export function FormV2SubmitFooter({
     : canActuallySubmit
       ? submitButtonLabel
       : `还差：${gaps.map((gap) => gap.label).join("、")}`;
+  const appealLabel = appealStatus === "pending"
+    ? "已提交审批"
+    : appealStatus === "resume_pending"
+      ? "等待重试续交"
+      : appealStatus === "rejected"
+        ? "重新申请补交"
+        : "提交审批";
 
   return (
     <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 -mx-2 flex items-center gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-2 py-3 backdrop-blur-md">
@@ -56,22 +73,37 @@ export function FormV2SubmitFooter({
         {!isSubmitted && lastSavedAt
           ? `已自动保存 ${lastSavedAt.getHours().toString().padStart(2, "0")}:${lastSavedAt.getMinutes().toString().padStart(2, "0")}`
           : ""}
+        {appealStatus === "pending" ? " · 补交申请审批中" : null}
+        {appealStatus === "rejected" && appealResultReason ? ` · 已驳回：${appealResultReason}` : null}
+        {appealStatus === "resume_pending" && appealResultReason ? ` · ${appealResultReason}` : null}
       </span>
       {isBackfillMode || submittedViewActive ? (
         <Button type="button" variant="ghost" size="l" onClick={onCancel} className="shrink-0 px-3 text-[14px] font-normal">
           取消
         </Button>
       ) : null}
-      {appealRequired && !isSubmitted ? (
+      {appealStatus === "resume_pending" && !isSubmitted ? (
         <Button
           type="button"
           size="l"
-          onClick={requestLateSubmission}
+          onClick={retryAppealResume}
+          disabled={isAppealResuming}
+          className="shrink-0 px-5 text-[14px] font-normal"
+        >
+          {isAppealResuming ? "重试中..." : "重试续交"}
+        </Button>
+      ) : (appealRequired || appealPrecheckRequired) && !isSubmitted ? (
+        <Button
+          type="button"
+          size="l"
+          onClick={appealRequired ? requestLateSubmission : triggerSubmit}
           disabled={isAppealSubmitting}
           className="shrink-0 px-5 text-[14px] font-normal"
         >
-          {isAppealSubmitting ? "申请中..." : "申请补交"}
+          {isAppealSubmitting ? "申请中..." : appealLabel}
         </Button>
+      ) : appealStatus === "pending" && !isSubmitted ? (
+        <span className="shrink-0 text-[13px] text-[#78716C]">等待审批</span>
       ) : (
         <Button
           type="button"

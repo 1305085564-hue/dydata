@@ -81,6 +81,12 @@ export function HistoryAppealCard({
           <span>{appeal.reason}</span>
         </div>
       )}
+      {appeal.appeal_trigger_reason && (
+        <div className="text-[12px] text-[#78716C]">
+          触发原因：{appeal.appeal_trigger_reason === "manual_published_at" ? "手工填写或修改发布时间" : "超过 72 小时"}
+          {appeal.appeal_trigger_reason === "manual_published_at" && appeal.ocr_published_at_text ? ` · OCR 原值：${appeal.ocr_published_at_text}` : ""}
+        </div>
+      )}
 
       {/* Rejection Reason Display */}
       {!isApproved && rejectionReason && (

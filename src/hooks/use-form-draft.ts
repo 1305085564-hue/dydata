@@ -9,6 +9,10 @@ interface DraftEntry<T> {
   savedAt: string;
 }
 
+interface DraftStorage {
+  setItem: (key: string, value: string) => void;
+}
+
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== "object" || typeof b !== "object") return false;
@@ -46,11 +50,32 @@ export interface UseFormDraftReturn<T> {
   hasDraft: boolean;
   restoreDraft: () => T | null;
   clearDraft: () => void;
+  pauseSaving: () => void;
+  resumeSaving: () => void;
   lastSavedAt: Date | null;
 }
 
 interface UseFormDraftOptions<T> {
   isEmpty?: (data: T) => boolean;
+  paused?: boolean;
+}
+
+export function persistDraftToStorage<T>(
+  storage: DraftStorage,
+  key: string,
+  data: T,
+  isEmpty: (value: T) => boolean,
+  lastSaved: T | null,
+  paused: boolean,
+): { saved: boolean; savedAt: Date | null } {
+  if (paused || isEmpty(data) || (lastSaved !== null && deepEqual(lastSaved, data))) {
+    return { saved: false, savedAt: null };
+  }
+
+  const savedAt = new Date();
+  const entry: DraftEntry<T> = { data, savedAt: savedAt.toISOString() };
+  storage.setItem(key, JSON.stringify(entry));
+  return { saved: true, savedAt };
 }
 
 export function useFormDraft<T>(
@@ -64,9 +89,11 @@ export function useFormDraft<T>(
   const lastSavedRef = useRef<T | null>(null);
   const formDataRef = useRef(formData);
   const hasWarnedSaveFailureRef = useRef(false);
+  const manuallyPausedRef = useRef(false);
   const isEmpty = options.isEmpty ?? isDraftEmpty;
 
   formDataRef.current = formData;
+  const isPaused = Boolean(options.paused) || manuallyPausedRef.current;
 
   // Check for existing draft on mount + 跨 Tab 同步
   useEffect(() => {
@@ -112,18 +139,18 @@ export function useFormDraft<T>(
   useEffect(() => {
     function flush() {
       const latestFormData = formDataRef.current;
-      if (isEmpty(latestFormData)) return;
-      if (lastSavedRef.current && deepEqual(lastSavedRef.current, latestFormData)) {
-        return;
-      }
+      if (isPaused) return;
 
       try {
-        const entry: DraftEntry<T> = {
-          data: latestFormData,
-          savedAt: new Date().toISOString(),
-        };
-        localStorage.setItem(key, JSON.stringify(entry));
-        lastSavedRef.current = latestFormData;
+        const result = persistDraftToStorage(
+          localStorage,
+          key,
+          latestFormData,
+          isEmpty,
+          lastSavedRef.current,
+          isPaused,
+        );
+        if (result.saved) lastSavedRef.current = latestFormData;
       } catch {
         // pagehide 阶段不弹 toast，避免阻塞关闭流程。
       }
@@ -131,26 +158,27 @@ export function useFormDraft<T>(
 
     window.addEventListener("pagehide", flush);
     return () => window.removeEventListener("pagehide", flush);
-  }, [key, isEmpty]);
+  }, [isEmpty, isPaused, key]);
 
   // 输入停止 1 秒后自动保存，替代原 30 秒轮询。
   useEffect(() => {
-    if (isEmpty(formData)) return;
-    if (lastSavedRef.current && deepEqual(lastSavedRef.current, formData)) {
-      return;
-    }
+    if (isPaused) return;
 
     const timer = setTimeout(() => {
       try {
-        const savedAt = new Date();
-        const entry: DraftEntry<T> = {
-          data: formData,
-          savedAt: savedAt.toISOString(),
-        };
-        localStorage.setItem(key, JSON.stringify(entry));
-        lastSavedRef.current = formData;
-        setLastSavedAt(savedAt);
-        setHasDraft(true);
+        const result = persistDraftToStorage(
+          localStorage,
+          key,
+          formData,
+          isEmpty,
+          lastSavedRef.current,
+          isPaused,
+        );
+        if (result.saved && result.savedAt) {
+          lastSavedRef.current = formData;
+          setLastSavedAt(result.savedAt);
+          setHasDraft(true);
+        }
       } catch {
         if (!hasWarnedSaveFailureRef.current) {
           hasWarnedSaveFailureRef.current = true;
@@ -161,7 +189,7 @@ export function useFormDraft<T>(
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, isEmpty, ...deps]);
+  }, [key, isEmpty, isPaused, ...deps]);
 
   const restoreDraft = useCallback((): T | null => {
     try {
@@ -186,10 +214,20 @@ export function useFormDraft<T>(
     setLastSavedAt(null);
   }, [key]);
 
+  const pauseSaving = useCallback(() => {
+    manuallyPausedRef.current = true;
+  }, []);
+
+  const resumeSaving = useCallback(() => {
+    manuallyPausedRef.current = false;
+  }, []);
+
   return {
     hasDraft,
     restoreDraft,
     clearDraft,
+    pauseSaving,
+    resumeSaving,
     lastSavedAt,
   };
 }

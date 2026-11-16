@@ -477,7 +477,7 @@ export function HistoryReportEditForm({
     [initialDraftData],
   );
 
-  const { hasDraft, restoreDraft, clearDraft } = useFormDraft<HistoryReportEditDraftData>(
+  const { hasDraft, restoreDraft, clearDraft, pauseSaving } = useFormDraft<HistoryReportEditDraftData>(
     `dydata:draft:history-edit:${report.id}`,
     draftData,
     [draftData],
@@ -631,6 +631,7 @@ export function HistoryReportEditForm({
           ? "历史手稿修改已保存。该作品没有数据底稿，指标只更新到日报，管理端的表现不会同步更新"
           : "历史手稿修改已保存",
       );
+      pauseSaving();
       clearDraft();
       onSaved?.();
     });

@@ -36,6 +36,7 @@ export type VideoSubmitPanelBodyProps = {
   activeDateReport: MonthReport | null;
   requestedEditBizDate: string | null;
   onRequestEditSubmittedReport: (target: { reportId: string | null; reportDate: string }) => void;
+  onCreateAnother: () => void;
   clearSubmittedEditTarget: () => void;
   activeDateReports: MonthReport[];
   selectedReportId: string | null;

@@ -79,6 +79,23 @@ test("提交接口允许内容标签为空数组", () => {
   assert.deepEqual(result.normalized.content_keywords, []);
 });
 
+test("手填发布时间来源和 OCR 原值进入规范化 payload", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    published_at: "2026-11-10T08:00:00.000Z",
+    published_at_text: "2026-11-10 16:00",
+    published_at_source: "manual",
+    ocr_published_at: "2026-11-10T07:30:00.000Z",
+    ocr_published_at_text: "2026-11-10 15:30",
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.published_at_source, "manual");
+  assert.equal(result.normalized.ocr_published_at, "2026-11-10T07:30:00.000Z");
+  assert.equal(result.normalized.ocr_published_at_text, "2026-11-10 15:30");
+});
+
 test("提交接口接受站内相对截图地址，避免域名切换阻断历史编辑", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,

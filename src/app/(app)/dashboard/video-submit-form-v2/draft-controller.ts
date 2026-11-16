@@ -67,12 +67,15 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     [workflow],
   );
 
-  const { hasDraft, restoreDraft, clearDraft, lastSavedAt } =
+  const { hasDraft, restoreDraft, clearDraft, pauseSaving, resumeSaving, lastSavedAt } =
     useFormDraft<VideoSubmitDraftData>(
       draftKey,
       draftData,
       [workflow],
-      { isEmpty: isVideoSubmitDraftEmpty },
+      {
+        isEmpty: isVideoSubmitDraftEmpty,
+        paused: isSubmitted || submittedViewActive,
+      },
     );
 
   const showDraftBanner =
@@ -125,6 +128,8 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     hasDraft,
     restoreDraft,
     clearDraft,
+    pauseSaving,
+    resumeSaving,
     lastSavedAt,
     showDraftBanner,
     handleRestoreDraft,

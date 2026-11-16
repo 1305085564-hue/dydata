@@ -30,7 +30,7 @@ import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/membe
 import * as submitResponseFields from "./response-fields";
 import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
-import { resolveCreateSubmissionConflict } from "./create-conflict";
+import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
 import { resolveDailyReportSubmissionTarget } from "./report-target";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
 import {
@@ -60,14 +60,7 @@ function stripId<T extends Record<string, unknown>>(row: T) {
  * 业务键判重的发布日窗口：按上海自然日（与数据复盘页的日期分组口径一致）。
  * 返回 [start, end) 两个 UTC ISO 边界；发布时间缺失或非法时返回 null（跳过业务键判重）。
  */
-export function buildPublishedDayWindow(publishedAt: string | null): { start: string; end: string } | null {
-  if (!publishedAt) return null;
-  const ms = new Date(publishedAt).getTime();
-  if (Number.isNaN(ms)) return null;
-  const shanghai = new Date(ms + 8 * 60 * 60 * 1000);
-  const start = Date.UTC(shanghai.getUTCFullYear(), shanghai.getUTCMonth(), shanghai.getUTCDate()) - 8 * 60 * 60 * 1000;
-  return { start: new Date(start).toISOString(), end: new Date(start + 24 * 60 * 60 * 1000).toISOString() };
-}
+export { buildPublishedDayWindow } from "./create-conflict";
 
 export async function rollbackSafely(actions: RollbackAction[]) {
   const errors: Error[] = [];
@@ -270,65 +263,6 @@ async function handleVideoSubmit(
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
-  // The 72h / cross-month deadline only guards first-time normal submissions.
-  // Violation reporting (abnormal) and historical edits are exempt so this rule
-  // never re-judges or blocks existing/edge flows.
-  if (shouldCheckPublishDeadline({ mode: normalized.mode })) {
-    // published_at_text is only present when the publish time was recognized by
-    // OCR or explicitly entered by the user; the silent fallback default leaves
-    // it empty, which is exactly the case we must not trust for the window check.
-    const deadline = resolveVideoSubmitDeadline({
-      mode: normalized.mode === "edit" ? "edit" : "create",
-      publishedAt: normalized.published_at,
-      businessDate: normalized.biz_date,
-      publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
-    });
-    const hasPublishScreenshot = normalized.assets.some((asset) => asset.role === "screenshot_2");
-    if (deadline.decision === "invalid") {
-      // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
-      // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
-      const message = resolvePublishEvidenceFailureMessage({
-        reason: deadline.reason,
-        hasPublishScreenshot,
-        punishType: normalized.punish_type,
-      });
-      return NextResponse.json({ error: message }, { status: 400 });
-    }
-    if (deadline.decision === "requires_confirmation") {
-      return NextResponse.json({
-        error: resolvePublishEvidenceFailureMessage({
-          reason: deadline.reason,
-          hasPublishScreenshot,
-          punishType: normalized.punish_type,
-        }),
-        code: "PUBLISH_TIME_CONFIRM_REQUIRED",
-        reason: deadline.reason,
-      }, { status: 409 });
-    }
-    if (deadline.decision === "requires_appeal") {
-      const { data: approvedAppeal, error: appealError } = await supabase
-        .from("fulfillment_appeals")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("account_id", normalized.account_id)
-        .eq("record_date", normalized.biz_date)
-        .eq("status", "approved")
-        .order("handled_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
-      if (!approvedAppeal) {
-        return NextResponse.json({
-          error: "该提交已超过 72 小时，请先申请补交",
-          code: "SUBMISSION_APPEAL_REQUIRED",
-          reason: deadline.reason,
-          published_date: deadline.publishedDate,
-          elapsed_hours: deadline.elapsedHours,
-        }, { status: 409 });
-      }
-    }
-  }
-
   if (normalized.mode !== "edit") {
     const dayWindow = normalized.video_title ? buildPublishedDayWindow(normalized.published_at) : null;
     const [existingReportResult, existingVideoResult, existingSameDayResult] = await Promise.all([
@@ -368,7 +302,69 @@ async function handleVideoSubmit(
       existingActiveWorkSameDay: (existingSameDayResult.data ?? []).length > 0,
     });
     if (duplicateResponse) {
-      return NextResponse.json({ error: duplicateResponse.error }, { status: duplicateResponse.status });
+      return NextResponse.json({ error: "这条已经上传过,无需重复提交", code: "SUBMISSION_DUPLICATE" }, { status: duplicateResponse.status });
+    }
+  }
+
+  // The 72h / cross-month deadline only guards first-time normal submissions.
+  // Violation reporting (abnormal) and historical edits are exempt so this rule
+  // never re-judges or blocks existing/edge flows.
+  if (shouldCheckPublishDeadline({ mode: normalized.mode })) {
+    // published_at_text is only present when the publish time was recognized by
+    // OCR or explicitly entered by the user; the silent fallback default leaves
+    // it empty, which is exactly the case we must not trust for the window check.
+    const deadline = resolveVideoSubmitDeadline({
+      mode: normalized.mode === "edit" ? "edit" : "create",
+      publishedAt: normalized.published_at,
+      businessDate: normalized.biz_date,
+      publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
+      publishedAtSource: normalized.published_at_source,
+    });
+    const hasPublishScreenshot = normalized.assets.some((asset) => asset.role === "screenshot_2");
+    if (deadline.decision === "invalid") {
+      // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
+      // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
+      const message = resolvePublishEvidenceFailureMessage({
+        reason: deadline.reason,
+        hasPublishScreenshot,
+        punishType: normalized.punish_type,
+      });
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+    if (deadline.decision === "requires_confirmation") {
+      return NextResponse.json({
+        error: resolvePublishEvidenceFailureMessage({
+          reason: deadline.reason,
+          hasPublishScreenshot,
+          punishType: normalized.punish_type,
+        }),
+        code: "PUBLISH_TIME_CONFIRM_REQUIRED",
+        reason: deadline.reason,
+      }, { status: 409 });
+    }
+    if (deadline.decision === "requires_appeal") {
+      const { data: approvedAppeal, error: appealError } = await supabase
+        .from("fulfillment_appeals")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("account_id", normalized.account_id)
+        .eq("record_date", normalized.biz_date)
+        .eq("status", "approved")
+        .order("handled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
+      if (!approvedAppeal) {
+        return NextResponse.json({
+          error: deadline.reason === "manual_published_at"
+            ? "发布时间由成员手工填写，请先申请补交"
+            : "该提交已超过 72 小时，请先申请补交",
+          code: "SUBMISSION_APPEAL_REQUIRED",
+          reason: deadline.reason,
+          published_date: deadline.publishedDate,
+          elapsed_hours: deadline.elapsedHours,
+        }, { status: 409 });
+      }
     }
   }
 

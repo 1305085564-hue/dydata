@@ -98,6 +98,19 @@ test("首次创建发布时间已确认且在窗口内允许提交", () => {
   assert.equal(result.reason, "within_window");
 });
 
+test("手填或改过识别值的发布时间统一要求补交审批", () => {
+  const result = resolveVideoSubmitDeadline({
+    mode: "create",
+    publishedAt: "2026-09-29T10:00",
+    uploadedAt: "2026-09-29T11:00+08:00",
+    businessDate: "2026-09-29",
+    publishedAtConfirmed: true,
+    publishedAtSource: "manual",
+  });
+  assert.equal(result.decision, "requires_appeal");
+  assert.equal(result.reason, "manual_published_at");
+});
+
 test("跨月且发布时间未确认仍要求确认真实时间", () => {
   const result = resolveVideoSubmitDeadline({
     mode: "create",

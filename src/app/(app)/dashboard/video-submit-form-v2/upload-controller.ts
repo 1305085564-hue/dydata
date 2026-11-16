@@ -143,7 +143,14 @@ export function createUploadHandler({
     const recognizedVideoTitle = typeof recognizedFields?.video_title === "string" ? recognizedFields.video_title.trim() : "";
     const resolvedPublishedAt = resolveOcrPublishedAt(recognizedPublishedAt, recognizedPublishedAtText);
     if (resolvedPublishedAt && !initialSummary) {
-      dispatchWorkflow({ type: "ocr/commit", meta: (current) => ({ ...current, publishedAt: resolvedPublishedAt.publishedAt, publishedAtText: resolvedPublishedAt.publishedAtText }) });
+      dispatchWorkflow({ type: "ocr/commit", meta: (current) => ({
+        ...current,
+        publishedAt: resolvedPublishedAt.publishedAt,
+        publishedAtText: resolvedPublishedAt.publishedAtText,
+        publishedAtSource: "ocr",
+        ocrPublishedAt: resolvedPublishedAt.publishedAt,
+        ocrPublishedAtText: resolvedPublishedAt.publishedAtText,
+      }) });
     }
     if (recognizedVideoTitle && !initialSummary) {
       dispatchWorkflow({ type: "ocr/commit", meta: (current) => current.videoTitle.trim() ? current : { ...current, videoTitle: recognizedVideoTitle } });

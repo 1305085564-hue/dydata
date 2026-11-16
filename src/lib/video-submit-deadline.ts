@@ -18,7 +18,8 @@ export type VideoSubmitDeadlineResult = {
     | "expired"
     | "missing_published_at"
     | "invalid_published_at"
-    | "unconfirmed_published_at";
+    | "unconfirmed_published_at"
+    | "manual_published_at";
   publishedDate: string | null;
   elapsedHours: number | null;
 };
@@ -50,6 +51,7 @@ export function resolveVideoSubmitDeadline(input: {
    * the silent fallback default and must NOT be trusted to grant a normal pass.
    */
   publishedAtConfirmed?: boolean;
+  publishedAtSource?: "ocr" | "manual" | null;
 }): VideoSubmitDeadlineResult {
   const publishedAt = parseDate(input.publishedAt);
   const publishedDate = publishedAt ? formatShanghaiDateOnly(publishedAt) : null;
@@ -77,6 +79,15 @@ export function resolveVideoSubmitDeadline(input: {
       decision: "invalid",
       reason: "invalid_published_at",
       publishedDate: null,
+      elapsedHours: null,
+    };
+  }
+
+  if (input.publishedAtSource === "manual") {
+    return {
+      decision: "requires_appeal",
+      reason: "manual_published_at",
+      publishedDate,
       elapsedHours: null,
     };
   }

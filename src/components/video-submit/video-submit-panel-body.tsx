@@ -36,6 +36,7 @@ export function VideoSubmitPanelBody({
   activeDateReport,
   requestedEditBizDate,
   onRequestEditSubmittedReport,
+  onCreateAnother,
   clearSubmittedEditTarget,
   activeDateReports,
   selectedReportId,
@@ -283,6 +284,7 @@ export function VideoSubmitPanelBody({
                   onRequestEditSubmittedReport(target);
                   setRequestedMode("editToday");
                 }}
+                onCreateAnother={onCreateAnother}
               />
             ) : null}
         </div>

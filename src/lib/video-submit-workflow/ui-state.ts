@@ -16,6 +16,9 @@ export interface SubmissionQualityResponse {
 export type SubmissionUiState = {
   isSubmitting: boolean;
   appealRequired: boolean;
+  appealStatus: "idle" | "pending" | "resume_pending" | "approved" | "rejected";
+  appealId: string | null;
+  appealResultReason: string | null;
   isAppealDialogOpen: boolean;
   appealReason: string;
   isAppealSubmitting: boolean;
@@ -36,6 +39,9 @@ export function createSubmissionUiState(initial?: Partial<SubmissionUiState>): S
   return {
     isSubmitting: false,
     appealRequired: false,
+    appealStatus: "idle",
+    appealId: null,
+    appealResultReason: null,
     isAppealDialogOpen: false,
     appealReason: "超过 72 小时，需要补交数据",
     isAppealSubmitting: false,

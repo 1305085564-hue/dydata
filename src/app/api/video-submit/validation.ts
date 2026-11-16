@@ -55,6 +55,9 @@ export interface VideoSubmitValidationResult {
     content: string;
     published_at: string | null;
     published_at_text: string | null;
+    published_at_source?: "ocr" | "manual" | null;
+    ocr_published_at?: string | null;
+    ocr_published_at_text?: string | null;
     biz_date: string;
     anomaly_status: string;
     punish_type: VideoPunishType | null;
@@ -236,6 +239,11 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const operatorUserId = normalizeOptionalUserId(payload.operator_user_id);
   const manualEdit = payload.manual_edit ?? false;
   const screenshotsRefreshed = payload.screenshots_refreshed ?? false;
+  const publishedAtSource = payload.published_at_source === "ocr" || payload.published_at_source === "manual"
+    ? payload.published_at_source
+    : payload.published_at_source == null
+      ? null
+      : undefined;
 
   if (!mode) {
     return { ok: false, error: "mode 必须是 create、edit 或 abnormal" };
@@ -310,6 +318,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   if (operatorUserId === undefined) return { ok: false, error: "operator_user_id 必须是合法 UUID" };
   if (typeof manualEdit !== "boolean") return { ok: false, error: "manual_edit 必须是布尔值" };
   if (typeof screenshotsRefreshed !== "boolean") return { ok: false, error: "screenshots_refreshed 必须是布尔值" };
+  if (publishedAtSource === undefined) return { ok: false, error: "published_at_source 必须是 ocr、manual 或 null" };
 
   if (anomalyStatus === "abnormal") {
     if (!content) {
@@ -355,6 +364,9 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       content,
       published_at: normalizeOptionalDate(payload.published_at),
       published_at_text: normalizeOptionalText(payload.published_at_text),
+      published_at_source: publishedAtSource ?? null,
+      ocr_published_at: normalizeOptionalDate(payload.ocr_published_at),
+      ocr_published_at_text: normalizeOptionalText(payload.ocr_published_at_text),
       biz_date: normalizeDateOnly(payload.biz_date),
       anomaly_status: anomalyStatus,
       punish_type: deriveVideoPunishType({

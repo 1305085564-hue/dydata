@@ -11,6 +11,8 @@ import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { mapAppealRowForResponse } from "./_appeal-response";
+import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "@/app/api/video-submit/create-conflict";
+import { buildSubmissionRecordId } from "@/app/api/video-submit/stability";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -110,6 +112,29 @@ async function handlePost(request: Request, observation: MutationObservation, la
     .single();
   if (accountError || !account || account.profile_id !== user.id) {
     return NextResponse.json({ error: "账号不存在或无权限申请" }, { status: 403 });
+  }
+
+  const normalized = submissionValidation.normalized;
+  const submissionVideoId = buildSubmissionRecordId(normalized);
+  const dayWindow = normalized.video_title ? buildPublishedDayWindow(normalized.published_at) : null;
+  const [existingReportResult, existingVideoResult, existingSameDayResult] = await Promise.all([
+    admin.from("daily_reports").select("id").eq("video_id", submissionVideoId).eq("user_id", user.id).eq("is_void", false).limit(1),
+    admin.from("videos").select("id").eq("id", submissionVideoId).limit(1),
+    dayWindow
+      ? admin.from("videos").select("id").eq("account_id", accountId).eq("video_title", normalized.video_title).eq("lifecycle_state", "active").gte("published_at", dayWindow.start).lt("published_at", dayWindow.end).limit(1)
+      : Promise.resolve({ data: [] as { id: string }[] | null, error: null }),
+  ]);
+  if (existingReportResult.error || existingVideoResult.error || existingSameDayResult.error) {
+    return NextResponse.json({ error: "核对重复提交状态失败" }, { status: 500 });
+  }
+  const duplicateResponse = resolveCreateSubmissionConflict({
+    mode: normalized.mode,
+    existingReportWithSameVideo: (existingReportResult.data ?? []).length > 0,
+    existingVideo: (existingVideoResult.data ?? []).length > 0,
+    existingActiveWorkSameDay: (existingSameDayResult.data ?? []).length > 0,
+  });
+  if (duplicateResponse) {
+    return NextResponse.json({ error: duplicateResponse.error, code: "SUBMISSION_DUPLICATE" }, { status: duplicateResponse.status });
   }
 
   const { data: existing, error: existingError } = await admin

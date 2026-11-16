@@ -6,9 +6,18 @@ export type CreateSubmissionConflictInput = {
   existingActiveWorkSameDay: boolean;
 };
 
+export function buildPublishedDayWindow(publishedAt: string | null): { start: string; end: string } | null {
+  if (!publishedAt) return null;
+  const ms = new Date(publishedAt).getTime();
+  if (Number.isNaN(ms)) return null;
+  const shanghai = new Date(ms + 8 * 60 * 60 * 1000);
+  const start = Date.UTC(shanghai.getUTCFullYear(), shanghai.getUTCMonth(), shanghai.getUTCDate()) - 8 * 60 * 60 * 1000;
+  return { start: new Date(start).toISOString(), end: new Date(start + 24 * 60 * 60 * 1000).toISOString() };
+}
+
 export type CreateSubmissionConflict = {
   status: 409;
-  error: "该作品已录入，请勿重复提交";
+  error: "这条已经上传过,无需重复提交";
 };
 
 export function resolveCreateSubmissionConflict(
@@ -19,6 +28,6 @@ export function resolveCreateSubmissionConflict(
 
   return {
     status: 409,
-    error: "该作品已录入，请勿重复提交",
+    error: "这条已经上传过,无需重复提交",
   };
 }

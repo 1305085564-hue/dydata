@@ -43,7 +43,7 @@ import {
   parseMetric,
   resolveCompleteEditPayload,
 } from "@/lib/video-submit/domain/form-rules";
-import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
   isInteractionExceedingPlayCount,
@@ -130,6 +130,7 @@ interface VideoSubmitFormProps {
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onCancel?: () => void;
+  onCreateAnother?: () => void;
   onRequestEdit?: (target: { reportId: string | null; reportDate: string }) => void;
   onViewHistory?: () => void;
   onViewVideo?: (videoId: string) => void;
@@ -158,6 +159,7 @@ export function VideoSubmitFormV2({
   onDismissPendingExemption,
   onSubmitted,
   onCancel,
+  onCreateAnother,
   onRequestEdit,
   onViewHistory,
   onViewVideo,
@@ -362,6 +364,9 @@ export function VideoSubmitFormV2({
   const {
     isSubmitting,
     appealRequired,
+    appealStatus,
+    appealId,
+    appealResultReason,
     isAppealDialogOpen,
     appealReason,
     isAppealSubmitting,
@@ -374,6 +379,9 @@ export function VideoSubmitFormV2({
   } = uiState;
   const setIsSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitting", next), [setUiField]);
   const setAppealRequired = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("appealRequired", next), [setUiField]);
+  const setAppealStatus = useCallback((next: SubmissionUiState["appealStatus"] | ((current: SubmissionUiState["appealStatus"]) => SubmissionUiState["appealStatus"])) => setUiField("appealStatus", next), [setUiField]);
+  const setAppealId = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("appealId", next), [setUiField]);
+  const setAppealResultReason = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("appealResultReason", next), [setUiField]);
   const setIsAppealDialogOpen = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isAppealDialogOpen", next), [setUiField]);
   const setAppealReason = useCallback((next: string | ((current: string) => string)) => setUiField("appealReason", next), [setUiField]);
   const setIsAppealSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isAppealSubmitting", next), [setUiField]);
@@ -556,13 +564,24 @@ export function VideoSubmitFormV2({
     return Boolean(meta.videoTitle.trim() || meta.content.trim());
   }, [fields, meta.content, meta.videoTitle, screenshotItems.length, slots]);
 
+  const deadlinePrecheck = useMemo(
+    () => resolveVideoSubmitDeadline({
+      mode: resolveVideoSubmitMode({ panelMode: mode, anomalyStatus: meta.anomalyStatus, videoId: editDetail?.videoId ?? null }) === "edit" ? "edit" : "create",
+      publishedAt: meta.publishedAt,
+      businessDate: meta.bizDate,
+      publishedAtConfirmed: isPublishedAtConfirmed(meta.publishedAtText),
+      publishedAtSource: meta.publishedAtSource,
+    }),
+    [editDetail?.videoId, meta.anomalyStatus, meta.bizDate, meta.publishedAt, meta.publishedAtSource, meta.publishedAtText, mode],
+  );
+
   useEffect(() => {
     if (!isSubmitted) {
       setHasUserInteracted(false);
     }
   }, [isSubmitted]);
 
-  const { clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
+  const { clearDraft, pauseSaving, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
     userId,
     accountId: account?.id ?? null,
     today,
@@ -574,6 +593,63 @@ export function VideoSubmitFormV2({
     hasInitialSummary: Boolean(initialSummary),
     dispatchWorkflow,
   });
+
+  useEffect(() => {
+    if (appealStatus !== "idle" || deadlinePrecheck.decision !== "requires_appeal") return;
+    setAppealReason(
+      deadlinePrecheck.reason === "manual_published_at"
+        ? "发布时间由成员手工填写，需要补交审批"
+        : "超过 72 小时，需要补交数据",
+    );
+  }, [appealStatus, deadlinePrecheck.decision, deadlinePrecheck.reason, setAppealReason]);
+
+  const [isAppealResuming, setIsAppealResuming] = useState(false);
+  const checkAppealStatus = useCallback(async () => {
+    if (!account || !meta.bizDate || appealStatus !== "pending") return;
+    try {
+      const response = await fetch(`/api/fulfillment/appeal-status?accountId=${encodeURIComponent(account.id)}&recordDate=${encodeURIComponent(meta.bizDate)}`);
+      const payload = (await response.json().catch(() => ({}))) as {
+        appeal?: {
+          id: string;
+          status: "pending" | "approved" | "rejected";
+          decisionReason?: string | null;
+          resumePending?: boolean;
+          resumeError?: string | null;
+        } | null;
+      };
+      if (!response.ok || !payload.appeal) return;
+      if (payload.appeal.status === "rejected") {
+        setAppealStatus("rejected");
+        setAppealResultReason(payload.appeal.decisionReason ?? "管理员未通过这次补交申请");
+        return;
+      }
+      if (payload.appeal.status !== "approved") return;
+      if (payload.appeal.resumePending) {
+        setAppealStatus("resume_pending");
+        setAppealResultReason(payload.appeal.resumeError ?? "自动提交未完成，请点击重试");
+        return;
+      }
+      pauseSaving();
+      clearDraft();
+      setAppealStatus("approved");
+      setAppealResultReason(null);
+      setIsSubmitted(true);
+      feedbackToast.success("补交申请已通过，数据已自动提交");
+    } catch {
+      // 暂时的网络失败留给下一次轮询或页面聚焦处理。
+    }
+  }, [account, appealStatus, clearDraft, meta.bizDate, pauseSaving, setAppealResultReason, setAppealStatus, setIsSubmitted]);
+
+  useEffect(() => {
+    if (appealStatus !== "pending") return;
+    void checkAppealStatus();
+    const interval = window.setInterval(() => void checkAppealStatus(), 30_000);
+    window.addEventListener("focus", checkAppealStatus);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", checkAppealStatus);
+    };
+  }, [appealStatus, checkAppealStatus]);
 
   // 豁免/请假审批通知本地关闭状态
   const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
@@ -805,6 +881,7 @@ export function VideoSubmitFormV2({
       publishedAtConfirmed,
     ],
   );
+  const appealPrecheckRequired = deadlinePrecheck.decision === "requires_appeal" && appealStatus === "idle";
   const issueSummaryRef = useRef(issueSummary);
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
@@ -970,7 +1047,7 @@ export function VideoSubmitFormV2({
 
   // Controller receives event-time callbacks; refs are read only when submit/appeal handlers run.
   // eslint-disable-next-line react-hooks/refs
-  const { executeSubmit, requestLateSubmission, handleConfirmAppeal } = createSubmitController({
+  const { executeSubmit, requestLateSubmission, handleConfirmAppeal, resumeAppeal } = createSubmitController({
     account,
     userId,
     mode,
@@ -982,8 +1059,29 @@ export function VideoSubmitFormV2({
     topicTitle: selectedTopicTitle || initialTopicTitle,
     supabase,
     pendingSubmissionPayloadRef,
-    setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
+    setIsSubmitting, setAppealRequired, setAppealStatus, setAppealId, setAppealResultReason, setAppealReason, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, pauseDraftSaving: pauseSaving, scrollToIssueAnchor,
   });
+
+  const retryAppealResume = useCallback(async () => {
+    if (!appealId || isAppealResuming) return;
+    setIsAppealResuming(true);
+    try {
+      const result = await resumeAppeal(appealId);
+      if (!result.ok) {
+        setAppealResultReason(result.error ?? "自动提交未完成，请稍后重试");
+        feedbackToast.error(result.error ?? "自动提交未完成，请稍后重试");
+        return;
+      }
+      pauseSaving();
+      clearDraft();
+      setAppealStatus("approved");
+      setAppealResultReason(null);
+      setIsSubmitted(true);
+      feedbackToast.success("补交数据已自动提交");
+    } finally {
+      setIsAppealResuming(false);
+    }
+  }, [appealId, clearDraft, isAppealResuming, pauseSaving, resumeAppeal, setAppealResultReason, setAppealStatus, setIsSubmitted]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1314,7 +1412,12 @@ export function VideoSubmitFormV2({
                 isSubmitted={isSubmitted}
                 lastSavedAt={lastSavedAt}
                 appealRequired={appealRequired}
+                appealStatus={appealStatus}
+                appealResultReason={appealResultReason}
+                appealPrecheckRequired={appealPrecheckRequired}
                 requestLateSubmission={requestLateSubmission}
+                retryAppealResume={retryAppealResume}
+                isAppealResuming={isAppealResuming}
                 isAppealSubmitting={isAppealSubmitting}
                 isBackfillMode={isBackfillMode}
                 submittedViewActive={submittedViewActive}

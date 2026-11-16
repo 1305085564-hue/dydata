@@ -32,7 +32,7 @@ export interface FormV2ResultsSectionProps {
   updateMeta: <Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) => void;
 }
 
-/** 识别结果：数字、标题、发布时间都以读出来的字呈现；只有没认准、没认出的才是输入框。 */
+/** 识别结果：数字、标题、发布时间都以读出来的字呈现；发布时间识别失败时允许手填并进入补交审批。 */
 export function FormV2ResultsSection({
   editing = false,
   metricsSectionRef,
@@ -60,6 +60,7 @@ export function FormV2ResultsSection({
   const publishedText = publishedConfirmed
     ? normalizePublishedAtInputValue(meta.publishedAt).replace("T", " ") || meta.publishedAtText
     : null;
+  const editablePublishedAtValue = normalizePublishedAtInputValue(meta.publishedAt);
 
   return (
     <div className="space-y-3">
@@ -108,7 +109,20 @@ export function FormV2ResultsSection({
 
         <div ref={publishedAtSectionRef} className="flex h-9 items-center gap-3 px-2">
           <span className="w-16 shrink-0 text-[12px] text-[#78716C]">发布时间</span>
-          <div
+          {!editing ? (
+            <Input
+              aria-label={publishedConfirmed ? "修改发布时间" : "手填发布时间"}
+              type="datetime-local"
+              value={editablePublishedAtValue}
+              onChange={(event) => {
+                const value = event.target.value;
+                updateMeta("publishedAt", value);
+                updateMeta("publishedAtText", value.replace("T", " "));
+                updateMeta("publishedAtSource", value === editablePublishedAtValue && meta.publishedAtSource === "ocr" ? "ocr" : value ? "manual" : null);
+              }}
+              className="h-9 min-h-0 flex-1 rounded-md border border-status-warning/50 bg-white px-2 font-sans text-[14px] text-[#141413] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+            />
+          ) : <div
             className={cn(
               "flex h-9 min-h-0 flex-1 items-center rounded-md px-2 font-sans text-[14px] transition-colors",
               publishedText
@@ -129,7 +143,7 @@ export function FormV2ResultsSection({
             ) : (
               "从完播截图识别"
             )}
-          </div>
+          </div>}
         </div>
       </div>
     </div>

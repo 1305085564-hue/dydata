@@ -21,6 +21,9 @@ export type FormMetaState = {
   bizDate: string;
   publishedAt: string;
   publishedAtText: string;
+  publishedAtSource?: "ocr" | "manual" | null;
+  ocrPublishedAt?: string | null;
+  ocrPublishedAtText?: string | null;
   anomalyStatus: AnomalyStatus;
   uploadedAt: string;
   topicTag: string;
@@ -96,6 +99,9 @@ export function createInitialMeta(today: string, userId: string, bizDate = today
     bizDate: normalizedBizDate,
     publishedAt,
     publishedAtText: "",
+    publishedAtSource: null,
+    ocrPublishedAt: null,
+    ocrPublishedAtText: null,
     anomalyStatus: "normal",
     uploadedAt: "",
     topicTag: "复盘",
@@ -262,6 +268,9 @@ export function createMetaFromEditDetail(
     bizDate: refill.bizDate,
     publishedAt: meta.publishedAt ?? "",
     publishedAtText: meta.publishedAtText ?? "",
+    publishedAtSource: null,
+    ocrPublishedAt: null,
+    ocrPublishedAtText: null,
     anomalyStatus: meta.anomalyStatus,
     uploadedAt: refill.uploadedAt ?? "",
     topicTag: meta.topicTag ?? "",

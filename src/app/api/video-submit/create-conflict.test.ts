@@ -11,7 +11,7 @@ test("新建提交遇到同作品已存有效日报或视频时返回409冲突",
       existingVideo: false,
       existingActiveWorkSameDay: false,
     }),
-    { status: 409, error: "该作品已录入，请勿重复提交" },
+    { status: 409, error: "这条已经上传过,无需重复提交" },
   );
 
   assert.deepEqual(
@@ -21,7 +21,7 @@ test("新建提交遇到同作品已存有效日报或视频时返回409冲突",
       existingVideo: true,
       existingActiveWorkSameDay: false,
     }),
-    { status: 409, error: "该作品已录入，请勿重复提交" },
+    { status: 409, error: "这条已经上传过,无需重复提交" },
   );
 });
 
@@ -33,7 +33,7 @@ test("同账号同标题同发布日已有活跃视频时返回409（指纹漂�
       existingVideo: false,
       existingActiveWorkSameDay: true,
     }),
-    { status: 409, error: "该作品已录入，请勿重复提交" },
+    { status: 409, error: "这条已经上传过,无需重复提交" },
   );
 
   assert.deepEqual(
@@ -43,7 +43,7 @@ test("同账号同标题同发布日已有活跃视频时返回409（指纹漂�
       existingVideo: false,
       existingActiveWorkSameDay: true,
     }),
-    { status: 409, error: "该作品已录入，请勿重复提交" },
+    { status: 409, error: "这条已经上传过,无需重复提交" },
   );
 });
 

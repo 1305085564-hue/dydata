@@ -103,6 +103,13 @@ export async function loadFulfillmentAppealRows(input: {
       absence_days: absentKeys.has(`${row.user_id}:${row.record_date}`) ? 1 : 0,
       rejection_reason: row.status === "rejected" ? row.decision_reason ?? null : null,
       resumePending: deriveResumePending(row.status, row.submission_payload),
+      published_at_source: row.submission_payload?.published_at_source === "manual" ? "manual" : row.submission_payload?.published_at_source === "ocr" ? "ocr" : null,
+      ocr_published_at_text: typeof row.submission_payload?.ocr_published_at_text === "string" ? row.submission_payload.ocr_published_at_text : null,
+      appeal_trigger_reason: row.submission_payload?.published_at_source === "manual"
+        ? "manual_published_at"
+        : row.submission_payload?.mode === "create"
+          ? "expired"
+          : null,
       source: "fulfillment_appeal" as const,
     })),
   };
