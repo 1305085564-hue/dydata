@@ -141,10 +141,10 @@ export function BreakdownWorksSection({
                                   </span>
                                 )}
 
-                                {q.coreAchievement !== null && (
+                                {q.contentAchievement !== null && (
                                   <span className="text-[#78716C] font-normal tabular-nums shrink-0">
-                                    主要指标 {q.coreMetric === "favoriteRate" ? "收藏" : "点赞"}{" "}
-                                    {Math.round(q.coreAchievement)}%
+                                    留存达成 {Math.round(q.contentAchievement)}%
+                                    {q.retentionCalculation === "avg_play_duration_only" ? "（按均播折算）" : q.retentionCalculation === "avg_play_ratio_only" ? "（按占比折算）" : ""}
                                   </span>
                                 )}
                               </div>
