@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填报表单状态";
 import { listSubmitGaps, SUBMIT_SLOT_LABELS } from "@/lib/video-submit/domain/submit-gaps";
+import { shouldShowAppealSubmitAction, type AppealStatus } from "@/lib/dashboard-logic/appeal-submit-state";
 
 export const SLOT_LABELS = SUBMIT_SLOT_LABELS;
 
@@ -13,7 +14,7 @@ export interface FormV2SubmitFooterProps {
   isSubmitted: boolean;
   lastSavedAt: Date | null;
   appealRequired: boolean;
-  appealStatus: "idle" | "pending" | "resume_pending" | "approved" | "rejected";
+  appealStatus: AppealStatus;
   appealResultReason: string | null;
   appealPrecheckRequired: boolean;
   requestLateSubmission: () => void;
@@ -92,7 +93,7 @@ export function FormV2SubmitFooter({
         >
           {isAppealResuming ? "重试中..." : "重试续交"}
         </Button>
-      ) : (appealRequired || appealPrecheckRequired) && !isSubmitted ? (
+      ) : shouldShowAppealSubmitAction({ appealRequired, appealPrecheckRequired, appealStatus, isSubmitted }) ? (
         <Button
           type="button"
           size="l"
