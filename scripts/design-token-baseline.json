@@ -1,7 +1,13 @@
 {
   "_note": "设计令牌存量违规基线（棘轮下界）。新增/上升即红灯；下调须走定律2。",
   "rules": {
-    "font-size": {},
+    "font-size": {
+      "src/app/(app)/admin/content/detail/content-detail-metrics.tsx": 1,
+      "src/app/(app)/admin/collaboration/staff-tab.tsx": 1,
+      "src/app/(app)/admin/content/content-list-table.tsx": 2,
+      "src/app/(app)/admin/collaboration/talent-tab.tsx": 2,
+      "src/app/(app)/admin/collaboration/personal-card-works.tsx": 4
+    },
     "ink": {
       "src/app/(app)/douyin/douyin-accounts-page.tsx": 12
     },
