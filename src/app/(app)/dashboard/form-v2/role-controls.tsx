@@ -64,7 +64,7 @@ export function VideoStatusSegmented({
             className={cn(
               "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[14px] transition cursor-pointer",
               isActive
-                ? "bg-white text-[#1F1E1D] shadow-input font-normal"
+                ? "bg-white text-[#141413] shadow-input ring-1 ring-[#141413]/15 font-normal"
                 : "text-[#78716C] hover:text-[#1F1E1D] font-normal"
             )}
           >

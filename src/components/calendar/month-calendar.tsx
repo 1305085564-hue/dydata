@@ -81,12 +81,12 @@ export function MonthCalendar({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const monthRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // 生成连续滚动的月份序列（以 viewMonth 为基准：前 14 个月 ~ 后 4 个月）
+  // 生成连续滚动的月份序列（以 viewMonth 为基准：前 1 个月 ~ 后 1 个月，共 3 个月）
   const months = useMemo<MonthDescriptor[]>(() => {
     const list: MonthDescriptor[] = [];
     const anchorTotal = anchorYear * 12 + (anchorMonth - 1);
-    let startTotal = anchorTotal - 14;
-    let endTotal = anchorTotal + 4;
+    let startTotal = anchorTotal - 1;
+    let endTotal = anchorTotal + 1;
 
     if (minDate) {
       const [minY, minM] = minDate.split("-").map(Number);
@@ -345,12 +345,14 @@ export function MonthCalendar({
             data-month-key={m.key}
             className="mb-3.5 last:mb-1"
           >
-            {/* 月份轻量吸顶指示条 */}
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-white/95 backdrop-blur-sm py-1 px-1 mb-1 border-b border-[#E2E2DF]/50 text-[12px] font-normal text-[#78716C]">
-              <span>
-                {m.year}年{m.month}月
-              </span>
-            </div>
+            {/* 月份指示条：若包含多个月且不是初始锚点月份时显示，避免与顶栏标题重复 */}
+            {months.length > 1 && m.key !== initialKey && (
+              <div className="sticky top-0 z-10 flex items-center justify-between bg-white/95 backdrop-blur-sm py-1 px-1 mb-1 border-b border-[#E2E2DF]/50 text-[12px] font-normal text-[#78716C]">
+                <span>
+                  {m.year}年{m.month}月
+                </span>
+              </div>
+            )}
 
             {/* 该月 7 列网格：月初紧接周历空位，月末自然接续 */}
             <div className="grid grid-cols-7 gap-1">

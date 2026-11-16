@@ -51,7 +51,7 @@ export function VideoSubmitPanelToolbar({
   return (
     <>
         {/* 页头：一句话说今天交没交；副行是本月的账，点开看月历（裸铺于底层画布，无卡片外框） */}
-        <div className="px-0.5">
+        <div className="px-2">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
             {/* 左侧：状态句 + 本月履约摘要 */}
             <div className="space-y-1 min-w-0">

@@ -231,7 +231,7 @@ export function SubmittedView({
 
       <div className="flex flex-col items-center justify-center gap-1 pt-2 pb-4 select-none">
         <ColophonMark className="py-0 gap-2" />
-        <span className="text-[12px] tracking-wider text-[#A8A29E]">今日创作已立卷 · 数据已妥善入库</span>
+        <span className="text-[14px] text-[#78716C]">今日创作已立卷 · 数据已妥善入库</span>
       </div>
     </motion.div>
   );

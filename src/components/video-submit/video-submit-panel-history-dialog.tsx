@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useEffect, type Dispatch, type SetStateAction } from "react";
 
 import {
   Dialog,
@@ -45,6 +45,23 @@ export function VideoSubmitPanelHistoryDialog({
   onLoadMore,
   historyReports,
 }: VideoSubmitPanelHistoryDialogProps) {
+  useEffect(() => {
+    if (!isHistoryOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (viewingReport) {
+          setViewingReport(null);
+        } else {
+          setIsHistoryOpen(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isHistoryOpen, viewingReport, setViewingReport, setIsHistoryOpen]);
+
   return (
     <>
       {/* 历史手稿纪事列表弹窗（内嵌右侧极速微调抽屉） */}

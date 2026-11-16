@@ -82,11 +82,12 @@ export function MetricInputCard({
       <div className="flex h-5 items-center justify-between gap-1 px-2">
         <Label
           htmlFor={`metric-${field.key}`}
+          title={`${label}${suffix ? `（${suffix}）` : ""}${optional ? " · 选填" : ""}`}
           className="min-w-0 truncate text-[12px] font-normal text-[#78716C] select-none cursor-pointer"
         >
           {label}
           {suffix ? `（${suffix}）` : ""}
-          {optional && mode === "blank" ? <span className="ml-1 opacity-70">可不填</span> : null}
+          {optional && mode === "blank" && !suffix ? <span className="ml-1 opacity-70">选填</span> : null}
         </Label>
         <div className="flex shrink-0 items-center gap-1 text-[12px]">
           {mode === "doubt" ? (

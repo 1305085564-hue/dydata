@@ -51,7 +51,7 @@ function Chips<T extends string>({ options, value, onPick }: { options: readonly
           onClick={() => onPick(option)}
           className={cn(
             CHIP_CLASS,
-            value === option ? "bg-white text-[#141413] shadow-input" : "text-[#78716C] hover:text-[#141413]",
+            value === option ? "bg-white text-[#141413] shadow-input ring-1 ring-[#141413]/15 font-normal" : "text-[#78716C] hover:text-[#141413]",
           )}
         >
           {option}
