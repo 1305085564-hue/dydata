@@ -21,7 +21,7 @@ export type SubmitControllerOptions = {
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setAppealStatus: Setter<"idle" | "pending" | "resume_pending" | "approved" | "rejected">; setAppealId: Setter<string | null>; setAppealResultReason: Setter<string | null>; setAppealReason: Setter<string>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
-  onSubmitted: (video: Video, summaryOverride?: TodaySubmissionReportLike | null) => void;
+  onSubmitted: (video: Video | null, summaryOverride?: TodaySubmissionReportLike | null) => void;
   clearDraft: () => void; pauseDraftSaving: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
@@ -129,6 +129,8 @@ export function createSubmitController(options: SubmitControllerOptions) {
               ? "发布时间由成员手工填写，需要补交审批"
               : "超过 72 小时，需要补交数据",
           );
+          setIsAppealDialogOpen(true);
+          return;
         }
         if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
           // 发布时间在左栏「更多设置」内，锚点必须与状态机的 firstIssueAnchor 同源，
