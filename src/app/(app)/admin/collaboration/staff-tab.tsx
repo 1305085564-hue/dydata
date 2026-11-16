@@ -170,10 +170,10 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   绩效条
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
-                  <p className="text-[#FCFCFB] leading-relaxed">
+                  <p className="font-normal text-[#141413] mb-1">文案绩效核算口径：</p>
+                  <p className="text-[#1F1E1D] leading-relaxed">
                     播放≥500条数 + 优秀作品×2。<br />
-                    <span className="text-[#FCFCFB] text-[12px]">注：未认证文案不计入绩效结算。</span>
+                    <span className="text-[#78716C] text-[12px]">注：未认证文案不计入绩效结算。</span>
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -201,8 +201,8 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   {sort.renderSortIcon("avgInteractionAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">互动数据均值：</p>
-                  <p className="text-[#FCFCFB] leading-relaxed">
+                  <p className="font-normal text-[#141413] mb-1">互动数据均值：</p>
+                  <p className="text-[#1F1E1D] leading-relaxed">
                     有互动数据作品的互动指标达成率算术平均，不按播放加权。
                   </p>
                 </TooltipContent>
@@ -224,8 +224,8 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   {sort.renderSortIcon("avgContentAchievement")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">留存数据均值：</p>
-                  <p className="text-[#FCFCFB] leading-relaxed">
+                  <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
+                  <p className="text-[#1F1E1D] leading-relaxed">
                     播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
                   </p>
                 </TooltipContent>
@@ -247,8 +247,8 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   {sort.renderSortIcon("goodExcellentRate")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">良优率口径：</p>
-                  <p className="text-[#FCFCFB] leading-relaxed">
+                  <p className="font-normal text-[#141413] mb-1">良优率口径：</p>
+                  <p className="text-[#1F1E1D] leading-relaxed">
                     留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
                     播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
                   </p>
@@ -354,8 +354,8 @@ export function StaffRowCells({
               </span>
             </TooltipTrigger>
             <TooltipContent className="text-[12px] max-w-xs">
-              <p className="font-normal text-[#FCFCFB] mb-1">经手账号：</p>
-              <p className="text-[#FCFCFB] leading-relaxed">
+              <p className="font-normal text-[#141413] mb-1">经手账号：</p>
+              <p className="text-[#1F1E1D] leading-relaxed">
                 {row.involvedAccounts.map((account) => account.accountName).join("、")}（展开本行可查看逐篇明细）
               </p>
             </TooltipContent>

@@ -738,7 +738,7 @@ export function VideoSubmitFormV2({
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="inline-flex min-h-8 h-8 items-center rounded-md bg-[#141413] px-2.5 py-1 text-[12px] font-normal text-white hover:bg-[#141413]/90 transition-colors cursor-pointer select-none shadow-input"
+              className="inline-flex min-h-8 h-8 items-center rounded-md border border-[#D97757] px-2.5 py-1 text-[12px] font-normal text-[#D97757] hover:bg-[#D97757]/5 transition-colors cursor-pointer select-none"
             >
               恢复
             </button>

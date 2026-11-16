@@ -83,7 +83,7 @@ export function VideoStatusSegmented({
               <TooltipContent
                 side="top"
                 sideOffset={6}
-                className="max-w-xs text-[12px] leading-relaxed bg-[#141413] text-white p-2.5 rounded-xl shadow-claude-float border border-[#1F1E1D]"
+                className="max-w-xs text-[12px] leading-relaxed bg-white text-[#141413] p-2.5 rounded-xl shadow-claude-float border border-[#E2E2DF]"
               >
                 {option.tip}
               </TooltipContent>

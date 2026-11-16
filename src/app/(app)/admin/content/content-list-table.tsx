@@ -374,9 +374,9 @@ export function ContentListTable({
                                 side="top"
                                 align="start"
                                 sideOffset={4}
-                                className="max-w-md p-2 bg-[#1F1E1D] text-white border border-[#333] shadow-claude-float rounded-lg text-left pointer-events-none z-50 text-[12px] leading-relaxed"
+                                className="max-w-md p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-lg text-left pointer-events-none z-50 text-[12px] leading-relaxed"
                               >
-                                <div className=" text-white">{video.video_title || video.content || "未命名视频"}</div>
+                                <div className="text-[#141413]">{video.video_title || video.content || "未命名视频"}</div>
                                 {video.accounts?.name ? (
                                   <div className="text-[12px] text-[#78716C] mt-0.5">账号：@{video.accounts.name}</div>
                                 ) : null}
