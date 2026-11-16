@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cleanMetricInputValue, normalizeFullWidthNumbers } from "./metric-input-cleaner";
+import {
+  cleanMetricInputValue,
+  normalizeFullWidthNumbers,
+  preserveMetricInputText,
+} from "./metric-input-cleaner";
 
 test("基础数字原样返回", () => {
   assert.equal(cleanMetricInputValue("123"), "123");
@@ -68,4 +72,21 @@ test("全角数字自动转为半角", () => {
   assert.equal(normalizeFullWidthNumbers("１２３"), "123");
   assert.equal(cleanMetricInputValue("１２，３４５"), "12345");
   assert.equal(cleanMetricInputValue("１．２ｗ"), "12000");
+});
+
+test("逐字输入保留非法原文，提交清洗仍判为无效", () => {
+  let negative = "";
+  for (const char of "-5") negative = preserveMetricInputText(negative + char);
+  assert.equal(negative, "-5");
+  assert.equal(cleanMetricInputValue(negative), "");
+
+  let scientific = "";
+  for (const char of "1e9") scientific = preserveMetricInputText(scientific + char);
+  assert.equal(scientific, "1e9");
+  assert.equal(cleanMetricInputValue(scientific), "");
+
+  let letters = "";
+  for (const char of "abc") letters = preserveMetricInputText(letters + char);
+  assert.equal(letters, "abc");
+  assert.equal(cleanMetricInputValue(letters), "");
 });

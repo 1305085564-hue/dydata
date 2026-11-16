@@ -1,4 +1,5 @@
 import { normalizeVideoAnomalyStatus } from "@/lib/video-anomaly";
+import { isMetricInputValueValid, METRIC_INPUT_TYPE_BY_FIELD } from "@/lib/dashboard-logic/metric-input-cleaner";
 
 export type SubmissionSlotRole = "screenshot_1" | "screenshot_2";
 
@@ -180,7 +181,9 @@ export function summarizeSubmissionIssues(
         !slot.confirmed
     )
     .map((slot) => slot.role);
-  const missingRequiredMetrics = REQUIRED_METRIC_KEYS.filter((key) => !state.fields[key].value.trim());
+  const missingRequiredMetrics = REQUIRED_METRIC_KEYS.filter(
+    (key) => !isMetricInputValueValid(state.fields[key].value, METRIC_INPUT_TYPE_BY_FIELD[key]),
+  );
 
   const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
   const missingRequiredMeta: RequiredMetaKey[] = [];

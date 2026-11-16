@@ -5,7 +5,12 @@ import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { cleanMetricInputValue, type MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
+import {
+  cleanMetricInputValue,
+  isMetricInputValueValid,
+  preserveMetricInputText,
+  type MetricInputType,
+} from "@/lib/dashboard-logic/metric-input-cleaner";
 import type { SubmissionFieldState } from "./提交状态机";
 import { canRestoreOcrValue, type ConfidenceLevel } from "./填报表单状态";
 
@@ -75,6 +80,7 @@ export function MetricInputCard({
   const displayValue = field.value;
   const canRestoreOcr = Boolean(onRestoreOcr) && canRestoreOcrValue(field);
   const isBoxed = mode === "doubt" || mode === "missing";
+  const hasInvalidInput = Boolean(displayValue) && !isMetricInputValueValid(displayValue, metricType);
   const checkedByHand = Boolean(field.manuallyEdited) && Boolean(field.ocrValue) && field.value === field.ocrValue;
 
   return (
@@ -138,13 +144,13 @@ export function MetricInputCard({
             const pasted = e.clipboardData.getData("text");
             if (pasted) {
               const cleaned = cleanMetricInputValue(pasted, metricType);
-              if (cleaned !== pasted && cleaned) {
+              if (cleaned !== pasted) {
                 e.preventDefault();
                 onChange(cleaned);
               }
             }
           }}
-          onChange={(event) => onChange(cleanMetricInputValue(event.target.value, metricType))}
+          onChange={(event) => onChange(preserveMetricInputText(event.target.value))}
           onFocus={(e) => {
             e.currentTarget.select();
             onFocus?.();
@@ -160,12 +166,19 @@ export function MetricInputCard({
           className={cn(
             "h-9 min-h-[36px] rounded-md px-2 text-left font-sans text-[14px] tabular-nums text-[#141413] transition-colors",
             "placeholder:text-[#A8A29E] focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0",
-            isBoxed
-              ? "border border-status-warning/50 bg-white shadow-input"
+            hasInvalidInput
+              ? "border border-status-danger/50 bg-white shadow-input"
+              : isBoxed
+                ? "border border-status-warning/50 bg-white shadow-input"
               : "border border-transparent bg-transparent shadow-none hover:bg-[#F1F1F0]",
           )}
         />
       )}
+      {hasInvalidInput ? (
+        <p role="alert" className="px-2 text-[12px] text-status-danger">
+          请输入有效数字
+        </p>
+      ) : null}
     </div>
   );
 }

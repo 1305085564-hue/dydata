@@ -19,6 +19,11 @@ export function normalizeFullWidthNumbers(str: string): string {
     .replace(/\u3000/g, " ");
 }
 
+/** 输入过程中只做无损归一化，非法字符交给失焦和提交校验处理。 */
+export function preserveMetricInputText(rawInput: string): string {
+  return normalizeFullWidthNumbers(rawInput).replace(/\s/g, "");
+}
+
 export type MetricInputType = "count" | "rate" | "duration";
 
 export const METRIC_INPUT_TYPE_BY_FIELD = {
@@ -119,4 +124,12 @@ export function cleanMetricInputValue(
   }
 
   return input;
+}
+
+export function isMetricInputValueValid(
+  rawInput: string,
+  metricType: MetricInputType = "count",
+): boolean {
+  const cleaned = cleanMetricInputValue(rawInput, metricType);
+  return cleaned !== "" && Number.isFinite(Number(cleaned));
 }

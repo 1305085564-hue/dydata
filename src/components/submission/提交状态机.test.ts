@@ -54,6 +54,20 @@ test("初始状态为草稿", () => {
   assert.equal(getSubmissionStage(state), "草稿");
 });
 
+test("必填指标的非法原文仍计为缺项", () => {
+  const state = createInitialSubmissionState({
+    fields: {
+      ...COMPLETE_REQUIRED_FIELDS,
+      play_count: createField({ key: "play_count", value: "-5" }),
+      likes: createField({ key: "likes", value: "1e9" }),
+    },
+  });
+
+  const summary = summarizeSubmissionIssues(state);
+  assert.deepEqual(summary.missingRequiredMetrics, ["play_count", "likes"]);
+  assert.equal(summary.canSubmit, false);
+});
+
 test("存在上传中或识别中槽位时为识别中", () => {
   const state = createInitialSubmissionState({
     slots: {
