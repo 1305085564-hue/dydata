@@ -219,6 +219,7 @@ export function CollaborationWorkbench({
         snapshot?: CollaborationDiagnosisDetail["snapshot"] | null;
         reviewReadiness?: CollaborationDiagnosisDetail["reviewReadiness"] | null;
         topicKind?: CollaborationDiagnosisDetail["topicKind"];
+        contentQuality?: CollaborationDiagnosisDetail["contentQuality"];
         error?: string;
       };
       if (!response.ok || !payload.videoId) {
@@ -231,6 +232,7 @@ export function CollaborationWorkbench({
           snapshot: payload.snapshot ?? null,
           reviewReadiness: payload.reviewReadiness ?? null,
           topicKind: payload.topicKind ?? null,
+          contentQuality: payload.contentQuality ?? null,
         });
       } else {
         toast.error("没拿到这件作品的详细诊断数据");

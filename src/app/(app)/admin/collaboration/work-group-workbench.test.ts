@@ -14,6 +14,11 @@ const workbenchSource = [
   "src/lib/collaboration/data/workbench.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
+const collaborationWorkbenchSource = readFileSync(
+  new URL("./collaboration-workbench.tsx", import.meta.url),
+  "utf8",
+);
+
 const listTabSource = readFileSync(
   new URL("./work-group-list-tab.tsx", import.meta.url),
   "utf8",
@@ -63,6 +68,16 @@ test("P3.1: 协作管理具备岗位与小组双模式分段切换，进组/切�
     workbenchSource.match(/const handleBackToGroupList = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
   assert.match(handleBackToGroupListBody, /history\.replaceState\(/);
   assert.doesNotMatch(handleBackToGroupListBody, /router\.replace\(/);
+});
+
+test("D1: 协作入口诊断把接口返回的 contentQuality 透传到详情状态", () => {
+  const diagnosisHandler =
+    collaborationWorkbenchSource.match(
+      /const openDiagnosisByReportId = useCallback\(async \(reportId: string\) => \{[\s\S]*?\n  \}, \[openingReportId\]\);/,
+    )?.[0] ?? "";
+
+  assert.match(diagnosisHandler, /contentQuality\?: CollaborationDiagnosisDetail\["contentQuality"\];/);
+  assert.match(diagnosisHandler, /contentQuality: payload\.contentQuality \?\? null,/);
 });
 
 test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/四率）", () => {
