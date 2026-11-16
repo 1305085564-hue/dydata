@@ -136,15 +136,20 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
           const el = inputRefs.current[key];
           if (!el) return;
           el.focus();
-          const highlightClasses = ["ring-2", "ring-status-danger/70", "ring-offset-1"];
+          const highlightClasses = ["ring-2", "ring-status-warning", "ring-offset-1"];
           el.classList.add(...highlightClasses);
+          const removeHighlight = () => {
+            el.classList.remove(...highlightClasses);
+            el.removeEventListener("input", removeHighlight);
+          };
+          el.addEventListener("input", removeHighlight, { once: true });
           if (highlightTimerRef.current) {
             clearTimeout(highlightTimerRef.current);
           }
           highlightTimerRef.current = setTimeout(() => {
-            el.classList.remove(...highlightClasses);
+            removeHighlight();
             highlightTimerRef.current = null;
-          }, 1500);
+          }, 2000);
         },
       }),
       [],

@@ -524,16 +524,26 @@ export function VideoSubmitFormV2({
 
   const focusWithHighlight = useCallback((el: HTMLElement | null) => {
     if (!el) return;
+    if (el.tabIndex < 0 && el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "BUTTON" && el.tagName !== "SELECT") {
+      el.tabIndex = -1;
+    }
     el.focus();
-    const highlightClasses = ["ring-2", "ring-status-danger/70", "ring-offset-1"];
+    const highlightClasses = ["ring-2", "ring-status-warning", "ring-offset-1"];
     el.classList.add(...highlightClasses);
+    const removeHighlight = () => {
+      el.classList.remove(...highlightClasses);
+      el.removeEventListener("input", removeHighlight);
+      el.removeEventListener("click", removeHighlight);
+    };
+    el.addEventListener("input", removeHighlight, { once: true });
+    el.addEventListener("click", removeHighlight, { once: true });
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
     }
     highlightTimerRef.current = setTimeout(() => {
-      el.classList.remove(...highlightClasses);
+      removeHighlight();
       highlightTimerRef.current = null;
-    }, 1500);
+    }, 2000);
   }, []);
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -719,14 +729,14 @@ export function VideoSubmitFormV2({
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="inline-flex min-h-[32px] sm:min-h-0 sm:h-6 items-center rounded-md bg-[#141413] px-2.5 py-1 text-[12px] font-normal text-white hover:bg-[#141413]/90 transition-colors cursor-pointer select-none shadow-input"
+              className="inline-flex min-h-8 h-8 items-center rounded-md bg-[#141413] px-2.5 py-1 text-[12px] font-normal text-white hover:bg-[#141413]/90 transition-colors cursor-pointer select-none shadow-input"
             >
               恢复
             </button>
             <button
               type="button"
               onClick={() => setDiscardConfirmOpen(true)}
-              className="inline-flex min-h-[32px] sm:min-h-0 sm:h-6 items-center px-1.5 py-1 text-[12px] text-[#78716C] hover:text-status-danger transition-colors cursor-pointer select-none"
+              className="inline-flex min-h-8 h-8 items-center px-2 py-1 text-[12px] text-[#78716C] hover:text-status-danger transition-colors cursor-pointer select-none"
             >
               丢弃
             </button>
@@ -1144,12 +1154,25 @@ export function VideoSubmitFormV2({
         } else if (invalidKey === "content") {
           focusWithHighlight(contentTextareaRef.current);
         } else if (invalidKey === "topicTag") {
-          // 维持现状仅滚动
+          const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
+          focusWithHighlight(topicBtn ?? null);
         } else {
           metricsGroupRef.current?.focusMetric(invalidKey);
         }
-      } else if (issueSummary.missingRequiredSlots.length > 0) {
+      } else if (issueSummary.firstIssueAnchor === "slots" || issueSummary.missingRequiredSlots.length > 0) {
         triggerSlotsPulse();
+        const slotEl = slotsSectionRef.current?.querySelector<HTMLElement>(
+          '[role="button"][tabindex="0"], [tabindex="0"], button'
+        ) ?? slotsSectionRef.current;
+        focusWithHighlight(slotEl);
+      } else if (issueSummary.firstIssueAnchor === "meta") {
+        focusWithHighlight(metaVideoTitleRef.current ?? contentTextareaRef.current);
+      } else if (issueSummary.firstIssueAnchor === "topicTag") {
+        const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
+        focusWithHighlight(topicBtn ?? null);
+      } else if (issueSummary.firstIssueAnchor === "publishedAt") {
+        const pubInput = publishedAtSectionRef.current?.querySelector<HTMLElement>("input, button, [tabindex='0']");
+        focusWithHighlight(pubInput ?? null);
       }
       return;
     }
@@ -1233,6 +1256,7 @@ export function VideoSubmitFormV2({
       setHasAttemptedSubmit(true);
       triggerFormShake();
       scrollToIssueAnchor(issueSummaryRef.current.firstIssueAnchor);
+      const anchor = issueSummaryRef.current.firstIssueAnchor;
       const invalidKey = issueSummaryRef.current.firstInvalidFieldKey;
       if (invalidKey) {
         if (invalidKey === "videoTitle") {
@@ -1240,12 +1264,25 @@ export function VideoSubmitFormV2({
         } else if (invalidKey === "content") {
           focusWithHighlight(contentTextareaRef.current);
         } else if (invalidKey === "topicTag") {
-          // 维持现状仅滚动
+          const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
+          focusWithHighlight(topicBtn ?? null);
         } else {
           metricsGroupRef.current?.focusMetric(invalidKey);
         }
-      } else if (issueSummaryRef.current.missingRequiredSlots.length > 0) {
+      } else if (anchor === "slots" || issueSummaryRef.current.missingRequiredSlots.length > 0) {
         triggerSlotsPulse();
+        const slotEl = slotsSectionRef.current?.querySelector<HTMLElement>(
+          '[role="button"][tabindex="0"], [tabindex="0"], button'
+        ) ?? slotsSectionRef.current;
+        focusWithHighlight(slotEl);
+      } else if (anchor === "meta") {
+        focusWithHighlight(metaVideoTitleRef.current ?? contentTextareaRef.current);
+      } else if (anchor === "topicTag") {
+        const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
+        focusWithHighlight(topicBtn ?? null);
+      } else if (anchor === "publishedAt") {
+        const pubInput = publishedAtSectionRef.current?.querySelector<HTMLElement>("input, button, [tabindex='0']");
+        focusWithHighlight(pubInput ?? null);
       }
       const gaps = listSubmitGaps(issueSummaryRef.current);
       if (gaps.length > 0) {

@@ -36,7 +36,7 @@
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-bottom-nav-height: 3.5rem;
+  --app-bottom-nav-height: 0px;
   --app-bottom-offset: calc(var(--app-bottom-nav-height) + var(--app-safe-bottom));
   --network-bar-offset: 0px;
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top) + var(--network-bar-offset, 0px));

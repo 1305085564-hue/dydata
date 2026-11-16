@@ -170,7 +170,7 @@ export function SubmissionSlotsSection({
           className={cn(
             "flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 text-center transition-colors",
             isDragOverGlobal || pulseEmptySlots
-              ? "border-[#D97757]/60 bg-[#D97757]/[0.04]"
+              ? "border-[#D97757]/60 bg-[#D97757]/[0.04] ring-2 ring-status-warning ring-offset-1"
               : "border-[#D6D3D1] bg-white hover:border-[#78716C]/60",
           )}
         >
@@ -260,7 +260,7 @@ export function SubmissionSlotsSection({
                   "group relative flex min-h-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-3 transition-colors",
                   isEmpty
                     ? pulseEmptySlots
-                      ? "border-dashed border-[#D97757]/60 bg-[#D97757]/[0.04]"
+                      ? "border-dashed border-[#D97757]/60 bg-[#D97757]/[0.04] ring-2 ring-status-warning ring-offset-1"
                       : "border-dashed border-[#D6D3D1] bg-white hover:border-[#78716C]/60"
                     : "border-[#E2E2DF] bg-white hover:border-[#78716C]/60",
                   dragOverRole === item.role && "border-[#78716C] bg-[#EBEBE9]",
