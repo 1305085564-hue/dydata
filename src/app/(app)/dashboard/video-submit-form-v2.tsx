@@ -104,6 +104,7 @@ import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-cont
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import {
+  getBrowserAppealSuccessPublishedAt,
   getBrowserAppealSuccessTitle,
   hasBrowserAppealSuccessSession,
   markBrowserAppealSuccessSession,
@@ -189,9 +190,17 @@ export function VideoSubmitFormV2({
     const appealSuccessTitle = !editDetail
       ? getBrowserAppealSuccessTitle(account?.id ?? "", initialBizDate ?? today)
       : null;
+    const appealSuccessPublishedAt = !editDetail
+      ? getBrowserAppealSuccessPublishedAt(account?.id ?? "", initialBizDate ?? today)
+      : null;
     const meta = initial.uploadedAt
       ? initial
-      : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN"), ...(appealSuccessTitle ? { videoTitle: appealSuccessTitle } : {}) };
+      : {
+        ...initial,
+        uploadedAt: new Date().toLocaleString("zh-CN"),
+        ...(appealSuccessTitle ? { videoTitle: appealSuccessTitle } : {}),
+        ...(appealSuccessPublishedAt ? { publishedAt: appealSuccessPublishedAt } : {}),
+      };
     return createWorkflowState({
       meta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
@@ -670,7 +679,7 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
-      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle, meta.publishedAt);
       onSubmitted(null);
       feedbackToast.success("补交申请已通过，数据已自动提交");
     } catch {
@@ -1113,7 +1122,7 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
-      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle, meta.publishedAt);
       onSubmitted(null);
       feedbackToast.success("补交数据已自动提交");
     } finally {
