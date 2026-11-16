@@ -1,5 +1,5 @@
 import { getContentOwner } from "@/lib/content/content-owner";
-import { ExternalLink, Play, Bookmark, Layers, UserCheck, TrendingUp, ThumbsUp, Sparkles, ChevronDown } from "lucide-react";
+import { ExternalLink, Play, Layers, UserCheck, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
@@ -48,17 +48,12 @@ export interface ContentDetailMetricsProps {
   snapshot: VideoMetricsSnapshot | null;
   canPurge: boolean;
   isPurgeEligible: (trashedAt: string | null | undefined) => boolean;
-  hasTopicKind: boolean;
-  fourthSlotIsFavorite: boolean;
-  fourthSlotLabel: string;
-  fourthSlotValue: number | null;
   followerConv: number | null;
   fanConv: number | null;
   interaction: number | null;
-  breakoutTargets: { follower: number; interaction: number; fourth: number } | null;
+  breakoutTargets: { follower: number; interaction: number } | null;
   followerRating: BreakoutRating | null;
   interactionRating: BreakoutRating | null;
-  fourthRating: BreakoutRating | null;
   overallGrade: BreakoutGrade | null;
   contentQuality?: WorkContentQuality | null;
   hasAvailableScreenshots?: boolean;
@@ -66,7 +61,7 @@ export interface ContentDetailMetricsProps {
   onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
-export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade, contentQuality = null, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
+export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, overallGrade, contentQuality = null, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
   const owner = onSelectAuthor || ownerNames
     ? getContentOwner(video, ownerNames)
     : { id: video.user_id, name: video.profiles.name };
@@ -199,7 +194,6 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                       )}
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
-                      {!hasTopicKind && "话题暂未识别，评级按互动与留存数据 · "}
                       抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
                     </span>
                   </div>
@@ -274,14 +268,10 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>留存达成</span>
-                        {fourthSlotIsFavorite ? (
-                          <Bookmark className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <ThumbsUp className="size-3.5 text-[#78716C]" />
-                        )}
+                        <span className="text-[11px] text-[#78716C]">按快照计算</span>
                       </div>
                       <Metric
-                        settleKey="content-detail:fourth-rate"
+                        settleKey="content-detail:retention-achievement"
                         value={formatAchievement(contentQuality?.contentAchievement)}
                         className="mt-1.5"
                       />

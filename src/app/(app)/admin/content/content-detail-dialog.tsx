@@ -5,11 +5,7 @@ import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/ev
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, Flame, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import {
-  breakoutRating,
-  breakoutTargetsFor,
-  hasKnownTopicKind,
-} from "@/lib/breakout-rating";
+import { breakoutRating, breakoutTargetsFor } from "@/lib/breakout-rating";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,10 +16,8 @@ import {
 } from "@/components/ui/sheet";
 import {
   fanConversionRate,
-  favoriteRate,
   followerConversionRate,
   interactionRate,
-  likeRate,
 } from "@/lib/video-metrics";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
@@ -44,7 +38,7 @@ export interface ContentDetailDialogProps {
   canPurge?: boolean;
   onLifecycleChanged: () => void;
   topicLibraryStatus?: VideoTopicLibraryStatus | null;
-  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率；null = 话题未识别（不出评级，不按复盘口径兜底） */
+  /** 视频话题分类，仅用于展示与选题分析。 */
   topicKind?: VideoTopicKind | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
   /** 抽屉标题前缀，默认为“数据复盘” */
@@ -111,7 +105,6 @@ export function ContentDetailDialog({
     isPurgeEligible,
     getPurgeTooltip,
   } = useContentDetailLifecycle({ video, onLifecycleChanged });
-  // 抽屉打开时的落焦目标：默认落在容器上，不落在「移入回收站」这种破坏性按钮上
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
@@ -201,11 +194,8 @@ export function ContentDetailDialog({
     if (!open) return;
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      // 1. 如果大图预览开着，由嵌套预览弹窗处理，不关闭底层详情
       if (previewIndex !== null) return;
-      // 2. 如果补录24h弹窗开着，由 Dialog 处理
       if (showPatch24h) return;
-      // 3. 如果有行内二次确认框，ESC 优先收起确认框，大图同款 capture 优先级
       if (showConfirmTrash || showConfirmPurge || showConfirmRestore) {
         e.preventDefault();
         e.stopPropagation();
@@ -213,7 +203,6 @@ export function ContentDetailDialog({
         clearConfirmation();
         return;
       }
-      // 4. 如果有上级档案卡（传入了 onBack），ESC 优先退回档案卡
       if (onBack) {
         e.preventDefault();
         e.stopPropagation();
@@ -221,7 +210,6 @@ export function ContentDetailDialog({
         onBack();
         return;
       }
-      // 5. 如果是 inline 模式且没有 onBack，ESC 触发完全关闭抽屉
       if (renderMode === "inline") {
         e.preventDefault();
         e.stopPropagation();
@@ -258,31 +246,14 @@ export function ContentDetailDialog({
     }
   };
 
-  // Calculated metrics
   const interaction = snapshot ? interactionRate(snapshot) : null;
   const followerConv = snapshot ? followerConversionRate(snapshot) : null;
   const fanConv = snapshot ? fanConversionRate(snapshot) : null;
 
-  // 大盘第四格：干货看收藏率，复盘及其他看点赞率
-  // 只有拿到三种已知分类之一才算「话题已识别」：null（状态未取到）与 undefined（调用方未传 prop）
-  // 都属于未识别，一律不按复盘口径出数，避免静默错口径
-  const hasTopicKind = hasKnownTopicKind(topicKind);
-  const fourthSlotIsFavorite = topicKind === "dry_goods";
-  const fourthSlotLabel = !hasTopicKind ? "话题未识别" : fourthSlotIsFavorite ? "收藏率" : "点赞率";
-  const fourthSlotValue = snapshot && hasTopicKind
-    ? fourthSlotIsFavorite
-      ? favoriteRate(snapshot)
-      : likeRate(snapshot)
-    : null;
-
-  // 爆款评级：三项各自独立，实际值 ÷ 该话题标准线（干货看收藏率，复盘及其他看点赞率）
-  // 话题未识别时标准线无从选择（第四格指标本身不同：收藏率 vs 点赞率），整体不出评级
-  const breakoutTargets = hasTopicKind ? breakoutTargetsFor(topicKind, evaluationStandards) : null;
+  const breakoutTargets = breakoutTargetsFor(topicKind, evaluationStandards);
   const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
   const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
-  const fourthRating = breakoutTargets ? breakoutRating(fourthSlotValue, breakoutTargets.fourth) : null;
 
-  // 综合评级统一使用上游内容质量结果，详情不再按旧的互动率 + 第四格公式重算。
   const overallGrade = contentQuality?.overallGrade ?? null;
 
   const innerContent = (
@@ -316,7 +287,6 @@ export function ContentDetailDialog({
 
             {video && onStepVideo && (
               <div className="flex shrink-0 items-center gap-1">
-                {/* 上一条 */}
                 <button
                   type="button"
                   onClick={() => onStepVideo("prev")}
@@ -327,11 +297,9 @@ export function ContentDetailDialog({
                 >
                   <ChevronLeft className="size-3.5" />
                 </button>
-                {/* 篇数指示，tabular-nums */}
                 <span className="text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap px-0.5">
                   {displayCurrent} / {displayTotal}
                 </span>
-                {/* 下一条 */}
                 <button
                   type="button"
                   onClick={() => onStepVideo("next")}
@@ -419,7 +387,6 @@ export function ContentDetailDialog({
           </div>
         </SheetHeader>
 
-        {/* 移入回收站就地确认横幅（防误触作废日报） */}
         {showConfirmTrash && video && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
@@ -449,7 +416,6 @@ export function ContentDetailDialog({
           </div>
         )}
 
-        {/* 永久删除就地确认横幅（消除 Sheet 外再叠弹窗） */}
         {showConfirmPurge && video && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
@@ -479,7 +445,6 @@ export function ContentDetailDialog({
           </div>
         )}
 
-        {/* 恢复就地确认横幅（会连带复活关联日报，与另两个生命周期操作同规格） */}
         {showConfirmRestore && video && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
@@ -521,17 +486,12 @@ export function ContentDetailDialog({
                 ownerNames={ownerNames}
                 canPurge={canPurge}
                 isPurgeEligible={isPurgeEligible}
-                hasTopicKind={hasTopicKind}
-                fourthSlotIsFavorite={fourthSlotIsFavorite}
-                fourthSlotLabel={fourthSlotLabel}
-                fourthSlotValue={fourthSlotValue}
                 followerConv={followerConv}
                 fanConv={fanConv}
                 interaction={interaction}
                 breakoutTargets={breakoutTargets}
                 followerRating={followerRating}
                 interactionRating={interactionRating}
-                fourthRating={fourthRating}
                 overallGrade={overallGrade}
                 contentQuality={contentQuality}
                 hasAvailableScreenshots={hasAvailableScreenshots}
@@ -548,7 +508,6 @@ export function ContentDetailDialog({
                 setPreviewIndex={setPreviewIndex}
                 setViewLayout={setViewLayout}
               />
-              {/* 4. 脚本文案与内容库 (置于截图下方，方便对照留存脱落点阅读文案，行高加舒展) */}
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -583,7 +542,6 @@ export function ContentDetailDialog({
                 </div>
               </section>
 
-              {/* 5. 仅向有选题库处理能力的用户展示管理段，成员不请求该状态。 */}
               {onToggleTopicLibrary && <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -631,13 +589,11 @@ export function ContentDetailDialog({
           modal={!isDesktop}
           onOpenChange={(nextOpen, eventDetails) => {
             if (!nextOpen) {
-              // 桌面端非模态抽屉：焦点移出（如鼠标按下左侧列表行）绝不触发关闭，避免先收起再重开闪烁
               if (eventDetails?.reason === "focus-out") {
                 return;
               }
               if (eventDetails?.event) {
                 const target = eventDetails.event.target as Element | null;
-                // 桌面端左右联看：点击左侧列表作品行时直接切换作品，不关闭当前抽屉
                 if (target?.closest?.("[data-video-id]")) {
                   return;
                 }

@@ -126,10 +126,9 @@ test("buildMonthSummary 汇总指标先加总再相除（与 buildPerformanceMet
   assert.equal(summary.goodRate, 1);
 });
 
-test("buildTopWorks 按 优>良>普>劣>null 排序，同级按播放与日期降序", () => {
+test("buildTopWorks 按 优>良>普>null 排序，同级按播放与日期降序", () => {
   const works = [
     work("null-1", { overallGrade: null, workDate: "2026-10-05" }),
-    work("poor-1", { overallGrade: "劣", workDate: "2026-10-04" }),
     work("fair-1", { overallGrade: "普", workDate: "2026-10-03" }),
     work("good-1", { overallGrade: "良", workDate: "2026-10-02" }),
     work("great-1", { overallGrade: "优", workDate: "2026-10-01" }),
@@ -148,7 +147,7 @@ test("buildTopWorks 按 优>良>普>劣>null 排序，同级按播放与日期�
     ["优", "优", "优", "良", "良"],
   );
   const tail = buildTopWorks(works, works.length).slice(-3).map((item) => item.overallGrade);
-  assert.deepEqual(tail, ["普", "劣", null], "未评级排在所有评级之后");
+  assert.deepEqual(tail, ["良", "普", null], "未评级排在所有评级之后");
 });
 
 test("buildRecentAnomalies 只留真异常并按作品日期降序", () => {

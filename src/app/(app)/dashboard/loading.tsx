@@ -49,9 +49,9 @@ export default function DashboardLoading() {
               </div>
             </div>
 
-            {/* 右栏：核心指标 + 标题文案 + 提交（对齐终态纯排版平铺） */}
+            {/* 右栏：互动、留存数据 + 标题文案 + 提交（对齐终态纯排版平铺） */}
             <div className="flex min-w-0 flex-col gap-6">
-              {/* 核心指标 */}
+              {/* 互动、留存数据 */}
               <div className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
                 <div className="h-4 w-24 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

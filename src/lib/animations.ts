@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import type { MotionProps, Variants } from "framer-motion";
 
 /**
- * 动效节奏（与 globals.css 的 --ease-smooth、《组件与场景契约》§5 同一套）：
+ * 动效节奏（与 globals.css 的 --ease-smooth、《美学宝典》§5 同一套）：
  * 150 即时反馈 · 200 弹层 · 240 面板与入场 · 封顶 300；只有数字滚动等仪式节点可超出。
  */
 export const ANIMATION_TIMINGS = {

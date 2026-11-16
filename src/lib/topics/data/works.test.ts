@@ -49,8 +49,6 @@ test("话题作品详情按团队达标基准返回质量值", async () => {
   const standards = {
     ...DEFAULT_EVALUATION_STANDARDS,
     targets: {
-      reviewLikeRate: 10,
-      dryFavoriteRate: 10,
       interactionRate: 20,
       followerRate: 2,
     },
@@ -67,8 +65,7 @@ test("话题作品详情按团队达标基准返回质量值", async () => {
 
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  const value = result.value as { items: Array<{ contentQuality: { interactionAchievement: number | null; coreAchievement: number | null } }> };
+  const value = result.value as { items: Array<{ contentQuality: { interactionAchievement: number | null } }> };
   const item = value.items[0];
   assert.equal(item?.contentQuality.interactionAchievement, 35);
-  assert.equal(item?.contentQuality.coreAchievement, 40);
 });

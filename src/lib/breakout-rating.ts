@@ -14,24 +14,18 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 export interface BreakoutTargets {
   /** 互动率标准线 */
   interaction: number;
-  /** 兼容历史配置读取的参考标准线；不参与综合评级。 */
-  fourth: number;
   /** 转粉率标准线（两套通用） */
   follower: number;
 }
 
 export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> = {
-  // 干货：互动率 3.5%、收藏率 2%、转粉率 1%
-  dry_goods: { interaction: 0.035, fourth: 0.02, follower: 0.01 },
-  // 复盘：互动率 3.5%、点赞率 2%、转粉率 1%（2026-10-09 起与干货同数值）
-  review: { interaction: 0.035, fourth: 0.02, follower: 0.01 },
+  dry_goods: { interaction: 0.035, follower: 0.01 },
+  review: { interaction: 0.035, follower: 0.01 },
 };
 
-/** 劣仅作为旧数据/旧测试输入兼容值；所有新计算永不返回。 */
-export type BreakoutGrade = "优" | "良" | "普" | "劣";
+export type BreakoutGrade = "优" | "良" | "普";
 /**
- * 纯文字状态色（优藕紫、良陈玫、普深苔橄榄、劣深青瓷，小字下清晰扎实）
- * 评级文字与图表四色共用，普/劣已加深到 12px 白底与卡片底均 ≥4.5:1
+ * 纯文字状态色，供表格、标签和图表统一使用。
  * 注：2026-09-22 删除已无消费方的胶囊底色版 `BREAKOUT_GRADE_CLASS`
  * （其注释写「优=成功绿 / 劣=异常红」，与实际配色语义相反，留着会读错）
  */
@@ -39,7 +33,6 @@ export const BREAKOUT_GRADE_TEXT_CLASS: Record<BreakoutGrade, string> = {
   优: "text-[#7E5C99]", // 藕紫
   良: "text-[#A85A6B]", // 陈玫
   普: "text-[#6F6B2F]", // 深苔橄榄
-  劣: "text-[#2F6F66]",
 };
 
 export interface BreakoutRating {
@@ -67,9 +60,6 @@ export function breakoutTargetsFor(
   if (standards) {
     return {
       interaction: standards.targets.interactionRate / 100,
-      fourth: topicKind === "dry_goods"
-        ? (standards.targets.dryFavoriteRate ?? BREAKOUT_TARGETS.dry_goods.fourth * 100) / 100
-        : (standards.targets.reviewLikeRate ?? BREAKOUT_TARGETS.review.fourth * 100) / 100,
       follower: standards.targets.followerRate / 100,
     };
   }
@@ -140,7 +130,7 @@ const GRADE_ORDER: readonly BreakoutGrade[] = ["普", "良", "优"];
  * 强项最多能把较差项拉高的档位数（2026-10-12 阿禅定稿，防过度偏科）：
  * 综合指标档 = min(两项平均达成率档位, 较差单项档位 + 本值)。
  * 取值 1 时等价于：要拿优，两项都不能低于「良」（≥80%）；要拿良，两项都不能低于「普」（≥60%）。
- * 极端例：200% + 0%，平均 100% 名义为优，但较差项是劣、最多拉到普 → 综合指标档为普。
+ * 极端例：200% + 0%，平均 100% 名义为优，但较差项不足 60%，综合最多为普。
  */
 export const MAX_PULL_GRADES = 1;
 

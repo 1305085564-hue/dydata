@@ -115,10 +115,6 @@ export interface WorkContentQuality {
   interactionAchievement: number | null;
   /** 原始互动值 = (赞 + 评论 + 收藏 + 转发) / 播放，0–1 小数。 */
   interactionValue?: number | null;
-  /** @deprecated 兼容旧接口读取。 */
-  coreMetric?: "favoriteRate" | "likeRate" | null;
-  /** @deprecated 兼容旧接口读取。 */
-  coreAchievement?: number | null;
   /** 留存达成率（留存分，百分数，可超过 100） */
   contentAchievement: number | null;
   /** 留存组合项实际采用的折算方式。 */
@@ -162,17 +158,11 @@ export interface ContentQualitySummary {
   avgInteractionAchievement: number | null;
   /** 留存分均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
-  /** @deprecated 兼容旧接口读取。 */
-  avgCoreAchievement?: number | null;
-  /** @deprecated 兼容旧接口读取。 */
-  coreSampleCount?: number;
   /** 综合优/良/普件数计数 */
   overallGradeCounts: {
     excellent: number;
     good: number;
     fair: number;
-    /** 旧接口兼容；新计算不产生劣。 */
-    poor?: number;
   };
   /** 综合良优率（0–1 小数，例如 0.65 表示 65%）；无参评样本时为 null */
   goodExcellentRate: number | null;

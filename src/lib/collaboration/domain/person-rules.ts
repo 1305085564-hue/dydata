@@ -262,6 +262,7 @@ export function buildPersonPayload(input: {
     growthWorks: growth.works,
     growthSummary: growth.summary,
     writerQuality,
+    talentQuality: input.growthRole === "talents" ? writerQuality ?? null : undefined,
     // 达人明细用「账号主人」归属的 recordRows（数据层已按 isGrowthRoleMatch/talents 过滤），
     // 其余岗位维持署名口径的 currentRows。
     records: (input.recordRows

@@ -160,10 +160,9 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
       totalCount: 10,
       achievementSampleCount: 8,
       interactionSampleCount: 9,
-      coreSampleCount: 8,
       ratedCount: 8,
       goodExcellentRate: 0.75,
-      overallGradeCounts: { excellent: 3, good: 3, fair: 1, poor: 1 },
+      overallGradeCounts: { excellent: 3, good: 3, fair: 1 },
       unratedReasons: {
         unlinked: 1,
         pendingSnapshot: 1,
@@ -172,7 +171,6 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
         topicUnavailable: 0,
       },
       avgInteractionAchievement: 90,
-      avgCoreAchievement: 85,
       avgContentAchievement: 87.5,
     },
   });

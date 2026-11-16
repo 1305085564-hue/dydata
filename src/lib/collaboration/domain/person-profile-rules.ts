@@ -175,9 +175,9 @@ export function buildMonthlyTrend(works: PersonProfileWork[], today: string): Pe
   }));
 }
 
-const GRADE_RANK: Record<BreakoutGrade, number> = { 优: 0, 良: 1, 普: 2, 劣: 3 };
+const GRADE_RANK: Record<BreakoutGrade, number> = { 优: 0, 良: 1, 普: 2 };
 
-/** 代表作：评级 优>良>普>劣>null，同级按播放降序、再按作品日期降序。 */
+/** 代表作：评级 优>良>普>null，同级按播放降序、再按作品日期降序。 */
 export function buildTopWorks(works: PersonProfileWork[], limit = 5): PersonProfileWork[] {
   return [...works]
     .sort(

@@ -19,9 +19,8 @@ import {
 
 type TargetKey = keyof EvaluationStandards["targets"];
 type EvaluationStandardsDraft = {
-  [Metric in Exclude<EvaluationMetric, "coreAchievement">]: { good: string; poor: string };
+  [Metric in EvaluationMetric]: { good: string; poor: string };
 } & {
-  coreAchievement?: { good: string; poor: string };
   minPlayCount: string;
   targets: Partial<Record<TargetKey, string>> & Pick<Record<TargetKey, string>, "interactionRate" | "followerRate">;
   retentionWeights: Record<RetentionWeightKey, string>;

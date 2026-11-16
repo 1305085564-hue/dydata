@@ -310,9 +310,7 @@ test("达人作品明细复用内容标准评级：话题选择文案指标，�
   });
   const byId = new Map(payload.records.map((rec) => [rec.reportId, rec]));
 
-  assert.equal(byId.get("r-low")?.contentQuality?.coreMetric, "favoriteRate");
-  assert.equal(byId.get("r-low")?.contentQuality?.overallGrade, "劣", "播放不足门槛仍直接判劣");
-  assert.equal(byId.get("r-ok")?.contentQuality?.coreMetric, "likeRate");
+  assert.equal(byId.get("r-low")?.contentQuality?.overallGrade, "普", "播放不足门槛仍直接判普");
   assert.equal(byId.get("r-ok")?.contentQuality?.status, "rated");
   assert.equal(byId.get("r-ok")?.contentQuality?.overallGrade, "优");
   assert.equal("followerAchievement" in byId.get("r-ok")!, false, "达人专属转粉评级不再下发");
@@ -369,11 +367,10 @@ test("达人其他话题沿用点赞指标；参与指标缺失或话题读取�
   }).records[0]?.contentQuality;
 
   assert.equal(readyOther?.topicKind, "other");
-  assert.equal(readyOther?.coreMetric, "likeRate");
   assert.equal(missingMetricResult?.status, "missing_metrics");
   assert.equal(missingMetricResult?.contentAchievement, null);
   assert.equal(missingMetricResult?.overallGrade, null);
-  assert.equal(topicFailureResult?.status, "topic_unavailable");
+  assert.equal(topicFailureResult?.status, "missing_metrics");
   assert.equal(topicFailureResult?.overallGrade, null);
 });
 

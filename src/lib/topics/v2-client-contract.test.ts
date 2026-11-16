@@ -189,10 +189,8 @@ test("无 24h 快照时不复活历史播放，质量块逐字段校验半截响
           video_metrics_snapshots: [{ play_count: 99999 }],
           contentQuality: {
             topicKind: "other",
-            coreMetric: "likeRate",
             snapshotPlayCount: null,
             interactionAchievement: null,
-            coreAchievement: null,
             contentAchievement: null,
             contentGrade: null,
             overallGrade: null,

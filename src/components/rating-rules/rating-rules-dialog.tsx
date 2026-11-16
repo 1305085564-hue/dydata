@@ -39,7 +39,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
   const standards = evaluationStandards ?? DEFAULT_EVALUATION_STANDARDS;
   const retentionWeight = (key: keyof EvaluationStandards["retentionWeights"]) =>
     formatNumber(standards.retentionWeights[key]) + "%";
-  const retentionBand = (key: Exclude<EvaluationMetric, "coreAchievement">, unit: string) => {
+  const retentionBand = (key: EvaluationMetric, unit: string) => {
     const band = standards[key];
     return "好 " + formatNumber(band.good) + unit + "，差 " + formatNumber(band.poor) + unit;
   };
@@ -80,7 +80,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
             </table>
           </div>
           <p className="text-[12px] text-[#78716C]">
-            互动达成率按互动数据相对好标准计算。留存达成率由五项快照指标合成留存分，缺少任一项时不生成留存分。
+            互动达成率按互动数据相对好标准计算。留存达成率由五项快照指标合成；2 秒跳出率、5 秒完播率、整体完播率必须齐全，均播时长和平均播放占比至少有一项。
           </p>
         </section>
 
@@ -131,7 +131,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
           <ol className="list-decimal list-outside pl-5 space-y-2 text-[13px] text-[#1F1E1D]">
             <li>播放量低于 {KPI_PLAY_FLOOR.toLocaleString()}，直接评为普。</li>
             <li>{KPI_PLAY_FLOOR.toLocaleString()} 至不足 {formatPlayWan(KPI_PLAY_GOOD)}，最高记为普；达到 {formatPlayWan(KPI_PLAY_EXCELLENT)} 以上不再受播放量上限影响。</li>
-            <li>留存分按 {BREAKOUT_GRADE_THRESHOLDS.excellent}、{BREAKOUT_GRADE_THRESHOLDS.good}、{BREAKOUT_GRADE_THRESHOLDS.fair} 分为优、良、普。</li>
+            <li>互动达成率和留存达成率取平均后，≥{BREAKOUT_GRADE_THRESHOLDS.excellent}% 为优、≥{BREAKOUT_GRADE_THRESHOLDS.good}% 为良、其余为普。要拿优，两项都需 ≥80%；要拿良，两项都需 ≥60%。</li>
             <li>没有完整快照数据时，页面显示待处理状态，不用其他数据代替。</li>
           </ol>
         </section>
@@ -142,7 +142,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
             互动数据好标准为 {formatNumber(standards.targets.interactionRate)}%。互动达成率和留存达成率取平均后确定综合评级，转粉率不进入作品评级。
           </p>
           <div className="flex flex-wrap gap-3 text-[12px]">
-            {(Object.keys(BREAKOUT_GRADE_TEXT_CLASS) as Array<keyof typeof BREAKOUT_GRADE_TEXT_CLASS>).map((grade) => (
+            {(["优", "良", "普"] as const).map((grade) => (
               <span key={grade} className={cn("font-normal", BREAKOUT_GRADE_TEXT_CLASS[grade])}>{grade}</span>
             ))}
           </div>

@@ -40,11 +40,26 @@ test("旧公司标准缺少平均播放占比时只补齐新增默认值", () =>
   }
 });
 
+test("历史评价标准中的旧指标字段可读，返回结构只保留现行字段", () => {
+  const current = draft();
+  const historical = {
+    ...current,
+    coreAchievement: { good: 100, poor: 60 },
+    targets: { ...current.targets, reviewLikeRate: 2, dryFavoriteRate: 2 },
+  };
+  const parsed = parseEvaluationStandards(historical);
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal("coreAchievement" in parsed.data, false);
+    assert.deepEqual(parsed.data.targets, current.targets);
+  }
+});
+
 test("修改后的标准决定判断，播放不足和缺值不评优劣", () => {
   const standards = draft();
   standards.minPlayCount = 1500;
   standards.completionRate5s = { good: 70, poor: 45 };
-  standards.coreAchievement = { good: 110, poor: 50 };
   assert.equal(evaluationTone("completionRate5s", 65, 1500, standards), "normal");
   assert.equal(evaluationTone("completionRate5s", 75, 1499, standards), "normal");
   assert.equal(evaluationTone("interactionAchievement", null, 1500, standards), "normal");

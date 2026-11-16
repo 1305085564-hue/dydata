@@ -2,7 +2,7 @@ import { BREAKOUT_TARGETS } from "@/lib/breakout-rating";
 import { VIDEO_REVIEW_COLOR_MIN_PLAY, VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 
 export type EvaluationBand = { good: number; poor: number };
-export type EvaluationMetric = "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" | "interactionAchievement" | "coreAchievement";
+export type EvaluationMetric = "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" | "interactionAchievement";
 export type RetentionWeightKey = "bounceRate2s" | "completionRate5s" | "avgPlayBundle" | "completionRate";
 export type EvaluationStandards = Record<EvaluationMetric, EvaluationBand> & {
   /** 指标颜色的样本下限，默认 5000，可按公司配置调整。 */
@@ -10,7 +10,7 @@ export type EvaluationStandards = Record<EvaluationMetric, EvaluationBand> & {
   /** 留存总分四项权重，百分数输入且合计必须为 100。均播时长与平均播放占比共用 avgPlayBundle。 */
   retentionWeights: Record<RetentionWeightKey, number>;
   /** 百分数输入，2 表示 2%。点赞、收藏、转粉仅作参考标准。 */
-  targets: { interactionRate: number; followerRate: number; reviewLikeRate?: number; dryFavoriteRate?: number };
+  targets: { interactionRate: number; followerRate: number };
 };
 
 export const EVALUATION_METRICS: ReadonlyArray<{ key: EvaluationMetric; label: string; unit: string; lowerIsBetter?: boolean; max: number }> = [
@@ -45,7 +45,6 @@ export const DEFAULT_EVALUATION_STANDARDS: EvaluationStandards = {
   avgPlayRatio: { good: VIDEO_REVIEW_RULE_THRESHOLDS.excellent.avg_play_ratio, poor: VIDEO_REVIEW_RULE_THRESHOLDS.poor.avg_play_ratio },
   completionRate: { good: VIDEO_REVIEW_RULE_THRESHOLDS.excellent.completion_rate, poor: VIDEO_REVIEW_RULE_THRESHOLDS.poor.completion_rate },
   interactionAchievement: { good: 100, poor: 60 },
-  coreAchievement: { good: 100, poor: 60 },
   targets: {
     interactionRate: Number((BREAKOUT_TARGETS.review.interaction * 100).toFixed(6)),
     followerRate: BREAKOUT_TARGETS.review.follower * 100,
@@ -74,6 +73,9 @@ export function parseEvaluationStandards(input: unknown): { success: true; data:
   const legacyFree = Object.fromEntries(Object.entries(standards).filter(([key]) => key !== "coreAchievement"));
   if (Object.keys(legacyFree).some((key) => !expected.has(key))) return { success: false, error: "包含未知的评价标准" };
   const targetRecord = isRecord(standards.targets) ? standards.targets : {};
+  if (Object.keys(targetRecord).some((key) => !["interactionRate", "followerRate", "reviewLikeRate", "dryFavoriteRate"].includes(key))) {
+    return { success: false, error: "包含未知的评价标准" };
+  }
   const cleanTargets = {
     interactionRate: targetRecord.interactionRate,
     followerRate: targetRecord.followerRate,

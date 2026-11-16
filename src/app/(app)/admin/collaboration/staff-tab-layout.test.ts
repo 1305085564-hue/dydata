@@ -112,7 +112,7 @@ test("达人与运营表格统一落地紧凑列宽、colgroup与py-2单行高�
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
 
   // 达人表规范断言
-  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1065px\]"/);
+  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1335px\]"/);
   assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(talentSource, /<TalentTableColGroup \/>/);
   assert.match(talentSource, /<TableCell className="py-2 pl-4 pr-2 sticky left-0/);

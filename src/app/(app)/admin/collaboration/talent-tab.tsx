@@ -34,7 +34,7 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate";
 
-export const TALENT_TABLE_MIN_WIDTH = "min-w-[1065px]";
+export const TALENT_TABLE_MIN_WIDTH = "min-w-[1335px]";
 
 export function TalentTableColGroup() {
   return (
@@ -161,7 +161,10 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
-            {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
+            <span className="inline-flex flex-col items-end leading-tight">
+              <span>{field === "followerConversionRate" ? "转粉率" : "互动率"}</span>
+              <span className="text-[10px] text-[#A8A29E]">（参考）</span>
+            </span>{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
@@ -207,9 +210,9 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
       </TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.qualitySummary && row.qualitySummary.interactionSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.qualitySummary?.avgInteractionAchievement == null ? "—" : `${Math.round(row.qualitySummary.avgInteractionAchievement)}%`}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.qualitySummary && row.qualitySummary.achievementSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.qualitySummary?.avgContentAchievement == null ? "—" : `${Math.round(row.qualitySummary.avgContentAchievement)}%`}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.qualitySummary && row.qualitySummary.ratedCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.qualitySummary?.goodExcellentRate == null ? "—" : <>{Math.round(row.qualitySummary.goodExcellentRate * 100)}%<span className="ml-1 text-[11px] text-[#78716C]">{row.qualitySummary.ratedCount}/{row.qualitySummary.totalCount}篇</span></>}</TableCell>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.interactionSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.avgInteractionAchievement == null ? "—" : `${Math.round(row.writerQuality.summary.avgInteractionAchievement)}%`}</TableCell>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.achievementSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.avgContentAchievement == null ? "—" : `${Math.round(row.writerQuality.summary.avgContentAchievement)}%`}</TableCell>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.ratedCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.goodExcellentRate == null ? "—" : <>{Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%<span className="ml-1 text-[11px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span></>}</TableCell>
       <TableCell className="py-2 pl-4 pr-4">
         <div className="flex flex-wrap gap-1">
           {row.accounts.slice(0, 3).map((account) => (

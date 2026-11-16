@@ -153,6 +153,8 @@ export interface PersonDetailData {
   growthSummary: PersonGrowthSummary | null;
   records: PersonRecordItem[];
   writerQuality?: PersonWriterQuality | null;
+  /** 达人岗位专属质量数据；作品按账号主人归属，结构与文案质量数据一致。 */
+  talentQuality?: PersonWriterQuality | null;
 }
 
 export interface TalentAccount {
@@ -179,6 +181,7 @@ export interface TalentRow {
   selfHandledCount: number;
   accounts: TalentAccount[];
   qualitySummary?: import("@/lib/collaboration/content-quality-contract").ContentQualitySummary | null;
+  writerQuality?: StaffRow["writerQuality"];
 }
 
 export function formatBigNumber(val: number | null | undefined): string {

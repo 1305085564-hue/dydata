@@ -247,7 +247,7 @@ test("流量筛选 URL 可往返并跟随重置清空", () => {
   assert.equal(reset.toString(), "");
 });
 
-// ===== 评级筛选（优 / 良 / 普 / 劣 / 未评级）=====
+// ===== 评级筛选（优 / 良 / 普 / 未评级）=====
 
 test("评级筛选支持 URL 解析与往返，默认或非法值回退为 all", () => {
   const source = new URLSearchParams("qualityGrade=excellent");
@@ -276,10 +276,8 @@ test("评级筛选按各档位过滤作品，未关联视频不参与评级筛�
   const qualityByVideoId = new Map([
     ["video-1", {
       topicKind: "dry_goods" as const,
-      coreMetric: "favoriteRate" as const,
       snapshotPlayCount: 10000,
       interactionAchievement: 120,
-      coreAchievement: 110,
       contentAchievement: 115,
       contentGrade: "优" as const,
       overallGrade: "优" as const,
@@ -287,21 +285,17 @@ test("评级筛选按各档位过滤作品，未关联视频不参与评级筛�
     }],
     ["video-2", {
       topicKind: "review" as const,
-      coreMetric: "likeRate" as const,
       snapshotPlayCount: 1999,
       interactionAchievement: null,
-      coreAchievement: null,
       contentAchievement: null,
       contentGrade: null,
-      overallGrade: "劣" as const, // 播放低于 2,000 判劣
+      overallGrade: "普" as const, // 播放低于 2,000 判普
       status: "invalid_play" as const,
     }],
     ["video-3", {
       topicKind: "review" as const,
-      coreMetric: "likeRate" as const,
       snapshotPlayCount: 8000,
       interactionAchievement: null,
-      coreAchievement: null,
       contentAchievement: null,
       contentGrade: null,
       overallGrade: null,
@@ -309,10 +303,8 @@ test("评级筛选按各档位过滤作品，未关联视频不参与评级筛�
     }],
     ["video-4", {
       topicKind: null,
-      coreMetric: null,
       snapshotPlayCount: null,
       interactionAchievement: null,
-      coreAchievement: null,
       contentAchievement: null,
       contentGrade: null,
       overallGrade: null,
@@ -333,10 +325,10 @@ test("评级筛选按各档位过滤作品，未关联视频不参与评级筛�
     ["video-1"],
   );
 
-  // 2. 筛选「劣」：video-2（低播放判劣）
+  // 2. 旧筛选「劣」不再作为新档位，由兼容层按普处理
   assert.deepEqual(
     filterContentVideos(testVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, qualityGrade: "poor" }, undefined, qualityByVideoId).map((v) => v.id),
-    ["video-2"],
+    ["video-1", "video-2", "video-3"],
   );
 
   // 3. 筛选「未评级」：video-3（missing_metrics 综合为空）；video-4（unlinked）按规范不参与筛选命中

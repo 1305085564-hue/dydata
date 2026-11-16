@@ -88,11 +88,13 @@ const fixtures: Fixture[] = [
   { name: "bounce-25", playCount: 15000, bounceRate2s: 25, ...completeRetention },
   { name: "bounce-30", playCount: 15000, bounceRate2s: 30, ...completeRetention },
   { name: "bounce-30.01", playCount: 15000, bounceRate2s: 30.01, ...completeRetention },
-  { name: "play-1999", playCount: 1999, bounceRate2s: 25, ...completeRetention },
-  { name: "play-2000", playCount: 2000, bounceRate2s: 25, ...completeRetention },
-  { name: "play-14999", playCount: 14999, bounceRate2s: 25, ...completeRetention },
-  { name: "play-15000", playCount: 15000, bounceRate2s: 25, ...completeRetention },
-  { name: "missing-avg-ratio", playCount: 15000, bounceRate2s: 25, avgPlayRatio: null, completionRate5s: completeRetention.completionRate5s, avgPlayDuration: completeRetention.avgPlayDuration, completionRate: completeRetention.completionRate },
+  ...[1999, 2000, 4999, 5000, 14999, 15000].flatMap((playCount) => [true, false].map((hasRatio): Fixture => ({
+    name: `play-${playCount}-${hasRatio ? "ratio" : "duration-only"}`,
+    playCount,
+    bounceRate2s: 25,
+    ...completeRetention,
+    avgPlayRatio: hasRatio ? completeRetention.avgPlayRatio : null,
+  }))),
   { name: "missing-bounce", playCount: 15000, bounceRate2s: null, ...completeRetention },
   { name: "missing-completion-5s", playCount: 15000, bounceRate2s: 25, completionRate5s: null, avgPlayDuration: completeRetention.avgPlayDuration, avgPlayRatio: completeRetention.avgPlayRatio, completionRate: completeRetention.completionRate },
   { name: "missing-duration", playCount: 15000, bounceRate2s: 25, completionRate5s: completeRetention.completionRate5s, avgPlayDuration: null, avgPlayRatio: completeRetention.avgPlayRatio, completionRate: completeRetention.completionRate },
@@ -112,14 +114,12 @@ function buildParityProjectionFunction(source: string, functionName: string) {
 select coalesce(jsonb_agg(jsonb_build_object(
   'id', id,
   'interactionAchievement', interaction_achievement,
-  'coreAchievement', core_achievement,
   'retentionAchievement', retention_achievement,
   'retentionCalculation', retention_calculation,
   'retentionGrade', case
     when retention_achievement >= ${BREAKOUT_GRADE_THRESHOLDS.excellent} then '优'
     when retention_achievement >= ${BREAKOUT_GRADE_THRESHOLDS.good} then '良'
     when retention_achievement >= ${BREAKOUT_GRADE_THRESHOLDS.fair} then '普'
-    when retention_achievement is not null then '劣'
     else null
   end,
   'overallGrade', overall_grade,
@@ -248,11 +248,15 @@ test("前后端内容质量评级在本地 RPC 上逐项对账", async () => {
       );
       const database = projected.rows[0].payload.find((row) => row.id === videoId);
       assert.ok(database, `${fixture.name} 数据库对账投影未返回夹具作品`);
+      assert.equal(snapshot.retention_calculation, frontend.retentionCalculation, `${fixture.name} RPC 未返回折算方式`);
       assertClose(`${fixture.name}.retentionAchievement`, nullableNumber(database.retentionAchievement), frontend.contentAchievement);
       assert.equal(database.retentionCalculation, frontend.retentionCalculation, `${fixture.name} 留存折算方式不一致`);
       assertClose(`${fixture.name}.interactionAchievement`, nullableNumber(database.interactionAchievement), frontend.interactionAchievement);
       assert.equal(database.retentionGrade, frontend.contentGrade, `${fixture.name} 留存档位不一致`);
       assert.equal(database.overallGrade, frontend.overallGrade, `${fixture.name} 综合评级不一致`);
+      if (fixture.playCount < 5000) assert.notEqual(database.overallGrade, "良", `${fixture.name} 播放不足 5000 不得评良`);
+      if (fixture.playCount < 5000) assert.notEqual(database.overallGrade, "优", `${fixture.name} 播放不足 5000 不得评优`);
+      if (fixture.playCount < 15000) assert.notEqual(database.overallGrade, "优", `${fixture.name} 播放不足 15000 不得评优`);
 
       const warnings = database.warnings as Record<string, number | null>;
       const frontendWarnings = {
@@ -278,6 +282,11 @@ test("前后端内容质量评级在本地 RPC 上逐项对账", async () => {
         const included = gradePayload.videos?.some((video) => video.id === videoId) ?? false;
         assert.equal(included, grade === expectedGrade, `${fixture.name} RPC ${gradeFilter} 筛选与前端综合评级不一致`);
       }
+      assert.equal(
+        gradeFilters.filter(([gradeFilter, grade]) => gradeFilter === "unrated" ? expectedGrade === null : grade === expectedGrade).length,
+        1,
+        `${fixture.name} 必须且只能命中一个评级筛选档位`,
+      );
 
       await client.query("delete from public.videos where id = $1", [videoId]);
     }

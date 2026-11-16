@@ -77,7 +77,7 @@ export function Highlightable({ hit, children }: { hit: boolean; children: React
 }
 
 /** 发布时间：单日显示时刻，多日显示月日；固定按北京时间（Asia/Shanghai）格式化，
- *  完整时间通过悬停 title 查看，节省横向空间释放给核心指标等前排数据。 */
+ *  完整时间通过悬停 title 查看，节省横向空间释放给互动、留存等前排数据。 */
 export function formatCompactDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);

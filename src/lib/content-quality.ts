@@ -147,12 +147,12 @@ export function buildWorkContentQualityFromMetrics(
       : averageRatio != null
         ? { score: averageRatio, calculation: "avg_play_ratio_only" as const }
         : null;
+  if (averagePlayScore) base.retentionCalculation = averagePlayScore.calculation;
   const bounce = scoreRetentionMetric(input.snapshot.bounceRate2s, evaluation.bounceRate2s, true);
   const completion5s = scoreRetentionMetric(input.snapshot.completionRate5s, evaluation.completionRate5s);
   const completion = scoreRetentionMetric(input.snapshot.completionRate, evaluation.completionRate);
   if (bounce !== null && completion5s !== null && averagePlayScore !== null && completion !== null) {
     const weights = evaluation.retentionWeights;
-    base.retentionCalculation = averagePlayScore.calculation;
     base.contentAchievement =
       bounce * (weights.bounceRate2s / 100)
       + completion5s * (weights.completionRate5s / 100)
@@ -214,7 +214,7 @@ export function buildContentQualitySummaryFromWorks(
       ? samples.reduce((sum, work) => sum + (work[field] ?? 0), 0) / samples.length
       : null;
   };
-  const overallGradeCounts = { excellent: 0, good: 0, fair: 0, poor: 0 };
+  const overallGradeCounts = { excellent: 0, good: 0, fair: 0 };
   for (const work of ratedWorks) incrementGradeCount(overallGradeCounts, work.overallGrade!);
   const unratedReasons = {
     unlinked: 0,

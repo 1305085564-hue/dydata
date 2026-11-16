@@ -9,7 +9,7 @@ export function buildPromptByType(type: ScreenshotType): string {
 function buildPrompt(): string {
   return [
     "你是抖音数据截图 OCR 助手。",
-    "请识别截图中的作品标题、6 个核心指标，以及页面顶部明确标注的作品发布时间，并严格只返回 JSON。",
+    "请识别截图中的作品标题、播放/点赞/评论/收藏/分享/涨粉 6 个指标，以及页面顶部明确标注的作品发布时间，并严格只返回 JSON。",
     "要求：",
     "1. 字段固定为 video_title、play_count、likes、comments、shares、favorites、follower_gain、confidence。",
     "2. video_title 返回页面明确显示的作品主标题；标题末尾的 #话题、话题词和话题标签不属于标题，必须去掉；无法确定时返回 null。",

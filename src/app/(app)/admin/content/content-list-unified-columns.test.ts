@@ -19,13 +19,12 @@ const source = [
   "src/lib/content/data/content-list.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
-test("视频复盘列表支持完整/宽松指标视图切换，核心指标常驻", () => {
+test("视频复盘列表支持完整/宽松指标视图切换，评级与留存达成常驻", () => {
   assert.match(source, /metricViewMode/);
   assert.match(source, />完整</);
   assert.match(source, />宽松</);
 
   for (const label of [
-    "核心指标",
     "点赞",
     "评论",
     "分享",
@@ -39,6 +38,8 @@ test("视频复盘列表支持完整/宽松指标视图切换，核心指标常�
   ]) {
     assert.match(source, new RegExp(`<span>${label}<\\/span>`));
   }
+  assert.match(source, /data-col-key="retention_achievement"/);
+  assert.match(source, /data-col-key="overall_grade"/);
 });
 
 test("视频复盘列表空态占位单元格支持动态跨列（宽松11列/完整15列）", () => {
@@ -67,8 +68,8 @@ test("未评级原因短文案与长文案同源，未知状态不等于硬编�
   assert.equal(shortText, "数据未就绪");
 });
 
-test("列表隐藏评级列，无硬编码待采集兜底，无其他·点赞", () => {
-  assert.doesNotMatch(source, /data-col-key="overall_grade"/);
+test("列表保留评级列，无硬编码待采集兜底，无其他·点赞", () => {
+  assert.match(source, /data-col-key="overall_grade"/);
   assert.doesNotMatch(source, /"其他·点赞"/);
   assert.doesNotMatch(source, /status === "unlinked"\s*\?\s*"未关联"/);
 });

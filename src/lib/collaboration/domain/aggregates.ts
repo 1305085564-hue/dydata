@@ -121,7 +121,6 @@ export function buildTalents(
           state: qualityTopics.state,
           summary: qualityTopics.state === "ready" ? buildContentQualitySummary(talentRows, snapshots, qualityTopics, evaluationStandards) : null,
         },
-        qualitySummary: qualityTopics.state === "ready" ? buildContentQualitySummary(talentRows, snapshots, qualityTopics, evaluationStandards) : null,
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)

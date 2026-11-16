@@ -72,8 +72,8 @@ function topics(entries: Array<[string, string | null]>, state: "ready" | "error
 
 test("规则下发来自 breakout-rating 现行常量，前端不需要复制数字", () => {
   assert.deepEqual(contentQualityRules(), {
-    dryGoods: { interaction: BREAKOUT_TARGETS.dry_goods.interaction, core: BREAKOUT_TARGETS.dry_goods.fourth },
-    review: { interaction: BREAKOUT_TARGETS.review.interaction, core: BREAKOUT_TARGETS.review.fourth },
+    dryGoods: { interaction: BREAKOUT_TARGETS.dry_goods.interaction },
+    review: { interaction: BREAKOUT_TARGETS.review.interaction },
     gradeThresholds: BREAKOUT_GRADE_THRESHOLDS,
     playFloors: { floor: KPI_PLAY_FLOOR, good: KPI_PLAY_GOOD, excellent: KPI_PLAY_EXCELLENT },
     retentionBands: {
@@ -151,11 +151,10 @@ test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计�
     topics([["video-1", "干货"]]),
   );
   assert.equal(dry.topicKind, "dry_goods");
-  assert.equal(dry.coreMetric, "favoriteRate");
   assert.equal(dry.status, "rated");
   assert.equal(dry.contentGrade, "优");
   assert.equal(dry.contentAchievement, 100);
-  assert.equal(dry.overallGrade, "普", "10000 播放不足 1.5 万，只能封顶为普");
+  assert.equal(dry.overallGrade, "良", "10000 播放最高可评良");
 
   const review = buildWorkContentQuality(
     report({ id: "review-report", video_id: "video-2" }),
@@ -163,9 +162,8 @@ test("干货按收藏、复盘按点赞，留存评级与播放门槛分别计�
     topics([["video-2", "复盘"]]),
   );
   assert.equal(review.topicKind, "review");
-  assert.equal(review.coreMetric, "likeRate");
   assert.equal(review.contentGrade, "优");
-  assert.equal(review.overallGrade, "普");
+  assert.equal(review.overallGrade, "良");
 });
 
 test("公司互动基准继续下发，留存评级沿用播放门槛", () => {
@@ -188,11 +186,10 @@ test("公司互动基准继续下发，留存评级沿用播放门槛", () => {
   const customRules = contentQualityRules(standards);
 
   assert.equal(custom.interactionAchievement, 70);
-  assert.ok(Math.abs((custom.coreAchievement ?? Number.NaN) - (200 / 3)) < 1e-9);
   assert.equal(custom.contentGrade, "优", "留存数据使用当前公司好差线和权重");
   assert.equal(custom.contentAchievement, 100);
   assert.equal(custom.overallGrade, "良", "综合评级同时受互动达成率和留存分影响");
-  assert.deepEqual(customRules.dryGoods, { interaction: 0.1, core: 0.06 });
+  assert.deepEqual(customRules.dryGoods, { interaction: 0.1 });
   assert.deepEqual(customRules.gradeThresholds, BREAKOUT_GRADE_THRESHOLDS);
   assert.deepEqual(customRules.playFloors, {
     floor: KPI_PLAY_FLOOR,
@@ -313,10 +310,15 @@ test("五项留存数据任一缺失时不生成留存分或评级", () => {
       topics([[`missing-${key}`, "复盘"]]),
     );
 
-    assert.equal(quality.status, "missing_metrics", `${key} 缺失时应显示待处理`);
-    assert.equal(quality.contentAchievement, null, `${key} 缺失时不补算留存分`);
-    assert.equal(quality.contentGrade, null);
-    assert.equal(quality.overallGrade, null);
+    if (key === "avgPlayDuration" || key === "avgPlayRatio") {
+      assert.equal(quality.status, "rated", `${key} 缺失时允许另一项独占组合权重`);
+      assert.ok(quality.contentAchievement !== null);
+    } else {
+      assert.equal(quality.status, "missing_metrics", `${key} 缺失时应显示待处理`);
+      assert.equal(quality.contentAchievement, null, `${key} 缺失时不补算留存分`);
+      assert.equal(quality.contentGrade, null);
+      assert.equal(quality.overallGrade, null);
+    }
   }
 });
 
@@ -353,7 +355,7 @@ test("播放量门槛只影响评级上限，不进入留存总分", () => {
     topics([[id, "复盘"]]),
   ));
 
-  assert.deepEqual(works.map((work) => work.overallGrade), ["劣", "普", "普", "优"]);
+  assert.deepEqual(works.map((work) => work.overallGrade), ["普", "普", "普", "良"]);
   assert.ok(works.every((work) => work.contentAchievement === 100));
 });
 
@@ -373,13 +375,12 @@ test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被
     topics([["low", "干货"], ["good", "干货"], ["pending", "干货"]]),
   );
   assert.equal(summary.totalCount, 3);
-  assert.equal(summary.ratedCount, 1);
-  assert.equal(summary.achievementSampleCount, 2);
-  assert.equal(summary.interactionSampleCount, 1, "低播放作品的互动计数越过播放量，互动数据按缺失处理");
-  assert.equal(summary.coreSampleCount, 2);
-  assert.equal(summary.overallGradeCounts.poor, 0);
+  assert.equal(summary.ratedCount, 2);
+  assert.equal(summary.achievementSampleCount, 1);
+  assert.equal(summary.interactionSampleCount, 1, "低播放作品的互动不进入均值分母");
+  assert.equal(summary.overallGradeCounts.fair, 1);
   assert.equal(summary.overallGradeCounts.excellent, 1);
-  assert.equal(summary.goodExcellentRate, 1);
+  assert.equal(summary.goodExcellentRate, 0.5);
   assert.equal(summary.unratedReasons.pendingSnapshot, 1);
 });
 
@@ -394,7 +395,7 @@ test("无快照与缺视频分别保留准确状态，话题读取失败仍可�
   const failed = buildWorkContentQuality(report({ id: "failed", video_id: "failed" }), snapshot({ videoId: "failed" }), topics([], "error"));
   assert.equal(failed.status, "rated");
   assert.equal(failed.contentGrade, "优");
-  assert.equal(failed.overallGrade, "普");
+  assert.equal(failed.overallGrade, "良");
 });
 
 test("话题读取失败不阻断独立的留存数据评级", () => {
@@ -424,7 +425,6 @@ test("话题读取失败不阻断独立的留存数据评级", () => {
     { state: "error", tags: new Map() },
   ).get("failed-tag");
   assert.equal(failedTag?.status, "rated");
-  assert.equal(failedTag?.coreAchievement, null);
   assert.equal(failedTag?.contentGrade, "良");
   assert.equal(failedTag?.overallGrade, "优");
 });
@@ -441,8 +441,6 @@ test("混合干货与复盘按各自核心指标计算，小队汇总基于作�
       { state: "ready", tags: new Map([["review", "复盘"]]) },
     ),
   ];
-  assert.equal(works[0]?.coreMetric, "favoriteRate");
-  assert.equal(works[1]?.coreMetric, "likeRate");
   const summary = buildContentQualitySummaryFromWorks(works);
   assert.equal(summary.totalCount, 2);
   assert.equal(summary.ratedCount, 2);
@@ -500,7 +498,6 @@ test("个人 payload 同时补月度文案明细、近30日作品质量和规则
   assert.deepEqual(payload.writerQuality?.monthWorks.map((work) => work.reportId), ["current-writer"]);
   assert.equal(payload.writerQuality?.monthSummary?.totalCount, 1);
   assert.equal(payload.growthWorks[0]?.contentQuality?.topicKind, "dry_goods");
-  assert.equal(payload.growthWorks[0]?.contentQuality?.coreMetric, "favoriteRate");
 });
 
 test("达人个人作品明细使用同一份公司内容质量标准，不再计算转粉评级", () => {
@@ -543,9 +540,7 @@ test("达人个人作品明细使用同一份公司内容质量标准，不再�
   });
 
   assert.equal(payload.records[0]?.contentQuality?.topicKind, "dry_goods");
-  assert.equal(payload.records[0]?.contentQuality?.coreMetric, "favoriteRate");
   assert.equal(payload.records[0]?.contentQuality?.interactionAchievement, 35);
-  assert.equal(payload.records[0]?.contentQuality?.coreAchievement, 40);
   assert.equal(payload.records[0]?.contentQuality?.contentAchievement, 100);
   assert.equal("followerAchievement" in payload.records[0]!, false);
 });

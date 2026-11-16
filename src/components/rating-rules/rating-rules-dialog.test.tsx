@@ -62,7 +62,7 @@ test("作品评级说明展示互动达成率和留存达成率", () => {
   assert.ok(rendered.includes(BREAKOUT_GRADE_TEXT_CLASS["优"]));
   assert.ok(rendered.includes(BREAKOUT_GRADE_TEXT_CLASS["良"]));
   assert.ok(rendered.includes(BREAKOUT_GRADE_TEXT_CLASS["普"]));
-  assert.ok(rendered.includes(BREAKOUT_GRADE_TEXT_CLASS["劣"]));
+  assert.match(rendered, /要拿优，两项都需 ≥80%；要拿良，两项都需 ≥60%/);
 });
 
 test("协作管理页面挂载了作品评级规则入口", () => {

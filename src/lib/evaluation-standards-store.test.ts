@@ -59,10 +59,10 @@ test("坏配置读取失败，不假装默认标准；数据库错误不伪装�
   await assert.rejects(loadEvaluationSettings(db as never, "a"), (error: Error) => !error.message.includes("secret sql"));
 });
 
-test("数据库尚未支持新达标基准时拒绝保存，不能让显示与筛选分裂", async () => {
+test("列表函数未升级前拒绝保存互动基准", async () => {
   const f = fakeDb();
   const standards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
-  standards.targets.reviewLikeRate = 4;
+  standards.targets.interactionRate = 4;
   const db = { ...f.db, rpc: () => ({ abortSignal: async () => ({ data: { diagnostics: {} }, error: null }) }) };
   await assert.rejects(saveEvaluationSettings(db as never, "a", "owner", standards, null), /尚未完成数据升级/);
   assert.equal(f.writes(), 0);
@@ -71,7 +71,7 @@ test("数据库尚未支持新达标基准时拒绝保存，不能让显示与�
 test("列表函数版本 2 就绪后允许保存公司达标基准", async () => {
   const f = fakeDb();
   const standards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
-  standards.targets.reviewLikeRate = 4;
+  standards.targets.interactionRate = 4;
   const db = {
     ...f.db,
     rpc: () => ({
@@ -80,7 +80,7 @@ test("列表函数版本 2 就绪后允许保存公司达标基准", async () =>
   };
 
   const saved = await saveEvaluationSettings(db as never, "a", "owner", standards, null);
-  assert.equal(saved.standards.targets.reviewLikeRate, 4);
+  assert.equal(saved.standards.targets.interactionRate, 4);
   assert.equal(f.writes(), 1);
 });
 

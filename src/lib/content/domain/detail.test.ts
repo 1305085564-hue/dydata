@@ -19,10 +19,10 @@ test("详情单项颜色沿用列表已定稿的双线边界", () => {
   assert.match(detail.getCompletionRateClass(5, 5000), /text-status-success/);
 });
 
-test("不足3000播放的正常比率降灰，脏值仍优先标红，0与缺值不混淆", () => {
-  assert.equal(detail.getBounceRate2sClass(22.2, 2999), "text-[#A8A29E]");
+test("不足5000播放的正常比率降灰，脏值仍优先标红，0与缺值不混淆", () => {
+  assert.equal(detail.getBounceRate2sClass(22.2, 4999), "text-[#A8A29E]");
   assert.equal(detail.getCompletionRate5sClass(60, 0), "text-[#A8A29E]");
-  assert.match(detail.getCompletionRate5sClass(150, 4999), /text-status-danger/);
+  assert.match(detail.getCompletionRate5sClass(150, 5999), /text-status-danger/);
   assert.match(detail.getCompletionRateClass(0, 5000), /text-status-success/);
   assert.equal(detail.getCompletionRateClass(null, 5000), "text-[#141413]");
   assert.equal(detail.getCompletionRateClass(undefined, 5000), "text-[#141413]");
@@ -38,51 +38,41 @@ test("均播时长与列表同样按50秒优质、30秒预警，并遵守样本�
 });
 
 test("平均播放占比按0-1快照值转换为百分数，25%为好、20%以下为差", () => {
-  assert.equal(detail.getAvgPlayRatioClass(0.25, 3000), "text-status-danger");
-  assert.equal(detail.getAvgPlayRatioClass(0.19, 3000), "text-status-success");
-  assert.equal(detail.getAvgPlayRatioClass(0.2, 3000), "text-[#141413]");
-  assert.equal(detail.getAvgPlayRatioClass(0.25, 2999), "text-[#A8A29E]");
-  assert.equal(detail.getAvgPlayRatioClass(null, 3000), "text-[#141413]");
-  assert.match(detail.getAvgPlayRatioClass(1.01, 3000), /text-status-danger/);
+  assert.equal(detail.getAvgPlayRatioClass(0.25, 5000), "text-status-danger");
+  assert.equal(detail.getAvgPlayRatioClass(0.19, 5000), "text-status-success");
+  assert.equal(detail.getAvgPlayRatioClass(0.2, 5000), "text-[#141413]");
+  assert.equal(detail.getAvgPlayRatioClass(0.25, 4999), "text-[#A8A29E]");
+  assert.equal(detail.getAvgPlayRatioClass(null, 5000), "text-[#141413]");
+  assert.match(detail.getAvgPlayRatioClass(1.01, 5000), /text-status-danger/);
 });
 
 test("播放达到3000后指标可显示表现颜色", () => {
-  assert.equal(detail.getBounceRate2sClass(25, 3000), "text-status-danger");
-  assert.equal(detail.getCompletionRate5sClass(60, 3000), "text-status-danger");
-  assert.equal(detail.getCompletionRateClass(10, 3000), "text-status-danger");
-  assert.equal(detail.getAvgPlayDurationClass(50, 3000), "text-status-danger");
+  assert.equal(detail.getBounceRate2sClass(25, 5000), "text-status-danger");
+  assert.equal(detail.getCompletionRate5sClass(60, 5000), "text-status-danger");
+  assert.equal(detail.getCompletionRateClass(10, 5000), "text-status-danger");
+  assert.equal(detail.getAvgPlayDurationClass(50, 5000), "text-status-danger");
 });
 
 test("显示口径：好红差绿，边界与样本下限正确", () => {
-  assert.equal(detail.getBounceRate2sClass(25, 3000), "text-status-danger");
-  assert.equal(detail.getBounceRate2sClass(30, 3000), "text-[#141413]");
-  assert.equal(detail.getBounceRate2sClass(30.01, 3000), "text-status-success");
-  assert.equal(detail.getAvgPlayDurationClass(20, 3000), "text-status-success");
-  assert.equal(detail.getAvgPlayDurationClass(50, 3000), "text-status-danger");
-  assert.equal(detail.getCompletionRateClass(5, 3000), "text-status-success");
-  assert.equal(detail.getCompletionRateClass(10, 3000), "text-status-danger");
-});
-
-test("核心指标仅按自身达成率和样本门槛着色", () => {
-  assert.equal(detail.getCoreAchievementClass(100, 3000), "text-status-danger");
-  assert.equal(detail.getCoreAchievementClass(60, 3000), "text-status-success");
-  assert.equal(detail.getCoreAchievementClass(60.01, 3000), "");
-  assert.equal(detail.getCoreAchievementClass(100, 2999), "");
-  assert.equal(detail.getCoreAchievementClass(null, 3000), "");
+  assert.equal(detail.getBounceRate2sClass(25, 5000), "text-status-danger");
+  assert.equal(detail.getBounceRate2sClass(30, 5000), "text-[#141413]");
+  assert.equal(detail.getBounceRate2sClass(30.01, 5000), "text-status-success");
+  assert.equal(detail.getAvgPlayDurationClass(20, 5000), "text-status-success");
+  assert.equal(detail.getAvgPlayDurationClass(50, 5000), "text-status-danger");
+  assert.equal(detail.getCompletionRateClass(5, 5000), "text-status-success");
+  assert.equal(detail.getCompletionRateClass(10, 5000), "text-status-danger");
 });
 
 test("5 秒完播 50% 及以下显示较差", () => {
-  assert.equal(detail.getCompletionRate5sClass(50, 3000), "text-status-success");
-  assert.equal(detail.getCompletionRate5sClass(50.01, 3000), "text-[#141413]");
+  assert.equal(detail.getCompletionRate5sClass(50, 5000), "text-status-success");
+  assert.equal(detail.getCompletionRate5sClass(50.01, 5000), "text-[#141413]");
 });
 
 test("详情按传入公司标准判断，与固定默认线不同", async () => {
   const { DEFAULT_EVALUATION_STANDARDS } = await import("@/lib/evaluation-standards");
   const standards = structuredClone(DEFAULT_EVALUATION_STANDARDS);
   standards.completionRate5s = { good: 75, poor: 40 };
-  standards.minPlayCount = 1000;
-  standards.coreAchievement = { good: 120, poor: 50 };
-  assert.equal(detail.getCompletionRate5sClass(65, 1500, standards), "text-[#141413]");
-  assert.equal(detail.getCompletionRate5sClass(75, 1500, standards), "text-status-danger");
-  assert.equal(detail.getCoreAchievementClass(100, 1500, standards), "");
+  standards.minPlayCount = 5000;
+  assert.equal(detail.getCompletionRate5sClass(65, 6000, standards), "text-[#141413]");
+  assert.equal(detail.getCompletionRate5sClass(75, 6000, standards), "text-status-danger");
 });

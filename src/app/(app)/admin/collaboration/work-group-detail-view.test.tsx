@@ -210,10 +210,9 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
     totalCount: 5,
     achievementSampleCount: 4,
     interactionSampleCount: 5,
-    coreSampleCount: 4,
     ratedCount: 4,
     goodExcellentRate: 0.8,
-    overallGradeCounts: { excellent: 2, good: 2, fair: 0, poor: 0 },
+    overallGradeCounts: { excellent: 2, good: 2, fair: 0 },
     unratedReasons: {
       unlinked: 1,
       pendingSnapshot: 0,
@@ -222,7 +221,6 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
       topicUnavailable: 0,
     },
     avgInteractionAchievement: 95,
-    avgCoreAchievement: 90,
     avgContentAchievement: 92.5,
   };
   const html = renderDetail({
@@ -247,7 +245,7 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
   const text = stripTags(html);
   assert.ok(text.includes("互动 95%"));
   assert.ok(text.includes("留存 93%"));
-  assert.ok(text.includes("优2·良2·普0·劣0"));
+  assert.ok(text.includes("优2·良2·普0"));
 
   // 达人组详情即使有数据也不出留存数据列
   const talentHtml = renderDetail({

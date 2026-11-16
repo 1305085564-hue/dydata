@@ -133,7 +133,7 @@ function buildDataStructurePrompt(lineBlock: string): string {
     "你是抖音数据截图结构化助手。以下是 OCR 从截图中按原始顺序识别出的文字行：",
     lineBlock,
     "",
-    "请从文字行中提取作品标题、6 个核心指标和页面明确标注的作品发布时间，并严格只返回 JSON。",
+    "请从文字行中提取作品标题、播放/点赞/评论/收藏/分享/涨粉 6 个指标，以及页面顶部明确标注的作品发布时间，并严格只返回 JSON。",
     "要求：",
     "1. 字段固定为 video_title、play_count、likes、comments、shares、favorites、follower_gain、confidence。",
     "2. video_title 返回文字行中明确显示的作品主标题；标题末尾的 #话题、话题词和话题标签不属于标题，必须去掉；找不到时返回 null。",

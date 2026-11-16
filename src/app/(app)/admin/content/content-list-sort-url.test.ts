@@ -23,11 +23,14 @@ test("表头暴露 aria-sort：读屏与键盘用户能知道当前按哪列、�
   assert.match(header, /aria-label=\{/, "排序按钮缺少可读名称");
 
   // 所有可排序列都要覆盖，不能只给个别列加
+  const sortableFields = [...header.matchAll(/handleSort\("([^"]+)"\)/g)].map((match) => match[1]);
+  for (const field of sortableFields) {
+    assert.match(header, new RegExp(`aria-sort=\\{ariaSortFor\\("${field}"\\)\\}`), `${field} 缺少 aria-sort`);
+  }
   const ariaSortCount = (header.match(/aria-sort=\{ariaSortFor\(/g) ?? []).length;
-  const sortableCount = (header.match(/handleSort\("/g) ?? []).length;
-  assert.equal(ariaSortCount, sortableCount, `可排序 ${sortableCount} 列，只有 ${ariaSortCount} 列标了 aria-sort`);
-  // 当前完整列集：状态、标题/账号按设计不排序，其余 13 列可排序；旧的 14 阈值来自已移除的列。
-  assert.ok(sortableCount >= 13, `可排序列数量异常：${sortableCount}`);
+  const sortableCount = sortableFields.length;
+  // 当前完整列集：状态、标题/账号按设计不排序，其余列可排序。
+  assert.ok(sortableCount >= 12, `可排序列数量异常：${sortableCount}`);
 });
 
 test("排序进 URL：深链/刷新/分享后排序不变（审计 M1）", () => {

@@ -157,6 +157,14 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                     </span>
                   </div>
 
+                  {data.talentQuality?.monthSummary ? (
+                    <div className="grid grid-cols-3 gap-2 text-[12px]">
+                      <span>互动数据 <strong>{data.talentQuality.monthSummary.avgInteractionAchievement == null ? "—" : `${Math.round(data.talentQuality.monthSummary.avgInteractionAchievement)}%`}</strong></span>
+                      <span>留存数据 <strong>{data.talentQuality.monthSummary.avgContentAchievement == null ? "—" : `${Math.round(data.talentQuality.monthSummary.avgContentAchievement)}%`}</strong></span>
+                      <span>良优率 <strong>{data.talentQuality.monthSummary.goodExcellentRate == null ? "—" : `${Math.round(data.talentQuality.monthSummary.goodExcellentRate * 100)}% (${data.talentQuality.monthSummary.ratedCount}/${data.talentQuality.monthSummary.totalCount}篇)`}</strong></span>
+                    </div>
+                  ) : null}
+
                   {data.records.length === 0 ? (
                     <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
                       本月暂无达人作品记录
@@ -190,7 +198,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                               q?.interactionAchievement != null
                                 ? `${Math.round(q.interactionAchievement)}%`
                                 : "—";
-                            const warnings = retentionWarningLabels(q?.retentionMetrics, data.writerQuality?.rules);
+                            const warnings = retentionWarningLabels(q?.retentionMetrics, data.talentQuality?.rules);
 
                             return (
                               <tr
