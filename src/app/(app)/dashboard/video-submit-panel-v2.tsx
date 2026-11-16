@@ -33,11 +33,7 @@ import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import {
-  clearBrowserAppealSuccessSession,
-  hasBrowserAppealSuccessSession,
-} from "@/lib/video-submit/domain/appeal-success-session";
-
+import { clearBrowserAppealSuccessSession, hasBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
@@ -111,9 +107,7 @@ export function VideoSubmitPanelV2({
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [submittedEditTarget, setSubmittedEditTarget] = useState<{ reportId: string | null; reportDate: string } | null>(null);
   const initialSelectedAccountId = controlledSelectedAccountId ?? accounts[0]?.id ?? "";
-  const [submittedViewActive, setSubmittedViewActive] = useState(() =>
-    hasBrowserAppealSuccessSession(initialSelectedAccountId, today),
-  );
+  const [submittedViewActive, setSubmittedViewActive] = useState(() => hasBrowserAppealSuccessSession(initialSelectedAccountId, today));
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -433,11 +427,7 @@ export function VideoSubmitPanelV2({
     (!isEditing || editDetailLoadState.status === "ready") &&
     (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive || isEditing);
 
-  const handleSubmitted = useCallback(
-    (
-      video: Video | null,
-      summaryOverride?: TodaySubmissionReportLike | null,
-    ) => {
+  const handleSubmitted = useCallback((video: Video | null, summaryOverride?: TodaySubmissionReportLike | null) => {
       const nextState = resolvePanelSubmittedState();
       setSubmittedViewActive(nextState.submittedViewActive);
       setRequestedMode(nextState.requestedMode);

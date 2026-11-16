@@ -104,6 +104,7 @@ import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-cont
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import {
+  getBrowserAppealSuccessTitle,
   hasBrowserAppealSuccessSession,
   markBrowserAppealSuccessSession,
 } from "@/lib/video-submit/domain/appeal-success-session";
@@ -185,9 +186,12 @@ export function VideoSubmitFormV2({
       editDetail
         ? createMetaFromEditDetail(editDetail, today, userId)
         : createInitialMeta(today, userId, initialBizDate ?? today);
+    const appealSuccessTitle = !editDetail
+      ? getBrowserAppealSuccessTitle(account?.id ?? "", initialBizDate ?? today)
+      : null;
     const meta = initial.uploadedAt
       ? initial
-      : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN") };
+      : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN"), ...(appealSuccessTitle ? { videoTitle: appealSuccessTitle } : {}) };
     return createWorkflowState({
       meta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
@@ -656,7 +660,7 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
-      markBrowserAppealSuccessSession(account.id, meta.bizDate);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle);
       onSubmitted(null);
       feedbackToast.success("补交申请已通过，数据已自动提交");
     } catch {
@@ -1099,7 +1103,7 @@ export function VideoSubmitFormV2({
       setAppealStatus("approved");
       setAppealResultReason(null);
       setIsSubmitted(true);
-      markBrowserAppealSuccessSession(account.id, meta.bizDate);
+      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle);
       onSubmitted(null);
       feedbackToast.success("补交数据已自动提交");
     } finally {

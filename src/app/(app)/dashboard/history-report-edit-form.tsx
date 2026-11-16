@@ -477,12 +477,7 @@ export function HistoryReportEditForm({
     [initialDraftData],
   );
 
-  const { hasDraft, restoreDraft, clearDraft, pauseSaving } = useFormDraft<HistoryReportEditDraftData>(
-    `dydata:draft:history-edit:${report.id}`,
-    draftData,
-    [draftData],
-    { isEmpty: isHistoryEditDraftEmpty },
-  );
+  const { hasDraft, restoreDraft, clearDraft, pauseSaving } = useFormDraft<HistoryReportEditDraftData>(`dydata:draft:history-edit:${report.id}`, draftData, [draftData], { isEmpty: isHistoryEditDraftEmpty });
 
   function handleRestoreDraft() {
     const draft = restoreDraft();

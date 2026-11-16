@@ -1,23 +1,11 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import test from "node:test"; import assert from "node:assert/strict";
 
-import {
-  normalizeContentKeywords,
-  resolveSubmissionRoleUserIds,
-  resolveOperatorUserId,
-  validateVideoSubmitPayload,
-} from "./validation";
+import { normalizeContentKeywords, resolveSubmissionRoleUserIds, resolveOperatorUserId, validateVideoSubmitPayload } from "./validation";
 import { mergePreservedEditMetricFields } from "./edit-binding";
 import { buildEditSubmissionContract } from "./edit-detail";
 import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability";
 
-const ownedAsset = (role: "screenshot_1" | "screenshot_2", confirmed = true) => ({
-  role,
-  url: `https://dydata.cc/api/submission-screenshots/file?path=user-1%2Faccount-1%2F${role}%2Fshot.png`,
-  confirmed,
-  confidence_score: 1,
-  screenshot_type: role === "screenshot_1" ? "data" : "retention",
-});
+const ownedAsset = (role: "screenshot_1" | "screenshot_2", confirmed = true) => ({ role, url: `https://dydata.cc/api/submission-screenshots/file?path=user-1%2Faccount-1%2F${role}%2Fshot.png`, confirmed, confidence_score: 1, screenshot_type: role === "screenshot_1" ? "data" : "retention" });
 
 const completeMetrics = {
   play_count: 100,

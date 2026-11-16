@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   clearAppealSuccessSession,
+  getAppealSuccessTitle,
   hasAppealSuccessSession,
   markAppealSuccessSession,
 } from "./appeal-success-session";
@@ -19,8 +20,9 @@ test("审批成功会话标记可跨刷新保留，并能在开启新填报时�
   const storage = createStorage();
 
   assert.equal(hasAppealSuccessSession(storage, "account-1", "2026-11-16"), false);
-  markAppealSuccessSession(storage, "account-1", "2026-11-16");
+  markAppealSuccessSession(storage, "account-1", "2026-11-16", "真实标题");
   assert.equal(hasAppealSuccessSession(storage, "account-1", "2026-11-16"), true);
+  assert.equal(getAppealSuccessTitle(storage, "account-1", "2026-11-16"), "真实标题");
   clearAppealSuccessSession(storage, "account-1", "2026-11-16");
   assert.equal(hasAppealSuccessSession(storage, "account-1", "2026-11-16"), false);
 });
