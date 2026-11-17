@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { HubShortcutHelpPopover } from "@/components/unified-command-hub-shortcuts";
 import type { ActionItem } from "@/lib/action-center/types";
 import {
   groupPendingApprovals,
@@ -1179,49 +1179,12 @@ export function UnifiedCommandHub({
             <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
               {isAdmin && (
-                <div className="hidden sm:flex items-center">
-                  <Popover open={shortcutPopoverOpen} onOpenChange={setShortcutPopoverOpen}>
-                    <PopoverTrigger
-                      onMouseEnter={handleShortcutMouseEnter}
-                      onMouseLeave={handleShortcutMouseLeave}
-                      onFocus={() => setShortcutPopoverOpen(true)}
-                      onBlur={() => setShortcutPopoverOpen(false)}
-                      className="inline-flex size-5 items-center justify-center rounded-full border border-[#E2E2DF] bg-surface-row-hover text-[12px] font-mono text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413] cursor-pointer"
-                      aria-label="查看快捷键帮助"
-                      title="快捷键帮助"
-                    >
-                      ?
-                    </PopoverTrigger>
-                    <PopoverContent
-                      side="top"
-                      align="end"
-                      sideOffset={8}
-                      onMouseEnter={handleShortcutMouseEnter}
-                      onMouseLeave={handleShortcutMouseLeave}
-                      className="p-3 text-[12px] shadow-lg border border-[#E2E2DF] bg-white rounded-xl min-w-[200px]"
-                    >
-                      <div className="flex flex-col gap-2">
-                        <div className="text-[#1F1E1D] pb-1 border-b border-border/60">
-                          键盘快捷键
-                        </div>
-                        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-[#78716C]">
-                          <span className="font-mono text-[#1F1E1D]">J / K</span>
-                          <span>上下选卡</span>
-                          <span className="font-mono text-[#1F1E1D]">A</span>
-                          <span>同意当前审批</span>
-                          <span className="font-mono text-[#1F1E1D]">R</span>
-                          <span>拒绝当前审批</span>
-                          <span className="font-mono text-[#1F1E1D]">Z</span>
-                          <span>撤回上一次操作</span>
-                          <span className="font-mono text-[#1F1E1D]">1 - 3</span>
-                          <span>切换视图</span>
-                          <span className="font-mono text-[#1F1E1D]">Esc</span>
-                          <span>关闭工作台</span>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <HubShortcutHelpPopover
+                  open={shortcutPopoverOpen}
+                  onOpenChange={setShortcutPopoverOpen}
+                  onMouseEnter={handleShortcutMouseEnter}
+                  onMouseLeave={handleShortcutMouseLeave}
+                />
               )}
             </div>
           </motion.div>

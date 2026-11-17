@@ -2,6 +2,7 @@
 
 import { Columns2, ChevronDown, Maximize2, ZoomIn } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
 
@@ -42,32 +43,44 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         className="hidden sm:inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setViewLayout("side-by-side")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                            effectiveLayout === "side-by-side"
-                              ? "bg-white text-[#141413] shadow-input"
-                              : "text-[#78716C] hover:text-[#141413]"
-                          }`}
-                          title="双列左右并排对照"
-                        >
-                          <Columns2 className="size-3" />
-                          双列对照
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setViewLayout("stacked")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                            effectiveLayout === "stacked"
-                              ? "bg-white text-[#141413] shadow-input"
-                              : "text-[#78716C] hover:text-[#141413]"
-                          }`}
-                          title="单列大画幅展开，字迹更大更清晰"
-                        >
-                          <Maximize2 className="size-3" />
-                          单列大图
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => setViewLayout("side-by-side")}
+                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
+                                  effectiveLayout === "side-by-side"
+                                    ? "bg-white text-[#141413] shadow-input"
+                                    : "text-[#78716C] hover:text-[#141413]"
+                                }`}
+                              />
+                            }
+                          >
+                            <Columns2 className="size-3" />
+                            双列对照
+                          </TooltipTrigger>
+                          <TooltipContent side="top">双列左右并排对照</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => setViewLayout("stacked")}
+                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
+                                  effectiveLayout === "stacked"
+                                    ? "bg-white text-[#141413] shadow-input"
+                                    : "text-[#78716C] hover:text-[#141413]"
+                                }`}
+                              />
+                            }
+                          >
+                            <Maximize2 className="size-3" />
+                            单列大图
+                          </TooltipTrigger>
+                          <TooltipContent side="top">单列大画幅展开，字迹更大更清晰</TooltipContent>
+                        </Tooltip>
                       </div>
                     )}
                     <ChevronDown className="size-4 text-[#78716C] transition-[transform,color] duration-150 group-open/details:rotate-180" />
@@ -87,44 +100,50 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                     </div>
 
                     {curveScreenshot && screenshotGrantReady ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
-                          if (idx !== -1) setPreviewIndex(idx);
-                        }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                          effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
-                            ? "max-w-[380px] mx-auto"
-                            : ""
-                        }`}
-                        title="点击全屏放大预览"
-                      >
-                        <ScreenshotImage
-                          src={curveScreenshot.url}
-                          alt="流量曲线截图"
-                          variant="stage"
-                          placeholderClassName="min-h-[320px] w-full rounded-xl"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            if (img.naturalWidth && img.naturalHeight) {
-                              handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
-                            }
-                          }}
-                          onError={() => handleImageError?.(curveScreenshot.url)}
-                          className={`w-full object-contain ${
-                            effectiveLayout === "stacked"
-                              ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
-                                ? "max-h-[440px]"
-                                : "max-h-[600px]"
-                              : "max-h-[540px]"
-                          }`}
-                        />
-                        <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <ZoomIn className="size-3.5 text-[#78716C]" />
-                          <span>全屏查看</span>
-                        </div>
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
+                                if (idx !== -1) setPreviewIndex(idx);
+                              }}
+                              className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                                effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
+                                  ? "max-w-[380px] mx-auto"
+                                  : ""
+                              }`}
+                            />
+                          }
+                        >
+                          <ScreenshotImage
+                            src={curveScreenshot.url}
+                            alt="流量曲线截图"
+                            variant="stage"
+                            placeholderClassName="min-h-[320px] w-full rounded-xl"
+                            onLoad={(e) => {
+                              const img = e.currentTarget;
+                              if (img.naturalWidth && img.naturalHeight) {
+                                handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
+                              }
+                            }}
+                            onError={() => handleImageError?.(curveScreenshot.url)}
+                            className={`w-full object-contain ${
+                              effectiveLayout === "stacked"
+                                ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
+                                  ? "max-h-[440px]"
+                                  : "max-h-[600px]"
+                                : "max-h-[540px]"
+                            }`}
+                          />
+                          <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                            <ZoomIn className="size-3.5 text-[#78716C]" />
+                            <span>全屏查看</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">点击全屏放大预览</TooltipContent>
+                      </Tooltip>
                     ) : curveScreenshot ? pending : (
                       <EmptyState
                         variant="compact"
@@ -140,44 +159,50 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                     </div>
 
                     {retentionScreenshot && screenshotGrantReady ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
-                          if (idx !== -1) setPreviewIndex(idx);
-                        }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                          effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
-                            ? "max-w-[380px] mx-auto"
-                            : ""
-                        }`}
-                        title="点击全屏放大预览"
-                      >
-                        <ScreenshotImage
-                          src={retentionScreenshot.url}
-                          alt="留存脱落截图"
-                          variant="stage"
-                          placeholderClassName="min-h-[320px] w-full rounded-xl"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            if (img.naturalWidth && img.naturalHeight) {
-                              handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
-                            }
-                          }}
-                          onError={() => handleImageError?.(retentionScreenshot.url)}
-                          className={`w-full object-contain ${
-                            effectiveLayout === "stacked"
-                              ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
-                                ? "max-h-[440px]"
-                                : "max-h-[600px]"
-                              : "max-h-[540px]"
-                          }`}
-                        />
-                        <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <ZoomIn className="size-3.5 text-[#78716C]" />
-                          <span>全屏查看</span>
-                        </div>
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
+                                if (idx !== -1) setPreviewIndex(idx);
+                              }}
+                              className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                                effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
+                                  ? "max-w-[380px] mx-auto"
+                                  : ""
+                              }`}
+                            />
+                          }
+                        >
+                          <ScreenshotImage
+                            src={retentionScreenshot.url}
+                            alt="留存脱落截图"
+                            variant="stage"
+                            placeholderClassName="min-h-[320px] w-full rounded-xl"
+                            onLoad={(e) => {
+                              const img = e.currentTarget;
+                              if (img.naturalWidth && img.naturalHeight) {
+                                handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
+                              }
+                            }}
+                            onError={() => handleImageError?.(retentionScreenshot.url)}
+                            className={`w-full object-contain ${
+                              effectiveLayout === "stacked"
+                                ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
+                                  ? "max-h-[440px]"
+                                  : "max-h-[600px]"
+                                : "max-h-[540px]"
+                            }`}
+                          />
+                          <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                            <ZoomIn className="size-3.5 text-[#78716C]" />
+                            <span>全屏查看</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">点击全屏放大预览</TooltipContent>
+                      </Tooltip>
                     ) : retentionScreenshot ? pending : (
                       <EmptyState
                         variant="compact"

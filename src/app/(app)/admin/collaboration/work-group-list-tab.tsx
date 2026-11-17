@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CompassConstellationIllustration, DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import {
   formatBigNumber,
@@ -236,32 +237,8 @@ export function WorkGroupListTab({
                   {formatRate(group.aggregate.favoriteRate)}
                 </TableCell>
                 {hasContentQuality && (
-                  <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                    {group.contentQuality ? (
-                      <div>
-                        <div className="font-normal text-[#141413]">
-                          互动 {group.contentQuality.avgInteractionAchievement == null
-                            ? "—"
-                            : `${Math.round(group.contentQuality.avgInteractionAchievement)}%`}
-                          <span className="mx-1 text-[#A8A29E]">·</span>
-                          留存 {group.contentQuality.avgContentAchievement == null
-                            ? "—"
-                            : `${Math.round(group.contentQuality.avgContentAchievement)}%`}
-                        </div>
-                        <div
-                          className="text-[12px] text-[#78716C] font-normal"
-                          title={`综合已评级 ${group.contentQuality.ratedCount} / 作品 ${group.contentQuality.totalCount} 篇\n良优率 ${group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${group.contentQuality.overallGradeCounts.excellent} · 良 ${group.contentQuality.overallGradeCounts.good} · 普 ${group.contentQuality.overallGradeCounts.fair}`}
-                        >
-                          良优 {group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null
-                            ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%`
-                            : "—"}
-                          <span className="mx-1 text-[#A8A29E]">·</span>
-                          优{group.contentQuality.overallGradeCounts.excellent}·良{group.contentQuality.overallGradeCounts.good}·普{group.contentQuality.overallGradeCounts.fair}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-[#A8A29E]">—</span>
-                    )}
+                  <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
+                    <WorkGroupQualitySummaryCell contentQuality={group.contentQuality} />
                   </TableCell>
                 )}
                 <TableCell className="py-2 pl-2 pr-4 text-right">
@@ -288,5 +265,83 @@ export function WorkGroupListTab({
         播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。
       </p>
     </div>
+  );
+}
+
+/** 内容质量摘要单元格：小队列表与小队详情共用，悬停即时展示 3 行评级拆解，不阻断整行点击。 */
+export function WorkGroupQualitySummaryCell({
+  contentQuality,
+  emptyClassName = "text-[#A8A29E]",
+}: {
+  contentQuality: WorkGroupSummaryRow["contentQuality"] | null | undefined;
+  emptyClassName?: string;
+}) {
+  if (!contentQuality) {
+    return (
+      <div className="py-2 px-2 text-right">
+        <span className={emptyClassName}>—</span>
+      </div>
+    );
+  }
+
+  const goodRateText =
+    contentQuality.ratedCount > 0 && contentQuality.goodExcellentRate !== null
+      ? `${Math.round(contentQuality.goodExcellentRate * 100)}%`
+      : "—";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <div className="group/cell py-2 px-2 text-right cursor-help">
+            <div className="font-normal text-[#141413]">
+              互动{" "}
+              {contentQuality.avgInteractionAchievement == null
+                ? "—"
+                : `${Math.round(contentQuality.avgInteractionAchievement)}%`}
+              <span className="mx-1 text-[#A8A29E]">·</span>
+              留存{" "}
+              {contentQuality.avgContentAchievement == null
+                ? "—"
+                : `${Math.round(contentQuality.avgContentAchievement)}%`}
+            </div>
+            <div className="text-[12px] text-[#78716C] font-normal">
+              <span className="border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
+                良优 {goodRateText}
+                <span className="mx-1 text-[#A8A29E]">·</span>
+                优{contentQuality.overallGradeCounts.excellent}·良
+                {contentQuality.overallGradeCounts.good}·普
+                {contentQuality.overallGradeCounts.fair}
+              </span>
+            </div>
+          </div>
+        }
+      />
+      <TooltipContent
+        side="top"
+        align="end"
+        sideOffset={4}
+        className="w-[224px] max-w-[224px] flex-col items-stretch gap-1 p-3 text-left"
+      >
+        <div className="flex items-center justify-between text-[12px] text-[#78716C] tabular-nums">
+          <span>综合已评级</span>
+          <span className="text-[#141413]">
+            {contentQuality.ratedCount} / {contentQuality.totalCount} 篇
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-[12px] text-[#78716C] tabular-nums">
+          <span>良优率</span>
+          <span className="text-[#141413]">{goodRateText}</span>
+        </div>
+        <div className="flex items-center justify-between border-t border-[#E2E2DF]/80 pt-1 text-[12px] text-[#78716C] tabular-nums">
+          <span>分档统计</span>
+          <span className="text-[#141413]">
+            优 {contentQuality.overallGradeCounts.excellent} · 良{" "}
+            {contentQuality.overallGradeCounts.good} · 普{" "}
+            {contentQuality.overallGradeCounts.fair}
+          </span>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }

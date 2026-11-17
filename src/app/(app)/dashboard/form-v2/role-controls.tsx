@@ -3,7 +3,7 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { ChevronDown, X } from "lucide-react";
 import type { AnomalyStatus } from "@/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AssigneeDisplay } from "../video-submit-form-state";
 
@@ -60,7 +60,6 @@ export function VideoStatusSegmented({
             role="radio"
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
-            title={option.tip}
             className={cn(
               "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[14px] transition cursor-pointer",
               isActive
@@ -77,18 +76,16 @@ export function VideoStatusSegmented({
         }
 
         return (
-          <TooltipProvider key={option.value} delay={150}>
-            <Tooltip>
-              <TooltipTrigger render={buttonEl} />
-              <TooltipContent
-                side="top"
-                sideOffset={6}
-                className="max-w-xs text-[12px] leading-relaxed bg-white text-[#141413] p-2.5 rounded-xl shadow-claude-float border border-[#E2E2DF]"
-              >
-                {option.tip}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip key={option.value}>
+            <TooltipTrigger render={buttonEl} />
+            <TooltipContent
+              side="top"
+              sideOffset={6}
+              className="max-w-xs text-[12px] leading-relaxed bg-white text-[#141413] p-2.5 rounded-xl shadow-claude-float border border-[#E2E2DF]"
+            >
+              {option.tip}
+            </TooltipContent>
+          </Tooltip>
         );
       })}
     </div>
@@ -119,7 +116,7 @@ export function RoleItemRow({
       {/* 右侧人员选择 - 一体化内嵌设计 */}
       <div
         className={cn(
-          "group flex h-6 items-center rounded-md transition",
+          "group flex h-7 items-center rounded-md transition",
           display.external
             ? "bg-status-warning-bg text-ink-body hover:bg-status-warning/[0.10] font-normal"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
@@ -139,17 +136,26 @@ export function RoleItemRow({
         </button>
 
         {display.external && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onResetSelf();
-            }}
-            title="恢复由我完成"
-            className="flex h-full items-center pr-1.5 pl-0.5 text-status-warning-text hover:text-ink-strong transition-colors cursor-pointer"
-          >
-            <X className="size-3 stroke-[2]" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onResetSelf();
+                  }}
+                  aria-label="恢复由我完成"
+                  className="flex h-full items-center pr-2 pl-1 text-status-warning-text hover:text-ink-strong transition-colors cursor-pointer"
+                />
+              }
+            >
+              <X className="size-3 stroke-[2]" />
+            </TooltipTrigger>
+            <TooltipContent side="top" align="end">
+              恢复由我完成
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Monitor, Smartphone, X } from "lucide-react";
 import { useRef, type Dispatch, type SetStateAction } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
@@ -34,40 +35,60 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
         }}
         aria-label="截图大图预览"
       >
-        <DialogPrimitive.Close
-          ref={closeButtonRef}
-          aria-label="关闭截图预览"
-          type="button"
-          className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
-          title="关闭预览 (Esc)"
-        >
-          <X className="size-5" />
-        </DialogPrimitive.Close>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DialogPrimitive.Close
+                ref={closeButtonRef}
+                aria-label="关闭截图预览"
+                type="button"
+                className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+              />
+            }
+          >
+            <X className="size-5" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="end">关闭预览 (Esc)</TooltipContent>
+        </Tooltip>
 
         {activeScreenshots.length > 1 && (
           <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
-              title="上一张 (←)"
-            >
-              <ChevronLeft className="size-6" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
-              title="下一张 (→)"
-            >
-              <ChevronRight className="size-6" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label="上一张"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
+                  />
+                }
+              >
+                <ChevronLeft className="size-6" />
+              </TooltipTrigger>
+              <TooltipContent side="right">上一张 (←)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label="下一张"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
+                  />
+                }
+              >
+                <ChevronRight className="size-6" />
+              </TooltipTrigger>
+              <TooltipContent side="left">下一张 (→)</TooltipContent>
+            </Tooltip>
           </>
         )}
 

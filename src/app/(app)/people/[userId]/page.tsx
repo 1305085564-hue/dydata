@@ -332,13 +332,14 @@ export default async function PersonProfilePage({
                       </div>
                       <CollaborationWorkReviewLink
                         reportId={work.reportId}
+                        previewMode="title-only"
                         preview={{
                           title: work.title,
                           accountName: work.accountName,
                           playCount: work.playCount,
                           reportDate: work.workDate,
                         }}
-                        className="block min-w-0 truncate text-left text-[12px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline"
+                        className="block min-w-0 max-w-full truncate text-left text-[12px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline"
                       >
                         {work.title}
                       </CollaborationWorkReviewLink>

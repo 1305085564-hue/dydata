@@ -4,6 +4,7 @@ import {
   CollaborationDiagnosisContext,
   CollaborationWorkReviewLink,
 } from "@/components/admin/collaboration-work-review-link";
+import { TableCellHint as CellWithTooltip } from "@/components/admin/quality-tooltip-content";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { Fragment, useContext, useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
@@ -16,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -151,48 +152,47 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
         </button>
       </TableHead>
       <TableHead className="text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("effectiveCount")}
-          title="播放大于500的作品条数"
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          有效作品
-          {sort.renderSortIcon("effectiveCount")}
-        </button>
+        <SimpleTooltip align="end" tip="播放大于 500 的作品条数">
+          <button
+            type="button"
+            onClick={() => sort.onSort("effectiveCount")}
+            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+          >
+            有效作品{sort.renderSortIcon("effectiveCount")}
+          </button>
+        </SimpleTooltip>
       </TableHead>
       <TableHead className="text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("excellentCount")}
-          title="播放至少30,000，简单计数"
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          优秀作品
-          {sort.renderSortIcon("excellentCount")}
-        </button>
+        <SimpleTooltip align="end" tip="播放至少 30,000 的作品条数">
+          <button
+            type="button"
+            onClick={() => sort.onSort("excellentCount")}
+            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+          >
+            优秀作品{sort.renderSortIcon("excellentCount")}
+          </button>
+        </SimpleTooltip>
       </TableHead>
       {role === "writer" && (
         <>
           <TableHead className="text-right font-normal text-[#78716C]">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
-                  绩效条
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px] max-w-xs text-left">
+            <SimpleTooltip
+              align="end"
+              contentClassName="text-[12px] max-w-xs text-left"
+              tip={
+                <>
                   <p className="font-normal text-[#141413] mb-1">文案绩效核算口径：</p>
                   <p className="text-[#1F1E1D] leading-relaxed">
                     播放≥500条数 + 优秀作品×2。<br />
                     <span className="text-[#78716C] text-[12px]">注：未认证文案不计入绩效结算。</span>
                   </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </>
+              }
+            >
+              <button type="button" className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
+                绩效条
+              </button>
+            </SimpleTooltip>
           </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
             <TableHead key={field} className="text-right font-normal text-[#78716C]">
@@ -202,74 +202,67 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             </TableHead>
           ))}
           <TableHead className="text-right font-normal text-[#78716C]">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() => sort.onSort("avgInteractionAchievement")}
-                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sort.sortField === "avgInteractionAchievement"
-                      ? "text-[#141413] font-normal"
-                      : "hover:text-[#141413]"
-                  }`}
-                >
-                  互动数据
-                  {sort.renderSortIcon("avgInteractionAchievement")}
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px] max-w-xs text-left">
+            <SimpleTooltip
+              align="end"
+              contentClassName="text-[12px] max-w-xs text-left"
+              tip={
+                <>
                   <p className="font-normal text-[#141413] mb-1">互动数据均值：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">
-                    有互动数据作品的互动指标达成率算术平均，不按播放加权。
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <p className="text-[#1F1E1D] leading-relaxed">有互动数据作品的互动指标达成率算术平均，不按播放加权。</p>
+                </>
+              }
+            >
+              <button
+                type="button"
+                onClick={() => sort.onSort("avgInteractionAchievement")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgInteractionAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+              >
+                互动数据{sort.renderSortIcon("avgInteractionAchievement")}
+              </button>
+            </SimpleTooltip>
           </TableHead>
           <TableHead className="text-right font-normal text-[#78716C]">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() => sort.onSort("avgContentAchievement")}
-                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sort.sortField === "avgContentAchievement"
-                      ? "text-[#141413] font-normal"
-                      : "hover:text-[#141413]"
-                  }`}
-                >
-                  留存数据
-                  {sort.renderSortIcon("avgContentAchievement")}
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px] max-w-xs text-left">
+            <SimpleTooltip
+              align="end"
+              contentClassName="text-[12px] max-w-xs text-left"
+              tip={
+                <>
                   <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">
-                    播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <p className="text-[#1F1E1D] leading-relaxed">播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。</p>
+                </>
+              }
+            >
+              <button
+                type="button"
+                onClick={() => sort.onSort("avgContentAchievement")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgContentAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+              >
+                留存数据{sort.renderSortIcon("avgContentAchievement")}
+              </button>
+            </SimpleTooltip>
           </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C] px-1.5">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() => sort.onSort("goodExcellentRate")}
-                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sort.sortField === "goodExcellentRate"
-                      ? "text-[#141413] font-normal"
-                      : "hover:text-[#141413]"
-                  }`}
-                >
-                  良优率
-                  {sort.renderSortIcon("goodExcellentRate")}
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px] max-w-xs text-left">
+          <TableHead className="text-right font-normal text-[#78716C] px-2">
+            <SimpleTooltip
+              align="end"
+              contentClassName="text-[12px] max-w-xs text-left"
+              tip={
+                <>
                   <p className="font-normal text-[#141413] mb-1">良优率口径：</p>
                   <p className="text-[#1F1E1D] leading-relaxed">
                     留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
                     播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
                   </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </>
+              }
+            >
+              <button
+                type="button"
+                onClick={() => sort.onSort("goodExcellentRate")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+              >
+                良优率{sort.renderSortIcon("goodExcellentRate")}
+              </button>
+            </SimpleTooltip>
           </TableHead>
           <TableHead className="text-right font-normal text-[#78716C] pr-6">认证状态</TableHead>
         </>
@@ -377,22 +370,22 @@ export function StaffRowCells({
       <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       {role === "writer" && (
         <>
-          <TableCell className="text-right tabular-nums py-2">
+          <TableCell className="p-0 text-right tabular-nums">
             {row.billingCount !== null ? (
               <Tooltip>
-                <TooltipTrigger
-                  className="font-normal text-[#141413] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
-                >
-                  {row.billingCount}
+                <TooltipTrigger className="group/cell flex h-full w-full items-center justify-end px-2 py-2 font-normal text-[#141413] hover:text-[#D97757] cursor-pointer">
+                  <span className="border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#D97757]">
+                    {row.billingCount}
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent
-                  side="left"
-                  align="center"
-                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-2xl space-y-2 text-left"
+                  side="top"
+                  align="end"
+                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-2xl flex-col items-stretch space-y-2 text-left"
                 >
-                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
+                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1">
                     <span className="text-[12px] font-normal text-[#141413]">绩效条数核算明细</span>
-                    <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
+                    <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-2 py-0.5 rounded-md">
                       {row.name}
                     </span>
                   </div>
@@ -405,7 +398,7 @@ export function StaffRowCells({
                       <span>优秀作品加成（{row.excellentCount} × 2）</span>
                       <span className="tabular-nums font-normal text-[#141413]">+{row.excellentCount * 2} 条</span>
                     </ListRow>
-                    <ListRow className="border-t border-[#E2E2DF]/60 pt-1.5 pb-0 border-b-0 font-normal">
+                    <ListRow className="border-t border-[#E2E2DF]/60 pt-1 pb-0 border-b-0 font-normal">
                       <span className="text-[#141413]">最终计费条数</span>
                       <span className="tabular-nums text-[14px] font-normal text-[#141413]">{row.billingCount} 条</span>
                     </ListRow>
@@ -418,55 +411,68 @@ export function StaffRowCells({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
+              <CellWithTooltip tip="未认证成员不计费" muted>—</CellWithTooltip>
             )}
           </TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.followerConversionRate)}</TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.interactionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
+          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <Badge variant="warning" title="质量数据读取异常">异常</Badge>
+                <CellWithTooltip tip="质量数据读取异常">
+                  <Badge variant="warning">异常</Badge>
+                </CellWithTooltip>
               ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
-                <span className={row.writerQuality.summary.interactionSampleCount < 3 ? "text-[#A8A29E]" : ""} title={`互动数据样本 ${row.writerQuality.summary.interactionSampleCount} 篇`}>
+                <CellWithTooltip
+                  tip={`互动数据样本 ${row.writerQuality.summary.interactionSampleCount} 篇`}
+                  muted={row.writerQuality.summary.interactionSampleCount < 3}
+                >
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
-                </span>
+                </CellWithTooltip>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无互动数据完整样本">—</span>
+                <CellWithTooltip tip="尚无互动数据完整样本" muted>—</CellWithTooltip>
               )
             ) : (
-              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
+          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
+                <CellWithTooltip tip="质量数据读取异常" muted>—</CellWithTooltip>
               ) : row.writerQuality.summary?.avgContentAchievement != null ? (
-                <span className={row.writerQuality.summary.achievementSampleCount < 3 ? "text-[#A8A29E]" : ""} title={`留存数据样本 ${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                <CellWithTooltip
+                  tip={`留存数据样本 ${row.writerQuality.summary.achievementSampleCount} 篇`}
+                  muted={row.writerQuality.summary.achievementSampleCount < 3}
+                >
                   {Math.round(row.writerQuality.summary.avgContentAchievement)}%
-                </span>
+                </CellWithTooltip>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无留存数据完整样本">—</span>
+                <CellWithTooltip tip="尚无留存数据完整样本" muted>—</CellWithTooltip>
               )
             ) : (
-              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2 px-1.5">
+          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
-                <span className="text-[#A8A29E]" title="质量数据读取异常">—</span>
+                <CellWithTooltip tip="质量数据读取异常" muted>—</CellWithTooltip>
               ) : row.writerQuality.summary && row.writerQuality.summary.ratedCount > 0 && row.writerQuality.summary.goodExcellentRate != null ? (
-                <span className={row.writerQuality.summary.ratedCount < 3 ? "text-[#A8A29E]" : ""} title={`良优率分母 ${row.writerQuality.summary.ratedCount} 篇`}>
-                  {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
-                  <span className="ml-1 text-[11px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span>
-                </span>
+                <CellWithTooltip
+                  tip={`良优率分母 ${row.writerQuality.summary.ratedCount} 篇`}
+                  muted={row.writerQuality.summary.ratedCount < 3}
+                >
+                  <span>
+                    {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
+                    <span className="ml-1 text-[12px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span>
+                  </span>
+                </CellWithTooltip>
               ) : (
-                <span className="text-[#A8A29E]" title="尚无可评级作品或参评样本">—</span>
+                <CellWithTooltip tip="尚无可评级作品或参评样本" muted>—</CellWithTooltip>
               )
             ) : (
-              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
             )}
           </TableCell>
           <TableCell className="text-right py-2 pr-6">
@@ -529,6 +535,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                         <div className="flex min-w-0 items-center gap-1">
                           <CollaborationWorkReviewLink
                             reportId={work.reportId}
+                            previewMode="title-only"
                             preview={{
                               title: work.title,
                               accountName: work.accountName,
@@ -540,7 +547,11 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                           >
                             {work.title}
                           </CollaborationWorkReviewLink>
-                          {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+                          {work.dataSource === "manual" && (
+                            <SimpleTooltip tip="该数据由人工填写或修改" align="end">
+                              <span className="shrink-0 text-[12px] text-[#78716C] cursor-help">手工</span>
+                            </SimpleTooltip>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
@@ -659,8 +670,7 @@ export function StaffTab({ rows, role, isLoading, currentUserId = null, isMember
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-2">
+    <div className="space-y-2">
       {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
       <Card className="overflow-hidden p-0 gap-0">
         <Table className={`${STAFF_TABLE_MIN_WIDTH[role]} table-fixed`}>
@@ -697,7 +707,6 @@ export function StaffTab({ rows, role, isLoading, currentUserId = null, isMember
         </Table>
       </Card>
       {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月还没有产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步数据复盘的作品不参与比率。</p>}
-      </div>
-    </TooltipProvider>
+    </div>
   );
 }

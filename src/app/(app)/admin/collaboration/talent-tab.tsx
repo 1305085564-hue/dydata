@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
@@ -125,30 +126,46 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("effectiveCount")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-          title="播放大于500的作品条数"
-        >
-          有效作品
-          {sort.renderSortIcon("effectiveCount")}
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                onClick={() => sort.onSort("effectiveCount")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+                  sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+                }`}
+              />
+            }
+          >
+            有效作品
+            {sort.renderSortIcon("effectiveCount")}
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            播放大于 500 的作品条数
+          </TooltipContent>
+        </Tooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("excellentCount")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-          title="播放至少30,000，简单计数"
-        >
-          优秀作品
-          {sort.renderSortIcon("excellentCount")}
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                onClick={() => sort.onSort("excellentCount")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+                  sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+                }`}
+              />
+            }
+          >
+            优秀作品
+            {sort.renderSortIcon("excellentCount")}
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            播放至少 30,000 的作品条数
+          </TooltipContent>
+        </Tooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button

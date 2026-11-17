@@ -1,4 +1,12 @@
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DEFAULT_EVALUATION_STANDARDS,
+  EVALUATION_METRICS,
+  type EvaluationMetric,
+  type EvaluationStandards,
+} from "@/lib/evaluation-standards";
+import { KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD } from "@/lib/breakout-rating";
 import type { SortField } from "@/lib/content/domain/content-list";
 
 type ContentListTableHeaderProps = {
@@ -7,7 +15,25 @@ type ContentListTableHeaderProps = {
   sortDir: "asc" | "desc";
   handleSort: (field: SortField) => void;
   hoveredColKey?: string | null;
+  evaluationStandards?: EvaluationStandards;
 };
+
+function MetricHeaderTooltip({
+  children,
+  tip,
+}: {
+  children: React.ReactElement;
+  tip: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={children} />
+      <TooltipContent side="top" align="end" className="max-w-xs text-left leading-relaxed">
+        {tip}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function ContentListTableHeader({
   isSpacious,
@@ -15,7 +41,15 @@ export function ContentListTableHeader({
   sortDir,
   handleSort,
   hoveredColKey,
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableHeaderProps) {
+  const standardLineFor = (metric: EvaluationMetric): string => {
+    const meta = EVALUATION_METRICS.find((item) => item.key === metric)!;
+    const band = evaluationStandards[metric];
+    const goodOp = meta.lowerIsBetter ? "≤" : "≥";
+    const poorOp = meta.lowerIsBetter ? ">" : metric === "avgPlayRatio" ? "<" : "≤";
+    return `${meta.label}：好 ${goodOp}${band.good}${meta.unit} · 差 ${poorOp}${band.poor}${meta.unit}（低于 ${evaluationStandards.minPlayCount.toLocaleString("zh-CN")} 播放计样本不足）`;
+  };
   // 当前列的 aria-sort 值。此前排序状态只由 ▼/▲/↕ 三个字符表达，
   // 且未排序列的 ↕ 是 opacity-0 只有 hover 才显形——读屏与键盘用户完全无从得知
   // 当前按哪列、升序还是降序（2026-10-11 审计 M4）。
@@ -118,96 +152,112 @@ export function ContentListTableHeader({
       </>
     )}
 
-    {/* 完播指标：为百分比和时长数据留出列间空间 */}
+    {/* 完播指标：统一在列头展示合格/优秀标准线 */}
     <th data-col-key="bounce_rate_2s" className={cn("font-normal py-2 pl-4 pr-2 text-right w-[77px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-surface-sand")} aria-sort={ariaSortFor("bounce_rate_2s")}>
-      <button
-        aria-label={`按2s跳出排序${sortField === "bounce_rate_2s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("bounce_rate_2s")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("bounce_rate_2s")}
-        <span>2s跳出</span>
-      </button>
+      <MetricHeaderTooltip tip={standardLineFor("bounceRate2s")}>
+        <button
+          aria-label={`按2s跳出排序${sortField === "bounce_rate_2s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("bounce_rate_2s")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("bounce_rate_2s")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>2s跳出</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
     <th data-col-key="completion_rate_5s" className={cn("font-normal py-2 px-2 text-right w-[73px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-surface-sand")} aria-sort={ariaSortFor("completion_rate_5s")}>
-      <button
-        aria-label={`按5s完播排序${sortField === "completion_rate_5s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("completion_rate_5s")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("completion_rate_5s")}
-        <span>5s完播</span>
-      </button>
+      <MetricHeaderTooltip tip={standardLineFor("completionRate5s")}>
+        <button
+          aria-label={`按5s完播排序${sortField === "completion_rate_5s" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("completion_rate_5s")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("completion_rate_5s")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>5s完播</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
     <th data-col-key="avg_play_duration" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-sand")} aria-sort={ariaSortFor("avg_play_duration")}>
-      <button
-        aria-label={`按均播排序${sortField === "avg_play_duration" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("avg_play_duration")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("avg_play_duration")}
-        <span>均播</span>
-      </button>
+      <MetricHeaderTooltip tip={standardLineFor("avgPlayDuration")}>
+        <button
+          aria-label={`按均播排序${sortField === "avg_play_duration" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("avg_play_duration")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("avg_play_duration")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>均播</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
     <th data-col-key="avg_play_ratio" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-sand")} aria-sort={ariaSortFor("avg_play_ratio")}>
-      <button
-        aria-label={`按播放占比排序${sortField === "avg_play_ratio" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("avg_play_ratio")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("avg_play_ratio")}
-        <span>播放占比</span>
-      </button>
+      <MetricHeaderTooltip tip={standardLineFor("avgPlayRatio")}>
+        <button
+          aria-label={`按播放占比排序${sortField === "avg_play_ratio" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("avg_play_ratio")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("avg_play_ratio")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>播放占比</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
     <th data-col-key="completion_rate" className={cn("font-normal py-2 px-2 text-right w-[63px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-sand")} aria-sort={ariaSortFor("completion_rate")}>
-      <button
-        aria-label={`按完播排序${sortField === "completion_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("completion_rate")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("completion_rate")}
-        <span>完播</span>
-      </button>
+      <MetricHeaderTooltip tip={standardLineFor("completionRate")}>
+        <button
+          aria-label={`按完播排序${sortField === "completion_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("completion_rate")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("completion_rate")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>完播</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
 
     <th data-col-key="interaction_rate" className={cn("font-normal py-2 px-2 text-right w-[62px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-sand")} aria-sort={ariaSortFor("interaction_rate")}>
-      <button
-        aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("interaction_rate")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("interaction_rate")}
-        <span>互动率</span>
-      </button>
+      <MetricHeaderTooltip tip={`（点赞+评论+分享+收藏）÷ 播放量；参考基准 ${evaluationStandards.targets.interactionRate}%（达成率好 ≥${evaluationStandards.interactionAchievement.good}% · 差 ≤${evaluationStandards.interactionAchievement.poor}%）`}>
+        <button
+          aria-label={`按互动率排序${sortField === "interaction_rate" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("interaction_rate")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("interaction_rate")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>互动率</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
 
     <th data-col-key="retention_achievement" className={cn("font-normal py-2 px-2 text-right w-[78px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "retention_achievement" && "bg-surface-sand")} aria-sort={ariaSortFor("retention_achievement")}>
-      <button
-        aria-label={`按留存达成排序${sortField === "retention_achievement" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("retention_achievement")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("retention_achievement")}
-        <span>留存达成</span>
-      </button>
+      <MetricHeaderTooltip tip="按 2s 跳出 / 5s 完播 / 均播与播放占比 / 整体完播权重加权计算达成率；缺项时按均播或占比折算">
+        <button
+          aria-label={`按留存达成排序${sortField === "retention_achievement" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("retention_achievement")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("retention_achievement")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>留存达成</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
     <th data-col-key="overall_grade" className={cn("font-normal py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-surface-sand")} aria-sort={ariaSortFor("overall_grade")}>
-      <button
-        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
-        type="button"
-        onClick={() => handleSort("overall_grade")}
-        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-      >
-        {renderSortIndicator("overall_grade")}
-        <span>评级</span>
-      </button>
+      <MetricHeaderTooltip tip={`互动与留存达成均 ≥100% 且均 ≥80% 评优；≥80% 且均 ≥60% 评良；低于 ${KPI_PLAY_FLOOR.toLocaleString("zh-CN")} 播放直接评普，低于 ${KPI_PLAY_GOOD.toLocaleString("zh-CN")} 最高普，低于 ${KPI_PLAY_EXCELLENT.toLocaleString("zh-CN")} 最高良`}>
+        <button
+          aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+          type="button"
+          onClick={() => handleSort("overall_grade")}
+          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+        >
+          {renderSortIndicator("overall_grade")}
+          <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors"><span>评级</span></span>
+        </button>
+      </MetricHeaderTooltip>
     </th>
 
     {/* 发布时间 */}

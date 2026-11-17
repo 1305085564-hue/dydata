@@ -241,8 +241,8 @@ export function TopicSelectDropdown({
           ref={panelRef}
           {...menuMotion.exitProps}
           className={cn(
-            menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
-            "absolute right-0 top-full z-40 mt-1.5 w-80 sm:w-96 origin-top-right rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float duration-150",
+            menuMotion.closing ? "animate-out fade-out slide-out-to-top-1 pointer-events-none" : "animate-in fade-in slide-in-from-top-1",
+            "absolute right-0 top-full z-40 mt-1.5 w-80 sm:w-96 origin-top-right rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float duration-100",
           )}
         >
           {/* 搜索框 */}

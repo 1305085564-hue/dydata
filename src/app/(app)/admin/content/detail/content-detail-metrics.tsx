@@ -5,6 +5,12 @@ import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
+import { SimpleTooltip } from "@/components/ui/tooltip";
+import {
+  InteractionBreakdownContent,
+  RetentionBreakdownContent,
+} from "@/components/admin/quality-tooltip-content";
+import { contentQualityRules } from "@/lib/content-quality";
 import { isImpossibleRatio, describeImpossibleRatio } from "@/lib/metric-bounds";
 import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anomaly";
 import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
@@ -32,20 +38,28 @@ function MetricPercentValue({ value, playCount, normalClassName, standards = DEF
   const percentageValue = avgPlayRatio ? avgPlayRatioAsPercentagePoints(value) : value;
   const dirty = isImpossibleRatio(percentageValue);
   const lowSampleTitle = value != null ? getLowSampleTitle(playCount, standards) : undefined;
-  return (
-    <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""}`} title={dirty ? describeImpossibleRatio() : lowSampleTitle}>
+  const tip = dirty ? describeImpossibleRatio() : lowSampleTitle;
+  const label = (
+    <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""} ${tip ? "cursor-help" : ""}`}>
       {formatPercentagePoints(percentageValue)}
     </span>
   );
+  return tip ? <SimpleTooltip align="end" tip={tip}>{label}</SimpleTooltip> : label;
 }
 
 /** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
-function BreakoutGradeTag({ rating, metricLabel, targetLabel }: { rating: BreakoutRating | null; metricLabel: string; targetLabel: string }) {
+function BreakoutGradeTag({ rating, metricLabel, targetLabel, hideTooltip = false }: { rating: BreakoutRating | null; metricLabel: string; targetLabel: string; hideTooltip?: boolean }) {
   if (!rating) return null;
-  return (
-    <span className={`shrink-0 tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]}`} title={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}>
+  const tag = (
+    <span className={`shrink-0 tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]} ${hideTooltip ? "" : "cursor-help border-b border-dashed border-[#D6D3D1]"}`}>
       {rating.grade}{formatAchievement(rating.achievement)}
     </span>
+  );
+  if (hideTooltip) return tag;
+  return (
+    <SimpleTooltip align="end" tip={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}>
+      {tag}
+    </SimpleTooltip>
   );
 }
 
@@ -148,14 +162,15 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         <UserCheck className="size-3.5 text-[#78716C]" />
                         <span className="text-[#78716C]">责任人:</span>{" "}
                         {owner.id && onSelectAuthor ? (
-                          <button
-                            type="button"
-                            onClick={() => onSelectAuthor(owner.id, owner.name)}
-                            className="font-normal text-[#1F1E1D] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
-                            title={`查看 ${owner.name} 的全部作品`}
-                          >
-                            {owner.name}
-                          </button>
+                          <SimpleTooltip align="start" tip={`查看 ${owner.name} 的全部作品`}>
+                            <button
+                              type="button"
+                              onClick={() => onSelectAuthor(owner.id, owner.name)}
+                              className="font-normal text-[#1F1E1D] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
+                            >
+                              {owner.name}
+                            </button>
+                          </SimpleTooltip>
                         ) : (
                           <span>{owner.name}</span>
                         )}
@@ -180,102 +195,103 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                         爆款数据核心大盘
                       </h3>
                       {overallGrade && (
-                        <Badge
-                          variant="secondary"
-                          className={`bg-[#F1F1F0] text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动达成率与留存达成率取平均，按 ≥100% 优 / ≥80% 良 / 其余普落档；想拿优两项都要 ≥80%，想拿良两项都要 ≥60%；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 直接评普，低于 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，低于 ${KPI_PLAY_EXCELLENT.toLocaleString()} 最高良；互动或留存数据不完整时不评级`}
+                        <SimpleTooltip
+                          align="start"
+                          contentClassName="w-[268px] max-w-[268px] flex-col items-stretch gap-1 p-3 text-left leading-relaxed"
+                          tip={
+                            <>
+                              <div className="text-[12px] text-[#141413] border-b border-[#E2E2DF]/80 pb-1">综合评级口径</div>
+                              <p className="text-[12px] text-[#1F1E1D]">互动达成与留存达成取平均：≥100% 且两项均 ≥80% 评优；≥80% 且两项均 ≥60% 评良；其余评普。</p>
+                              <p className="text-[12px] text-[#78716C]">播放 &lt; {KPI_PLAY_FLOOR.toLocaleString()} 直接评普；&lt; {KPI_PLAY_GOOD.toLocaleString()} 最高评普；&lt; {KPI_PLAY_EXCELLENT.toLocaleString()} 最高评良；任一项不完整时不评级。</p>
+                            </>
+                          }
                         >
-                          综合{overallGrade}
-                        </Badge>
+                          <span>
+                            <Badge variant="secondary" className={`bg-[#F1F1F0] text-[12px] cursor-help ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}>
+                              综合{overallGrade}
+                            </Badge>
+                          </span>
+                        </SimpleTooltip>
                       )}
                     </div>
-                    <span className="text-[12px] text-[#78716C] font-normal">
-                      抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
-                    </span>
+                    <span className="text-[12px] text-[#78716C] font-normal">抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {/* 播放量 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
-                      <Metric
-                        settleKey="content-detail:play"
-                        value={formatNumber(snapshot?.play_count)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
-                        {getPlayThresholdLabel(snapshot?.play_count)}
-                      </div>
+                      <Metric settleKey="content-detail:play" value={formatNumber(snapshot?.play_count)} className="mt-1.5" />
+                      <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">{getPlayThresholdLabel(snapshot?.play_count)}</div>
                     </div>
 
-                    {/* 转粉率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
-                      <Metric
-                        settleKey="content-detail:follower-rate"
-                        value={formatPercent(followerConv)}
-                        className="mt-1.5"
-                      />
+                      <Metric settleKey="content-detail:follower-rate" value={formatPercent(followerConv)} className="mt-1.5" />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>
-                          涨粉量:{" "}
-                          <span className="tabular-nums font-normal text-[#1F1E1D]">
-                            +{formatNumber(snapshot?.follower_gain)}
-                          </span>
-                        </span>
-                        <BreakoutGradeTag
-                          rating={followerRating}
-                          metricLabel="转粉率"
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.follower) : ""}
-                        />
+                        <span>涨粉量: <span className="tabular-nums font-normal text-[#1F1E1D]">+{formatNumber(snapshot?.follower_gain)}</span></span>
+                        <BreakoutGradeTag rating={followerRating} metricLabel="转粉率" targetLabel={breakoutTargets ? formatTarget(breakoutTargets.follower) : ""} />
                       </div>
                     </div>
 
-                    {/* 互动率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>互动达成</span>
-                        <TrendingUp className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric
-                        settleKey="content-detail:interaction-rate"
-                        value={formatAchievement(contentQuality?.interactionAchievement)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>赞/评/藏/转</span>
-                        <BreakoutGradeTag
-                          rating={interactionRating}
-                          metricLabel="互动达成"
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""}
-                        />
-                      </div>
-                    </div>
+                    {(() => {
+                      const hasInteractionDetail = Boolean(contentQuality?.interactionMetrics || contentQuality?.interactionValue != null);
+                      const interactionCard = (
+                        <div className={`group/card relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 ${hasInteractionDetail ? "cursor-help" : ""}`}>
+                          <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
+                            <span className={hasInteractionDetail ? "border-b border-dashed border-[#D6D3D1] group-hover/card:border-[#78716C] transition-colors" : ""}>互动达成</span>
+                            <TrendingUp className="size-3.5 text-[#78716C]" />
+                          </div>
+                          <Metric settleKey="content-detail:interaction-rate" value={formatAchievement(contentQuality?.interactionAchievement)} className="mt-1.5" />
+                          <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
+                            <span>赞/评/藏/转</span>
+                            <BreakoutGradeTag rating={interactionRating} metricLabel="互动达成" targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""} hideTooltip={hasInteractionDetail} />
+                          </div>
+                        </div>
+                      );
+                      return hasInteractionDetail ? (
+                        <SimpleTooltip
+                          align="end"
+                          sideOffset={6}
+                          contentClassName="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+                          tip={<InteractionBreakdownContent quality={contentQuality} playCount={snapshot?.play_count} rules={contentQualityRules(evaluationStandards)} />}
+                        >
+                          {interactionCard}
+                        </SimpleTooltip>
+                      ) : interactionCard;
+                    })()}
 
-                    {/* 留存达成：点赞率和收藏率保留在快照明细中作参考 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>留存达成</span>
-                        <span className="text-[12px] text-[#78716C]">按快照计算</span>
-                      </div>
-                      <Metric
-                        settleKey="content-detail:retention-achievement"
-                        value={formatAchievement(contentQuality?.contentAchievement)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>
-                          {contentQuality?.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : contentQuality?.retentionCalculation === "avg_play_ratio_only" ? "按占比折算" : "五项加权"}
-                        </span>
-                        <span className="shrink-0 tabular-nums text-[#78716C]">{contentQuality?.contentGrade ?? "—"}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const hasRetentionDetail = Boolean(contentQuality?.retentionMetrics);
+                      const retentionCard = (
+                        <div className={`group/card relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 ${hasRetentionDetail ? "cursor-help" : ""}`}>
+                          <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
+                            <span className={hasRetentionDetail ? "border-b border-dashed border-[#D6D3D1] group-hover/card:border-[#78716C] transition-colors" : ""}>留存达成</span>
+                            <span className="text-[12px] text-[#78716C]">按快照计算</span>
+                          </div>
+                          <Metric settleKey="content-detail:retention-achievement" value={formatAchievement(contentQuality?.contentAchievement)} className="mt-1.5" />
+                          <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
+                            <span>{contentQuality?.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : contentQuality?.retentionCalculation === "avg_play_ratio_only" ? "按占比折算" : "五项加权"}</span>
+                            <span className="shrink-0 tabular-nums text-[#78716C]">{contentQuality?.contentGrade ?? "—"}</span>
+                          </div>
+                        </div>
+                      );
+                      return hasRetentionDetail ? (
+                        <SimpleTooltip
+                          align="end"
+                          sideOffset={6}
+                          contentClassName="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left"
+                          tip={<RetentionBreakdownContent quality={contentQuality} rules={contentQualityRules(evaluationStandards)} />}
+                        >
+                          {retentionCard}
+                        </SimpleTooltip>
+                      ) : retentionCard;
+                    })()}
                   </div>
                 </div>
               </section>
@@ -383,12 +399,15 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                     </ListRow>
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">平均播放时长</span>
-                      <span
-                        className={`font-normal tabular-nums ${getAvgPlayDurationClass(snapshot.avg_play_duration, snapshot.play_count, evaluationStandards)}`}
-                        title={snapshot.avg_play_duration != null ? getLowSampleTitle(snapshot.play_count, evaluationStandards) : undefined}
-                      >
-                        {formatDuration(snapshot.avg_play_duration)}
-                      </span>
+                      {(() => {
+                        const lowSampleTip = snapshot.avg_play_duration != null ? getLowSampleTitle(snapshot.play_count, evaluationStandards) : undefined;
+                        const val = (
+                          <span className={`font-normal tabular-nums ${getAvgPlayDurationClass(snapshot.avg_play_duration, snapshot.play_count, evaluationStandards)} ${lowSampleTip ? "cursor-help" : ""}`}>
+                            {formatDuration(snapshot.avg_play_duration)}
+                          </span>
+                        );
+                        return lowSampleTip ? <SimpleTooltip align="end" tip={lowSampleTip}>{val}</SimpleTooltip> : val;
+                      })()}
                     </ListRow>
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">平均播放占比</span>

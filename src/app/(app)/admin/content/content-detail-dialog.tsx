@@ -8,6 +8,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { breakoutRating, breakoutTargetsFor } from "@/lib/breakout-rating";
 
 import { Button } from "@/components/ui/button";
+import { SimpleTooltip } from "@/components/ui/tooltip";
 import {
   Sheet,
   SheetContent,
@@ -291,17 +292,18 @@ export function ContentDetailDialog({
             <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-normal text-[#78716C] md:w-auto md:flex-1">
               {onBack && (
                 <>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="s"
-                    onClick={onBack}
-                    className="h-6 px-1.5 -ml-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] shrink-0 gap-0.5"
-                    title="返回上一级"
-                  >
-                    <ChevronLeft className="size-3.5" />
-                    <span>{backLabel ? `返回 ${backLabel}` : "返回"}</span>
-                  </Button>
+                  <SimpleTooltip side="bottom" align="start" tip="返回上一级">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="s"
+                      onClick={onBack}
+                      className="h-6 px-1.5 -ml-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] shrink-0 gap-0.5"
+                    >
+                      <ChevronLeft className="size-3.5" />
+                      <span>{backLabel ? `返回 ${backLabel}` : "返回"}</span>
+                    </Button>
+                  </SimpleTooltip>
                   <span className="shrink-0 text-[#A8A29E]">·</span>
                 </>
               )}
@@ -312,29 +314,31 @@ export function ContentDetailDialog({
 
             {video && onStepVideo && (
               <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onStepVideo("prev")}
-                  disabled={!hasPrev}
-                  className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                  aria-label="上一条"
-                  title="上一条（快捷键 K 或 ↑）"
-                >
-                  <ChevronLeft className="size-3.5" />
-                </button>
+                <SimpleTooltip side="bottom" tip="上一条（快捷键 K 或 ↑）">
+                  <button
+                    type="button"
+                    onClick={() => onStepVideo("prev")}
+                    disabled={!hasPrev}
+                    className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                    aria-label="上一条"
+                  >
+                    <ChevronLeft className="size-3.5" />
+                  </button>
+                </SimpleTooltip>
                 <span className="text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap px-0.5">
                   {displayCurrent} / {displayTotal}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onStepVideo("next")}
-                  disabled={!hasNext}
-                  className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                  aria-label="下一条"
-                  title={isLast ? "已是最后一条" : "下一条（快捷键 J 或 ↓）"}
-                >
-                  <ChevronRight className="size-3.5" />
-                </button>
+                <SimpleTooltip side="bottom" tip={isLast ? "已是最后一条" : "下一条（快捷键 J 或 ↓）"}>
+                  <button
+                    type="button"
+                    onClick={() => onStepVideo("next")}
+                    disabled={!hasNext}
+                    className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                    aria-label="下一条"
+                  >
+                    <ChevronRight className="size-3.5" />
+                  </button>
+                </SimpleTooltip>
               </div>
             )}
 
@@ -379,19 +383,21 @@ export function ContentDetailDialog({
                       (() => {
                         const eligible = isPurgeEligible(video.trashed_at ?? null);
                         const tooltip = getPurgeTooltip(video.trashed_at ?? null);
-                        return (
+                        const purgeButton = (
                           <Button
                             type="button"
                             variant="secondary"
                             size="s"
                             onClick={() => requestConfirmation("purge")}
                             disabled={!eligible || isOperating}
-                            title={tooltip || undefined}
                           >
                             <Trash2 className="size-3" />
                             永久删除
                           </Button>
                         );
+                        return tooltip ? (
+                          <SimpleTooltip side="bottom" align="end" tip={tooltip}>{purgeButton}</SimpleTooltip>
+                        ) : purgeButton;
                       })()}
                   </>
                 ) : (
@@ -411,15 +417,16 @@ export function ContentDetailDialog({
             )}
 
             {renderMode === "inline" && (
-              <button
-                type="button"
-                onClick={onCloseEntirely || (() => onOpenChange(false))}
-                aria-label="关闭作品详情"
-                className="absolute right-3 top-3 size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
-                title="关闭抽屉 (Esc)"
-              >
-                <X className="size-4" />
-              </button>
+              <SimpleTooltip side="bottom" align="end" tip="关闭抽屉 (Esc)">
+                <button
+                  type="button"
+                  onClick={onCloseEntirely || (() => onOpenChange(false))}
+                  aria-label="关闭作品详情"
+                  className="absolute right-3 top-3 size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </SimpleTooltip>
             )}
           </div>
         </SheetHeader>

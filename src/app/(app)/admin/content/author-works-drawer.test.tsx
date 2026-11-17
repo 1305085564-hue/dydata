@@ -84,7 +84,7 @@ test("ContentListTable 桌面和移动列表只显示可点击的负责人，账
     />,
   );
 
-  assert.equal(html.match(/title="查看 老罗 的全部作品">老罗<\/button>/g)?.length, 2);
+  assert.equal(html.match(/aria-label="查看 老罗 的全部作品"[^>]*>老罗<\/button>/g)?.length, 2);
   assert.doesNotMatch(html, />[^<>]*老罗商业[^<>]*</);
 });
 

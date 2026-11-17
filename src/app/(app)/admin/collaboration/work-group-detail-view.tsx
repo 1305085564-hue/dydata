@@ -16,7 +16,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { SelfMemberBadge } from "./member-self-hint";
-import { WorkGroupKindBadge, formatRate } from "./work-group-list-tab";
+import { WorkGroupKindBadge, WorkGroupQualitySummaryCell, formatRate } from "./work-group-list-tab";
 import {
   formatBigNumber,
   type WorkGroupDetailView as WorkGroupDetailViewType,
@@ -248,32 +248,11 @@ export function WorkGroupDetailView({
                     {formatRate(summary.aggregate.favoriteRate)}
                   </TableCell>
                   {hasContentQuality && (
-                    <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                      {summary.contentQuality ? (
-                        <div>
-                          <div className="font-normal text-[#141413]">
-                            互动 {summary.contentQuality.avgInteractionAchievement == null
-                              ? "—"
-                              : `${Math.round(summary.contentQuality.avgInteractionAchievement)}%`}
-                            <span className="mx-1 text-[#A8A29E]">·</span>
-                            留存 {summary.contentQuality.avgContentAchievement == null
-                              ? "—"
-                              : `${Math.round(summary.contentQuality.avgContentAchievement)}%`}
-                          </div>
-                          <div
-                            className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 作品 ${summary.contentQuality.totalCount} 篇\n良优率 ${summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair}`}
-                          >
-                            良优 {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
-                              ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
-                              : "—"}
-                            <span className="mx-1 text-[#A8A29E]">·</span>
-                            优{summary.contentQuality.overallGradeCounts.excellent}·良{summary.contentQuality.overallGradeCounts.good}·普{summary.contentQuality.overallGradeCounts.fair}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="font-normal text-[#141413]">—</span>
-                      )}
+                    <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
+                      <WorkGroupQualitySummaryCell
+                        contentQuality={summary.contentQuality}
+                        emptyClassName="font-normal text-[#141413]"
+                      />
                     </TableCell>
                   )}
                 </TableRow>
@@ -322,32 +301,11 @@ export function WorkGroupDetailView({
                       {formatRate(member.favoriteRate)}
                     </TableCell>
                     {hasContentQuality && (
-                      <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                      {member.contentQuality ? (
-                          <div>
-                          <div className="font-normal text-[#141413]">
-                            互动 {member.contentQuality.avgInteractionAchievement == null
-                              ? "—"
-                              : `${Math.round(member.contentQuality.avgInteractionAchievement)}%`}
-                            <span className="mx-1 text-[#A8A29E]">·</span>
-                            留存 {member.contentQuality.avgContentAchievement == null
-                              ? "—"
-                              : `${Math.round(member.contentQuality.avgContentAchievement)}%`}
-                          </div>
-                            <div
-                              className="text-[12px] text-[#78716C] font-normal"
-                            title={`综合已评级 ${member.contentQuality.ratedCount} / 作品 ${member.contentQuality.totalCount} 篇\n良优率 ${member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%` : "—"}\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair}`}
-                            >
-                            良优 {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
-                              ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
-                              : "—"}
-                            <span className="mx-1 text-[#A8A29E]">·</span>
-                            优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="font-normal text-[#141413]">—</span>
-                        )}
+                      <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
+                        <WorkGroupQualitySummaryCell
+                          contentQuality={member.contentQuality}
+                          emptyClassName="font-normal text-[#141413]"
+                        />
                       </TableCell>
                     )}
                   </TableRow>

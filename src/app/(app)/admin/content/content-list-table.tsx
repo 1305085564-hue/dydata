@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
@@ -20,9 +20,12 @@ import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import {
   DurationCell,
   Highlightable,
+  InteractionRateTooltipCell,
   RatioCell,
+  RetentionAchievementTooltipCell,
   formatCompactDate,
   formatCount,
+  formatFullDateTime,
   formatTimeOfDay,
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
@@ -89,8 +92,7 @@ export function ContentListTable({
   }, [selectedVideoId, tableContainerRef]);
 
   return (
-    <TooltipProvider delay={100}>
-      <div ref={tableContainerRef} className="flex-1 w-full min-h-0">
+    <div ref={tableContainerRef} className="flex-1 w-full min-h-0">
         {/* 1. 移动端紧凑高密度流 (<768px)：发丝线分隔，一屏 4~5 条，5 项关键指标清晰平铺 */}
         <div className="md:hidden w-full bg-white rounded-xl shadow-card-ring border border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60 overflow-hidden">
           {visibleRows.length === 0 ? (
@@ -137,12 +139,18 @@ export function ContentListTable({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      <span
-                        className="text-[12px] tabular-nums text-[#78716C] font-normal"
-                        title={video.published_at ?? "发布日期未知"}
-                      >
-                        {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-[12px] tabular-nums text-[#78716C] font-normal">
+                              {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
+                            </span>
+                          }
+                        />
+                        <TooltipContent side="top" align="end">
+                          {formatFullDateTime(video.published_at)}
+                        </TooltipContent>
+                      </Tooltip>
                       <ChevronRight className="size-3.5 text-[#A8A29E] group-hover:text-[#141413] transition-colors" />
                     </div>
                   </div>
@@ -166,17 +174,26 @@ export function ContentListTable({
                       <span className="shrink-0 text-[#78716C]">
                         责任人：
                         {owner.id && onSelectAuthor ? (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onSelectAuthor(owner.id, owner.name);
-                            }}
-                            className="text-[#78716C] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
-                            title={`查看 ${owner.name} 的全部作品`}
-                          >
-                            {owner.name}
-                          </button>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onSelectAuthor(owner.id, owner.name);
+                                  }}
+                                  aria-label={`查看 ${owner.name} 的全部作品`}
+                                  className="text-[#78716C] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
+                                />
+                              }
+                            >
+                              {owner.name}
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="start">
+                              查看 {owner.name} 的全部作品
+                            </TooltipContent>
+                          </Tooltip>
                         ) : (
                           <span className="text-[#78716C]">{owner.name}</span>
                         )}
@@ -236,6 +253,7 @@ export function ContentListTable({
                   sortDir={sortDir}
                   handleSort={handleSort}
                   hoveredColKey={hoveredColKey}
+                  evaluationStandards={evaluationStandards}
                 />
 
                 <tbody
@@ -289,7 +307,7 @@ export function ContentListTable({
                               hoveredColKey === "status" && "bg-surface-row-hover/60",
                             )}
                           >
-                            <Badge variant={dot.variant} title={`状态：${dot.label}`}>
+                            <Badge variant={dot.variant}>
                               {dot.label}
                             </Badge>
                           </td>
@@ -331,17 +349,26 @@ export function ContentListTable({
                                   <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
                                     ·{" "}
                                     {owner.id && onSelectAuthor ? (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          onSelectAuthor(owner.id, owner.name);
-                                        }}
-                                        className="text-[#78716C] hover:text-[#141413] hover:underline transition-colors cursor-pointer"
-                                        title={`查看 ${owner.name} 的全部作品`}
-                                      >
-                                        {owner.name}
-                                      </button>
+                                      <Tooltip>
+                                        <TooltipTrigger
+                                          render={
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                onSelectAuthor(owner.id, owner.name);
+                                              }}
+                                              aria-label={`查看 ${owner.name} 的全部作品`}
+                                              className="text-[#78716C] hover:text-[#141413] hover:underline transition-colors cursor-pointer"
+                                            />
+                                          }
+                                        >
+                                          {owner.name}
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" align="start">
+                                          查看 {owner.name} 的全部作品
+                                        </TooltipContent>
+                                      </Tooltip>
                                     ) : (
                                       <span className="text-[#78716C]">{owner.name}</span>
                                     )}
@@ -391,32 +418,41 @@ export function ContentListTable({
                           )}
 
                           {/* 完播指标 (2s跳出、5s完播、均播、播放占比、完播) */}
-                          <td data-col-key="bounce_rate_2s" className={cn("py-2.5 pl-4 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          <td data-col-key="bounce_rate_2s" className={cn("p-0 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-surface-row-hover/60")}>
+                            <RatioCell fullCell cellClassName="pl-4 pr-2" standards={evaluationStandards} value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="completion_rate_5s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.completionRate5s} lowSample={item.lowSample} metricType="completion_rate_5s" className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          <td data-col-key="completion_rate_5s" className={cn("p-0 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-surface-row-hover/60")}>
+                            <RatioCell fullCell standards={evaluationStandards} value={item.completionRate5s} lowSample={item.lowSample} metricType="completion_rate_5s" className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
-                            <DurationCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          <td data-col-key="avg_play_duration" className={cn("p-0 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-surface-row-hover/60")}>
+                            <DurationCell fullCell standards={evaluationStandards} value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="avg_play_ratio" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.avgPlayRatio} lowSample={item.lowSample} metricType="avg_play_ratio" />
+                          <td data-col-key="avg_play_ratio" className={cn("p-0 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_ratio" && "bg-surface-row-hover/60")}>
+                            <RatioCell fullCell standards={evaluationStandards} value={item.avgPlayRatio} lowSample={item.lowSample} metricType="avg_play_ratio" />
                           </td>
                           {/* 完播率 */}
-                          <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          <td data-col-key="completion_rate" className={cn("p-0 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-surface-row-hover/60")}>
+                            <RatioCell fullCell standards={evaluationStandards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 互动率 */}
-                          <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-row-hover/60")}>
-                            <RatioCell standards={evaluationStandards} value={item.interactionRate} achievement={item.quality?.interactionAchievement} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                          <td data-col-key="interaction_rate" className={cn("p-0 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-surface-row-hover/60")}>
+                            <InteractionRateTooltipCell
+                              value={item.interactionRate}
+                              quality={item.quality}
+                              playCount={item.playCount}
+                              lowSample={item.lowSample}
+                              standards={evaluationStandards}
+                              highlightClass={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""}
+                            />
                           </td>
 
                           {/* 留存达成 */}
-                          <td data-col-key="retention_achievement" className={cn("py-2.5 px-2 text-right tabular-nums whitespace-nowrap transition-colors", hoveredColKey === "retention_achievement" && "bg-surface-row-hover/60")}>
-                            {item.quality?.contentAchievement == null ? "—" : `${Math.round(item.quality.contentAchievement)}%`}
-                            {item.quality?.retentionCalculation === "avg_play_duration_only" ? <span className="ml-1 text-[12px] text-[#78716C]">均播折算</span> : item.quality?.retentionCalculation === "avg_play_ratio_only" ? <span className="ml-1 text-[12px] text-[#78716C]">占比折算</span> : null}
+                          <td data-col-key="retention_achievement" className={cn("p-0 text-right tabular-nums whitespace-nowrap transition-colors", hoveredColKey === "retention_achievement" && "bg-surface-row-hover/60")}>
+                            <RetentionAchievementTooltipCell
+                              quality={item.quality}
+                              standards={evaluationStandards}
+                            />
                           </td>
 
                           {/* 综合评级 */}
@@ -433,10 +469,20 @@ export function ContentListTable({
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}
                           <td
                             data-col-key="published_at"
-                            className={cn("py-2.5 px-1 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-surface-row-hover/60")}
-                            title={video.published_at ?? "发布日期未知"}
+                            className={cn("p-0 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-surface-row-hover/60")}
                           >
-                            {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <div className="flex h-full w-full items-center justify-end py-2.5 px-1">
+                                    {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
+                                  </div>
+                                }
+                              />
+                              <TooltipContent side="top" align="end">
+                                {formatFullDateTime(video.published_at)}
+                              </TooltipContent>
+                            </Tooltip>
                           </td>
                         </tr>
                       );
@@ -447,6 +493,5 @@ export function ContentListTable({
               </Table>
             </Card>
       </div>
-    </TooltipProvider>
   );
 }

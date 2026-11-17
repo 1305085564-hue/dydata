@@ -23,7 +23,6 @@ import { Card } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -81,17 +80,15 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
         运营姓名
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
-              负责账号
-              <HelpCircle className="size-3 text-[#78716C]" />
-            </TooltipTrigger>
-            <TooltipContent className="text-[12px]">
-              只统计该运营为别人孵化、负责的账号
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger className="inline-flex w-full items-center justify-end gap-1 cursor-help">
+            负责账号
+            <HelpCircle className="size-3 text-[#78716C]" />
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end" className="text-[12px]">
+            只统计该运营为别人孵化、负责的账号
+          </TooltipContent>
+        </Tooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
@@ -135,8 +132,26 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <Tooltip>
+          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
+            有效作品
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            播放大于 500 的作品条数
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <Tooltip>
+          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
+            优秀作品
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            播放至少 30,000 的作品条数
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
@@ -145,7 +160,14 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
         </TableHead>
       ))}
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        环比
+        <Tooltip>
+          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
+            环比
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            本月总播放较上月总播放的变化比例；上月无有效基准时显示 —
+          </TooltipContent>
+        </Tooltip>
       </TableHead>
     </TableRow>
   );

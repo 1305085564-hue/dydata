@@ -187,7 +187,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
             </button>
 
             {isDropdownOpen && group.children && (
-              <div className="absolute left-0 top-full pt-1.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150">
+              <div className="absolute left-0 top-full pt-1.5 z-50 animate-in fade-in duration-100">
                 <div className="w-56 rounded-xl bg-white/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                   <div className="space-y-0.5">
                     {group.children.map((child: NavSubItem) => {
@@ -253,7 +253,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
           </button>
 
           {compactMoreOpen && (
-            <div className="absolute left-0 top-full z-50 pt-1.5 animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150">
+            <div className="absolute left-0 top-full z-50 pt-1.5 animate-in fade-in duration-100">
               <div className="w-56 rounded-xl bg-white/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                 <div className="space-y-0.5">
                   {compactMoreGroups.map((group) => {

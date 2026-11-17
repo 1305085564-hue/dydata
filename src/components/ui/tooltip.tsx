@@ -1,17 +1,20 @@
 "use client"
 
+import type { ReactElement, ReactNode } from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
 
 function TooltipProvider({
-  delay = 0,
+  delay = 100,
+  timeout = 400,
   ...props
 }: TooltipPrimitive.Provider.Props) {
   return (
     <TooltipPrimitive.Provider
       data-slot="tooltip-provider"
       delay={delay}
+      timeout={timeout}
       {...props}
     />
   )
@@ -45,12 +48,12 @@ function TooltipContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        className="isolate z-[90]"
+        className="isolate z-[110]"
       >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            "z-[90] inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] text-[#1F1E1D] shadow-claude-float has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-[90] **:data-[slot=kbd]:rounded-md data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "z-[110] inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] text-[#1F1E1D] shadow-claude-float duration-100 has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-[110] **:data-[slot=kbd]:rounded-md data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-instant:animate-none data-instant:duration-0",
             className
           )}
           {...props}
@@ -63,4 +66,29 @@ function TooltipContent({
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+function SimpleTooltip({
+  tip,
+  side = "top",
+  align = "center",
+  sideOffset = 4,
+  contentClassName,
+  children,
+}: {
+  tip: ReactNode
+  side?: TooltipPrimitive.Positioner.Props["side"]
+  align?: TooltipPrimitive.Positioner.Props["align"]
+  sideOffset?: number
+  contentClassName?: string
+  children: ReactElement
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={children} />
+      <TooltipContent side={side} align={align} sideOffset={sideOffset} className={contentClassName}>
+        {tip}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, SimpleTooltip }

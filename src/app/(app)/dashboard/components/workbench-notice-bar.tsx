@@ -117,7 +117,7 @@ export function WorkbenchNoticeCapsule({
 
       {/* 多条提示时展开浮层 */}
       {isOpen && hasMultiple && (
-        <div className="absolute left-0 top-full mt-1.5 z-40 w-72 sm:w-80 rounded-xl border border-[#E2E2DF] bg-white p-2 shadow-claude-float divide-y divide-[#E2E2DF]/60 ring-1 ring-[#141413]/5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-full mt-1.5 z-40 w-72 sm:w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-[#E2E2DF] bg-white p-2 shadow-claude-float divide-y divide-[#E2E2DF]/60 ring-1 ring-[#141413]/5 animate-in fade-in duration-100">
           {notices.map((notice) => (
             <div
               key={notice.id}

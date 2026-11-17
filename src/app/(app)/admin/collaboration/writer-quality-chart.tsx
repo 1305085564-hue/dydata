@@ -6,6 +6,7 @@ import {
   CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,
 } from "recharts";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CHART_AXIS_TICK, CHART_GRID_PROPS } from "@/lib/chart-palette";
 import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "@/lib/breakout-rating";
 import {
@@ -233,45 +234,57 @@ export function WriterQualityChart({
         </div>
 
         {chartData.length > 0 && (
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              aria-pressed={visibleMetrics.content}
-              onClick={() => toggleMetric("content")}
-              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                visibleMetrics.content
-                  ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
-                  : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-              }`}
-              title="点击切换留存数据折线显隐"
-            >
-              <span
-                className="size-1.5 rounded-full"
-                style={{
-                  backgroundColor: visibleMetrics.content ? "#D97757" : "#A8A29E",
-                }}
-              />
-              <span>留存数据</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={visibleMetrics.interaction}
-              onClick={() => toggleMetric("interaction")}
-              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                visibleMetrics.interaction
-                  ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
-                  : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-              }`}
-              title="点击切换互动数据折线显隐"
-            >
-              <span
-                className="size-1.5 rounded-full"
-                style={{
-                  backgroundColor: visibleMetrics.interaction ? "#43718E" : "#A8A29E",
-                }}
-              />
-              <span>互动数据</span>
-            </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-pressed={visibleMetrics.content}
+                    onClick={() => toggleMetric("content")}
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                      visibleMetrics.content
+                        ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
+                        : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                    }`}
+                  />
+                }
+              >
+                <span
+                  className="size-1.5 rounded-full"
+                  style={{
+                    backgroundColor: visibleMetrics.content ? "#D97757" : "#A8A29E",
+                  }}
+                />
+                <span>留存数据</span>
+              </TooltipTrigger>
+              <TooltipContent side="top">点击切换留存数据折线显隐</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-pressed={visibleMetrics.interaction}
+                    onClick={() => toggleMetric("interaction")}
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                      visibleMetrics.interaction
+                        ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
+                        : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                    }`}
+                  />
+                }
+              >
+                <span
+                  className="size-1.5 rounded-full"
+                  style={{
+                    backgroundColor: visibleMetrics.interaction ? "#43718E" : "#A8A29E",
+                  }}
+                />
+                <span>互动数据</span>
+              </TooltipTrigger>
+              <TooltipContent side="top">点击切换互动数据折线显隐</TooltipContent>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -297,7 +310,6 @@ export function WriterQualityChart({
                 void diagnosisContext.openDiagnosisByReportId(hoveredWork.reportId);
               }
             }}
-            title={hoveredWork?.reportId ? "点击打开作品复盘诊断" : undefined}
           >
             {hoveredWork ? (
               <div className="flex items-center justify-between w-full gap-3 min-w-0">
@@ -387,13 +399,15 @@ export function WriterQualityChart({
             ) : (
               <div className="flex items-center w-full min-w-0">
                 {/* 默认均值带：单行展示，留存数据无样本显示「—」非「0%」 */}
-                <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
-                  <span
-                    className="text-[#78716C] font-normal shrink-0"
-                    title="留存分均值只统计五项留存数据完整作品；良优率只统计已评级作品"
-                  >
-                    近30天作品数据
-                  </span>
+                <div className="flex items-center gap-2 min-w-0 whitespace-nowrap">
+                  <Tooltip>
+                    <TooltipTrigger render={<span className="text-[#78716C] font-normal shrink-0 cursor-help" />}>
+                      近30天作品数据
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      留存分均值只统计五项留存数据完整作品；良优率只统计已评级作品
+                    </TooltipContent>
+                  </Tooltip>
                   {summary ? (
                     <>
                       {visibleMetrics.content && summary.avgContentAchievement != null && (
@@ -406,20 +420,35 @@ export function WriterQualityChart({
                           互动数据均值 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
                         </span>
                       )}
-                      <span className="text-[#78716C] tabular-nums" title="五项留存数据完整且已计算留存分的作品篇数">
-                        留存完整 <span className="font-normal text-[#1F1E1D]">{summary.achievementSampleCount}</span> 篇
-                      </span>
-                      <span className="text-[#78716C] tabular-nums" title="综合已评级篇数 / 署名作品篇数">
-                        已评级 <span className="font-normal text-[#1F1E1D]">{summary.ratedCount}</span>/{summary.totalCount}
-                      </span>
-                      <span className="text-[#78716C] tabular-nums" title="综合评级为良或优的篇数 ÷ 综合已评级篇数">
-                        留存良优率{" "}
-                        <span className="font-normal text-[#141413]">
-                          {summary.ratedCount === 0 || summary.goodExcellentRate === null
-                            ? "—"
-                            : `${Math.round(summary.goodExcellentRate * 100)}%`}
-                        </span>
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger render={<span className="text-[#78716C] tabular-nums cursor-help" />}>
+                          留存完整 <span className="font-normal text-[#1F1E1D]">{summary.achievementSampleCount}</span> 篇
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          五项留存数据完整且已计算留存分的作品篇数
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger render={<span className="text-[#78716C] tabular-nums cursor-help" />}>
+                          已评级 <span className="font-normal text-[#1F1E1D]">{summary.ratedCount}</span>/{summary.totalCount}
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          综合已评级篇数 / 署名作品篇数
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger render={<span className="text-[#78716C] tabular-nums cursor-help" />}>
+                          留存良优率{" "}
+                          <span className="font-normal text-[#141413]">
+                            {summary.ratedCount === 0 || summary.goodExcellentRate === null
+                              ? "—"
+                              : `${Math.round(summary.goodExcellentRate * 100)}%`}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="end">
+                          综合评级为良或优的篇数 ÷ 综合已评级篇数
+                        </TooltipContent>
+                      </Tooltip>
                     </>
                   ) : (
                     <span className="text-[#A8A29E] text-[12px]">质量数据尚未接入</span>

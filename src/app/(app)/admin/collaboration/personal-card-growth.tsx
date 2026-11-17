@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CHART_COLORS } from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 import type { CollaborationRoleTab, PersonDetailData } from "./types";
@@ -72,61 +73,79 @@ export function PersonalCardGrowth({
                   {growthChartData.length > 0 && (
                     /* 胶囊淡底与描边必须与下方折线同色；Tailwind 的任意值类要留字面量才能被编译，
                        取值与 CHART_COLORS.primary / secondary / success 一一对应，改色板时同步这里。 */
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleMetric("interaction")}
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                          visibleMetrics.interaction
-                            ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
-                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-                        }`}
-                        title="点击切换互动率折线显隐"
-                      >
-                        <span
-                          className="size-1.5 rounded-full"
-                          style={{
-                            backgroundColor: visibleMetrics.interaction ? CHART_COLORS.primary : "#A8A29E",
-                          }}
-                        />
-                        <span>互动率</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleMetric("like")}
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                          visibleMetrics.like
-                            ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
-                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-                        }`}
-                        title="点击切换点赞率折线显隐"
-                      >
-                        <span
-                          className="size-1.5 rounded-full"
-                          style={{
-                            backgroundColor: visibleMetrics.like ? CHART_COLORS.secondary : "#A8A29E",
-                          }}
-                        />
-                        <span>点赞率</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleMetric("favorite")}
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
-                          visibleMetrics.favorite
-                            ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
-                            : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
-                        }`}
-                        title="点击切换收藏率折线显隐"
-                      >
-                        <span
-                          className="size-1.5 rounded-full"
-                          style={{
-                            backgroundColor: visibleMetrics.favorite ? CHART_COLORS.success : "#A8A29E",
-                          }}
-                        />
-                        <span>收藏率</span>
-                      </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              type="button"
+                              onClick={() => toggleMetric("interaction")}
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                                visibleMetrics.interaction
+                                  ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
+                                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                              }`}
+                            />
+                          }
+                        >
+                          <span
+                            className="size-1.5 rounded-full"
+                            style={{
+                              backgroundColor: visibleMetrics.interaction ? CHART_COLORS.primary : "#A8A29E",
+                            }}
+                          />
+                          <span>互动率</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">点击切换互动率折线显隐</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              type="button"
+                              onClick={() => toggleMetric("like")}
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                                visibleMetrics.like
+                                  ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
+                                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                              }`}
+                            />
+                          }
+                        >
+                          <span
+                            className="size-1.5 rounded-full"
+                            style={{
+                              backgroundColor: visibleMetrics.like ? CHART_COLORS.secondary : "#A8A29E",
+                            }}
+                          />
+                          <span>点赞率</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">点击切换点赞率折线显隐</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              type="button"
+                              onClick={() => toggleMetric("favorite")}
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                                visibleMetrics.favorite
+                                  ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
+                                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                              }`}
+                            />
+                          }
+                        >
+                          <span
+                            className="size-1.5 rounded-full"
+                            style={{
+                              backgroundColor: visibleMetrics.favorite ? CHART_COLORS.success : "#A8A29E",
+                            }}
+                          />
+                          <span>收藏率</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">点击切换收藏率折线显隐</TooltipContent>
+                      </Tooltip>
                     </div>
                   )}
                 </div>
@@ -151,7 +170,6 @@ export function PersonalCardGrowth({
                           void diagnosisContext.openDiagnosisByReportId(hoveredWork.reportId);
                         }
                       }}
-                      title={hoveredWork?.reportId ? "点击打开作品复盘诊断" : undefined}
                     >
                       {hoveredWork ? (
                         <div className="flex items-center justify-between w-full gap-3 min-w-0">
@@ -220,12 +238,14 @@ export function PersonalCardGrowth({
                         <div className="flex items-center w-full min-w-0">
                           {/* 30天均值基线：单行展示，杜绝换行跳动 */}
                           <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
-                            <span
-                              className="text-[#78716C] font-normal shrink-0"
-                              title="口径与岗位榜单一致：全部作品分子合计 ÷ 播放合计（仅计已同步 24h 快照的作品）"
-                            >
-                              近30天均值
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="text-[#78716C] font-normal shrink-0 cursor-help" />}>
+                                近30天均值
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="start" className="max-w-xs text-left">
+                                口径与岗位榜单一致：全部作品分子合计 ÷ 播放合计（仅计已同步 24h 快照的作品）
+                              </TooltipContent>
+                            </Tooltip>
                             {growthAverages && (
                               <>
                                 {growthAverages.avgPlay != null && (

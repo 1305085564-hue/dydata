@@ -3,24 +3,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { CollaborationDiagnosisContextValue } from "@/components/admin/collaboration-work-review-link";
 import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
+import {
+  InteractionTooltipCell,
+  OverallGradeTooltipCell,
+  RetentionTooltipCell,
+} from "@/components/admin/quality-tooltip-content";
 import type { CollaborationRoleTab, PersonDetailData } from "./types";
 import { formatBigNumber } from "./types";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
-import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
-import {
-  getContentQualityStatusText,
-  retentionSubMetricDetails,
-  type ContentQualityRules,
-  type ContentQualitySummary,
-  type WorkContentQuality,
+import type {
+  ContentQualityRules,
+  ContentQualitySummary,
+  WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 
 interface PersonalCardWorksProps {
@@ -119,6 +115,7 @@ function WorkTitleCell({
         ) : (
           <CollaborationWorkReviewLink
             reportId={work.reportId}
+            previewMode="title-only"
             preview={{
               title: work.title,
               accountName: work.accountName,
@@ -126,7 +123,7 @@ function WorkTitleCell({
               reportDate: work.reportDate,
               dataSource: work.dataSource,
             }}
-            className="min-w-0 truncate text-left text-[13px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
+            className="min-w-0 max-w-full truncate text-left text-[13px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
           >
             {displayTitle}
           </CollaborationWorkReviewLink>
@@ -150,302 +147,6 @@ function WorkTitleCell({
   );
 }
 
-function InteractionTooltipCell({
-  quality,
-  playCount,
-  rules,
-}: {
-  quality: WorkContentQuality | null | undefined;
-  playCount: number | null;
-  rules: ContentQualityRules | null | undefined;
-}) {
-  if (quality?.interactionAchievement == null) {
-    return <span className="inline-block py-2.5 px-2.5 text-[12px] text-[#A8A29E]">—</span>;
-  }
-
-  const achPct = Math.round(quality.interactionAchievement);
-  const rateText =
-    quality.interactionValue != null
-      ? `${(quality.interactionValue * 100).toFixed(2)}%`
-      : null;
-  const targetRate =
-    rules == null
-      ? null
-      : quality.topicKind === "dry_goods"
-        ? rules.dryGoods.interaction
-        : rules.review.interaction;
-  const effectivePlay = quality.snapshotPlayCount ?? playCount;
-  const m = quality.interactionMetrics;
-
-  const triggerContent = (
-    <div className="flex h-full w-full items-center justify-end py-2.5 px-2.5 cursor-default group/cell">
-      <span className="text-[13px] text-[#141413] tabular-nums border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
-        {achPct}%
-      </span>
-    </div>
-  );
-
-  if (!m && !rateText) {
-    return (
-      <div className="py-2.5 px-2.5 text-[13px] text-[#141413] tabular-nums">
-        {achPct}%
-      </div>
-    );
-  }
-
-  const items: Array<{ label: string; value: number | null | undefined }> = m
-    ? [
-        { label: "点赞", value: m.likes },
-        { label: "评论", value: m.comments },
-        { label: "转发", value: m.shares },
-        { label: "收藏", value: m.favorites },
-      ]
-    : [];
-
-  return (
-    <Tooltip>
-      <TooltipTrigger render={triggerContent} />
-      <TooltipContent
-        side="top"
-        align="end"
-        sideOffset={4}
-        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
-      >
-        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
-          <span className="text-[12px] text-[#141413]">互动达成 {achPct}%</span>
-          {rateText ? (
-            <span className="text-[12px] text-[#78716C] tabular-nums">
-              互动率 {rateText}
-            </span>
-          ) : null}
-        </div>
-        {items.length > 0 ? (
-          <div className="space-y-1">
-            {items.map((item) => {
-              const count = item.value;
-              const pct =
-                count != null && effectivePlay != null && effectivePlay > 0
-                  ? `${((count / effectivePlay) * 100).toFixed(2)}%`
-                  : "—";
-              return (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between gap-2 text-[12px] tabular-nums"
-                >
-                  <span className="text-[#78716C]">{item.label}</span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-[#141413]">
-                      {count == null ? "—" : count.toLocaleString("zh-CN")}
-                    </span>
-                    <span className="w-[48px] text-right text-[#78716C]">{pct}</span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-        {targetRate != null ? (
-          <div className="flex items-center justify-between border-t border-[#E2E2DF]/80 pt-1 text-[12px] text-[#78716C] tabular-nums">
-            <span>目标标准线</span>
-            <span>{(targetRate * 100).toFixed(2)}%</span>
-          </div>
-        ) : null}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function RetentionTooltipCell({
-  quality,
-  rules,
-}: {
-  quality: WorkContentQuality | null | undefined;
-  rules: ContentQualityRules | null | undefined;
-}) {
-  if (quality?.contentAchievement == null) {
-    return (
-      <span className="inline-block py-2.5 px-2.5 text-[12px] text-[#A8A29E]">
-        {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
-      </span>
-    );
-  }
-
-  const totalPct = Math.round(quality.contentAchievement);
-  const calcNote =
-    quality.retentionCalculation === "avg_play_duration_only"
-      ? "按均播折算"
-      : quality.retentionCalculation === "avg_play_ratio_only"
-        ? "按占比折算"
-        : null;
-  const details = retentionSubMetricDetails(quality.retentionMetrics, rules);
-
-  const triggerContent = (
-    <div className="flex h-full w-full items-center justify-end py-2.5 px-2.5 cursor-default group/cell">
-      <span className="text-[13px] text-[#141413] tabular-nums border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
-        {totalPct}%
-      </span>
-    </div>
-  );
-
-  if (details.length === 0) {
-    return (
-      <div className="py-2.5 px-2.5 text-[13px] text-[#141413] tabular-nums">
-        {totalPct}%
-      </div>
-    );
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger render={triggerContent} />
-      <TooltipContent
-        side="top"
-        align="end"
-        sideOffset={4}
-        className="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
-      >
-        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
-          <span className="text-[12px] text-[#141413]">留存达成 {totalPct}%</span>
-          {calcNote ? (
-            <span className="text-[12px] text-[#78716C]">{calcNote}</span>
-          ) : null}
-        </div>
-        <div className="space-y-1">
-          {details.map((item) => {
-            const dotClass =
-              item.status === "poor"
-                ? "bg-status-danger"
-                : item.status === "good"
-                  ? "bg-status-success"
-                  : "bg-[#D6D3D1]";
-            const achText =
-              item.achievement != null ? `达成 ${item.achievement}%` : "未回传";
-            const achColor =
-              item.status === "poor"
-                ? "text-status-danger"
-                : item.status === "good"
-                  ? "text-status-success-text"
-                  : "text-[#78716C]";
-
-            return (
-              <div
-                key={item.key}
-                className="flex items-center justify-between gap-2 text-[12px] tabular-nums"
-              >
-                <span className="inline-flex items-center gap-1 text-[#1F1E1D] min-w-0">
-                  <span className={`size-1.5 shrink-0 rounded-full ${dotClass}`} />
-                  <span className="truncate">{item.label}</span>
-                </span>
-                <span className="inline-flex items-center gap-2 shrink-0">
-                  <span className="text-[#141413]">{item.actualText}</span>
-                  <span className={`w-[58px] text-right ${achColor}`}>{achText}</span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function OverallGradeTooltipCell({
-  quality,
-  playCount,
-  rules,
-}: {
-  quality: WorkContentQuality | null | undefined;
-  playCount: number | null;
-  rules: ContentQualityRules | null | undefined;
-}) {
-  if (!quality?.overallGrade) {
-    return (
-      <div className="py-2.5 px-3">
-        <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-          {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
-        </span>
-      </div>
-    );
-  }
-
-  const effectivePlay = quality.snapshotPlayCount ?? playCount;
-  const floors = rules?.playFloors;
-  let playNote: string | null = null;
-  let playDot = "bg-[#D6D3D1]";
-
-  if (effectivePlay != null && floors) {
-    if (effectivePlay < floors.floor) {
-      playNote = `未满 ${formatBigNumber(floors.floor)} 直接判普`;
-      playDot = "bg-status-danger";
-    } else if (effectivePlay < floors.good) {
-      playNote = `未满 ${formatBigNumber(floors.good)} 最高评普`;
-      playDot = "bg-status-danger";
-    } else if (effectivePlay < floors.excellent) {
-      playNote = `未满 ${formatBigNumber(floors.excellent)} 最高评良`;
-      playDot = "bg-[#D6D3D1]";
-    } else {
-      playNote = `已达 ${formatBigNumber(floors.excellent)} 门槛`;
-      playDot = "bg-status-success";
-    }
-  }
-
-  const triggerContent = (
-    <div className="flex h-full w-full items-center justify-end py-2.5 px-3 cursor-default group/cell">
-      <span
-        className={`inline-block font-normal border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}
-      >
-        综合{quality.overallGrade}
-      </span>
-    </div>
-  );
-
-  return (
-    <Tooltip>
-      <TooltipTrigger render={triggerContent} />
-      <TooltipContent
-        side="top"
-        align="end"
-        sideOffset={4}
-        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
-      >
-        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
-          <span className={`text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}>
-            综合{quality.overallGrade}
-          </span>
-          {playNote ? (
-            <span className="text-[12px] text-[#78716C]">{playNote}</span>
-          ) : null}
-        </div>
-        <div className="space-y-1 text-[12px] tabular-nums">
-          <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1 text-[#1F1E1D]">
-              <span className={`size-1.5 shrink-0 rounded-full ${playDot}`} />
-              <span>播放量</span>
-            </span>
-            <span className="text-[#141413]">{formatBigNumber(effectivePlay)}</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[#78716C]">互动达成</span>
-            <span className="text-[#141413]">
-              {quality.interactionAchievement != null
-                ? `${Math.round(quality.interactionAchievement)}%`
-                : "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[#78716C]">留存达成</span>
-            <span className="text-[#141413]">
-              {quality.contentAchievement != null
-                ? `${Math.round(quality.contentAchievement)}%`
-                : "—"}
-            </span>
-          </div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
 function QualityWorksTable({
   ownerName,
   works,
@@ -460,8 +161,7 @@ function QualityWorksTable({
   const showAccountName = shouldShowWorkAccountNames(ownerName, works);
 
   return (
-    <TooltipProvider delay={0}>
-      <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
+    <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
         <table className="w-full text-[13px] table-fixed">
           <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] text-left">
             <tr className="h-9">
@@ -529,7 +229,6 @@ function QualityWorksTable({
           </tbody>
         </table>
       </Card>
-    </TooltipProvider>
   );
 }
 
