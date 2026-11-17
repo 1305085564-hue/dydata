@@ -98,13 +98,17 @@ test("岗位表格采用自适应文本列宽（min-w-[90px] w-auto）与紧凑�
   // 有效作品与优秀作品带排序能力
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
-  // 文本列 min-w w-auto 自适应 + 数字列规整
+  // 文本列 min-w w-auto 自适应 + 数字列规整（writer 收紧数字列给良优率与认证状态留足宽度，editor 保持不变）
   assert.match(source, /<col className="min-w-\[90px\] w-auto" \/>/);
+  assert.match(source, /<col className="min-w-\[104px\] w-auto" \/>/);
+  assert.match(source, /<col className="w-\[76px\]" \/>/);
+  assert.match(source, /<col className="w-\[72px\]" \/>/);
+  assert.match(source, /<col className="w-\[74px\]" \/>/);
+  assert.match(source, /<col className="w-\[86px\]" \/>/);
+  assert.match(source, /<col className="w-\[126px\]" \/>/);
   assert.match(source, /<col className="min-w-\[120px\] w-auto" \/>/);
   assert.match(source, /<col className="w-\[80px\]" \/>/);
   assert.match(source, /<col className="w-\[82px\]" \/>/);
-  assert.match(source, /<col className="w-\[75px\]" \/>/);
-  assert.match(source, /<col className="min-w-\[96px\] w-auto" \/>/);
 });
 
 test("达人与运营表格统一落地自适应文本列宽、colgroup与py-2单行高度标准", () => {

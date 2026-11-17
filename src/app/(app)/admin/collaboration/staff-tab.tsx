@@ -69,6 +69,28 @@ export interface StaffColumnSort {
 }
 
 export function StaffTableColGroup({ role }: { role: StaffRole }) {
+  if (role === "writer") {
+    return (
+      <colgroup>
+        <col className="w-10" />
+        <col className="min-w-[90px] w-auto" />
+        <col className="min-w-[104px] w-auto" />
+        <col className="w-[76px]" />
+        <col className="w-[76px]" />
+        <col className="w-[80px]" />
+        <col className="w-[80px]" />
+        <col className="w-[80px]" />
+        <col className="w-[72px]" />
+        <col className="w-[74px]" />
+        <col className="w-[74px]" />
+        <col className="w-[80px]" />
+        <col className="w-[80px]" />
+        <col className="w-[86px]" />
+        <col className="w-[126px]" />
+      </colgroup>
+    );
+  }
+
   return (
     <colgroup>
       <col className="w-10" />
@@ -79,17 +101,6 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="w-[82px]" />
       <col className="w-[82px]" />
       <col className="w-[82px]" />
-      {role === "writer" && (
-        <>
-          <col className="w-[76px]" />
-          <col className="w-[78px]" />
-          <col className="w-[78px]" />
-          <col className="w-[82px]" />
-          <col className="w-[82px]" />
-          <col className="w-[75px]" />
-          <col className="min-w-[96px] w-auto" />
-        </>
-      )}
     </colgroup>
   );
 }
