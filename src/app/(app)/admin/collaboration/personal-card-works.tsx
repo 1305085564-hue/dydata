@@ -160,7 +160,7 @@ function InteractionTooltipCell({
   rules: ContentQualityRules | null | undefined;
 }) {
   if (quality?.interactionAchievement == null) {
-    return <span className="text-[12px] text-[#A8A29E]">—</span>;
+    return <span className="inline-block py-2.5 px-2.5 text-[12px] text-[#A8A29E]">—</span>;
   }
 
   const achPct = Math.round(quality.interactionAchievement);
@@ -178,13 +178,19 @@ function InteractionTooltipCell({
   const m = quality.interactionMetrics;
 
   const triggerContent = (
-    <span className="inline-block cursor-default text-[13px] text-[#141413] tabular-nums">
-      {achPct}%
-    </span>
+    <div className="flex h-full w-full items-center justify-end py-2.5 px-2.5 cursor-default group/cell">
+      <span className="text-[13px] text-[#141413] tabular-nums border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
+        {achPct}%
+      </span>
+    </div>
   );
 
   if (!m && !rateText) {
-    return triggerContent;
+    return (
+      <div className="py-2.5 px-2.5 text-[13px] text-[#141413] tabular-nums">
+        {achPct}%
+      </div>
+    );
   }
 
   const items: Array<{ label: string; value: number | null | undefined }> = m
@@ -200,9 +206,10 @@ function InteractionTooltipCell({
     <Tooltip>
       <TooltipTrigger render={triggerContent} />
       <TooltipContent
-        side="left"
-        align="center"
-        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+        side="top"
+        align="end"
+        sideOffset={4}
+        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
       >
         <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
           <span className="text-[12px] text-[#141413]">互动达成 {achPct}%</span>
@@ -257,7 +264,7 @@ function RetentionTooltipCell({
 }) {
   if (quality?.contentAchievement == null) {
     return (
-      <span className="text-[12px] text-[#A8A29E]">
+      <span className="inline-block py-2.5 px-2.5 text-[12px] text-[#A8A29E]">
         {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
       </span>
     );
@@ -273,22 +280,29 @@ function RetentionTooltipCell({
   const details = retentionSubMetricDetails(quality.retentionMetrics, rules);
 
   const triggerContent = (
-    <span className="inline-block cursor-default text-[13px] text-[#141413] tabular-nums">
-      {totalPct}%
-    </span>
+    <div className="flex h-full w-full items-center justify-end py-2.5 px-2.5 cursor-default group/cell">
+      <span className="text-[13px] text-[#141413] tabular-nums border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
+        {totalPct}%
+      </span>
+    </div>
   );
 
   if (details.length === 0) {
-    return triggerContent;
+    return (
+      <div className="py-2.5 px-2.5 text-[13px] text-[#141413] tabular-nums">
+        {totalPct}%
+      </div>
+    );
   }
 
   return (
     <Tooltip>
       <TooltipTrigger render={triggerContent} />
       <TooltipContent
-        side="left"
-        align="center"
-        className="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left"
+        side="top"
+        align="end"
+        sideOffset={4}
+        className="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
       >
         <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
           <span className="text-[12px] text-[#141413]">留存达成 {totalPct}%</span>
@@ -346,9 +360,11 @@ function OverallGradeTooltipCell({
 }) {
   if (!quality?.overallGrade) {
     return (
-      <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-        {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
-      </span>
+      <div className="py-2.5 px-3">
+        <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+          {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
+        </span>
+      </div>
     );
   }
 
@@ -374,20 +390,23 @@ function OverallGradeTooltipCell({
   }
 
   const triggerContent = (
-    <span
-      className={`inline-block cursor-default font-normal ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}
-    >
-      综合{quality.overallGrade}
-    </span>
+    <div className="flex h-full w-full items-center justify-end py-2.5 px-3 cursor-default group/cell">
+      <span
+        className={`inline-block font-normal border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}
+      >
+        综合{quality.overallGrade}
+      </span>
+    </div>
   );
 
   return (
     <Tooltip>
       <TooltipTrigger render={triggerContent} />
       <TooltipContent
-        side="left"
-        align="center"
-        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+        side="top"
+        align="end"
+        sideOffset={4}
+        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left duration-100 data-open:zoom-in-100 data-closed:zoom-out-100 data-[side=top]:slide-in-from-bottom-0 data-[side=bottom]:slide-in-from-top-0"
       >
         <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
           <span className={`text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}>
@@ -441,7 +460,7 @@ function QualityWorksTable({
   const showAccountName = shouldShowWorkAccountNames(ownerName, works);
 
   return (
-    <TooltipProvider delay={120}>
+    <TooltipProvider delay={0}>
       <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
         <table className="w-full text-[13px] table-fixed">
           <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] text-left">
@@ -487,17 +506,17 @@ function QualityWorksTable({
                   <td className="py-2.5 px-2.5 text-right tabular-nums text-[#141413] whitespace-nowrap">
                     {formatBigNumber(work.playCount)}
                   </td>
-                  <td className="py-2.5 px-2.5 text-right tabular-nums whitespace-nowrap">
+                  <td className="p-0 text-right tabular-nums whitespace-nowrap">
                     <InteractionTooltipCell
                       quality={q}
                       playCount={work.playCount}
                       rules={rules}
                     />
                   </td>
-                  <td className="py-2.5 px-2.5 text-right tabular-nums whitespace-nowrap">
+                  <td className="p-0 text-right tabular-nums whitespace-nowrap">
                     <RetentionTooltipCell quality={q} rules={rules} />
                   </td>
-                  <td className="py-2.5 px-3 text-right whitespace-nowrap text-[12px]">
+                  <td className="p-0 text-right whitespace-nowrap text-[12px]">
                     <OverallGradeTooltipCell
                       quality={q}
                       playCount={work.playCount}
