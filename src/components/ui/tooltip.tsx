@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactElement, ReactNode } from "react"
+import { useRef, useState, type ReactElement, type ReactNode } from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
@@ -91,4 +91,49 @@ function SimpleTooltip({
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, SimpleTooltip }
+function TruncatedTooltip({
+  tip,
+  side = "top",
+  align = "start",
+  delay = 140,
+  contentClassName,
+  children,
+}: {
+  tip: ReactNode
+  side?: TooltipPrimitive.Positioner.Props["side"]
+  align?: TooltipPrimitive.Positioner.Props["align"]
+  delay?: number
+  contentClassName?: string
+  children: ReactElement
+}) {
+  const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLElement>(null)
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      const el = triggerRef.current
+      if (!el || el.scrollWidth <= el.clientWidth + 1) {
+        setOpen(false)
+        return
+      }
+    }
+    setOpen(nextOpen)
+  }
+
+  return (
+    <Tooltip open={open} onOpenChange={handleOpenChange}>
+      <TooltipTrigger
+        ref={(node: HTMLElement | null) => {
+          triggerRef.current = node
+        }}
+        delay={delay}
+        render={children}
+      />
+      <TooltipContent side={side} align={align} className={contentClassName}>
+        {tip}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, SimpleTooltip, TruncatedTooltip }

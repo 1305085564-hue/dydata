@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SimpleTooltip } from "@/components/ui/tooltip";
+import {
+  COLLABORATION_METRIC_HEADER_TIPS,
+  CollaborationQualityCells,
+} from "./collaboration-quality-hints";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
@@ -126,46 +130,32 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                type="button"
-                onClick={() => sort.onSort("effectiveCount")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                  sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-                }`}
-              />
-            }
+        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.effectiveCount}>
+          <button
+            type="button"
+            onClick={() => sort.onSort("effectiveCount")}
+            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+              sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+            }`}
           >
             有效作品
             {sort.renderSortIcon("effectiveCount")}
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            播放大于 500 的作品条数
-          </TooltipContent>
-        </Tooltip>
+          </button>
+        </SimpleTooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                type="button"
-                onClick={() => sort.onSort("excellentCount")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                  sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-                }`}
-              />
-            }
+        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
+          <button
+            type="button"
+            onClick={() => sort.onSort("excellentCount")}
+            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+              sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+            }`}
           >
             优秀作品
             {sort.renderSortIcon("excellentCount")}
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            播放至少 30,000 的作品条数
-          </TooltipContent>
-        </Tooltip>
+          </button>
+        </SimpleTooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
@@ -181,17 +171,53 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
       </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
-            <span className="inline-flex flex-col items-end leading-tight">
-              <span>{field === "followerConversionRate" ? "转粉率" : "互动率"}</span>
-              <span className="text-[10px] text-[#A8A29E]">（参考）</span>
-            </span>{sort.renderSortIcon(field)}
-          </button>
+          <SimpleTooltip
+            align="end"
+            contentClassName="text-[12px] max-w-xs text-left"
+            tip={COLLABORATION_METRIC_HEADER_TIPS[field]}
+          >
+            <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
+              <span className="inline-flex flex-col items-end leading-tight">
+                <span>{field === "followerConversionRate" ? "转粉率" : "互动率"}</span>
+                <span className="text-[10px] text-[#A8A29E]">（参考）</span>
+              </span>{sort.renderSortIcon(field)}
+            </button>
+          </SimpleTooltip>
         </TableHead>
       ))}
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">互动数据</TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">留存数据</TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">良优率</TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <SimpleTooltip
+          align="end"
+          contentClassName="text-[12px] max-w-xs text-left"
+          tip={COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement}
+        >
+          <span className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
+            互动数据
+          </span>
+        </SimpleTooltip>
+      </TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <SimpleTooltip
+          align="end"
+          contentClassName="text-[12px] max-w-xs text-left"
+          tip={COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement}
+        >
+          <span className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
+            留存数据
+          </span>
+        </SimpleTooltip>
+      </TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
+        <SimpleTooltip
+          align="end"
+          contentClassName="text-[12px] max-w-xs text-left"
+          tip={COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate}
+        >
+          <span className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
+            良优率
+          </span>
+        </SimpleTooltip>
+      </TableHead>
       <TableHead className="py-2 pl-4 pr-4 text-left font-normal text-[#78716C]">
         名下账号
       </TableHead>
@@ -202,6 +228,8 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
 /** 单人数据行：只出单元格，行容器由调用方决定（岗位 Tab 行不可整行点，组详情行可整行点）。 */
 export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf?: boolean }) {
   const isZero = row.reportCount === 0;
+  const displayedAccounts = row.accounts.slice(0, 2).map((a) => a.accountName).join("、");
+  const extraCount = row.accounts.length - Math.min(row.accounts.length, 2);
 
   return (
     <>
@@ -234,26 +262,33 @@ export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf
       </TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.interactionSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.avgInteractionAchievement == null ? "—" : `${Math.round(row.writerQuality.summary.avgInteractionAchievement)}%`}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.achievementSampleCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.avgContentAchievement == null ? "—" : `${Math.round(row.writerQuality.summary.avgContentAchievement)}%`}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${row.writerQuality?.summary && row.writerQuality.summary.ratedCount < 3 ? "text-[#A8A29E]" : ""}`}>{row.writerQuality?.summary?.goodExcellentRate == null ? "—" : <>{Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%<span className="ml-1 text-[11px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span></>}</TableCell>
-      <TableCell className="py-2 pl-4 pr-4">
-        <div className="flex flex-wrap gap-1">
-          {row.accounts.slice(0, 3).map((account) => (
-            <span
-              key={account.accountId}
-              className="inline-block px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[12px] text-[#78716C] truncate max-w-[120px]"
-              title={account.accountName}
-            >
-              {account.accountName}
-            </span>
-          ))}
-          {row.accounts.length > 3 && (
-            <span className="inline-block px-1.5 py-0.5 text-[12px] text-[#78716C]">
-              +{row.accounts.length - 3}
-            </span>
-          )}
-        </div>
+      <CollaborationQualityCells writerQuality={row.writerQuality} />
+      <TableCell className="p-0 text-left text-[#1F1E1D] overflow-hidden">
+        {extraCount > 0 ? (
+          <SimpleTooltip
+            align="end"
+            contentClassName="text-[12px] max-w-xs text-left"
+            tip={
+              <>
+                <p className="font-normal text-[#141413] mb-1">名下账号：</p>
+                <p className="text-[#1F1E1D] leading-relaxed">
+                  {row.accounts.map((account) => account.accountName).join("、")}
+                </p>
+              </>
+            }
+          >
+            <div className="cursor-help flex h-full w-full items-center py-2 pl-4 pr-4 text-left overflow-hidden">
+              <span className="truncate">{displayedAccounts || "—"}</span>
+              <span className="ml-1 shrink-0 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
+                等 {row.accounts.length} 个账号
+              </span>
+            </div>
+          </SimpleTooltip>
+        ) : (
+          <div className="py-2 pl-4 pr-4 overflow-hidden">
+            <span className="block truncate">{displayedAccounts || "—"}</span>
+          </div>
+        )}
       </TableCell>
     </>
   );

@@ -5,6 +5,10 @@ import {
   CollaborationWorkReviewLink,
 } from "@/components/admin/collaboration-work-review-link";
 import { TableCellHint as CellWithTooltip } from "@/components/admin/quality-tooltip-content";
+import {
+  COLLABORATION_METRIC_HEADER_TIPS,
+  CollaborationQualityCells,
+} from "./collaboration-quality-hints";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { Fragment, useContext, useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
@@ -25,7 +29,6 @@ import { ListRow } from "@/components/ui/list-row";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
-import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import { formatBigNumber, type StaffRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
@@ -152,7 +155,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
         </button>
       </TableHead>
       <TableHead className="text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip="播放大于 500 的作品条数">
+        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.effectiveCount}>
           <button
             type="button"
             onClick={() => sort.onSort("effectiveCount")}
@@ -163,7 +166,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
         </SimpleTooltip>
       </TableHead>
       <TableHead className="text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip="播放至少 30,000 的作品条数">
+        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
           <button
             type="button"
             onClick={() => sort.onSort("excellentCount")}
@@ -196,21 +199,22 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
             <TableHead key={field} className="text-right font-normal text-[#78716C]">
-              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
-                {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
-              </button>
+              <SimpleTooltip
+                align="end"
+                contentClassName="text-[12px] max-w-xs text-left"
+                tip={COLLABORATION_METRIC_HEADER_TIPS[field]}
+              >
+                <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
+                  {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
+                </button>
+              </SimpleTooltip>
             </TableHead>
           ))}
           <TableHead className="text-right font-normal text-[#78716C]">
             <SimpleTooltip
               align="end"
               contentClassName="text-[12px] max-w-xs text-left"
-              tip={
-                <>
-                  <p className="font-normal text-[#141413] mb-1">互动数据均值：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">有互动数据作品的互动指标达成率算术平均，不按播放加权。</p>
-                </>
-              }
+              tip={COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement}
             >
               <button
                 type="button"
@@ -225,12 +229,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             <SimpleTooltip
               align="end"
               contentClassName="text-[12px] max-w-xs text-left"
-              tip={
-                <>
-                  <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。</p>
-                </>
-              }
+              tip={COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement}
             >
               <button
                 type="button"
@@ -245,15 +244,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             <SimpleTooltip
               align="end"
               contentClassName="text-[12px] max-w-xs text-left"
-              tip={
-                <>
-                  <p className="font-normal text-[#141413] mb-1">良优率口径：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">
-                    留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
-                    播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
-                  </p>
-                </>
-              }
+              tip={COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate}
             >
               <button
                 type="button"
@@ -416,65 +407,7 @@ export function StaffRowCells({
           </TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.followerConversionRate)}</TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.interactionRate)}</TableCell>
-          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-            {row.writerQuality ? (
-              row.writerQuality.state === "error" ? (
-                <CellWithTooltip tip="质量数据读取异常">
-                  <Badge variant="warning">异常</Badge>
-                </CellWithTooltip>
-              ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
-                <CellWithTooltip
-                  tip={`互动数据样本 ${row.writerQuality.summary.interactionSampleCount} 篇`}
-                  muted={row.writerQuality.summary.interactionSampleCount < 3}
-                >
-                  {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
-                </CellWithTooltip>
-              ) : (
-                <CellWithTooltip tip="尚无互动数据完整样本" muted>—</CellWithTooltip>
-              )
-            ) : (
-              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
-            )}
-          </TableCell>
-          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-            {row.writerQuality ? (
-              row.writerQuality.state === "error" ? (
-                <CellWithTooltip tip="质量数据读取异常" muted>—</CellWithTooltip>
-              ) : row.writerQuality.summary?.avgContentAchievement != null ? (
-                <CellWithTooltip
-                  tip={`留存数据样本 ${row.writerQuality.summary.achievementSampleCount} 篇`}
-                  muted={row.writerQuality.summary.achievementSampleCount < 3}
-                >
-                  {Math.round(row.writerQuality.summary.avgContentAchievement)}%
-                </CellWithTooltip>
-              ) : (
-                <CellWithTooltip tip="尚无留存数据完整样本" muted>—</CellWithTooltip>
-              )
-            ) : (
-              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
-            )}
-          </TableCell>
-          <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-            {row.writerQuality ? (
-              row.writerQuality.state === "error" ? (
-                <CellWithTooltip tip="质量数据读取异常" muted>—</CellWithTooltip>
-              ) : row.writerQuality.summary && row.writerQuality.summary.ratedCount > 0 && row.writerQuality.summary.goodExcellentRate != null ? (
-                <CellWithTooltip
-                  tip={`良优率分母 ${row.writerQuality.summary.ratedCount} 篇`}
-                  muted={row.writerQuality.summary.ratedCount < 3}
-                >
-                  <span>
-                    {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
-                    <span className="ml-1 text-[12px] text-[#78716C]">{row.writerQuality.summary.ratedCount}/{row.writerQuality.summary.totalCount}篇</span>
-                  </span>
-                </CellWithTooltip>
-              ) : (
-                <CellWithTooltip tip="尚无可评级作品或参评样本" muted>—</CellWithTooltip>
-              )
-            ) : (
-              <CellWithTooltip tip="质量数据尚未接入" muted>—</CellWithTooltip>
-            )}
-          </TableCell>
+          <CollaborationQualityCells writerQuality={row.writerQuality} />
           <TableCell className="text-right py-2 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
