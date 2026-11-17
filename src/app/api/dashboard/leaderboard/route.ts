@@ -59,7 +59,10 @@ export async function buildDashboardLeaderboardResponse({
         .order("created_at", { ascending: true }),
       cloudBase
         ? loadCloudBaseLeaderboardRows(supabase, sinceDate, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
-        : supabase.rpc("get_leaderboard_rows", { since_date: sinceDate }),
+        : supabase.rpc("get_leaderboard_rows", {
+            since_date: sinceDate,
+            ...(monthRange ? { until_date: monthRange.end } : {}),
+          }),
     ]));
 
     assertSupabaseQuerySucceeded(accountsResult.error, "读取排行榜账号失败");
@@ -131,7 +134,7 @@ export async function GET(request: Request) {
     const hasMonthParams = rawYear !== null || rawMonth !== null;
 
     return buildDashboardLeaderboardResponse({
-      supabase: adminClient,
+      supabase: isCloudBaseBackend() ? adminClient : supabase,
       userId: user.id,
       permissionContext,
       visibleUserIds,

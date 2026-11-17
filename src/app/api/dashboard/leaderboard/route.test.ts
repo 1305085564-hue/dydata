@@ -157,7 +157,7 @@ test("排行榜支持传入 year/month 查询指定历史月份，并严格过�
   });
 
   assert.equal(response.status, 200);
-  assert.deepEqual(leaderboardCalls, [{ since_date: "2026-09-01" }]);
+  assert.deepEqual(leaderboardCalls, [{ since_date: "2026-09-01", until_date: "2026-09-30" }]);
   const payload = await response.json();
   assert.deepEqual(
     payload.leaderboardData.map((d: { account_name: string }) => d.account_name),
@@ -182,4 +182,10 @@ test("排行榜传入非法 year/month 时返回 400", async () => {
   });
 
   assert.equal(response.status, 400);
+});
+
+test("Supabase 模式下 GET 入口向 buildDashboardLeaderboardResponse 传入登录态 supabase 客户端而非 adminClient", async () => {
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
+  assert.match(source, /supabase:\s*isCloudBaseBackend\(\)\s*\?\s*adminClient\s*:\s*supabase/);
 });
