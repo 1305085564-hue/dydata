@@ -65,6 +65,7 @@ function providerRow(input: {
   return {
     id: input.id,
     model_id: input.modelId,
+    canonical_model_id: input.modelId.split("/").at(-1),
     is_enabled: true,
     consecutive_failures: input.consecutiveFailures ?? 0,
     unhealthy_until: input.unhealthyUntil ?? null,
@@ -112,6 +113,15 @@ test("selectHealthyProviderKeyModel orders by model sort_order then id, ignoring
   const selected = await selectHealthyProviderKeyModel(service as never, "claude-sonnet-4-6");
   assert.equal(selected?.providerKeyModelId, "pkm-a");
   assert.equal(selected?.config.baseUrl, "https://provider-pkm-a.test");
+});
+
+test("按 canonical 查询时仍返回原始上游调用名", async () => {
+  const selected = await selectHealthyProviderKeyModel(
+    createFakeService([providerRow({ id: "prefixed", modelId: "vendor/model-a", keyPriority: 1 })]) as never,
+    "model-a",
+  );
+  assert.equal(selected?.config.canonicalModelId, "model-a");
+  assert.equal(selected?.config.modelId, "vendor/model-a");
 });
 
 test("停用供应商后调度器不会选择其仍启用的 Key 模型", async () => {

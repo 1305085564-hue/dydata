@@ -103,6 +103,7 @@ export type AiProviderKeyModel = ProviderHealthFields & {
   id: string;
   key_id: string;
   model_id: string;
+  canonical_model_id?: string | null;
   display_name: string | null;
   is_enabled: boolean;
   global_is_enabled?: boolean | null;
@@ -117,6 +118,7 @@ export type AiProviderKeyModel = ProviderHealthFields & {
 };
 
 export type KeyModelInventoryItem = {
+  /** Canonical model identity; raw upstream IDs are only in modelGroups.modelIds. */
   modelId: string;
   displayName: string | null;
   isEnabled: boolean;

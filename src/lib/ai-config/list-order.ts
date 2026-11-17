@@ -55,10 +55,10 @@ export const compareSelectableModels = byRankThenName<{ id: string; displayName:
 );
 
 /** 同步模型弹窗：本渠道在用的在上，其余在下；打开弹窗时排一次。 */
-export function sortSyncGroups<T extends { displayName: string; modelIds: string[] }>(groups: readonly T[], enabledModelIds: ReadonlySet<string>): T[] {
+export function sortSyncGroups<T extends { displayName: string; recommendedModelId: string }>(groups: readonly T[], enabledModelIds: ReadonlySet<string>): T[] {
   return [...groups].sort(byRankThenName<T>(
-    (group) => group.modelIds.some((value) => enabledModelIds.has(value)) ? 0 : 1,
+    (group) => enabledModelIds.has(group.recommendedModelId) ? 0 : 1,
     (group) => group.displayName,
-    (group) => group.modelIds[0] ?? "",
+    (group) => group.recommendedModelId,
   ));
 }

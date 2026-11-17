@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 export type Row = Record<string, unknown>;
 export type TableName = "ai_providers" | "ai_provider_keys" | "ai_provider_key_models" | "ai_feature_bindings" | "audit_logs";
@@ -150,8 +151,14 @@ export class MemorySupabase {
     this.tables = {
       ai_providers: (input.ai_providers ?? []).map((row) => ({ ...row })),
       ai_provider_keys: (input.ai_provider_keys ?? []).map((row) => ({ ...row })),
-      ai_provider_key_models: (input.ai_provider_key_models ?? []).map((row) => ({ ...row })),
-      ai_feature_bindings: (input.ai_feature_bindings ?? []).map((row) => ({ ...row })),
+      ai_provider_key_models: (input.ai_provider_key_models ?? []).map((row) => ({
+        ...row,
+        canonical_model_id: row.canonical_model_id ?? toCanonicalModelId(String(row.model_id ?? "")),
+      })),
+      ai_feature_bindings: (input.ai_feature_bindings ?? []).map((row) => ({
+        ...row,
+        model_id: row.model_id ? toCanonicalModelId(String(row.model_id)) : row.model_id,
+      })),
       audit_logs: (input.audit_logs ?? []).map((row) => ({ ...row })),
     };
     this.options = options;
@@ -177,19 +184,23 @@ export class MemorySupabase {
       const availableModels = Array.isArray(args.p_available_models)
         ? [...new Set(args.p_available_models.map(String))]
         : [];
-      const availableModelIds = new Set(availableModels);
+      const availableModelIds = new Set(availableModels.map(toCanonicalModelId));
       const payloadModels = Array.isArray(args.p_models) ? args.p_models as Row[] : [];
       key.available_models = availableModels;
 
       for (const model of payloadModels) {
         const modelId = String(model.model_id ?? "");
         if (!modelId) continue;
-        const existing = this.tables.ai_provider_key_models.find((row) => row.key_id === keyId && row.model_id === modelId);
+        const canonicalModelId = toCanonicalModelId(modelId);
+        const existing = this.tables.ai_provider_key_models.find((row) => (
+          row.key_id === keyId && row.canonical_model_id === canonicalModelId
+        ));
         if (!existing) {
           this.tables.ai_provider_key_models.push({
             id: nextId("supply"),
             key_id: keyId,
             model_id: modelId,
+            canonical_model_id: canonicalModelId,
             display_name: model.display_name,
             is_enabled: false,
           });
@@ -203,7 +214,7 @@ export class MemorySupabase {
 
       if (args.p_verified === true && availableModels.length > 0) {
         this.tables.ai_provider_key_models = this.tables.ai_provider_key_models.filter((row) => (
-          !(row.key_id === keyId && !availableModelIds.has(String(row.model_id)))
+          !(row.key_id === keyId && !availableModelIds.has(String(row.canonical_model_id ?? toCanonicalModelId(String(row.model_id)))))
         ));
       }
       return { data: null, error: null };
@@ -258,11 +269,22 @@ export class MemorySupabase {
       });
       const modelRows = Array.isArray(args.p_models) ? args.p_models as Row[] : [];
       for (const model of modelRows) {
+        const modelId = String(model.model_id ?? "");
+        const canonicalModelId = toCanonicalModelId(modelId);
+        const existing = this.tables.ai_provider_key_models.find((row) => (
+          row.key_id === keyId && row.canonical_model_id === canonicalModelId
+        ));
+        if (existing) {
+          const previousModelId = String(existing.model_id);
+          const isAutomaticDisplayName = String(existing.display_name) === previousModelId;
+          if (previousModelId.includes("/") && !modelId.includes("/")) existing.model_id = modelId;
+          if (isAutomaticDisplayName) existing.display_name = model.display_name;
+          existing.is_enabled = Boolean(existing.is_enabled) || Boolean(model.is_enabled);
+          continue;
+        }
         this.tables.ai_provider_key_models.push({
-          id: nextId("supply"),
-          key_id: keyId,
-          model_id: model.model_id,
-          display_name: model.display_name,
+          id: nextId("supply"), key_id: keyId, model_id: modelId,
+          canonical_model_id: canonicalModelId, display_name: model.display_name,
           is_enabled: model.is_enabled,
         });
       }
@@ -272,6 +294,7 @@ export class MemorySupabase {
     if (fn === "set_ai_channel_model_selection") {
       const keyId = String(args.p_key_id ?? "");
       const selectedIds = new Set(Array.isArray(args.p_model_ids) ? args.p_model_ids.map(String) : []);
+      const selectedCanonicalIds = new Set([...selectedIds].map(toCanonicalModelId));
       const displayNames = args.p_display_names && typeof args.p_display_names === "object"
         ? args.p_display_names as Record<string, unknown>
         : {};
@@ -279,7 +302,7 @@ export class MemorySupabase {
       let created = 0;
       let disabled = 0;
       for (const modelId of selectedIds) {
-        const existing = existingRows.find((row) => row.model_id === modelId);
+        const existing = existingRows.find((row) => row.canonical_model_id === toCanonicalModelId(modelId));
         if (existing) {
           existing.is_enabled = true;
           if (Object.prototype.hasOwnProperty.call(existing, "disabled_by_model")) existing.disabled_by_model = false;
@@ -287,6 +310,7 @@ export class MemorySupabase {
         } else {
           this.tables.ai_provider_key_models.push({
             id: nextId("supply"), key_id: keyId, model_id: modelId,
+            canonical_model_id: toCanonicalModelId(modelId),
             display_name: typeof displayNames[modelId] === "string" ? displayNames[modelId] : modelId,
             is_enabled: true,
           });
@@ -294,7 +318,7 @@ export class MemorySupabase {
         }
       }
       for (const row of existingRows) {
-        if (selectedIds.has(String(row.model_id)) || row.is_enabled === false) continue;
+        if (selectedCanonicalIds.has(String(row.canonical_model_id)) || row.is_enabled === false) continue;
         row.is_enabled = false;
         if (Object.prototype.hasOwnProperty.call(row, "disabled_by_model")) row.disabled_by_model = false;
         disabled += 1;
@@ -308,7 +332,7 @@ export class MemorySupabase {
       const target = this.tables.ai_provider_key_models.find((row) => row.id === supplyId);
       if (!target) return { data: null, error: { message: "supply not found" } };
       const affectedRows = patch.display_name !== undefined
-        ? this.tables.ai_provider_key_models.filter((row) => row.model_id === target.model_id)
+        ? this.tables.ai_provider_key_models.filter((row) => row.canonical_model_id === target.canonical_model_id)
         : [target];
       for (const row of affectedRows) {
         if (patch.display_name !== undefined) row.display_name = patch.display_name;
@@ -358,13 +382,17 @@ export class MemorySupabase {
     if (fn === "enable_ai_config_supply") {
       const keyId = String(args.p_key_id ?? "");
       const modelId = String(args.p_model_id ?? "");
-      let supply = this.tables.ai_provider_key_models.find((row) => row.key_id === keyId && row.model_id === modelId);
+      const canonicalModelId = toCanonicalModelId(modelId);
+      let supply = this.tables.ai_provider_key_models.find((row) => (
+        row.key_id === keyId && row.canonical_model_id === canonicalModelId
+      ));
       if (supply) {
         supply.is_enabled = true;
         if (Object.prototype.hasOwnProperty.call(supply, "disabled_by_model")) supply.disabled_by_model = false;
       } else {
         supply = {
           id: nextId("supply"), key_id: keyId, model_id: modelId,
+          canonical_model_id: canonicalModelId,
           display_name: args.p_display_name, is_enabled: true,
         };
         this.tables.ai_provider_key_models.push(supply);

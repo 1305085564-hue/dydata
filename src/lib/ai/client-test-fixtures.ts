@@ -1,3 +1,5 @@
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
+
 export type Row = Record<string, unknown>;
 export type FakeDb = Record<string, Row[]>;
 
@@ -53,6 +55,7 @@ export function makePkmRow(opts: {
   return {
     id: opts.id,
     model_id: opts.modelId,
+    canonical_model_id: toCanonicalModelId(opts.modelId),
     is_enabled: true,
     sort_order: opts.sortOrder ?? 0,
     key: [

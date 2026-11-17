@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
 import { buildSyncModelsResponse, syncModelsForKey } from "./route";
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 type Row = Record<string, unknown>;
 type Tables = Record<string, Row[]>;
@@ -112,23 +113,27 @@ function fakeSupabase(tables: Tables, beforeExecute?: (table: string, operation:
       const verified = parameters.p_verified === true;
       key.available_models = modelIds;
       for (const model of models) {
-        let existing = tables.ai_provider_key_models?.find((row) => row.key_id === keyId && row.model_id === model.model_id);
+        const canonicalModelId = toCanonicalModelId(model.model_id);
+        let existing = tables.ai_provider_key_models?.find((row) => (
+          row.key_id === keyId && toCanonicalModelId(String(row.model_id)) === canonicalModelId
+        ));
         if (!existing) {
           existing = {
             id: `rpc-created-${tables.ai_provider_key_models?.length ?? 0}`,
             key_id: keyId,
             model_id: model.model_id,
+            canonical_model_id: canonicalModelId,
             display_name: model.display_name,
             is_enabled: false,
           };
           (tables.ai_provider_key_models ?? (tables.ai_provider_key_models = [])).push(existing);
-        } else if (existing.display_name === model.model_id) {
+        } else if (existing.display_name === existing.model_id) {
           existing.display_name = model.display_name;
         }
       }
       if (verified && modelIds.length > 0) {
         tables.ai_provider_key_models = (tables.ai_provider_key_models ?? []).filter((row) => (
-          !(row.key_id === keyId && !modelIds.includes(String(row.model_id)))
+          !(row.key_id === keyId && !modelIds.some((modelId) => toCanonicalModelId(modelId) === toCanonicalModelId(String(row.model_id))))
         ));
       }
       return { data: null, error: null };
@@ -223,6 +228,33 @@ test("客户端提供的模型清单不会解除永久封禁", async () => {
   assert.equal(result.allModels.find((model) => model.modelId === "new-client-model")?.isEnabled, false);
 });
 
+test("上游同款模型只写一条，优先保留不带前缀的调用名并保留变体展示", async () => {
+  const tables: Tables = {
+    ai_provider_keys: [{
+      id: "key-canonical",
+      api_key: "test-only",
+      provider_id: "provider-1",
+      provider: { name: "provider", base_url: "https://provider.test/v1" },
+    }],
+    ai_provider_key_models: [],
+  };
+
+  const result = await syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-canonical" }, async () => (
+    Response.json({ data: [
+      { id: "vendor/gemini-2.5-flash" },
+      { id: "gemini-2.5-flash" },
+    ] })
+  ));
+
+  assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["gemini-2.5-flash"]);
+  assert.deepEqual(result.allModels.map((row) => row.modelId), ["gemini-2.5-flash"]);
+  assert.deepEqual(result.modelGroups, [{
+    displayName: "Gemini 2.5 Flash",
+    recommendedModelId: "gemini-2.5-flash",
+    modelIds: ["vendor/gemini-2.5-flash", "gemini-2.5-flash"],
+  }]);
+});
+
 test("同步鉴权通过后使用注入的服务端客户端，拒绝时不创建服务端客户端", async () => {
   const serviceTables: Tables = {
     ai_provider_keys: [{
@@ -292,7 +324,11 @@ test("同步按真实 model_id 返回别名展示组，自动名可更新而人�
   assert.deepEqual(result.modelGroups, [{
     displayName: "Claude Haiku 5.5",
     recommendedModelId: "claude-haiku-5-5",
-    modelIds: ["claude-haiku-5-5", "claude-haiku-5.5"],
+    modelIds: ["claude-haiku-5-5"],
+  }, {
+    displayName: "Claude Haiku 5.5",
+    recommendedModelId: "claude-haiku-5.5",
+    modelIds: ["claude-haiku-5.5"],
   }]);
 });
 

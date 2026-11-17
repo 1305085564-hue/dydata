@@ -1,4 +1,5 @@
 import { getChannelGovernance, type ProviderHealthFields } from "./channel-governance";
+import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -8,6 +9,7 @@ export type ProviderKeyModelConfig = {
   baseUrl: string;
   apiKey: string;
   modelId: string;
+  canonicalModelId: string;
   providerName: string;
   providerKeyId: string;
   providerKeyModelId: string;
@@ -18,6 +20,7 @@ export type ProviderKeyModelConfig = {
 type ProviderKeyModelJoinRow = ProviderHealthFields & {
   id: string;
   model_id: string;
+  canonical_model_id?: string | null;
   sort_order?: number | null;
   global_is_enabled?: boolean | null;
   last_error_message?: string | null;
@@ -59,6 +62,7 @@ function toConfig(row: ProviderKeyModelJoinRow, options: { includeSleeping?: boo
     baseUrl: provider.base_url,
     apiKey: key.api_key,
     modelId: row.model_id,
+    canonicalModelId: readCanonicalModelId(row.model_id, row.canonical_model_id),
     providerName: provider.name,
     providerKeyId: key.id,
     providerKeyModelId: row.id,
@@ -70,6 +74,7 @@ function toConfig(row: ProviderKeyModelJoinRow, options: { includeSleeping?: boo
 const PROVIDER_KEY_MODEL_SELECT = `
   id,
   model_id,
+  canonical_model_id,
   is_enabled,
   consecutive_failures,
   unhealthy_until,
@@ -104,13 +109,14 @@ async function selectProviderKeyModelRows(
   service: MinimalClient,
   modelIdPreference?: string,
 ): Promise<ProviderKeyModelJoinRow[]> {
+  const canonicalModelId = modelIdPreference?.trim() ? toCanonicalModelId(modelIdPreference) : null;
   const buildQuery = (select: string) => {
     let query = service
       .from("ai_provider_key_models")
       .select(select)
       .eq("is_enabled", true);
-    if (modelIdPreference?.trim()) {
-      query = query.eq("model_id", modelIdPreference.trim());
+    if (canonicalModelId) {
+      query = query.eq("canonical_model_id", canonicalModelId);
     }
     return query;
   };

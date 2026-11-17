@@ -7,6 +7,7 @@ import {
   parseOcrScreenshotChannel,
   type OcrScreenshotChannel,
 } from "@/lib/ai-config/ocr-channel";
+import { readCanonicalModelId } from "./canonical-model";
 
 export type AiFeatureBindingControlRow = {
   id: string;
@@ -58,7 +59,9 @@ export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFe
       routing: entry.routing,
       bindingId: binding?.id ?? null,
       providerKeyModelId: null,
-      modelId: binding?.model_id ?? null,
+      modelId: binding?.model_id
+        ? readCanonicalModelId(binding.model_id)
+        : null,
       systemPrompt: binding?.system_prompt ?? null,
       outputTokenLimit: binding?.output_token_limit ?? 3600,
       contextMessageLimit: binding?.context_message_limit ?? 30,
