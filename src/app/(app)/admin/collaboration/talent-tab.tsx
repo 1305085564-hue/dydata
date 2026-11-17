@@ -228,8 +228,8 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
 /** 单人数据行：只出单元格，行容器由调用方决定（岗位 Tab 行不可整行点，组详情行可整行点）。 */
 export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf?: boolean }) {
   const isZero = row.reportCount === 0;
-  const displayedAccounts = row.accounts.slice(0, 2).map((a) => a.accountName).join("、");
-  const extraCount = row.accounts.length - Math.min(row.accounts.length, 2);
+  const displayedAccounts = row.accounts.slice(0, 3).map((a) => a.accountName).join("、");
+  const extraCount = row.accounts.length - Math.min(row.accounts.length, 3);
 
   return (
     <>

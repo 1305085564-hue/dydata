@@ -103,9 +103,7 @@ export function CollaborationWorkReviewLink({
       <TruncatedTooltip
         side="top"
         align="start"
-        delay={140}
-        contentClassName="max-w-sm p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left pointer-events-none"
-        tip={<p className="text-[12px] font-normal text-[#141413] leading-snug">{previewTitle}</p>}
+        tip={previewTitle}
       >
         <button
           type="button"
@@ -126,7 +124,6 @@ export function CollaborationWorkReviewLink({
     <Tooltip>
       <TooltipTrigger
         type="button"
-        delay={140}
         onClick={(event) => {
           event.stopPropagation();
           void openReview();

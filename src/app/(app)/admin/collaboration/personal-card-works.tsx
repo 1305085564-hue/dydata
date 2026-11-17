@@ -110,9 +110,7 @@ function WorkTitleCell({
           <TruncatedTooltip
             side="top"
             align="start"
-            delay={140}
-            contentClassName="max-w-sm p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left pointer-events-none"
-            tip={<p className="text-[12px] font-normal text-[#141413] leading-snug">{displayTitle}</p>}
+            tip={displayTitle}
           >
             <span className="block min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]">
               {displayTitle}
@@ -141,8 +139,6 @@ function WorkTitleCell({
             <TruncatedTooltip
               side="top"
               align="start"
-              delay={140}
-              contentClassName="max-w-xs p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left pointer-events-none"
               tip={subtitle}
             >
               <span className="min-w-0 truncate">{subtitle}</span>

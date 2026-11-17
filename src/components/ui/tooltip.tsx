@@ -95,14 +95,12 @@ function TruncatedTooltip({
   tip,
   side = "top",
   align = "start",
-  delay = 140,
   contentClassName,
   children,
 }: {
   tip: ReactNode
   side?: TooltipPrimitive.Positioner.Props["side"]
   align?: TooltipPrimitive.Positioner.Props["align"]
-  delay?: number
   contentClassName?: string
   children: ReactElement
 }) {
@@ -126,10 +124,13 @@ function TruncatedTooltip({
         ref={(node: HTMLElement | null) => {
           triggerRef.current = node
         }}
-        delay={delay}
         render={children}
       />
-      <TooltipContent side={side} align={align} className={contentClassName}>
+      <TooltipContent
+        side={side}
+        align={align}
+        className={cn("max-w-sm text-left pointer-events-none leading-snug", contentClassName)}
+      >
         {tip}
       </TooltipContent>
     </Tooltip>
