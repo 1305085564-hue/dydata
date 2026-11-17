@@ -11,12 +11,13 @@ import {
 } from "@/lib/breakout-rating";
 import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
 import { interactionRate } from "@/lib/video-metrics";
-import type {
-  ContentQualityRules,
-  ContentQualityStatus,
-  ContentQualitySummary,
-  RetentionMetrics,
-  WorkContentQuality,
+import {
+  scoreRetentionMetric,
+  type ContentQualityRules,
+  type ContentQualityStatus,
+  type ContentQualitySummary,
+  type RetentionMetrics,
+  type WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
@@ -174,19 +175,6 @@ export function buildWorkContentQualityFromMetrics(
   else if (base.contentAchievement === null || base.interactionAchievement === null) base.status = "missing_metrics";
   else base.status = "rated";
   return base;
-}
-
-function scoreRetentionMetric(
-  actual: number | null | undefined,
-  band: { good: number; poor: number },
-  lowerIsBetter = false,
-): number | null {
-  if (actual == null || !Number.isFinite(actual)) return null;
-  if (lowerIsBetter) {
-    if (actual === 0) return 200;
-    return (band.good / actual) * 100;
-  }
-  return (actual / band.good) * 100;
 }
 
 function incrementGradeCount(

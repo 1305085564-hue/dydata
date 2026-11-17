@@ -54,6 +54,119 @@ export interface RetentionMetrics {
   completionRate: number | null;
 }
 
+export function scoreRetentionMetric(
+  actual: number | null | undefined,
+  band: { good: number; poor: number },
+  lowerIsBetter = false,
+): number | null {
+  if (actual == null || !Number.isFinite(actual)) return null;
+  if (lowerIsBetter) {
+    if (actual === 0) return 200;
+    return (band.good / actual) * 100;
+  }
+  return (actual / band.good) * 100;
+}
+
+export type RetentionSubMetricStatus = "good" | "normal" | "poor" | "missing";
+
+export interface RetentionSubMetricDetail {
+  key: keyof RetentionMetrics;
+  label: string;
+  actualText: string;
+  targetText: string;
+  achievement: number | null;
+  status: RetentionSubMetricStatus;
+}
+
+function formatRetentionValue(value: number | null, unit: "%" | "s"): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (unit === "s") return `${Math.round(value)}s`;
+  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+}
+
+export function retentionSubMetricDetails(
+  metrics: RetentionMetrics | null | undefined,
+  rules: Pick<ContentQualityRules, "retentionBands"> | null | undefined,
+): RetentionSubMetricDetail[] {
+  if (!metrics || !rules) return [];
+  const specs: Array<{
+    key: keyof RetentionMetrics;
+    label: string;
+    unit: "%" | "s";
+    lowerIsBetter?: boolean;
+    isPoor: (val: number, poor: number) => boolean;
+    isGood: (val: number, good: number) => boolean;
+  }> = [
+    {
+      key: "bounceRate2s",
+      label: "2 秒跳出率",
+      unit: "%",
+      lowerIsBetter: true,
+      isPoor: (v, p) => v > p,
+      isGood: (v, g) => v <= g,
+    },
+    {
+      key: "completionRate5s",
+      label: "5 秒完播率",
+      unit: "%",
+      isPoor: (v, p) => v <= p,
+      isGood: (v, g) => v >= g,
+    },
+    {
+      key: "avgPlayDuration",
+      label: "均播时长",
+      unit: "s",
+      isPoor: (v, p) => v <= p,
+      isGood: (v, g) => v >= g,
+    },
+    {
+      key: "avgPlayRatio",
+      label: "平均播放占比",
+      unit: "%",
+      isPoor: (v, p) => v < p,
+      isGood: (v, g) => v >= g,
+    },
+    {
+      key: "completionRate",
+      label: "整体完播率",
+      unit: "%",
+      isPoor: (v, p) => v <= p,
+      isGood: (v, g) => v >= g,
+    },
+  ];
+
+  return specs.map((spec) => {
+    const val = metrics[spec.key];
+    const band = rules.retentionBands[spec.key];
+    const targetPrefix = spec.lowerIsBetter ? "≤" : "≥";
+    const targetText = `${targetPrefix} ${formatRetentionValue(band.good, spec.unit)}`;
+    if (val == null || !Number.isFinite(val)) {
+      return {
+        key: spec.key,
+        label: spec.label,
+        actualText: "—",
+        targetText,
+        achievement: null,
+        status: "missing",
+      };
+    }
+    const rawScore = scoreRetentionMetric(val, band, Boolean(spec.lowerIsBetter));
+    const status: RetentionSubMetricStatus = spec.isPoor(val, band.poor)
+      ? "poor"
+      : spec.isGood(val, band.good)
+        ? "good"
+        : "normal";
+    return {
+      key: spec.key,
+      label: spec.label,
+      actualText: formatRetentionValue(val, spec.unit),
+      targetText,
+      achievement: rawScore == null ? null : Math.round(rawScore),
+      status,
+    };
+  });
+}
+
 export function retentionWarningLabels(
   metrics: RetentionMetrics | null | undefined,
   rules: Pick<ContentQualityRules, "retentionBands"> | null | undefined,

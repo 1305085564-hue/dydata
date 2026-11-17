@@ -236,11 +236,12 @@ export function WriterQualityChart({
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
+              aria-pressed={visibleMetrics.content}
               onClick={() => toggleMetric("content")}
               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                 visibleMetrics.content
-                  ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
-                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                  ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
+                  : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
               }`}
               title="点击切换留存数据折线显隐"
             >
@@ -254,11 +255,12 @@ export function WriterQualityChart({
             </button>
             <button
               type="button"
+              aria-pressed={visibleMetrics.interaction}
               onClick={() => toggleMetric("interaction")}
               className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                 visibleMetrics.interaction
-                  ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
-                  : "bg-transparent border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
+                  ? "bg-[#F7F7F6] border-[#1F1E1D]/20 text-[#1F1E1D]"
+                  : "bg-white border-[#E2E2DF] text-[#78716C] hover:text-[#141413]"
               }`}
               title="点击切换互动数据折线显隐"
             >

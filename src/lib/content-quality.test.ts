@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildContentQualitySummaryFromWorks, buildWorkContentQualityFromMetrics } from "./content-quality";
+import { retentionSubMetricDetails } from "./collaboration/content-quality-contract";
 import { DEFAULT_EVALUATION_STANDARDS } from "./evaluation-standards";
 const topics = () => ({ state: "ready" as const, tags: new Map([["v", "复盘"]]) });
 const snapshot = (overrides: Record<string, unknown> = {}) => ({ playCount: 15000, likes: 525, comments: 0, shares: 0, favorites: 0, bounceRate2s: 25, completionRate5s: 60, avgPlayDuration: 50, avgPlayRatio: 0.25, completionRate: 10, ...overrides });
@@ -27,4 +28,32 @@ test("低于 2000 直接评普，质量均值只看 2000 以上", () => {
   assert.equal(summary.goodExcellentRate, 0.5);
   assert.equal(summary.interactionSampleCount, 1);
   assert.equal(summary.achievementSampleCount, 1);
+});
+
+test("留存子项明细返回各指标实际值、达标率与状态", () => {
+  const details = retentionSubMetricDetails(
+    {
+      bounceRate2s: 50,
+      completionRate5s: 60,
+      avgPlayDuration: null,
+      avgPlayRatio: 25,
+      completionRate: 10,
+    },
+    {
+      retentionBands: {
+        bounceRate2s: DEFAULT_EVALUATION_STANDARDS.bounceRate2s,
+        completionRate5s: DEFAULT_EVALUATION_STANDARDS.completionRate5s,
+        avgPlayDuration: DEFAULT_EVALUATION_STANDARDS.avgPlayDuration,
+        avgPlayRatio: DEFAULT_EVALUATION_STANDARDS.avgPlayRatio,
+        completionRate: DEFAULT_EVALUATION_STANDARDS.completionRate,
+      },
+    },
+  );
+  assert.equal(details.length, 5);
+  assert.equal(details[0]?.status, "poor");
+  assert.equal(details[0]?.actualText, "50%");
+  assert.equal(details[1]?.status, "good");
+  assert.equal(details[1]?.achievement, 100);
+  assert.equal(details[2]?.status, "missing");
+  assert.equal(details[2]?.actualText, "—");
 });
