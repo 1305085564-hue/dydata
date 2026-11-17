@@ -128,6 +128,12 @@ export function buildWorkContentQualityFromMetrics(
   const interaction = interactionRate(metrics);
   base.interactionAchievement = breakoutAchievement(interaction, targets);
   base.interactionValue = interaction;
+  base.interactionMetrics = {
+    likes: input.snapshot.likes ?? null,
+    comments: input.snapshot.comments ?? null,
+    shares: input.snapshot.shares ?? null,
+    favorites: input.snapshot.favorites ?? null,
+  };
 
   const retentionMetrics: RetentionMetrics = {
     bounceRate2s: input.snapshot.bounceRate2s ?? null,

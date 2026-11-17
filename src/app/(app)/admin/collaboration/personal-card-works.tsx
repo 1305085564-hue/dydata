@@ -104,13 +104,14 @@ function WorkTitleCell({
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }) {
   const displayTitle = work.title || "未命名作品";
+  const isManual = work.dataSource === "manual";
 
   return (
     <td className="py-2.5 px-3 min-w-0">
-      <div className="flex min-w-0 items-center gap-1">
+      <div className="min-w-0">
         {diagnosisContext ? (
           <span
-            className="min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]"
+            className="block min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]"
             title={displayTitle}
           >
             {displayTitle}
@@ -130,18 +131,120 @@ function WorkTitleCell({
             {displayTitle}
           </CollaborationWorkReviewLink>
         )}
-        {work.dataSource === "manual" ? (
-          <Badge title="该数据由人工填写或修改" className="shrink-0">
-            手工
-          </Badge>
-        ) : null}
       </div>
-      {subtitle ? (
-        <div className="mt-0.5 truncate text-[12px] text-[#78716C]" title={subtitle}>
-          {subtitle}
+      {subtitle || isManual ? (
+        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-[#78716C]">
+          {subtitle ? (
+            <span className="min-w-0 truncate" title={subtitle}>
+              {subtitle}
+            </span>
+          ) : null}
+          {isManual ? (
+            <Badge title="该数据由人工填写或修改" className="shrink-0">
+              手工
+            </Badge>
+          ) : null}
         </div>
       ) : null}
     </td>
+  );
+}
+
+function InteractionTooltipCell({
+  quality,
+  playCount,
+  rules,
+}: {
+  quality: WorkContentQuality | null | undefined;
+  playCount: number | null;
+  rules: ContentQualityRules | null | undefined;
+}) {
+  if (quality?.interactionAchievement == null) {
+    return <span className="text-[12px] text-[#A8A29E]">—</span>;
+  }
+
+  const achPct = Math.round(quality.interactionAchievement);
+  const rateText =
+    quality.interactionValue != null
+      ? `${(quality.interactionValue * 100).toFixed(2)}%`
+      : null;
+  const targetRate =
+    rules == null
+      ? null
+      : quality.topicKind === "dry_goods"
+        ? rules.dryGoods.interaction
+        : rules.review.interaction;
+  const effectivePlay = quality.snapshotPlayCount ?? playCount;
+  const m = quality.interactionMetrics;
+
+  const triggerContent = (
+    <span className="inline-block cursor-default text-[13px] text-[#141413] tabular-nums">
+      {achPct}%
+    </span>
+  );
+
+  if (!m && !rateText) {
+    return triggerContent;
+  }
+
+  const items: Array<{ label: string; value: number | null | undefined }> = m
+    ? [
+        { label: "点赞", value: m.likes },
+        { label: "评论", value: m.comments },
+        { label: "转发", value: m.shares },
+        { label: "收藏", value: m.favorites },
+      ]
+    : [];
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={triggerContent} />
+      <TooltipContent
+        side="left"
+        align="center"
+        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+      >
+        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
+          <span className="text-[12px] text-[#141413]">互动达成 {achPct}%</span>
+          {rateText ? (
+            <span className="text-[12px] text-[#78716C] tabular-nums">
+              互动率 {rateText}
+            </span>
+          ) : null}
+        </div>
+        {items.length > 0 ? (
+          <div className="space-y-1">
+            {items.map((item) => {
+              const count = item.value;
+              const pct =
+                count != null && effectivePlay != null && effectivePlay > 0
+                  ? `${((count / effectivePlay) * 100).toFixed(2)}%`
+                  : "—";
+              return (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between gap-2 text-[12px] tabular-nums"
+                >
+                  <span className="text-[#78716C]">{item.label}</span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-[#141413]">
+                      {count == null ? "—" : count.toLocaleString("zh-CN")}
+                    </span>
+                    <span className="w-[48px] text-right text-[#78716C]">{pct}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+        {targetRate != null ? (
+          <div className="flex items-center justify-between border-t border-[#E2E2DF]/80 pt-1 text-[12px] text-[#78716C] tabular-nums">
+            <span>目标标准线</span>
+            <span>{(targetRate * 100).toFixed(2)}%</span>
+          </div>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -170,13 +273,8 @@ function RetentionTooltipCell({
   const details = retentionSubMetricDetails(quality.retentionMetrics, rules);
 
   const triggerContent = (
-    <span className="inline-flex items-baseline justify-end gap-1 cursor-default">
-      <span className="text-[13px] text-[#141413] tabular-nums">{totalPct}%</span>
-      {calcNote ? (
-        <span className="text-[12px] text-[#78716C]" title={calcNote}>
-          折算
-        </span>
-      ) : null}
+    <span className="inline-block cursor-default text-[13px] text-[#141413] tabular-nums">
+      {totalPct}%
     </span>
   );
 
@@ -192,7 +290,7 @@ function RetentionTooltipCell({
         align="center"
         className="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left"
       >
-        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1.5">
+        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
           <span className="text-[12px] text-[#141413]">留存达成 {totalPct}%</span>
           {calcNote ? (
             <span className="text-[12px] text-[#78716C]">{calcNote}</span>
@@ -237,6 +335,98 @@ function RetentionTooltipCell({
   );
 }
 
+function OverallGradeTooltipCell({
+  quality,
+  playCount,
+  rules,
+}: {
+  quality: WorkContentQuality | null | undefined;
+  playCount: number | null;
+  rules: ContentQualityRules | null | undefined;
+}) {
+  if (!quality?.overallGrade) {
+    return (
+      <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+        {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
+      </span>
+    );
+  }
+
+  const effectivePlay = quality.snapshotPlayCount ?? playCount;
+  const floors = rules?.playFloors;
+  let playNote: string | null = null;
+  let playDot = "bg-[#D6D3D1]";
+
+  if (effectivePlay != null && floors) {
+    if (effectivePlay < floors.floor) {
+      playNote = `未满 ${formatBigNumber(floors.floor)} 直接判普`;
+      playDot = "bg-status-danger";
+    } else if (effectivePlay < floors.good) {
+      playNote = `未满 ${formatBigNumber(floors.good)} 最高评普`;
+      playDot = "bg-status-danger";
+    } else if (effectivePlay < floors.excellent) {
+      playNote = `未满 ${formatBigNumber(floors.excellent)} 最高评良`;
+      playDot = "bg-[#D6D3D1]";
+    } else {
+      playNote = `已达 ${formatBigNumber(floors.excellent)} 门槛`;
+      playDot = "bg-status-success";
+    }
+  }
+
+  const triggerContent = (
+    <span
+      className={`inline-block cursor-default font-normal ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}
+    >
+      综合{quality.overallGrade}
+    </span>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={triggerContent} />
+      <TooltipContent
+        side="left"
+        align="center"
+        className="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+      >
+        <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
+          <span className={`text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}>
+            综合{quality.overallGrade}
+          </span>
+          {playNote ? (
+            <span className="text-[12px] text-[#78716C]">{playNote}</span>
+          ) : null}
+        </div>
+        <div className="space-y-1 text-[12px] tabular-nums">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1 text-[#1F1E1D]">
+              <span className={`size-1.5 shrink-0 rounded-full ${playDot}`} />
+              <span>播放量</span>
+            </span>
+            <span className="text-[#141413]">{formatBigNumber(effectivePlay)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[#78716C]">互动达成</span>
+            <span className="text-[#141413]">
+              {quality.interactionAchievement != null
+                ? `${Math.round(quality.interactionAchievement)}%`
+                : "—"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[#78716C]">留存达成</span>
+            <span className="text-[#141413]">
+              {quality.contentAchievement != null
+                ? `${Math.round(quality.contentAchievement)}%`
+                : "—"}
+            </span>
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function QualityWorksTable({
   ownerName,
   works,
@@ -259,8 +449,8 @@ function QualityWorksTable({
               <th className="px-3 w-[60px] font-normal whitespace-nowrap">日期</th>
               <th className="px-3 font-normal">作品</th>
               <th className="px-2.5 text-right w-[68px] font-normal whitespace-nowrap">播放量</th>
-              <th className="px-2.5 text-right w-[86px] font-normal whitespace-nowrap">互动</th>
-              <th className="px-2.5 text-right w-[88px] font-normal whitespace-nowrap">留存达成</th>
+              <th className="px-2.5 text-right w-[76px] font-normal whitespace-nowrap">互动达成</th>
+              <th className="px-2.5 text-right w-[76px] font-normal whitespace-nowrap">留存达成</th>
               <th className="px-3 text-right w-[76px] font-normal whitespace-nowrap">综合评级</th>
             </tr>
           </thead>
@@ -272,10 +462,6 @@ function QualityWorksTable({
                 showAccountName && work.accountName.trim()
                   ? `${work.accountName.trim()} · ${topicText}`
                   : topicText;
-              const interactionAchText =
-                q?.interactionAchievement != null
-                  ? `达成 ${Math.round(q.interactionAchievement)}%`
-                  : null;
 
               return (
                 <tr
@@ -302,28 +488,21 @@ function QualityWorksTable({
                     {formatBigNumber(work.playCount)}
                   </td>
                   <td className="py-2.5 px-2.5 text-right tabular-nums whitespace-nowrap">
-                    <div className="text-[#141413]">
-                      {q?.interactionValue == null
-                        ? "—"
-                        : `${(q.interactionValue * 100).toFixed(2)}%`}
-                    </div>
-                    {interactionAchText ? (
-                      <div className="text-[12px] text-[#78716C]">{interactionAchText}</div>
-                    ) : null}
+                    <InteractionTooltipCell
+                      quality={q}
+                      playCount={work.playCount}
+                      rules={rules}
+                    />
                   </td>
                   <td className="py-2.5 px-2.5 text-right tabular-nums whitespace-nowrap">
                     <RetentionTooltipCell quality={q} rules={rules} />
                   </td>
                   <td className="py-2.5 px-3 text-right whitespace-nowrap text-[12px]">
-                    {q?.overallGrade ? (
-                      <span className={`font-normal ${BREAKOUT_GRADE_TEXT_CLASS[q.overallGrade]}`}>
-                        综合{q.overallGrade}
-                      </span>
-                    ) : (
-                      <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-                        {getContentQualityStatusText(q?.status ?? "pending_snapshot")}
-                      </span>
-                    )}
+                    <OverallGradeTooltipCell
+                      quality={q}
+                      playCount={work.playCount}
+                      rules={rules}
+                    />
                   </td>
                 </tr>
               );

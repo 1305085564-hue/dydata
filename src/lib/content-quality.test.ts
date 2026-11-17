@@ -56,4 +56,16 @@ test("留存子项明细返回各指标实际值、达标率与状态", () => {
   assert.equal(details[1]?.achievement, 100);
   assert.equal(details[2]?.status, "missing");
   assert.equal(details[2]?.actualText, "—");
+
+  const withInteraction = buildWorkContentQualityFromMetrics(
+    { videoId: "v", snapshot: snapshot({ likes: 500, comments: 20, shares: 10, favorites: 30 }) },
+    topics(),
+    DEFAULT_EVALUATION_STANDARDS,
+  );
+  assert.deepEqual(withInteraction.interactionMetrics, {
+    likes: 500,
+    comments: 20,
+    shares: 10,
+    favorites: 30,
+  });
 });

@@ -54,6 +54,13 @@ export interface RetentionMetrics {
   completionRate: number | null;
 }
 
+export interface InteractionMetrics {
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+}
+
 export function scoreRetentionMetric(
   actual: number | null | undefined,
   band: { good: number; poor: number },
@@ -228,6 +235,8 @@ export interface WorkContentQuality {
   interactionAchievement: number | null;
   /** 原始互动值 = (赞 + 评论 + 收藏 + 转发) / 播放，0–1 小数。 */
   interactionValue?: number | null;
+  /** 互动四项原始计数（赞、评、转、藏）。 */
+  interactionMetrics?: InteractionMetrics | null;
   /** 留存达成率（留存分，百分数，可超过 100） */
   contentAchievement: number | null;
   /** 留存组合项实际采用的折算方式。 */
