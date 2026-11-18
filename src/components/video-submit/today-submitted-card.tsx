@@ -37,7 +37,7 @@ export function TodaySubmittedCard({
   const triggerRef = useRef<HTMLElement | null>(null);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl space-y-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl space-y-3">
       <Card className="divide-y divide-[#E2E2DF]/60 p-0">
         {reports.map((report, index) => {
           const title = report.title || "未命名作品";
@@ -89,7 +89,7 @@ export function TodaySubmittedCard({
         })}
       </Card>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-2 text-[14px]">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-2 text-[14px]">
         <button type="button" onClick={onGoToTopics} className="text-[#1F1E1D] hover:text-[#141413] hover:underline cursor-pointer">
           去选题库挑明天的选题 →
         </button>

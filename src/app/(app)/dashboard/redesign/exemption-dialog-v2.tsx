@@ -139,7 +139,7 @@ export function ExemptionDialogV2({
       <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-[800px] max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
         <DialogHeader className="border-b border-[#E2E2DF]/60 px-6 py-4 pr-12">
           <DialogTitle>
-            停笔调养 · 申请请假或特殊豁免
+            申请请假或免交
           </DialogTitle>
         </DialogHeader>
 

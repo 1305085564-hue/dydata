@@ -281,11 +281,11 @@ export function TopicSelectDropdown({
                 </div>
                 {loadingSearch ? (
                   <div className="flex items-center justify-center py-6 text-[12px] text-[#78716C] gap-2">
-                    <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-                    <span>正在检索选题...</span>
+                    <Loader2 className="size-3.5 animate-spin text-[#A8A29E]" />
+                    <span>正在搜索选题…</span>
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <EmptyState variant="compact" title="题库中暂未寻得契合选题" />
+                  <EmptyState variant="compact" title="没搜到相关选题" />
                 ) : (
                   searchResults.map((item) => (
                     <TopicItemRow
@@ -307,8 +307,8 @@ export function TopicSelectDropdown({
 
                 {loadingClaims ? (
                   <div className="flex items-center justify-center py-6 text-[12px] text-[#78716C] gap-2">
-                    <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-                    <span>调阅我的选题...</span>
+                    <Loader2 className="size-3.5 animate-spin text-[#A8A29E]" />
+                    <span>正在加载我的选题…</span>
                   </div>
                 ) : myClaims.length === 0 ? (
                   <EmptyState

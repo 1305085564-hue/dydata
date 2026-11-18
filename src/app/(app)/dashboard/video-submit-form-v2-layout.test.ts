@@ -124,7 +124,7 @@ test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁�
   assert.match(panelSource, /onSubmitRequest=/);
   assert.match(panelSource, /submitExemptionRequest\(/);
   assert.doesNotMatch(panelSource, /fetch\(["']\/api\/exemptions\/apply/);
-  assert.match(panelSource, /title="可申请停笔调养；已在审批中的日期会被锁定"/);
+  assert.match(panelSource, /title="请假或报备免交；已在审批中的日期不能重复申请"/);
   assert.doesNotMatch(panelSource, /disabled=\{isExemptionPending\}/);
 });
 
