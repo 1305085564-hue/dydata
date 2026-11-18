@@ -15,7 +15,8 @@ import { cancelJoinRequestAction } from "./join-actions";
 
 type Props =
   | { mode: "unassigned"; teams: TeamOption[] }
-  | { mode: "pending"; requestId: string; targetTeamName: string };
+  | { mode: "pending"; requestId: string; targetTeamName: string }
+  | { mode: "rejected"; teams: TeamOption[]; targetTeamName: string; reviewNote: string | null };
 
 export function JoinBannerClient(props: Props) {
   const [, startTransition] = useTransition();
@@ -25,11 +26,15 @@ export function JoinBannerClient(props: Props) {
 
   const requestId = props.mode === "pending" ? props.requestId : null;
   const targetTeamName = props.mode === "pending" ? props.targetTeamName : null;
-  const isUnassigned = props.mode === "unassigned";
-  const bannerTitle = isUnassigned ? "你还未加入团队" : "团队申请审核中";
-  const bannerBody = isUnassigned
-    ? "目前只能查看自己的数据。申请加入团队后，才能参与团队协作和豁免流程。"
-    : `目标团队：${targetTeamName || "未知"}`;
+  const isRejected = props.mode === "rejected";
+  // 未通过和未加入都是「可以（重新）申请」的状态，共用申请入口
+  const isUnassigned = props.mode === "unassigned" || isRejected;
+  const bannerTitle = isRejected ? "入团申请未通过" : isUnassigned ? "你还未加入团队" : "团队申请审核中";
+  const bannerBody = isRejected
+    ? `${props.targetTeamName ? `${props.targetTeamName}：` : ""}未通过${props.reviewNote ? `：${props.reviewNote}` : ""}`
+    : isUnassigned
+      ? "目前只能查看自己的数据。申请加入团队后，才能参与团队协作和豁免流程。"
+      : `目标团队：${targetTeamName || "未知"}`;
 
   const handleCancel = useCallback(() => {
     if (!requestId) return;
@@ -68,7 +73,7 @@ export function JoinBannerClient(props: Props) {
                   {bannerTitle}
                 </ItemHeading>
                 <Badge variant={isUnassigned ? "warning" : "accent"}>
-                  {isUnassigned ? "未加入" : "审核中"}
+                  {isRejected ? "未通过" : isUnassigned ? "未加入" : "审核中"}
                 </Badge>
               </div>
               <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
@@ -90,7 +95,7 @@ export function JoinBannerClient(props: Props) {
                   : "border-[#E2E2DF] px-3.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] sm:text-[14px]"
               }
             >
-              {isUnassigned ? "申请加入团队" : "撤销申请"}
+              {isRejected ? "重新申请加入团队" : isUnassigned ? "申请加入团队" : "撤销申请"}
             </Button>
             <span className="hidden text-[12px] text-[#78716C] sm:inline-block">
               {isUnassigned
@@ -101,7 +106,7 @@ export function JoinBannerClient(props: Props) {
         </div>
       </div>
 
-      {props.mode === "unassigned" ? (
+      {props.mode !== "pending" ? (
         <ApplyJoinDialog
           teams={props.teams}
           open={applyOpen}

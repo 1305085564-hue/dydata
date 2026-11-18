@@ -677,14 +677,14 @@ export function AdminModulesContentV3({
   };
 
   // 10. Review Join Requests
-  const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject") => {
+  const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject", note?: string) => {
     const targetRequest = pendingRequests.find((r) => r.id === requestId);
     if (!targetRequest) return;
     setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
 
     startTransition(async () => {
       const actionFn = action === "approve" ? approveJoinRequestAction : rejectJoinRequestAction;
-      const res = await actionFn(requestId, "通过管理工作台一键审批");
+      const res = await actionFn(requestId, action === "reject" ? note?.trim() || null : null);
       if (!res.ok) {
         setPendingRequests((prev) => [...prev, targetRequest]);
         feedbackToast.error(action === "approve" ? "审批通过失败" : "驳回申请失败", {
