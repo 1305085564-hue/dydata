@@ -1,0 +1,3690 @@
+{
+  "not_applied": [
+    {
+      "version": "20261016090000",
+      "type": "not_applied",
+      "reason": "清理集团模式的迁移会被现有策略挡住，下一轮重写前必须先重建 exemption_request_date 两参读取策略。"
+    },
+    {
+      "version": "20261017170811",
+      "type": "not_applied",
+      "reason": "抖音同步功能已取消，迁移依赖的表不再执行。"
+    }
+  ],
+  "recorded_as": [
+    {
+      "version": "20261025100000",
+      "type": "recorded_as",
+      "recorded_version": "20261025181704",
+      "reason": "生产已执行，但账本使用执行时间版本号登记。"
+    },
+    {
+      "version": "20261028045959",
+      "type": "recorded_as",
+      "recorded_version": "20261028053314",
+      "reason": "生产已执行，但账本使用执行时间版本号登记。"
+    },
+    {
+      "version": "20261108090000",
+      "type": "recorded_as",
+      "recorded_version": "20261107173430",
+      "reason": "生产已执行，但账本使用执行时间版本号登记。"
+    },
+    {
+      "version": "20261112065847",
+      "type": "recorded_as",
+      "recorded_version": "20261112081908",
+      "reason": "生产已执行，但账本使用执行时间版本号登记。"
+    }
+  ],
+  "superseded": [
+    {
+      "version": "20261013100000",
+      "type": "superseded",
+      "reason": "执行情况无法确认，内容已被后续版本覆盖或部分生效。"
+    },
+    {
+      "version": "20261024154236",
+      "type": "superseded",
+      "reason": "执行情况无法确认，内容已被后续版本覆盖或部分生效。"
+    },
+    {
+      "version": "20261109120000",
+      "type": "superseded",
+      "reason": "执行情况无法确认，内容已被后续版本覆盖或部分生效。"
+    }
+  ],
+  "replay_skip": [
+    {
+      "version": "20261019120000",
+      "type": "replay_skip",
+      "reason": "回填真实生产数据，本机重放没有对应数据。"
+    },
+    {
+      "version": "20261016090000",
+      "type": "replay_skip",
+      "reason": "not_applied 迁移，本机重放跳过。"
+    },
+    {
+      "version": "20261017170811",
+      "type": "replay_skip",
+      "reason": "not_applied 迁移，本机重放跳过。"
+    }
+  ],
+  "replay_pre_sql": [
+    {
+      "version": "20261005024700",
+      "type": "replay_pre_sql",
+      "reason": "线上曾有 script_document_public_read，重放前补建同名策略。"
+    }
+  ],
+  "prod_only_objects": [
+    {
+      "version": "get_production_dashboard(date,uuid,uuid)",
+      "type": "prod_only_objects",
+      "reason": "生产独有函数，任何迁移都没创建，下一轮决定去留。"
+    },
+    {
+      "version": "get_user_content(uuid)",
+      "type": "prod_only_objects",
+      "reason": "生产独有函数，任何迁移都没创建，下一轮决定去留。"
+    },
+    {
+      "version": "log_content_edit()",
+      "type": "prod_only_objects",
+      "reason": "生产独有函数及触发器，任何迁移都没创建，下一轮决定去留。"
+    },
+    {
+      "version": "trg_log_content_edit",
+      "type": "prod_only_objects",
+      "reason": "生产独有触发器，任何迁移都没创建，下一轮决定去留。"
+    },
+    {
+      "version": "ai_result",
+      "type": "prod_only_objects",
+      "reason": "生产独有表，任何迁移都没创建，下一轮决定去留。"
+    },
+    {
+      "version": "exemption_audit",
+      "type": "prod_only_objects",
+      "reason": "生产独有表，任何迁移都没创建，下一轮决定去留。"
+    }
+  ],
+  "known_drift": [
+    {
+      "version": "migration:repo_not_in_prod:20261019000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261019000000_fix_report_date_offset_by_one.sql）。"
+    },
+    {
+      "version": "migration:repo_not_in_prod:20261104120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261104120000_ai_channel_availability_governance.sql）。"
+    },
+    {
+      "version": "migration:repo_not_in_prod:20261107140000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261107140000_ocr_recognition_logs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_in_prod:20261107170000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261107170000_ai_config_shelf_and_manual_health.sql）。"
+    },
+    {
+      "version": "migration:repo_not_in_prod:20261116120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261116120000_sync_content_quality_three_grades.sql）。"
+    },
+    {
+      "version": "migration:repo_not_in_prod:20261117114500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在生产记账（20261117114500_leaderboard_until_date.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:001",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（001_init.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:002",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（002_invite_rls.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:003",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（003_remind_function.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:004",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（004_validate_invite_function.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:005",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（005_audit_logs_and_status.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:006",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（006_content_and_published_at.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:007",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（007_owner_role_and_permissions.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:008",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（008_structured_exemption.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:009",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（009_accounts_and_account_reports.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:010",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（010_followers_and_uploaded_at.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:012",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（012_account_leaderboard_rows.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:013",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（013_videos_and_snapshots.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:014",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（014_tags_market_advice.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:015",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（015_accounts_target_mode.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:016",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（016_video_tags_review.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:017",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（017_curve_and_retention.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:018",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（018_content_segments.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:019",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（019_submission_batch.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:020",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（020_content_item.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:021",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（021_metric_snapshot.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:022",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（022_content_asset_and_field_provenance.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:023",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（023_script_document_and_segment.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:024",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（024_tag_definition.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:025",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（025_content_tag_link_and_provisional_tag_text.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:026",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（026_ai_input_and_result.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:027",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（027_ai_feedback.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:028",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（028_teams_and_groups.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:029",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（029_profiles_team_and_group.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:030",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（030_exemption_tables.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:031",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（031_member_change_log.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:032",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（032_audit_log_fields.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:033",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（033_rls_policies.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:034",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（034_leaderboard_add_columns.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:035",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（035_screenshot_slot_roles.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:036",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（036_exemption_request_mode_compat.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:037",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（037_admin_ai_assistant.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:038",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（038_admin_ai_assistant_grants.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:039",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（039_ai_channels.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:040",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（040_ai_feature_config.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:041",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（041_add_ocr_screenshot_feature.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:042",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（042_ai_insight_gin_index.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:043",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（043_video_tags_keyword_multi_value.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:044",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（044_rewrite_workspace.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:045",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（045_rewrite_step_model_view.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:046",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（046_rewrite_fixed_modes.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:047",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（047_rewrite_runtime_limits.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:048",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（048_content_page_performance_indexes.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:049",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（049_fix_exemption_grant.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:050",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（050_sop_team_management.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:051",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（051_leader_daily_reports.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:052",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（052_exemption_category_split.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:053",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（053_fix_profiles_team_group_columns.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:054",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（054_fix_is_admin_function.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:055",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（055_violation_system.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:056",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（056_conversion_hub.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:057",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（057_team_join_requests.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:058",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（058_submission_screenshots_bucket.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:059",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（059_admin_cockpit_rpc.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:060",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（060_conversion_hub_unify.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:061",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（061_growth_prompts_to_db.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:062",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（062_ai_rewrite_unified_view.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:063",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（063_member_change_log_transfer_team.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:064",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（064_sample_quality_issues.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:065",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（065_remind_logs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:066",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（066_daily_report_management_fields.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:067",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（067_one_shot_audit_tuning.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:068",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（068_notifications.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:069",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（069_notifications_dedupe_tighten.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:071",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（071_case_library_states.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:072",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（072_case_library_inbox_rpc.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:073",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（073_case_library_inbox_v2.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:074",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（074_violation_cases_platforms.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:075",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（075_video_assets_feedback_cards.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:076",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（076_feishu_integration.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260525115147",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260525115147_io_pressure_relief.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260526032453",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260526032453_remote_history_placeholder.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260527000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260527000000_case_library_processed.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260527093000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260527093000_violation_case_fields.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260527200908",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260527200908_case_library_inbox_screenshot_paths.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260528223551",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260528223551_videos_account_published_index.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260528231500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260528231500_content_review_analysis.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260530031500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260530031500_admin_first_screen_read_models.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260530052000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260530052000_admin_first_screen_guardrails.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260531110000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260531110000_restore_admin_content_first_screen_signals.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260531123000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260531123000_sync_admin_content_first_screen_signal_thresholds.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260531140000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260531140000_admin_anomaly_videos_today.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260601100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260601100000_create_publish_drafts.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260603050000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260603050000_fulfillment_module.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260603070000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260603070000_fulfillment_workbench_backend.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260608103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260608103000_admin_content_first_screen_sort_by_uploaded_at.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260614075247",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260614075247_yike_personal_action_workbench.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260614161500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260614161500_yike_area_color.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260615002000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260615002000_rename_yike_workspace_to_cike.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260628001455",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260628001455_fulfillment_backend_loop_fix.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260628113000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260628113000_review_desk_case_library_architecture_refactor.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260628134819",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260628134819_provider_key_health_rpc.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260629000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260629000000_rewrite_skills_and_documents.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260629173000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260629173000_ai_feature_bindings_unify.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260630000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260630000000_merge_providers_and_semantic_align.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260706103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260706103000_add_remark_to_accounts.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260707090000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260707090000_remote_history_placeholder.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260714120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260714120000_add_usage_events.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260715093000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260715093000_video_anomaly_unified_fields.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260716093000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260716093000_topic_library.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260716171000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260716171000_knowledge_cases_submitted_insert_rls.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260716180000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260716180000_abnormal_video_violation_cases.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260717235530",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260717235530_restore_fulfillment_backend_loop.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260718103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260718103000_private_submission_screenshots.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260718104500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260718104500_atomic_feedback_reply.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260718110000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260718110000_seed_default_registration_team.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260718111500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260718111500_atomic_daily_report_usage_replace.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260718113000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260718113000_atomic_exemption_approval.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260720090000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260720090000_video_recycle_bin.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260727120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260727120000_add_submission_operator_user.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260727193000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260727193000_allow_members_delete_own_video_tags.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260727210000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260727210000_allow_members_delete_own_video_snapshots.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260728120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260728120000_atomic_collaboration_attribution.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260731193000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260731193000_ai_feature_control_plane.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260801103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260801103000_remove_dead_ai_features.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260804120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260804120000_member_lifecycle.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260805100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260805100000_member_lifecycle_write_protection.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260805113000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260805113000_member_lifecycle_production_compat.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260805120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260805120000_permission_v2.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260806090000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260806090000_fix_fulfillment_drop_group_refs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260807103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260807103000_permission_v2_contract_closure.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260818000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260818000000_exemption_request_insert_policy.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260818100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260818100000_exemption_active_scope.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819100000_admin_current_scope_archived.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819110000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819110000_owner_scope_consistency.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819120000_company_role_and_group_mode.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130100",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130100_reconcile_owner_scope_consistency.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130200",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130200_reconcile_exemption_active_scope.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130300",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130300_reconcile_admin_current_scope_archived.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130400",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130400_reconcile_violation_cases.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130500_reconcile_exemption_projection.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130600",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130600_reconcile_registration_team_schema.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130700",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130700_reconcile_knowledge_cases_base.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260819130800",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260819130800_reconcile_feedback_reply_foundation.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260820100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260820100000_owner_group_mode_access.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260823000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260823000000_remind_logs_claim_idempotency.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260823010000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260823010000_remind_logs_active_claim_unique.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260823020000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260823020000_audit_logs_smart_alert_dedupe.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260825120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260825120000_ocr_channel_switch_and_structure_key.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260825200000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260825200000_feature_binding_model_primary.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260825220000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260825220000_provider_key_available_models.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260828120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260828120000_remove_content_feedback_workflow.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260829090000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260829090000_topics_v3_library.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260829091000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260829091000_topics_v3_writing_states.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260830120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260830120000_topics_pool_aggregates.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260901120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260901120000_re_review_exemption_atomically.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260902100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260902100000_exemption_daily_review.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260902190000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260902190000_exemption_review_alignment.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260902210000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260902210000_exemption_reopen_to_pending.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260903010000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260903010000_admin_first_screen_rls.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260903153000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260903153000_fix_fulfillment_appeal_drop_group_refs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260903170000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260903170000_admin_grant_exemption_rpc.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260904010000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260904010000_restore_exemption_request_status_default.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260904020000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260904020000_restore_exemption_type_check.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260904120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260904120000_revoke_fulfillment_write_rpc_authenticated_grant.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260907113000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260907113000_daily_reports_video_link.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260907130047",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260907130047_writer_certifications.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260907130052",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260907130052_daily_report_data_source.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260912120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260912120000_topics_security_metrics_hardening.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260913103000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260913103000_topics_pool_aggregates_performance.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260914080215",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260914080215_add_video_review_status.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260914102806",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260914102806_reconcile_ai_input_bundle_schema.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260915141335",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260915141335_unify_permission_functions.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260916095530",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260916095530_fix_has_permission_inactive_false.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260916133825",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260916133825_b3_rls_company_row_scope.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260916134053",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260916134053_b3_fix_exemption_request_insert_team_scope.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260916172444",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260916172444_b3_close_public_rls_and_related_scopes.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260918100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260918100000_fix_cross_company_permissions.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260918121244",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260918121244_fix_teams_delete_company_scope.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260919095135",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260919095135_permission_v2_reconcile_compat.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260920003000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260920003000_backfill_daily_quota_objects.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260920230000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260920230000_fix_restore_report_link_id_ambiguity.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260922110000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260922110000_work_groups_for_collab.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260922180000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260922180000_history_report_edit_atomic.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260922190000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260922190000_drop_guessed_video_attribution.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926121500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926121500_remove_retired_system_settings.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926130000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926130000_drop_deprecated_rewrite_tables.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926180000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926180000_unify_permission_functions.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926230000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926230000_retire_orphan_case_tables.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926233000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926233000_retire_knowledge_case_tables.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926234000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926234000_visual_tags.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260926235000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260926235000_revoke_fulfillment_write_rpc_public_anon.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20260930163503",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20260930163503_add_account_scoped_video_submission_appeals.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261001040618",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261001040618_system_settings_service_role_only.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261001095105",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261001095105_restore_provider_key_health_rpc.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261001120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261001120000_remove_cross_month_submission_appeal_rule.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261002144830",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261002144830_permanent_exemption_owner_toggle.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261002160807",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261002160807_permanent_exemption_state_machine_hardening.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261003020000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261003020000_business_day_shanghai_timezone.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261003095010",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261003095010_fulfillment_appeal_reopen_and_decision_reason.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261003132000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261003132000_fulfillment_appeal_submission_payload.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261005024700",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261005024700_narrow_anon_read_policies.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261005101500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261005101500_fix_fulfillment_appeal_overload_ambiguity.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261005110000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261005110000_drop_dead_date_rpcs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261005210000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261005210000_ai_provider_key_model_health.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261008090000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261008090000_narrow_daily_report_manual_source.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261008143000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261008143000_fix_fulfillment_range_filter_void_reports.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261008150000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261008150000_drop_daily_reports_account_date_unique_index.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261008233000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261008233000_fulfillment_range_return_leave_status.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261009112826",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261009112826_ai_model_global_state_and_removal_audit.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261009120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261009120000_flatten_ai_provider_priority.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261009170000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261009170000_video_screenshot_replacement_history.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261010120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261010120000_topics_pool_aggregates_published_date.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261010123000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261010123000_fulfillment_use_video_published_date.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261010124500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261010124500_leaderboard_use_published_date.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261011120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261011120000_topics_pool_aggregates_drop_legacy_field.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261013120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261013120000_fix_report_date_align_to_published_at.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261013145000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261013145000_repair_report_date_timezone.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261013150000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261013150000_add_report_date_constraint.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261015052202",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261015052202_unify_fulfillment_date_and_exemptions.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261019000000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261019000000_fix_report_date_offset_by_one.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261021120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261021120000_admin_content_server_pagination.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261022100000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261022100000_video_review_tickets.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261022120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261022120000_admin_content_date_pagination.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261023160000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261023160000_content_date_counts.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261104120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261104120000_ai_channel_availability_governance.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261105062301",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261105062301_ai_config_supply_switches.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261105065140",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261105065140_ai_supply_health_and_probe_leases.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261105070700",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261105070700_ai_generated_model_display_names.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261105071735",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261105071735_ai_config_atomic_writes.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261105084231",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261105084231_ai_cooling_last_resort_retry.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261107140000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261107140000_ocr_recognition_logs.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261107170000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261107170000_ai_config_shelf_and_manual_health.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261113120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261113120000_fix_admin_content_rating_floor_2000.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261116120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261116120000_sync_content_quality_three_grades.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261117033000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261117033000_content_list_sort_ratio_retention.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261117114500",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261117114500_leaderboard_until_date.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261117192720",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261117192720_ai_canonical_model_identity.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261118120000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261118120000_fix_exemption_reapprove_and_leave_status.sql）。"
+    },
+    {
+      "version": "migration:repo_not_applied_locally:20261118140000",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，仓库迁移未在重放库执行（20261118140000_content_overall_grade_single_source.sql）。"
+    },
+    {
+      "version": "functions:only_prod:get_production_dashboard(p_date date, p_team_id uuid, p_group_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有函数（get_production_dashboard(p_date date, p_team_id uuid, p_group_id uuid)）。"
+    },
+    {
+      "version": "functions:only_prod:get_user_content(p_user uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有函数（get_user_content(p_user uuid)）。"
+    },
+    {
+      "version": "functions:only_prod:log_content_edit()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有函数（log_content_edit()）。"
+    },
+    {
+      "version": "functions:only_prod:re_review_exemption_request_atomically(p_request_id uuid, p_decision text, p_group_mode_token_hash text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有函数（re_review_exemption_request_atomically(p_request_id uuid, p_decision text, p_group_mode_token_hash text)）。"
+    },
+    {
+      "version": "functions:only_local:append_knowledge_case_status_log(p_case_id uuid, p_from_status text, p_to_status text, p_action text, p_actor_id uuid, p_note text, p_meta jsonb)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（append_knowledge_case_status_log(p_case_id uuid, p_from_status text, p_to_status text, p_action text, p_actor_id uuid, p_note text, p_meta jsonb)）。"
+    },
+    {
+      "version": "functions:only_local:armor(bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（armor(bytea)）。"
+    },
+    {
+      "version": "functions:only_local:armor(bytea, text[], text[])",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（armor(bytea, text[], text[])）。"
+    },
+    {
+      "version": "functions:only_local:crypt(text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（crypt(text, text)）。"
+    },
+    {
+      "version": "functions:only_local:dearmor(text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（dearmor(text)）。"
+    },
+    {
+      "version": "functions:only_local:decrypt(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（decrypt(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:decrypt_iv(bytea, bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（decrypt_iv(bytea, bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:digest(bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（digest(bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:digest(text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（digest(text, text)）。"
+    },
+    {
+      "version": "functions:only_local:encrypt(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（encrypt(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:encrypt_iv(bytea, bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（encrypt_iv(bytea, bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:enrich_and_verify_case(p_case_id uuid, p_actor_id uuid, p_hook_text text, p_body_text text, p_cta_text text, p_admin_insight text, p_original_video_id uuid, p_taxonomy_payload jsonb)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（enrich_and_verify_case(p_case_id uuid, p_actor_id uuid, p_hook_text text, p_body_text text, p_cta_text text, p_admin_insight text, p_original_video_id uuid, p_taxonomy_payload jsonb)）。"
+    },
+    {
+      "version": "functions:only_local:gen_random_bytes(integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（gen_random_bytes(integer)）。"
+    },
+    {
+      "version": "functions:only_local:gen_random_uuid()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（gen_random_uuid()）。"
+    },
+    {
+      "version": "functions:only_local:gen_salt(text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（gen_salt(text)）。"
+    },
+    {
+      "version": "functions:only_local:gen_salt(text, integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（gen_salt(text, integer)）。"
+    },
+    {
+      "version": "functions:only_local:hmac(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（hmac(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:hmac(text, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（hmac(text, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:knowledge_case_snapshot(p_case_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（knowledge_case_snapshot(p_case_id uuid)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_armor_headers(text, OUT key text, OUT value text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_armor_headers(text, OUT key text, OUT value text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_key_id(bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_key_id(bytea)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt(bytea, bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt(bytea, bytea)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt(bytea, bytea, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt(bytea, bytea, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt_bytea(bytea, bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt_bytea(bytea, bytea)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt_bytea(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt_bytea(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_decrypt_bytea(bytea, bytea, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_decrypt_bytea(bytea, bytea, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_encrypt(text, bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_encrypt(text, bytea)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_encrypt(text, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_encrypt(text, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_encrypt_bytea(bytea, bytea)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_encrypt_bytea(bytea, bytea)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_pub_encrypt_bytea(bytea, bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_pub_encrypt_bytea(bytea, bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_decrypt(bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_decrypt(bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_decrypt(bytea, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_decrypt(bytea, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_decrypt_bytea(bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_decrypt_bytea(bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_decrypt_bytea(bytea, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_decrypt_bytea(bytea, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_encrypt(text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_encrypt(text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_encrypt(text, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_encrypt(text, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_encrypt_bytea(bytea, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_encrypt_bytea(bytea, text)）。"
+    },
+    {
+      "version": "functions:only_local:pgp_sym_encrypt_bytea(bytea, text, text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（pgp_sym_encrypt_bytea(bytea, text, text)）。"
+    },
+    {
+      "version": "functions:only_local:recalculate_knowledge_case_usage_metrics(target_case_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（recalculate_knowledge_case_usage_metrics(target_case_id uuid)）。"
+    },
+    {
+      "version": "functions:only_local:request_case_supplement(p_case_id uuid, p_actor_id uuid, p_reason text, p_missing_fields jsonb)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（request_case_supplement(p_case_id uuid, p_actor_id uuid, p_reason text, p_missing_fields jsonb)）。"
+    },
+    {
+      "version": "functions:only_local:sync_knowledge_case_taxonomies(p_case_id uuid, p_taxonomy_payload jsonb)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（sync_knowledge_case_taxonomies(p_case_id uuid, p_taxonomy_payload jsonb)）。"
+    },
+    {
+      "version": "functions:only_local:trg_recalculate_knowledge_case_usage_metrics()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（trg_recalculate_knowledge_case_usage_metrics()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_generate_v1()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_generate_v1()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_generate_v1mc()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_generate_v1mc()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_generate_v3(namespace uuid, name text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_generate_v3(namespace uuid, name text)）。"
+    },
+    {
+      "version": "functions:only_local:uuid_generate_v4()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_generate_v4()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_generate_v5(namespace uuid, name text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_generate_v5(namespace uuid, name text)）。"
+    },
+    {
+      "version": "functions:only_local:uuid_nil()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_nil()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_ns_dns()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_ns_dns()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_ns_oid()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_ns_oid()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_ns_url()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_ns_url()）。"
+    },
+    {
+      "version": "functions:only_local:uuid_ns_x500()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有函数（uuid_ns_x500()）。"
+    },
+    {
+      "version": "functions:differing:admin_analytics_first_screen(p_visible_user_ids uuid[], p_user_id uuid, p_role text, p_current_user_name text, p_from date, p_to date, p_should_load_previous_period boolean, p_previous_from date, p_previous_to date)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_analytics_first_screen(p_visible_user_ids uuid[], p_user_id uuid, p_role text, p_current_user_name text, p_from date, p_to date, p_should_load_previous_period boolean, p_previous_from date, p_previous_to date)）。"
+    },
+    {
+      "version": "functions:differing:admin_anomaly_videos_today(p_visible_user_ids uuid[], target_date date, limit_rows integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_anomaly_videos_today(p_visible_user_ids uuid[], target_date date, limit_rows integer)）。"
+    },
+    {
+      "version": "functions:differing:admin_content_first_screen(p_visible_user_ids uuid[], p_view text, p_limit_rows integer, p_candidate_limit integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_content_first_screen(p_visible_user_ids uuid[], p_view text, p_limit_rows integer, p_candidate_limit integer)）。"
+    },
+    {
+      "version": "functions:differing:admin_first_screen_perf_regressions(p_route text, p_threshold_ms integer, p_window_minutes integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_first_screen_perf_regressions(p_route text, p_threshold_ms integer, p_window_minutes integer)）。"
+    },
+    {
+      "version": "functions:differing:admin_pending_violations(limit_rows integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_pending_violations(limit_rows integer)）。"
+    },
+    {
+      "version": "functions:differing:admin_videos_first_screen(p_visible_user_ids uuid[], p_view text, p_limit_rows integer, p_candidate_limit integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（admin_videos_first_screen(p_visible_user_ids uuid[], p_view text, p_limit_rows integer, p_candidate_limit integer)）。"
+    },
+    {
+      "version": "functions:differing:assign_ai_channel_sort_order()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（assign_ai_channel_sort_order()）。"
+    },
+    {
+      "version": "functions:differing:bump_ai_channel_failure(target_id uuid, error_message text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（bump_ai_channel_failure(target_id uuid, error_message text)）。"
+    },
+    {
+      "version": "functions:differing:canonical_ai_model_id(p_model_id text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（canonical_ai_model_id(p_model_id text)）。"
+    },
+    {
+      "version": "functions:differing:case_library_actor_scope(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（case_library_actor_scope(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:case_library_inbox(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（case_library_inbox(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:case_library_inbox_counts(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（case_library_inbox_counts(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:case_library_processed(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（case_library_processed(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:cash_dist(money, money)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（cash_dist(money, money)）。"
+    },
+    {
+      "version": "functions:differing:cleanup_expired_notifications()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（cleanup_expired_notifications()）。"
+    },
+    {
+      "version": "functions:differing:clear_fulfillment_absent_after_daily_report()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（clear_fulfillment_absent_after_daily_report()）。"
+    },
+    {
+      "version": "functions:differing:content_overall_grade_rank(p_play_count numeric, p_interaction_achievement numeric, p_retention_achievement numeric, p_rule jsonb)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（content_overall_grade_rank(p_play_count numeric, p_interaction_achievement numeric, p_retention_achievement numeric, p_rule jsonb)）。"
+    },
+    {
+      "version": "functions:differing:conversion_hub_advice_list(limit_rows integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（conversion_hub_advice_list(limit_rows integer)）。"
+    },
+    {
+      "version": "functions:differing:conversion_hub_pipeline_counts(week_start date)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（conversion_hub_pipeline_counts(week_start date)）。"
+    },
+    {
+      "version": "functions:differing:conversion_hub_weekly_items(week_start date, p_bucket text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（conversion_hub_weekly_items(week_start date, p_bucket text)）。"
+    },
+    {
+      "version": "functions:differing:count_remind_logs_for_user(p_user_id uuid, p_target_date date, p_days integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（count_remind_logs_for_user(p_user_id uuid, p_target_date date, p_days integer)）。"
+    },
+    {
+      "version": "functions:differing:date_dist(date, date)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（date_dist(date, date)）。"
+    },
+    {
+      "version": "functions:differing:exemption_target_in_active_scope(p_actor_id uuid, p_target_id uuid, p_group_mode_token_hash text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（exemption_target_in_active_scope(p_actor_id uuid, p_target_id uuid, p_group_mode_token_hash text)）。"
+    },
+    {
+      "version": "functions:differing:float4_dist(real, real)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（float4_dist(real, real)）。"
+    },
+    {
+      "version": "functions:differing:float8_dist(double precision, double precision)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（float8_dist(double precision, double precision)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_consistent(internal, bit, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_consistent(internal, bit, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_same(gbtreekey_var, gbtreekey_var, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_same(gbtreekey_var, gbtreekey_var, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bit_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bit_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_consistent(internal, boolean, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_consistent(internal, boolean, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_same(gbtreekey2, gbtreekey2, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_same(gbtreekey2, gbtreekey2, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bool_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bool_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bpchar_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bpchar_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bpchar_consistent(internal, character, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bpchar_consistent(internal, character, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_consistent(internal, bytea, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_consistent(internal, bytea, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_same(gbtreekey_var, gbtreekey_var, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_same(gbtreekey_var, gbtreekey_var, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_bytea_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_bytea_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_consistent(internal, money, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_consistent(internal, money, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_distance(internal, money, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_distance(internal, money, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_cash_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_cash_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_consistent(internal, date, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_consistent(internal, date, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_distance(internal, date, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_distance(internal, date, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_same(gbtreekey8, gbtreekey8, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_same(gbtreekey8, gbtreekey8, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_date_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_date_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_decompress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_decompress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_consistent(internal, anyenum, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_consistent(internal, anyenum, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_same(gbtreekey8, gbtreekey8, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_same(gbtreekey8, gbtreekey8, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_enum_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_enum_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_consistent(internal, real, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_consistent(internal, real, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_distance(internal, real, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_distance(internal, real, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_same(gbtreekey8, gbtreekey8, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_same(gbtreekey8, gbtreekey8, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float4_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float4_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_consistent(internal, double precision, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_consistent(internal, double precision, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_distance(internal, double precision, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_distance(internal, double precision, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_float8_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_float8_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_consistent(internal, inet, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_consistent(internal, inet, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_inet_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_inet_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_consistent(internal, smallint, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_consistent(internal, smallint, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_distance(internal, smallint, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_distance(internal, smallint, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_same(gbtreekey4, gbtreekey4, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_same(gbtreekey4, gbtreekey4, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int2_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int2_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_consistent(internal, integer, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_consistent(internal, integer, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_distance(internal, integer, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_distance(internal, integer, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_same(gbtreekey8, gbtreekey8, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_same(gbtreekey8, gbtreekey8, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int4_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int4_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_consistent(internal, bigint, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_consistent(internal, bigint, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_distance(internal, bigint, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_distance(internal, bigint, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_int8_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_int8_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_consistent(internal, interval, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_consistent(internal, interval, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_decompress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_decompress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_distance(internal, interval, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_distance(internal, interval, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_same(gbtreekey32, gbtreekey32, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_same(gbtreekey32, gbtreekey32, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_intv_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_intv_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_consistent(internal, macaddr8, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_consistent(internal, macaddr8, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad8_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad8_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_consistent(internal, macaddr, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_consistent(internal, macaddr, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_macad_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_macad_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_consistent(internal, numeric, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_consistent(internal, numeric, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_same(gbtreekey_var, gbtreekey_var, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_same(gbtreekey_var, gbtreekey_var, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_numeric_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_numeric_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_consistent(internal, oid, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_consistent(internal, oid, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_distance(internal, oid, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_distance(internal, oid, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_same(gbtreekey8, gbtreekey8, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_same(gbtreekey8, gbtreekey8, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_oid_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_oid_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_consistent(internal, text, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_consistent(internal, text, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_same(gbtreekey_var, gbtreekey_var, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_same(gbtreekey_var, gbtreekey_var, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_text_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_text_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_consistent(internal, time without time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_consistent(internal, time without time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_distance(internal, time without time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_distance(internal, time without time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_time_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_time_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_timetz_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_timetz_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_timetz_consistent(internal, time with time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_timetz_consistent(internal, time with time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_consistent(internal, timestamp without time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_consistent(internal, timestamp without time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_distance(internal, timestamp without time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_distance(internal, timestamp without time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_same(gbtreekey16, gbtreekey16, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_same(gbtreekey16, gbtreekey16, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_ts_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_ts_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_tstz_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_tstz_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_tstz_consistent(internal, timestamp with time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_tstz_consistent(internal, timestamp with time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_tstz_distance(internal, timestamp with time zone, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_tstz_distance(internal, timestamp with time zone, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_compress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_compress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_consistent(internal, uuid, smallint, oid, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_consistent(internal, uuid, smallint, oid, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_penalty(internal, internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_penalty(internal, internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_picksplit(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_picksplit(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_same(gbtreekey32, gbtreekey32, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_same(gbtreekey32, gbtreekey32, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_uuid_union(internal, internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_uuid_union(internal, internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_var_decompress(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_var_decompress(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbt_var_fetch(internal)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbt_var_fetch(internal)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey16_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey16_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey16_out(gbtreekey16)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey16_out(gbtreekey16)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey2_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey2_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey2_out(gbtreekey2)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey2_out(gbtreekey2)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey32_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey32_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey32_out(gbtreekey32)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey32_out(gbtreekey32)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey4_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey4_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey4_out(gbtreekey4)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey4_out(gbtreekey4)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey8_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey8_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey8_out(gbtreekey8)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey8_out(gbtreekey8)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey_var_in(cstring)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey_var_in(cstring)）。"
+    },
+    {
+      "version": "functions:differing:gbtreekey_var_out(gbtreekey_var)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（gbtreekey_var_out(gbtreekey_var)）。"
+    },
+    {
+      "version": "functions:differing:get_fulfillment_calendar(target_year integer, target_month integer, p_visible_user_ids uuid[])",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（get_fulfillment_calendar(target_year integer, target_month integer, p_visible_user_ids uuid[])）。"
+    },
+    {
+      "version": "functions:differing:get_fulfillment_range(p_start_date date, p_end_date date, p_visible_user_ids uuid[], p_team_id uuid, p_group_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（get_fulfillment_range(p_start_date date, p_end_date date, p_visible_user_ids uuid[], p_team_id uuid, p_group_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:get_leaderboard_rows(since_date date, until_date date)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（get_leaderboard_rows(since_date date, until_date date)）。"
+    },
+    {
+      "version": "functions:differing:get_published_date_for_stats(p_published_at timestamp with time zone, p_report_date date)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（get_published_date_for_stats(p_published_at timestamp with time zone, p_report_date date)）。"
+    },
+    {
+      "version": "functions:differing:get_today_submission_status()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（get_today_submission_status()）。"
+    },
+    {
+      "version": "functions:differing:guard_profile_exemption_projection()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（guard_profile_exemption_projection()）。"
+    },
+    {
+      "version": "functions:differing:guard_profile_membership_lifecycle()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（guard_profile_membership_lifecycle()）。"
+    },
+    {
+      "version": "functions:differing:has_violation_permission()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（has_violation_permission()）。"
+    },
+    {
+      "version": "functions:differing:int2_dist(smallint, smallint)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（int2_dist(smallint, smallint)）。"
+    },
+    {
+      "version": "functions:differing:int4_dist(integer, integer)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（int4_dist(integer, integer)）。"
+    },
+    {
+      "version": "functions:differing:int8_dist(bigint, bigint)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（int8_dist(bigint, bigint)）。"
+    },
+    {
+      "version": "functions:differing:interval_dist(interval, interval)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（interval_dist(interval, interval)）。"
+    },
+    {
+      "version": "functions:differing:oid_dist(oid, oid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（oid_dist(oid, oid)）。"
+    },
+    {
+      "version": "functions:differing:preserve_daily_report_manual_source()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（preserve_daily_report_manual_source()）。"
+    },
+    {
+      "version": "functions:differing:publish_draft_actor_scope(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（publish_draft_actor_scope(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:publish_drafts_approved_list(p_limit integer, p_account_id uuid, p_search text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（publish_drafts_approved_list(p_limit integer, p_account_id uuid, p_search text)）。"
+    },
+    {
+      "version": "functions:differing:publish_drafts_review_queue(p_user_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（publish_drafts_review_queue(p_user_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:publish_drafts_set_updated_at()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（publish_drafts_set_updated_at()）。"
+    },
+    {
+      "version": "functions:differing:recalculate_script_usage_aggregate(target_case_id uuid)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（recalculate_script_usage_aggregate(target_case_id uuid)）。"
+    },
+    {
+      "version": "functions:differing:reopen_exemption_request_atomically(p_request_id uuid, p_group_mode_token_hash text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（reopen_exemption_request_atomically(p_request_id uuid, p_group_mode_token_hash text)）。"
+    },
+    {
+      "version": "functions:differing:reset_ai_channel_failure_window_on_success()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（reset_ai_channel_failure_window_on_success()）。"
+    },
+    {
+      "version": "functions:differing:review_team_join_request(p_request_id uuid, p_action text, p_note text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（review_team_join_request(p_request_id uuid, p_action text, p_note text)）。"
+    },
+    {
+      "version": "functions:differing:set_ai_feature_binding_canonical_model()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（set_ai_feature_binding_canonical_model()）。"
+    },
+    {
+      "version": "functions:differing:set_ai_feature_config_updated_at()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（set_ai_feature_config_updated_at()）。"
+    },
+    {
+      "version": "functions:differing:set_ai_provider_key_model_canonical()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（set_ai_provider_key_model_canonical()）。"
+    },
+    {
+      "version": "functions:differing:set_rewrite_updated_at()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（set_rewrite_updated_at()）。"
+    },
+    {
+      "version": "functions:differing:set_violation_case_script_hash()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（set_violation_case_script_hash()）。"
+    },
+    {
+      "version": "functions:differing:time_dist(time without time zone, time without time zone)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（time_dist(time without time zone, time without time zone)）。"
+    },
+    {
+      "version": "functions:differing:touch_rewrite_conversation_last_message()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（touch_rewrite_conversation_last_message()）。"
+    },
+    {
+      "version": "functions:differing:touch_updated_at()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（touch_updated_at()）。"
+    },
+    {
+      "version": "functions:differing:ts_dist(timestamp without time zone, timestamp without time zone)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（ts_dist(timestamp without time zone, timestamp without time zone)）。"
+    },
+    {
+      "version": "functions:differing:tstz_dist(timestamp with time zone, timestamp with time zone)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（tstz_dist(timestamp with time zone, timestamp with time zone)）。"
+    },
+    {
+      "version": "functions:differing:update_history_report_edit_atomic(p_report_id uuid, p_actor_id uuid, p_video_id uuid, p_title text, p_content text, p_published_at timestamp with time zone, p_uploaded_at timestamp with time zone, p_submitter text, p_play_count integer, p_likes integer, p_comments integer, p_shares integer, p_favorites integer, p_follower_gain integer, p_follower_convert integer, p_completion_rate text, p_avg_play_duration text, p_bounce_rate_2s text, p_completion_rate_5s text, p_script_author_user_id uuid, p_video_editor_user_id uuid, p_operator_user_id uuid, p_touch_assignees boolean)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（update_history_report_edit_atomic(p_report_id uuid, p_actor_id uuid, p_video_id uuid, p_title text, p_content text, p_published_at timestamp with time zone, p_uploaded_at timestamp with time zone, p_submitter text, p_play_count integer, p_likes integer, p_comments integer, p_shares integer, p_favorites integer, p_follower_gain integer, p_follower_convert integer, p_completion_rate text, p_avg_play_duration text, p_bounce_rate_2s text, p_completion_rate_5s text, p_script_author_user_id uuid, p_video_editor_user_id uuid, p_operator_user_id uuid, p_touch_assignees boolean)）。"
+    },
+    {
+      "version": "functions:differing:update_script_usage_aggregate()",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（update_script_usage_aggregate()）。"
+    },
+    {
+      "version": "functions:differing:validate_invite_code(p_code text)",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，函数定义或权限不同（validate_invite_code(p_code text)）。"
+    },
+    {
+      "version": "indexes:only_prod:ai_result|ai_result_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（ai_result|ai_result_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:appeal_backfill_20261019_ledger|appeal_backfill_20261019_ledger_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（appeal_backfill_20261019_ledger|appeal_backfill_20261019_ledger_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:content_history|content_history_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（content_history|content_history_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:content_history|idx_content_history_content_item_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（content_history|idx_content_history_content_item_id）。"
+    },
+    {
+      "version": "indexes:only_prod:content_item|idx_content_item_owner",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（content_item|idx_content_item_owner）。"
+    },
+    {
+      "version": "indexes:only_prod:exemption_audit|exemption_audit_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（exemption_audit|exemption_audit_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:profiles_group|profiles_group_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（profiles_group|profiles_group_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:profiles_team|profiles_team_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（profiles_team|profiles_team_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:system_issues|idx_system_issues_created_at",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（system_issues|idx_system_issues_created_at）。"
+    },
+    {
+      "version": "indexes:only_prod:system_issues|idx_system_issues_reported_by",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（system_issues|idx_system_issues_reported_by）。"
+    },
+    {
+      "version": "indexes:only_prod:system_issues|idx_system_issues_status",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（system_issues|idx_system_issues_status）。"
+    },
+    {
+      "version": "indexes:only_prod:system_issues|system_issues_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（system_issues|system_issues_pkey）。"
+    },
+    {
+      "version": "indexes:only_prod:tag_definition|tag_definition_name_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（tag_definition|tag_definition_name_key）。"
+    },
+    {
+      "version": "indexes:only_prod:work_submissions|idx_work_submissions_submit_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（work_submissions|idx_work_submissions_submit_date）。"
+    },
+    {
+      "version": "indexes:only_prod:work_submissions|idx_work_submissions_user_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（work_submissions|idx_work_submissions_user_date）。"
+    },
+    {
+      "version": "indexes:only_prod:work_submissions|work_submissions_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有索引（work_submissions|work_submissions_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:admin_first_screen_perf_events|admin_first_screen_perf_events_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（admin_first_screen_perf_events|admin_first_screen_perf_events_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:audit_logs|audit_logs_created_at_idx",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（audit_logs|audit_logs_created_at_idx）。"
+    },
+    {
+      "version": "indexes:only_local:audit_log|audit_log_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（audit_log|audit_log_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:content_asset|idx_content_asset_asset_role",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_asset|idx_content_asset_asset_role）。"
+    },
+    {
+      "version": "indexes:only_local:content_asset|idx_content_asset_content_item_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_asset|idx_content_asset_content_item_id）。"
+    },
+    {
+      "version": "indexes:only_local:content_item|idx_content_item_account_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_item|idx_content_item_account_id）。"
+    },
+    {
+      "version": "indexes:only_local:content_item|idx_content_item_batch_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_item|idx_content_item_batch_id）。"
+    },
+    {
+      "version": "indexes:only_local:content_item|idx_content_item_biz_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_item|idx_content_item_biz_date）。"
+    },
+    {
+      "version": "indexes:only_local:content_item|idx_content_item_owner_user_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_item|idx_content_item_owner_user_id）。"
+    },
+    {
+      "version": "indexes:only_local:content_item|idx_content_item_task_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_item|idx_content_item_task_date）。"
+    },
+    {
+      "version": "indexes:only_local:content_observations|content_observations_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_observations|content_observations_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:content_observations|content_observations_video_id_observer_id_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（content_observations|content_observations_video_id_observer_id_key）。"
+    },
+    {
+      "version": "indexes:only_local:field_provenance|idx_field_provenance_snapshot_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（field_provenance|idx_field_provenance_snapshot_id）。"
+    },
+    {
+      "version": "indexes:only_local:field_provenance|idx_field_provenance_source_asset_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（field_provenance|idx_field_provenance_source_asset_id）。"
+    },
+    {
+      "version": "indexes:only_local:metric_snapshot|idx_metric_snapshot_content_item_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（metric_snapshot|idx_metric_snapshot_content_item_id）。"
+    },
+    {
+      "version": "indexes:only_local:metric_snapshot|idx_metric_snapshot_snapshot_type",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（metric_snapshot|idx_metric_snapshot_snapshot_type）。"
+    },
+    {
+      "version": "indexes:only_local:notifications|notifications_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（notifications|notifications_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:remind_logs|remind_logs_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（remind_logs|remind_logs_pkey）。"
+    },
+    {
+      "version": "indexes:only_local:submission_batch|idx_submission_batch_org_team_task_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（submission_batch|idx_submission_batch_org_team_task_date）。"
+    },
+    {
+      "version": "indexes:only_local:submission_batch|idx_submission_batch_submitter_user_id",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（submission_batch|idx_submission_batch_submitter_user_id）。"
+    },
+    {
+      "version": "indexes:only_local:submission_batch|idx_submission_batch_task_date",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（submission_batch|idx_submission_batch_task_date）。"
+    },
+    {
+      "version": "indexes:only_local:submission_batch|submission_batch_idempotency_key_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（submission_batch|submission_batch_idempotency_key_key）。"
+    },
+    {
+      "version": "indexes:only_local:tag_definition|tag_definition_org_id_dimension_tag_code_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有索引（tag_definition|tag_definition_org_id_dimension_tag_code_key）。"
+    },
+    {
+      "version": "indexes:differing:content_tag_link|content_tag_link_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，索引定义不同（content_tag_link|content_tag_link_pkey）。"
+    },
+    {
+      "version": "columns:ai_feedback",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（ai_feedback）。"
+    },
+    {
+      "version": "columns:ai_input_bundle",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（ai_input_bundle）。"
+    },
+    {
+      "version": "columns:audit_logs",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（audit_logs）。"
+    },
+    {
+      "version": "columns:content_asset",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（content_asset）。"
+    },
+    {
+      "version": "columns:content_item",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（content_item）。"
+    },
+    {
+      "version": "columns:content_tag_link",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（content_tag_link）。"
+    },
+    {
+      "version": "columns:exemption_request",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（exemption_request）。"
+    },
+    {
+      "version": "columns:field_provenance",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（field_provenance）。"
+    },
+    {
+      "version": "columns:member_change_log",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（member_change_log）。"
+    },
+    {
+      "version": "columns:metric_snapshot",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（metric_snapshot）。"
+    },
+    {
+      "version": "columns:provisional_tag_text",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（provisional_tag_text）。"
+    },
+    {
+      "version": "columns:script_document",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（script_document）。"
+    },
+    {
+      "version": "columns:script_segment",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（script_segment）。"
+    },
+    {
+      "version": "columns:submission_batch",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（submission_batch）。"
+    },
+    {
+      "version": "columns:tag_definition",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（tag_definition）。"
+    },
+    {
+      "version": "columns:teams",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，同名表列定义不同（teams）。"
+    },
+    {
+      "version": "constraints:only_prod:ai_feedback|ai_feedback_ai_result_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（ai_feedback|ai_feedback_ai_result_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_prod:ai_input_bundle|ai_input_bundle_content_item_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（ai_input_bundle|ai_input_bundle_content_item_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_prod:content_item|chk_title_nonempty",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（content_item|chk_title_nonempty）。"
+    },
+    {
+      "version": "constraints:only_prod:content_tag_link|content_tag_link_content_item_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（content_tag_link|content_tag_link_content_item_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_prod:field_provenance|field_provenance_content_item_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（field_provenance|field_provenance_content_item_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_prod:provisional_tag_text|provisional_tag_text_content_item_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（provisional_tag_text|provisional_tag_text_content_item_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_prod:tag_definition|tag_definition_name_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有约束（tag_definition|tag_definition_name_key）。"
+    },
+    {
+      "version": "constraints:only_local:accounts|accounts_target_mode_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（accounts|accounts_target_mode_check）。"
+    },
+    {
+      "version": "constraints:only_local:admin_first_screen_perf_events|admin_first_screen_perf_events_actor_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（admin_first_screen_perf_events|admin_first_screen_perf_events_actor_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:admin_first_screen_perf_events|admin_first_screen_perf_events_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（admin_first_screen_perf_events|admin_first_screen_perf_events_pkey）。"
+    },
+    {
+      "version": "constraints:only_local:advice_actions|advice_actions_advice_source_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（advice_actions|advice_actions_advice_source_check）。"
+    },
+    {
+      "version": "constraints:only_local:advice_actions|advice_actions_review_result_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（advice_actions|advice_actions_review_result_check）。"
+    },
+    {
+      "version": "constraints:only_local:advice_actions|advice_actions_status_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（advice_actions|advice_actions_status_check）。"
+    },
+    {
+      "version": "constraints:only_local:ai_feedback|ai_feedback_feedback_type_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（ai_feedback|ai_feedback_feedback_type_check）。"
+    },
+    {
+      "version": "constraints:only_local:ai_feedback|ai_feedback_insight_result_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（ai_feedback|ai_feedback_insight_result_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:ai_feedback|ai_feedback_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（ai_feedback|ai_feedback_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_asset|content_asset_asset_role_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_asset|content_asset_asset_role_check）。"
+    },
+    {
+      "version": "constraints:only_local:content_asset|content_asset_asset_status_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_asset|content_asset_asset_status_check）。"
+    },
+    {
+      "version": "constraints:only_local:content_item|content_item_batch_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_item|content_item_batch_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_item|content_item_owner_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_item|content_item_owner_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_item|content_item_publish_precision_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_item|content_item_publish_precision_check）。"
+    },
+    {
+      "version": "constraints:only_local:content_observations|content_observations_observer_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_observations|content_observations_observer_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_observations|content_observations_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_observations|content_observations_pkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_observations|content_observations_video_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_observations|content_observations_video_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:content_observations|content_observations_video_id_observer_id_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_observations|content_observations_video_id_observer_id_key）。"
+    },
+    {
+      "version": "constraints:only_local:content_tag_link|content_tag_link_tag_source_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（content_tag_link|content_tag_link_tag_source_check）。"
+    },
+    {
+      "version": "constraints:only_local:field_provenance|field_provenance_snapshot_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（field_provenance|field_provenance_snapshot_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:field_provenance|field_provenance_source_asset_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（field_provenance|field_provenance_source_asset_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:market_context_daily|market_context_daily_market_sentiment_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（market_context_daily|market_context_daily_market_sentiment_check）。"
+    },
+    {
+      "version": "constraints:only_local:market_context_daily|market_context_daily_source_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（market_context_daily|market_context_daily_source_check）。"
+    },
+    {
+      "version": "constraints:only_local:member_change_log|member_change_log_operator_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（member_change_log|member_change_log_operator_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:member_change_log|member_change_log_team_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（member_change_log|member_change_log_team_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:member_change_log|member_change_log_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（member_change_log|member_change_log_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:metric_snapshot|metric_snapshot_snapshot_type_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（metric_snapshot|metric_snapshot_snapshot_type_check）。"
+    },
+    {
+      "version": "constraints:only_local:notifications|notifications_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（notifications|notifications_pkey）。"
+    },
+    {
+      "version": "constraints:only_local:notifications|notifications_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（notifications|notifications_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:profiles|profiles_status_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（profiles|profiles_status_check）。"
+    },
+    {
+      "version": "constraints:only_local:remind_logs|remind_logs_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（remind_logs|remind_logs_pkey）。"
+    },
+    {
+      "version": "constraints:only_local:remind_logs|remind_logs_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（remind_logs|remind_logs_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:script_segment|script_segment_mapping_status_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（script_segment|script_segment_mapping_status_check）。"
+    },
+    {
+      "version": "constraints:only_local:script_segment|script_segment_segment_type_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（script_segment|script_segment_segment_type_check）。"
+    },
+    {
+      "version": "constraints:only_local:submission_batch|submission_batch_batch_status_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（submission_batch|submission_batch_batch_status_check）。"
+    },
+    {
+      "version": "constraints:only_local:submission_batch|submission_batch_idempotency_key_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（submission_batch|submission_batch_idempotency_key_key）。"
+    },
+    {
+      "version": "constraints:only_local:submission_batch|submission_batch_submitter_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（submission_batch|submission_batch_submitter_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:only_local:tag_definition|tag_definition_dimension_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（tag_definition|tag_definition_dimension_check）。"
+    },
+    {
+      "version": "constraints:only_local:tag_definition|tag_definition_org_id_dimension_tag_code_key",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（tag_definition|tag_definition_org_id_dimension_tag_code_key）。"
+    },
+    {
+      "version": "constraints:only_local:video_content_segments|video_content_segments_segment_type_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（video_content_segments|video_content_segments_segment_type_check）。"
+    },
+    {
+      "version": "constraints:only_local:video_metrics_snapshots|video_metrics_snapshots_snapshot_type_check",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有约束（video_metrics_snapshots|video_metrics_snapshots_snapshot_type_check）。"
+    },
+    {
+      "version": "constraints:differing:audit_logs|audit_logs_user_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，约束定义不同（audit_logs|audit_logs_user_id_fkey）。"
+    },
+    {
+      "version": "constraints:differing:content_tag_link|content_tag_link_pkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，约束定义不同（content_tag_link|content_tag_link_pkey）。"
+    },
+    {
+      "version": "constraints:differing:content_tag_link|content_tag_link_tag_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，约束定义不同（content_tag_link|content_tag_link_tag_id_fkey）。"
+    },
+    {
+      "version": "constraints:differing:script_segment|script_segment_script_document_id_fkey",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，约束定义不同（script_segment|script_segment_script_document_id_fkey）。"
+    },
+    {
+      "version": "rls:policy_only_prod:ai_feedback|ai_feedback_owner",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（ai_feedback|ai_feedback_owner）。"
+    },
+    {
+      "version": "rls:policy_only_prod:ai_input_bundle|ai_input_bundle_owner",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（ai_input_bundle|ai_input_bundle_owner）。"
+    },
+    {
+      "version": "rls:policy_only_prod:audit_logs|audit_logs_insert_authenticated",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（audit_logs|audit_logs_insert_authenticated）。"
+    },
+    {
+      "version": "rls:policy_only_prod:content_asset|content_asset_owner",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（content_asset|content_asset_owner）。"
+    },
+    {
+      "version": "rls:policy_only_prod:content_tag_link|content_tag_link_read",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（content_tag_link|content_tag_link_read）。"
+    },
+    {
+      "version": "rls:policy_only_prod:exemption_request|exemption_request_select",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（exemption_request|exemption_request_select）。"
+    },
+    {
+      "version": "rls:policy_only_prod:invite_codes|invite_codes_select_valid_for_s ignup",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（invite_codes|invite_codes_select_valid_for_s ignup）。"
+    },
+    {
+      "version": "rls:policy_only_prod:member_change_log|member_change_log_select",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（member_change_log|member_change_log_select）。"
+    },
+    {
+      "version": "rls:policy_only_prod:metric_snapshot|metric_snapshot_owner",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（metric_snapshot|metric_snapshot_owner）。"
+    },
+    {
+      "version": "rls:policy_only_prod:profiles|profiles_insert_on_signup",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（profiles|profiles_insert_on_signup）。"
+    },
+    {
+      "version": "rls:policy_only_prod:provisional_tag_text|provisional_tag_text_insert",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（provisional_tag_text|provisional_tag_text_insert）。"
+    },
+    {
+      "version": "rls:policy_only_prod:provisional_tag_text|provisional_tag_text_select",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（provisional_tag_text|provisional_tag_text_select）。"
+    },
+    {
+      "version": "rls:policy_only_prod:teams|teams_read",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有 RLS 策略（teams|teams_read）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_input_bundle|仅管理员删除AI输入包",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_input_bundle|仅管理员删除AI输入包）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_input_bundle|仅管理员更新AI输入包",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_input_bundle|仅管理员更新AI输入包）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_input_bundle|用户可按范围写入AI输入包",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_input_bundle|用户可按范围写入AI输入包）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_input_bundle|用户可按范围读取AI输入包",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_input_bundle|用户可按范围读取AI输入包）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_insight_result|仅管理员删除AI洞察结果",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_insight_result|仅管理员删除AI洞察结果）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_insight_result|仅管理员更新AI洞察结果",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_insight_result|仅管理员更新AI洞察结果）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_insight_result|用户可按范围写入AI洞察结果",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_insight_result|用户可按范围写入AI洞察结果）。"
+    },
+    {
+      "version": "rls:policy_only_local:ai_insight_result|用户可按范围读取AI洞察结果",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（ai_insight_result|用户可按范围读取AI洞察结果）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_asset|通过内容项继承写入素材权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_asset|通过内容项继承写入素材权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_asset|通过内容项继承删除素材权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_asset|通过内容项继承删除素材权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_asset|通过内容项继承更新素材权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_asset|通过内容项继承更新素材权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_asset|通过内容项继承读取素材权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_asset|通过内容项继承读取素材权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_item|用户创建自己的内容项",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_item|用户创建自己的内容项）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_item|用户删除自己的内容项",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_item|用户删除自己的内容项）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_item|用户更新自己的内容项",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_item|用户更新自己的内容项）。"
+    },
+    {
+      "version": "rls:policy_only_local:content_item|用户读取自己的内容项",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（content_item|用户读取自己的内容项）。"
+    },
+    {
+      "version": "rls:policy_only_local:field_provenance|通过快照继承写入字段来源权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（field_provenance|通过快照继承写入字段来源权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:field_provenance|通过快照继承删除字段来源权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（field_provenance|通过快照继承删除字段来源权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:field_provenance|通过快照继承更新字段来源权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（field_provenance|通过快照继承更新字段来源权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:field_provenance|通过快照继承读取字段来源权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（field_provenance|通过快照继承读取字段来源权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:invite_codes|invite_codes_select_valid_for_signup",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（invite_codes|invite_codes_select_valid_for_signup）。"
+    },
+    {
+      "version": "rls:policy_only_local:metric_snapshot|通过内容项继承写入快照权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（metric_snapshot|通过内容项继承写入快照权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:metric_snapshot|通过内容项继承删除快照权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（metric_snapshot|通过内容项继承删除快照权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:metric_snapshot|通过内容项继承更新快照权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（metric_snapshot|通过内容项继承更新快照权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:metric_snapshot|通过内容项继承读取快照权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（metric_snapshot|通过内容项继承读取快照权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_document|仅管理员写入脚本文档",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_document|仅管理员写入脚本文档）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_document|仅管理员删除脚本文档",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_document|仅管理员删除脚本文档）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_document|仅管理员更新脚本文档",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_document|仅管理员更新脚本文档）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_document|通过内容项继承读取脚本文档权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_document|通过内容项继承读取脚本文档权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_segment|仅管理员写入脚本分段",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_segment|仅管理员写入脚本分段）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_segment|仅管理员删除脚本分段",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_segment|仅管理员删除脚本分段）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_segment|仅管理员更新脚本分段",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_segment|仅管理员更新脚本分段）。"
+    },
+    {
+      "version": "rls:policy_only_local:script_segment|通过脚本文档继承读取脚本分段权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（script_segment|通过脚本文档继承读取脚本分段权限）。"
+    },
+    {
+      "version": "rls:policy_only_local:submission_batch|用户创建自己的提交批次",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（submission_batch|用户创建自己的提交批次）。"
+    },
+    {
+      "version": "rls:policy_only_local:submission_batch|用户删除自己的提交批次",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（submission_batch|用户删除自己的提交批次）。"
+    },
+    {
+      "version": "rls:policy_only_local:submission_batch|用户更新自己的提交批次",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（submission_batch|用户更新自己的提交批次）。"
+    },
+    {
+      "version": "rls:policy_only_local:submission_batch|用户读取自己的提交批次",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（submission_batch|用户读取自己的提交批次）。"
+    },
+    {
+      "version": "rls:policy_only_local:tag_definition|仅管理员写入标签定义",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（tag_definition|仅管理员写入标签定义）。"
+    },
+    {
+      "version": "rls:policy_only_local:tag_definition|仅管理员删除标签定义",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（tag_definition|仅管理员删除标签定义）。"
+    },
+    {
+      "version": "rls:policy_only_local:tag_definition|仅管理员更新标签定义",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（tag_definition|仅管理员更新标签定义）。"
+    },
+    {
+      "version": "rls:policy_only_local:tag_definition|已登录用户可读取标签定义",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（tag_definition|已登录用户可读取标签定义）。"
+    },
+    {
+      "version": "rls:policy_only_local:teams|仅管理员写入团队",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（teams|仅管理员写入团队）。"
+    },
+    {
+      "version": "rls:policy_only_local:teams|仅管理员删除团队",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（teams|仅管理员删除团队）。"
+    },
+    {
+      "version": "rls:policy_only_local:teams|仅管理员更新团队",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（teams|仅管理员更新团队）。"
+    },
+    {
+      "version": "rls:policy_only_local:teams|成员读取所属团队或演示团队",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，本地独有 RLS 策略（teams|成员读取所属团队或演示团队）。"
+    },
+    {
+      "version": "rls:policy_differing:advice_actions|员工更新自己的建议状态",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（advice_actions|员工更新自己的建议状态）。"
+    },
+    {
+      "version": "rls:policy_differing:advice_actions|员工看自己的建议",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（advice_actions|员工看自己的建议）。"
+    },
+    {
+      "version": "rls:policy_differing:advice_actions|管理员管理全部建议",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（advice_actions|管理员管理全部建议）。"
+    },
+    {
+      "version": "rls:policy_differing:content_item|b3_content_item_select_own_active",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（content_item|b3_content_item_select_own_active）。"
+    },
+    {
+      "version": "rls:policy_differing:exemption_request|b3_exemption_request_insert_scope",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（exemption_request|b3_exemption_request_insert_scope）。"
+    },
+    {
+      "version": "rls:policy_differing:market_context_daily|登录用户可读市场数据",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（market_context_daily|登录用户可读市场数据）。"
+    },
+    {
+      "version": "rls:policy_differing:market_context_daily|管理员管理市场数据",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（market_context_daily|管理员管理市场数据）。"
+    },
+    {
+      "version": "rls:policy_differing:video_metrics_snapshots|员工创建自己视频的快照",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_metrics_snapshots|员工创建自己视频的快照）。"
+    },
+    {
+      "version": "rls:policy_differing:video_metrics_snapshots|员工更新自己视频的快照",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_metrics_snapshots|员工更新自己视频的快照）。"
+    },
+    {
+      "version": "rls:policy_differing:video_metrics_snapshots|管理员管理全部快照",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_metrics_snapshots|管理员管理全部快照）。"
+    },
+    {
+      "version": "rls:policy_differing:video_metrics_snapshots|通过视频继承读权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_metrics_snapshots|通过视频继承读权限）。"
+    },
+    {
+      "version": "rls:policy_differing:video_tags|员工创建自己视频的标签",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_tags|员工创建自己视频的标签）。"
+    },
+    {
+      "version": "rls:policy_differing:video_tags|管理员管理全部标签",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_tags|管理员管理全部标签）。"
+    },
+    {
+      "version": "rls:policy_differing:video_tags|通过视频继承读权限",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（video_tags|通过视频继承读权限）。"
+    },
+    {
+      "version": "rls:policy_differing:videos|员工创建自己的视频",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，RLS 策略条件不同（videos|员工创建自己的视频）。"
+    },
+    {
+      "version": "triggers:only_prod:content_item|trg_log_content_edit",
+      "type": "known_drift",
+      "reason": "待查：首次生产库与重放库对账记录，生产独有触发器（content_item|trg_log_content_edit）。"
+    }
+  ]
+}

@@ -27,6 +27,8 @@
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "seed:roles": "node --env-file-if-exists=.env.ai-test.local node_modules/tsx/dist/cli.mjs scripts/seed-roles-test-data.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
+    "db:replay": "node scripts/db-replay.mjs",
+    "db:drift": "node scripts/audit/db-drift-report.mjs --check --exceptions supabase/migration-ledger-exceptions.json --local-url postgresql://postgres:postgres@127.0.0.1:54322/dydata_replay",
     "analyze": "ANALYZE=true next build",
     "hooks:install": "node scripts/install-git-hooks.mjs"
   },

@@ -9,6 +9,16 @@ const root = process.cwd();
 const dryRun = process.argv.includes("--dry-run");
 const baseUrl = process.env.BASE_URL?.trim();
 
+function migrationChangesPresent() {
+  const ranges = [
+    ["diff", "--name-only", "origin/main...HEAD", "--", "supabase/migrations"],
+    ["diff", "--name-only", "HEAD", "--", "supabase/migrations"],
+    ["diff", "--cached", "--name-only", "--", "supabase/migrations"],
+    ["ls-files", "--others", "--exclude-standard", "--", "supabase/migrations"],
+  ];
+  return ranges.some((args) => (spawnSync("git", args, { cwd: root, encoding: "utf8" }).stdout ?? "").trim());
+}
+
 const scriptTests = readdirSync(path.join(root, "scripts"))
   .filter((file) => file.endsWith(".test.mjs"))
   .sort()
@@ -18,6 +28,7 @@ const steps = [
   { id: "screenshot-storage-boundary", command: "npm run gate:screenshot-storage", args: ["run", "gate:screenshot-storage"] },
   { id: "scripts-tests", command: `node --test ${scriptTests.join(" ")}`, args: ["--test", ...scriptTests] },
   { id: "unit-tests", command: "npm test", args: ["test"] },
+  { id: "migration-replay", command: "npm run db:replay", args: ["run", "db:replay"] },
   { id: "typecheck", command: "npx tsc --noEmit --pretty false", args: ["tsc", "--noEmit", "--pretty", "false"] },
   { id: "lint", command: "npm run lint", args: ["run", "lint"] },
   { id: "build", command: "npm run build", args: ["run", "build"] },
@@ -26,12 +37,15 @@ const steps = [
 ];
 
 function runStep(step) {
+  if (step.id === "migration-replay" && !migrationChangesPresent()) {
+    console.log("[preflight] migration replay skipped（本次推送范围没有迁移文件）");
+    return 0;
+  }
   if (step.id === "migration-scope") {
     const tracked = spawnSync("git", ["diff", "--name-only", "--", "supabase/migrations"], { cwd: root, encoding: "utf8" });
     const untracked = spawnSync("git", ["ls-files", "--others", "--exclude-standard", "--", "supabase/migrations"], { cwd: root, encoding: "utf8" });
     const changed = `${tracked.stdout ?? ""}${untracked.stdout ?? ""}`.trim();
-    if (changed) throw new Error(`本批禁止修改 supabase/migrations/**：${changed}`);
-    console.log("[preflight] migration scope clean");
+    console.log(changed ? `[preflight] migration changes detected：${changed}` : "[preflight] migration scope clean");
     return 0;
   }
   const command = step.command.startsWith("npx ") ? "npx" : step.command.startsWith("node ") ? process.execPath : npmCommand;
