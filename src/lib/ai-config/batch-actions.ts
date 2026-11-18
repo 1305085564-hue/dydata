@@ -5,6 +5,7 @@ import { discoverModelIds, syncModelsForKey } from "@/app/api/admin/ai-config/sy
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
 import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-config/key-dependencies";
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,7 +22,7 @@ export type AiConfigKeyRow = {
 
 export function parseModelIds(value: unknown) {
   return Array.isArray(value)
-    ? [...new Set(value.map((id) => toTrimmedString(id)).filter(Boolean))]
+    ? [...new Set(value.map((id) => toTrimmedString(id)).filter(Boolean).map(toCanonicalModelId))]
     : [];
 }
 
@@ -49,8 +50,8 @@ export async function handleSetKeyModelSelection(
     .eq("key_id", keyId);
   if (existErr) throw new Error(existErr.message);
 
-  const existingRows = (existing ?? []) as Array<{ id: string; model_id: string; is_enabled: boolean; disabled_by_model?: boolean | null }>;
-  const toDisable = existingRows.filter((row) => !modelIds.includes(row.model_id));
+  const existingRows = (existing ?? []) as Array<{ id: string; model_id: string; canonical_model_id?: string | null; is_enabled: boolean; disabled_by_model?: boolean | null }>;
+  const toDisable = existingRows.filter((row) => !modelIds.includes(row.canonical_model_id ?? toCanonicalModelId(row.model_id)));
   if (toDisable.length > 0) {
     const preview = await buildDependencyPreview(supabase, {
       scope: "key",
@@ -87,6 +88,7 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
     if(duplicates?.length) throw new Error("同一接入点下已有同名渠道，请换一个渠道显示名");
   }
   const selectedModelIds=parseModelIds(data.selectedModelIds ?? data.selected_model_ids);
+  const selectedModelIdSet = new Set(selectedModelIds);
   const hasSelectionPayload=Array.isArray(data.selectedModelIds) || Array.isArray(data.selected_model_ids);
   // Discovery is read-only and happens before any write, so upstream failure leaves no orphan group/key.
   const discovered=hasSelectionPayload ? await discoverModelIds({base_url:baseUrl},String(patch.api_key)) : [];
@@ -94,7 +96,11 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
   return runAiConfigWrite(supabase,"create_ai_config_channel",{
     p_provider_id:providerId,p_base_url:baseUrl,p_provider_name:toTrimmedString(data.provider_name) || baseUrl,
     p_label:label,p_api_key:patch.api_key,p_available_models:discovered,p_enabled:patch.is_enabled ?? true,
-    p_models:allModels.map(model_id=>({model_id,display_name:getModelDisplayName(model_id),is_enabled:selectedModelIds.includes(model_id)})),
+    p_models:allModels.map(model_id=>({
+      model_id,
+      display_name:getModelDisplayName(model_id),
+      is_enabled:selectedModelIdSet.has(toCanonicalModelId(model_id)),
+    })),
   });
 }
 
@@ -159,4 +165,40 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
       .filter((result): result is { ok: false; key: AiConfigKeyRow; error: string } => !result.ok)
       .map((result) => ({ keyId: result.key.id, keyName: result.key.label, error: result.error })),
   };
+}
+export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Record<string, unknown>) {
+  const modelId = toTrimmedString(data.modelId ?? data.model_id);
+  if (!modelId) throw new Error("缺少 modelId");
+  const canonicalModelId = toCanonicalModelId(modelId);
+  if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
+  const isEnabled = data.is_enabled;
+  if (!isEnabled) {
+    const preview = await buildDependencyPreview(supabase, { scope: "model", id: canonicalModelId });
+    requireDependencyConfirmation(preview, data.confirm_impact === true, "停用模型");
+  }
+  const { data: currentRows, error: readError } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, is_enabled, disabled_by_model")
+    .eq("canonical_model_id", canonicalModelId);
+  if (readError) {
+    if (/disabled_by_model/i.test(readError.message ?? "")) {
+      throw Object.assign(new Error("数据库尚未执行 AI 供应开关迁移，暂不能批量停用或恢复模型"), { status: 409 });
+    }
+    throw new Error(readError.message);
+  }
+  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
+  const changedRows = isEnabled
+    ? snapshot.filter((row) => row.disabled_by_model === true)
+    : snapshot.filter((row) => row.is_enabled);
+  if (changedRows.length === 0) {
+    return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
+  }
+  const { error: updateError } = await supabase
+    .from("ai_provider_key_models")
+    .update(isEnabled
+      ? { is_enabled: true, disabled_by_model: false }
+      : { is_enabled: false, disabled_by_model: true })
+    .in("id", changedRows.map((row) => row.id));
+  if (updateError) throw new Error(updateError.message);
+  return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
 }

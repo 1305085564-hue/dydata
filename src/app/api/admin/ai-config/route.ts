@@ -15,6 +15,7 @@ import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
 import {
   handleCreateKey,
   handleSetKeyModelSelection,
+  handleSetModelEnabled,
   handleSyncKeyModels,
   handleSyncAllKeys,
 } from "@/lib/ai-config/batch-actions";
@@ -34,6 +35,7 @@ import {
 } from "../ai-channels/_shared";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { auditRollbackMessage } from "@/lib/audit-log";
+import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 type AiConfigEntity =
   | "provider"
@@ -124,10 +126,11 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
 }
 
 async function requireSelectableModel(supabase: SupabaseClient, modelId: string, currentModelId: string | null) {
-  if (modelId === currentModelId) return;
+  const canonicalModelId = toCanonicalModelId(modelId);
+  if (canonicalModelId === (currentModelId ? toCanonicalModelId(currentModelId) : null)) return;
   const { availability } = await loadAiConfig(supabase);
-  const family = availability.modelFamilies.find((item) => item.modelId === modelId);
-  if (!family?.isSelectable) throw mutationError(`模型【${modelId}】当前没有可用渠道，不能新选`, 409);
+  const family = availability.modelFamilies.find((item) => item.modelId === canonicalModelId);
+  if (!family?.isSelectable) throw mutationError(`模型【${canonicalModelId}】当前没有可用渠道，不能新选`, 409);
 }
 
 type MutationResult = {
@@ -190,13 +193,14 @@ async function handleRemoveKeyModel(
     .select("*, key:ai_provider_keys(label, provider_id, provider:ai_providers(name))");
   const { data: row, error: rowError } = keyModelId
     ? await query.eq("id", keyModelId).maybeSingle()
-    : await query.eq("key_id", keyId).eq("model_id", modelId).maybeSingle();
+    : await query.eq("key_id", keyId).eq("canonical_model_id", toCanonicalModelId(modelId)).maybeSingle();
   if (rowError || !row) throw new Error(rowError?.message || "渠道未挂载此模型");
 
   const target = row as {
     id: string;
     key_id: string;
     model_id: string;
+    canonical_model_id?: string | null;
     display_name?: string | null;
     is_enabled: boolean;
     key?: { label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null } | Array<{ label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null }> | null;
@@ -204,7 +208,8 @@ async function handleRemoveKeyModel(
   const preview = await buildDependencyPreview(supabase, { scope: "supply", id: target.id });
   requireDependencyConfirmation(preview, data.confirm_impact === true, "删除渠道模型供应");
   const bundle = await loadAiConfig(supabase);
-  const remaining = bundle.availability.modelFamilies.find((family) => family.modelId === target.model_id)?.channels
+  const targetCanonicalModelId = readCanonicalModelId(target.model_id, target.canonical_model_id);
+  const remaining = bundle.availability.modelFamilies.find((family) => family.modelId === targetCanonicalModelId)?.channels
     .filter((candidate) => candidate.keyModelId !== target.id && candidate.isSchedulable) ?? [];
 
   const key = firstOrNull(target.key);
@@ -221,50 +226,10 @@ async function handleRemoveKeyModel(
 
   return {
     ok: true,
-    removed: { keyModelId: target.id, keyId: target.key_id, modelId: target.model_id },
+    removed: { keyModelId: target.id, keyId: target.key_id, modelId: targetCanonicalModelId },
     remainingAvailableLineCount: remaining.length,
     auditStatus: "succeeded",
   };
-}
-
-async function handleSetModelEnabled(supabase: SupabaseClient, data: Record<string, unknown>) {
-  const modelId = toTrimmedString(data.modelId ?? data.model_id);
-  if (!modelId) throw new Error("缺少 modelId");
-  if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
-  const isEnabled = data.is_enabled;
-
-  if (!isEnabled) {
-    const preview = await buildDependencyPreview(supabase, { scope: "model", id: modelId });
-    requireDependencyConfirmation(preview, data.confirm_impact === true, "停用模型");
-  }
-
-  const { data: currentRows, error: readError } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, is_enabled, disabled_by_model")
-    .eq("model_id", modelId);
-  if (readError) {
-    if (/disabled_by_model/i.test(readError.message ?? "")) {
-      throw mutationError("数据库尚未执行 AI 供应开关迁移，暂不能批量停用或恢复模型", 409);
-    }
-    throw new Error(readError.message);
-  }
-  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
-  const changedRows = isEnabled
-    ? snapshot.filter((row) => row.disabled_by_model === true)
-    : snapshot.filter((row) => row.is_enabled);
-  if (changedRows.length === 0) {
-    return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
-  }
-
-  const { error: updateError } = await supabase
-    .from("ai_provider_key_models")
-    .update(isEnabled
-      ? { is_enabled: true, disabled_by_model: false }
-      : { is_enabled: false, disabled_by_model: true })
-    .in("id", changedRows.map((row) => row.id));
-  if (updateError) throw new Error(updateError.message);
-
-  return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
 }
 
 async function applyMutation(
@@ -408,7 +373,7 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
       if (error) throw new Error(error.message);
       await requireSelectableModel(supabase, nextModelId, toNullableString(current?.model_id));
     }
-    patch.model_id = nextModelId;
+    patch.model_id = nextModelId ? toCanonicalModelId(nextModelId) : null;
   }
   if (feature.key === "ocr_screenshot") {
     patch.channel_settings = {
@@ -483,8 +448,9 @@ export async function buildAiConfigResponse(
         .maybeSingle() : {data:{base_url:normalizeChannelAddress(data.base_url),is_enabled:true},error:null};
       if (error || !provider) throw new Error(error?.message || "接入点不存在");
       if (!(provider as { is_enabled?: boolean }).is_enabled) throw new Error("接入点已停用");
-      const modelIds = await discoverModelIds(provider as { name?: string; base_url?: string }, apiKey);
-      return NextResponse.json({ modelIds, modelGroups: groupModelIdAliases(modelIds) });
+      const upstreamModelIds = await discoverModelIds(provider as { name?: string; base_url?: string }, apiKey);
+      const modelIds = [...new Set(upstreamModelIds.map(toCanonicalModelId))];
+      return NextResponse.json({ modelIds, modelGroups: groupModelIdAliases(upstreamModelIds) });
     } catch {
       // 不把上游响应原文返回给浏览器，避免错误消息意外回显凭据。
       return NextResponse.json({ error: "服务端探测模型列表失败，请检查接入点和 API Key" }, { status: 502 });
@@ -496,20 +462,21 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const modelId = toTrimmedString(data.model_id);
       if (!modelId) throw new Error("缺少 model_id");
+      const canonicalModelId = toCanonicalModelId(modelId);
       const bundle = await loadAiConfig(auth.supabase);
-      const candidates = findModelChannelCandidates(bundle as unknown as ModelChannelDiscoveryInput,modelId);
-      if (action === "find_model_channels") return NextResponse.json({modelId,candidates});
+      const candidates = findModelChannelCandidates(bundle as unknown as ModelChannelDiscoveryInput, canonicalModelId);
+      if (action === "find_model_channels") return NextResponse.json({modelId: canonicalModelId,candidates});
       const candidate = candidates.find(item=>item.keyId === toTrimmedString(data.key_id));
       if (!candidate) throw new Error("该供应已经打开，或上游缓存未发现这个模型，请先同步");
       if (!candidate.keyEnabled || !candidate.providerEnabled) throw new Error("请先打开渠道及其地址组，再开启模型供应");
       const target = await loadKeyProvider(auth.supabase,candidate.keyId);
-      const testResult = await probeProviderModel(target.key.api_key,target.provider.base_url,modelId);
+      const testResult = await probeProviderModel(target.key.api_key,target.provider.base_url,candidate.upstreamModelId);
       if (!testResult.ok) return NextResponse.json({error:"该渠道的模型测试未通过，供应仍关闭",testResult},{status:422});
       const supplyId = await runAiConfigWrite((deps.createAdminClient ?? createAdminClient)(),"enable_ai_config_supply",{
-        p_key_id:candidate.keyId,p_model_id:modelId,p_display_name:getModelDisplayName(modelId),
+        p_key_id:candidate.keyId,p_model_id:candidate.upstreamModelId,p_display_name:getModelDisplayName(canonicalModelId),
       });
       aiClientInternal.resetCache();
-      return NextResponse.json({...await loadAiConfig(auth.supabase),enableResult:{keyId:candidate.keyId,modelId,supplyId,testResult}});
+      return NextResponse.json({...await loadAiConfig(auth.supabase),enableResult:{keyId:candidate.keyId,modelId:canonicalModelId,supplyId,testResult}});
     } catch (error) {
       return NextResponse.json(mutationErrorBody(error,"模型供应操作失败"),{status:(error as MutationError).status ?? 400});
     }
@@ -697,9 +664,10 @@ export async function buildAiConfigResponse(
       const id = toTrimmedString(data.key_model_id);
       const targetId = toTrimmedString(data.target_key_model_id);
       if (!modelId || !id || !targetId || id === targetId) throw mutationError("顺位交换参数不合法");
+      const canonicalModelId = toCanonicalModelId(modelId);
       // 「可调度相邻」校验复用五态唯一真源：中间隔着失效/停用渠道不阻断交换，端点不可调度则拒绝。
       const preloaded = await loadAiConfig(auth.supabase);
-      const family = preloaded.availability.modelFamilies.find((f) => f.modelId === modelId);
+      const family = preloaded.availability.modelFamilies.find((f) => f.modelId === canonicalModelId);
       const current = family?.channels.find((c) => c.keyModelId === id);
       const target = family?.channels.find((c) => c.keyModelId === targetId);
       if (!family || !current || !target || !current.isSchedulable || !target.isSchedulable) {
@@ -711,7 +679,7 @@ export async function buildAiConfigResponse(
         throw mutationError("两条渠道之间还有可用渠道，请刷新后重试", 409);
       }
       const { error } = await (deps.createAdminClient ?? createAdminClient)().rpc("swap_provider_key_model_order", {
-        p_model_id: modelId, p_key_model_id: id, p_target_key_model_id: targetId,
+        p_model_id: canonicalModelId, p_key_model_id: id, p_target_key_model_id: targetId,
       });
       if (error) throw mutationError(error.message, 409);
       aiClientInternal.resetCache();
@@ -726,17 +694,18 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const modelId = toNullableString(data.model_id);
       if (!modelId) throw new Error("还没有选择默认兜底模型");
+      const canonicalModelId = toCanonicalModelId(modelId);
       const { data: current, error: currentError } = await auth.supabase
         .from("ai_feature_bindings")
         .select("model_id")
         .eq("feature_key", "default")
         .maybeSingle();
       if (currentError) throw new Error(currentError.message);
-      await requireSelectableModel(auth.supabase, modelId, toNullableString(current?.model_id));
+      await requireSelectableModel(auth.supabase, canonicalModelId, toNullableString(current?.model_id));
       const { error } = await auth.supabase
         .from("ai_feature_bindings")
         .upsert(
-          { feature_key: "default", label: "全局默认 AI 模型", model_id: modelId },
+          { feature_key: "default", label: "全局默认 AI 模型", model_id: canonicalModelId },
           { onConflict: "feature_key" }
         );
       if (error) throw new Error(error.message);

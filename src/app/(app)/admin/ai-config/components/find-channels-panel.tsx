@@ -13,6 +13,7 @@ export interface ChannelCandidate {
   providerName: string;
   providerEnabled: boolean;
   keyEnabled: boolean;
+  upstreamModelId?: string;
   existingSupplyId?: string;
   requiresProbe: boolean;
 }

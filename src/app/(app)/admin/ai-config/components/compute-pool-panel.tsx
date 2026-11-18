@@ -19,6 +19,7 @@ import { Search, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import type { CheckResultItem } from "./channel-model-test-list";
+import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { cn } from "@/lib/utils";
 
 // 恢复模型只说响应能证明的结果：零条不等于本来已开，缺字段也不推断
@@ -262,7 +263,9 @@ export function ComputePoolPanel() {
 
   // 单供应测试
   const handleTestSupply = async (keyId: string, modelId: string) => {
-    const keyModelId = bundle?.models.find((m) => m.key_id === keyId && m.model_id === modelId)?.id;
+    const keyModelId = bundle?.models.find(
+      (m) => m.key_id === keyId && readCanonicalModelId(m.model_id, m.canonical_model_id) === modelId,
+    )?.id;
     if (keyModelId) setTestingKeyModelId(keyModelId);
     try {
       const res = await runCommand("test_key_model", { key_id: keyId, model_id: modelId });

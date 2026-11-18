@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { WithdrawPendingButton } from "@/components/video-submit/withdraw-pending-button";
 import { cn } from "@/lib/utils";
 import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填报表单状态";
 import { listSubmitGaps, SUBMIT_SLOT_LABELS } from "@/lib/video-submit/domain/submit-gaps";
@@ -19,6 +20,8 @@ export interface FormV2SubmitFooterProps {
   appealPrecheckRequired: boolean;
   requestLateSubmission: () => void;
   retryAppealResume: () => void;
+  /** 待审批时可撤回申请；没有申请 ID 时不传。 */
+  onWithdrawAppeal?: () => Promise<void>;
   isAppealResuming: boolean;
   isAppealSubmitting: boolean;
   isBackfillMode: boolean;
@@ -45,6 +48,7 @@ export function FormV2SubmitFooter({
   appealPrecheckRequired,
   requestLateSubmission,
   retryAppealResume,
+  onWithdrawAppeal,
   isAppealResuming,
   isAppealSubmitting,
   isBackfillMode,
@@ -104,7 +108,10 @@ export function FormV2SubmitFooter({
           {isAppealSubmitting ? "申请中..." : appealLabel}
         </Button>
       ) : appealStatus === "pending" && !isSubmitted ? (
-        <span className="shrink-0 text-[13px] text-[#78716C]">等待审批</span>
+        <span className="flex shrink-0 items-center gap-3 text-[13px] text-[#78716C]">
+          等待审批
+          {onWithdrawAppeal ? <WithdrawPendingButton onWithdraw={onWithdrawAppeal} className="cursor-pointer select-none text-[13px] text-[#78716C] underline-offset-2 hover:text-[#141413] hover:underline disabled:opacity-60" /> : null}
+        </span>
       ) : (
         <Button
           type="button"

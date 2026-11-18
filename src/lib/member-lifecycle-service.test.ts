@@ -16,6 +16,7 @@ type FakeState = {
   metadata: Record<string, unknown>;
   banned: boolean;
   failures: Partial<Record<FailureMode, number>>;
+  missingTeams: string[];
   calls: string[];
   profilePatches: Record<string, unknown>[];
   logRows: Record<string, unknown>[];
@@ -46,6 +47,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
     metadata: { team_id: "team-1", team_name: "内容一部" },
     banned: false,
     failures: options.fail ? { [options.fail]: 1 } : {},
+    missingTeams: [],
     calls: [],
     profilePatches: [],
     logRows: [],
@@ -171,7 +173,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
           select: () => ({
             eq: (_field: string, id: string) => ({
               maybeSingle: async () => ({
-                data: { name: id === "team-1" ? "内容一部" : "内容二部" },
+                data: state.missingTeams.includes(id) ? null : { name: id === "team-1" ? "内容一部" : "内容二部" },
                 error: null,
               }),
             }),
@@ -448,4 +450,42 @@ test("调配团队的 pending 豁免归属同步失败时恢复 profile 和 Auth
   assert.equal(state.profile.team_id, "team-1");
   assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
   assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
+});
+
+test("恢复成员带回归档前的团队，角色仍是普通组员、权限清空，Auth 团队资料同步", async () => {
+  const { client, state } = createFakeClient({
+    profile: {
+      membership_status: "archived", team_id: null, role: "member", company_role: "member", permissions: {},
+      archived_at: "2026-08-03T12:00:00.000Z", archived_by: "owner-1", archive_reason: "离职",
+      archive_snapshot: { role: "admin", company_role: "admin", permissions: { manage_members: true }, team_id: "team-1" },
+    },
+  });
+  state.metadata = {};
+
+  const result = await restoreMemberWithClient({ client, actor: owner, targetId: "member-1" });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.profile.team_id, "team-1");
+  assert.equal(state.profile.role, "member");
+  assert.deepEqual(state.profile.permissions, {});
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
+  assert.equal(state.logRows[0]?.change_payload && (state.logRows[0].change_payload as { team_id: string }).team_id, "team-1");
+  assert.ok(result.ok && result.affectedData?.restoredTeamId === "team-1" && result.affectedData?.teamMissing === false);
+});
+
+test("归档前的团队已被删除：恢复成未分配团队的普通组员，并明确标出团队已不存在", async () => {
+  const { client, state } = createFakeClient({
+    profile: {
+      membership_status: "archived", team_id: null, role: "member", company_role: "member", permissions: {},
+      archived_at: "2026-08-03T12:00:00.000Z", archived_by: "owner-1", archive_reason: "离职",
+      archive_snapshot: { role: "member", company_role: "member", permissions: {}, team_id: "team-1" },
+    },
+  });
+  state.missingTeams.push("team-1");
+
+  const result = await restoreMemberWithClient({ client, actor: owner, targetId: "member-1" });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.profile.team_id, null);
+  assert.ok(result.ok && result.affectedData?.restoredTeamId === null && result.affectedData?.teamMissing === true);
 });

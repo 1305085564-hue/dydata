@@ -16,7 +16,10 @@ import {
   type TodaySubmissionReportLike,
 } from "@/lib/dashboard-submission-state";
 import { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
-import { resolvePanelHeaderStatus, summarizeMonthFulfillment } from "@/lib/dashboard-panel-header";
+import { resolvePanelHeaderStatus } from "@/lib/dashboard-panel-header";
+import { useMonthFulfillment } from "./use-month-fulfillment";
+import { useReviewNoticeDismissal } from "./use-review-notice-dismissal";
+import { withdrawMyPendingExemptions } from "@/lib/withdraw-requests-client";
 import {
   resolvePanelDateSelection,
   resolvePanelRequestedMode,
@@ -56,7 +59,8 @@ export function VideoSubmitPanelV2({
   pendingExemptionDates = [],
   absentDates = [],
   absentReasons = {},
-  userExemptionReviewNotice = null,
+  monthFulfillmentBasis,
+  userExemptionReviewNotices = [],
   userExemptionProfile,
   userExemptionGrants,
   selectedAccountId: controlledSelectedAccountId,
@@ -140,26 +144,7 @@ export function VideoSubmitPanelV2({
     return () => window.clearTimeout(timeoutId);
   }, [today]);
 
-  const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
-  useEffect(() => {
-    if (!userExemptionReviewNotice) return;
-    let nextDismissed = false;
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
-    } catch {}
-    const timeoutId = window.setTimeout(() => setDismissedReviewNotice(nextDismissed), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [userExemptionReviewNotice]);
-
-  const handleDismissReviewNotice = useCallback(() => {
-    if (!userExemptionReviewNotice) return;
-    setDismissedReviewNotice(true);
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      window.sessionStorage.setItem(key, "dismissed");
-    } catch {}
-  }, [userExemptionReviewNotice]);
+  const { dismissed: dismissedReviewNotice, dismiss: handleDismissReviewNotice } = useReviewNoticeDismissal(userExemptionReviewNotices);
 
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
@@ -334,29 +319,15 @@ export function VideoSubmitPanelV2({
     [activeExemptionState.category, activeExemptionState.isExempt, activeExemptionState.reason],
   );
 
-  const monthFulfillment = useMemo(
-    () =>
-      summarizeMonthFulfillment({
-        today,
-        submittedDates: submittedDatesIncludingActivity,
-        exemptDates: [
-          ...allExemptionDateBuckets.waiveDates,
-          ...allExemptionDateBuckets.leaveDates,
-          ...localPendingExemptionDates,
-        ],
-        exemptionProfile: userExemptionProfile,
-        exemptionGrants: userExemptionGrants,
-      }),
-    [
-      allExemptionDateBuckets.leaveDates,
-      allExemptionDateBuckets.waiveDates,
-      localPendingExemptionDates,
-      userExemptionGrants,
-      userExemptionProfile,
-      submittedDatesIncludingActivity,
-      today,
-    ],
-  );
+  const monthFulfillment = useMonthFulfillment({
+    today,
+    submittedDates: submittedDatesIncludingActivity,
+    exemptionDateBuckets: allExemptionDateBuckets,
+    pendingExemptionDates: localPendingExemptionDates,
+    basis: monthFulfillmentBasis,
+    profile: userExemptionProfile,
+    grants: userExemptionGrants,
+  });
 
   useEffect(() => {
     if (primaryMode !== "editToday" || !selectedAccount) {
@@ -471,6 +442,16 @@ export function VideoSubmitPanelV2({
     } catch {}
   }, [today]);
 
+  // 撤回后以服务端为准：先本地清掉提示，再刷新让日历、角标、横幅与管理员侧一致
+  const withdrawPendingExemption = useCallback(async () => {
+    const result = await withdrawMyPendingExemptions();
+    if (!result.ok) return void toast.error(result.error);
+    setLocalHasPendingExemption(false);
+    setLocalPendingExemptionDates([]);
+    toast.success(result.message);
+    router.refresh();
+  }, [router]);
+
   // 点击外部及 Esc 键收起日历 Popover
   useEffect(() => {
     if (!isCalendarOpen) return;
@@ -527,10 +508,11 @@ export function VideoSubmitPanelV2({
           shouldShowForm={shouldShowForm}
           isExemptionPending={isExemptionPending}
           dismissedPendingExemption={dismissedPendingExemption}
-          userExemptionReviewNotice={userExemptionReviewNotice}
+          userExemptionReviewNotices={userExemptionReviewNotices}
           dismissedReviewNotice={dismissedReviewNotice}
           handleDismissReviewNotice={handleDismissReviewNotice}
           dismissPendingExemption={dismissPendingExemption}
+          onWithdrawPendingExemption={withdrawPendingExemption}
           isPrimarySummaryMode={isPrimarySummaryMode}
           activeBizDate={activeBizDate}
           today={today}

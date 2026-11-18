@@ -27,7 +27,8 @@ interface DashboardContentProps {
   pendingExemptionDates?: string[];
   absentDates: string[];
   absentReasons: Record<string, string>;
-  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
+  monthFulfillmentBasis?: DashboardPageData["monthFulfillmentBasis"];
+  userExemptionReviewNotices: DashboardPageData["userExemptionReviewNotices"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
 }

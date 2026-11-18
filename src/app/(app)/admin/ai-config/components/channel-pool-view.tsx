@@ -24,6 +24,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { formatSleepCountdown, AI_CONFIG_MESSAGES, CHANNEL_IDENTITY_PRESENTATION } from "@/lib/ai-config/presentation";
 import type { AvailabilityChannel, AvailabilityKeySummary } from "@/lib/ai-config/availability";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
+import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { cn } from "@/lib/utils";
 
 export interface ChannelPoolViewProps {
@@ -302,7 +303,9 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
   // 模型勾选（取消勾选只是关闭，不删除）
   const handleToggleModelSelection = async (modelId: string, willEnable: boolean) => {
     if (!selectedChannel) return;
-    const currentEnabledIds = channelModels.filter((m) => m.is_enabled).map((m) => m.model_id);
+    const currentEnabledIds = channelModels
+      .filter((m) => m.is_enabled)
+      .map((m) => readCanonicalModelId(m.model_id, m.canonical_model_id));
     const nextIds = willEnable
       ? Array.from(new Set([...currentEnabledIds, modelId]))
       : currentEnabledIds.filter((id) => id !== modelId);
@@ -672,11 +675,11 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                     >
                       <Checkbox
                         checked={m.is_enabled}
-                        onCheckedChange={(checked) => handleToggleModelSelection(m.model_id, Boolean(checked))}
+                        onCheckedChange={(checked) => handleToggleModelSelection(readCanonicalModelId(m.model_id, m.canonical_model_id), Boolean(checked))}
                         className="size-4 rounded-md shrink-0"
                       />
                       <span className="font-normal text-[13px] text-[#141413] truncate">
-                        {m.display_name || m.model_id}
+                        {m.display_name || readCanonicalModelId(m.model_id, m.canonical_model_id)}
                       </span>
                       {m.display_name && m.display_name !== m.model_id && (
                         <span className="text-[12px] font-mono text-[#78716C] truncate">

@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { sortSyncGroups } from "@/lib/ai-config/list-order";
+import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 export interface SyncModelsDialogProps {
   open: boolean;
@@ -66,8 +67,8 @@ export function SyncModelsDialog({
     if (!keyId || !bundle?.models) return new Set<string>();
     return new Set(
       bundle.models
-        .filter((m: { key_id: string; is_enabled: boolean; model_id: string }) => m.key_id === keyId && m.is_enabled)
-        .map((m: { model_id: string }) => m.model_id)
+        .filter((m) => m.key_id === keyId && m.is_enabled)
+        .map((m) => readCanonicalModelId(m.model_id, m.canonical_model_id))
     );
   }, [keyId, bundle]);
 
@@ -153,21 +154,11 @@ export function SyncModelsDialog({
   };
 
   // 展开/收起更多版本
-  const toggleGroupExpanded = (displayName: string) => {
+  const toggleGroupExpanded = (modelKey: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(displayName)) next.delete(displayName);
-      else next.add(displayName);
-      return next;
-    });
-  };
-
-  // 勾选/取消勾选单个真实 ID
-  const toggleModelSelection = (modelId: string, checked: boolean) => {
-    setSelectedModelIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(modelId);
-      else next.delete(modelId);
+      if (next.has(modelKey)) next.delete(modelKey);
+      else next.add(modelKey);
       return next;
     });
   };
@@ -180,10 +171,7 @@ export function SyncModelsDialog({
         // 推荐勾选推荐写法
         next.add(group.recommendedModelId);
       } else {
-        // 取消时把组内全部取消
-        for (const id of group.modelIds) {
-          next.delete(id);
-        }
+        next.delete(group.recommendedModelId);
       }
       return next;
     });
@@ -336,17 +324,16 @@ export function SyncModelsDialog({
           ) : (
             <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white overflow-hidden text-[12px]">
               {filteredGroups.map((group) => {
-                const isGroupExpanded = expandedGroups.has(group.displayName);
+                const isGroupExpanded = expandedGroups.has(group.recommendedModelId);
                 const hasMultipleVersions = group.modelIds.length > 1;
 
-                // 判断是否有任何一个子版本被勾选
-                const isAnySelected = group.modelIds.some((id) => selectedModelIds.has(id));
+                const isAnySelected = selectedModelIds.has(group.recommendedModelId);
 
                 // S9: 标签只保留「在用」和「新发现」两种
-                const isInUse = group.modelIds.some((id) => currentChannelEnabledModelIds.has(id));
+                const isInUse = currentChannelEnabledModelIds.has(group.recommendedModelId);
 
                 return (
-                  <div key={group.displayName} className="p-3 space-y-2 hover:bg-[#F7F7F6]/40 transition-colors">
+                  <div key={group.recommendedModelId} className="p-3 space-y-2 hover:bg-[#F7F7F6]/40 transition-colors">
                     {/* 主行 */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -383,7 +370,7 @@ export function SyncModelsDialog({
                       {hasMultipleVersions && (
                         <button
                           type="button"
-                          onClick={() => toggleGroupExpanded(group.displayName)}
+                          onClick={() => toggleGroupExpanded(group.recommendedModelId)}
                           className="flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
                         >
                           <span>更多版本 ({group.modelIds.length})</span>
@@ -395,31 +382,21 @@ export function SyncModelsDialog({
                     {/* 口径 7: 展开展示同一模型的不同写法与变体 */}
                     {isGroupExpanded && hasMultipleVersions && (
                       <div className="mt-2 pl-6 pt-2 border-t border-[#E2E2DF]/60 space-y-1">
-                        <div className="text-[12px] text-[#78716C]">可勾选具体上游标识：</div>
+                        <div className="text-[12px] text-[#78716C]">上游实际调用名：</div>
                         <div className="space-y-1">
                           {group.modelIds.map((id) => {
-                            const isChecked = selectedModelIds.has(id);
-                            const isRec = id === group.recommendedModelId;
+                            const isRec = id === group.modelIds[0];
 
                             return (
-                              <label
+                              <div
                                 key={id}
-                                className="flex items-center justify-between p-1.5 rounded-md hover:bg-[#F1F1F0] cursor-pointer"
+                                className="flex items-center justify-between p-1.5 rounded-md hover:bg-[#F1F1F0]"
                               >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <Checkbox
-                                    checked={isChecked}
-                                    onCheckedChange={(checked) => toggleModelSelection(id, Boolean(checked))}
-                                    className="size-3.5 rounded-md"
-                                  />
-                                  <span className="font-mono text-[12px] text-[#1F1E1D] truncate">
-                                    {id}
-                                  </span>
-                                </div>
+                                <span className="font-mono text-[12px] text-[#1F1E1D] truncate">{id}</span>
                                 {isRec && (
-                                  <span className="text-[12px] text-[#8A6A2F]">推荐</span>
+                                  <span className="text-[12px] text-[#8A6A2F]">优先调用</span>
                                 )}
-                              </label>
+                              </div>
                             );
                           })}
                         </div>

@@ -24,3 +24,22 @@ test("待审核账号会渲染撤销申请入口", () => {
   assert.match(html, /撤销申请/);
   assert.match(html, /目标团队：内容一部/);
 });
+
+test("入团申请被驳回：横幅显示「未通过：原因」并可重新申请", () => {
+  const html = renderToStaticMarkup(
+    <JoinBannerClient mode="rejected" teams={[{ id: "team-1", name: "内容一部" }]} targetTeamName="内容一部" reviewNote="名额已满，下月再申请" />,
+  );
+
+  assert.match(html, /入团申请未通过/);
+  assert.match(html, /未通过：名额已满，下月再申请/);
+  assert.match(html, /重新申请加入团队/);
+});
+
+test("驳回没写原因时只显示未通过", () => {
+  const html = renderToStaticMarkup(
+    <JoinBannerClient mode="rejected" teams={[]} targetTeamName="" reviewNote={null} />,
+  );
+
+  assert.match(html, /未通过</);
+  assert.doesNotMatch(html, /未通过：/);
+});

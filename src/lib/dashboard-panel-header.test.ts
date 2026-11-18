@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  dropExpiredExemptionNotice,
   formatHeaderDate,
   resolvePanelHeaderStatus,
   summarizeMonthFulfillment,
@@ -34,17 +33,40 @@ test("页头状态句：已交、免交、修改、补交不受表单进度影�
   );
 });
 
-test("本月漏交只算今天以前的工作日：周末没交不算漏", () => {
+test("本月漏交按自然日算：公司要求每天都发，周末也算漏", () => {
   // 2026-11：1 日周日，2–6 日周一到周五，7–8 日周末，9 日周一
   const result = summarizeMonthFulfillment({
     today: "2026-11-10",
     submittedDates: ["2026-11-02", "2026-11-03", "2026-11-08"],
     exemptDates: ["2026-11-04"],
   });
-  // 已交：2、3、8 日（周末交了也算已交）
+  // 已交：2、3、8 日
   assert.equal(result.submittedCount, 3);
-  // 漏交：5、6、9 日；1、7 日是周末，4 日免交，10 日是今天
+  // 漏交：1、5、6、7、9 日；4 日免交，10 日是今天（作品第二天才上传）
+  assert.equal(result.missedCount, 5);
+});
+
+test("本月漏交从入职日起算，入职前的日子不算漏", () => {
+  const result = summarizeMonthFulfillment({
+    today: "2026-11-10",
+    submittedDates: [],
+    exemptDates: [],
+    joinedDate: "2026-11-07",
+  });
+  // 7、8、9 日（周末也算）
   assert.equal(result.missedCount, 3);
+});
+
+test("管理员人工标记过的日子（请假、豁免、确认已发）不算漏", () => {
+  const result = summarizeMonthFulfillment({
+    today: "2026-11-10",
+    submittedDates: [],
+    exemptDates: [],
+    manualMarkedDates: ["2026-11-01", "2026-11-07", "2026-11-09"],
+    joinedDate: "2026-11-01",
+  });
+  // 2–6、8 日 = 6 天
+  assert.equal(result.missedCount, 6);
 });
 
 test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
@@ -76,17 +98,10 @@ test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
       exempt_reason: null,
     },
   });
-  assert.equal(active.missedCount, 6);
+  assert.equal(active.missedCount, 9);
 });
 
 test("页头副行日期写成「11 月 13 日 周五」", () => {
   assert.equal(formatHeaderDate("2026-11-13"), "11 月 13 日 周五");
   assert.equal(formatHeaderDate("2026-11-01"), "11 月 1 日 周日");
-});
-
-test("涉及日期全部早于今天的审批通知不再返回", () => {
-  const notice = { start_date: "2026-10-05", end_date: "2026-10-05" };
-  assert.equal(dropExpiredExemptionNotice(notice, "2026-11-13"), null);
-  const current = { start_date: "2026-11-12", end_date: "2026-11-14" };
-  assert.equal(dropExpiredExemptionNotice(current, "2026-11-13"), current);
 });

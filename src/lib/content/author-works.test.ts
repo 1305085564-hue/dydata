@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildAuthorQuery, summarizeAuthorWorks } from "./author-works-domain";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 
 test("作者查询显式覆盖全部历史，不触发大盘最新一天默认；上月按上海日期", () => {
   const all = buildAuthorQuery({ userId: "u", timeRange: "all" }, new Date("2026-10-30T00:00:00Z"));
@@ -29,7 +30,8 @@ test("画像含周期内所有作品，剔除未满24h/缺快照/缺播放；零
   };
   const summary = summarizeAuthorWorks({ userId: "u", name: "作者" }, data as never, new Date("2026-10-30T00:00:00Z"));
   assert.equal(summary.totalWorksCount, 5);
-  assert.equal(summary.averagePlayCount, 30000);
+  // 条均播放与数据管理同口径（averagePlayOf）：0 播放样本不拉低均值，但仍算有效样本
+  assert.equal(summary.averagePlayCount, 60000);
   assert.equal(summary.measuredWorksCount, 2);
   assert.equal(summary.completionRatePassCount, 1);
   assert.equal(summary.qualityWorksCount, 1);
@@ -50,4 +52,17 @@ test("作者入口按账号归属解析ID和姓名，不串用提交人", async 
   assert.deepEqual(getContentOwner(video,{owner:"归属人"}),{id:"owner",name:"归属人"});
   assert.deepEqual(getContentOwner(video),{id:"owner",name:"账号归属人"});
   assert.deepEqual(getContentOwner({...video,accounts:{profile_id:null}}),{id:"submitter",name:"提交人"});
+});
+
+test("条均播放只计 >= 2000 的作品：含 0/500 播放样本时与数据管理同数；全部不足 2000 为 0，无样本才为空", () => {
+  const videos = ["a", "b", "c", "d"].map(id => ({ id, published_at: "2026-10-01T00:00:00Z" }));
+  const base = { videos, contentQualityByVideoId: {}, evaluationStandards: DEFAULT_EVALUATION_STANDARDS };
+  const snaps = (plays: number[]) => plays.map((play_count, i) => ({ video_id: videos[i].id, play_count, completion_rate: null }));
+  const now = new Date("2026-10-30T00:00:00Z");
+  const mixed = summarizeAuthorWorks({ userId: "u", name: "作者" }, { ...base, snapshots: snaps([0, 500, 2000, 4000]) } as never, now);
+  assert.equal(mixed.averagePlayCount, averagePlayOf([0, 500, 2000, 4000]));
+  assert.equal(mixed.averagePlayCount, 3000);
+  assert.equal(mixed.measuredWorksCount, 4);
+  const low = summarizeAuthorWorks({ userId: "u", name: "作者" }, { ...base, snapshots: snaps([0, 500]) } as never, now);
+  assert.equal(low.averagePlayCount, 0);
 });

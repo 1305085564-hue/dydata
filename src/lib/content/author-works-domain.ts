@@ -2,6 +2,7 @@ import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { ContentListQuery } from "./domain/content-list-query";
 import { DEFAULT_CONTENT_LIST_FILTERS } from "@/app/(app)/admin/content/content-list-filters";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationTone } from "@/lib/evaluation-standards";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 
 export interface AuthorWorksQueryParams {
@@ -70,21 +71,22 @@ export function summarizeAuthorWorks(
 ): AuthorProfileSummary {
   const snapshots = new Map(data.snapshots.map(s => [s.video_id, s])); // gate:transient-map 单次画像计算的索引，函数返回即释放，不跨请求缓存
   const standards = data.evaluationStandards ?? DEFAULT_EVALUATION_STANDARDS;
-  let measuredWorksCount = 0, totalPlays = 0, completionRatePassCount = 0, qualityWorksCount = 0;
+  const plays: number[] = [];
+  let completionRatePassCount = 0, qualityWorksCount = 0;
   for (const video of data.videos) {
     const snapshot = snapshots.get(video.id);
     const published = video.published_at ? Date.parse(video.published_at) : NaN;
     if (!snapshot || !Number.isFinite(published) || published > now.getTime() - 86400000) continue;
     const play = snapshot.play_count;
     if (play == null || !Number.isFinite(play) || play < 0) continue;
-    measuredWorksCount++;
-    totalPlays += play;
+    plays.push(play);
     const completion = snapshot.completion_rate;
     if (completion != null && completion >= 0 && completion <= 100 &&
       evaluationTone("completionRate", completion, play, standards) === "good") completionRatePassCount++;
     if (data.contentQualityByVideoId[video.id]?.overallGrade === "优") qualityWorksCount++;
   }
-  return { ...author, totalWorksCount: data.videos.length, measuredWorksCount,
-    averagePlayCount: measuredWorksCount ? Math.floor(totalPlays / measuredWorksCount) : null,
+  // 条均播放与数据管理同一口径（averagePlayOf：>= 2000 才计入）；有效样本数仍含低播放作品
+  return { ...author, totalWorksCount: data.videos.length, measuredWorksCount: plays.length,
+    averagePlayCount: plays.length ? averagePlayOf(plays) : null,
     completionRatePassCount, qualityWorksCount };
 }

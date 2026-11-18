@@ -43,7 +43,7 @@ export async function rejectJoinRequestAction(
   const gate = await ensureAdmin();
   if (!gate.ok) return gate;
 
-  const result = await reviewRequest({ requestId, action: "reject", note });
+  const result = await reviewRequest({ requestId, action: "reject", note: note?.trim().slice(0, 200) || null });
   if (!result.ok) {
     return { ok: false, error: mapReviewError(result.error) };
   }

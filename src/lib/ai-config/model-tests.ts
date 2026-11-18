@@ -5,6 +5,7 @@ import { classifyProviderFailure,isPermanentProviderFailure,sanitizeProviderErro
 import { describeChannelFailure,type ChannelFailureDiagnostic } from "./failure-diagnostic";
 import { toTrimmedString } from "@/lib/type-guards";
 import { loadAiConfig,type AiConfigClient } from "./config-loader";
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 function firstOrNull<T>(value:T|T[]|null|undefined) {return Array.isArray(value) ? value[0] ?? null : value ?? null;}
 
@@ -69,14 +70,14 @@ export async function handleTestKey(
 
   let modelQuery = supabase
     .from("ai_provider_key_models")
-    .select("id, model_id")
+    .select("id, model_id, canonical_model_id")
     .eq("key_id", keyId);
-  if (modelId) modelQuery = modelQuery.eq("model_id", modelId);
+  if (modelId) modelQuery = modelQuery.eq("canonical_model_id", toCanonicalModelId(modelId));
   else modelQuery = modelQuery.limit(1);
   const { data: modelData, error: modelError } = await modelQuery.maybeSingle();
   if (modelError) throw new Error(modelError.message);
-  const mounted = modelData as { id?: string; model_id?: string } | null;
-  const testModel = modelId || mounted?.model_id || "gpt-3.5-turbo";
+  const mounted = modelData as { id?: string; model_id?: string; canonical_model_id?: string | null } | null;
+  const testModel = mounted?.model_id || modelId || "gpt-3.5-turbo";
 
   const result = await probeProviderModel(
     keyRow.api_key,
@@ -119,15 +120,16 @@ export async function handleTestKeyModel(
 
   const { data: modelData, error: modelError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, key_id, model_id")
+    .select("id, key_id, model_id, canonical_model_id")
     .eq("key_id", keyId)
-    .eq("model_id", modelId)
+    .eq("canonical_model_id", toCanonicalModelId(modelId))
     .maybeSingle();
   if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
-  const supplyId = (modelData as { id: string }).id;
+  const mounted = modelData as { id: string; model_id: string; canonical_model_id?: string | null };
+  const supplyId = mounted.id;
 
   const result = await loadKeyProvider(supabase, keyId);
-  const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);
+  const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, mounted.model_id);
   // 成功必须洗白，否则测通了界面还挂在故障上。
   if (probe.ok) {
     await markProviderKeyModelSuccess(supabase, supplyId);
@@ -303,7 +305,7 @@ export async function handleCheckAllInUse(
     featureBindings: Array<{ feature_key: string; model_id?: string | null }>;
     keys: Array<{ id: string; provider_id: string; is_enabled: boolean }>;
     providers: Array<{ id: string; is_enabled: boolean }>;
-    models: Array<{ key_id: string; model_id: string; is_enabled: boolean }>;
+    models: Array<{ key_id: string; model_id: string; canonical_model_id?: string | null; is_enabled: boolean }>;
   };
   const modelIds = new Set(
     before.featureControls
@@ -321,11 +323,12 @@ export async function handleCheckAllInUse(
   // gate:transient-map this deduplication index is built for one check request and discarded with its response.
   const targets = new Map<string, { key_id: string; model_id: string }>();
   for (const model of before.models) {
-    if (!modelIds.has(model.model_id) || !model.is_enabled) continue;
+    const canonicalModelId = model.canonical_model_id ?? toCanonicalModelId(model.model_id);
+    if (!modelIds.has(canonicalModelId) || !model.is_enabled) continue;
     const key = keyById.get(model.key_id);
     const provider = key ? providerById.get(key.provider_id) : undefined;
     if (!key?.is_enabled || !provider?.is_enabled) continue;
-    targets.set(`${model.key_id}\u0000${model.model_id}`, { key_id: model.key_id, model_id: model.model_id });
+    targets.set(`${model.key_id}\u0000${canonicalModelId}`, { key_id: model.key_id, model_id: model.model_id });
   }
 
   const healthClient = options.healthClient ?? supabase;

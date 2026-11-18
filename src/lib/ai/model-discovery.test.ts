@@ -3,9 +3,10 @@ import test from "node:test";
 
 import { findModelChannelCandidates, groupModelIdAliases, isModelConfirmedUnavailable } from "./model-discovery";
 
-test("只把大小写和分隔符不同的模型 ID 合并为展示别名", () => {
+test("只按去掉最后一个斜杠后的 canonical 身份合并上游写法", () => {
   assert.deepEqual(groupModelIdAliases([
     "claude-haiku-5-5",
+    "anthropic/claude-haiku-5-5",
     "claude-haiku-5.5",
     "claude-haiku-5.5-thinking",
     "claude-haiku-5.5-agentic",
@@ -15,7 +16,12 @@ test("只把大小写和分隔符不同的模型 ID 合并为展示别名", () =
     {
       displayName: "Claude Haiku 5.5",
       recommendedModelId: "claude-haiku-5-5",
-      modelIds: ["claude-haiku-5-5", "claude-haiku-5.5", "CLAUDE_HAIKU_5_5"],
+      modelIds: ["claude-haiku-5-5", "anthropic/claude-haiku-5-5"],
+    },
+    {
+      displayName: "Claude Haiku 5.5",
+      recommendedModelId: "claude-haiku-5.5",
+      modelIds: ["claude-haiku-5.5"],
     },
     {
       displayName: "Claude Haiku 5.5 (Thinking)",
@@ -31,6 +37,11 @@ test("只把大小写和分隔符不同的模型 ID 合并为展示别名", () =
       displayName: "Claude Haiku 5.5 (2025-10-01)",
       recommendedModelId: "claude-haiku-5.5-20251001",
       modelIds: ["claude-haiku-5.5-20251001"],
+    },
+    {
+      displayName: "Claude Haiku 5.5",
+      recommendedModelId: "CLAUDE_HAIKU_5_5",
+      modelIds: ["CLAUDE_HAIKU_5_5"],
     },
   ]);
 });
@@ -56,6 +67,7 @@ test("渠道发现按 available_models 精确匹配，只列未打开的供应�
   assert.deepEqual(candidates, [
     {
       modelId: "claude-haiku-5-5",
+      upstreamModelId: "claude-haiku-5-5",
       keyId: "k-closed",
       keyLabel: "待开",
       providerId: "p1",
@@ -67,6 +79,7 @@ test("渠道发现按 available_models 精确匹配，只列未打开的供应�
     },
     {
       modelId: "claude-haiku-5-5",
+      upstreamModelId: "claude-haiku-5-5",
       keyId: "k-disabled",
       keyLabel: "接入点关闭",
       providerId: "p2",

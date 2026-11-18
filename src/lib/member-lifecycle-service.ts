@@ -771,47 +771,43 @@ export async function restoreMemberWithClient(input: {
   const auth = await loadAuthUserSnapshot(input.client, target.id);
   if (!auth.ok) return operationFailure("restore", "读取 Auth 用户", auth.error);
   const beforeSnapshot = toProfileSnapshot(target);
-  const restorePatch = buildRestoreMemberProfilePatch();
+  // 带回归档前的团队，原团队管理员才看得到；团队已被删除就不分配，由调用方明确提示
+  const snapshotTeamId = target.archive_snapshot?.team_id ?? null;
+  const snapshotTeam = await loadName(input.client, "teams", snapshotTeamId);
+  if (snapshotTeam.error) return operationFailure("restore", "核对归档前团队", new Error(snapshotTeam.error));
+  const restoredTeamId = snapshotTeam.name ? snapshotTeamId : null;
+  const restorePatch = buildRestoreMemberProfilePatch(restoredTeamId);
+  const undoProfile = { label: "恢复归档成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) };
+  const undoBan = { label: "恢复 Auth 登录状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) };
 
   const unbanError = await setAuthBan(input.client, target.id, false);
   if (unbanError) return operationFailure("restore", "解除 Auth 封禁", unbanError);
 
   const profileWrite = await writeProfileAndReload(input.client, target.id, restorePatch);
   if (profileWrite.error) {
-    const rollbackErrors = await rollback([
-      ...(profileWrite.applied
-        ? [{ label: "恢复归档成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) }]
-        : []),
-      { label: "恢复 Auth 封禁状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) },
-    ]);
+    const rollbackErrors = await rollback([...(profileWrite.applied ? [undoProfile] : []), undoBan]);
     return operationFailure("restore", "成员资料写入", profileWrite.error, rollbackErrors);
   }
   const afterProfile = profileWrite.profile;
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
-    teamId: null,
-    teamName: null,
+    teamId: restoredTeamId,
+    teamName: snapshotTeam.name ?? null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
-    const rollbackErrors = await rollback([
-      { label: "恢复归档成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) },
-      { label: "恢复 Auth 登录状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) },
-    ]);
+    const rollbackErrors = await rollback([undoProfile, undoBan]);
     return operationFailure("restore", "Auth 团队元数据同步", metadataError, rollbackErrors);
   }
 
   const logError = await writeMemberChangeLog(input.client, {
     targetId: target.id,
-    teamId: null,
+    teamId: restoredTeamId,
     actionType: "restore",
     operatorId: input.actor.id,
   });
   if (logError) {
-    const rollbackErrors = await rollback([
-      { label: "恢复归档成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) },
-      { label: "恢复 Auth 登录状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) },
-    ]);
+    const rollbackErrors = await rollback([undoProfile, undoBan]);
     return operationFailure("restore", "成员变更日志写入", logError, rollbackErrors);
   }
 
@@ -821,6 +817,6 @@ export async function restoreMemberWithClient(input: {
     target,
     beforeSnapshot,
     afterSnapshot: toProfileSnapshot(afterProfile),
-    affectedData: { userId: target.id },
+    affectedData: { userId: target.id, restoredTeamId, restoredTeamName: snapshotTeam.name ?? null, teamMissing: Boolean(snapshotTeamId && !restoredTeamId) },
   };
 }

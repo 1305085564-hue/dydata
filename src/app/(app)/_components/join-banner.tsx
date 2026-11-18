@@ -22,5 +22,16 @@ export async function JoinBanner() {
 
   const teams = await getTeamOptions();
 
+  if (data.mode === "rejected") {
+    return (
+      <JoinBannerClient
+        mode="rejected"
+        teams={teams}
+        targetTeamName={teams.find((team) => team.id === data.targetTeamId)?.name ?? ""}
+        reviewNote={data.reviewNote}
+      />
+    );
+  }
+
   return <JoinBannerClient mode="unassigned" teams={teams} />;
 }

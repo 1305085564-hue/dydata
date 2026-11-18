@@ -47,8 +47,21 @@ export interface RestoreMemberProfilePatch {
   role: "member";
   company_role: "member";
   permissions: Permissions;
-  team_id: null;
+  team_id: string | null;
 }
+
+/** 恢复成员结果里的团队去向（供操作入口和页面提示）；teamMissing = 归档前的团队已被删除。 */
+export interface RestoredTeamInfo {
+  restoredTeamId?: string | null;
+  restoredTeamName?: string | null;
+  teamMissing?: boolean;
+}
+
+export type RestoreMemberActionResult = {
+  error?: string;
+  team?: { id: string; name: string | null } | null;
+  teamMissing?: boolean;
+};
 
 export function normalizeMembershipStatus(value: unknown): MembershipStatus {
   return value === "archived" ? "archived" : "active";
@@ -171,7 +184,8 @@ export function buildArchiveMemberProfilePatch(input: {
   };
 }
 
-export function buildRestoreMemberProfilePatch(): RestoreMemberProfilePatch {
+/** 恢复成普通组员、空权限；teamId 是归档快照里仍存在的团队（没有就不分配）。 */
+export function buildRestoreMemberProfilePatch(teamId: string | null = null): RestoreMemberProfilePatch {
   return {
     membership_status: "active",
     archived_at: null,
@@ -181,6 +195,6 @@ export function buildRestoreMemberProfilePatch(): RestoreMemberProfilePatch {
     role: "member",
     company_role: "member",
     permissions: {},
-    team_id: null,
+    team_id: teamId,
   };
 }

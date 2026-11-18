@@ -2,10 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { __internal, loadDashboardPageData } from "./dashboard-page";
-import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
-
-const todayDate = formatShanghaiDateOnly();
-const yesterdayDate = shiftDateOnly(new Date(`${todayDate}T00:00:00+08:00`), -1);
 
 type QueryCall = {
   table: string;
@@ -24,9 +20,6 @@ type MockOptions = {
   accountResponses?: MockResponse[];
   pendingRequests?: unknown[];
   pendingRequestDetails?: unknown[];
-  reviewNotice?: unknown;
-  partialNotices?: unknown[];
-  reviewNoticeDetails?: unknown[];
 };
 
 function createSupabaseMock(
@@ -143,15 +136,6 @@ function createSupabaseMock(
       return { data: options.pendingRequests ?? [], error: null };
     }
 
-    // 已结单查询用 in(request_status, [approved, rejected])，部分批准回看用 eq(request_status, pending)。
-    const isPartialPendingQuery = call.eqFilters.some(
-      ([col, value]) => col === "request_status" && value === "pending",
-    );
-    if (call.table === "exemption_request" && call.columns.startsWith("id, request_status")) {
-      if (isPartialPendingQuery) return { data: options.partialNotices ?? [], error: null };
-      return { data: options.reviewNotice ?? null, error: null };
-    }
-
     if (call.table === "exemption_request") {
       return { data: null, error: null };
     }
@@ -159,17 +143,13 @@ function createSupabaseMock(
     if (call.table === "exemption_request_date") {
       if (call.inFilters.some(([col]) => col === "request_id")) {
         const requestIds = call.inFilters.find(([col]) => col === "request_id")?.[1] ?? [];
-        const rows = call.columns === "request_id, request_date, status"
-          ? options.pendingRequestDetails ?? []
-          : options.reviewNoticeDetails ?? [];
+        const rows = options.pendingRequestDetails ?? [];
         return {
           data: (rows as Array<Record<string, unknown>>).filter((row) => requestIds.includes(row.request_id)),
           error: null,
         };
       }
-      const requestId = call.eqFilters.find(([col]) => col === "request_id")?.[1];
-      const rows = (options.reviewNoticeDetails ?? []) as Array<Record<string, unknown>>;
-      return { data: rows.filter((row) => row.request_id === requestId), error: null };
+      return { data: [], error: null };
     }
 
     throw new Error(`Unexpected query: ${call.table} ${call.columns}`);
@@ -391,108 +371,4 @@ test("默认账号创建成功后，本次请求重新查询并返回新账号",
 
   assert.deepEqual(result.accountIds, ["account-created"]);
   assert.equal(result.accounts[0]?.id, "account-created");
-});
-
-test("审批通过和拒绝通知都能到达首屏页面数据契约", async () => {
-  for (const requestStatus of ["approved", "rejected"] as const) {
-    const supabase = createSupabaseMock({}, {
-      reviewNotice: {
-        id: `request-${requestStatus}`,
-        request_status: requestStatus,
-        exemption_type: "temporary",
-        exemption_category: requestStatus === "approved" ? "waive" : "leave",
-        start_date: todayDate,
-        end_date: todayDate,
-        reason: "测试原因",
-        reviewed_at: `${todayDate}T01:00:00Z`,
-        created_at: `${todayDate}T01:00:00Z`,
-      },
-    });
-
-    const result = await loadDashboardPageData({
-      supabase: supabase as never,
-      userId: "user-1",
-    });
-
-    assert.equal(result.userExemptionReviewNotice?.id, `request-${requestStatus}`);
-    assert.equal(result.userExemptionReviewNotice?.request_status, requestStatus);
-  }
-});
-
-test("部分批准（整单仍 pending）也能到达通知，并带逐日结果", async () => {
-  const supabase = createSupabaseMock({}, {
-    reviewNotice: null,
-    partialNotices: [
-      {
-        id: "request-partial",
-        request_status: "pending",
-        exemption_type: "range",
-        exemption_category: "waive",
-        start_date: yesterdayDate,
-        end_date: todayDate,
-        reason: "两天豁免",
-        reviewed_at: null,
-        created_at: `${yesterdayDate}T01:00:00Z`,
-      },
-    ],
-    reviewNoticeDetails: [
-      { request_id: "request-partial", request_date: yesterdayDate, status: "approved", feedback: null, reviewed_by: "admin-1", reviewed_at: `${yesterdayDate}T02:00:00Z` },
-      { request_id: "request-partial", request_date: todayDate, status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
-    ],
-  });
-
-  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
-
-  assert.equal(result.userExemptionReviewNotice?.id, "request-partial");
-  assert.equal(result.userExemptionReviewNotice?.request_status, "pending");
-  assert.deepEqual(
-    result.userExemptionReviewNotice?.daily_results?.map((d) => [d.date, d.status]),
-    [[yesterdayDate, "approved"], [todayDate, "pending"]],
-  );
-});
-
-test("涉及日期全部早于今天的审批通知不再出现", async () => {
-  const supabase = createSupabaseMock({}, {
-    reviewNotice: {
-      id: "request-expired",
-      request_status: "approved",
-      exemption_type: "single",
-      exemption_category: "leave",
-      start_date: "2026-10-05",
-      end_date: "2026-10-05",
-      reason: "旧请假",
-      reviewed_at: "2026-10-05T02:00:00Z",
-      created_at: "2026-10-05T01:00:00Z",
-    },
-  });
-
-  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
-
-  assert.equal(result.userExemptionReviewNotice, null);
-});
-
-test("全部日期仍 pending 的申请不产生审批通知", async () => {
-  const supabase = createSupabaseMock({}, {
-    reviewNotice: null,
-    partialNotices: [
-      {
-        id: "request-all-pending",
-        request_status: "pending",
-        exemption_type: "single",
-        exemption_category: "waive",
-        start_date: "2026-05-01",
-        end_date: null,
-        reason: "待审批",
-        reviewed_at: null,
-        created_at: "2026-04-30T01:00:00Z",
-      },
-    ],
-    reviewNoticeDetails: [
-      { request_id: "request-all-pending", request_date: "2026-05-01", status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
-    ],
-  });
-
-  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
-
-  assert.equal(result.userExemptionReviewNotice, null);
 });

@@ -33,7 +33,8 @@ export function TodoItemCard({
   const isWarning = todo.priority === "P1";
   const isAppealTodo = Boolean(getAppealTodoId(todo));
   const actionText = getTodoActionText(todo);
-  const canMarkDone = getTodoIsCompletable(todo) && !todo.actionUrl;
+  // 带跳转链接的普通待办也必须能手动完成：缺勤提醒、权限申请、历史催填等没有任何业务事件会自动关闭它们。
+  const canMarkDone = getTodoIsCompletable(todo);
 
   return (
     <motion.div {...listItemMotion}>

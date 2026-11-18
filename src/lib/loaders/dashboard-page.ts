@@ -8,7 +8,6 @@ import {
   getDashboardSubmittedDates,
   isDashboardReport,
 } from "@/lib/dashboard-submission-state";
-import { dropExpiredExemptionNotice } from "@/lib/dashboard-panel-header";
 import {
   getPendingExemptionDatesFromRequests,
   type ExemptionGrantLike,
@@ -20,6 +19,8 @@ import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provision
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { formatShanghaiDateOnly, getSafeAccountDisplayName, shiftDateOnly } from "./shared";
+import { loadRecentExemptionReviewNotices, type UserExemptionReviewNotice } from "./dashboard-exemption-review";
+import { resolveDashboardFulfillmentMarks, type FulfillmentMarkRow, type MonthFulfillmentBasis } from "./dashboard-fulfillment-marks";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 
 type DashboardSupabase = SupabaseClient;
@@ -54,6 +55,7 @@ type ProfileWithExemptionRow = {
   exempt_end_date: string | null;
   exempt_reason: string | null;
   exemption_category: "waive" | "leave" | null;
+  created_at?: string | null;
 };
 
 type ProfileWithoutCategoryRow = Omit<ProfileWithExemptionRow, "exemption_category">;
@@ -67,29 +69,10 @@ type ApprovedRequestGrantRow = {
   created_at: string | null;
 };
 
-export type UserExemptionReviewNotice = {
-  id: string;
-  request_status: "approved" | "rejected" | "pending";
-  exemption_type: string;
-  exemption_category: "waive" | "leave" | null;
-  start_date: string | null;
-  end_date: string | null;
-  reason: string | null;
-  reviewed_at: string | null;
-  created_at: string | null;
-  daily_results?: Array<{
-    date: string;
-    status: "pending" | "approved" | "rejected";
-    feedback: string | null;
-    reviewed_by: string | null;
-    reviewed_at: string | null;
-  }>;
-};
-
 const DASHBOARD_PROFILE_SELECT =
-  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, created_at";
 const DASHBOARD_PROFILE_SELECT_FALLBACK =
-  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, created_at";
 
 let profileExemptionCategoryAvailable: boolean | null = null;
 let exemptionGrantTableAvailable: boolean | null = null;
@@ -251,142 +234,7 @@ async function loadPendingExemptionDates(supabase: DashboardSupabase, userId: st
   );
 }
 
-function latestDailyReviewTime(dailyResults: UserExemptionReviewNotice["daily_results"]): number | null {
-  let latest: number | null = null;
-  for (const item of dailyResults ?? []) {
-    if (!item.reviewed_at) continue;
-    const ts = Date.parse(item.reviewed_at);
-    if (!Number.isNaN(ts) && (latest === null || ts > latest)) latest = ts;
-  }
-  return latest;
-}
-
-async function loadLatestExemptionReviewNotice(
-  supabase: DashboardSupabase,
-  userId: string,
-): Promise<UserExemptionReviewNotice | null> {
-  const primary = await supabase
-    .from("exemption_request")
-    .select("id, request_status, exemption_type, exemption_category, start_date, end_date, reason, reviewed_at, created_at")
-    .eq("applicant_user_id", userId)
-    .in("request_status", ["approved", "rejected"])
-    .order("reviewed_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!isMissingExemptionRequestCategoryError(primary.error)) {
-    assertSupabaseQuerySucceeded(primary.error, "加载豁免审批通知失败");
-    const primaryNotice = primary.data ? (primary.data as UserExemptionReviewNotice) : null;
-
-    // 部分批准/部分拒绝的申请 request_status 仍为 pending，只查已结单会漏掉更新的逐日结果。
-    // 因此同时回看最近的 pending 单，取存在已处理日期明细的一条，再与已结单比较新旧。
-    const partial = await supabase
-      .from("exemption_request")
-      .select("id, request_status, exemption_type, exemption_category, start_date, end_date, reason, reviewed_at, created_at")
-      .eq("applicant_user_id", userId)
-      .eq("request_status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(5);
-    if (partial.error && !isMissingExemptionRequestCategoryError(partial.error)) {
-      assertSupabaseQuerySucceeded(partial.error, "加载豁免审批通知失败");
-    }
-    let partialNotice: UserExemptionReviewNotice | null = null;
-    const partialRows = (partial.data ?? []) as UserExemptionReviewNotice[];
-    const partialRequestIds = partialRows.map((row) => row.id);
-    if (partialRequestIds.length > 0) {
-      try {
-        // 最多五条 pending 申请一次取完逐日结果，避免按申请逐条串行查询。
-        const details = await supabase
-          .from("exemption_request_date")
-          .select("request_id, request_date, status, feedback, reviewed_by, reviewed_at")
-          .in("request_id", partialRequestIds)
-          .order("request_date", { ascending: true });
-        if (!details.error) {
-          const detailsByRequestId = new Map<string, Array<{
-            request_date: string;
-            status: "pending" | "approved" | "rejected";
-            feedback: string | null;
-            reviewed_by: string | null;
-            reviewed_at: string | null;
-          }>>();
-          for (const item of (details.data ?? []) as Array<{
-            request_id: string;
-            request_date: string;
-            status: "pending" | "approved" | "rejected";
-            feedback: string | null;
-            reviewed_by: string | null;
-            reviewed_at: string | null;
-          }>) {
-            const rows = detailsByRequestId.get(item.request_id) ?? [];
-            rows.push(item);
-            detailsByRequestId.set(item.request_id, rows);
-          }
-          for (const row of partialRows) {
-            const dailyResults = (detailsByRequestId.get(row.id) ?? []).map((item) => ({
-              date: item.request_date,
-              status: item.status,
-              feedback: item.feedback,
-              reviewed_by: item.reviewed_by,
-              reviewed_at: item.reviewed_at,
-            }));
-            if (dailyResults.some((item) => item.status !== "pending")) {
-              partialNotice = { ...row, daily_results: dailyResults };
-              break;
-            }
-          }
-        }
-      } catch {
-        partialNotice = null;
-      }
-    }
-
-    // 已结单与部分批准单都可能存在，按最近处理时间取新的一条展示。
-    const withDetails = async (notice: UserExemptionReviewNotice): Promise<UserExemptionReviewNotice> => {
-      try {
-        const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", notice.id).order("request_date", { ascending: true });
-        if (details.error) return notice;
-        return { ...notice, daily_results: (details.data ?? []).map((row) => ({ date: row.request_date, status: row.status, feedback: row.feedback, reviewed_by: row.reviewed_by, reviewed_at: row.reviewed_at })) };
-      } catch {
-        return notice;
-      }
-    };
-
-    if (primaryNotice && partialNotice) {
-      const primaryTime = Date.parse(primaryNotice.reviewed_at || primaryNotice.created_at || "");
-      const partialTime = latestDailyReviewTime(partialNotice.daily_results) ?? Date.parse(partialNotice.created_at || "");
-      if (partialTime > primaryTime) return partialNotice;
-      return withDetails(primaryNotice);
-    }
-    if (primaryNotice) return withDetails(primaryNotice);
-    return partialNotice;
-  }
-
-  const fallback = await supabase
-    .from("exemption_request")
-    .select("id, request_status, exemption_type, start_date, end_date, reason, reviewed_at, created_at")
-    .eq("applicant_user_id", userId)
-    .in("request_status", ["approved", "rejected"])
-    .order("reviewed_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  assertSupabaseQuerySucceeded(fallback.error, "加载豁免审批通知失败");
-
-  if (!fallback.data) return null;
-
-  let dailyResults: UserExemptionReviewNotice["daily_results"] = undefined;
-  try {
-    const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", fallback.data.id).order("request_date", { ascending: true });
-    if (!details.error) dailyResults = (details.data ?? []).map((row) => ({ date: row.request_date, status: row.status, feedback: row.feedback, reviewed_by: row.reviewed_by, reviewed_at: row.reviewed_at }));
-  } catch { dailyResults = undefined; }
-  return {
-    ...(fallback.data as Omit<UserExemptionReviewNotice, "exemption_category">),
-    exemption_category: "waive",
-    daily_results: dailyResults,
-  };
-}
+export type { UserExemptionReviewNotice };
 
 export interface DashboardPageData {
   today: string;
@@ -404,7 +252,9 @@ export interface DashboardPageData {
   pendingExemptionDates: string[];
   absentDates: string[];
   absentReasons: Record<string, string>;
-  userExemptionReviewNotice: UserExemptionReviewNotice | null;
+  monthFulfillmentBasis: MonthFulfillmentBasis;
+  /** 近 7 天内审批过的请假/免交结果，最新在前（含逐日结果与驳回理由）。 */
+  userExemptionReviewNotices: UserExemptionReviewNotice[];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
 }
@@ -477,7 +327,7 @@ export async function loadDashboardPageData({
     recentDatesResult,
     userExemptionGrants,
     pendingExemptionDates,
-    userExemptionReviewNotice,
+    userExemptionReviewNotices,
     absentRecordsResult,
   ] = await Promise.all([
     accountIds.length
@@ -513,13 +363,12 @@ export async function loadDashboardPageData({
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadPendingExemptionDates(supabase, userId),
-    loadLatestExemptionReviewNotice(supabase, userId),
+    loadRecentExemptionReviewNotices(supabase, userId),
     adminSupabase
       ? adminSupabase
           .from("fulfillment_records")
           .select("record_date, status, reason")
           .eq("user_id", userId)
-          .eq("status", "absent")
           .gte("record_date", reportLookupStart)
           .lte("record_date", today)
       : Promise.resolve({ data: [], error: null }),
@@ -545,10 +394,8 @@ export async function loadDashboardPageData({
     ...getDashboardSubmittedDates(monthReports),
     ...recentSubmittedDates,
   ])).sort();
-  const absentRecords = (absentRecordsResult.data ?? []) as Array<{ record_date: string; reason: string | null }>;
-  const absentDates = absentRecords.map((row) => row.record_date).sort();
-  const absentReasons = Object.fromEntries(
-    absentRecords.map((row) => [row.record_date, row.reason?.trim() || "管理员认定缺勤"]),
+  const { absentDates, absentReasons, monthFulfillmentBasis } = resolveDashboardFulfillmentMarks(
+    (absentRecordsResult.data ?? []) as FulfillmentMarkRow[], profile?.created_at,
   );
 
   return {
@@ -567,7 +414,8 @@ export async function loadDashboardPageData({
     pendingExemptionDates,
     absentDates,
     absentReasons,
-    userExemptionReviewNotice: dropExpiredExemptionNotice(userExemptionReviewNotice, today),
+    monthFulfillmentBasis,
+    userExemptionReviewNotices,
     userExemptionProfile,
     userExemptionGrants,
   };

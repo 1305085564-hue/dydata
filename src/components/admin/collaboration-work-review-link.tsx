@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { VideoMetricsSnapshot, ContentReviewReadiness } from "@/types";
@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TruncatedTooltip,
 } from "@/components/ui/tooltip";
 
 export type CollaborationDiagnosisDetail = {
@@ -57,25 +58,12 @@ export function CollaborationWorkReviewLink({
   const router = useRouter();
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
   const [localOpening, setLocalOpening] = useState(false);
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const isOpening = diagnosisContext
     ? diagnosisContext.openingReportId === reportId
     : localOpening;
 
   const showTitleOnly = previewMode === "title-only";
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen && showTitleOnly) {
-      const el = triggerRef.current;
-      if (!el || el.scrollWidth <= el.clientWidth + 1) {
-        setOpen(false);
-        return;
-      }
-    }
-    setOpen(nextOpen);
-  };
 
   async function openReview() {
     if (isOpening) return;
@@ -110,12 +98,32 @@ export function CollaborationWorkReviewLink({
 
   const previewTitle = preview?.title || (typeof children === "string" ? children : "作品诊断");
 
+  if (showTitleOnly) {
+    return (
+      <TruncatedTooltip
+        side="top"
+        align="start"
+        tip={previewTitle}
+      >
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            void openReview();
+          }}
+          disabled={isOpening}
+          className={className}
+        >
+          {children}
+        </button>
+      </TruncatedTooltip>
+    );
+  }
+
   return (
-    <Tooltip open={open} onOpenChange={handleOpenChange}>
+    <Tooltip>
       <TooltipTrigger
-        ref={triggerRef}
         type="button"
-        delay={140}
         onClick={(event) => {
           event.stopPropagation();
           void openReview();
@@ -128,41 +136,29 @@ export function CollaborationWorkReviewLink({
       <TooltipContent
         side="top"
         align="start"
-        className={
-          showTitleOnly
-            ? "max-w-sm p-2 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left pointer-events-none"
-            : "max-w-xs p-2.5 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-2xl text-left space-y-1 pointer-events-none"
-        }
+        className="max-w-xs p-2.5 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-2xl text-left space-y-1 pointer-events-none"
       >
-        {showTitleOnly ? (
-          <p className="text-[12px] font-normal text-[#141413] leading-snug">
-            {previewTitle}
-          </p>
-        ) : (
-          <>
-            <div className="flex items-center justify-between text-[12px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
-              <span className="font-normal text-[#1F1E1D] truncate max-w-[140px]">
-                {preview?.accountName || "协同作品"}
-              </span>
-              {preview?.reportDate && (
-                <span className="tabular-nums text-[#78716C]">{preview.reportDate}</span>
-              )}
-            </div>
-            <p className="text-[12px] font-normal text-[#141413] leading-snug line-clamp-2">
-              {previewTitle}
-            </p>
-            <div className="flex items-center justify-between text-[12px] text-[#78716C] pt-0.5">
-              {preview?.playCount != null ? (
-                <span className="tabular-nums">
-                  播放: <span className="font-normal text-[#141413]">{preview.playCount.toLocaleString("zh-CN")}</span>
-                </span>
-              ) : (
-                <span>点击查看数据诊断</span>
-              )}
-              <span className="text-[#D97757] text-[12px] font-normal">展开手稿 ↗</span>
-            </div>
-          </>
-        )}
+        <div className="flex items-center justify-between text-[12px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
+          <span className="font-normal text-[#1F1E1D] truncate max-w-[140px]">
+            {preview?.accountName || "协同作品"}
+          </span>
+          {preview?.reportDate && (
+            <span className="tabular-nums text-[#78716C]">{preview.reportDate}</span>
+          )}
+        </div>
+        <p className="text-[12px] font-normal text-[#141413] leading-snug line-clamp-2">
+          {previewTitle}
+        </p>
+        <div className="flex items-center justify-between text-[12px] text-[#78716C] pt-0.5">
+          {preview?.playCount != null ? (
+            <span className="tabular-nums">
+              播放: <span className="font-normal text-[#141413]">{preview.playCount.toLocaleString("zh-CN")}</span>
+            </span>
+          ) : (
+            <span>点击查看数据诊断</span>
+          )}
+          <span className="text-[#D97757] text-[12px] font-normal">展开手稿 ↗</span>
+        </div>
       </TooltipContent>
     </Tooltip>
   );

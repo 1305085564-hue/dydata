@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BoundedTtlCache } from "@/lib/cache-policy";
 import { resolveFeatureModelRouting } from "./feature-routing";
 import { getProviderKeyModelConfig, listRankedProviderKeyModels, type ProviderKeyModelConfig } from "./provider-routing";
+import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 export type ChannelConfig = {
   id?: string;
@@ -9,6 +10,7 @@ export type ChannelConfig = {
   baseUrl: string;
   apiKey: string;
   model?: string | null;
+  canonicalModelId?: string | null;
   providerKeyModelId?: string | null;
   providerKeyId?: string | null;
   source: "env" | "provider_key_model";
@@ -74,7 +76,7 @@ function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
   return {
     featureKey: row.feature_key,
     providerKeyModelId: null,
-    modelId: row.model_id ?? null,
+    modelId: row.model_id ? readCanonicalModelId(row.model_id) : null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
     lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
@@ -105,6 +107,7 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
     model: config.modelId,
+    canonicalModelId: config.canonicalModelId,
     providerKeyModelId: config.providerKeyModelId,
     providerKeyId: config.providerKeyId,
     requiresProbe: config.requiresProbe,
@@ -133,9 +136,9 @@ async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise
   const primaryModelId = ids[0];
   const available = ids.length > 1
     ? [
-        ...all.filter(channel => !channel.cooldownUntil && channel.model === primaryModelId)
+        ...all.filter(channel => !channel.cooldownUntil && channel.canonicalModelId === primaryModelId)
           .slice(0, PRIMARY_MODEL_CHANNEL_LIMIT),
-        ...all.filter(channel => !channel.cooldownUntil && channel.model !== primaryModelId),
+        ...all.filter(channel => !channel.cooldownUntil && channel.canonicalModelId !== primaryModelId),
       ]
     : all.filter(channel => !channel.cooldownUntil);
   return [

@@ -29,6 +29,7 @@ import { findReadableSubmissionScreenshots } from "@/lib/screenshot-storage";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import * as submitResponseFields from "./response-fields";
 import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
+import { consumeApprovedAppealPayload, findApprovedAppealForSubmission } from "./appeal-consumption";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
 import { resolveDailyReportSubmissionTarget } from "./report-target";
@@ -309,6 +310,7 @@ async function handleVideoSubmit(
   // The 72h / cross-month deadline only guards first-time normal submissions.
   // Violation reporting (abnormal) and historical edits are exempt so this rule
   // never re-judges or blocks existing/edge flows.
+  let approvedAppealUsed: { id: string; submission_payload: unknown } | null = null;
   if (shouldCheckPublishDeadline({ mode: normalized.mode })) {
     // published_at_text is only present when the publish time was recognized by
     // OCR or explicitly entered by the user; the silent fallback default leaves
@@ -343,17 +345,8 @@ async function handleVideoSubmit(
       }, { status: 409 });
     }
     if (deadline.decision === "requires_appeal") {
-      const { data: approvedAppeal, error: appealError } = await supabase
-        .from("fulfillment_appeals")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("account_id", normalized.account_id)
-        .eq("record_date", normalized.biz_date)
-        .eq("status", "approved")
-        .order("handled_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
+      const { appeal: approvedAppeal, failed: appealFailed } = await findApprovedAppealForSubmission({ supabase, userId, submitted: normalized });
+      if (appealFailed) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
       if (!approvedAppeal) {
         return NextResponse.json({
           error: deadline.reason === "manual_published_at"
@@ -365,6 +358,7 @@ async function handleVideoSubmit(
           elapsed_hours: deadline.elapsedHours,
         }, { status: 409 });
       }
+      approvedAppealUsed = approvedAppeal;
     }
   }
 
@@ -853,6 +847,7 @@ async function handleVideoSubmit(
   } catch (libraryError) {
     console.error("[video-submit] topic library auto entry failed", libraryError);
   }
+  await consumeApprovedAppealPayload({ admin: deps.createAdminClient(), appeal: approvedAppealUsed, submitted: normalized });
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,

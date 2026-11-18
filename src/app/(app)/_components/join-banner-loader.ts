@@ -13,7 +13,21 @@ export type JoinBannerData = {
   userId: string;
   requestId: string;
   targetTeamName: string;
+} | {
+  shouldRender: true;
+  mode: "rejected";
+  userId: string;
+  targetTeamId: string;
+  reviewNote: string | null;
 };
+
+type ReviewedRequestRow = { target_team_id: string; status: string; review_note: string | null };
+
+/** 最近一次已处理的申请是驳回时，给申请人看驳回原因（之后通过则已有团队，不会走到这里）。 */
+export function buildRejectedBanner(userId: string, latestReviewed: ReviewedRequestRow | null): JoinBannerData | null {
+  if (latestReviewed?.status !== "rejected") return null;
+  return { shouldRender: true, mode: "rejected", userId, targetTeamId: latestReviewed.target_team_id, reviewNote: latestReviewed.review_note?.trim() || null };
+}
 
 export async function loadJoinBanner(): Promise<JoinBannerData> {
   const { supabase, user, authError } = await getCurrentUserContext();
@@ -47,5 +61,14 @@ export async function loadJoinBanner(): Promise<JoinBannerData> {
     };
   }
 
-  return { shouldRender: true, mode: "unassigned", userId: user.id };
+  const { data: latestReviewed } = await supabase
+    .from("team_join_requests")
+    .select("target_team_id, status, review_note")
+    .eq("applicant_user_id", user.id)
+    .in("status", ["approved", "rejected"])
+    .order("reviewed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return buildRejectedBanner(user.id, latestReviewed) ?? { shouldRender: true, mode: "unassigned", userId: user.id };
 }

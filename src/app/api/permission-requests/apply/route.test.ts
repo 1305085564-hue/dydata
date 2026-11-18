@@ -33,7 +33,7 @@ test("未登录调用返回 401，不发通知", async () => {
   assert.equal(emitCalled, false);
 });
 
-test("正常登录用户申请只通知同公司的可处理管理员", async () => {
+test("权限申请只通知公司负责人：组长/团队管理员不再收到，负责人不受团队限制", async () => {
   const emitInputs: Array<Record<string, unknown>> = [];
   const res = await buildPermissionRequestApplyResponse(
     makeRequest({ moduleTitle: "转化中心", currentPath: "/conversion-hub" }),
@@ -51,6 +51,7 @@ test("正常登录用户申请只通知同公司的可处理管理员", async ()
                   in: async () => ({
                     data: [
                       { id: "owner-1", role: "owner", permissions: {}, team_id: null },
+                      { id: "owner-2", role: "owner", company_role: "company_owner", permissions: {}, team_id: "team-b" },
                       { id: "archived-owner", role: "owner", permissions: {}, team_id: null, membership_status: "archived" },
                       { id: "same-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a" },
                       { id: "archived-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a", membership_status: "archived" },
@@ -78,14 +79,15 @@ test("正常登录用户申请只通知同公司的可处理管理员", async ()
   assert.equal(body.ok, true);
   assert.equal(emitInputs.length, 1);
   const emitted = emitInputs[0];
-  assert.deepEqual(new Set(emitted.recipients as string[]), new Set(["same-team-admin"]));
+  assert.deepEqual(new Set(emitted.recipients as string[]), new Set(["owner-1", "owner-2"]));
+  assert.equal(emitted.actionLabel, "前往成员管理调整角色");
   assert.equal(emitted.category, "todo");
   assert.equal(emitted.sourceType, "permission_request");
   assert.equal(emitted.sourceId, "member-1:转化中心");
   assert.equal(emitted.actionUrl, "/admin/modules?member=member-1");
 });
 
-test("归档管理员不会继续收到权限申请通知", async () => {
+test("归档的负责人不会继续收到权限申请通知", async () => {
   const emitInputs: Array<Record<string, unknown>> = [];
   const res = await buildPermissionRequestApplyResponse(
     makeRequest({ moduleTitle: "转化中心" }),
@@ -124,7 +126,7 @@ test("归档管理员不会继续收到权限申请通知", async () => {
 
   assert.equal(res.status, 200);
   assert.equal(emitInputs.length, 1);
-  assert.deepEqual(new Set(emitInputs[0].recipients as string[]), new Set(["same-team-admin"]));
+  assert.deepEqual(new Set(emitInputs[0].recipients as string[]), new Set(["owner-1"]));
 });
 
 test("归档申请人不能继续发起权限申请", async () => {
@@ -162,7 +164,7 @@ test("归档申请人不能继续发起权限申请", async () => {
   assert.equal(emitCalled, false);
 });
 
-test("没有可通知的管理员时安全返回提示，不报 500", async () => {
+test("没有可通知的公司负责人时安全返回提示，不报 500", async () => {
   const res = await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), {
     createClient: async () => makeSupabaseClient("member-1"),
     createAdminClient: () =>

@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
+import { SimpleTooltip, TruncatedTooltip } from "@/components/ui/tooltip";
 import type { CollaborationDiagnosisContextValue } from "@/components/admin/collaboration-work-review-link";
 import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
 import {
@@ -106,12 +107,15 @@ function WorkTitleCell({
     <td className="py-2.5 px-3 min-w-0">
       <div className="min-w-0">
         {diagnosisContext ? (
-          <span
-            className="block min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]"
-            title={displayTitle}
+          <TruncatedTooltip
+            side="top"
+            align="start"
+            tip={displayTitle}
           >
-            {displayTitle}
-          </span>
+            <span className="block min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]">
+              {displayTitle}
+            </span>
+          </TruncatedTooltip>
         ) : (
           <CollaborationWorkReviewLink
             reportId={work.reportId}
@@ -132,14 +136,18 @@ function WorkTitleCell({
       {subtitle || isManual ? (
         <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-[#78716C]">
           {subtitle ? (
-            <span className="min-w-0 truncate" title={subtitle}>
-              {subtitle}
-            </span>
+            <TruncatedTooltip
+              side="top"
+              align="start"
+              tip={subtitle}
+            >
+              <span className="min-w-0 truncate">{subtitle}</span>
+            </TruncatedTooltip>
           ) : null}
           {isManual ? (
-            <Badge title="该数据由人工填写或修改" className="shrink-0">
-              手工
-            </Badge>
+            <SimpleTooltip tip="该数据由人工填写或修改" align="end">
+              <Badge className="shrink-0 cursor-help">手工</Badge>
+            </SimpleTooltip>
           ) : null}
         </div>
       ) : null}

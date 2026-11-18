@@ -430,6 +430,7 @@ test("S2 停用目标模型后运行时只切到明确的全局默认", async ()
         {
           id: "target-row",
           model_id: "target-model",
+          canonical_model_id: "target-model",
           is_enabled: false,
           key: {
             id: "key-1",
@@ -444,6 +445,7 @@ test("S2 停用目标模型后运行时只切到明确的全局默认", async ()
         {
           id: "backup-row",
           model_id: "backup-model",
+          canonical_model_id: "backup-model",
           is_enabled: true,
           key: {
             id: "key-1",

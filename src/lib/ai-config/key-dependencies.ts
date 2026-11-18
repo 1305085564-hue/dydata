@@ -1,5 +1,6 @@
 import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "@/lib/ai-config/feature-controls";
 import { computeAvailability, type AvailabilityInput } from "@/lib/ai-config/availability";
+import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 export type DependencyScope = "provider" | "key" | "supply" | "model";
 
@@ -64,7 +65,13 @@ async function loadDependencySnapshot(supabase: any): Promise<DependencySnapshot
   if (firstError) throw new Error(firstError.message);
 
   const models = ((modelsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => {
-    const model = { ...row };
+    const model: Record<string, unknown> = {
+      ...row,
+      canonical_model_id: readCanonicalModelId(
+        String(row.model_id ?? ""),
+        typeof row.canonical_model_id === "string" ? row.canonical_model_id : null,
+      ),
+    };
     delete model.global_is_enabled;
     return model;
   }) as unknown as NonNullable<AvailabilityInput["models"]>;
@@ -92,7 +99,7 @@ function requireTarget(snapshot: DependencySnapshot, input: DependencyInput) {
   if (input.scope === "provider" && !snapshot.providers.some((provider) => provider.id === input.id)) throw new Error("接入点不存在");
   if (input.scope === "key" && !snapshot.keys.some((key) => key.id === input.id)) throw new Error("渠道不存在");
   if (input.scope === "supply" && !snapshot.models.some((model) => model.id === input.id)) throw new Error("渠道未挂载此模型");
-  if (input.scope === "model" && !snapshot.models.some((model) => model.model_id === input.id)) throw new Error("模型不存在");
+  if (input.scope === "model" && !snapshot.models.some((model) => readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id))) throw new Error("模型不存在");
 }
 
 function simulateDisable(snapshot: DependencySnapshot, input: DependencyInput): DependencySnapshot {
@@ -108,7 +115,7 @@ function simulateDisable(snapshot: DependencySnapshot, input: DependencyInput): 
       : key),
     models: snapshot.models.map((model) => {
       const disabled = input.scope === "model"
-        ? model.model_id === input.id
+        ? readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id)
         : input.scope === "supply"
           ? model.id === input.id
           : input.scope === "key"
@@ -153,9 +160,12 @@ export async function buildDependencyPreview(
   }));
 
   const targetModelId = input.scope === "model"
-    ? input.id
+    ? toCanonicalModelId(input.id)
     : input.scope === "supply"
-      ? snapshot.models.find((model) => model.id === input.id)?.model_id ?? null
+      ? (() => {
+        const model = snapshot.models.find((item) => item.id === input.id);
+        return model ? readCanonicalModelId(model.model_id, model.canonical_model_id) : null;
+      })()
       : null;
   const selectedKeys = input.scope === "provider"
     ? snapshot.keys.filter((key) => key.provider_id === input.id)
@@ -164,17 +174,17 @@ export async function buildDependencyPreview(
       : input.scope === "supply"
         ? snapshot.keys.filter((key) => key.id === snapshot.models.find((model) => model.id === input.id)?.key_id)
         : input.scope === "model"
-          ? snapshot.keys.filter((key) => snapshot.models.some((model) => model.key_id === key.id && model.model_id === input.id))
+        ? snapshot.keys.filter((key) => snapshot.models.some((model) => model.key_id === key.id && readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id)))
         : [];
   // gate:transient-map this result index is used only for this preview response and then discarded.
   const afterModelFamilies = new Map(after.modelFamilies.map((family) => [family.modelId, family]));
   const channels = selectedKeys.map((key) => {
     const provider = snapshot.providers.find((item) => item.id === key.provider_id);
     const models = snapshot.models.filter((model) => model.key_id === key.id && (
-      input.scope === "supply" ? model.id === input.id : input.scope === "model" ? model.model_id === input.id : true
+      input.scope === "supply" ? model.id === input.id : input.scope === "model" ? readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id) : true
     ));
     const affectedKeys = new Set(affectedBusinesses.map((item) => item.key));
-    const modelIds = new Set(models.map((model) => model.model_id));
+    const modelIds = new Set(models.map((model) => readCanonicalModelId(model.model_id, model.canonical_model_id)));
     const directlyAffected = after.businessAssurances
       .filter((item) => affectedKeys.has(item.key) && item.selectedModelId && modelIds.has(item.selectedModelId))
       .map((item) => ({ key: item.key, label: item.label }));
@@ -183,7 +193,7 @@ export async function buildDependencyPreview(
       name: key.label ?? "",
       providerName: provider?.name ?? "未知接入点",
       models: models.map((model) => ({
-        modelId: model.model_id,
+        modelId: readCanonicalModelId(model.model_id, model.canonical_model_id),
         displayName: model.display_name ?? null,
         isEnabled: model.is_enabled,
         isGloballyEnabled: model.is_enabled,

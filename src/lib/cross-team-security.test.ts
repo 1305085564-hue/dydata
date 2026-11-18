@@ -275,7 +275,7 @@ test("buildSubmissionScreenshotFileResponse: 团队 A 主管读取本团队组�
 });
 
 // 5. Permission Request Notifications Isolation
-test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限时只通知团队 A 管理员，绝不跨团队触达团队 B", async () => {
+test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知公司负责人，任何团队的管理员都不再收到", async () => {
   const emittedRecipients: string[][] = [];
 
   const mockAdminSupabase = {
@@ -297,6 +297,7 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限时只通�
                 data: [
                   { id: MANAGER_A_ID, role: "admin", company_role: "admin", permissions: { manage_members: true }, team_id: TEAM_A, membership_status: "active" },
                   { id: MANAGER_B_ID, role: "admin", company_role: "admin", permissions: { manage_members: true }, team_id: TEAM_B, membership_status: "active" },
+                  { id: "company-owner-1", role: "owner", company_role: "company_owner", permissions: {}, team_id: TEAM_B, membership_status: "active" },
                 ],
                 error: null,
               };
@@ -326,6 +327,7 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限时只通�
 
   assert.equal(response.status, 200);
   assert.equal(emittedRecipients.length, 1);
-  assert.deepEqual(emittedRecipients[0], [MANAGER_A_ID]);
+  assert.deepEqual(emittedRecipients[0], ["company-owner-1"]);
+  assert.ok(!emittedRecipients[0].includes(MANAGER_A_ID));
   assert.ok(!emittedRecipients[0].includes(MANAGER_B_ID));
 });

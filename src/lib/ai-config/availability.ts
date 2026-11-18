@@ -1,4 +1,5 @@
 import { CHANNEL_MESSAGE_KEYS } from "./presentation";
+import { readCanonicalModelId } from "./canonical-model";
 import { resolveFeatureModelRouting } from "@/lib/ai/feature-routing";
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
@@ -35,6 +36,7 @@ export type AvailabilityModel = ProviderHealthFields & {
   id: string;
   key_id: string;
   model_id: string;
+  canonical_model_id?: string | null;
   display_name?: string | null;
   is_enabled: boolean;
   global_is_enabled?: boolean | null;
@@ -71,6 +73,7 @@ export type AvailabilityChannel = ChannelGovernance & {
   keyModelId: string;
   keyId: string;
   modelId: string;
+  upstreamModelId?: string;
   providerId: string;
   providerName: string;
   label: string;
@@ -164,7 +167,7 @@ function countIdentities(rows: Array<{ identity: ChannelIdentity }>): Record<Cha
 
 /** Compatibility name for the old UI; only supply switches determine configuration. */
 export function resolveModelGlobalEnabled(modelId: string, models: AvailabilityModel[]): boolean {
-  return models.some(model => model.model_id === modelId && model.is_enabled);
+  return models.some(model => readCanonicalModelId(model.model_id, model.canonical_model_id) === modelId && model.is_enabled);
 }
 
 export function computeAvailability(
@@ -174,8 +177,14 @@ export function computeAvailability(
   const now = options.now ?? Date.now();
   const providers = input.providers ?? [];
   const keys = input.keys ?? [];
-  const models = input.models ?? [];
-  const featureControls = input.featureControls ?? [];
+  const models = (input.models ?? []).map((model) => ({
+    ...model,
+    canonical_model_id: readCanonicalModelId(model.model_id, model.canonical_model_id),
+  }));
+  const featureControls = (input.featureControls ?? []).map((control) => ({
+    ...control,
+    modelId: control.modelId ? readCanonicalModelId(control.modelId) : null,
+  }));
 
   const providerById = new Map(providers.map((p) => [p.id, p])); // gate:transient-map 函数内查找索引，随调用返回释放
   const keyById = new Map(keys.map((k) => [k.id, k])); // gate:transient-map 函数内查找索引，随调用返回释放
@@ -186,18 +195,19 @@ export function computeAvailability(
   const displayNameByModelId = new Map<string, string>(); // gate:transient-map 函数内显示名索引，随调用返回释放
   const globalStateByModelId = new Map<string, boolean | null>();
   for (const model of models) {
-    globalStateByModelId.set(model.model_id, resolveModelGlobalEnabled(model.model_id, models));
+    globalStateByModelId.set(model.canonical_model_id, resolveModelGlobalEnabled(model.canonical_model_id, models));
   }
 
   for (const m of models) {
     const key = keyById.get(m.key_id);
     const provider = key ? providerById.get(key.provider_id) : undefined;
-    const globalEnabled = globalStateByModelId.get(m.model_id) === true;
+    const canonicalModelId = m.canonical_model_id;
+    const globalEnabled = globalStateByModelId.get(canonicalModelId) === true;
 
-    if (globalEnabled) shelvedModelIds.add(m.model_id);
-    if (!displayNameByModelId.has(m.model_id)) {
+    if (globalEnabled) shelvedModelIds.add(canonicalModelId);
+    if (!displayNameByModelId.has(canonicalModelId)) {
       const resolved = resolveModelDisplayName(m.display_name, m.model_id);
-      displayNameByModelId.set(m.model_id, resolved);
+      displayNameByModelId.set(canonicalModelId, resolved);
     }
 
     const governance = getChannelGovernance({ model: m, key, provider, now });
@@ -209,7 +219,8 @@ export function computeAvailability(
       sortOrder: m.sort_order ?? 0,
       keyModelId: m.id,
       keyId: m.key_id,
-      modelId: m.model_id,
+      modelId: canonicalModelId,
+      upstreamModelId: m.model_id,
       providerId: provider?.id ?? "",
       providerName: provider?.name ?? "",
       label: key?.label ?? "",
@@ -282,7 +293,7 @@ export function computeAvailability(
     family.untestedChannelCount = family.channels.filter((c) => c.health === "untested").length;
     family.schedulableChannelCount = family.channels.filter((c) => c.isSchedulable).length;
     family.faultChannelCount = family.channels.filter((c) => c.health === "fault").length;
-    family.isConfigured = models.some(model => model.model_id === family.modelId && model.is_enabled);
+    family.isConfigured = models.some(model => model.canonical_model_id === family.modelId && model.is_enabled);
     family.isSelectable = family.schedulableChannelCount > 0;
     family.unavailableReasonKey = family.isSelectable ? null : "model.no_available_supply";
   }
@@ -290,7 +301,7 @@ export function computeAvailability(
 
   // 全局默认模型：default 绑定不在 featureControls（仅 business 组），从 featureBindings 取
   const globalDefaultModelId =
-    input.defaultBinding?.model_id?.trim() ||
+    (input.defaultBinding?.model_id?.trim() ? readCanonicalModelId(input.defaultBinding.model_id) : null) ||
     featureControls.find((c) => c.key === "default")?.modelId?.trim() ||
     null;
 

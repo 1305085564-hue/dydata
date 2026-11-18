@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +23,7 @@ export function MemberAlerts({
   pendingRequests: PendingRequest[];
   canManageMembers: boolean;
   isPending: boolean;
-  handleReviewJoinRequest: (requestId: string, action: "approve" | "reject") => void;
+  handleReviewJoinRequest: (requestId: string, action: "approve" | "reject", note?: string) => void;
   orphanExemptionCount: number;
   isCompanyOwner: boolean;
   orphanExemptionRequests: OrphanExemptionRequest[];
@@ -27,6 +31,15 @@ export function MemberAlerts({
   handleAssignOrphanMember: (request: OrphanExemptionRequest, teamId: string) => void;
   handleRejectOrphanRequest: (request: OrphanExemptionRequest) => void;
 }) {
+  // 驳回时可填原因（选填），申请人在横幅上看到「未通过：原因」
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectNote, setRejectNote] = useState("");
+  const confirmReject = (requestId: string) => {
+    handleReviewJoinRequest(requestId, "reject", rejectNote);
+    setRejectingId(null);
+    setRejectNote("");
+  };
+
   return (
     <>
         {/* ── 待审批入团申请预警栏（复用标准 Alert 规范） ── */}
@@ -45,7 +58,7 @@ export function MemberAlerts({
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between gap-4 py-2"
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2"
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[14px] font-normal text-[#141413]">{req.applicantName}</span>
@@ -61,7 +74,7 @@ export function MemberAlerts({
                       <Button
                         variant="ghost"
                         size="s"
-                        onClick={() => handleReviewJoinRequest(req.id, "reject")}
+                        onClick={() => { setRejectingId(req.id); setRejectNote(""); }}
                         disabled={isPending}
                         className="text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger"
                       >
@@ -74,6 +87,20 @@ export function MemberAlerts({
                       >
                         同意入团
                       </Button>
+                    </div>
+                  )}
+                  {canManageMembers && rejectingId === req.id && (
+                    <div className="flex w-full items-center gap-2">
+                      <input
+                        autoFocus
+                        value={rejectNote}
+                        maxLength={200}
+                        onChange={(event) => setRejectNote(event.target.value)}
+                        placeholder="驳回原因（选填，申请人会看到）"
+                        className="h-8 min-w-0 flex-1 rounded-md border border-[#E2E2DF] bg-white px-2 text-[14px] text-[#141413] outline-none focus:border-[#78716C]"
+                      />
+                      <Button size="s" variant="ghost" onClick={() => setRejectingId(null)} className="text-[#78716C]">取消</Button>
+                      <Button size="s" onClick={() => confirmReject(req.id)} disabled={isPending}>确认驳回</Button>
                     </div>
                   )}
                 </div>

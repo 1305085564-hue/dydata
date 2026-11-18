@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
+import { WithdrawPendingButton } from "@/components/video-submit/withdraw-pending-button";
 
 export type WorkbenchNoticeItem = {
   id: string;
@@ -195,7 +196,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             {notice.title}
           </span>
           {notice.description && (
-            <span className="truncate text-[#78716C] text-[12px] sm:text-[14px]">
+            <span className="truncate text-[#78716C] text-[12px] sm:text-[14px]" title={notice.description}>
               {notice.description}
             </span>
           )}
@@ -255,38 +256,52 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
   );
 }
 
+const formatNoticeDate = (date: string) => `${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日`;
+
+/** 同一条驳回理由的日期并在一起：「11月13日、11月14日（理由）；11月15日（另一条理由）」。 */
+function describeRejected(rejected: ReadonlyArray<{ date: string; feedback: string | null }>) {
+  const groups: Array<{ feedback: string; dates: string[] }> = [];
+  for (const item of rejected) {
+    const feedback = item.feedback?.trim() ?? "";
+    const group = groups.find((entry) => entry.feedback === feedback);
+    if (group) group.dates.push(formatNoticeDate(item.date));
+    else groups.push({ feedback, dates: [formatNoticeDate(item.date)] });
+  }
+  return groups.map((group) => `${group.dates.join("、")}${group.feedback ? `（${group.feedback}）` : ""}`).join("；");
+}
+
 /**
- * 辅助构建请假/豁免审批通知的 NoticeItem
+ * 辅助构建请假/豁免审批通知的 NoticeItem：一条申请一项，按逐日结果展示，
+ * 通过和驳回的日期都列出，驳回带管理员写的理由；部分通过时两类并列。
  */
 export function buildExemptionReviewNoticeItem(
-  notice: NonNullable<DashboardPageData["userExemptionReviewNotice"]>,
+  notice: NonNullable<DashboardPageData["userExemptionReviewNotices"][number]>,
   onDismiss: () => void,
 ): WorkbenchNoticeItem {
   const categoryText = notice.exemption_category === "leave" ? "请假" : "特殊豁免";
   const daily = notice.daily_results ?? [];
   const approvedDates = daily.filter((d) => d.status === "approved").map((d) => d.date);
-  const rejectedDates = daily.filter((d) => d.status === "rejected").map((d) => d.date);
-  const processedCount = approvedDates.length + rejectedDates.length;
+  const rejected = daily.filter((d) => d.status === "rejected");
+  const pendingCount = daily.filter((d) => d.status === "pending").length;
+  const processedCount = approvedDates.length + rejected.length;
+  const id = `notice-review-${notice.id || notice.created_at || "review"}`;
 
   // 存在逐日明细时按逐日结果展示，覆盖部分批准（request_status 仍为 pending）的场景；
   // 否则回退整单状态。
   if (processedCount > 0) {
-    const isPartial = approvedDates.length > 0 && rejectedDates.length > 0;
-    const isAllApproved = approvedDates.length === processedCount;
-    const dateText = approvedDates.length
-      ? approvedDates.join("、")
-      : rejectedDates.join("、");
-    const statusLabel = isPartial
-      ? `部分通过（${approvedDates.length}/${processedCount}）`
-      : isAllApproved
-        ? "已通过"
-        : "未通过";
+    const isPartial = approvedDates.length > 0 && rejected.length > 0;
+    const isAllApproved = rejected.length === 0;
+    const parts = [
+      approvedDates.length ? `通过：${approvedDates.map(formatNoticeDate).join("、")}` : "",
+      rejected.length ? `驳回：${describeRejected(rejected)}` : "",
+      pendingCount ? `另有 ${pendingCount} 天待审` : "",
+    ].filter(Boolean);
     return {
-      id: `notice-review-${notice.id || notice.created_at || "review"}`,
+      id,
       type: "exemption_review",
       statusTone: isPartial ? "amber" : isAllApproved ? "green" : "red",
-      title: `${dateText} ${categoryText}${statusLabel}`,
-      description: notice.reason ? `· ${notice.reason}` : undefined,
+      title: `${categoryText}${isPartial ? `部分通过（${approvedDates.length}/${processedCount}）` : isAllApproved ? "已通过" : "未通过"}`,
+      description: `· ${parts.join("；")}`,
       onDismiss,
     };
   }
@@ -298,11 +313,40 @@ export function buildExemptionReviewNoticeItem(
       : `${notice.start_date} 至 ${notice.end_date}`;
 
   return {
-    id: `notice-review-${notice.id || notice.created_at || "review"}`,
+    id,
     type: "exemption_review",
     statusTone: isApproved ? "green" : "red",
     title: `${dateText} ${categoryText}${isApproved ? "已通过" : "未通过"}`,
     description: notice.reason ? `· ${notice.reason}` : undefined,
+    onDismiss,
+  };
+}
+
+/** 近 7 天全部审批结果，一条申请一项；关闭是整组关闭（同一个 onDismiss）。 */
+export function buildExemptionReviewNoticeItems(
+  notices: ReadonlyArray<NonNullable<DashboardPageData["userExemptionReviewNotices"][number]>>,
+  onDismiss: () => void,
+): WorkbenchNoticeItem[] {
+  return notices.map((notice) => buildExemptionReviewNoticeItem(notice, onDismiss));
+}
+
+/**
+ * 待审批请假/免交提示。面板与表单两处共用同一条，传入 onWithdraw 时带「撤回申请」。
+ */
+export function buildPendingExemptionNoticeItem({
+  onDismiss,
+  onWithdraw,
+}: {
+  onDismiss?: () => void;
+  onWithdraw?: () => Promise<unknown> | void;
+}): WorkbenchNoticeItem {
+  return {
+    id: "pending-exemption",
+    type: "exemption_pending",
+    statusTone: "amber",
+    title: "特殊豁免申请审批中",
+    description: "· 正在等待管理员审批",
+    actions: onWithdraw ? <WithdrawPendingButton onWithdraw={onWithdraw} /> : undefined,
     onDismiss,
   };
 }

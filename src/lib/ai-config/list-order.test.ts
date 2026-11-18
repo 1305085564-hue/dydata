@@ -48,13 +48,13 @@ test("渠道、供应模型、下拉框：开着/能选的在上", () => {
   );
 });
 
-test("同步弹窗：本渠道在用的组在上，任一版本在用即算", () => {
+test("同步弹窗：本渠道在用的 canonical 模型组在上", () => {
   const groups = [
-    { displayName: "A", modelIds: ["a"] },
-    { displayName: "C", modelIds: ["c", "c-thinking"] },
-    { displayName: "B", modelIds: ["b"] },
+    { displayName: "A", recommendedModelId: "a" },
+    { displayName: "C", recommendedModelId: "c" },
+    { displayName: "B", recommendedModelId: "b" },
   ];
-  assert.deepEqual(sortSyncGroups(groups, new Set(["c-thinking", "b"])).map((item) => item.displayName), ["B", "C", "A"]);
+  assert.deepEqual(sortSyncGroups(groups, new Set(["c", "b"])).map((item) => item.displayName), ["B", "C", "A"]);
 });
 
 test("定格顺序：已在快照里的保持原位，新出现的排在末尾", () => {

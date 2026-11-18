@@ -42,7 +42,7 @@ function snapshotAt(index: number): Snapshot {
     video_id: `video-${index}`,
     snapshot_type: "24h",
     captured_at: "2026-10-16T00:00:00.000Z",
-    play_count: index,
+    play_count: 2000 + index, // 条均只计 >= 2000 播放的作品（口径页）
     completion_rate: null,
   } as Snapshot;
 }
@@ -92,7 +92,7 @@ test("501 条作品分两批加载，画像 summary 覆盖完整周期", async (
   assert.ok(calls.every((call) => call.query?.pageSize === 500));
   assert.equal(result.summary.totalWorksCount, 501);
   assert.equal(result.summary.measuredWorksCount, 501);
-  assert.equal(result.summary.averagePlayCount, 250);
+  assert.equal(result.summary.averagePlayCount, 2250);
   assert.equal(result.total, 501);
   assert.equal(result.works.length, 100);
   assert.equal(calls[0]?.query?.filters.userId, AUTHOR.userId);
@@ -116,7 +116,7 @@ test("1001 条作品分页时 page 2 取正确切片，并传递周期、作者�
 
   assert.deepEqual(calls.map((call) => call.query?.page), [1, 2, 3]);
   assert.equal(result.summary.totalWorksCount, 1001);
-  assert.equal(result.summary.averagePlayCount, 500);
+  assert.equal(result.summary.averagePlayCount, 2500);
   assert.deepEqual(result.works.map((video) => video.id),
     Array.from({ length: 100 }, (_, index) => `video-${index + 100}`));
   assert.equal(result.page, 2);

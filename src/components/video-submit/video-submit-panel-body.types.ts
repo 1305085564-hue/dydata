@@ -17,10 +17,11 @@ export type VideoSubmitPanelBodyProps = {
   shouldShowForm: boolean;
   isExemptionPending: boolean;
   dismissedPendingExemption: boolean;
-  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
+  userExemptionReviewNotices: DashboardPageData["userExemptionReviewNotices"];
   dismissedReviewNotice: boolean;
   handleDismissReviewNotice: () => void;
   dismissPendingExemption: () => void;
+  onWithdrawPendingExemption: () => Promise<unknown>;
   isPrimarySummaryMode: boolean;
   activeBizDate: string;
   today: string;
