@@ -34,6 +34,7 @@ import {
 import {
   buildApprovalQueue,
   getAppealId,
+  getAppealTodoId,
   getTodoItems,
   splitApprovalItems,
 } from "@/lib/command-hub/domain/workbench-rules";
@@ -51,6 +52,7 @@ interface UndoEntry {
   dates?: string[];
   timerId: ReturnType<typeof setTimeout>;
   source: "exemption" | "fulfillment_appeal";
+  suppressedTodoIds?: string[];
 }
 
 function natureName(nature: "leave" | "waive") {
@@ -173,6 +175,13 @@ export function useApprovalReview({
     [completedTodoIds, isAdmin, queuedAppealIds, summary],
   );
 
+  // 补交提醒跟着审批决定走：决定一下就本地收起（服务端要到撤回窗口结束才自动关它），撤回或失败时放回
+  const releaseSuppressedTodos = useCallback((ids: string[] | undefined) => {
+    if (!ids?.length) return;
+    const released = new Set(ids);
+    setCompletedTodoIds((prev) => prev.filter((id) => !released.has(id)));
+  }, []);
+
   // ---------- 真正提交（撤回窗口结束后） ----------
 
   const commitExemption = useCallback(async (entry: UndoEntry) => {
@@ -215,6 +224,7 @@ export function useApprovalReview({
       const result = await reviewFulfillmentAppeal(appealId, entry.action, entry.feedback);
       if (!result.ok) {
         setPending((current) => [original, ...current]);
+        releaseSuppressedTodos(entry.suppressedTodoIds);
         toast.error("审批没能保存，已放回待批", { description: result.error || "网络异常，请刷新后重试" });
         return;
       }
@@ -226,9 +236,10 @@ export function useApprovalReview({
       onActionCenterChanged?.();
     } catch {
       setPending((current) => [original, ...current]);
+      releaseSuppressedTodos(entry.suppressedTodoIds);
       toast.error("审批没能保存，已放回待批", { description: "网络连接异常，请重试" });
     }
-  }, [onActionCenterChanged]);
+  }, [onActionCenterChanged, releaseSuppressedTodos]);
 
   // ---------- 撤回缓冲 ----------
 
@@ -270,8 +281,9 @@ export function useApprovalReview({
         ? [...entry.originalItems, ...current]
         : [...restoreApprovalItems(current, entry.originalItems), ...current],
     );
+    releaseSuppressedTodos(entry.suppressedTodoIds);
     toast.success(`已撤回：${entry.title}`);
-  }, []);
+  }, [releaseSuppressedTodos]);
 
   // 关面板、关页面时，撤回窗口里还没提交的审批立刻补发，不能丢
   const flushUndoQueue = useCallback(() => {
@@ -387,7 +399,12 @@ export function useApprovalReview({
   const reviewAppeal = useCallback((appeal: ExemptionRequest, action: ReviewAction, reason?: string) => {
     const appealId = getAppealId(appeal);
     if (!appealId) return;
+    // 从原始摘要收提醒：队列去重已把它挡在 todos 外，批准那一刻 todos 里找不到它
+    const suppressedTodoIds = (summary?.topItems ?? [])
+      .filter((todo) => getAppealTodoId(todo) === appealId && !completedTodoIds.includes(todo.id))
+      .map((todo) => todo.id);
     setPending((current) => current.filter((item) => getAppealId(item) !== appealId));
+    if (suppressedTodoIds.length > 0) setCompletedTodoIds((prev) => [...prev, ...suppressedTodoIds]);
     schedule({
       title: `${appeal.applicant_name || "成员"}的${appeal.appeal_type || ""}补交`,
       requestIds: [appealId],
@@ -395,8 +412,9 @@ export function useApprovalReview({
       originalItems: [appeal],
       feedback: reason || undefined,
       source: "fulfillment_appeal",
+      suppressedTodoIds,
     });
-  }, [schedule]);
+  }, [completedTodoIds, schedule, summary]);
 
   const approveItems = useCallback((items: readonly ApprovalQueueItem[]) => {
     for (const item of items) {

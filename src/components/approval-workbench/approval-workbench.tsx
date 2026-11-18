@@ -81,12 +81,13 @@ export function ApprovalWorkbench({
     loading: review.pendingLoading || (summaryLoading && summary === null),
   });
 
-  // 入口指定 "todos" 时焦点落到待办第一条；关闭时收起正在写的拒绝原因（渲染期同步，不走 effect）
+  // 入口指定 "todos" 时焦点落到待办第一条；重开面板焦点回到第一行，不沿用上次位置；关闭时收起正在写的拒绝原因（渲染期同步，不走 effect）
   const [prevEntry, setPrevEntry] = useState({ open, activeTab });
   if (prevEntry.open !== open || prevEntry.activeTab !== activeTab) {
     setPrevEntry({ open, activeTab });
     if (!open) setRejecting(null);
-    if (activeTab === "todos") setFocusIndex(isAdmin ? queue.length : 0);
+    if (open && !prevEntry.open) setFocusIndex(activeTab === "todos" ? queue.length : 0);
+    else if (activeTab === "todos") setFocusIndex(isAdmin ? queue.length : 0);
   }
 
   const scrollRowIntoView = (index: number) => {
@@ -202,6 +203,20 @@ export function ApprovalWorkbench({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [approve, approveAllSnapshot, focused, latestUndo, onOpenChange, open, rejecting, review, rows, startReject, view]);
+
+  // 面板打开时锁住背景滚动：根元素与 body 一起锁（只锁 body 依赖浏览器向视口传播，实测不可靠）
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const prevRoot = root.style.overflow;
+    const prevBody = document.body.style.overflow;
+    root.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = prevRoot;
+      document.body.style.overflow = prevBody;
+    };
+  }, [open]);
 
   // 打开时把焦点放进面板，关闭时还给触发按钮
   useEffect(() => {
