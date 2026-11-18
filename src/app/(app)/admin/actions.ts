@@ -40,6 +40,7 @@ import {
   restoreMemberWithClient,
   transferMemberToTeamWithClient,
 } from "@/lib/member-lifecycle-service";
+import type { RestoreMemberActionResult, RestoredTeamInfo } from "@/lib/member-lifecycle";
 import {
   canChangeMemberRole,
   canRemoveMemberTarget,
@@ -362,13 +363,7 @@ export async function updateMemberTeam(
   if (newTeamId === null) {
     const result = await removeMemberFromTeamWithClient({
       client: adminSupabase,
-      actor: {
-        id: perm.userId,
-        role: perm.role,
-        companyRole: perm.companyRole,
-        permissions: perm.permissions,
-        teamId: perm.teamId,
-      },
+      actor: lifecycleActor(perm),
       targetId: targetUserId,
     });
     if (!result.ok) return { error: result.error };
@@ -395,13 +390,7 @@ export async function updateMemberTeam(
   const newTeamName = formatTeamName(newTeamId, teamNames);
   const result = await transferMemberToTeamWithClient({
     client: adminSupabase,
-    actor: {
-      id: perm.userId,
-      role: perm.role,
-      companyRole: perm.companyRole,
-      permissions: perm.permissions,
-      teamId: perm.teamId,
-    },
+    actor: lifecycleActor(perm),
     targetId: targetUserId,
     newTeamId,
     newTeamName,
@@ -561,13 +550,7 @@ export async function archiveMember(
 
   const result = await archiveMemberWithClient({
     client: adminSupabase,
-    actor: {
-      id: perm.userId,
-      role: perm.role,
-      companyRole: perm.companyRole,
-      permissions: perm.permissions,
-      teamId: perm.teamId,
-    },
+    actor: lifecycleActor(perm),
     targetId: targetUserId,
     reason,
     archivedAt: new Date().toISOString(),
@@ -582,7 +565,7 @@ export async function archiveMember(
       target: targetUserId,
       detail: `归档成员：${result.target.name ?? targetUserId}；原因：${reason.trim()}`,
     });
-    // 归档回滚只能用「恢复成员」，那是把成员重置为未分配团队/普通成员/空权限，
+    // 归档回滚只能用「恢复成员」，那是把成员重置为（原团队）普通成员/空权限，
     // 不是原状态，因此不冒充回滚，按已生效上报。
     if (!audit.ok) return auditNotLogged("归档成员");
   }
@@ -592,7 +575,12 @@ export async function archiveMember(
   return {};
 }
 
-export async function restoreMember(targetUserId: string): Promise<{ error?: string }> {
+function lifecycleActor(perm: NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>) {
+  return { id: perm.userId, role: perm.role, companyRole: perm.companyRole, permissions: perm.permissions, teamId: perm.teamId };
+}
+
+/** 恢复后回到归档前的团队；团队已被删除时 teamMissing 为 true、不分配团队。 */
+export async function restoreMember(targetUserId: string): Promise<RestoreMemberActionResult> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
   if (perm.permissions.manage_members !== true) return { error: "无权限" };
@@ -602,16 +590,11 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
   const adminSupabase = createAdminClient();
   const result = await restoreMemberWithClient({
     client: adminSupabase,
-    actor: {
-      id: perm.userId,
-      role: perm.role,
-      companyRole: perm.companyRole,
-      permissions: perm.permissions,
-      teamId: perm.teamId,
-    },
+    actor: lifecycleActor(perm),
     targetId: targetUserId,
   });
   if (!result.ok) return { error: result.error };
+  const { restoredTeamId = null, restoredTeamName = null, teamMissing = false } = (result.affectedData ?? {}) as RestoredTeamInfo;
 
   if (result.changed) {
     const audit = await recordAdminAudit({
@@ -619,7 +602,7 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
       userId: perm.userId,
       action: "restore_member",
       target: targetUserId,
-      detail: `恢复成员：${result.target.name ?? targetUserId}；恢复后未分配团队、普通成员、空权限`,
+      detail: `恢复成员：${result.target.name ?? targetUserId}；恢复后${restoredTeamId ? `回到原团队「${restoredTeamName}」` : "未分配团队"}、普通成员、空权限`,
     });
     // 恢复的逆向操作是归档，需另填原因且会改归属，不作回滚，如实报告。
     if (!audit.ok) return auditNotLogged("恢复成员");
@@ -627,7 +610,7 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
-  return {};
+  return { team: restoredTeamId ? { id: restoredTeamId, name: restoredTeamName } : null, teamMissing };
 }
 
 export async function resetMemberPassword(

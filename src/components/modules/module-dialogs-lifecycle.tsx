@@ -155,7 +155,7 @@ export function ModuleDialogsLifecycle({
         open={restoreTarget !== null}
         title="恢复成员账号"
         description={
-          restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后将解除封禁，成为未分配团队的在职组员。` : ""
+          restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后将解除封禁，回到归档前的团队（该团队已删除则为未分配团队），成为在职组员，权限为空。` : ""
         }
         confirmText="确认恢复"
         loading={isPending}

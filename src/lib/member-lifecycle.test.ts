@@ -245,7 +245,8 @@ test("归档快照保留旧归属与权限，但写入最低权限和空团队",
   });
 });
 
-test("恢复始终回到未分配团队的普通成员和空权限", () => {
+test("恢复回到普通成员和空权限；团队按归档快照带回，没有可带回的团队才为空", () => {
+  assert.equal(buildRestoreMemberProfilePatch("team-1").team_id, "team-1");
   assert.deepEqual(buildRestoreMemberProfilePatch(), {
     membership_status: "active",
     archived_at: null,

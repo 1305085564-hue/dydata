@@ -602,13 +602,8 @@ export function AdminModulesContentV3({
         return;
       }
       const restoredItem: ProfileSummary = {
-        ...target,
-        role: "member",
-        company_role: "member",
-        membership_status: "active",
-        team_id: null,
-        team_name: null,
-        permissions: {},
+        ...target, role: "member", company_role: "member", membership_status: "active",
+        team_id: res.team?.id ?? null, team_name: res.team?.name ?? null, permissions: {},
       };
       setLocalProfiles((prev) => [...prev, restoredItem]);
       setMemberView("active");
@@ -616,7 +611,8 @@ export function AdminModulesContentV3({
       setSearchQuery("");
       setRestoredFocusId(target.id);
       setTimeout(() => setRestoredFocusId(null), 3000);
-      feedbackToast.success(`已恢复「${target.name}」为在职组员`);
+      if (res.teamMissing) feedbackToast.warning(`已恢复「${target.name}」，但原团队已不存在`, { description: "已恢复为未分配团队的组员，请在成员管理里重新分配团队" });
+      else feedbackToast.success(res.team ? `已恢复「${target.name}」为「${res.team.name}」组员` : `已恢复「${target.name}」为在职组员`);
       router.refresh();
     });
   };
