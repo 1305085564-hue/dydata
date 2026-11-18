@@ -231,22 +231,12 @@ test("客户端提供的模型清单不会解除永久封禁", async () => {
 
 test("上游同款模型只写一条，优先保留不带前缀的调用名并保留变体展示", async () => {
   const tables: Tables = {
-    ai_provider_keys: [{
-      id: "key-canonical",
-      api_key: "test-only",
-      provider_id: "provider-1",
-      provider: { name: "provider", base_url: "https://provider.test/v1" },
-    }],
+    ai_provider_keys: [{ id: "key-canonical", api_key: "test-only", provider_id: "provider-1", provider: { name: "provider", base_url: "https://provider.test/v1" } }],
     ai_provider_key_models: [],
   };
-
   const result = await syncModelsForKey(fakeSupabase(tables) as never, { keyId: "key-canonical" }, async () => (
-    Response.json({ data: [
-      { id: "vendor/gemini-2.5-flash" },
-      { id: "gemini-2.5-flash" },
-    ] })
+    Response.json({ data: [{ id: "vendor/gemini-2.5-flash" }, { id: "gemini-2.5-flash" }] })
   ));
-
   assert.deepEqual(tables.ai_provider_key_models.map((row) => row.model_id), ["gemini-2.5-flash"]);
   assert.deepEqual(result.allModels.map((row) => row.modelId), ["gemini-2.5-flash"]);
   assert.deepEqual(result.modelGroups, [{
@@ -258,13 +248,7 @@ test("上游同款模型只写一条，优先保留不带前缀的调用名并�
 
 test("上游只返回带前缀写法时，调用名跟随上游，不沿用库里旧写法；清单外模型才沿用旧写法", async () => {
   const tables: Tables = {
-    ai_provider_keys: [{
-      id: "key-rename",
-      api_key: "test-only",
-      provider_id: "provider-1",
-      provider: { name: "provider", base_url: "https://provider.test/v1" },
-      available_models: ["gemini-2.5-flash", "old-only-model"],
-    }],
+    ai_provider_keys: [{ id: "key-rename", api_key: "test-only", provider_id: "provider-1", provider: { name: "provider", base_url: "https://provider.test/v1" }, available_models: ["gemini-2.5-flash", "old-only-model"] }],
     ai_provider_key_models: [
       { id: "m1", key_id: "key-rename", model_id: "gemini-2.5-flash", display_name: "Gemini 2.5 Flash", is_enabled: true },
       { id: "m2", key_id: "key-rename", model_id: "vendor/old-only-model", display_name: "old-only-model", is_enabled: false },
@@ -280,9 +264,7 @@ test("上游只返回带前缀写法时，调用名跟随上游，不沿用库�
 
   const clientDb = fakeSupabase({
     ai_provider_keys: [{ id: "key-client", api_key: "x", provider_id: "p", provider: { name: "p", base_url: "https://p.test/v1" }, available_models: ["old-only-model"] }],
-    ai_provider_key_models: [
-      { id: "c1", key_id: "key-client", model_id: "vendor/old-only-model", display_name: "x", is_enabled: false },
-    ],
+    ai_provider_key_models: [{ id: "c1", key_id: "key-client", model_id: "vendor/old-only-model", display_name: "x", is_enabled: false }],
   });
   await syncModelsForKey(clientDb as never, { keyId: "key-client", modelIds: ["new-model"] }, async () => { throw new Error("不应请求上游"); });
   assert.deepEqual((clientDb.rpcCalls[0]?.parameters.p_models as Array<{ model_id: string }>).map((m) => m.model_id), ["new-model", "vendor/old-only-model"]);

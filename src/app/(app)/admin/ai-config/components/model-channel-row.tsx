@@ -128,7 +128,7 @@ export function ModelChannelRow({
               </span>
             </div>
             {channel.upstreamModelId && channel.upstreamModelId !== modelId && (
-              <div className="font-mono text-[11px] text-[#78716C] truncate" title="上游实际调用名">
+              <div className="font-mono text-[12px] text-[#78716C] truncate" title="上游实际调用名">
                 {channel.upstreamModelId}
               </div>
             )}

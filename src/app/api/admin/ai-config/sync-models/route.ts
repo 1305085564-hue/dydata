@@ -137,6 +137,7 @@ export async function syncModelsForKey(
     : [];
   // 调用名只认上游本次清单里真实存在的写法（同款有不带前缀的取不带前缀的）；
   // 本次清单没有该模型时，才沿用库里现有写法，绝不让旧记录的写法盖过上游现状。
+  // gate:transient-map 请求级调用名索引；同步调用结束即释放，无外部缓存 TTL/容量。
   const rawModelIdByCanonical = new Map<string, string>();
   const pickRawModelId = (modelId: string, onlyIfMissing: boolean) => {
     const canonical = toCanonicalModelId(modelId);

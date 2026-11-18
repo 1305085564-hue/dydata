@@ -166,3 +166,39 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
       .map((result) => ({ keyId: result.key.id, keyName: result.key.label, error: result.error })),
   };
 }
+export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Record<string, unknown>) {
+  const modelId = toTrimmedString(data.modelId ?? data.model_id);
+  if (!modelId) throw new Error("缺少 modelId");
+  const canonicalModelId = toCanonicalModelId(modelId);
+  if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
+  const isEnabled = data.is_enabled;
+  if (!isEnabled) {
+    const preview = await buildDependencyPreview(supabase, { scope: "model", id: canonicalModelId });
+    requireDependencyConfirmation(preview, data.confirm_impact === true, "停用模型");
+  }
+  const { data: currentRows, error: readError } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, is_enabled, disabled_by_model")
+    .eq("canonical_model_id", canonicalModelId);
+  if (readError) {
+    if (/disabled_by_model/i.test(readError.message ?? "")) {
+      throw Object.assign(new Error("数据库尚未执行 AI 供应开关迁移，暂不能批量停用或恢复模型"), { status: 409 });
+    }
+    throw new Error(readError.message);
+  }
+  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
+  const changedRows = isEnabled
+    ? snapshot.filter((row) => row.disabled_by_model === true)
+    : snapshot.filter((row) => row.is_enabled);
+  if (changedRows.length === 0) {
+    return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
+  }
+  const { error: updateError } = await supabase
+    .from("ai_provider_key_models")
+    .update(isEnabled
+      ? { is_enabled: true, disabled_by_model: false }
+      : { is_enabled: false, disabled_by_model: true })
+    .in("id", changedRows.map((row) => row.id));
+  if (updateError) throw new Error(updateError.message);
+  return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
+}
