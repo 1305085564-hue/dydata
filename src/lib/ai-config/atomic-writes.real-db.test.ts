@@ -11,16 +11,16 @@ test("第四批真实事务：接入、改名、批选、共享地址和审计�
   assert.equal(url.hostname,"127.0.0.1");assert.equal(url.port,"54322");
   const db=new Client({connectionString:url.href});await db.connect();
   const address=`https://${randomUUID()}.fixture.test/v1`,model=`atomic-${randomUUID()}`;
-  async function rejected(sql:string,args:unknown[]){
+  async function rejected(sql:string,args:unknown[],reason?:RegExp){
     await db.query("savepoint expected_failure");
-    await assert.rejects(()=>db.query(sql,args));
+    if(reason)await assert.rejects(()=>db.query(sql,args),{message:reason});else await assert.rejects(()=>db.query(sql,args));
     await db.query("rollback to savepoint expected_failure");
   }
   const create=(label:string,models:unknown)=>db.query("select public.create_ai_config_channel(null,$1,$1,$2,'local-only',$3,$4,true) as result",[address,label,[model],JSON.stringify(models)]);
   try{
     await db.query("begin");
     const createSql="select public.create_ai_config_channel(null,$1,$1,'invalid','local-only','{}',$2,true)";
-    await rejected(createSql,[address,JSON.stringify([{model_id:null,display_name:"bad",is_enabled:true}])]);
+    await rejected(createSql,[address,JSON.stringify([{model_id:null,display_name:"bad",is_enabled:true}])],/模型 ID 不能为空/);
     assert.equal((await db.query("select count(*)::int as n from public.ai_providers where base_url=$1",[address])).rows[0].n,0);
     const first=(await create("first",[{model_id:model,display_name:"原名",is_enabled:true}])).rows[0].result;
     const second=(await create("second",[{model_id:model,display_name:"原名",is_enabled:true}])).rows[0].result;
@@ -39,7 +39,7 @@ test("第四批真实事务：接入、改名、批选、共享地址和审计�
     await db.query(`create function pg_temp.reject_atomic_disable() returns trigger language plpgsql as $$ begin if new.id='${supply}'::uuid and not new.is_enabled then raise exception 'intentional local disable failure'; end if; return new; end $$`);
     await db.query("create trigger local_atomic_disable before update on public.ai_provider_key_models for each row execute function pg_temp.reject_atomic_disable()");
     const newModel=`new-${randomUUID()}`;
-    await rejected("select public.set_ai_channel_model_selection($1,$2,'{}')",[first.keyId,[newModel]]);
+    await rejected("select public.set_ai_channel_model_selection($1,$2,'{}')",[first.keyId,[newModel]],/intentional local disable failure/);
     assert.equal((await db.query("select count(*)::int as n from public.ai_provider_key_models where model_id=$1",[newModel])).rows[0].n,0);
     assert.equal((await db.query("select is_enabled from public.ai_provider_key_models where id=$1",[supply])).rows[0].is_enabled,true);
     await db.query("drop trigger local_atomic_disable on public.ai_provider_key_models");

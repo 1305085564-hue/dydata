@@ -154,11 +154,11 @@ export function SyncModelsDialog({
   };
 
   // 展开/收起更多版本
-  const toggleGroupExpanded = (displayName: string) => {
+  const toggleGroupExpanded = (modelKey: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(displayName)) next.delete(displayName);
-      else next.add(displayName);
+      if (next.has(modelKey)) next.delete(modelKey);
+      else next.add(modelKey);
       return next;
     });
   };
@@ -324,7 +324,7 @@ export function SyncModelsDialog({
           ) : (
             <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white overflow-hidden text-[12px]">
               {filteredGroups.map((group) => {
-                const isGroupExpanded = expandedGroups.has(group.displayName);
+                const isGroupExpanded = expandedGroups.has(group.recommendedModelId);
                 const hasMultipleVersions = group.modelIds.length > 1;
 
                 const isAnySelected = selectedModelIds.has(group.recommendedModelId);
@@ -333,7 +333,7 @@ export function SyncModelsDialog({
                 const isInUse = currentChannelEnabledModelIds.has(group.recommendedModelId);
 
                 return (
-                  <div key={group.displayName} className="p-3 space-y-2 hover:bg-[#F7F7F6]/40 transition-colors">
+                  <div key={group.recommendedModelId} className="p-3 space-y-2 hover:bg-[#F7F7F6]/40 transition-colors">
                     {/* 主行 */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -370,7 +370,7 @@ export function SyncModelsDialog({
                       {hasMultipleVersions && (
                         <button
                           type="button"
-                          onClick={() => toggleGroupExpanded(group.displayName)}
+                          onClick={() => toggleGroupExpanded(group.recommendedModelId)}
                           className="flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
                         >
                           <span>更多版本 ({group.modelIds.length})</span>

@@ -127,8 +127,9 @@ function fakeSupabase(tables: Tables, beforeExecute?: (table: string, operation:
             is_enabled: false,
           };
           (tables.ai_provider_key_models ?? (tables.ai_provider_key_models = [])).push(existing);
-        } else if (existing.display_name === existing.model_id) {
-          existing.display_name = model.display_name;
+        } else {
+          if (verified) existing.model_id = model.model_id;
+          if (existing.display_name === existing.model_id) existing.display_name = model.display_name;
         }
       }
       if (verified && modelIds.length > 0) {
@@ -253,6 +254,38 @@ test("上游同款模型只写一条，优先保留不带前缀的调用名并�
     recommendedModelId: "gemini-2.5-flash",
     modelIds: ["vendor/gemini-2.5-flash", "gemini-2.5-flash"],
   }]);
+});
+
+test("上游只返回带前缀写法时，调用名跟随上游，不沿用库里旧写法；清单外模型才沿用旧写法", async () => {
+  const tables: Tables = {
+    ai_provider_keys: [{
+      id: "key-rename",
+      api_key: "test-only",
+      provider_id: "provider-1",
+      provider: { name: "provider", base_url: "https://provider.test/v1" },
+      available_models: ["gemini-2.5-flash", "old-only-model"],
+    }],
+    ai_provider_key_models: [
+      { id: "m1", key_id: "key-rename", model_id: "gemini-2.5-flash", display_name: "Gemini 2.5 Flash", is_enabled: true },
+      { id: "m2", key_id: "key-rename", model_id: "vendor/old-only-model", display_name: "old-only-model", is_enabled: false },
+    ],
+  };
+  const db = fakeSupabase(tables);
+  await syncModelsForKey(db as never, { keyId: "key-rename" }, async () => (
+    Response.json({ data: [{ id: "google/gemini-2.5-flash" }] })
+  ));
+  assert.deepEqual((db.rpcCalls[0]?.parameters.p_models as Array<{ model_id: string }>).map((m) => m.model_id), ["google/gemini-2.5-flash"]);
+  assert.deepEqual(db.rpcCalls[0]?.parameters.p_available_models, ["google/gemini-2.5-flash"]);
+  assert.equal(tables.ai_provider_key_models.find((row) => row.id === "m1")?.model_id, "google/gemini-2.5-flash");
+
+  const clientDb = fakeSupabase({
+    ai_provider_keys: [{ id: "key-client", api_key: "x", provider_id: "p", provider: { name: "p", base_url: "https://p.test/v1" }, available_models: ["old-only-model"] }],
+    ai_provider_key_models: [
+      { id: "c1", key_id: "key-client", model_id: "vendor/old-only-model", display_name: "x", is_enabled: false },
+    ],
+  });
+  await syncModelsForKey(clientDb as never, { keyId: "key-client", modelIds: ["new-model"] }, async () => { throw new Error("不应请求上游"); });
+  assert.deepEqual((clientDb.rpcCalls[0]?.parameters.p_models as Array<{ model_id: string }>).map((m) => m.model_id), ["new-model", "vendor/old-only-model"]);
 });
 
 test("同步鉴权通过后使用注入的服务端客户端，拒绝时不创建服务端客户端", async () => {

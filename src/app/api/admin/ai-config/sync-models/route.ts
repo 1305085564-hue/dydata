@@ -135,11 +135,19 @@ export async function syncModelsForKey(
   const availableModelIds = Array.isArray(availableModels)
     ? availableModels.map((id) => toTrimmedString(id)).filter(Boolean)
     : [];
+  // 调用名只认上游本次清单里真实存在的写法（同款有不带前缀的取不带前缀的）；
+  // 本次清单没有该模型时，才沿用库里现有写法，绝不让旧记录的写法盖过上游现状。
   const rawModelIdByCanonical = new Map<string, string>();
-  for (const modelId of [...existingRows.map((row) => row.model_id), ...availableModelIds, ...discoveredModelIds]) {
+  const pickRawModelId = (modelId: string, onlyIfMissing: boolean) => {
     const canonical = toCanonicalModelId(modelId);
     const current = rawModelIdByCanonical.get(canonical);
-    if (!current || (current.includes("/") && !modelId.includes("/"))) rawModelIdByCanonical.set(canonical, modelId);
+    if (!current) rawModelIdByCanonical.set(canonical, modelId);
+    else if (!onlyIfMissing && current.includes("/") && !modelId.includes("/")) rawModelIdByCanonical.set(canonical, modelId);
+  };
+  for (const modelId of discoveredModelIds) pickRawModelId(modelId, false);
+  const discoveredCanonicalIds = new Set(rawModelIdByCanonical.keys());
+  for (const modelId of [...existingRows.map((row) => row.model_id), ...availableModelIds]) {
+    if (!discoveredCanonicalIds.has(toCanonicalModelId(modelId))) pickRawModelId(modelId, true);
   }
   const targetModelIds = targetCanonicalIds.map((canonical) => rawModelIdByCanonical.get(canonical) ?? canonical);
   const verifiedFromUpstream = !hasClientModelIds;
@@ -150,7 +158,10 @@ export async function syncModelsForKey(
   // 服务端真实取回上游清单时，只写清单内的模型；清单外旧记录由同一个数据库事务撤下。
   const modelIdsToWrite = verifiedFromUpstream
     ? targetModelIds
-    : [...new Set([...targetModelIds, ...existingRows.map((model) => model.model_id)])];
+    : [...new Set([
+      ...targetModelIds,
+      ...existingRows.map((model) => model.model_id).filter((id) => !discoveredCanonicalIds.has(toCanonicalModelId(id))),
+    ])];
   await runAiConfigWrite(supabase as Parameters<typeof runAiConfigWrite>[0], "sync_ai_config_models", {
     p_key_id: input.keyId,
     p_available_models: verifiedFromUpstream ? discoveredModelIds : targetModelIds,

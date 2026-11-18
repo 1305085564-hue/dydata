@@ -24,6 +24,9 @@ declare
   merge_state record;
   latest_failure record;
   chosen_display_name text;
+  moved_bindings jsonb;
+  moved_routes jsonb;
+  moved_runs jsonb;
 begin
   create table if not exists public.ai_provider_key_model_merge_audit (
     id uuid primary key default gen_random_uuid(),
@@ -35,6 +38,7 @@ begin
     discarded_model_ids text[] not null,
     original_rows jsonb not null,
     decision text not null,
+    transferred_references jsonb not null default '{}'::jsonb,
     created_at timestamptz not null default now()
   );
 
@@ -86,9 +90,49 @@ begin
       m.id
     limit 1;
 
+    -- 所有引用被删行的外键先转移到保留行，再删除；转移的行号记入审计表。
+    with moved as (
+      update public.ai_feature_bindings b
+      set provider_key_model_id = survivor_id
+      where b.provider_key_model_id in (
+        select m.id from public.ai_provider_key_models m
+        where m.key_id = duplicate_group.key_id
+          and m.canonical_model_id = duplicate_group.canonical_model_id
+          and m.id <> survivor_id
+      )
+      returning b.id
+    )
+    select coalesce(jsonb_agg(id order by id), '[]'::jsonb) into moved_bindings from moved;
+
+    with moved as (
+      update public.rewrite_model_routes r
+      set provider_key_model_id = survivor_id
+      where r.provider_key_model_id in (
+        select m.id from public.ai_provider_key_models m
+        where m.key_id = duplicate_group.key_id
+          and m.canonical_model_id = duplicate_group.canonical_model_id
+          and m.id <> survivor_id
+      )
+      returning r.id
+    )
+    select coalesce(jsonb_agg(id order by id), '[]'::jsonb) into moved_routes from moved;
+
+    with moved as (
+      update public.rewrite_generation_runs g
+      set provider_key_model_id = survivor_id
+      where g.provider_key_model_id in (
+        select m.id from public.ai_provider_key_models m
+        where m.key_id = duplicate_group.key_id
+          and m.canonical_model_id = duplicate_group.canonical_model_id
+          and m.id <> survivor_id
+      )
+      returning g.id
+    )
+    select coalesce(jsonb_agg(id order by id), '[]'::jsonb) into moved_runs from moved;
+
     insert into public.ai_provider_key_model_merge_audit (
       key_id, canonical_model_id, survivor_id, discarded_ids,
-      survivor_model_id, discarded_model_ids, original_rows, decision
+      survivor_model_id, discarded_model_ids, original_rows, decision, transferred_references
     )
     select
       duplicate_group.key_id,
@@ -98,20 +142,21 @@ begin
       max(m.model_id) filter (where m.id = survivor_id),
       array_agg(m.model_id order by m.id) filter (where m.id <> survivor_id),
       jsonb_agg(to_jsonb(m) order by m.id),
-      'same key and canonical model: keep unprefixed upstream model id when available'
+      'same key and canonical model: keep unprefixed upstream model id when available',
+      jsonb_build_object(
+        'ai_feature_bindings', moved_bindings,
+        'rewrite_model_routes', moved_routes,
+        'rewrite_generation_runs', moved_runs
+      )
     from public.ai_provider_key_models m
     where m.key_id = duplicate_group.key_id
       and m.canonical_model_id = duplicate_group.canonical_model_id;
 
-    update public.ai_feature_bindings b
-    set provider_key_model_id = survivor_id
-    where provider_key_model_id in (
-      select m.id
-      from public.ai_provider_key_models m
-      where m.key_id = duplicate_group.key_id
-        and m.canonical_model_id = duplicate_group.canonical_model_id
-        and m.id <> survivor_id
-    );
+    -- 成功时间单独先写：它会触发"成功后清空失败窗口"的触发器，
+    -- 清空只作用在保留行上，随后第二条语句再写入合并后的失败状态，不被触发器抹掉。
+    update public.ai_provider_key_models survivor
+    set last_success_at = merge_state.last_success_at
+    where survivor.id = survivor_id;
 
     update public.ai_provider_key_models survivor
     set display_name = coalesce(chosen_display_name, duplicate_group.canonical_model_id),
@@ -120,7 +165,6 @@ begin
         consecutive_failures = merge_state.max_failures,
         first_failure_at = merge_state.first_failure_at,
         last_failure_at = merge_state.last_failure_at,
-        last_success_at = merge_state.last_success_at,
         unhealthy_until = merge_state.unhealthy_until,
         invalidated_at = merge_state.invalidated_at,
         last_error_message = latest_failure.last_error_message,
@@ -301,8 +345,8 @@ begin
   set is_enabled = false, disabled_by_model = false
   where m.key_id = p_key_id
     and not exists (
-      select 1 from unnest(coalesce(p_model_ids, '{}'::text[])) chosen
-      where public.canonical_ai_model_id(chosen) = m.canonical_model_id
+      select 1 from unnest(coalesce(p_model_ids, '{}'::text[])) selected_id
+      where public.canonical_ai_model_id(selected_id) = m.canonical_model_id
     );
   return jsonb_build_object(
     'created', greatest(0, (select count(*) from public.ai_provider_key_models where key_id = p_key_id) - before_count),
@@ -374,7 +418,10 @@ begin
     insert into public.ai_provider_key_models as m(key_id, model_id, display_name, is_enabled)
       values(p_key_id, upstream_model_id, coalesce(item->>'display_name', canonical), false)
     on conflict (key_id, canonical_model_id) do update set
+      -- 上游清单已核实时，调用名以上游现在的写法为准（上游改名后要跟着改）；
+      -- 未核实（调用方自带清单）时只做保守升级：带前缀换成不带前缀。
       model_id = case
+        when p_verified then excluded.model_id
         when position('/' in m.model_id) > 0 and position('/' in excluded.model_id) = 0 then excluded.model_id
         else m.model_id end,
       display_name = case when m.display_name = m.model_id then excluded.display_name else m.display_name end;
