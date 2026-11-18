@@ -31,6 +31,7 @@ import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state"
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import { formatBigNumber, formatMomChange, type OperatorRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
+import { CALIBER } from "@/lib/metrics/caliber";
 
 interface OperatorTabProps {
   operators: OperatorRow[];
@@ -148,7 +149,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
             优秀作品
           </TooltipTrigger>
           <TooltipContent side="top" align="end">
-            播放至少 30,000 的作品条数
+            播放至少 {CALIBER.excellentMinPlay.toLocaleString("zh-CN")} 的作品条数
           </TooltipContent>
         </Tooltip>
       </TableHead>
