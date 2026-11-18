@@ -182,6 +182,9 @@ export function MetricInputCard({
         <p role="alert" className="px-2 text-[12px] text-status-danger">
           请输入有效数字
         </p>
+      ) : hint ? (
+        // 原因写在格子下方：触屏和不悬停时也看得到，title 只作补充
+        <p className="px-2 text-[12px] leading-4 text-[#78716C]">{hint}</p>
       ) : null}
     </div>
   );

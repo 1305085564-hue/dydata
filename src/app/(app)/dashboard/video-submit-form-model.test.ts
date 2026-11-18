@@ -97,6 +97,14 @@ test("零指标回填为 0，编辑指标仍由人工确认", () => {
   assert.equal(createEditableFields().play_count.value, "");
 });
 
+test("修改态平均播放占比只换算一次：库里 0.325 回填为 32.5，不是 3250", () => {
+  const fields = createEditableFieldsFromEditDetail({
+    ...detail,
+    metrics: { ...detail.metrics, avgPlayRatio: 0.325 },
+  });
+  assert.equal(fields.avg_play_ratio.value, "32.5");
+});
+
 test("旧截图复用同一地址且不持有 File，待确认截图不被提升为已确认", () => {
   const slots = createEditableSlotsFromEditDetail(detail);
   assert.equal(slots.screenshot_1.assetUrl, detail.assets[0]?.url);

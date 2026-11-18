@@ -369,13 +369,7 @@ export function VideoSubmitPanelV2({
   }, [activeDateReport?.id, activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount, submittedEditTarget?.reportDate, submittedEditTarget?.reportId]);
 
   const isPrimarySummaryMode = primaryMode === "summary" && primarySummary !== null;
-  const shouldShowBlockedStateCard =
-    (activeDateStatus.state === "waive" || activeDateStatus.state === "leave") &&
-    !submittedViewActive;
-  const isPermanentExemption = activeExemptionState.isExempt && activeExemptionState.type === "permanent";
-
-  const shouldHideFormForExemption =
-    shouldShowBlockedStateCard && !isPermanentExemption;
+  // 免交/请假日只由页头状态句说明，表单照常可交（与长期免交一致），不再隐藏成空白。
   const shouldShowActivityErrorCard = activeDateStatus.requiresActivityRetry;
   const shouldShowActivityLoadingCard =
     activeBizDate < today &&
@@ -393,7 +387,6 @@ export function VideoSubmitPanelV2({
   const isExemptionPending = localHasPendingExemption;
   const shouldShowForm =
     Boolean(selectedAccount) &&
-    !shouldHideFormForExemption &&
     !shouldShowActivityLoadingCard &&
     !shouldShowActivityErrorCard &&
     !shouldShowHistoricalSubmittedCard &&

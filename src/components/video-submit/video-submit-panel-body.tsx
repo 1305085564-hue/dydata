@@ -75,11 +75,12 @@ export function VideoSubmitPanelBody({
                 (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice)) && (
                 <WorkbenchNoticeBar
                   notices={[
-                    ...(userExemptionReviewNotices.length > 0 && !dismissedReviewNotice
-                      ? buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice)
-                      : []),
+                    // 审批中排第一：折叠时也能直接看到、直接撤回
                     ...(isExemptionPending && !dismissedPendingExemption
                       ? [buildPendingExemptionNoticeItem({ items: pendingExemptionItems, onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
+                      : []),
+                    ...(userExemptionReviewNotices.length > 0 && !dismissedReviewNotice
+                      ? buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice)
                       : []),
                   ]}
                 />

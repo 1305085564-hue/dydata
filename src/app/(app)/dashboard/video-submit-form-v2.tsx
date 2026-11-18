@@ -732,18 +732,18 @@ export function VideoSubmitFormV2({
       });
     }
 
-    // 2. 请假/豁免审批结果通知
-    if (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice) {
-      items.push(...buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice));
-    }
-
-    // 3. 待审批中提示
+    // 2. 待审批中提示：还能撤回、正在发生，排在已出结果的通知前面，折叠时也露在第一条
     if (isExemptionPending) {
       items.push(buildPendingExemptionNoticeItem({
         items: pendingExemptionItems,
         onDismiss: onDismissPendingExemption,
         onWithdraw: onWithdrawPendingExemption,
       }));
+    }
+
+    // 3. 请假/豁免审批结果通知
+    if (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice) {
+      items.push(...buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice));
     }
 
     // 4. 选题带入上下文提示
@@ -1069,7 +1069,8 @@ export function VideoSubmitFormV2({
         feedbackToast.error("剪贴板内容为空");
       }
     } catch {
-      feedbackToast.error("无法读取剪贴板，请手动粘贴");
+      feedbackToast.error("浏览器没给读取剪贴板的权限，请在文案框里手动粘贴");
+      contentTextareaRef.current?.focus();
     }
   }
 

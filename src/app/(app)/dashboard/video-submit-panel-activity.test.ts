@@ -43,3 +43,17 @@ test("历史活动请求支持分页参数并保留服务端继续加载标记",
   assert.equal(result.hasMore, true);
   assert.equal(result.page, 2);
 });
+
+test("断网时给中文原因，不把浏览器的 Failed to fetch 原样送到页面", async () => {
+  await assert.rejects(
+    () => fetchDashboardActivity(async () => { throw new TypeError("Failed to fetch"); }),
+    (error: Error) => error.message === "网络连不上，检查网络后点重试。",
+  );
+});
+
+test("服务端返回纯文本 503 时给中文原因，不暴露 JSON 解析报错", async () => {
+  await assert.rejects(
+    () => fetchDashboardActivity(async () => new Response("暂时无法确认账号状态，请稍后重试", { status: 503 })),
+    (error: Error) => error.message === "服务器暂时没响应，稍后点重试。",
+  );
+});

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ColophonMark } from "@/components/editorial/editorial-illustrations";
 import { cn } from "@/lib/utils";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
 
 function formatCount(value: number | null | undefined) {
@@ -69,7 +70,7 @@ export function TodaySubmittedCard({
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="truncate text-[14px] text-[#141413]">{title}</p>
                 <p className="truncate text-[12px] tabular-nums text-[#78716C]">
-                  {report.published_at || report.report_date || "今天"} 发布 · 播放 {formatCount(report.play_count)} · 完播 {report.completion_rate ?? "—"} · 已写入日报
+                  {getPublishedDateKey(report) ?? report.report_date ?? "今天"} 发布 · 播放 {formatCount(report.play_count)} · 完播 {report.completion_rate ?? "—"} · 已写入日报
                 </p>
               </div>
               <Button

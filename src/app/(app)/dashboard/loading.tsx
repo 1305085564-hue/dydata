@@ -12,7 +12,8 @@ export default function DashboardLoading() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <div className={`h-6 w-40 sm:h-[34px] sm:w-52 ${block}`} />
-            <div className={`h-6 w-72 ${block}`} />
+            {/* 副行是带上下内边距和边框的月历按钮，实高约 29px */}
+            <div className={`h-[29px] w-72 ${block}`} />
           </div>
           <div className="flex items-center gap-2">
             <div className={`h-7 w-24 ${block}`} />

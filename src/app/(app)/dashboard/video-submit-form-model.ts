@@ -327,11 +327,8 @@ export function createEditableFieldsFromEditDetail(
       }
     : buildVideoSubmissionEditRefill(detail).metrics;
   for (const [key, metricValue] of Object.entries(metrics) as Array<[EditableMetricKey, number | null | string]>) {
-    const value = metricValue == null
-      ? ""
-      : key === "avg_play_ratio"
-        ? String(Number(metricValue) * 100)
-        : String(metricValue);
+    // 绑定作品的回填值已由 buildVideoSubmissionEditRefill 换成百分比（0.325 → "32.5"），这里不再换算。
+    const value = metricValue == null ? "" : String(metricValue);
     fields[key] = {
       ...fields[key],
       value,
