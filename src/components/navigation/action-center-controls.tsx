@@ -6,8 +6,8 @@ import { Bell } from "lucide-react";
 import type { ActionCenterSummary } from "@/lib/action-center/types";
 import { cn } from "@/lib/utils";
 
-const UnifiedCommandHub = dynamic(
-  () => import("@/components/unified-command-hub").then((module) => module.UnifiedCommandHub),
+const ApprovalWorkbench = dynamic(
+  () => import("@/components/approval-workbench/approval-workbench").then((module) => module.ApprovalWorkbench),
   { ssr: false },
 );
 
@@ -71,7 +71,7 @@ export function ActionCenterControls({
       {commandHubLoaded &&
         typeof document !== "undefined" &&
         createPortal(
-          <UnifiedCommandHub
+          <ApprovalWorkbench
             open={open}
             onOpenChange={onOpenChange}
             activeTab={activeTab}

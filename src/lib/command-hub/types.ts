@@ -1,50 +1,15 @@
-import type { Dispatch, SetStateAction } from "react";
-import type { ActionCenterSummary, ActionItem } from "@/lib/action-center/types";
-import type {
-  DailyApprovalDetail,
-  ExemptionRequest,
-  GroupedApprovalItem,
-} from "@/lib/exemption-approvals";
+import type { ActionCenterSummary } from "@/lib/action-center/types";
+import type { ExemptionRequest, GroupedApprovalItem } from "@/lib/exemption-approvals";
 
 export type CommandHubTab = "todos" | "approvals" | "history";
 export type ReviewAction = "approved" | "rejected";
-export type ApprovalFilterNature = "all" | "leave" | "waive" | "appeal" | "todo";
-export type ApprovalCard =
-  | { type: "exemption"; group: GroupedApprovalItem; id: string }
-  | { type: "appeal"; appeal: ExemptionRequest; id: string }
-  | { type: "todo"; todo: ActionItem; id: string };
 
-export function formatRelativeTime(iso?: string | null): string {
-  if (!iso) return "";
-  const ts = new Date(iso).getTime();
-  if (Number.isNaN(ts)) return "";
-  const diff = Date.now() - ts;
-  const hr = Math.floor(diff / 3_600_000);
-  if (hr < 24) return `${Math.max(0, hr)} 小时前`;
-  const day = Math.floor(hr / 24);
-  if (day < 7) return `${day} 天前`;
-  return new Date(iso).toLocaleDateString("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    month: "numeric",
-    day: "numeric",
-  });
-}
+/** 「等你批」队列里的一件事：一组请假/免交，或一条补交申请 */
+export type ApprovalQueueItem =
+  | { kind: "exemption"; id: string; group: GroupedApprovalItem }
+  | { kind: "appeal"; id: string; appeal: ExemptionRequest };
 
-export function formatShanghaiDateTime(iso?: string | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-export interface UnifiedCommandHubProps {
+export interface ApprovalWorkbenchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeTab: CommandHubTab;
@@ -57,15 +22,6 @@ export interface UnifiedCommandHubProps {
   onActionCenterChanged?: () => void;
 }
 
-export interface ActiveFeedbackConfig {
-  initialAction: ReviewAction;
-  title: string;
-  scopeHint: string;
-  handler: (action: ReviewAction, feedback: string) => void;
-  required?: boolean;
-  confirmLabel?: string;
-}
-
 export interface ActiveUndoItem {
   id: string;
   title: string;
@@ -73,81 +29,15 @@ export interface ActiveUndoItem {
   remainingSeconds: number;
 }
 
-export interface ApprovalTabProps {
-  activeTab: CommandHubTab;
-  isAdmin: boolean;
-  filterNature: ApprovalFilterNature;
-  setFilterNature: Dispatch<SetStateAction<ApprovalFilterNature>>;
-  focusedCardIndex: number;
-  setFocusedCardIndex: Dispatch<SetStateAction<number>>;
-  groupedApprovals: GroupedApprovalItem[];
-  appealItems: ExemptionRequest[];
-  visibleCards: ApprovalCard[];
-  pendingApprovals: ExemptionRequest[];
-  handleApproveAll: () => void;
-  approvalError: string | null;
-  summaryError?: string | null;
-  fetchApprovals: () => Promise<void>;
-  approvalsLoading: boolean;
-  actionsLoading?: boolean;
-  todoPendingCount: number;
-  onTabChange: (tab: CommandHubTab) => void;
-  activeFeedbackKey: string | null;
-  activeFeedbackConfig: ActiveFeedbackConfig | null;
-  actionProcessing: { id: string; action: "pending" } | null;
-  scheduleAppealReviewWithUndo: (
-    appeal: ExemptionRequest,
-    action: ReviewAction,
-    reason?: string,
-  ) => void;
-  toggleAppealReject: (appealId: string) => void;
-  setActiveFeedbackKey: Dispatch<SetStateAction<string | null>>;
-  handleGroupAction: (
-    group: GroupedApprovalItem,
-    action: ReviewAction,
-  ) => void;
-  handleDailyAction: (
-    group: GroupedApprovalItem,
-    daily: DailyApprovalDetail,
-    action: ReviewAction,
-    withFeedback?: boolean,
-  ) => void;
-  todoItems?: ActionItem[];
-  todoProcessingId?: string | null;
-  handleToggleTodo?: (todo: ActionItem) => Promise<void>;
-  relativeTime?: (iso: string) => string;
-  completedSessionIds?: string[];
-  completedSessionTitles?: Record<string, string>;
-  markTodoRead?: (todoId: string) => void;
-  onOpenChange?: (open: boolean) => void;
-  onReviewAppeal?: (appealId: string) => void;
-}
-
-export interface TodoTabProps {
-  activeTab: CommandHubTab;
-  todoPendingCount: number;
-  summaryError: string | null | undefined;
-  onRefreshSummary?: () => Promise<ActionCenterSummary | null>;
-  actionsLoading: boolean;
-  todoItems: ActionItem[];
-  todoProcessingId: string | null;
-  handleToggleTodo: (todo: ActionItem) => Promise<void>;
-  relativeTime: (iso: string) => string;
-  completedSessionIds: string[];
-  completedSessionTitles: Record<string, string>;
-  markTodoRead: (todoId: string) => void;
-  onOpenChange: (open: boolean) => void;
-}
-
-export interface HistoryTabProps {
-  activeTab: CommandHubTab;
-  isAdmin: boolean;
-  historyApprovals: ExemptionRequest[];
-  historyError: string | null;
-  fetchHistoryApprovals: () => Promise<void>;
-  historyLoading: boolean;
-  actionProcessing: { id: string; action: "pending" } | null;
-  handleReopenAppeal: (appealId: string) => Promise<void>;
-  handleReopenReviewDecision: (item: ExemptionRequest) => Promise<void>;
-  onTabChange?: (tab: CommandHubTab) => void;
+export function formatShanghaiDateTime(iso?: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

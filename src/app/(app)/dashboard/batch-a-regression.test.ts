@@ -20,7 +20,7 @@ test("成功态提供再交一条入口并切回新建模式", () => {
 test("发布时间可修改并把来源与 OCR 原值带入审批链路", () => {
   const resultsSection = read("src/app/(app)/dashboard/form-v2/results-section.tsx");
   const submitController = read("src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts");
-  const appealCard = read("src/components/command-hub/fulfillment-appeal-card.tsx");
+  const appealCard = read("src/lib/command-hub/domain/workbench-rules.ts");
 
   assert.match(resultsSection, /aria-label=\{publishedConfirmed \? "修改发布时间" : "手填发布时间"\}/);
   assert.equal(resolvePublishedAtSource("2026-11-10T10:00", "2026-11-10T10:00"), "ocr");

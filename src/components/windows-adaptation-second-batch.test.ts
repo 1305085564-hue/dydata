@@ -59,7 +59,7 @@ test("共享抽屉和截图预览使用动态视口高度", () => {
 });
 
 test("全局命令气泡在窄屏和低矮视口内收缩", () => {
-  const source = readSource("src/components/unified-command-hub.tsx");
+  const source = readSource("src/components/approval-workbench/approval-workbench.tsx");
 
   assert.match(source, /w-\[min\(440px,calc\(100vw-2rem\)\)\]/);
   assert.match(
