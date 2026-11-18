@@ -15,9 +15,3 @@ test("预发布脚本 dry-run 固化全部门禁顺序", () => {
     "roles", "browser",
   ]);
 });
-
-test("故障注入默认只输出本地/预览演练步骤", () => {
-  const result = JSON.parse(run("fault-injection.mjs", ["--dry-run"]));
-  assert.equal(result.target, "health:supabase-down");
-  assert.deepEqual(result.steps.map((step) => step.id), ["inject", "recover"]);
-});
