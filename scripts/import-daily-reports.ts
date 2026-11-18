@@ -3,6 +3,7 @@ import path from "node:path";
 import ExcelJS from "exceljs";
 import { createClient } from "@supabase/supabase-js";
 import { excelCellValueToScalar, excelSerialToDate } from "../src/lib/excel-values";
+import { assertProdWriteAllowed } from "./lib/prod-write-guard.mjs";
 
 type RawRow = Record<string, unknown>;
 
@@ -363,6 +364,7 @@ async function upsertReports(rows: PreparedRow[]) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (!args.dryRun) assertProdWriteAllowed(supabaseUrl, "导入日报");
   const rawRows = await parseWorkbook(args.filePath);
   assertRequiredColumns(rawRows);
 

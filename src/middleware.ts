@@ -17,6 +17,12 @@ import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, 
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const DEV_PROD_WRITE_AUTH_PATHS = new Set([
+  "/login",
+  "/api/cloudbase/auth/signin",
+  "/api/cloudbase/auth/signout",
+  "/api/cloudbase/auth/refresh",
+]);
 
 // 飞书回调等外部服务调用的路由，豁免 CSRF 检查
 const CSRF_EXEMPT_PATHS = new Set(["/api/feishu/event"]);
@@ -42,6 +48,14 @@ export function isUntrustedApiWriteRequest(request: NextRequest) {
   } catch {
     return true;
   }
+}
+
+export function shouldBlockDevProductionWrite(request: NextRequest, env: Record<string, string | undefined> = process.env) {
+  if (env.NODE_ENV !== "development") return false;
+  if (!String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("gcrhhxaopomtposmahsw")) return false;
+  if (env.DYDATA_DEV_ALLOW_PROD_WRITE === "1") return false;
+  if (!UNSAFE_METHODS.has(request.method.toUpperCase())) return false;
+  return !DEV_PROD_WRITE_AUTH_PATHS.has(request.nextUrl.pathname);
 }
 
 function createClientFromRequest(request: NextRequest, response: NextResponse) {
@@ -218,6 +232,9 @@ async function handleCloudBaseSession(request: NextRequest, options: {
 export async function middleware(request: NextRequest) {
   const maintenance = cutoverMaintenanceResponse(request.nextUrl.pathname, undefined, request);
   if (maintenance) return maintenance;
+  if (shouldBlockDevProductionWrite(request)) {
+    return new NextResponse("本机预览连的是正式数据库，只能看不能改；要改数据请到线上网站操作", { status: 403 });
+  }
   if (!isApplicationMiddlewarePath(request.nextUrl.pathname)) return NextResponse.next();
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");

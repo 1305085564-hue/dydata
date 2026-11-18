@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { assertProdWriteAllowed } from "./lib/prod-write-guard.mjs";
 
 const TOPICS = [
   { name: "暴力战法类", groups: ["图形战法", "分时盘口", "模式战法", "龙头选股", "打板连板", "止盈止损"] },
@@ -18,6 +19,8 @@ if (!supabaseUrl || !serviceRoleKey) {
   console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   process.exit(1);
 }
+
+assertProdWriteAllowed(supabaseUrl, "初始化主题库");
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {

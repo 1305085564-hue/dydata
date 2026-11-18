@@ -280,7 +280,7 @@ function buildMigrationsSection({ prod, local, repoDir, deferredDir }) {
   const appliedWithoutFile = prodVersions.filter((v) => !fileByVersion.has(v))
     .map((v) => ({ version: v, name: prod.rows.find((r) => r.version === v)?.name ?? null }));
 
-  // 生产曾被 apply-single-migration.mjs 之类的手工执行器写入，版本号是“执行时间戳”而非文件名版本，
+  // 生产曾被手工执行器写入，版本号是“执行时间戳”而非文件名版本，
   // 因此按版本号对不上的条目要再用文件名（name）复核一次，避免把同一支迁移误报成两处缺失。
   const prodByName = new Map(prod.rows.map((r) => [r.name, r.version]));
   const repoByName = new Map(repoFiles.map((f) => [f.name, f]));
