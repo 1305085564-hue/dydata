@@ -17,7 +17,7 @@ export type VideoSubmitPanelBodyProps = {
   shouldShowForm: boolean;
   isExemptionPending: boolean;
   dismissedPendingExemption: boolean;
-  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
+  userExemptionReviewNotices: DashboardPageData["userExemptionReviewNotices"];
   dismissedReviewNotice: boolean;
   handleDismissReviewNotice: () => void;
   dismissPendingExemption: () => void;

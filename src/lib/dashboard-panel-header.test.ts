@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  dropExpiredExemptionNotice,
   formatHeaderDate,
   resolvePanelHeaderStatus,
   summarizeMonthFulfillment,
@@ -105,11 +104,4 @@ test("长期免交整月不算漏，管理员认定缺勤仍算漏", () => {
 test("页头副行日期写成「11 月 13 日 周五」", () => {
   assert.equal(formatHeaderDate("2026-11-13"), "11 月 13 日 周五");
   assert.equal(formatHeaderDate("2026-11-01"), "11 月 1 日 周日");
-});
-
-test("涉及日期全部早于今天的审批通知不再返回", () => {
-  const notice = { start_date: "2026-10-05", end_date: "2026-10-05" };
-  assert.equal(dropExpiredExemptionNotice(notice, "2026-11-13"), null);
-  const current = { start_date: "2026-11-12", end_date: "2026-11-14" };
-  assert.equal(dropExpiredExemptionNotice(current, "2026-11-13"), current);
 });

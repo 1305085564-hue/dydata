@@ -25,7 +25,7 @@ import { 截图对照栏, useCompareRailEnabled } from "@/components/submission/
 import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
 import {
   WorkbenchNoticeCapsule,
-  buildExemptionReviewNoticeItem,
+  buildExemptionReviewNoticeItems,
   buildPendingExemptionNoticeItem,
   type WorkbenchNoticeItem,
 } from "./components/workbench-notice-bar";
@@ -104,6 +104,7 @@ import { useAssigneeController } from "./video-submit-form-v2/assignee-controlle
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
 import { useAppealActions } from "./form-v2/use-appeal-actions";
+import { useReviewNoticeDismissal } from "./use-review-notice-dismissal";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import {
   getBrowserAppealSuccessPublishedAt,
@@ -130,7 +131,7 @@ interface VideoSubmitFormProps {
   initialTopicId?: string | null;
   initialTopicTitle?: string | null;
   submittedViewActive?: boolean;
-  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
+  userExemptionReviewNotices?: DashboardPageData["userExemptionReviewNotices"];
   isExemptionPending?: boolean;
   onDismissPendingExemption?: () => void;
   onWithdrawPendingExemption?: () => Promise<unknown>;
@@ -163,7 +164,7 @@ export function VideoSubmitFormV2({
   initialTopicId = null,
   initialTopicTitle = null,
   submittedViewActive = false,
-  userExemptionReviewNotice,
+  userExemptionReviewNotices = [],
   isExemptionPending = false,
   onDismissPendingExemption,
   onWithdrawPendingExemption,
@@ -701,28 +702,8 @@ export function VideoSubmitFormV2({
     };
   }, [appealStatus, checkAppealStatus]);
 
-  // 豁免/请假审批通知本地关闭状态
-  const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
-
-  useEffect(() => {
-    if (!userExemptionReviewNotice) return;
-    let nextDismissed = false;
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
-    } catch {}
-    const timeoutId = window.setTimeout(() => setDismissedReviewNotice(nextDismissed), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [userExemptionReviewNotice]);
-
-  const handleDismissReviewNotice = useCallback(() => {
-    if (!userExemptionReviewNotice) return;
-    setDismissedReviewNotice(true);
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      window.sessionStorage.setItem(key, "dismissed");
-    } catch {}
-  }, [userExemptionReviewNotice]);
+  // 豁免/请假审批通知本地关闭状态（与面板共用同一关闭标记）
+  const { dismissed: dismissedReviewNotice, dismiss: handleDismissReviewNotice } = useReviewNoticeDismissal(userExemptionReviewNotices);
 
   // 聚合工作台提示项（草稿恢复 / 请假豁免结果 / 审批中 / 选题带入上下文）
   const workbenchNotices = useMemo(() => {
@@ -758,13 +739,8 @@ export function VideoSubmitFormV2({
     }
 
     // 2. 请假/豁免审批结果通知
-    if (userExemptionReviewNotice && !dismissedReviewNotice) {
-      items.push(
-        buildExemptionReviewNoticeItem(
-          userExemptionReviewNotice,
-          handleDismissReviewNotice,
-        ),
-      );
+    if (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice) {
+      items.push(...buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice));
     }
 
     // 3. 待审批中提示
@@ -799,7 +775,7 @@ export function VideoSubmitFormV2({
     onDismissPendingExemption,
     onWithdrawPendingExemption,
     showDraftBanner,
-    userExemptionReviewNotice,
+    userExemptionReviewNotices,
   ]);
 
   // Blob URL 清理

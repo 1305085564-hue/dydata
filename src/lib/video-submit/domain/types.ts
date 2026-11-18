@@ -40,7 +40,7 @@ export interface VideoSubmitPanelV2Props {
   absentDates?: string[];
   absentReasons?: Record<string, string>;
   monthFulfillmentBasis?: DashboardPageData["monthFulfillmentBasis"];
-  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
+  userExemptionReviewNotices?: DashboardPageData["userExemptionReviewNotices"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
   embeddedChrome?: boolean;

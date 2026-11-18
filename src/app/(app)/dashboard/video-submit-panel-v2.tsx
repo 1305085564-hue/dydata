@@ -18,6 +18,7 @@ import {
 import { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
 import { resolvePanelHeaderStatus } from "@/lib/dashboard-panel-header";
 import { useMonthFulfillment } from "./use-month-fulfillment";
+import { useReviewNoticeDismissal } from "./use-review-notice-dismissal";
 import { withdrawMyPendingExemptions } from "@/lib/withdraw-requests-client";
 import {
   resolvePanelDateSelection,
@@ -59,7 +60,7 @@ export function VideoSubmitPanelV2({
   absentDates = [],
   absentReasons = {},
   monthFulfillmentBasis,
-  userExemptionReviewNotice = null,
+  userExemptionReviewNotices = [],
   userExemptionProfile,
   userExemptionGrants,
   selectedAccountId: controlledSelectedAccountId,
@@ -143,26 +144,7 @@ export function VideoSubmitPanelV2({
     return () => window.clearTimeout(timeoutId);
   }, [today]);
 
-  const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
-  useEffect(() => {
-    if (!userExemptionReviewNotice) return;
-    let nextDismissed = false;
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
-    } catch {}
-    const timeoutId = window.setTimeout(() => setDismissedReviewNotice(nextDismissed), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [userExemptionReviewNotice]);
-
-  const handleDismissReviewNotice = useCallback(() => {
-    if (!userExemptionReviewNotice) return;
-    setDismissedReviewNotice(true);
-    try {
-      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
-      window.sessionStorage.setItem(key, "dismissed");
-    } catch {}
-  }, [userExemptionReviewNotice]);
+  const { dismissed: dismissedReviewNotice, dismiss: handleDismissReviewNotice } = useReviewNoticeDismissal(userExemptionReviewNotices);
 
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
@@ -526,7 +508,7 @@ export function VideoSubmitPanelV2({
           shouldShowForm={shouldShowForm}
           isExemptionPending={isExemptionPending}
           dismissedPendingExemption={dismissedPendingExemption}
-          userExemptionReviewNotice={userExemptionReviewNotice}
+          userExemptionReviewNotices={userExemptionReviewNotices}
           dismissedReviewNotice={dismissedReviewNotice}
           handleDismissReviewNotice={handleDismissReviewNotice}
           dismissPendingExemption={dismissPendingExemption}

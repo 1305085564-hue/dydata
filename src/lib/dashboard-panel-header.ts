@@ -135,37 +135,3 @@ export function summarizeMonthFulfillment({
   }
   return { submittedCount, missedCount };
 }
-
-type ExemptionNoticeDateSource = {
-  start_date?: string | null;
-  end_date?: string | null;
-  daily_results?: ReadonlyArray<{ date: string }> | undefined;
-};
-
-/**
- * 过期的请假/豁免审批通知不再打扰人：涉及日期全部早于今天，就当没有这条通知。
- * 唯一收口点——表单与面板都不再各自判断，避免同一条规则两处实现。
- */
-export function isExemptionNoticeExpired(
-  notice: ExemptionNoticeDateSource | null,
-  today: string,
-): boolean {
-  if (!notice) return false;
-  const dailyDates = (notice.daily_results ?? [])
-    .map((item) => item.date)
-    .filter((date): date is string => Boolean(date));
-  const dates = dailyDates.length > 0
-    ? dailyDates
-    : [notice.start_date, notice.end_date ?? notice.start_date].filter(
-        (date): date is string => Boolean(date),
-      );
-  if (dates.length === 0) return false;
-  return dates.every((date) => date < today);
-}
-
-export function dropExpiredExemptionNotice<T extends ExemptionNoticeDateSource>(
-  notice: T | null,
-  today: string,
-): T | null {
-  return isExemptionNoticeExpired(notice, today) ? null : notice;
-}

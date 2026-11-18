@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardActivityError } from "./dashboard-activity-error";
 import { TodaySubmittedCard } from "./today-submitted-card";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
-import { WorkbenchNoticeBar, buildExemptionReviewNoticeItem, buildPendingExemptionNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
+import { WorkbenchNoticeBar, buildExemptionReviewNoticeItems, buildPendingExemptionNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
 import { cn } from "@/lib/utils";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
@@ -18,7 +18,7 @@ export function VideoSubmitPanelBody({
   shouldShowForm,
   isExemptionPending,
   dismissedPendingExemption,
-  userExemptionReviewNotice,
+  userExemptionReviewNotices,
   dismissedReviewNotice,
   handleDismissReviewNotice,
   dismissPendingExemption,
@@ -67,16 +67,11 @@ export function VideoSubmitPanelBody({
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
-                (userExemptionReviewNotice && !dismissedReviewNotice)) && (
+                (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice)) && (
                 <WorkbenchNoticeBar
                   notices={[
-                    ...(userExemptionReviewNotice && !dismissedReviewNotice
-                      ? [
-                          buildExemptionReviewNoticeItem(
-                            userExemptionReviewNotice,
-                            handleDismissReviewNotice,
-                          ),
-                        ]
+                    ...(userExemptionReviewNotices.length > 0 && !dismissedReviewNotice
+                      ? buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice)
                       : []),
                     ...(isExemptionPending && !dismissedPendingExemption
                       ? [buildPendingExemptionNoticeItem({ onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
@@ -257,7 +252,7 @@ export function VideoSubmitPanelBody({
                 initialTopicId={initialTopicId}
                 initialTopicTitle={initialTopicTitle}
                 submittedViewActive={submittedViewActive}
-                userExemptionReviewNotice={userExemptionReviewNotice}
+                userExemptionReviewNotices={userExemptionReviewNotices}
                 isExemptionPending={isExemptionPending && !dismissedPendingExemption}
                 onDismissPendingExemption={dismissPendingExemption}
                 onWithdrawPendingExemption={onWithdrawPendingExemption}
