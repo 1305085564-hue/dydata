@@ -134,6 +134,26 @@ const GRADE_ORDER: readonly BreakoutGrade[] = ["普", "良", "优"];
  */
 export const MAX_PULL_GRADES = 1;
 
+export type RatingRule = {
+  playFloor: number;
+  playGood: number;
+  playExcellent: number;
+  excellent: number;
+  good: number;
+  fair: number;
+  maxPull: number;
+};
+
+export const DEFAULT_RATING_RULE: RatingRule = {
+  playFloor: KPI_PLAY_FLOOR,
+  playGood: KPI_PLAY_GOOD,
+  playExcellent: KPI_PLAY_EXCELLENT,
+  excellent: BREAKOUT_GRADE_THRESHOLDS.excellent,
+  good: BREAKOUT_GRADE_THRESHOLDS.good,
+  fair: BREAKOUT_GRADE_THRESHOLDS.fair,
+  maxPull: MAX_PULL_GRADES,
+};
+
 /** 取较低档位（依赖 GRADE_ORDER 由低到高的顺序） */
 function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
   return GRADE_ORDER[Math.min(GRADE_ORDER.indexOf(a), GRADE_ORDER.indexOf(b))];
@@ -154,26 +174,31 @@ function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
 export function overallBreakoutGrade(
   playCount: number | null | undefined,
   items: readonly [BreakoutRating | null, BreakoutRating | null],
+  rule: RatingRule = DEFAULT_RATING_RULE,
 ): BreakoutGrade | null {
   if (playCount === null || playCount === undefined || !Number.isFinite(playCount)) {
     return null;
   }
   if (playCount <= 0) return null;
-  if (playCount < KPI_PLAY_FLOOR) return "普";
+  if (playCount < rule.playFloor) return "普";
   const [interaction, retention] = items;
   if (!interaction || !retention) return null;
   const averageAchievement = (interaction.achievement + retention.achievement) / 2;
-  const metricGrade = breakoutGrade(averageAchievement);
-  if (metricGrade === null) return null;
-  const weakAchievement = Math.min(interaction.achievement, retention.achievement);
-  const cappedMetricGrade = weakAchievement < BREAKOUT_GRADE_THRESHOLDS.fair
-    ? "普"
-    : weakAchievement < BREAKOUT_GRADE_THRESHOLDS.good
-      ? lowerGrade(metricGrade, "良")
-      : metricGrade;
-  const playGrade: BreakoutGrade = playCount >= KPI_PLAY_EXCELLENT
+  const metricGrade: BreakoutGrade = averageAchievement >= rule.excellent
     ? "优"
-    : playCount >= KPI_PLAY_GOOD ? "良" : "普";
+    : averageAchievement >= rule.good ? "良" : "普";
+  const weakAchievement = Math.min(interaction.achievement, retention.achievement);
+  const weakGradeIndex = weakAchievement < rule.fair
+    ? -1
+    : weakAchievement < rule.good ? 0 : 1;
+  const pullCapGrade: BreakoutGrade = GRADE_ORDER[Math.max(
+    0,
+    Math.min(weakGradeIndex + rule.maxPull, GRADE_ORDER.length - 1),
+  )];
+  const cappedMetricGrade = lowerGrade(metricGrade, pullCapGrade);
+  const playGrade: BreakoutGrade = playCount >= rule.playExcellent
+    ? "优"
+    : playCount >= rule.playGood ? "良" : "普";
   return lowerGrade(cappedMetricGrade, playGrade);
 }
 

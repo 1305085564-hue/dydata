@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
-import { isFaultInjectionRequested } from "@/lib/fault-injection";
 import { runSupabaseKeepalive, type SupabaseKeepaliveResult } from "@/lib/supabase/keepalive";
 import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
@@ -127,10 +126,7 @@ export async function buildHealthResponse(
   // 依赖检查：区分「未配置」和「探活失败」，失败只报 down，
   // 绝不返回数据库错误信息、行数或用户数据
   let supabase: SupabaseDependencyStatus;
-  const faultInjected = isFaultInjectionRequested("health:supabase-down", request);
-  if (faultInjected) {
-    supabase = "down";
-  } else if (!hasSupabaseConfig()) {
+  if (!hasSupabaseConfig()) {
     supabase = "unconfigured";
   } else {
     try {
@@ -150,7 +146,7 @@ export async function buildHealthResponse(
     method: request.method,
     status,
     durationMs: Date.now() - startedAt,
-    detail: { check: "supabase", supabase, ...(faultInjected ? { faultInjected: true } : {}) },
+    detail: { check: "supabase", supabase },
   });
 
   return NextResponse.json(

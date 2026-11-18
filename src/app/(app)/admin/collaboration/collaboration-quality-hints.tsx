@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
+import { CALIBER } from "@/lib/metrics/caliber";
 import type { ContentQualitySummary } from "@/lib/collaboration/content-quality-contract";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
@@ -17,7 +18,7 @@ export type WriterQualityData =
 
 export const COLLABORATION_METRIC_HEADER_TIPS = {
   effectiveCount: "播放大于 500 的作品条数",
-  excellentCount: "播放至少 30,000 的作品条数",
+  excellentCount: `播放至少 ${CALIBER.excellentMinPlay.toLocaleString("zh-CN")} 的作品条数`,
   followerConversionRate: (
     <>
       <p className="font-normal text-[#141413] mb-1">转粉率（加权参考）：</p>
@@ -46,7 +47,7 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
     <>
       <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
-        播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
+        播放 {KPI_PLAY_FLOOR} 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
       </p>
     </>
   ),

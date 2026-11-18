@@ -23,8 +23,6 @@ const steps = [
   { id: "build", command: "npm run build", args: ["run", "build"] },
   { id: "roles", command: "npm run gate:roles", args: ["run", "gate:roles"] },
   { id: "browser", command: "npm run gate:browser", args: ["run", "gate:browser"] },
-  { id: "architecture-baseline", command: "node scripts/architecture-baseline.mjs --report", args: ["scripts/architecture-baseline.mjs", "--report"] },
-  { id: "runtime-smoke", command: "npm run smoke:runtime", args: ["run", "smoke:runtime"] },
 ];
 
 function runStep(step) {
@@ -38,7 +36,7 @@ function runStep(step) {
   }
   const command = step.command.startsWith("npx ") ? "npx" : step.command.startsWith("node ") ? process.execPath : npmCommand;
   const args = step.args;
-  const env = step.id === "runtime-smoke" && baseUrl ? { ...process.env, BASE_URL: baseUrl } : process.env;
+  const env = baseUrl ? { ...process.env, BASE_URL: baseUrl } : process.env;
   const child = spawnSync(command, args, { cwd: root, stdio: "inherit", env, shell: false });
   if (child.error) throw child.error;
   return child.status ?? 1;

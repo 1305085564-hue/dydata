@@ -105,7 +105,7 @@
 
 - 改完默认本地 commit；push 必须本轮明确授权，push 即 push `main`（触发 Vercel 上线）。
 - push 前逐笔列出 `git log --oneline origin/main..HEAD`，核对差异文件，确认没夹带其他会话未确认的改动。
-- push 后核对服务健康和线上实际运行的提交号（结构化日志 `detail.release`），结论写进 `docs/reference/`；只在本地验证过不准说"已上线"。
+- push 后按[《工程运行事实》部署与运维事实](docs/系统架构与设计/工程运行事实.md)的两条命令核对健康状态和线上实际运行的提交号，结论写进 `docs/reference/`；只在本地验证过不准说"已上线"。
 
 ### 分工
 
