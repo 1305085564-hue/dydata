@@ -5,6 +5,10 @@
 # 不要用 --no-verify 跳过；门禁本身误报就修门禁。
 set -e
 cd "$(git rev-parse --show-toplevel)"
+# 从工作树 push 时，git 会给钩子导出 GIT_DIR（实测）。下面的测试会在临时目录里建仓库，
+# 继承它就会把 git init/config 写进真实仓库（2026-11-18 曾把 core.bare=true 和测试身份写进主仓库配置）。
+# 已 cd 到仓库根目录，清掉后 git 照常按当前目录找到本仓库。
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
 
 echo "[pre-push] 1/6 类型检查"
 npx tsc --noEmit --pretty false
