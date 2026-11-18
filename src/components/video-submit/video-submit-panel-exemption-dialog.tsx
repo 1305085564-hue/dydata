@@ -3,6 +3,7 @@ import { useState, useTransition, type Dispatch, type SetStateAction } from "rea
 import { ExemptionDialogV2 } from "@/app/(app)/dashboard/redesign/exemption-dialog-v2";
 import { submitExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { ExemptionDateBuckets } from "@/lib/豁免";
+import type { PendingExemptionItem } from "@/lib/loaders/dashboard-page";
 
 type VideoSubmitPanelExemptionDialogProps = {
   isExemptionDialogOpen: boolean;
@@ -13,6 +14,7 @@ type VideoSubmitPanelExemptionDialogProps = {
   localPendingExemptionDates: string[];
   setLocalHasPendingExemption: (value: boolean) => void;
   setLocalPendingExemptionDates: Dispatch<SetStateAction<string[]>>;
+  setLocalPendingExemptionItems: Dispatch<SetStateAction<PendingExemptionItem[]>>;
   loadActivity: () => void | Promise<void>;
 };
 
@@ -25,6 +27,7 @@ export function VideoSubmitPanelExemptionDialog({
   localPendingExemptionDates,
   setLocalHasPendingExemption,
   setLocalPendingExemptionDates,
+  setLocalPendingExemptionItems,
   loadActivity,
 }: VideoSubmitPanelExemptionDialogProps) {
   // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
@@ -61,6 +64,15 @@ export function VideoSubmitPanelExemptionDialog({
                         new Set([...current, ...(result.submittedDates ?? [])]),
                       ).sort(),
                     );
+                    setLocalPendingExemptionItems((current) => {
+                      const next = [
+                        ...current,
+                        ...(result.submittedDates ?? []).map((date) => ({ date, category: request.category })),
+                      ];
+                      return next.filter((item, index) => next.findIndex((candidate) =>
+                        candidate.date === item.date && candidate.category === item.category,
+                      ) === index).sort((left, right) => left.date.localeCompare(right.date));
+                    });
                     setIsExemptionDialogOpen(false);
                     void loadActivity();
                   }

@@ -1,6 +1,7 @@
 import type { FormMetaState } from "@/app/(app)/dashboard/video-submit-form-model";
 import {
   getVideoSubmissionEditDetailError,
+  isDailyReportOnlyEditDetail,
   normalizeOptionalText,
   type VideoSubmissionEditDetail,
 } from "@/app/(app)/dashboard/video-submit-form-state";
@@ -31,6 +32,7 @@ export function resolveCompleteEditPayload(
 ): CompleteEditPayload | null {
   if (getVideoSubmissionEditDetailError(detail, expected)) return null;
   if (!detail) return null;
+  if (isDailyReportOnlyEditDetail(detail)) return null;
 
   return {
     video_id: detail.videoId,

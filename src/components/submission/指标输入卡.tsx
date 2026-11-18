@@ -30,11 +30,12 @@ export function resolveMetricCellMode(args: {
   optional: boolean;
   slotProcessing: boolean;
   inputsOpen: boolean;
+  forceReview?: boolean;
 }): MetricCellMode {
   const hasValue = Boolean(args.field.value.trim());
   if (args.slotProcessing && !hasValue) return "pending";
   if (hasValue) {
-    const unsure = args.field.source === "ocr" && (args.confidenceLevel === "low" || args.confidenceLevel === "medium");
+    const unsure = args.forceReview || (args.field.source === "ocr" && (args.confidenceLevel === "low" || args.confidenceLevel === "medium"));
     return unsure ? "doubt" : "settled";
   }
   if (!args.optional && args.inputsOpen) return "missing";
@@ -55,6 +56,7 @@ interface MetricInputCardProps {
   onBlur?: () => void;
   onRestoreOcr?: () => void;
   optional?: boolean;
+  disabled?: boolean;
   hint?: string;
   inputRef?: React.Ref<HTMLInputElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -71,6 +73,7 @@ export function MetricInputCard({
   onBlur,
   onRestoreOcr,
   optional = false,
+  disabled = false,
   hint,
   inputRef,
   onKeyDown,
@@ -139,6 +142,7 @@ export function MetricInputCard({
           inputMode="decimal"
           autoComplete="off"
           value={displayValue}
+          disabled={disabled}
           placeholder={mode === "missing" ? undefined : "—"}
           onPaste={(e) => {
             const pasted = e.clipboardData.getData("text");

@@ -11,11 +11,14 @@ import type { MonthReport } from "@/lib/video-submit/domain/types";
 import type { Video } from "@/types";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
+import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
 export type VideoSubmitPanelBodyProps = {
   formAnchorRef: RefObject<HTMLDivElement | null>;
   shouldShowForm: boolean;
   isExemptionPending: boolean;
+  pendingExemptionItems: DashboardPageData["pendingExemptionItems"];
+  lastSubmissionPreferences: LastSubmittedReportPreferences | null;
   dismissedPendingExemption: boolean;
   userExemptionReviewNotices: DashboardPageData["userExemptionReviewNotices"];
   dismissedReviewNotice: boolean;
@@ -57,6 +60,7 @@ export type VideoSubmitPanelBodyProps = {
   handleSubmitted: (
     video: Video | null,
     summaryOverride?: TodaySubmissionReportLike | null,
+    submissionPreferences?: LastSubmittedReportPreferences & { accountId: string },
   ) => void;
   onViewHistory: () => void;
   onViewVideo: (videoId: string) => void;

@@ -1,15 +1,15 @@
 import {
-  buildUnboundDailyReportDetail,
   buildVideoSubmissionEditDetail,
   type VideoSubmissionEditDetailSource,
 } from "../edit-detail";
+import { buildUnboundDailyReportDetail } from "../unbound-daily-report-detail";
 
 export const EDIT_DETAIL_VIDEO_SELECT =
   "id, account_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, avg_play_ratio, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
 export const EDIT_DETAIL_REPORT_SELECT =
-  "id, user_id, account_id, report_date, video_id, data_source, script_author_user_id, video_editor_user_id, operator_user_id";
+  "id, user_id, account_id, report_date, video_id, data_source, title, content, published_at, uploaded_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";
 
 type QueryOutcome<T> = { data: T[] | null; error: { message: string } | null };
@@ -24,6 +24,21 @@ export interface EditDetailPageDbAdapter {
     report_date: string;
     video_id?: string | null;
     data_source?: unknown;
+    title?: string | null;
+    content?: string | null;
+    published_at?: string | null;
+    uploaded_at?: string | null;
+    play_count?: number | null;
+    likes?: number | null;
+    comments?: number | null;
+    shares?: number | null;
+    favorites?: number | null;
+    follower_gain?: number | null;
+    follower_convert?: number | null;
+    avg_play_duration?: string | null;
+    bounce_rate_2s?: string | null;
+    completion_rate_5s?: string | null;
+    completion_rate?: string | null;
     script_author_user_id?: string | null;
     video_editor_user_id?: string | null;
     operator_user_id?: string | null;

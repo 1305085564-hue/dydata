@@ -25,6 +25,8 @@ interface DashboardContentProps {
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   pendingExemptionDates?: string[];
+  pendingExemptionItems?: DashboardPageData["pendingExemptionItems"];
+  lastSubmissionPreferencesByAccount?: DashboardPageData["lastSubmissionPreferencesByAccount"];
   absentDates: string[];
   absentReasons: Record<string, string>;
   monthFulfillmentBasis?: DashboardPageData["monthFulfillmentBasis"];

@@ -14,6 +14,8 @@ export function VideoSubmitPanelBody({
   formAnchorRef,
   shouldShowForm,
   isExemptionPending,
+  pendingExemptionItems,
+  lastSubmissionPreferences,
   dismissedPendingExemption,
   userExemptionReviewNotices,
   dismissedReviewNotice,
@@ -77,7 +79,7 @@ export function VideoSubmitPanelBody({
                       ? buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice)
                       : []),
                     ...(isExemptionPending && !dismissedPendingExemption
-                      ? [buildPendingExemptionNoticeItem({ onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
+                      ? [buildPendingExemptionNoticeItem({ items: pendingExemptionItems, onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
                       : []),
                   ]}
                 />
@@ -205,6 +207,8 @@ export function VideoSubmitPanelBody({
                 submittedViewActive={submittedViewActive}
                 userExemptionReviewNotices={userExemptionReviewNotices}
                 isExemptionPending={isExemptionPending && !dismissedPendingExemption}
+                pendingExemptionItems={pendingExemptionItems}
+                lastSubmissionPreferences={lastSubmissionPreferences}
                 onDismissPendingExemption={dismissPendingExemption}
                 onWithdrawPendingExemption={onWithdrawPendingExemption}
                 onSubmitted={handleSubmitted}

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { submitExemptionRequestWithClient } from "./actions";
-import { preserveExistingHistoryReportAvgPlayRatio } from "@/lib/history-report-snapshot-sync";
 
 type RequestRow = Record<string, unknown>;
 
@@ -84,30 +83,6 @@ const baseInput = {
   dates: ["2026-08-25"],
   reason: "病假",
 };
-
-function snapshotMetricInput(avg_play_ratio: number | null) {
-  return {
-    play_count: 1,
-    likes: 1,
-    comments: 1,
-    shares: 1,
-    favorites: 1,
-    follower_gain: 1,
-    follower_convert: null,
-    avg_play_duration: null,
-    avg_play_ratio,
-    bounce_rate_2s: null,
-    completion_rate: null,
-    completion_rate_5s: null,
-  };
-}
-
-test("历史编辑回捞分支保留已有值、0 值和无快照空值", () => {
-  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), 0.2302).avg_play_ratio, 23.02);
-  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), 0).avg_play_ratio, 0);
-  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(null), null).avg_play_ratio, null);
-  assert.equal(preserveExistingHistoryReportAvgPlayRatio(snapshotMetricInput(12.5), 0.2302).avg_play_ratio, 12.5);
-});
 
 test("V2 豁免提交使用 range 对象契约并原样保存 leave", async () => {
   const stub = createSupabaseStub({});

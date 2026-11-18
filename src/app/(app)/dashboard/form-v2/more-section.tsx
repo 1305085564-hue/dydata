@@ -39,6 +39,7 @@ export interface FormV2MoreSectionProps {
   selectedTopicId: string | null;
   selectedTopicTitle: string | null;
   handleSelectTopic: (topic: SelectedTopicInfo | null) => void;
+  videoFieldsEnabled?: boolean;
 }
 
 function Chips<T extends string>({ options, value, onPick }: { options: readonly T[]; value: string; onPick: (next: T) => void }) {
@@ -83,6 +84,7 @@ export function FormV2MoreSection({
   selectedTopicId,
   selectedTopicTitle,
   handleSelectTopic,
+  videoFieldsEnabled = true,
 }: FormV2MoreSectionProps) {
   const visibleRows = ROLE_ROWS.filter((row) => roleVisible[row.role]);
   const externalRows = visibleRows.filter((row) => resolveRoleDisplay(meta[row.key]).external);
@@ -92,10 +94,9 @@ export function FormV2MoreSection({
   const isAbnormal = meta.anomalyStatus === "abnormal";
   const summaryParts = [
     creditText,
-    meta.topicTag || "题材未选",
-    meta.videoForm || "出镜",
-    ...(isAbnormal ? [`作品异常（${meta.punishType || "限流"}）`] : []),
-    ...(selectedTopicTitle ? [`选题《${selectedTopicTitle}》`] : []),
+    ...(videoFieldsEnabled ? [meta.topicTag || "题材未选", meta.videoForm || "出镜"] : []),
+    ...(videoFieldsEnabled && isAbnormal ? [`作品异常（${meta.punishType || "限流"}）`] : []),
+    ...(videoFieldsEnabled && selectedTopicTitle ? [`选题《${selectedTopicTitle}》`] : []),
   ];
 
   return (
@@ -150,63 +151,67 @@ export function FormV2MoreSection({
             )}
           </div>
 
-          <span className={cn("text-[#78716C]", topicTagMissing && "text-status-warning-text")}>题材标签</span>
-          <Chips
-            options={["干货", "复盘"] as const}
-            value={meta.topicTag}
-            onPick={(tag) => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-          />
-
-          <span className="text-[#78716C]">视频形式</span>
-          <Chips options={["出镜", "图文"] as const} value={meta.videoForm} onPick={(form) => updateMeta("videoForm", form)} />
-
-          <span className="text-[#78716C]">作品状态</span>
-          <div className="flex flex-wrap items-center gap-2">
-            <VideoStatusSegmented value={meta.anomalyStatus} onChange={(value) => updateMeta("anomalyStatus", value)} />
-            {isAbnormal && (
-              <Select value={meta.punishType || "限流"} onValueChange={(value) => updateMeta("punishType", value || undefined)}>
-                <SelectTrigger className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#1F1E1D] shadow-input">
-                  <SelectValue>{meta.punishType || "限流"}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="min-w-28 rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float">
-                  <SelectItem value="限流">限流</SelectItem>
-                  <SelectItem value="删稿">删稿</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {isAbnormal && (
+          {videoFieldsEnabled && (
             <>
-              <span />
-              <p className="leading-relaxed text-[#78716C]">限流和删稿照样算今天的作品，截图可以不交，把已有的数据和平台通知如实填上。</p>
-              <Label htmlFor="platform_notice" className="text-[12px] font-normal text-[#78716C]">平台通知</Label>
-              <Input
-                id="platform_notice"
-                value={meta.platformNotice || ""}
-                onChange={(e) => updateMeta("platformNotice", e.target.value)}
-                placeholder="选填，如处罚通知原文"
-                className="h-8 rounded-md border-[#E2E2DF] bg-white text-[12px] shadow-input"
+              <span className={cn("text-[#78716C]", topicTagMissing && "text-status-warning-text")}>题材标签</span>
+              <Chips
+                options={["干货", "复盘"] as const}
+                value={meta.topicTag}
+                onPick={(tag) => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
               />
-              <Label htmlFor="appeal" className="text-[12px] font-normal text-[#78716C]">申诉进展</Label>
-              <Input
-                id="appeal"
-                value={meta.appeal || ""}
-                onChange={(e) => updateMeta("appeal", e.target.value)}
-                placeholder="选填，如申诉处理中"
-                className="h-8 rounded-md border-[#E2E2DF] bg-white text-[12px] shadow-input"
-              />
+
+              <span className="text-[#78716C]">视频形式</span>
+              <Chips options={["出镜", "图文"] as const} value={meta.videoForm} onPick={(form) => updateMeta("videoForm", form)} />
+
+              <span className="text-[#78716C]">作品状态</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <VideoStatusSegmented value={meta.anomalyStatus} onChange={(value) => updateMeta("anomalyStatus", value)} />
+                {isAbnormal && (
+                  <Select value={meta.punishType || "限流"} onValueChange={(value) => updateMeta("punishType", value || undefined)}>
+                    <SelectTrigger className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#1F1E1D] shadow-input">
+                      <SelectValue>{meta.punishType || "限流"}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="min-w-28 rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float">
+                      <SelectItem value="限流">限流</SelectItem>
+                      <SelectItem value="删稿">删稿</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {isAbnormal && (
+                <>
+                  <span />
+                  <p className="leading-relaxed text-[#78716C]">限流和删稿照样算今天的作品，截图可以不交，把已有的数据和平台通知如实填上。</p>
+                  <Label htmlFor="platform_notice" className="text-[12px] font-normal text-[#78716C]">平台通知</Label>
+                  <Input
+                    id="platform_notice"
+                    value={meta.platformNotice || ""}
+                    onChange={(e) => updateMeta("platformNotice", e.target.value)}
+                    placeholder="选填，如处罚通知原文"
+                    className="h-8 rounded-md border-[#E2E2DF] bg-white text-[12px] shadow-input"
+                  />
+                  <Label htmlFor="appeal" className="text-[12px] font-normal text-[#78716C]">申诉进展</Label>
+                  <Input
+                    id="appeal"
+                    value={meta.appeal || ""}
+                    onChange={(e) => updateMeta("appeal", e.target.value)}
+                    placeholder="选填，如申诉处理中"
+                    className="h-8 rounded-md border-[#E2E2DF] bg-white text-[12px] shadow-input"
+                  />
+                </>
+              )}
+
+              <span className="text-[#78716C]">关联选题</span>
+              <div>
+                <TopicSelectDropdown
+                  selectedTopicId={selectedTopicId}
+                  selectedTopicTitle={selectedTopicTitle}
+                  onSelectTopic={handleSelectTopic}
+                />
+              </div>
             </>
           )}
-
-          <span className="text-[#78716C]">关联选题</span>
-          <div>
-            <TopicSelectDropdown
-              selectedTopicId={selectedTopicId}
-              selectedTopicTitle={selectedTopicTitle}
-              onSelectTopic={handleSelectTopic}
-            />
-          </div>
         </div>
       )}
     </div>

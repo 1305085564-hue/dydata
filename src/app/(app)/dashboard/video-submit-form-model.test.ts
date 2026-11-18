@@ -312,7 +312,7 @@ test("isInteractionExceedingPlayCount 正确判定互动量总和超过播放量
     shares: "20",
     favorites: "10",
   });
-  assert.equal(zeroPlay.exceeded, false);
+  assert.equal(zeroPlay.exceeded, true);
 });
 
 test("summarizeSubmissionIssues 计算 firstInvalidFieldKey 优先级符合规范", () => {

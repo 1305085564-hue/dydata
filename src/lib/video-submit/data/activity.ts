@@ -1,5 +1,6 @@
 import {
   getVideoSubmissionEditDetailError,
+  type UnboundDailyReportDetail,
   type VideoSubmissionEditDetail,
 } from "@/app/(app)/dashboard/video-submit-form-state";
 import type {
@@ -44,10 +45,10 @@ export async function fetchVideoSubmissionEditDetail(
   if (!response.ok) {
     throw new Error(payload.error || "加载原视频详情失败");
   }
-  // 日报没有绑定视频：面板的用途是重传视频，没有视频就没有可编辑对象，
-  // 沿用「没有可编辑」文案，交由面板既有的合法缺失分支呈现。
   if (payload.unboundReport !== undefined && payload.unboundReport !== null) {
-    throw new Error("该账号该日期没有可编辑的原视频");
+    const error = getVideoSubmissionEditDetailError(payload.unboundReport, input);
+    if (error) throw new Error(error);
+    return payload.unboundReport as UnboundDailyReportDetail;
   }
   const error = getVideoSubmissionEditDetailError(payload.detail, input);
   if (error) throw new Error(error);

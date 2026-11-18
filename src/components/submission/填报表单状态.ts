@@ -207,6 +207,9 @@ export interface SubmissionIssueMetaInput {
   /** 与 `提交状态机.ts` 的 SubmissionIssueMeta 保持同步（两处类型各存一份） */
   submissionMode?: "create" | "edit" | "abnormal";
   publishedAtConfirmed?: boolean;
+  screenshotsRequired?: boolean;
+  topicTagRequired?: boolean;
+  contentRequired?: boolean;
 }
 
 export function summarizeSubmissionIssues(
@@ -243,14 +246,29 @@ export function isInteractionExceedingPlayCount(fields: {
   shares: string | number | null;
   favorites: string | number | null;
 }): { exceeded: boolean; interactions: number; playCount: number } {
+  const hasPlayCount = fields.play_count != null && String(fields.play_count).trim() !== "";
   const playCount = Number(fields.play_count || 0);
   const likes = Number(fields.likes || 0);
   const comments = Number(fields.comments || 0);
   const shares = Number(fields.shares || 0);
   const favorites = Number(fields.favorites || 0);
   const interactions = likes + comments + shares + favorites;
-  const exceeded = playCount > 0 && interactions > playCount;
+  const exceeded = hasPlayCount && interactions > playCount;
   return { exceeded, interactions, playCount };
+}
+
+export const INTERACTION_ANOMALY_REVIEW_REASON = "点赞、评论、转发、收藏加起来比播放量还多";
+
+export function getInteractionAnomalyReviewReason(fields: {
+  play_count: string | number | null;
+  likes: string | number | null;
+  comments: string | number | null;
+  shares: string | number | null;
+  favorites: string | number | null;
+}) {
+  return isInteractionExceedingPlayCount(fields).exceeded
+    ? INTERACTION_ANOMALY_REVIEW_REASON
+    : null;
 }
 
 function formatDateKey(date: Date) {

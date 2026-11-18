@@ -21,16 +21,15 @@ import { useMonthFulfillment } from "./use-month-fulfillment";
 import { useReviewNoticeDismissal } from "./use-review-notice-dismissal";
 import { withdrawMyPendingExemptions } from "@/lib/withdraw-requests-client";
 import {
-  resolvePanelDateSelection,
   resolvePanelRequestedMode,
   resolvePanelSubmittedState,
 } from "@/lib/video-submit/domain/panel-state";
 import type {
   AsyncActivityData,
   EditDetailLoadState,
-  MonthReport,
   VideoSubmitPanelV2Props,
 } from "@/lib/video-submit/domain/types";
+import { useVideoSubmitPanelNavigation } from "./video-submit-panel-navigation";
 import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-panel-body";
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
@@ -38,13 +37,11 @@ import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import { clearBrowserAppealSuccessSession, hasBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
+import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
 
-/**
- * VideoSubmitPanel V2 - Claude 设计系统改造版
- * 保留所有 Antigravity 业务逻辑，用 Claude 设计系统重写 UI
- */
+/** 工作台提交面板。 */
 export function VideoSubmitPanelV2({
   accounts,
   userId,
@@ -57,6 +54,8 @@ export function VideoSubmitPanelV2({
   accountDisplayNameMap,
   hasPendingExemption = false,
   pendingExemptionDates = [],
+  pendingExemptionItems = [],
+  lastSubmissionPreferencesByAccount = {},
   absentDates = [],
   absentReasons = {},
   monthFulfillmentBasis,
@@ -64,6 +63,7 @@ export function VideoSubmitPanelV2({
   userExemptionProfile,
   userExemptionGrants,
   selectedAccountId: controlledSelectedAccountId,
+  onSelectedAccountChange,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
   initialTopicId = null,
@@ -107,7 +107,6 @@ export function VideoSubmitPanelV2({
   const [internalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [viewingReport, setViewingReport] = useState<MonthReport | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [submittedEditTarget, setSubmittedEditTarget] = useState<{ reportId: string | null; reportDate: string } | null>(null);
   const initialSelectedAccountId = controlledSelectedAccountId ?? accounts[0]?.id ?? "";
@@ -125,6 +124,8 @@ export function VideoSubmitPanelV2({
   const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
   const [localHasPendingExemption, setLocalHasPendingExemption] = useState(hasPendingExemption);
   const [localPendingExemptionDates, setLocalPendingExemptionDates] = useState(pendingExemptionDates);
+  const [localPendingExemptionItems, setLocalPendingExemptionItems] = useState(pendingExemptionItems);
+  const [submittedPreferenceOverrides, setSubmittedPreferenceOverrides] = useState<Record<string, LastSubmittedReportPreferences>>({});
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(false);
   const [formProgress, setFormProgress] = useState<FormProgress | null>(null);
 
@@ -152,7 +153,8 @@ export function VideoSubmitPanelV2({
   useEffect(() => {
     setLocalHasPendingExemption(hasPendingExemption);
     setLocalPendingExemptionDates(pendingExemptionDates);
-  }, [hasPendingExemption, pendingExemptionDates]);
+    setLocalPendingExemptionItems(pendingExemptionItems);
+  }, [hasPendingExemption, pendingExemptionDates, pendingExemptionItems]);
   const setActiveBizDate = useCallback(
     (date: string) => {
       setInternalActiveBizDate(date);
@@ -398,12 +400,20 @@ export function VideoSubmitPanelV2({
     (!isEditing || editDetailLoadState.status === "ready") &&
     (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive || isEditing);
 
-  const handleSubmitted = useCallback((video: Video | null, summaryOverride?: TodaySubmissionReportLike | null) => {
+  const handleSubmitted = useCallback((
+    video: Video | null,
+    summaryOverride?: TodaySubmissionReportLike | null,
+    submissionPreferences?: LastSubmittedReportPreferences & { accountId: string },
+  ) => {
       const nextState = resolvePanelSubmittedState();
       setSubmittedViewActive(nextState.submittedViewActive);
       setRequestedMode(nextState.requestedMode);
       void loadActivity();
       setSubmittedEditTarget(null);
+      if (submissionPreferences) {
+        const { accountId, ...preferences } = submissionPreferences;
+        setSubmittedPreferenceOverrides((current) => ({ ...current, [accountId]: preferences }));
+      }
 
       if (summaryOverride) {
         const key = summaryOverride.id ?? `${summaryOverride.account_id}-${summaryOverride.report_date}`;
@@ -420,20 +430,19 @@ export function VideoSubmitPanelV2({
     [loadActivity],
   );
 
-  const selectBizDate = useCallback(
-    (date: string) => {
-      setActiveBizDate(date);
-      setSelectedReportId(null);
-      setSubmittedEditTarget(null);
-      const nextState = resolvePanelDateSelection(date, today, Boolean(activityData), Boolean(activityError));
-      setRequestedMode(nextState.requestedMode);
-      setSubmittedViewActive(nextState.submittedViewActive);
-      if (nextState.shouldLoadActivity) {
-        void loadActivity();
-      }
-    },
-    [activityData, activityError, loadActivity, setActiveBizDate, today],
-  );
+  const { selectBizDate, requestHistoryEdit } = useVideoSubmitPanelNavigation({
+    activityAvailable: Boolean(activityData),
+    activityFailed: Boolean(activityError),
+    loadActivity,
+    today,
+    setActiveBizDate,
+    setSelectedReportId,
+    setSubmittedEditTarget,
+    setSubmittedViewActive,
+    setRequestedMode,
+    setIsHistoryOpen,
+    onSelectedAccountChange,
+  });
 
   const dismissPendingExemption = useCallback(() => {
     setDismissedPendingExemption(true);
@@ -448,6 +457,7 @@ export function VideoSubmitPanelV2({
     if (!result.ok) return void toast.error(result.error);
     setLocalHasPendingExemption(false);
     setLocalPendingExemptionDates([]);
+    setLocalPendingExemptionItems([]);
     toast.success(result.message);
     router.refresh();
   }, [router]);
@@ -484,7 +494,7 @@ export function VideoSubmitPanelV2({
 
   return (
     <>
-      <div className="space-y-5 sm:space-y-7">
+      <div className="space-y-5">
         <VideoSubmitPanelToolbar
           headerStatus={headerStatus}
           monthFulfillment={monthFulfillment}
@@ -507,6 +517,8 @@ export function VideoSubmitPanelV2({
           formAnchorRef={formAnchorRef}
           shouldShowForm={shouldShowForm}
           isExemptionPending={isExemptionPending}
+          pendingExemptionItems={localPendingExemptionItems}
+          lastSubmissionPreferences={submittedPreferenceOverrides[selectedAccountId] ?? lastSubmissionPreferencesByAccount[selectedAccountId] ?? null}
           dismissedPendingExemption={dismissedPendingExemption}
           userExemptionReviewNotices={userExemptionReviewNotices}
           dismissedReviewNotice={dismissedReviewNotice}
@@ -566,8 +578,6 @@ export function VideoSubmitPanelV2({
       <VideoSubmitPanelHistoryDialog
         isHistoryOpen={isHistoryOpen}
         setIsHistoryOpen={setIsHistoryOpen}
-        viewingReport={viewingReport}
-        setViewingReport={setViewingReport}
         accountDisplayNameMap={accountDisplayNameMap}
         loadActivity={loadActivity}
         activityError={activityError}
@@ -576,6 +586,7 @@ export function VideoSubmitPanelV2({
         hasMore={activityData?.hasMore === true}
         onLoadMore={() => void loadActivity({ append: true })}
         historyReports={historyReports}
+        onRequestEdit={requestHistoryEdit}
       />
 
       <VideoSubmitPanelExemptionDialog
@@ -587,6 +598,7 @@ export function VideoSubmitPanelV2({
         localPendingExemptionDates={localPendingExemptionDates}
         setLocalHasPendingExemption={setLocalHasPendingExemption}
         setLocalPendingExemptionDates={setLocalPendingExemptionDates}
+        setLocalPendingExemptionItems={setLocalPendingExemptionItems}
         loadActivity={loadActivity}
       />
 

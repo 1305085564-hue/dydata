@@ -3,10 +3,6 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const pageSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/page.tsx"),
-  "utf8",
-);
 const source = [
   "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
   "src/components/video-submit/video-submit-panel-toolbar.tsx",
@@ -49,9 +45,9 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
     new RegExp(`${serifClass} text-\\[20px\\] sm:text-\\[28px\\] leading-\\[1\\.20\\]`),
   );
   assert.doesNotMatch(source, /停笔调养/);
-  assert.match(source, /历史手稿/);
-  assert.match(source, /历史手稿静待立卷/);
-  assert.match(source, /每次立卷或补交之后，你的纪事手稿都会收在这里。/);
+  assert.match(source, /历史记录/);
+  assert.match(source, /还没有交过作品/);
+  assert.match(source, /每次交完或补交，都会记在这里。/);
   assert.match(exemptionSource, /申请请假或免交/);
   assert.doesNotMatch(exemptionSource, /停笔调养/);
   assert.doesNotMatch(source, /今日提交工作台/);
@@ -64,7 +60,7 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
   assert.doesNotMatch(exemptionSource, new RegExp(serifClass));
 });
 
-test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格", () => {
+test("工作台表单遵守字体与内容结构约定", () => {
   const formSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
     "utf8",
@@ -106,8 +102,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   // 3. 消除表单内重复粗标，仅保留微型段落标头 (H5 墨度)
   assert.doesNotMatch(
     formSource,
-    /今日创作立卷/,
-    "表单内严禁出现重复的大粗标「今日创作立卷」",
+    /今日创作已立卷/,
+    "表单内不重复展示提交完成寄语",
   );
   // 4. 同一状态只在一处说：表单不再自带「创作表达录入 / 修改今日作品」章节标题，状态句只在页头
   assert.doesNotMatch(formSource, /<SectionHeading as="h2">/, "表单内不得再自带状态标题");

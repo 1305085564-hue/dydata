@@ -170,6 +170,15 @@ test("上传两张必传截图后即可提交", () => {
   });
 });
 
+test("互动异常属于请核对提示，不阻止已补全的日报提交", () => {
+  const state = createReadyToSubmitState();
+  state.fields.play_count = createField({ key: "play_count", value: "10" });
+  const interactionTotal = ["likes", "comments", "shares", "favorites"]
+    .reduce((total, key) => total + Number(state.fields[key as keyof typeof state.fields].value || 0), 0);
+  assert.ok(interactionTotal > Number(state.fields.play_count.value));
+  assert.deepEqual(canSubmit(state, READY_META), { ok: true, reason: null });
+});
+
 test("问题汇总保留截图、必填指标和话题标签缺项", () => {
   const state = createInitialSubmissionState({
     slots: {

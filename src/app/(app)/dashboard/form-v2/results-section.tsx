@@ -32,6 +32,7 @@ export interface FormV2ResultsSectionProps {
   handleFieldBlur: (key: EditableMetricKey) => void;
   updateMeta: <Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) => void;
   onInspectScreenshot?: () => void;
+  disabledMetricKeys?: EditableMetricKey[];
 }
 
 /** 识别结果：数字、标题、发布时间都以读出来的字呈现；发布时间识别失败时允许手填并进入补交审批。 */
@@ -55,6 +56,7 @@ export function FormV2ResultsSection({
   handleFieldBlur,
   updateMeta,
   onInspectScreenshot,
+  disabledMetricKeys = [],
 }: FormV2ResultsSectionProps) {
   const titleRequired = meta.anomalyStatus !== "abnormal";
   const titleMissing = titleRequired && !meta.videoTitle.trim();
@@ -81,6 +83,7 @@ export function FormV2ResultsSection({
           onBlurField={handleFieldBlur}
           anomalyStatus={meta.anomalyStatus}
           onInspectScreenshot={onInspectScreenshot}
+          disabledKeys={disabledMetricKeys}
           onCompleteMetrics={() => document.getElementById("video_title")?.focus()}
         />
       </div>

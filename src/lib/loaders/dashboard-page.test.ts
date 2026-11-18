@@ -132,7 +132,7 @@ function createSupabaseMock(
       return { data: [], error: null };
     }
 
-    if (call.table === "exemption_request" && call.columns === "id, start_date, end_date") {
+    if (call.table === "exemption_request" && call.columns.startsWith("id, start_date, end_date")) {
       return { data: options.pendingRequests ?? [], error: null };
     }
 
@@ -353,6 +353,7 @@ test("dashboard 待审批日期按逐日明细读取，部分批准日期不再�
 
   assert.equal(result.hasPendingExemption, true);
   assert.deepEqual(result.pendingExemptionDates, ["2026-05-02"]);
+  assert.deepEqual(result.pendingExemptionItems, [{ date: "2026-05-02", category: "waive" }]);
 });
 
 test("默认账号创建成功后，本次请求重新查询并返回新账号", async () => {

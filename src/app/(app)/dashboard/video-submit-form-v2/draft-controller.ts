@@ -10,14 +10,19 @@ import type {
   VideoSubmitDraftData,
   WorkflowAction,
 } from "@/lib/video-submit-workflow/types";
-import { setOperatorToSelf as resolveSelfOperatorUserId } from "../video-submit-form-state";
 import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
+import {
+  resolveCreateSubmissionPreferences,
+  type LastSubmittedReportPreferences,
+} from "@/lib/video-submit-preferences";
 
 export type DraftControllerOptions = {
   userId: string;
   accountId: string | null;
   today: string;
   mode: SubmitPanelMode;
+  lastReportPreferences?: LastSubmittedReportPreferences | null;
+  visibleMemberIds?: ReadonlySet<string>;
   videoId: string | null;
   workflow: SubmissionWorkflowState;
   isSubmitted: boolean;
@@ -53,6 +58,8 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     accountId,
     today,
     mode,
+    lastReportPreferences,
+    visibleMemberIds,
     videoId,
     workflow,
     isSubmitted,
@@ -117,12 +124,12 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       type: "draft/restore",
       meta: {
         ...draft.meta,
-        scriptAuthorUserId:
-          draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-        videoEditorUserId:
-          draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-        operatorUserId:
-          draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+        ...resolveCreateSubmissionPreferences({
+          userId,
+          lastReport: lastReportPreferences,
+          draft: draft.meta,
+          visibleMemberIds,
+        }),
         roleOverrides: draft.meta.roleOverrides ?? [],
       },
       fields: draft.fields,
@@ -147,7 +154,7 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       },
     });
     setDismissedDraftKey(draftKey);
-  }, [dispatchWorkflow, draftKey, restoreDraft, userId]);
+  }, [dispatchWorkflow, draftKey, lastReportPreferences, restoreDraft, userId, visibleMemberIds]);
 
   const lastDiscardedDraftRef = useRef<VideoSubmitDraftData | null>(null);
 
@@ -168,12 +175,12 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       type: "draft/restore",
       meta: {
         ...draft.meta,
-        scriptAuthorUserId:
-          draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-        videoEditorUserId:
-          draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-        operatorUserId:
-          draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+        ...resolveCreateSubmissionPreferences({
+          userId,
+          lastReport: lastReportPreferences,
+          draft: draft.meta,
+          visibleMemberIds,
+        }),
         roleOverrides: draft.meta.roleOverrides ?? [],
       },
       fields: draft.fields,
@@ -207,7 +214,7 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       // ignore
     }
     setDismissedDraftKey(null);
-  }, [dispatchWorkflow, draftKey, userId]);
+  }, [dispatchWorkflow, draftKey, lastReportPreferences, userId, visibleMemberIds]);
 
   return {
     hasDraft,
