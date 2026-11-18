@@ -21,6 +21,7 @@ export type VideoSubmitPanelBodyProps = {
   dismissedReviewNotice: boolean;
   handleDismissReviewNotice: () => void;
   dismissPendingExemption: () => void;
+  onWithdrawPendingExemption: () => Promise<unknown>;
   isPrimarySummaryMode: boolean;
   activeBizDate: string;
   today: string;

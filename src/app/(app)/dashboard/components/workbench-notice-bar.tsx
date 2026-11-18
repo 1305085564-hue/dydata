@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
+import { WithdrawPendingButton } from "@/components/video-submit/withdraw-pending-button";
 
 export type WorkbenchNoticeItem = {
   id: string;
@@ -303,6 +304,27 @@ export function buildExemptionReviewNoticeItem(
     statusTone: isApproved ? "green" : "red",
     title: `${dateText} ${categoryText}${isApproved ? "已通过" : "未通过"}`,
     description: notice.reason ? `· ${notice.reason}` : undefined,
+    onDismiss,
+  };
+}
+
+/**
+ * 待审批请假/免交提示。面板与表单两处共用同一条，传入 onWithdraw 时带「撤回申请」。
+ */
+export function buildPendingExemptionNoticeItem({
+  onDismiss,
+  onWithdraw,
+}: {
+  onDismiss?: () => void;
+  onWithdraw?: () => Promise<unknown> | void;
+}): WorkbenchNoticeItem {
+  return {
+    id: "pending-exemption",
+    type: "exemption_pending",
+    statusTone: "amber",
+    title: "特殊豁免申请审批中",
+    description: "· 正在等待管理员审批",
+    actions: onWithdraw ? <WithdrawPendingButton onWithdraw={onWithdraw} /> : undefined,
     onDismiss,
   };
 }

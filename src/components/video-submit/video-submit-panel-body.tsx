@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardActivityError } from "./dashboard-activity-error";
 import { TodaySubmittedCard } from "./today-submitted-card";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
-import { WorkbenchNoticeBar, buildExemptionReviewNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
+import { WorkbenchNoticeBar, buildExemptionReviewNoticeItem, buildPendingExemptionNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
 import { cn } from "@/lib/utils";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
@@ -22,6 +22,7 @@ export function VideoSubmitPanelBody({
   dismissedReviewNotice,
   handleDismissReviewNotice,
   dismissPendingExemption,
+  onWithdrawPendingExemption,
   isPrimarySummaryMode,
   activeBizDate,
   today,
@@ -78,16 +79,7 @@ export function VideoSubmitPanelBody({
                         ]
                       : []),
                     ...(isExemptionPending && !dismissedPendingExemption
-                      ? [
-                          {
-                            id: "pending-exemption",
-                            type: "exemption_pending" as const,
-                            statusTone: "amber" as const,
-                            title: "特殊豁免申请审批中",
-                            description: "· 正在等待管理员审批",
-                            onDismiss: dismissPendingExemption,
-                          },
-                        ]
+                      ? [buildPendingExemptionNoticeItem({ onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
                       : []),
                   ]}
                 />
@@ -268,6 +260,7 @@ export function VideoSubmitPanelBody({
                 userExemptionReviewNotice={userExemptionReviewNotice}
                 isExemptionPending={isExemptionPending && !dismissedPendingExemption}
                 onDismissPendingExemption={dismissPendingExemption}
+                onWithdrawPendingExemption={onWithdrawPendingExemption}
                 onSubmitted={handleSubmitted}
                 onViewHistory={onViewHistory}
                 onViewVideo={onViewVideo}

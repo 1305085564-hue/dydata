@@ -26,6 +26,7 @@ import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropd
 import {
   WorkbenchNoticeCapsule,
   buildExemptionReviewNoticeItem,
+  buildPendingExemptionNoticeItem,
   type WorkbenchNoticeItem,
 } from "./components/workbench-notice-bar";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
@@ -102,6 +103,7 @@ import { createSubmitController } from "./video-submit-form-v2/submit-controller
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
+import { useAppealActions } from "./form-v2/use-appeal-actions";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import {
   getBrowserAppealSuccessPublishedAt,
@@ -131,6 +133,7 @@ interface VideoSubmitFormProps {
   userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
   isExemptionPending?: boolean;
   onDismissPendingExemption?: () => void;
+  onWithdrawPendingExemption?: () => Promise<unknown>;
   onSubmitted: (
     video: Video | null,
     summaryOverride?: TodaySubmissionReportLike | null,
@@ -163,6 +166,7 @@ export function VideoSubmitFormV2({
   userExemptionReviewNotice,
   isExemptionPending = false,
   onDismissPendingExemption,
+  onWithdrawPendingExemption,
   onSubmitted,
   onCancel,
   onCreateAnother,
@@ -648,7 +652,6 @@ export function VideoSubmitFormV2({
     );
   }, [appealStatus, deadlinePrecheck.decision, deadlinePrecheck.reason, setAppealReason]);
 
-  const [isAppealResuming, setIsAppealResuming] = useState(false);
   const checkAppealStatus = useCallback(async () => {
     if (!account || !meta.bizDate || appealStatus !== "pending") return;
     try {
@@ -766,14 +769,7 @@ export function VideoSubmitFormV2({
 
     // 3. 待审批中提示
     if (isExemptionPending) {
-      items.push({
-        id: "pending-exemption",
-        type: "exemption_pending",
-        statusTone: "amber",
-        title: "特殊豁免申请审批中",
-        description: "· 正在等待管理员审批",
-        onDismiss: onDismissPendingExemption,
-      });
+      items.push(buildPendingExemptionNoticeItem({ onDismiss: onDismissPendingExemption, onWithdraw: onWithdrawPendingExemption }));
     }
 
     // 4. 选题带入上下文提示
@@ -801,6 +797,7 @@ export function VideoSubmitFormV2({
     selectedTopicTitle,
     isExemptionPending,
     onDismissPendingExemption,
+    onWithdrawPendingExemption,
     showDraftBanner,
     userExemptionReviewNotice,
   ]);
@@ -1107,28 +1104,10 @@ export function VideoSubmitFormV2({
     setIsSubmitting, setAppealRequired, setAppealStatus, setAppealId, setAppealResultReason, setAppealReason, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, pauseDraftSaving: pauseSaving, scrollToIssueAnchor,
   });
 
-  const retryAppealResume = useCallback(async () => {
-    if (!account || !appealId || isAppealResuming) return;
-    setIsAppealResuming(true);
-    try {
-      const result = await resumeAppeal(appealId);
-      if (!result.ok) {
-        setAppealResultReason(result.error ?? "自动提交未完成，请稍后重试");
-        feedbackToast.error(result.error ?? "自动提交未完成，请稍后重试");
-        return;
-      }
-      pauseSaving();
-      clearDraft();
-      setAppealStatus("approved");
-      setAppealResultReason(null);
-      setIsSubmitted(true);
-      markBrowserAppealSuccessSession(account.id, meta.bizDate, meta.videoTitle, meta.publishedAt);
-      onSubmitted(null);
-      feedbackToast.success("补交数据已自动提交");
-    } finally {
-      setIsAppealResuming(false);
-    }
-  }, [account, appealId, clearDraft, isAppealResuming, meta.bizDate, onSubmitted, pauseSaving, resumeAppeal, setAppealResultReason, setAppealStatus, setIsSubmitted]);
+  const { isAppealResuming, retryAppealResume, withdrawAppeal } = useAppealActions({
+    accountId: account?.id ?? null, appealId, bizDate: meta.bizDate, videoTitle: meta.videoTitle, publishedAt: meta.publishedAt,
+    resumeAppeal, pauseSaving, clearDraft, onSubmitted, setAppealStatus, setAppealId, setAppealResultReason, setIsSubmitted,
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1495,6 +1474,7 @@ export function VideoSubmitFormV2({
                 appealPrecheckRequired={appealPrecheckRequired}
                 requestLateSubmission={requestLateSubmission}
                 retryAppealResume={retryAppealResume}
+                onWithdrawAppeal={appealId ? withdrawAppeal : undefined}
                 isAppealResuming={isAppealResuming}
                 isAppealSubmitting={isAppealSubmitting}
                 isBackfillMode={isBackfillMode}
