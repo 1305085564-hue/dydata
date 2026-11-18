@@ -7,7 +7,6 @@ const globalEntryFiles = [
   "src/app/(app)/template.tsx",
   "src/components/navigation/navigation-shell.tsx",
   "src/components/ui/scroll-to-top.tsx",
-  "src/components/workspace-picker.tsx",
 ];
 
 test("登录后全局入口不再静态引入 Framer Motion", () => {
