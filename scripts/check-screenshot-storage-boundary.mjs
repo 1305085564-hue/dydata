@@ -12,7 +12,6 @@ const productionAllowlist = new Set([
 const scriptAllowlist = new Set([
   "scripts/audit/verify-screenshot-coverage.mjs",
   "scripts/audit/screenshot-storage-s0.mjs",
-  "scripts/screenshot-migration.mjs",
   "scripts/migrate-screenshots-to-cos.mjs",
 ]);
 const migrationAllowlist = new Set([
