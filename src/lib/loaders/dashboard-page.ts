@@ -20,6 +20,7 @@ import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provision
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { formatShanghaiDateOnly, getSafeAccountDisplayName, shiftDateOnly } from "./shared";
+import { resolveDashboardFulfillmentMarks, type FulfillmentMarkRow, type MonthFulfillmentBasis } from "./dashboard-fulfillment-marks";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 
 type DashboardSupabase = SupabaseClient;
@@ -54,6 +55,7 @@ type ProfileWithExemptionRow = {
   exempt_end_date: string | null;
   exempt_reason: string | null;
   exemption_category: "waive" | "leave" | null;
+  created_at?: string | null;
 };
 
 type ProfileWithoutCategoryRow = Omit<ProfileWithExemptionRow, "exemption_category">;
@@ -87,9 +89,9 @@ export type UserExemptionReviewNotice = {
 };
 
 const DASHBOARD_PROFILE_SELECT =
-  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, created_at";
 const DASHBOARD_PROFILE_SELECT_FALLBACK =
-  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, created_at";
 
 let profileExemptionCategoryAvailable: boolean | null = null;
 let exemptionGrantTableAvailable: boolean | null = null;
@@ -404,6 +406,7 @@ export interface DashboardPageData {
   pendingExemptionDates: string[];
   absentDates: string[];
   absentReasons: Record<string, string>;
+  monthFulfillmentBasis: MonthFulfillmentBasis;
   userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -519,7 +522,6 @@ export async function loadDashboardPageData({
           .from("fulfillment_records")
           .select("record_date, status, reason")
           .eq("user_id", userId)
-          .eq("status", "absent")
           .gte("record_date", reportLookupStart)
           .lte("record_date", today)
       : Promise.resolve({ data: [], error: null }),
@@ -545,10 +547,8 @@ export async function loadDashboardPageData({
     ...getDashboardSubmittedDates(monthReports),
     ...recentSubmittedDates,
   ])).sort();
-  const absentRecords = (absentRecordsResult.data ?? []) as Array<{ record_date: string; reason: string | null }>;
-  const absentDates = absentRecords.map((row) => row.record_date).sort();
-  const absentReasons = Object.fromEntries(
-    absentRecords.map((row) => [row.record_date, row.reason?.trim() || "管理员认定缺勤"]),
+  const { absentDates, absentReasons, monthFulfillmentBasis } = resolveDashboardFulfillmentMarks(
+    (absentRecordsResult.data ?? []) as FulfillmentMarkRow[], profile?.created_at,
   );
 
   return {
@@ -567,6 +567,7 @@ export async function loadDashboardPageData({
     pendingExemptionDates,
     absentDates,
     absentReasons,
+    monthFulfillmentBasis,
     userExemptionReviewNotice: dropExpiredExemptionNotice(userExemptionReviewNotice, today),
     userExemptionProfile,
     userExemptionGrants,

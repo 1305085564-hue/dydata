@@ -36,6 +36,7 @@ export async function DashboardDataContainer() {
         pendingExemptionDates={data.pendingExemptionDates}
         absentDates={data.absentDates}
         absentReasons={data.absentReasons}
+        monthFulfillmentBasis={data.monthFulfillmentBasis}
         userExemptionReviewNotice={data.userExemptionReviewNotice}
         userExemptionProfile={data.userExemptionProfile}
         userExemptionGrants={data.userExemptionGrants}

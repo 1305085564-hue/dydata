@@ -16,7 +16,8 @@ import {
   type TodaySubmissionReportLike,
 } from "@/lib/dashboard-submission-state";
 import { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
-import { resolvePanelHeaderStatus, summarizeMonthFulfillment } from "@/lib/dashboard-panel-header";
+import { resolvePanelHeaderStatus } from "@/lib/dashboard-panel-header";
+import { useMonthFulfillment } from "./use-month-fulfillment";
 import {
   resolvePanelDateSelection,
   resolvePanelRequestedMode,
@@ -56,6 +57,7 @@ export function VideoSubmitPanelV2({
   pendingExemptionDates = [],
   absentDates = [],
   absentReasons = {},
+  monthFulfillmentBasis,
   userExemptionReviewNotice = null,
   userExemptionProfile,
   userExemptionGrants,
@@ -334,29 +336,15 @@ export function VideoSubmitPanelV2({
     [activeExemptionState.category, activeExemptionState.isExempt, activeExemptionState.reason],
   );
 
-  const monthFulfillment = useMemo(
-    () =>
-      summarizeMonthFulfillment({
-        today,
-        submittedDates: submittedDatesIncludingActivity,
-        exemptDates: [
-          ...allExemptionDateBuckets.waiveDates,
-          ...allExemptionDateBuckets.leaveDates,
-          ...localPendingExemptionDates,
-        ],
-        exemptionProfile: userExemptionProfile,
-        exemptionGrants: userExemptionGrants,
-      }),
-    [
-      allExemptionDateBuckets.leaveDates,
-      allExemptionDateBuckets.waiveDates,
-      localPendingExemptionDates,
-      userExemptionGrants,
-      userExemptionProfile,
-      submittedDatesIncludingActivity,
-      today,
-    ],
-  );
+  const monthFulfillment = useMonthFulfillment({
+    today,
+    submittedDates: submittedDatesIncludingActivity,
+    exemptionDateBuckets: allExemptionDateBuckets,
+    pendingExemptionDates: localPendingExemptionDates,
+    basis: monthFulfillmentBasis,
+    profile: userExemptionProfile,
+    grants: userExemptionGrants,
+  });
 
   useEffect(() => {
     if (primaryMode !== "editToday" || !selectedAccount) {

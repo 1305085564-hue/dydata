@@ -1,6 +1,5 @@
 import type { SubmissionDayStatus, SubmitPanelMode } from "@/lib/dashboard-submission-state";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
-import { isChinaWorkingDay } from "@/lib/工作日";
 import { getExemptionStateForDate, type ExemptionGrantLike, type ExemptionProfileLike } from "@/lib/豁免";
 
 /**
@@ -66,10 +65,6 @@ export function resolvePanelHeaderStatus({
   }
 }
 
-function isWorkingDateKey(dateKey: string) {
-  return isChinaWorkingDay(new Date(`${dateKey}T12:00:00+08:00`));
-}
-
 const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 /** 页头副行的日期：「11 月 13 日 周五」。只做日历换算，不涉及时区。 */
@@ -94,26 +89,36 @@ function enumerateMonthDatesUntil(monthPrefix: string, until: string) {
 
 /**
  * 本月履约摘要：本月已交 x 天，漏 y 天。
- * 已交：本月到今天为止有提交记录的日子（周末交了也算）。
- * 漏交：今天以前的中国工作日（`isChinaWorkingDay`，含调休），没有提交，且不是已批准免交/请假或待审批。
+ * 口径对齐管理端发布管理的"未确认"（`get_fulfillment_range`，口径见《数据口径与计算规则》）：
+ * 公司要求每天都发作品，周末和节假日不豁免，所以按自然日算，不看工作日历；
+ * 从入职日（joinedDate）起算；今天不算漏（作品第二天才上传）；
+ * 有提交、已批准免交/请假、待审批、管理员人工标记过（请假/豁免/确认已发）的日子不算漏；
  * 管理员认定缺勤仍算漏；长期免交由 `getExemptionStateForDate` 逐日判定。
  */
 export function summarizeMonthFulfillment({
   today,
   submittedDates,
   exemptDates,
+  manualMarkedDates = [],
+  joinedDate = null,
   exemptionProfile,
   exemptionGrants = [],
 }: {
   today: string;
   submittedDates: readonly string[];
   exemptDates: readonly string[];
+  /** 管理员在发布管理人工标记过的日子（请假/豁免/确认已发），不含缺勤。 */
+  manualMarkedDates?: readonly string[];
+  /** 入职日（上海日期）；缺失时不设下限。 */
+  joinedDate?: string | null;
   exemptionProfile?: ExemptionProfileLike | null;
   exemptionGrants?: ExemptionGrantLike[];
 }): { submittedCount: number; missedCount: number } {
   const monthPrefix = today.slice(0, 7);
   const submitted = new Set(submittedDates.filter((date) => date.startsWith(monthPrefix)));
-  const excluded = new Set(exemptDates.filter((date) => date.startsWith(monthPrefix)));
+  const excluded = new Set(
+    [...exemptDates, ...manualMarkedDates].filter((date) => date.startsWith(monthPrefix)),
+  );
 
   let submittedCount = 0;
   let missedCount = 0;
@@ -122,10 +127,11 @@ export function summarizeMonthFulfillment({
       submittedCount += 1;
       continue;
     }
+    if (date >= today || (joinedDate && date < joinedDate) || excluded.has(date)) continue;
     const exemptionState = exemptionProfile
       ? getExemptionStateForDate(exemptionProfile, date, exemptionGrants)
       : null;
-    if (date < today && !excluded.has(date) && !exemptionState?.isExempt && isWorkingDateKey(date)) missedCount += 1;
+    if (!exemptionState?.isExempt) missedCount += 1;
   }
   return { submittedCount, missedCount };
 }
