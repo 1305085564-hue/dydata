@@ -38,10 +38,10 @@ export function PermissionGuard({
       if (payload.warning) {
         feedbackToast.error(payload.warning);
       } else {
-        feedbackToast.success("已通知团队管理方，等待处理中。");
+        feedbackToast.success("已通知公司负责人，等待处理中。");
       }
     } catch {
-      feedbackToast.error("申请发送失败，请联系团队所有者或组长。");
+      feedbackToast.error("申请发送失败，请直接联系公司负责人。");
     } finally {
       setIsApplying(false);
     }

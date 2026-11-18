@@ -7,7 +7,7 @@ import type { MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
-import type { Permissions, UserRole } from "@/types";
+import type { UserRole } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +29,10 @@ function toTrimmedString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-type AdminCandidateRow = {
+type OwnerCandidateRow = {
   id: string;
   role: UserRole;
   company_role?: "member" | "admin" | "company_owner" | null;
-  permissions: Permissions | null;
-  team_id: string | null;
   membership_status?: string | null;
 };
 
@@ -81,15 +79,16 @@ export async function buildPermissionRequestApplyResponse(
   }
   const requesterName = toTrimmedString(requesterProfile.name) || "未知用户";
 
+  // 权限申请只发公司负责人：角色调整由负责人在成员管理里决定，组长没有这个权限，发给他们只会变成无法处理的待办
   let { data: adminProfiles, error: adminError } = await admin
     .from("profiles")
-    .select("id, role, company_role, permissions, team_id, membership_status")
+    .select("id, role, company_role, membership_status")
     .in("role", ["owner", "admin"]);
 
   if (adminError?.message?.includes("company_role")) {
     const legacy = await admin
       .from("profiles")
-      .select("id, role, permissions, team_id, membership_status")
+      .select("id, role, membership_status")
       .in("role", ["owner", "admin"]);
     adminProfiles = legacy.data as typeof adminProfiles;
     adminError = legacy.error;
@@ -99,15 +98,12 @@ export async function buildPermissionRequestApplyResponse(
     return NextResponse.json({ error: "查询管理员失败，请稍后重试" }, { status: 500 });
   }
 
-  const recipients = ((adminProfiles ?? []) as AdminCandidateRow[])
+  const recipients = ((adminProfiles ?? []) as OwnerCandidateRow[])
     .filter((profile) => {
       if (profile.id === user.id) return false;
       if (!isActiveMembership(profile)) return false;
       const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
-      if (roleResolution.conflict || !roleResolution.companyRole) return false;
-      if (profile.team_id !== requesterProfile.team_id) return false;
-      return roleResolution.companyRole === "company_owner"
-        || (roleResolution.companyRole === "admin" && profile.permissions?.manage_members === true);
+      return !roleResolution.conflict && roleResolution.companyRole === "company_owner";
     })
     .map((profile) => profile.id);
 
@@ -115,7 +111,7 @@ export async function buildPermissionRequestApplyResponse(
     return NextResponse.json({
       ok: true,
       notified: 0,
-      warning: "当前没有可通知的管理员，请直接联系系统负责人",
+      warning: "当前没有可通知的公司负责人，请直接联系系统负责人",
     });
   }
 
@@ -127,7 +123,7 @@ export async function buildPermissionRequestApplyResponse(
     severity: "warning",
     title: `${requesterName} 申请「${moduleTitle}」权限`,
     body: currentPath ? `申请页面：${currentPath}` : null,
-    actionLabel: "前往成员管理处理",
+    actionLabel: "前往成员管理调整角色",
     actionUrl: `/admin/modules?member=${user.id}`,
     sourceType: "permission_request",
     sourceId,
