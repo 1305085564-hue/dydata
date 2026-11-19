@@ -32,6 +32,8 @@ import { AI_CONFIG_MESSAGES, formatLatency } from "@/lib/ai-config/presentation"
 import type { BusinessAssuranceItem } from "@/lib/ai-config/availability";
 import { cn } from "@/lib/utils";
 import { repairTargetModelId } from "../ai-config-view";
+import { formatRate, rateTone } from "../duty-view";
+import type { FeatureCallStats } from "@/lib/ai-config/call-stats-contract";
 
 const DEFAULT_ROW_HINT = "没指定模型、或指定的不能用时，都用它";
 
@@ -95,7 +97,68 @@ function BusinessStatus({
   );
 }
 
-export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (modelId: string) => void }) {
+/** 功能级近期成功率 + 平均耗时；统计没到时显示「—」，不编数。 */
+function FeatureCallCells({ stats, statsReady }: { stats: FeatureCallStats | undefined; statsReady: boolean }) {
+  if (!statsReady) {
+    return (
+      <>
+        <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
+        <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
+      </>
+    );
+  }
+  const rate = formatRate(stats?.recent);
+  const tone = rateTone(stats?.recent, "recent");
+  const avg = stats?.recent.avgMs ?? null;
+  return (
+    <>
+      <TableCell className="text-[12px] tabular-nums">
+        {rate ? (
+          <span
+            className={tone === "danger" ? "text-status-danger-text" : tone === "warn" ? "text-[#8A6A2F]" : "text-[#141413]"}
+            title={`近 3 天最近 ${stats?.recent.calls ?? 0} 次${stats?.recent.rescuedCount ? `，其中 ${stats.recent.rescuedCount} 次靠换渠道救回` : ""}`}
+          >
+            {rate}
+          </span>
+        ) : (
+          <span className="text-[#A8A29E]">近 3 天没调用</span>
+        )}
+      </TableCell>
+      <TableCell className="text-[12px] tabular-nums text-[#1F1E1D]">
+        {avg === null ? <span className="text-[#A8A29E]">—</span> : formatLatency(avg)}
+      </TableCell>
+    </>
+  );
+}
+
+export function BusinessFunctionsPanel({
+  onRepairModel,
+  featureStats = null,
+}: {
+  onRepairModel?: (modelId: string) => void;
+  /** 调用统计里的功能级数据；null = 统计还没到或没接上 */
+  featureStats?: FeatureCallStats[] | null;
+}) {
+  const statsReady = featureStats !== null;
+  const featureStatsMap = useMemo(() => {
+    const map: Record<string, FeatureCallStats> = {};
+    for (const item of featureStats ?? []) map[item.featureKey] = item;
+    return map;
+  }, [featureStats]);
+  // 手机卡片上的一行：近期成功率 · 平均耗时
+  const featureCallLine = (key: string) => {
+    if (!statsReady) return null;
+    const item = featureStatsMap[key];
+    const rate = formatRate(item?.recent);
+    if (!rate) return <p className="text-[12px] text-[#A8A29E]">近 3 天没调用</p>;
+    const avg = item?.recent.avgMs;
+    return (
+      <p className="text-[12px] text-[#78716C]">
+        近期成功 {rate}
+        {avg != null && ` · 平均 ${formatLatency(avg)}`}
+      </p>
+    );
+  };
   const { bundle, runCommand } = useAiConfig();
   const report = useAvailabilityReport(bundle);
 
@@ -350,6 +413,8 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
               <TableHead className="w-[200px] text-[12px] text-[#78716C] pl-4">功能</TableHead>
               <TableHead className="w-[260px] text-[12px] text-[#78716C]">用哪个模型</TableHead>
               <TableHead className="text-[12px] text-[#78716C]">现在状态</TableHead>
+              <TableHead className="w-[96px] text-[12px] text-[#78716C]">近期成功率</TableHead>
+              <TableHead className="w-[80px] text-[12px] text-[#78716C]">平均耗时</TableHead>
               <TableHead className="w-[120px] text-right text-[12px] text-[#78716C] pr-4">操作</TableHead>
             </TableRow>
           </TableHeader>
@@ -374,6 +439,9 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
               <TableCell>
                 <BusinessStatus assurance={assuranceMap["default"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
               </TableCell>
+              {/* 兜底本身不是一次调用，成功率看它顶上的各个功能 */}
+              <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
+              <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
               <TableCell className="pr-4" />
             </TableRow>
 
@@ -394,6 +462,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
                 <TableCell>
                   <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
                 </TableCell>
+                <FeatureCallCells stats={featureStatsMap["ocr_screenshot"]} statsReady={statsReady} />
                 <TableCell className="pr-4 text-right">{ocrActions()}</TableCell>
               </TableRow>
             )}
@@ -415,6 +484,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
                 <TableCell>
                   <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
                 </TableCell>
+                <FeatureCallCells stats={featureStatsMap[ctrl.key]} statsReady={statsReady} />
                 <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
               </TableRow>
             ))}
@@ -444,6 +514,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
             {ocrControl.description && <p className="text-[12px] text-[#78716C]">{ocrControl.description}</p>}
             <ModelFamilySelect value={ocrControl.modelId} onChange={handleOcrModelChange} allowEmptyLabel="跟随全局默认" />
             <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+            {featureCallLine("ocr_screenshot")}
           </div>
         )}
 
@@ -460,6 +531,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
               allowEmptyLabel="跟随全局默认"
             />
             <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+            {featureCallLine(ctrl.key)}
           </div>
         ))}
       </div>
