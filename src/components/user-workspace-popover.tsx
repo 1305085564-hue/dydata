@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, LogOut, Settings } from "lucide-react";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { cn } from "@/lib/utils";
 import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
@@ -133,7 +134,7 @@ export function UserWorkspacePopover({
   };
 
   const MENU_ITEM =
-    "flex w-full items-center rounded-md px-2.5 py-2 text-left text-[14px] text-[#1F1E1D] transition-colors duration-150 hover:bg-[#EBEBE9] hover:text-[#141413]";
+    "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] text-[#1F1E1D] transition-colors duration-150 hover:bg-[#EBEBE9] hover:text-[#141413]";
 
   return (
     <div
@@ -149,10 +150,11 @@ export function UserWorkspacePopover({
         aria-controls={menuId}
         onClick={handleTriggerClick}
         className={cn(
-          "inline-flex h-8 max-w-[160px] items-center gap-1 rounded-md px-2 text-[14px] outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-status-info/20",
+          "inline-flex h-8 max-w-[180px] items-center gap-2 rounded-md px-2 text-[14px] outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-status-info/20",
           isOpen ? "bg-[#F1F1F0] text-[#141413]" : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         )}
       >
+        <InitialAvatar name={name} size="xs" />
         <span className="truncate">{name.trim() || "我的"}</span>
         <ChevronDown
           aria-hidden="true"
@@ -194,7 +196,10 @@ export function UserWorkspacePopover({
                         isSelected ? "bg-[#F1F1F0] text-[#141413]" : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
                       )}
                     >
-                      <span className="truncate text-[14px]">{account.display_name}</span>
+                      <span className="flex w-full items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-[14px]">{account.display_name}</span>
+                        {isSelected && <Check className="size-3.5 shrink-0 text-[#141413]" aria-hidden="true" />}
+                      </span>
                       {secondary && <span className="truncate text-[12px] text-[#78716C]">{secondary}</span>}
                     </button>
                   );
@@ -212,9 +217,11 @@ export function UserWorkspacePopover({
             }}
             className={MENU_ITEM}
           >
+            <Settings className="size-4 text-[#78716C]" aria-hidden="true" />
             账号与偏好设置
           </button>
           <button type="button" onClick={handleSignOut} className={MENU_ITEM}>
+            <LogOut className="size-4 text-[#78716C]" aria-hidden="true" />
             退出登录
           </button>
         </div>

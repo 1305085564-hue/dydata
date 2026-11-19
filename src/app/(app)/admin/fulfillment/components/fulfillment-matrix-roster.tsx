@@ -13,7 +13,7 @@ import {
 } from "@/lib/fulfillment-status";
 import { cn } from "@/lib/utils";
 import { rowSelectionClass } from "@/components/ui/selection";
-import { MemberAvatar } from "@/components/modules/member-identity";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { isMissingStreak, type RosterSortDir } from "../fulfillment-page-view";
 
 export interface FulfillmentAppeal {
@@ -314,7 +314,7 @@ export function FulfillmentMatrixRoster({
                         onClick={() => onCellClick(member, today)}
                         className="flex w-full items-center gap-2 overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-info/20 rounded-md"
                       >
-                        <MemberAvatar name={member.userName} />
+                        <InitialAvatar name={member.userName} />
                         <span className="flex min-w-0 flex-1 flex-col items-start">
                           <span className="w-full truncate text-[14px] text-[#141413] hover:underline underline-offset-2">
                             {member.userName}

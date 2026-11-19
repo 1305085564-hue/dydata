@@ -30,7 +30,8 @@ test("手机不放顶栏：顶栏只在 md 以上显示，手机顶部偏移归�
 
 test("顶栏导航只有字，当前页只用一种记号（浅砂底 + 深字）", () => {
   const menu = read("src/components/navigation/desktop-nav-menu.tsx");
-  assert.doesNotMatch(menu, /group\.icon|child\.icon|GroupIcon/);
+  assert.match(menu, /group\.icon && <group\.icon/, "顶栏导航项带图标锚点（《效率美学》§0 噪音与锚点）");
+  assert.match(menu, /child\.icon && <child\.icon/);
   assert.doesNotMatch(menu, /shadow-input|h-\[2px\]|text-status-info|active:scale/);
   assert.match(menu, /const ITEM_ON = "bg-\[#F1F1F0\] text-\[#141413\]";/);
 });

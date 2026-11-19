@@ -10,7 +10,7 @@ import { isNavGroupActive } from "@/lib/navigation/domain/navigation";
 import { cn } from "@/lib/utils";
 import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 
-/** 顶栏导航项：只有字。当前页只用一种记号——深字 + 浅砂底（美学宝典 §3.9），不叠阴影、横线、变色图标。 */
+/** 顶栏导航项：图标 + 字（图标是定位锚，《效率美学》§0）。当前页只用一种记号——深字 + 浅砂底（美学宝典 §3.9），不叠阴影、横线。 */
 const ITEM =
   "inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[13px] outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-status-info/20 lg:px-3 lg:text-[14px]";
 const ITEM_ON = "bg-[#F1F1F0] text-[#141413]";
@@ -18,7 +18,7 @@ const ITEM_OFF = "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]";
 /** 下拉浮层：白底 + 浮层阴影，不做毛玻璃 */
 const PANEL = "absolute left-0 top-full z-50 pt-1";
 const PANEL_BODY = "w-44 rounded-xl border border-[#E2E2DF] bg-white p-1 shadow-claude-float";
-const MENU_ITEM = "flex w-full items-center rounded-md px-2.5 py-2 text-[14px] transition-colors duration-150";
+const MENU_ITEM = "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[14px] transition-colors duration-150";
 const MENU_ON = "bg-[#F1F1F0] text-[#141413]";
 const MENU_OFF = "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]";
 
@@ -123,6 +123,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
         onClick={() => closeDropdown()}
         className={cn(MENU_ITEM, active ? MENU_ON : MENU_OFF)}
       >
+        {child.icon && <child.icon aria-hidden="true" className="size-4 shrink-0 text-[#78716C]" />}
         <span className="truncate">{child.label}</span>
       </Link>
     );
@@ -146,6 +147,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               onMouseEnter={() => prefetchOnHover(group.href!)}
               className={cn(ITEM, compactHidden && "hidden lg:inline-flex", isGroupActive ? ITEM_ON : ITEM_OFF)}
             >
+              {group.icon && <group.icon aria-hidden="true" className="size-4 shrink-0" />}
               {group.label}
             </Link>
           );
@@ -168,6 +170,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               aria-haspopup="true"
               className={cn(ITEM, isGroupActive || isDropdownOpen ? ITEM_ON : ITEM_OFF)}
             >
+              {group.icon && <group.icon aria-hidden="true" className="size-4 shrink-0" />}
               {group.label}
               <ChevronDown
                 aria-hidden="true"
@@ -210,7 +213,7 @@ export function DesktopNavMenu({ navGroups }: { navGroups: NavGroup[] }) {
               <div className={PANEL_BODY}>
                 {compactMoreGroups.map((group) => {
                   if (group.href && group.match) {
-                    return menuLink({ href: group.href, label: group.label, match: group.match });
+                    return menuLink({ href: group.href, label: group.label, icon: group.icon, match: group.match });
                   }
                   return (
                     <div key={group.key} className="pt-1">

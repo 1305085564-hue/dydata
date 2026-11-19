@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import type { CompanyRole } from "@/types";
 
 /**
@@ -6,17 +7,7 @@ import type { CompanyRole } from "@/types";
  * 身份色让人一眼分出老板 / 组长 / 组员。类别色，不是异常色。
  */
 export function MemberAvatar({ name, size = "sm" }: { name: string | null | undefined; size?: "sm" | "lg" }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full border border-[#E2E2DF]/60 bg-[#F1F1F0] text-[#1F1E1D]",
-        size === "lg" ? "size-9 text-[14px]" : "size-7 text-[12px]",
-      )}
-    >
-      {name ? name.slice(0, 1) : "?"}
-    </span>
-  );
+  return <InitialAvatar name={name} size={size} />;
 }
 
 const ROLE_TONE: Record<CompanyRole, string> = {

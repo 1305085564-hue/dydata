@@ -35,6 +35,7 @@ import {
 } from "@/lib/fulfillment-status";
 import { cn } from "@/lib/utils";
 import { rowSelectionClass } from "@/components/ui/selection";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { formatMonthDay, isMissingStreak } from "../fulfillment-page-view";
 
 type Source = "queue" | "matrix";
@@ -244,13 +245,16 @@ export function FulfillmentMemberSheet({
         className="w-full sm:max-w-lg overflow-y-auto"
         aria-label="成员这个月的发布记录"
       >
-        <SheetHeader className="border-b border-[#E2E2DF]/60 pb-3">
-          <SheetTitle className="text-[20px] text-[#141413]">
-            {member?.userName || "成员"}{monthLabel ? ` · ${monthLabel}` : ""}
-          </SheetTitle>
-          {member?.teamName && (
-            <SheetDescription className="text-[12px] text-[#78716C]">{member.teamName}</SheetDescription>
-          )}
+        <SheetHeader className="flex-row items-start justify-start gap-3 border-b border-[#E2E2DF]/60 pb-3">
+          <InitialAvatar name={member?.userName} size="lg" />
+          <div className="min-w-0">
+            <SheetTitle className="text-[20px] text-[#141413]">
+              {member?.userName || "成员"}{monthLabel ? ` · ${monthLabel}` : ""}
+            </SheetTitle>
+            {member?.teamName && (
+              <SheetDescription className="text-[12px] text-[#78716C]">{member.teamName}</SheetDescription>
+            )}
+          </div>
         </SheetHeader>
 
         {!member ? (

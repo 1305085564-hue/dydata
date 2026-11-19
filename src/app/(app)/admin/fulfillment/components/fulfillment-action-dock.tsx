@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CalendarX, FileClock, Plane } from "lucide-react";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 
 import type { FulfillmentAppeal, FulfillmentMemberSummary } from "@/types/fulfillment";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -55,7 +57,7 @@ export function requiresQuickMarkConfirmation(action: MarkAction) {
 }
 
 const ROW = "flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-[14px]";
-const SECTION_LABEL = "px-3 pt-3 pb-1 text-[12px] text-[#78716C]";
+const SECTION_LABEL = "flex items-center gap-2 px-3 pt-3 pb-1 text-[12px] text-[#78716C]";
 const ROW_ACTION = "h-7 px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]";
 
 /**
@@ -140,7 +142,10 @@ export function FulfillmentActionDock({
                 ))}
               </>
             ) : (
-              <span className="text-[12px] text-[#78716C]">今天还没发</span>
+              <span className="flex items-center gap-2 text-[12px] text-[#78716C]">
+                <CalendarX className="size-3.5" aria-hidden="true" />
+                今天还没发
+              </span>
             )}
           </div>
           <ul>
@@ -154,6 +159,7 @@ export function FulfillmentActionDock({
                     onCheckedChange={() => onSelectToggle(member.userId)}
                     aria-label={`选择 ${member.userName}`}
                   />
+                  <InitialAvatar name={member.userName} />
                   <button
                     type="button"
                     onClick={() => onMemberClick(member)}
@@ -195,10 +201,14 @@ export function FulfillmentActionDock({
 
       {pendingAppeals.length > 0 && (
         <div>
-          <div className={SECTION_LABEL}>补交待审</div>
+          <div className={SECTION_LABEL}>
+            <FileClock className="size-3.5" aria-hidden="true" />
+            补交待审
+          </div>
           <ul>
             {pendingAppeals.map((appeal) => (
               <li key={appeal.id} className={ROW}>
+                <InitialAvatar name={appeal.user_name} />
                 <span className="text-[#141413]">{appeal.user_name || "未知成员"}</span>
                 <span className="text-[12px] tabular-nums text-[#78716C]">补 {formatMonthDay(appeal.record_date)}</span>
                 <span className="min-w-0 flex-1 truncate text-[#1F1E1D]" title={appeal.reason}>
@@ -264,7 +274,10 @@ export function FulfillmentActionDock({
 
       {pendingLeaves.length > 0 && (
         <div>
-          <div className={SECTION_LABEL}>请假待批</div>
+          <div className={SECTION_LABEL}>
+            <Plane className="size-3.5" aria-hidden="true" />
+            请假待批
+          </div>
           <ul>
             {pendingLeaves.map(({ request, member }) => {
               const busy = reviewingLeaveId === request.id;
@@ -274,6 +287,7 @@ export function FulfillmentActionDock({
                   : formatMonthDay(request.start_date);
               return (
                 <li key={request.id} className={ROW}>
+                  <InitialAvatar name={member.userName} />
                   <span className="text-[#141413]">{member.userName}</span>
                   <span className="text-[12px] tabular-nums text-[#78716C]">
                     {request.exemption_type === "leave" ? "请假" : "免交"} {span}
