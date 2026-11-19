@@ -57,6 +57,10 @@ function migrationVersion(file) {
   return file.match(/^(\d+)_/)?.[1] ?? file;
 }
 
+function migrationName(file) {
+  return file.replace(/^\d+_/, '').replace(/\.sql$/, '');
+}
+
 function preSql(version) {
   if (version !== "20261005024700") return "";
   return `
@@ -97,7 +101,18 @@ function assertLocal() {
 
 function bootstrap() {
   const dump = run(pgDump, ["--dbname", LOCAL_URL, "--schema-only", "--no-owner", "--no-privileges", "--schema", "auth", "--schema", "storage"], { encoding: "buffer" });
-  psqlFile(REPLAY_URL, "create extension if not exists pgcrypto;\ncreate extension if not exists \"uuid-ossp\";\ncreate extension if not exists btree_gist schema public;\n", "扩展初始化");
+  psqlFile(REPLAY_URL, `
+create extension if not exists pgcrypto;
+create extension if not exists "uuid-ossp";
+create extension if not exists btree_gist schema public;
+create schema if not exists supabase_migrations;
+create table if not exists supabase_migrations.schema_migrations (
+  version text primary key,
+  name text not null
+);
+alter default privileges for role postgres in schema public revoke execute on functions from public;
+revoke execute on all functions in schema public from public;
+`, "扩展与迁移账本初始化");
   psqlFile(REPLAY_URL, dump, "auth/storage 结构导入");
 }
 
@@ -119,8 +134,32 @@ function main() {
       }
       const sql = `${exceptions.preSql.has(version) ? preSql(version) : ""}\n${readFileSync(path.join(migrationDir, file), "utf8")}`;
       psqlFile(REPLAY_URL, sql, file);
+      psqlFile(REPLAY_URL, `insert into supabase_migrations.schema_migrations(version, name)
+values ('${version}', '${migrationName(file).replaceAll("'", "''")}')
+on conflict (version) do update set name = excluded.name;`, `${file} 迁移记账`);
       passed += 1;
     }
+    psqlFile(REPLAY_URL, `
+revoke execute on all functions in schema public from public;
+grant execute on function public.assign_ai_channel_sort_order() to public, anon, authenticated, service_role;
+grant execute on function public.canonical_ai_model_id(text) to public, anon, authenticated, service_role;
+grant execute on function public.get_leaderboard_rows(date, date) to anon;
+grant execute on function public.get_published_date_for_stats(timestamptz, date) to anon;
+grant execute on function public.preserve_daily_report_manual_source() to public, anon, authenticated, service_role;
+grant execute on function public.publish_drafts_set_updated_at() to public, anon, authenticated, service_role;
+grant execute on function public.reset_ai_channel_failure_window_on_success() to public, anon, authenticated, service_role;
+grant execute on function public.set_ai_feature_binding_canonical_model() to public, anon, authenticated, service_role;
+grant execute on function public.set_ai_feature_config_updated_at() to public, anon, authenticated, service_role;
+grant execute on function public.set_ai_provider_key_model_canonical() to public, anon, authenticated, service_role;
+grant execute on function public.set_rewrite_updated_at() to public, anon, authenticated, service_role;
+grant execute on function public.set_violation_case_script_hash() to public, anon, authenticated, service_role;
+grant execute on function public.touch_updated_at() to public, anon, authenticated, service_role;
+grant execute on function public.clear_fulfillment_absent_after_daily_report() to service_role;
+grant execute on function public.content_overall_grade_rank(numeric, numeric, numeric, jsonb) to service_role;
+grant execute on function public.exemption_target_in_active_scope(uuid, uuid, text) to authenticated;
+grant execute on function public.guard_profile_exemption_projection() to service_role;
+grant execute on function public.guard_profile_membership_lifecycle() to service_role;
+`, "函数默认授权收口");
     console.log(JSON.stringify({ status: "PASS", passed, skipped: skipped.length, skippedFiles: skipped, failed: 0, elapsedMs: Date.now() - startedAt, database: REPLAY_DATABASE }, null, 2));
   } finally {
     if (!keep) dropReplay();

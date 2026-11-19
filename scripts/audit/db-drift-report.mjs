@@ -186,13 +186,25 @@ const SQL = {
                      p.prokind::text as kind,
                      p.prosecdef as security_definer,
                      coalesce(array_to_string(p.proconfig,';'),'') as config,
-                     coalesce(p.proacl::text,'') as acl,
+                     coalesce((
+                       select string_agg(
+                         case when grant_item.grantee = 0 then 'public' else grant_item.grantee::regrole::text end
+                         || ':' || grant_item.privilege_type,
+                         ',' order by grant_item.grantee, grant_item.privilege_type
+                       )
+                       from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) as grant_item
+                     ), '') as acl,
                      has_function_privilege('anon', p.oid, 'EXECUTE') as anon_exec,
                      has_function_privilege('authenticated', p.oid, 'EXECUTE') as authn_exec,
                      md5(regexp_replace(pg_get_functiondef(p.oid), '\\s+', '', 'g')) as def_md5,
                      pg_get_functiondef(p.oid) as def
               from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-              where n.nspname='public' and p.prokind in ('f','p') order by 1,2`,
+              where n.nspname='public' and p.prokind in ('f','p')
+                and not exists (
+                  select 1 from pg_depend d
+                  where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e'
+                )
+              order by 1,2`,
   constraints: `select cl.relname as table_name, con.conname, con.contype,
                        con.convalidated, pg_get_constraintdef(con.oid) as def
                 from pg_constraint con
@@ -356,11 +368,11 @@ function buildFunctionsSection({ prod, local }) {
     const p = prodMap.get(key);
     const l = localMap.get(key);
     if (p && !l) {
-      onlyProd.push({ key, security_definer: p.security_definer, config: p.config, anon_exec: p.anon_exec, authn_exec: p.authn_exec, def_md5: p.def_md5, def_len: p.def.length });
+      onlyProd.push({ key, security_definer: p.security_definer, config: p.config, acl: p.acl, anon_exec: p.anon_exec, authn_exec: p.authn_exec, def_md5: p.def_md5, def_len: p.def.length });
       continue;
     }
     if (l && !p) {
-      onlyLocal.push({ key, security_definer: l.security_definer, config: l.config, anon_exec: l.anon_exec, authn_exec: l.authn_exec, def_md5: l.def_md5, def_len: l.def.length });
+      onlyLocal.push({ key, security_definer: l.security_definer, config: l.config, acl: l.acl, anon_exec: l.anon_exec, authn_exec: l.authn_exec, def_md5: l.def_md5, def_len: l.def.length });
       continue;
     }
     const bodySame = p.def_md5 === l.def_md5;
@@ -372,6 +384,8 @@ function buildFunctionsSection({ prod, local }) {
     const entry = {
       key,
       body_same: bodySame,
+      definition_md5_prod: p.def_md5,
+      definition_md5_local: l.def_md5,
       config_prod: p.config,
       config_local: l.config,
       acl_prod: p.acl,
@@ -439,7 +453,11 @@ function buildColumnsSection({ prod, local }) {
     const m = new Map();
     for (const r of rows) {
       if (!m.has(r.table_name)) m.set(r.table_name, new Map());
-      m.get(r.table_name).set(r.column_name, `${r.data_type}${r.is_nullable === 'NO' ? ' not null' : ''}`);
+      m.get(r.table_name).set(r.column_name, {
+        column: r.column_name,
+        type: r.data_type,
+        nullable: r.is_nullable !== 'NO',
+      });
     }
     return m;
   };
@@ -451,13 +469,16 @@ function buildColumnsSection({ prod, local }) {
     const lcols = localM.get(table);
     const missingLocally = [...cols.keys()].filter((c) => !lcols.has(c));
     const missingOnProd = [...lcols.keys()].filter((c) => !cols.has(c));
-    const typeChanged = [...cols.keys()].filter((c) => lcols.has(c) && cols.get(c) !== lcols.get(c));
+    const typeChanged = [...cols.keys()].filter((c) => lcols.has(c)
+      && JSON.stringify(cols.get(c)) !== JSON.stringify(lcols.get(c)));
     if (missingLocally.length || missingOnProd.length || typeChanged.length) {
       differing.push({
         table,
         columns_only_prod: missingLocally,
         columns_only_local: missingOnProd,
         columns_type_or_nullable_changed: typeChanged.map((c) => ({ column: c, prod: cols.get(c), local: lcols.get(c) })),
+        prod_columns: [...cols.values()],
+        local_columns: [...lcols.values()],
       });
     }
   }
@@ -767,7 +788,7 @@ function buildFindings(sections) {
 
 function buildDriftIssues(report, exceptions) {
   const issues = [];
-  const add = (id, title, detail) => issues.push({ id, title, detail });
+  const add = (id, title, detail, fingerprint) => issues.push({ id, title, detail, fingerprint });
   const ignoredVersions = new Set([
     ...(exceptions.not_applied ?? []).map((item) => item.version),
     ...(exceptions.replay_skip ?? []).map((item) => item.version),
@@ -777,45 +798,86 @@ function buildDriftIssues(report, exceptions) {
   const recordedVersions = new Set((exceptions.recorded_as ?? []).map((item) => item.recorded_version));
   const mig = report.sections.migrations;
   for (const item of mig.repo_has_no_prod_record) {
-    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_in_prod:${item.version}`, '仓库迁移未在生产记账', item.file);
+    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_in_prod:${item.version}`, '仓库迁移未在生产记账', item.file, { file: item.file, repo_version: item.version });
   }
   for (const item of mig.prod_applied_without_repo_file) {
-    if (!recordedVersions.has(item.version)) add(`migration:prod_without_repo_file:${item.version}`, '生产账本没有仓库文件', `${item.version}（${item.name ?? '?' }）`);
+    if (!recordedVersions.has(item.version)) add(`migration:prod_without_repo_file:${item.version}`, '生产账本没有仓库文件', `${item.version}（${item.name ?? '?' }）`, { prod_version: item.version, name: item.name });
   }
   for (const item of mig.repo_not_applied_locally) {
-    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_applied_locally:${item.version}`, '仓库迁移未在重放库执行', item.file);
+    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_applied_locally:${item.version}`, '仓库迁移未在重放库执行', item.file, { file: item.file, repo_version: item.version });
   }
   for (const item of mig.version_mismatch_name_matched) {
-    if (!ignoredVersions.has(item.repo_version)) add(`migration:version_mismatch:${item.repo_version}`, '生产账本版本号不同', item.file);
+    if (!ignoredVersions.has(item.repo_version)) add(`migration:version_mismatch:${item.repo_version}`, '生产账本版本号不同', item.file, { file: item.file, repo_version: item.repo_version, prod_version: item.prod_version });
   }
-  for (const item of report.sections.functions.only_prod) add(`functions:only_prod:${item.key}`, '生产独有函数', item.key);
-  for (const item of report.sections.functions.only_local) add(`functions:only_local:${item.key}`, '本地独有函数', item.key);
-  for (const item of report.sections.functions.differing) add(`functions:differing:${item.key}`, '函数定义或权限不同', item.key);
-  for (const item of report.sections.indexes.only_prod) add(`indexes:only_prod:${item.key}`, '生产独有索引', item.key);
-  for (const item of report.sections.indexes.only_local) add(`indexes:only_local:${item.key}`, '本地独有索引', item.key);
-  for (const item of report.sections.indexes.differing) add(`indexes:differing:${item.key}`, '索引定义不同', item.key);
-  for (const item of report.sections.columns.shared_tables_with_column_drift) add(`columns:${item.table}`, '同名表列定义不同', item.table);
-  for (const item of report.sections.constraints.only_prod_on_shared_table) add(`constraints:only_prod:${item.key}`, '生产独有约束', item.key);
-  for (const item of report.sections.constraints.only_local_on_shared_table) add(`constraints:only_local:${item.key}`, '本地独有约束', item.key);
-  for (const item of report.sections.constraints.differing) add(`constraints:differing:${item.key}`, '约束定义不同', item.key);
-  for (const item of report.sections.rls.rls_differing) add(`rls:toggle:${item.table}`, 'RLS 开关不同', item.table);
-  for (const item of report.sections.rls.policies_only_prod) add(`rls:policy_only_prod:${item.key}`, '生产独有 RLS 策略', item.key);
-  for (const item of report.sections.rls.policies_only_local) add(`rls:policy_only_local:${item.key}`, '本地独有 RLS 策略', item.key);
-  for (const item of report.sections.rls.policies_differing) add(`rls:policy_differing:${item.key}`, 'RLS 策略条件不同', item.key);
-  for (const item of report.sections.triggers.only_prod) add(`triggers:only_prod:${item.key}`, '生产独有触发器', item.key);
-  for (const item of report.sections.triggers.only_local) add(`triggers:only_local:${item.key}`, '本地独有触发器', item.key);
-  for (const item of report.sections.triggers.differing) add(`triggers:differing:${item.key}`, '触发器定义不同', item.key);
-  const known = new Set((exceptions.known_drift ?? []).map((item) => item.version));
-  return issues.filter((item) => !known.has(item.id));
+  for (const item of report.sections.functions.only_prod) add(`functions:only_prod:${item.key}`, '生产独有函数', item.key, {
+    definition_md5: item.def_md5,
+    acl: item.acl,
+    config: item.config,
+    security_definer: item.security_definer,
+    anon_exec: item.anon_exec,
+    authn_exec: item.authn_exec,
+  });
+  for (const item of report.sections.functions.only_local) add(`functions:only_local:${item.key}`, '本地独有函数', item.key, {
+    definition_md5: item.def_md5,
+    acl: item.acl,
+    config: item.config,
+    security_definer: item.security_definer,
+    anon_exec: item.anon_exec,
+    authn_exec: item.authn_exec,
+  });
+  for (const item of report.sections.functions.differing) add(`functions:differing:${item.key}`, '函数定义或权限不同', item.key, {
+    prod: {
+      definition_md5: item.definition_md5_prod,
+      acl: item.acl_prod,
+      config: item.config_prod,
+      security_definer: item.security_definer_prod,
+      anon_exec: item.anon_exec_prod,
+      authn_exec: item.authn_exec_prod,
+    },
+    local: {
+      definition_md5: item.definition_md5_local,
+      acl: item.acl_local,
+      config: item.config_local,
+      security_definer: item.security_definer_local,
+      anon_exec: item.anon_exec_local,
+      authn_exec: item.authn_exec_local,
+    },
+  });
+  for (const item of report.sections.indexes.only_prod) add(`indexes:only_prod:${item.key}`, '生产独有索引', item.key, { indexdef: item.indexdef });
+  for (const item of report.sections.indexes.only_local) add(`indexes:only_local:${item.key}`, '本地独有索引', item.key, { indexdef: item.indexdef });
+  for (const item of report.sections.indexes.differing) add(`indexes:differing:${item.key}`, '索引定义不同', item.key, { prod: item.prod, local: item.local });
+  for (const item of report.sections.columns.shared_tables_with_column_drift) add(`columns:${item.table}`, '同名表列定义不同', item.table, { prod_columns: item.prod_columns, local_columns: item.local_columns });
+  for (const item of report.sections.constraints.only_prod_on_shared_table) add(`constraints:only_prod:${item.key}`, '生产独有约束', item.key, { type: item.type, def: item.def, validated: item.validated });
+  for (const item of report.sections.constraints.only_local_on_shared_table) add(`constraints:only_local:${item.key}`, '本地独有约束', item.key, { type: item.type, def: item.def, validated: item.validated });
+  for (const item of report.sections.constraints.differing) add(`constraints:differing:${item.key}`, '约束定义不同', item.key, { prod_def: item.prod_def, local_def: item.local_def, prod_validated: item.prod_validated, local_validated: item.local_validated });
+  for (const item of report.sections.rls.rls_differing) add(`rls:toggle:${item.table}`, 'RLS 开关不同', item.table, { prod_rls: item.prod_rls, local_rls: item.local_rls });
+  for (const item of report.sections.rls.policies_only_prod) add(`rls:policy_only_prod:${item.key}`, '生产独有 RLS 策略', item.key, item);
+  for (const item of report.sections.rls.policies_only_local) add(`rls:policy_only_local:${item.key}`, '本地独有 RLS 策略', item.key, item);
+  for (const item of report.sections.rls.policies_differing) add(`rls:policy_differing:${item.key}`, 'RLS 策略条件不同', item.key, item);
+  for (const item of report.sections.triggers.only_prod) add(`triggers:only_prod:${item.key}`, '生产独有触发器', item.key, item);
+  for (const item of report.sections.triggers.only_local) add(`triggers:only_local:${item.key}`, '本地独有触发器', item.key, item);
+  for (const item of report.sections.triggers.differing) add(`triggers:differing:${item.key}`, '触发器定义不同', item.key, item);
+  const stable = (value) => {
+    if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
+    if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(',')}}`;
+    return JSON.stringify(value);
+  };
+  const known = exceptions.known_drift ?? [];
+  return issues.filter((issue) => !known.some((entry) => entry.version === issue.id
+    && entry.fingerprint
+    && stable(entry.fingerprint) === stable(issue.fingerprint)));
 }
 
 function writeDriftBaseline(file, issues) {
   const current = loadExceptions(file);
-  const known = new Set((current.known_drift ?? []).map((item) => item.version));
-  for (const issue of issues) {
-    if (known.has(issue.id)) continue;
-    current.known_drift.push({ version: issue.id, type: 'known_drift', reason: `待查：首次生产库与重放库对账记录，${issue.title}（${issue.detail}）。` });
-  }
+  const issueIds = new Set(issues.map((issue) => issue.id));
+  current.known_drift = (current.known_drift ?? []).filter((item) => !issueIds.has(item.version));
+  for (const issue of issues) current.known_drift.push({
+    version: issue.id,
+    type: 'known_drift',
+    reason: `待查：首次生产库与重放库对账记录，${issue.title}（${issue.detail}）。`,
+    fingerprint: issue.fingerprint,
+  });
   fs.writeFileSync(file, `${JSON.stringify(current, null, 2)}\n`);
   return current.known_drift.length;
 }
