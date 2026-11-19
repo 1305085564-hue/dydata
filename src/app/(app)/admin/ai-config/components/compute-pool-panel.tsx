@@ -448,7 +448,10 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFocusedModelId(null);
+                  }}
                   aria-label="清除搜索"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
                 >

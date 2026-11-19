@@ -54,10 +54,7 @@ function BusinessStatus({
 
   if (assurance.routingStatus === "normal") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
-        <span className="size-1.5 rounded-full bg-[#4B6B4E]" aria-hidden />
-        正常
-      </span>
+      <span className="text-[12px] text-[#78716C]">正常</span>
     );
   }
 
@@ -302,29 +299,44 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
     );
   };
 
-  // 截图识别三个并列入口：测速台账、试跑、高级配置（图标靠形状区分，悬停有说明）
-  const ocrActions = (sizeClass: string) => (
+  // 行内入口：桌面是图标（悬停有说明）；手机没有悬停，图标旁带短字
+  const actionButton = (
+    key: string,
+    opts: { label: string; title: string; icon: React.ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean },
+    labeled: boolean,
+  ) => (
+    <Button
+      key={key}
+      variant="ghost"
+      size={labeled ? "s" : "icon-s"}
+      onClick={opts.onClick}
+      disabled={opts.disabled}
+      className={cn(
+        labeled ? "h-7 gap-1 px-2 text-[12px]" : "size-7",
+        "text-[#78716C]",
+        opts.danger ? "hover:text-status-danger" : "hover:text-[#141413]",
+      )}
+      title={opts.title}
+      aria-label={opts.title}
+    >
+      {opts.icon}
+      {labeled && <span>{opts.label}</span>}
+    </Button>
+  );
+
+  // 截图识别三个并列入口：测速台账、试跑、高级配置
+  const ocrActions = (labeled = false) => (
     <div className="flex items-center justify-end gap-1">
-      <Button variant="ghost" size="icon-s" onClick={() => setSpeedDrawerOpen(true)} className={cn(sizeClass, "text-[#78716C] hover:text-[#141413]")} title="测速台账" aria-label="测速台账">
-        <Gauge className="size-3.5" />
-      </Button>
-      <Button variant="ghost" size="icon-s" onClick={handleOcrTrialRun} disabled={testingOcr} className={cn(sizeClass, "text-[#78716C] hover:text-[#141413]")} title="快速连通性试跑" aria-label="快速连通性试跑">
-        <Play className={cn("size-3.5", testingOcr && "animate-spin")} />
-      </Button>
-      <Button variant="ghost" size="icon-s" onClick={() => ocrControl && setBindingModal({ open: true, data: ocrControl })} className={cn(sizeClass, "text-[#78716C] hover:text-[#141413]")} title="高级配置" aria-label="高级配置">
-        <Settings2 className="size-3.5" />
-      </Button>
+      {actionButton("speed", { label: "测速", title: "测速台账", icon: <Gauge className="size-3.5" />, onClick: () => setSpeedDrawerOpen(true) }, labeled)}
+      {actionButton("trial", { label: "试跑", title: "快速连通性试跑", icon: <Play className={cn("size-3.5", testingOcr && "animate-spin")} />, onClick: handleOcrTrialRun, disabled: testingOcr }, labeled)}
+      {actionButton("advanced", { label: "高级", title: "高级配置", icon: <Settings2 className="size-3.5" />, onClick: () => ocrControl && setBindingModal({ open: true, data: ocrControl }) }, labeled)}
     </div>
   );
 
-  const featureActions = (ctrl: AiFeatureControl, sizeClass: string) => (
+  const featureActions = (ctrl: AiFeatureControl, labeled = false) => (
     <div className="flex items-center justify-end gap-1">
-      <Button variant="ghost" size="icon-s" onClick={() => setBindingModal({ open: true, data: ctrl })} className={cn(sizeClass, "text-[#78716C] hover:text-[#141413]")} title="高级参数设置" aria-label="高级参数设置">
-        <Settings2 className="size-3.5" />
-      </Button>
-      <Button variant="ghost" size="icon-s" onClick={() => setArchiveModal(ctrl)} className={cn(sizeClass, "text-[#78716C] hover:text-status-danger")} title="停用此业务功能" aria-label="停用此业务功能">
-        <Archive className="size-3.5" />
-      </Button>
+      {actionButton("advanced", { label: "高级", title: "高级参数设置", icon: <Settings2 className="size-3.5" />, onClick: () => setBindingModal({ open: true, data: ctrl }) }, labeled)}
+      {actionButton("archive", { label: "停用", title: "停用此业务功能", icon: <Archive className="size-3.5" />, onClick: () => setArchiveModal(ctrl), danger: true }, labeled)}
     </div>
   );
 
@@ -382,7 +394,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
                 <TableCell>
                   <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
                 </TableCell>
-                <TableCell className="pr-4 text-right">{ocrActions("size-7")}</TableCell>
+                <TableCell className="pr-4 text-right">{ocrActions()}</TableCell>
               </TableRow>
             )}
 
@@ -403,7 +415,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
                 <TableCell>
                   <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
                 </TableCell>
-                <TableCell className="pr-4 text-right">{featureActions(ctrl, "size-7")}</TableCell>
+                <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -426,8 +438,10 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
           <div className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[14px] text-[#141413]">{ocrControl.label}</span>
-              {ocrActions("size-7")}
+              {ocrActions(true)}
             </div>
+            {/* 手机没有悬停，说明直接显示 */}
+            {ocrControl.description && <p className="text-[12px] text-[#78716C]">{ocrControl.description}</p>}
             <ModelFamilySelect value={ocrControl.modelId} onChange={handleOcrModelChange} allowEmptyLabel="跟随全局默认" />
             <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
           </div>
@@ -437,8 +451,9 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
           <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[14px] text-[#141413]">{ctrl.label}</span>
-              {featureActions(ctrl, "size-7")}
+              {featureActions(ctrl, true)}
             </div>
+            {ctrl.description && <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>}
             <ModelFamilySelect
               value={ctrl.modelId}
               onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
