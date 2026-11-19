@@ -3,12 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
-import { buildCollaborationEpigraph } from "@/components/editorial/page-epigraph-copy";
-import { CollaborationWorkbenchToolbar } from "./collaboration-workbench-toolbar";
+import { HelpCircle } from "lucide-react";
+import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
+import { CollaborationWorkbenchToolbar, type CollaborationSegment } from "./collaboration-workbench-toolbar";
+import { HealthBar } from "./health-bar";
 import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
 import type { WriterCandidateRow } from "./writer-tab";
-import { generateMonthOptions, WORK_GROUP_ROLE_TAB, type TabKey } from "@/lib/collaboration/domain/workbench-state";
+import {
+  buildCollaborationHeadline,
+  generateMonthOptions,
+  WORK_GROUP_ROLE_TAB,
+  type TabKey,
+} from "@/lib/collaboration/domain/workbench-state";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
@@ -90,7 +96,7 @@ export function CollaborationWorkbench({
   writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
-  usePublishPageEpigraph("collaboration", buildCollaborationEpigraph(overviewStats ?? summary));
+  const headline = buildCollaborationHeadline({ month, loadFailed, overview: overviewStats });
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [view, setView] = useState<"roles" | "teams">(defaultView);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);
@@ -311,6 +317,9 @@ export function CollaborationWorkbench({
 
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
+    setView("roles");
+    setSelectedGroupId(null);
+    groupEntryPushedRef.current = false;
     // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
     // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
     // 带上 personId：地址栏任何时候都与界面一致，不留「链接丢参数、抽屉还开着」的错位。
@@ -325,6 +334,31 @@ export function CollaborationWorkbench({
     }
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab, personId: selectedPersonId })}`);
   };
+
+  const handleSegmentChange = (next: CollaborationSegment) => {
+    if (next === "teams") handleViewChange("teams");
+    else handleTabChange(next);
+  };
+
+  // 评级规则入口就近放在「良优率」列头旁
+  const rulesEntry = useMemo(
+    () => (
+      <RatingRulesDialog
+        evaluationStandards={evaluationStandards}
+        trigger={
+          <button
+            type="button"
+            aria-label="作品评级规则"
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex size-4 items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] transition-colors duration-150 cursor-pointer"
+          >
+            <HelpCircle className="size-3" aria-hidden />
+          </button>
+        }
+      />
+    ),
+    [evaluationStandards],
+  );
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -412,15 +446,17 @@ export function CollaborationWorkbench({
     <CollaborationDiagnosisContext.Provider
       value={{ openDiagnosisByReportId, openingReportId }}
     >
+      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413]">
+          {headline}
+        </h1>
+        <HealthBar summary={summary} year={year} month={month} canEdit={isOwnerOrTeamAdmin} />
+      </header>
+      <div className="space-y-3">
       <CollaborationWorkbenchToolbar
-        year={year}
-        month={month}
         monthOptions={monthOptions}
         currentMonthValue={currentMonthValue}
-        view={view}
-        tab={tab}
-        summary={summary}
-        isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+        segment={view === "teams" ? "teams" : tab}
         loadFailed={loadFailed}
         canManageWorkGroups={canManageWorkGroups}
         hasActiveGroupDetail={Boolean(activeGroupDetail)}
@@ -431,8 +467,7 @@ export function CollaborationWorkbench({
         writerCandidates={writerCandidates}
         editorStaff={editorStaff}
         onMonthChange={handleMonthChange}
-        onViewChange={handleViewChange}
-        onTabChange={handleTabChange}
+        onSegmentChange={handleSegmentChange}
         onLeaderboardOpen={setLeaderboardDialogOpen}
         onOpenManageDrawer={() => {
           setManageDrawerFocusGroupId(null);
@@ -461,7 +496,7 @@ export function CollaborationWorkbench({
         diagnosisDetail={diagnosisDetail}
         openingReportId={openingReportId}
         leaderboardDialogOpen={leaderboardDialogOpen}
-        summary={summary}
+        rulesEntry={rulesEntry}
         talents={talents}
         operators={operators}
         writerStaff={writerStaff}
@@ -488,6 +523,7 @@ export function CollaborationWorkbench({
         onGroupsChange={setCurrentRawGroups}
         onRosterChange={setCurrentRoster}
       />
+      </div>
     </CollaborationDiagnosisContext.Provider>
   );
 }

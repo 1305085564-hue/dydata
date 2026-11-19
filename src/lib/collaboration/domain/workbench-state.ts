@@ -95,3 +95,22 @@ export const ROLE_ZERO_OUTPUT_RULE_TEXT: Record<TabKey, string> = {
   writers: "你本月暂无计入该岗位的作品（统计规则：统计本人本月署名文案的作品；管理员认证后计入文案绩效）",
   editors: "你本月暂无计入该岗位的作品（统计规则：仅统计为他人账号协同剪辑的作品，自营账号剪辑不计入）",
 };
+
+/**
+ * 页面标题＝这个月的事实结论（一页一问：这个月谁干得好？先给全团底数）。
+ * 只写事实，不点名掉队；组员只看自己时写「我的」。
+ */
+export function buildCollaborationHeadline(input: {
+  month: number;
+  loadFailed?: boolean;
+  overview: { total: number; goodExcellentRate: number | null; restrictToSelf?: boolean } | null;
+}): string {
+  const { month, loadFailed = false, overview } = input;
+  if (loadFailed) return `${month}月 · 数据没加载出来`;
+  if (!overview) return `${month}月`;
+  const scope = overview.restrictToSelf ? "我的" : "全团";
+  if (overview.total === 0) return `${month}月 · ${scope}还没有作品`;
+  const rate =
+    overview.goodExcellentRate != null ? `，良优率 ${Math.round(overview.goodExcellentRate * 100)}%` : "";
+  return `${month}月 · ${scope} ${overview.total} 篇${rate}`;
+}

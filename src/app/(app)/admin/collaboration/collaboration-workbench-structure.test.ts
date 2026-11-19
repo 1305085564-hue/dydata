@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import {
+  buildCollaborationHeadline,
   partitionWriterCandidates,
   pinCurrentUserFirst,
   ROLE_ZERO_OUTPUT_RULE_TEXT,
 } from "@/lib/collaboration/domain/workbench-state";
-import { buildCollaborationEpigraph } from "@/components/editorial/page-epigraph-copy";
 
 const source = [
   "src/app/(app)/admin/collaboration/collaboration-workbench.tsx",
@@ -62,10 +62,10 @@ test("Toolbar 文案徽标数只计已认证与本月有产出成员，未认证
   );
 
   // 1. 源码契约：Toolbar 与 WriterTab 共用 partitionWriterCandidates 唯一来源
-  assert.match(toolbarSource, /文案 \(\{writerCount\}\)/);
+  assert.match(toolbarSource, /label: "文案",\s*count: activeWriterCount/);
   assert.match(toolbarSource, /partitionWriterCandidates\(writerStaff, writerCandidates\)/);
   assert.match(writerTabSource, /partitionWriterCandidates\(\s*rows,\s*candidates,\s*\)/);
-  assert.match(writerTabSource, /查看未认证候选人 \(\$\{uncertifiedRows\.length\}\)/);
+  assert.match(writerTabSource, /还有 \$\{uncertifiedRows\.length\} 位未认证候选人/);
 
   // 2. 行为实测：5 名在岗/有产出文案 + 25 名未认证零产出候选 → 页签为 5，折叠候选为 25
   const mockWriterStaff = [
@@ -92,8 +92,8 @@ test("Toolbar 文案徽标数只计已认证与本月有产出成员，未认证
 test("个人档案抽屉先展示所选月份作品明细，再展示近 30 天增长曲线", () => {
   const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
   const worksIdx = cardSource.indexOf("<PersonalCardWorks");
-  const metricsIdx = cardSource.indexOf("<PersonalCardMetrics");
-  assert.ok(worksIdx > 0 && metricsIdx > worksIdx, "PersonalCardWorks 必须排在 PersonalCardMetrics 之前");
+  const growthIdx = cardSource.indexOf("<PersonalCardGrowth");
+  assert.ok(worksIdx > 0 && growthIdx > worksIdx, "PersonalCardWorks 必须排在 PersonalCardGrowth 之前");
 });
 
 test("组员视角支持本人行置顶标识与零产出规则提示", () => {
@@ -107,18 +107,41 @@ test("组员视角支持本人行置顶标识与零产出规则提示", () => {
   }
 });
 
-test("页头导语直接播报当月大盘结论（产出篇数、总播放、综合良优率），不再重复播报待补责任人", () => {
-  const epigraph = buildCollaborationEpigraph({
-    month: 11,
-    total: 128,
-    totalPlay: 3_400_000,
-    goodExcellentRate: 0.62,
-  });
-  assert.ok(epigraph);
-  assert.match(epigraph, /11月全团产出 128 篇/);
-  assert.match(epigraph, /总播放 340(\.0)?万/);
-  assert.match(epigraph, /综合良优率 62%/);
-  assert.doesNotMatch(epigraph, /待补/);
+test("标题就是本月事实结论：只写事实，不点名掉队；组员只看自己时写「我的」", () => {
+  assert.equal(
+    buildCollaborationHeadline({ month: 11, overview: { total: 291, goodExcellentRate: 0.352 } }),
+    "11月 · 全团 291 篇，良优率 35%",
+  );
+  assert.equal(
+    buildCollaborationHeadline({ month: 11, overview: { total: 12, goodExcellentRate: null, restrictToSelf: true } }),
+    "11月 · 我的 12 篇",
+  );
+  assert.equal(
+    buildCollaborationHeadline({ month: 10, overview: { total: 0, goodExcellentRate: null } }),
+    "10月 · 全团还没有作品",
+  );
+  assert.equal(buildCollaborationHeadline({ month: 9, loadFailed: true, overview: null }), "9月 · 数据没加载出来");
+  assert.doesNotMatch(pageSource, /title="协作管理"/, "固定标题与灰色导语已删除");
+  assert.doesNotMatch(source, /usePublishPageEpigraph/);
+  assert.match(source, /<h1 className="font-serif[^"]*">\s*\{headline\}/);
+});
+
+test("切换只剩一排：达人 · 文案 · 运营 · 剪辑 · 小队；全页唯一橙色只给署名补全", () => {
+  const toolbarSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
+    "utf8",
+  );
+  const healthSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/collaboration/health-bar.tsx"), "utf8");
+  const selfHintSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/collaboration/member-self-hint.tsx"), "utf8");
+  assert.doesNotMatch(toolbarSource, /按岗位|按小队/);
+  const order = ["\"talents\"", "\"writers\"", "\"operators\"", "\"editors\"", "\"teams\""].map((key) =>
+    toolbarSource.indexOf(`key: ${key}`),
+  );
+  assert.ok(order.every((idx, i) => idx > 0 && (i === 0 || idx > order[i - 1])), "五个切换按 达人 文案 运营 剪辑 小队 排成一排");
+  assert.doesNotMatch(toolbarSource, /D97757/, "账号排行图标去橙");
+  assert.doesNotMatch(selfHintSource, /D97757/, "「我」标签去橙");
+  assert.match(healthSource, /条作品署名没写全\{canEdit \? " · 去补全" : ""\}/);
+  assert.match(source, /const handleSegmentChange = \(next: CollaborationSegment\)/);
 });
 
 test("账号排行弹窗接收主页面 year/month，区分历史月份排行与当月实时排行", () => {

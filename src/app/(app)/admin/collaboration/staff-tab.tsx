@@ -1,490 +1,118 @@
 "use client";
 
-import {
-  CollaborationDiagnosisContext,
-  CollaborationWorkReviewLink,
-} from "@/components/admin/collaboration-work-review-link";
-import {
-  COLLABORATION_METRIC_HEADER_TIPS,
-  CollaborationQualityCells,
-  ExcellentCountCell,
-} from "./collaboration-quality-hints";
-import { WriterCertificationButton } from "./writer-certification-button";
-import { Fragment, useContext, useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { useMemo, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
-import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
-import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
+import {
+  excellentCountColumn,
+  interactionDetailColumns,
+  qualityColumns,
+  rateColumns,
+  retentionDetailColumns,
+  volumeColumns,
+} from "./collaboration-quality-hints";
+import { MemberZeroOutputBanner } from "./member-self-hint";
+import { RoleTable, type RoleColumn } from "./role-table";
+import { formatAccountLine, goodExcellentText } from "./talent-tab";
+import { DetailToggle } from "./work-group-detail-columns";
+import { WriterCertificationButton } from "./writer-certification-button";
 import { formatBigNumber, type StaffRow } from "./types";
-import { formatRate } from "./work-group-list-tab";
+
+export type StaffRole = "writer" | "editor";
 
 interface StaffTabProps {
   rows: StaffRow[];
   certifiableUserIds?: string[];
-  role: "writer" | "editor";
-  isLoading?: boolean;
+  role: StaffRole;
   currentUserId?: string | null;
   isMemberViewer?: boolean;
+  /** 良优率列头旁的「评级规则」入口（只有文案表有评级列） */
+  rulesEntry?: ReactNode;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
 }
 
-type SortField =
-  | "reportCount"
-  | "totalPlay"
-  | "avgPlay"
-  | "excellentCount"
-  | "followerConversionRate"
-  | "interactionRate"
-  | "avgInteractionAchievement"
-  | "avgContentAchievement"
-  | "goodExcellentRate";
-
-export type StaffRole = "writer" | "editor";
-
-/** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
-export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1080px]",
-  editor: "min-w-[500px]",
-};
-
-/** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
-export interface StaffColumnSort {
-  sortField: string;
-  sortOrder: "asc" | "desc";
-  onSort: (field: SortField) => void;
-  renderSortIcon: (field: SortField) => ReactNode;
-}
-
-export function StaffTableColGroup({ role }: { role: StaffRole }) {
-  if (role === "writer") {
-    return (
-      <colgroup>
-        <col className="w-10" />
-        <col className="min-w-[90px] w-auto" />
-        <col className="min-w-[104px] w-auto" />
-        <col className="w-[76px]" />
-        <col className="w-[76px]" />
-        <col className="w-[80px]" />
-        <col className="w-[80px]" />
-        <col className="w-[74px]" />
-        <col className="w-[74px]" />
-        <col className="w-[80px]" />
-        <col className="w-[80px]" />
-        <col className="w-[86px]" />
-        <col className="w-[126px]" />
-      </colgroup>
-    );
-  }
-
-  return (
-    <colgroup>
-      <col className="w-10" />
-      <col className="min-w-[90px] w-auto" />
-      <col className="min-w-[120px] w-auto" />
-      <col className="w-[80px]" />
-      <col className="w-[80px]" />
-      <col className="w-[82px]" />
-    </colgroup>
-  );
-}
-
-/** 列头：岗位 Tab 与组详情完全同一份，杜绝两边列名/列序漂移。 */
-export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffColumnSort }) {
-  const countLabel = "本月篇数";
-
-  return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-      <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="text-left font-normal text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
-      <TableHead className="text-left font-normal text-[#78716C] pl-4">负责账号</TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("totalPlay")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          总播放
-          {sort.renderSortIcon("totalPlay")}
-        </button>
-      </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("avgPlay")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          条均播
-          {sort.renderSortIcon("avgPlay")}
-        </button>
-      </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("reportCount")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          {countLabel}
-          {sort.renderSortIcon("reportCount")}
-        </button>
-      </TableHead>
-      {role === "writer" && (
-        <>
-          <TableHead className="text-right font-normal text-[#78716C]">
-            <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
-              <button
-                type="button"
-                onClick={() => sort.onSort("excellentCount")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-              >
-                优条数{sort.renderSortIcon("excellentCount")}
-              </button>
-            </SimpleTooltip>
-          </TableHead>
-          {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-            <TableHead key={field} className="text-right font-normal text-[#78716C]">
-              <SimpleTooltip
-                align="end"
-                contentClassName="text-[12px] max-w-xs text-left"
-                tip={COLLABORATION_METRIC_HEADER_TIPS[field]}
-              >
-                <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
-                  {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
-                </button>
-              </SimpleTooltip>
-            </TableHead>
-          ))}
-          <TableHead className="text-right font-normal text-[#78716C]">
-            <SimpleTooltip
-              align="end"
-              contentClassName="text-[12px] max-w-xs text-left"
-              tip={COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement}
-            >
-              <button
-                type="button"
-                onClick={() => sort.onSort("avgInteractionAchievement")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgInteractionAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-              >
-                互动达成{sort.renderSortIcon("avgInteractionAchievement")}
-              </button>
-            </SimpleTooltip>
-          </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C]">
-            <SimpleTooltip
-              align="end"
-              contentClassName="text-[12px] max-w-xs text-left"
-              tip={COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement}
-            >
-              <button
-                type="button"
-                onClick={() => sort.onSort("avgContentAchievement")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgContentAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-              >
-                留存达成{sort.renderSortIcon("avgContentAchievement")}
-              </button>
-            </SimpleTooltip>
-          </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C] px-2">
-            <SimpleTooltip
-              align="end"
-              contentClassName="text-[12px] max-w-xs text-left"
-              tip={COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate}
-            >
-              <button
-                type="button"
-                onClick={() => sort.onSort("goodExcellentRate")}
-                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-              >
-                良优率{sort.renderSortIcon("goodExcellentRate")}
-              </button>
-            </SimpleTooltip>
-          </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C] pr-6">认证状态</TableHead>
-        </>
-      )}
-    </TableRow>
-  );
-}
-
-/** 认证状态单元格：无认证权限（如组详情、只读视角）时只读展示，不挂载带路由的认证按钮。 */
-function WriterCertificationCell({
-  row,
-  certifiableUserIds,
-}: {
-  row: StaffRow;
-  certifiableUserIds: string[];
-}) {
+/** 认证：有权限的给按钮，其余只读。按钮在可点的行里，点击不能冒泡成「打开档案」。 */
+function WriterCertificationCell({ row, canCertify }: { row: StaffRow; canCertify: boolean }) {
   const hasWork = row.reportCount > 0;
-  if (!certifiableUserIds.includes(row.userId)) {
+  if (!canCertify) {
     return (
       <Badge variant={row.isCertified || !hasWork ? "secondary" : "warning"}>
-        {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : (hasWork ? "未认证 (有产出)" : "未认证")}
+        {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : hasWork ? "待认证" : "未认证"}
       </Badge>
     );
   }
   return (
-    <WriterCertificationButton
-      userId={row.userId}
-      certified={Boolean(row.isCertified)}
-      certifiedByName={row.certifiedByName}
-      canCertify
-      hasWork={hasWork}
-    />
+    <span
+      className="inline-flex"
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <WriterCertificationButton
+        userId={row.userId}
+        certified={Boolean(row.isCertified)}
+        certifiedByName={row.certifiedByName}
+        canCertify
+        hasWork={hasWork}
+      />
+    </span>
   );
 }
 
-/** 单人数据行：只出单元格，行容器（是否可点、键盘行为）由调用方决定。 */
-export function StaffRowCells({
-  row, role, isSelf = false, isExpanded, onToggleExpand, onSelectPerson, onPrefetchPerson, certifiableUserIds = [],
-}: {
-  row: StaffRow; role: StaffRole; isSelf?: boolean; isExpanded: boolean;
-  onToggleExpand: (userId: string) => void; onSelectPerson: (userId: string) => void; onPrefetchPerson?: (userId: string) => void; certifiableUserIds?: string[];
-}) {
-  const displayedAccounts = row.involvedAccounts.slice(0, 2).map((a) => a.accountName).join("、");
-  const extraCount = row.involvedAccountTotal - Math.min(row.involvedAccounts.length, 2);
-  const isZero = row.reportCount === 0;
-
-  return (
-    <>
-      <TableCell className="w-10 px-2 py-2 sticky left-0 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10">
-        <button
-          type="button"
-          onClick={() => onToggleExpand(row.userId)}
-          aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
-          className={`flex size-6 items-center justify-center rounded-md transition-colors cursor-pointer ${
-            isExpanded ? "text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-          }`}
-        >
-          {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-        </button>
-      </TableCell>
-      <TableCell className="text-left font-normal pl-4 py-2 sticky left-10 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <button
-          type="button"
-          onClick={(event) => { event.stopPropagation(); onSelectPerson(row.userId); }}
-          onMouseEnter={() => onPrefetchPerson?.(row.userId)}
-          onFocus={() => onPrefetchPerson?.(row.userId)}
-          className="inline-flex items-center hover:underline transition-colors cursor-pointer"
-        >
-          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${isZero ? "text-[#78716C]" : "text-[#141413]"}`}>
-            {row.name}
-          </span>
-          {isSelf && <SelfMemberBadge />}
-        </button>
-      </TableCell>
-      <TableCell className="text-left py-2 pl-4 text-[#1F1E1D] overflow-hidden">
-        {extraCount > 0 ? (
-          <Tooltip>
-            <TooltipTrigger className="cursor-help inline-flex max-w-full items-center text-left">
-              <span className="truncate">{displayedAccounts || "—"}</span>
-              <span className="ml-1 shrink-0 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
-                等 {row.involvedAccountTotal} 个账号
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="text-[12px] max-w-xs">
-              <p className="font-normal text-[#141413] mb-1">经手账号：</p>
-              <p className="text-[#1F1E1D] leading-relaxed">
-                {row.involvedAccounts.map((account) => account.accountName).join("、")}（展开本行可查看逐篇明细）
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="block truncate">{displayedAccounts || "—"}</span>
-        )}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {formatBigNumber(row.totalPlay)}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {formatBigNumber(row.avgPlay)}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
-        {row.reportCount}
-      </TableCell>
-      {role === "writer" && (
-        <>
-          <ExcellentCountCell writerQuality={row.writerQuality} />
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.followerConversionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.interactionRate)}</TableCell>
-          <CollaborationQualityCells writerQuality={row.writerQuality} />
-          <TableCell className="text-right py-2 pr-6">
-            <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
-          </TableCell>
-        </>
-      )}
-    </>
-  );
-}
-
-/** 展开行：逐篇作品明细。未展开时返回 null。 */
-export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; role: StaffRole; isExpanded: boolean }) {
-  const diagnosisContext = useContext(CollaborationDiagnosisContext);
-  if (!isExpanded) return null;
-
-  return (
-    <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 13 : 6} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
-        <div className="px-6 py-2">
-          <table className="w-full table-fixed text-[12px]">
-            <colgroup>
-              <col className="w-[110px]" />
-              <col className="w-[160px]" />
-              <col />
-              <col className="w-[90px]" />
-            </colgroup>
-            <thead>
-              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
-                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">日期</th>
-                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">账号</th>
-                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">作品</th>
-                <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">播放</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E2DF]/40">
-              {row.works.length > 0 ? (
-                row.works.map((work) => {
-                  return (
-                    <tr
-                      key={work.reportId}
-                      onClick={() => {
-                        if (work.reportId && diagnosisContext) {
-                          void diagnosisContext.openDiagnosisByReportId(work.reportId);
-                        }
-                      }}
-                      className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
-                    >
-                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">{work.reportDate}</td>
-                      <td className="px-3 py-2 text-[#1F1E1D]">{work.accountName}</td>
-                      <td className="overflow-hidden px-3 py-2 font-normal text-[#141413]">
-                        <div className="flex min-w-0 items-center gap-1">
-                          <CollaborationWorkReviewLink
-                            reportId={work.reportId}
-                            previewMode="title-only"
-                            preview={{
-                              title: work.title,
-                              accountName: work.accountName,
-                              playCount: work.playCount,
-                              reportDate: work.reportDate,
-                              dataSource: work.dataSource,
-                            }}
-                            className="min-w-0 flex-1 truncate text-left group-hover:text-[#141413] group-hover:underline"
-                          >
-                            {work.title}
-                          </CollaborationWorkReviewLink>
-                          {work.dataSource === "manual" && (
-                            <SimpleTooltip tip="该数据由人工填写或修改" align="end">
-                              <span className="shrink-0 text-[12px] text-[#78716C] cursor-help">手工</span>
-                            </SimpleTooltip>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-3 py-2">
-                    <EmptyState variant="compact" title="暂无作品记录" />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-export function StaffTab({ rows, role, isLoading, currentUserId = null, isMemberViewer = false, onSelectPerson, onPrefetchPerson, certifiableUserIds = [] }: StaffTabProps) {
+export function StaffTab({
+  rows,
+  role,
+  currentUserId = null,
+  isMemberViewer = false,
+  rulesEntry,
+  onSelectPerson,
+  onPrefetchPerson,
+  certifiableUserIds = [],
+}: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const tabKey = role === "writer" ? "writers" : "editors";
+  const [showDetail, setShowDetail] = useState(false);
 
-  const [sortField, setSortField] = useState<SortField>("reportCount");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
-
-  const toggleExpand = (userId: string) => {
-    setExpandedUserIds((previous) => (previous.has(userId) ? new Set() : new Set([userId])));
-  };
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
-    else { setSortField(field); setSortOrder("desc"); }
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1" />;
-    return sortOrder === "desc" ? <ArrowDown className="size-3 text-[#141413] ml-1" /> : <ArrowUp className="size-3 text-[#141413] ml-1" />;
-  };
-
-  const sortedRows = useMemo(() => {
-    const getSortValue = (row: StaffRow, field: SortField): number | null => {
-      if (field === "avgInteractionAchievement") return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
-      if (field === "avgContentAchievement") return row.writerQuality?.summary?.avgContentAchievement ?? null;
-      if (field === "goodExcellentRate") return row.writerQuality?.summary?.goodExcellentRate ?? null;
-      if (field === "excellentCount") return row.writerQuality?.summary?.overallGradeCounts.excellent ?? null;
-      return row[field] ?? null;
-    };
-    const list = [...rows];
-    list.sort((left, right) => {
-      const valLeft = getSortValue(left, sortField);
-      const valRight = getSortValue(right, sortField);
-      if (valLeft === null && valRight === null) return 0;
-      if (valLeft === null) return 1;
-      if (valRight === null) return -1;
-      const diff = valRight - valLeft;
-      return sortOrder === "desc" ? diff : -diff;
-    });
-    return pinCurrentUserFirst(list, currentUserId);
-  }, [rows, sortField, sortOrder, currentUserId]);
+  const columns = useMemo<RoleColumn<StaffRow>[]>(() => {
+    if (role === "editor") return volumeColumns<StaffRow>();
+    const getQuality = (row: StaffRow) => row.writerQuality;
+    const certifiable = new Set(certifiableUserIds);
+    return [
+      ...volumeColumns<StaffRow>(),
+      ...rateColumns<StaffRow>(),
+      ...(showDetail ? interactionDetailColumns<StaffRow>() : []),
+      ...qualityColumns<StaffRow>(getQuality, rulesEntry),
+      ...(showDetail ? retentionDetailColumns<StaffRow>(getQuality) : []),
+      excellentCountColumn<StaffRow>(getQuality),
+      {
+        key: "certification",
+        label: "认证",
+        tip: "认证后才计入文案结算。",
+        width: 104,
+        render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} />,
+      },
+    ];
+  }, [role, showDetail, rulesEntry, certifiableUserIds]);
 
   const showSelfZeroHint = Boolean(
     isMemberViewer && currentUserId && !rows.some((r) => r.userId === currentUserId && r.reportCount > 0),
   );
 
-  if (isLoading) {
-    return (
-      <Card className="p-4 gap-3">
-        <Skeleton className="h-10 w-full rounded-xl" />
-        {Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-12 w-full rounded-xl" />)}
-      </Card>
-    );
-  }
-
   if (rows.length === 0) {
     return (
       <div className="space-y-3">
         {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
-        <div className="py-16 text-center">
-          <EmptyState
-            illustration={role === "writer" ? <DeskStudyIllustration size={96} /> : <CompassConstellationIllustration size={96} />}
-            title={`本月暂无${roleLabel}岗位记录`}
-            description={role === "writer"
-              ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常计入文案结算。"
-              : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
-          />
-        </div>
+        <EmptyState
+          className="py-16"
+          illustration={role === "writer" ? <DeskStudyIllustration size={96} /> : <CompassConstellationIllustration size={96} />}
+          title={`本月还没有${roleLabel}记录`}
+          description={
+            role === "writer"
+              ? "管理员可在本表认证文案成员，认证后计入文案结算。"
+              : "剪辑只统计给别人账号协同剪辑的作品。"
+          }
+        />
       </div>
     );
   }
@@ -492,41 +120,32 @@ export function StaffTab({ rows, role, isLoading, currentUserId = null, isMember
   return (
     <div className="space-y-2">
       {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
-      <Card className="overflow-hidden p-0 gap-0">
-        <Table className={`${STAFF_TABLE_MIN_WIDTH[role]} table-fixed`}>
-          <StaffTableColGroup role={role} />
-          <TableHeader>
-            <StaffHeaderRow role={role} sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
-          </TableHeader>
-          <TableBody className="text-[13px]">
-            {sortedRows.map((row) => {
-              const isExpanded = expandedUserIds.has(row.userId);
-              const isSelf = Boolean(currentUserId && row.userId === currentUserId);
-              return (
-                <Fragment key={row.userId}>
-                <TableRow
-                  data-self={isSelf ? "true" : undefined}
-                  className={`group transition-colors data-[self=true]:bg-[#F7F7F6] ${isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]"}`}
-                >
-                  <StaffRowCells
-                    row={row}
-                    role={role}
-                    isSelf={isSelf}
-                    isExpanded={isExpanded}
-                    onToggleExpand={toggleExpand}
-                    onSelectPerson={onSelectPerson}
-                    onPrefetchPerson={onPrefetchPerson}
-                    certifiableUserIds={certifiableUserIds}
-                  />
-                </TableRow>
-                <StaffExpandedRow row={row} role={role} isExpanded={isExpanded} />
-                </Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
-      {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月还没有产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步数据复盘的作品不参与比率。</p>}
+      {role === "writer" && (
+        <div className="hidden sm:block">
+          <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
+        </div>
+      )}
+      <RoleTable
+        rows={rows}
+        columns={columns}
+        defaultSortKey="totalPlay"
+        getId={(row) => row.userId}
+        getName={(row) => row.name}
+        getSub={(row) =>
+          formatAccountLine(row.involvedAccounts.map((a) => a.accountName), row.involvedAccountTotal)
+        }
+        isZero={(row) => row.reportCount === 0}
+        getMobileSummary={(row) => ({
+          primary: formatBigNumber(row.totalPlay),
+          secondary:
+            role === "writer"
+              ? `${row.reportCount} 篇 · ${goodExcellentText(row.writerQuality?.summary)}`
+              : `${row.reportCount} 篇`,
+        })}
+        currentUserId={currentUserId}
+        onSelectPerson={onSelectPerson}
+        onPrefetchPerson={onPrefetchPerson}
+      />
     </div>
   );
 }

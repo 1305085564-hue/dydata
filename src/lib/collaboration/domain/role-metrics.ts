@@ -159,10 +159,15 @@ export function buildStaff(
     })
     .sort((a, b) => b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"));
 }
+/** 岗位行透传的比率：与小队同源（先加总再相除），赞评转藏四项相加等于互动率，供「展开明细」使用。 */
 export function pickRateMetrics(metrics: WorkGroupPerformanceMetrics) {
   return {
     followerConversionRate: metrics.followerConversionRate,
     interactionRate: metrics.interactionRate,
+    likeRate: metrics.likeRate,
+    commentRate: metrics.commentRate,
+    shareRate: metrics.shareRate,
+    favoriteRate: metrics.favoriteRate,
   };
 }
 

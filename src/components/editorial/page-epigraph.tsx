@@ -28,14 +28,6 @@ const MARKS: Record<PageEpigraphKey, React.ReactNode> = {
       <path d="M9.6 12.6C11.6 12.2 13 11 14 9.4" stroke={SOFT} strokeWidth="1.15" {...stroke} />
     </>
   ),
-  // 协作管理「接力」：两枚交叠的柔环，交汇处一点暖光
-  collaboration: (
-    <>
-      <circle cx="5.8" cy="8" r="3.8" stroke={INK} strokeWidth="1.2" />
-      <circle cx="10.2" cy="8" r="3.8" stroke={SOFT} strokeWidth="1.15" />
-      <circle cx="8" cy="8" r="1.4" fill={WARM} fillOpacity="0.88" />
-    </>
-  ),
   // 每日大盘「晨光」：地平线上升起的半轮暖日与一道远光
   pulse: (
     <>

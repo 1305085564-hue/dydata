@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { StaffTab } from "./staff-tab";
 import type { StaffRow, ContentQualitySummary } from "./types";
 import { partitionWriterCandidates } from "@/lib/collaboration/domain/workbench-state";
@@ -37,9 +37,11 @@ export function WriterTab({
   canCertify,
   currentUserId,
   isMemberViewer = false,
+  rulesEntry,
   onSelectPerson,
   onPrefetchPerson,
 }: {
+  rulesEntry?: ReactNode;
   rows: StaffRow[];
   candidates: WriterCandidateRow[];
   canCertify: boolean;
@@ -85,25 +87,22 @@ export function WriterTab({
         role="writer"
         currentUserId={currentUserId}
         isMemberViewer={isMemberViewer}
+        rulesEntry={rulesEntry}
         onSelectPerson={onSelectPerson}
         onPrefetchPerson={onPrefetchPerson}
         certifiableUserIds={certifiableUserIds}
       />
       {uncertifiedRows.length > 0 && (
-        <div className="px-1">
-          <button
-            type="button"
-            onClick={() => setShowCandidates((prev) => !prev)}
-            className="inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] font-normal text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors cursor-pointer"
-          >
-            <span className="tabular-nums">{showCandidates ? "[-]" : "[+]"}</span>
-            <span>
-              {showCandidates
-                ? `收起未认证候选人 (${uncertifiedRows.length})`
-                : `查看未认证候选人 (${uncertifiedRows.length})`}
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-expanded={showCandidates}
+          onClick={() => setShowCandidates((prev) => !prev)}
+          className="inline-flex h-7 items-center rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150 cursor-pointer"
+        >
+          {showCandidates
+            ? `收起未认证候选人（${uncertifiedRows.length}）`
+            : `还有 ${uncertifiedRows.length} 位未认证候选人`}
+        </button>
       )}
     </div>
   );

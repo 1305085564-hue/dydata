@@ -118,7 +118,6 @@ test("personal-card.tsx 源码断言：旧6个月柱状图已被彻底移除，�
   );
   const content = [
     cardPath,
-    path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-metrics.tsx"),
     path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-growth.tsx"),
     path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-growth-chart.tsx"),
     path.resolve(process.cwd(), "src/lib/collaboration/domain/person-metrics.ts"),

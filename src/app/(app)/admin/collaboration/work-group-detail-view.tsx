@@ -180,7 +180,7 @@ export function WorkGroupDetailView({
             onClick={() => onOpenManageDrawer(summary.id)}
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal shadow-input transition duration-150 cursor-pointer active:scale-[0.99]"
           >
-            <UserPlus className="size-3.5 text-[#D97757]" />
+            <UserPlus className="size-3.5 text-[#78716C]" />
             成员管理
           </button>
         )}

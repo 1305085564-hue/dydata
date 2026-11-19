@@ -13,8 +13,9 @@ const dialogSource = readFileSync(
   "utf8"
 );
 
+// 评级规则入口已从页头导语挪到「良优率」列头旁（就近放在用到的地方）
 const collaborationPageSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/admin/collaboration/page.tsx"),
+  resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench.tsx"),
   "utf8"
 );
 

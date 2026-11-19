@@ -263,7 +263,7 @@ export function WorkGroupListTab({
                       event.stopPropagation();
                       onSelectGroup(group.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded-md text-[14px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
+                    className="inline-flex items-center gap-1 rounded-md text-[14px] font-normal text-[#78716C] group-hover:text-[#141413] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
                   >
                     进入
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />

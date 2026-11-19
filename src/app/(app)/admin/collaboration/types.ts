@@ -38,6 +38,11 @@ export interface OperatorAccount {
 export interface OperatorRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   userId: string;
   name: string;
   reportCount: number;
@@ -57,6 +62,11 @@ export interface StaffAccount {
 export interface StaffRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   certifiedByName: string | null;
   isCertified?: boolean;
   userId: string;
@@ -165,6 +175,11 @@ export interface TalentAccount {
 export interface TalentRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   userId: string;
   name: string;
   accountCount: number;
