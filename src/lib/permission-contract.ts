@@ -8,7 +8,7 @@
  * ⚠️ 修改本文件后必须同步：
  * 1. SQL migration 中的权限数组
  * 2. 单元测试中的权限断言
- * 3. docs/系统架构与设计/权限与访问控制.md
+ * 3. docs/reference/链路设计与决策/权限链路.md
  */
 
 import type { CompanyRole, PermissionKey } from "@/types";

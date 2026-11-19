@@ -37,7 +37,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 总入口看 `docs/DYData产品全书.md`（场景 → 文件的映射表）。长期事实分三类：
 
-- `docs/系统架构与设计/` — 当前业务流程、数据口径、权限、模块地图、工程事实与设计规范
+- `docs/系统架构与设计/` — 界面设计规范（效率美学、美学宝典）；业务流程、口径、权限、模块地图和工程事实都在[设计与决策](docs/reference/设计与决策.md)
 - `docs/通用管理/` — 待办清单、上下文交接、文档与维护规范、纠错索引、CLAUDE.md写作指南
 
 其他：
@@ -48,7 +48,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 ## 开发纪律（摘要）
 
-- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、性能预算和证据边界见 `docs/系统架构与设计/工程运行事实.md`，后端写法硬规矩见 `docs/系统架构与设计/后端工程规范.md`。
-- 数据库变更和发布顺序见[项目规则](AGENTS.md)与[后端工程规范](docs/系统架构与设计/后端工程规范.md)。
+- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、性能预算和证据边界见 `docs/reference/链路设计与决策/工程底座（全站通用）.md`「性能预算与加载」，后端写法硬规矩见 `docs/reference/链路设计与决策/工程底座（全站通用）.md`。
+- 数据库变更和发布顺序见[项目规则](AGENTS.md)与[工程底座·后端写法](docs/reference/链路设计与决策/工程底座（全站通用）.md#现行-后端)。
 - 成员当前操作用 `activeVisibleUserIds`，历史查询用 `visibleUserIds`（统一复用 `src/lib/data-access-scope.ts`）。
 - 提交只精确 add 自己改过的文件，禁止 `git add .`；push `main` 需项目负责人确认。

@@ -2,6 +2,24 @@
 
 > 范围：业务怎么选模型、模型怎么找渠道、失败怎么兜底｜涉及页面：[数据上传（工作台）](../页面设计与决策/数据上传（工作台）.md)、[AI配置](../页面设计与决策/AI配置.md)
 
+<a id="现行设计"></a>
+
+## 现行设计
+
+> 系统现在怎么做，以这里为准；为什么这样定，看下面的历史决策。字段、顺位和检测的完整契约见[AI 配置数据契约](../2026-11-05-AI配置重整-数据契约.md)，最近的发布边界见[11-08 复审与上线](../2026-11-08-AI检测四项返工-复审与上线.md)。最后对过代码：2026-11-09。
+
+<a id="现行-入口"></a>
+
+### 一、入口、代码与验证
+
+- 入口：`/admin/ai-config` 先查权限（`manage_system`）→ `/api/admin/ai-config`；业务里正式调用 AI 一律走 `src/lib/ai/client.ts`。
+- 必须保持：业务只选模型，按「所选 → 唯一默认 → 明确停摆」兜底；按模型内顺位找渠道；同步不清健康记录；手动测试和真实失败分别写健康，冷却见契约。删除或停用要按活跃业务的影响确认。密钥不写进文档。
+- 验证（旧场景：同步不清健康、逐条写入、模型独立排序、默认兜底）：
+
+  ```sh
+  npx tsx --test src/lib/ai/feature-catalog.test.ts src/lib/ai-config/feature-controls.test.ts src/lib/ai-config/availability.test.ts src/lib/ai/channel-governance.test.ts src/lib/ai-config/failure-diagnostic.test.ts src/lib/ai/client.test.ts src/lib/ai/provider-routing.test.ts src/app/api/admin/ai-config/route.test.ts src/app/api/admin/ai-config/ai-config.behavior.test.ts src/lib/video-submit-workflow/upload-progress.test.ts
+  ```
+
 ## 历史决策
 
 <a id="第1条"></a>
