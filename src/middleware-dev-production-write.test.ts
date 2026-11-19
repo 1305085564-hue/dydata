@@ -35,6 +35,26 @@ test("登录、退出、会话续期入口放行", () => {
   }
 });
 
+test("本机预览截图凭证的 POST/DELETE 放行，其他写请求继续拦截", () => {
+  for (const method of ["POST", "DELETE"]) {
+    assert.equal(
+      shouldBlockDevProductionWrite(
+        new NextRequest("https://dydata.cc/api/submission-screenshots/grant", { method }),
+        productionEnv,
+      ),
+      false,
+      method,
+    );
+  }
+  assert.equal(
+    shouldBlockDevProductionWrite(
+      new NextRequest("https://dydata.cc/api/submission-screenshots/grant/other", { method: "POST" }),
+      productionEnv,
+    ),
+    true,
+  );
+});
+
 test("线上环境和显式开发放行开关不拦截", () => {
   const request = new NextRequest("https://dydata.cc/api/videos", { method: "POST" });
   assert.equal(shouldBlockDevProductionWrite(request, { ...productionEnv, NODE_ENV: "production" }), false);
