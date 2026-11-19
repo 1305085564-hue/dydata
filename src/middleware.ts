@@ -27,6 +27,8 @@ const DEV_PROD_WRITE_AUTH_PATHS = new Set([
   "/api/cloudbase/auth/refresh",
   // 只发浏览凭证，不写正式库。允许本机预览读取截图。
   "/api/submission-screenshots/grant",
+  // 只读取依赖关系预览，不写正式库。允许本机预览检查依赖。
+  "/api/admin/ai-config/check-dependencies",
 ]);
 
 // 飞书回调等外部服务调用的路由，豁免 CSRF 检查

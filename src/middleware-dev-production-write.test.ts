@@ -55,6 +55,23 @@ test("本机预览截图凭证的 POST/DELETE 放行，其他写请求继续拦�
   );
 });
 
+test("本机预览 AI 配置依赖的 POST 放行，近似路径继续拦截", () => {
+  assert.equal(
+    shouldBlockDevProductionWrite(
+      new NextRequest("https://dydata.cc/api/admin/ai-config/check-dependencies", { method: "POST" }),
+      productionEnv,
+    ),
+    false,
+  );
+  assert.equal(
+    shouldBlockDevProductionWrite(
+      new NextRequest("https://dydata.cc/api/admin/ai-config/check-dependencies/other", { method: "POST" }),
+      productionEnv,
+    ),
+    true,
+  );
+});
+
 test("线上环境和显式开发放行开关不拦截", () => {
   const request = new NextRequest("https://dydata.cc/api/videos", { method: "POST" });
   assert.equal(shouldBlockDevProductionWrite(request, { ...productionEnv, NODE_ENV: "production" }), false);
