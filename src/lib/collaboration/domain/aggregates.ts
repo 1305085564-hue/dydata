@@ -14,7 +14,6 @@ import {
   buildPerformanceMetrics,
   buildSummary,
   fromStatsStart,
-  isSelfHandled,
   profileNameMap,
 } from "./report-rules";
 import { averagePlayOf } from "@/lib/metrics/caliber";
@@ -30,7 +29,6 @@ export function buildCollaborationPageData(
 ) {
   const operators = buildOperators(
     dataset.currentRows,
-    dataset.previousRows,
     dataset.profiles,
     dataset.accounts,
     dataset.videoSnapshots,
@@ -107,7 +105,6 @@ export function buildTalents(
         totalPlay,
         avgPlay: averagePlayOf(talentRows.map((row) => row.play_count)),
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        selfHandledCount: talentRows.filter(isSelfHandled).length,
         accounts: talentAccounts,
         writerQuality: {
           state: qualityTopics.state,

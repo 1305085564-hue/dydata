@@ -82,7 +82,6 @@ export type PersonGrowthInput = {
 
 export type CollaborationMonthDataset = {
   currentRows: CollaborationReport[];
-  previousRows: CollaborationReport[];
   writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
@@ -150,7 +149,6 @@ export type TalentRow = {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  selfHandledCount: number;
   accounts: TalentAccount[];
   writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null };
   qualitySummary?: ContentQualitySummary | null;

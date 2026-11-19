@@ -1,8 +1,7 @@
 "use client";
 
 import { Metric } from "@/components/ui/metric";
-import { TrendingDown, TrendingUp } from "lucide-react";
-import { formatBigNumber, formatMomChange } from "./types";
+import { formatBigNumber } from "./types";
 import type { CollaborationRoleTab, PersonDetailData } from "./types";
 import { PersonalCardGrowth } from "./personal-card-growth";
 import type { CollaborationDiagnosisContextValue } from "@/components/admin/collaboration-work-review-link";
@@ -50,23 +49,6 @@ export function PersonalCardMetrics({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[14px]">
                     <span className="text-[14px] font-normal text-[#1F1E1D]">本月运营概览</span>
-                    {data.operatorSummary?.momChange != null && (
-                      <span className="font-normal text-[12px]">
-                        {data.operatorSummary.momChange > 0 ? (
-                          <span className="text-status-success inline-flex items-center gap-0.5">
-                            <TrendingUp className="size-3" />+
-                            {formatMomChange(data.operatorSummary.momChange)} 环比
-                          </span>
-                        ) : data.operatorSummary.momChange < 0 ? (
-                          <span className="text-status-danger inline-flex items-center gap-0.5">
-                            <TrendingDown className="size-3" />
-                            {formatMomChange(data.operatorSummary.momChange)} 环比
-                          </span>
-                        ) : (
-                          <span className="text-[#78716C]">0.0% 环比</span>
-                        )}
-                      </span>
-                    )}
                   </div>
 
                   {data.operatorSummary ? (

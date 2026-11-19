@@ -67,7 +67,6 @@ test("summary 识别空归属、自处理，并彻底排除统计起点之前的
   assert.deepEqual(buildSummary(rows), {
     total: 2,
     attributed: 1,
-    selfHandled: 1,
     unattributed: 1,
   });
 });
@@ -119,11 +118,10 @@ test("operators 汇总作品数与播放，上月无记录时环比为 null", ()
     report({ id: "old", report_date: "2026-07-26", play_count: 999999, operator_user_id: "operator-1" }),
   ];
 
-  const result = buildOperators(current, [], profiles, accounts);
+  const result = buildOperators(current, profiles, accounts);
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 3);
-  assert.equal(result[0]?.momChange, null);
 });
 
 test("operators 只负责一个账号也进入岗位月报", () => {
@@ -138,10 +136,9 @@ test("operators 只负责一个账号也进入岗位月报", () => {
     ),
     report({ id: "current-hit", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
   ];
-  const result = buildOperators(current, [], profiles, accounts);
+  const result = buildOperators(current, profiles, accounts);
 
   assert.equal(result.length, 1, "只负责一个账号的运营也应进入岗位月报");
-  assert.equal(result[0]?.momChange, null);
   assert.equal(result[0]?.accountCount, 1);
 });
 
@@ -164,7 +161,7 @@ test("operators 纯自营属于达人，不进入运营岗", () => {
     report({ id: "self-2", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
   ];
 
-  const result = buildOperators(rows, [], profiles, [ownAccount]);
+  const result = buildOperators(rows, profiles, [ownAccount]);
 
   assert.deepEqual(result, []);
 });
@@ -177,7 +174,7 @@ test("operators 混合归属时只统计孵化别人的账号", () => {
     report({ id: "other-1", play_count: 100, operator_user_id: "operator-1" }),
   ];
 
-  const result = buildOperators(rows, [], profiles, [...accounts, ownAccount]);
+  const result = buildOperators(rows, profiles, [...accounts, ownAccount]);
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 1);
@@ -190,7 +187,7 @@ test("operators 账号未绑定主人时按别人的账号计入", () => {
   const unbound: CollaborationAccount = { id: "account-free", name: "无主账号", profile_id: null };
   const rows = [report({ id: "free-1", account_id: "account-free", operator_user_id: "operator-1" })];
 
-  const result = buildOperators(rows, [], profiles, [unbound]);
+  const result = buildOperators(rows, profiles, [unbound]);
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.accountCount, 1);
@@ -307,7 +304,7 @@ test("岗位页服务端数据包含当前文案或剪辑标签，避免路由�
   ];
 
   const pageData = buildCollaborationPageData(
-    { currentRows, previousRows: [], profiles, accounts, writerCertifications: certifications },
+    { currentRows, profiles, accounts, writerCertifications: certifications },
     "writer",
   );
 
@@ -341,7 +338,7 @@ test("self 范围的岗位页只返回当前成员的岗位统计", () => {
   ];
 
   const pageData = buildCollaborationPageData(
-    { currentRows, previousRows: [], profiles, accounts, writerCertifications: certifications },
+    { currentRows, profiles, accounts, writerCertifications: certifications },
     null,
     "owner-1",
   );
@@ -798,7 +795,7 @@ test("达人明细的数据层归属过滤只收录本人名下账号的作品",
   );
 });
 
-test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 才包含更早样本", async () => {
+test("共享岗位数据集的 currentRows 只包含所选月份", async () => {
   const rows = [
     report({ id: "old", report_date: "2026-07-27" }),
     report({ id: "previous", report_date: "2026-08-15" }),
@@ -828,7 +825,7 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
     visibleUserIds: ["owner-1"],
     range: { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" },
   });
-  assert.deepEqual(dataset.previousRows.map((row) => row.id), ["previous"]);
+  assert.deepEqual(dataset.currentRows.map((row) => row.id), ["current"]);
 });
 
 
@@ -855,7 +852,7 @@ test("已认证零作品保留署名；仅给自己写也可统计", () => {
 });
 test("岗位聚合保留作品来源", () => {
   const rows = [report({operator_user_id:"operator-1",video_editor_user_id:"writer-1",data_source:"manual",play_count:30000})];
-  const operator = buildOperators(rows,[],profiles,accounts)[0];
+  const operator = buildOperators(rows, profiles,accounts)[0];
   assert.equal(operator.reportCount,1);
   assert.equal(buildStaff(rows,"editor",profiles,accounts)[0].works[0].dataSource,"manual");
 });
@@ -880,7 +877,7 @@ test("岗位比率复用24h快照加权聚合，未同步作品不入分母且�
   assert.equal(talent.followerConversionRate, 0.1);
   assert.equal(talent.interactionRate, 0.1);
 
-  const operators = buildOperators(rows, [], profiles, accounts, snapshots);
+  const operators = buildOperators(rows, profiles, accounts, snapshots);
   assert.equal(operators[0]?.followerConversionRate, 0.01);
   assert.equal(operators[0]?.interactionRate, 0.01);
   const empty = buildStaff(rows, "writer", profiles, accounts, certifications, new Map())[0]!;

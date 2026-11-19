@@ -184,7 +184,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                 onClick={() => sort.onSort("avgInteractionAchievement")}
                 className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgInteractionAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
               >
-                互动数据{sort.renderSortIcon("avgInteractionAchievement")}
+                互动达成{sort.renderSortIcon("avgInteractionAchievement")}
               </button>
             </SimpleTooltip>
           </TableHead>

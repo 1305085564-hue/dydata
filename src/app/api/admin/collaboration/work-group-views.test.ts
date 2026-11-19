@@ -93,7 +93,6 @@ const snapshots = new Map<string, VideoSnapshotMetrics>([
 
 const dataset: CollaborationMonthDataset = {
   currentRows,
-  previousRows: [],
   profiles,
   accounts,
   visibleUserIds: profiles.map((profile) => profile.id),

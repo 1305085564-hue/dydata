@@ -281,9 +281,9 @@ export function WriterQualityChart({
                     backgroundColor: visibleMetrics.interaction ? "#43718E" : "#A8A29E",
                   }}
                 />
-                <span>互动数据</span>
+                <span>互动达成</span>
               </TooltipTrigger>
-              <TooltipContent side="top">点击切换互动数据折线显隐</TooltipContent>
+              <TooltipContent side="top">点击切换互动达成折线显隐</TooltipContent>
             </Tooltip>
           </div>
         )}
@@ -361,7 +361,7 @@ export function WriterQualityChart({
                       )}
                       {visibleMetrics.interaction && (
                         <span className="text-[#78716C]">
-                          互动数据{" "}
+                          互动达成{" "}
                           <span className="font-normal text-[#43718E]">
                             {hoveredWork.interactionAchievement != null
                               ? `${Math.round(hoveredWork.interactionAchievement)}%`
@@ -417,7 +417,7 @@ export function WriterQualityChart({
                       )}
                       {visibleMetrics.interaction && summary.avgInteractionAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          互动数据均值 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
+                          互动达成均值 <span className="font-normal text-[#43718E]">{Math.round(summary.avgInteractionAchievement)}%</span>
                         </span>
                       )}
                       <Tooltip>
@@ -438,7 +438,7 @@ export function WriterQualityChart({
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger render={<span className="text-[#78716C] tabular-nums cursor-help" />}>
-                          留存良优率{" "}
+                          良优率{" "}
                           <span className="font-normal text-[#141413]">
                             {summary.ratedCount === 0 || summary.goodExcellentRate === null
                               ? "—"
@@ -574,7 +574,7 @@ export function WriterQualityChart({
                   <Line
                     type="monotone"
                     dataKey="interactionAchievement"
-                    name="互动数据"
+                    name="互动达成"
                     stroke="#43718E"
                     strokeWidth={1.5}
                     strokeDasharray="3 2"

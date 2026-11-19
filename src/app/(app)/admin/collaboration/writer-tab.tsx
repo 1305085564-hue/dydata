@@ -23,7 +23,6 @@ function candidateToStaffRow(candidate: WriterCandidateRow): StaffRow {
     isCertified: candidate.certified,
     totalPlay: 0,
     avgPlay: 0,
-    selfHandledCount: 0,
     involvedAccounts: [],
     involvedAccountTotal: 0,
     recentWorks: [],

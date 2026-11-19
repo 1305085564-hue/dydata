@@ -8,8 +8,6 @@ import {
   ArrowUpDown,
   ArrowDown,
   ArrowUp,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 import {
   Table,
@@ -29,7 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
-import { formatBigNumber, formatMomChange, type OperatorRow } from "./types";
+import { formatBigNumber, type OperatorRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
 interface OperatorTabProps {
@@ -43,7 +41,7 @@ interface OperatorTabProps {
 type SortField =
   "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
 
-export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[680px]";
+export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[600px]";
 
 export function OperatorTableColGroup() {
   return (
@@ -54,7 +52,6 @@ export function OperatorTableColGroup() {
       <col className="w-[82px]" />
       <col className="w-[80px]" />
       <col className="w-[82px]" />
-      <col className="w-[78px]" />
       <col className="w-[78px]" />
       <col className="w-[78px]" />
     </colgroup>
@@ -137,16 +134,6 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           </button>
         </TableHead>
       ))}
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
-            环比
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            本月总播放较上月总播放的变化比例；上月无有效基准时显示 —
-          </TooltipContent>
-        </Tooltip>
-      </TableHead>
     </TableRow>
   );
 }
@@ -168,7 +155,6 @@ export function OperatorRowCells({
   onPrefetchPerson?: (userId: string) => void;
 }) {
   const canExpand = row.accounts.length > 0;
-  const mom = row.momChange;
   const isZero = row.reportCount === 0;
 
   return (
@@ -235,23 +221,6 @@ export function OperatorRowCells({
       </TableCell>
       <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
       <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className="text-right tabular-nums py-2 px-2">
-        {mom == null ? (
-          <span className="text-[#78716C]">—</span>
-        ) : mom > 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-status-success font-normal text-[12px]">
-            <TrendingUp className="size-3" />+
-            {formatMomChange(mom)}
-          </span>
-        ) : mom < 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-status-danger font-normal text-[12px]">
-            <TrendingDown className="size-3" />
-            {formatMomChange(mom)}
-          </span>
-        ) : (
-          <span className="text-[#78716C] tabular-nums text-[12px]">0.0%</span>
-        )}
-      </TableCell>
     </>
   );
 }
@@ -262,7 +231,7 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={9} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
+      <TableCell colSpan={8} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
         <div className="px-6 py-2">
           <table className="w-full text-[12px]">
             <thead>

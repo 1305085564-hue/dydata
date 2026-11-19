@@ -20,7 +20,6 @@ import {
   buildPerformanceMetrics,
   fromStatsStart,
   getCollaborationWorkDate,
-  getPreviousMonthRange,
   getSixMonthRanges,
   roleList,
   selectGrowthReports,
@@ -184,18 +183,13 @@ export function buildPersonPayload(input: {
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
   const currentRange = ranges.at(-1)!;
-  const previousRange = getPreviousMonthRange(input.year, input.month);
   const reports = fromStatsStart(input.reports).filter(
     (row) => roleList(row, input.targetUserId).length > 0,
   );
   const currentRows = reports.filter(
     (row) => row.report_date >= currentRange.start && row.report_date <= currentRange.end,
   );
-  const previousRows = reports.filter(
-    (row) => row.report_date >= previousRange.start && row.report_date <= previousRange.end,
-  );
   const currentOperatorRows = currentRows.filter((row) => row.operator_user_id === input.targetUserId);
-  const previousOperatorRows = previousRows.filter((row) => row.operator_user_id === input.targetUserId);
   const anomalies = anomalyIndexes(input.videos);
   const growthToday = input.today ?? formatShanghaiDateOnly();
   const growth =
@@ -215,7 +209,7 @@ export function buildPersonPayload(input: {
       : { works: [] as PersonGrowthWorkItem[], summary: null };
 
   const operator = currentOperatorRows.length > 0
-    ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts).find(
+    ? buildOperators(currentOperatorRows, input.profiles, input.accounts).find(
         (item) => item.userId === input.targetUserId,
       ) ?? null
     : null;
@@ -225,7 +219,6 @@ export function buildPersonPayload(input: {
         totalPlay: operator.totalPlay,
         avgPlay: operator.avgPlay,
         totalFollowerConvert: operator.totalFollowerConvert,
-        momChange: operator.momChange,
         accountCount: operator.accountCount,
         operatedProfileCount: operator.operatedProfileCount,
       }

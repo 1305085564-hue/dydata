@@ -17,7 +17,7 @@ test("协作月度数据集在同一范围内复用 60 秒结果", async () => {
   let calls = 0;
   const loader = async () => {
     calls += 1;
-    return { currentRows: [], previousRows: [], historyRows: [], profiles: [], accounts: [], writerCertifications: [], visibleUserIds: [], videoSnapshots: new Map(), videoTopicTags: { state: "ready" as const, tags: new Map() } };
+    return { currentRows: [], profiles: [], accounts: [], writerCertifications: [], visibleUserIds: [], videoSnapshots: new Map(), videoTopicTags: { state: "ready" as const, tags: new Map() } };
   };
 
   const first = await loadCachedCollaborationMonthDataset(input, loader);
@@ -32,7 +32,7 @@ test("fresh 请求跳过协作月度缓存", async () => {
   let calls = 0;
   const loader = async () => {
     calls += 1;
-    return { currentRows: [], previousRows: [], profiles: [], accounts: [], writerCertifications: [], visibleUserIds: [], videoSnapshots: new Map(), videoTopicTags: { state: "ready" as const, tags: new Map() } };
+    return { currentRows: [], profiles: [], accounts: [], writerCertifications: [], visibleUserIds: [], videoSnapshots: new Map(), videoTopicTags: { state: "ready" as const, tags: new Map() } };
   };
 
   await loadCachedCollaborationMonthDataset(input, loader);

@@ -30,14 +30,6 @@ export function accountMap(accounts: CollaborationAccount[]) {
   return new Map(accounts.map((account) => [account.id, account])); // gate:transient-map 函数内临时聚合，随调用栈释放
 }
 
-export function isSelfHandled(row: CollaborationReport) {
-  return (
-    row.script_author_user_id === row.user_id &&
-    row.video_editor_user_id === row.user_id &&
-    row.operator_user_id === row.user_id
-  );
-}
-
 export function fromStatsStart(rows: CollaborationReport[]) {
   return rows.filter((row) => row.report_date >= STATS_START_DATE);
 }
@@ -113,11 +105,6 @@ export function getMonthRange(year: number, month: number): MonthRange | null {
   return { year, month, start: `${prefix}-01`, end: `${prefix}-${String(lastDay).padStart(2, "0")}` };
 }
 
-export function getPreviousMonthRange(year: number, month: number) {
-  const date = new Date(Date.UTC(year, month - 2, 1));
-  return getMonthRange(date.getUTCFullYear(), date.getUTCMonth() + 1)!;
-}
-
 export function getSixMonthRanges(year: number, month: number) {
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date(Date.UTC(year, month - 6 + index, 1));
@@ -140,7 +127,6 @@ export function buildSummary(rows: CollaborationReport[]) {
     attributed: scopedRows.filter(
       (row) => row.script_author_user_id && row.video_editor_user_id && row.operator_user_id,
     ).length,
-    selfHandled: scopedRows.filter(isSelfHandled).length,
     unattributed: scopedRows.filter(
       (row) => !row.script_author_user_id || !row.video_editor_user_id || !row.operator_user_id,
     ).length,
@@ -177,12 +163,6 @@ export function buildUnattributedReports(
   }));
 }
 
-export function monthOverMonth(currentTotal: number, previousRows: CollaborationReport[]) {
-  if (previousRows.length === 0) return null;
-  const previousTotal = previousRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
-  if (previousTotal <= 0) return null;
-  return (currentTotal - previousTotal) / previousTotal;
-}
 /**
  * 按快照聚合绩效：先加总再相除（加权口径）；未同步作品只计入 reportCount。
  *

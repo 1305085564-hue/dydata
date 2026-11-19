@@ -37,18 +37,16 @@ type SortField =
   | "avgPlay"
   | "reportCount"
   | "accountCount"
-  | "selfHandledCount"
   | "followerConversionRate"
   | "interactionRate";
 
-export const TALENT_TABLE_MIN_WIDTH = "min-w-[1030px]";
+export const TALENT_TABLE_MIN_WIDTH = "min-w-[950px]";
 
 export function TalentTableColGroup() {
   return (
     <colgroup>
       <col className="min-w-[90px] w-auto" />
       <col className="w-[72px]" />
-      <col className="w-[80px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
@@ -125,18 +123,6 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("selfHandledCount")}
-          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "selfHandledCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-          }`}
-        >
-          独立完成
-          {sort.renderSortIcon("selfHandledCount")}
-        </button>
-      </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
           <SimpleTooltip
@@ -160,7 +146,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           tip={COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement}
         >
           <span className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
-            互动数据
+            互动达成
           </span>
         </SimpleTooltip>
       </TableHead>
@@ -222,9 +208,6 @@ export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf
       </TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
-      </TableCell>
-      <TableCell className="py-2 px-2 text-right tabular-nums text-[#78716C]">
-        {row.selfHandledCount}
       </TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>

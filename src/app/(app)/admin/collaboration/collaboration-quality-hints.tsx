@@ -29,7 +29,7 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
     <>
       <p className="font-normal text-[#141413] mb-1">转粉率（加权参考）：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
-        按已同步 24h 快照的涨粉合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动数据」按作品算术平均（不按播放加权）。
+        按已同步 24h 快照的涨粉合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动达成」按作品算术平均（不按播放加权）。
       </p>
     </>
   ),
@@ -37,13 +37,13 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
     <>
       <p className="font-normal text-[#141413] mb-1">互动率（加权参考）：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
-        按已同步 24h 快照的（赞+评+转+藏）合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动数据」按作品算术平均（不按播放加权）。
+        按已同步 24h 快照的（赞+评+转+藏）合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动达成」按作品算术平均（不按播放加权）。
       </p>
     </>
   ),
   avgInteractionAchievement: (
     <>
-      <p className="font-normal text-[#141413] mb-1">互动数据均值：</p>
+      <p className="font-normal text-[#141413] mb-1">互动达成均值：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
         有互动数据作品的互动指标达成率算术平均，不按播放加权。
       </p>
@@ -61,14 +61,14 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
     <>
       <p className="font-normal text-[#141413] mb-1">良优率口径：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
-        留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
+        综合评级为良或优的署名作品篇数 ÷ 综合已评级的署名作品篇数。<br />
         播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
       </p>
     </>
   ),
 } satisfies Record<string, ReactNode>;
 
-/** 文案表与达人表共用的质量三列（互动数据 / 留存数据 / 良优率）及五态悬停提示。 */
+/** 文案表与达人表共用的质量三列（互动达成 / 留存数据 / 良优率）及五态悬停提示。 */
 export function CollaborationQualityCells({
   writerQuality,
 }: {

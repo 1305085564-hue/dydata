@@ -44,10 +44,10 @@ test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () =>
 test("岗位四个 Tab 的列名按锁定方案展示，运营展开行仍保留账号级导粉", () => {
   const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  assert.doesNotMatch(talentSource, /爆款作品|有效作品|优秀作品/);
+  assert.doesNotMatch(talentSource, /爆款作品|有效作品|优秀作品|独立完成/);
   assert.match(talentSource, /转粉率/);
   assert.match(talentSource, /互动率/);
-  assert.doesNotMatch(operatorSource, /爆款数|有效作品|优秀作品/);
+  assert.doesNotMatch(operatorSource, /爆款数|有效作品|优秀作品|环比/);
   assert.doesNotMatch(operatorSource, /导粉\s*\{sort/);
   assert.match(operatorSource, /<th[^>]*>\s*导粉\s*<\/th>/);
   assert.match(operatorSource, /转粉率/);
@@ -68,8 +68,8 @@ test("岗位表格脚注明确日报产量与快照比率口径不同", () => {
 
 test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  // 运营：展开+姓名+负责账号+本月作品+总播放+条均+环比+转粉+互动 = 9
-  assert.match(operatorSource, /colSpan=\{9\}/);
+  // 运营：展开+姓名+负责账号+本月作品+总播放+条均+转粉+互动 = 8
+  assert.match(operatorSource, /colSpan=\{8\}/);
   // 文案：6 基础列（展开+姓名+账号+总播放+条均+篇数） + 优条数 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 13；剪辑只有 6 基础列
   assert.match(source, /colSpan=\{role === "writer" \? 13 : 6\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 15 : 8\}/);
@@ -111,14 +111,14 @@ test("达人与运营表格统一落地自适应文本列宽、colgroup与py-2�
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
 
   // 达人表规范断言
-  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1030px\]"/);
+  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[950px\]"/);
   assert.match(talentSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(talentSource, /<TalentTableColGroup \/>/);
   assert.match(talentSource, /sticky left-0/);
 
   // 运营表规范断言
-  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[680px\]"/);
+  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[600px\]"/);
   assert.match(operatorSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(operatorSource, /<Table className=\{`\$\{OPERATOR_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(operatorSource, /<OperatorTableColGroup \/>/);

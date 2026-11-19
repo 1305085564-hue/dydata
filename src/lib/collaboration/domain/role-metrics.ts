@@ -14,8 +14,6 @@ import {
   fromStatsStart,
   getCollaborationWorkDate,
   isOtherAccount,
-  isSelfHandled,
-  monthOverMonth,
   profileNameMap,
   roleUserId,
   unique,
@@ -26,7 +24,6 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export function buildOperators(
   currentRows: CollaborationReport[],
-  previousRows: CollaborationReport[],
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
@@ -36,23 +33,13 @@ export function buildOperators(
   const current = fromStatsStart(currentRows).filter(
     (row) => row.operator_user_id && isOtherAccount(accountsById.get(row.account_id), row.operator_user_id),
   );
-  const previous = fromStatsStart(previousRows).filter(
-    (row) => row.operator_user_id && isOtherAccount(accountsById.get(row.account_id), row.operator_user_id),
-  );
   const currentByOperator = new Map<string, CollaborationReport[]>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  const previousByOperator = new Map<string, CollaborationReport[]>(); // gate:transient-map 函数内临时聚合，随调用栈释放
 
   for (const row of current) {
     const userId = row.operator_user_id!;
     const bucket = currentByOperator.get(userId) ?? [];
     bucket.push(row);
     currentByOperator.set(userId, bucket);
-  }
-  for (const row of previous) {
-    const userId = row.operator_user_id!;
-    const bucket = previousByOperator.get(userId) ?? [];
-    bucket.push(row);
-    previousByOperator.set(userId, bucket);
   }
 
   return Array.from(currentByOperator.entries())
@@ -90,7 +77,6 @@ export function buildOperators(
         totalPlay,
         avgPlay: averagePlayOf(operatorRows.map((row) => row.play_count)),
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         accountCount: accountIds.length,
         operatedProfileCount: ownerProfileIds.length,
         accounts: accountRows,
@@ -157,7 +143,6 @@ export function buildStaff(
         isCertified,
         totalPlay,
         avgPlay: averagePlayOf(staffRows.map((row) => row.play_count)),
-        selfHandledCount: staffRows.filter(isSelfHandled).length,
         involvedAccounts,
         involvedAccountTotal: involvedAccounts.length,
         recentWorks: works.slice(0, 3),
