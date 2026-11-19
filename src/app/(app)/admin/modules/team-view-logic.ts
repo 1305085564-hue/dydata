@@ -1,6 +1,8 @@
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 
 export const ALL_TEAMS_ID = "__all__" as const;
+/** 筛选「还没分团队」的人（页头那句「N 人还没分团队」点进来） */
+export const UNASSIGNED_TEAM_ID = "__unassigned__" as const;
 
 export type MemberView = "active" | "archived";
 export type TeamFilterId = string | typeof ALL_TEAMS_ID;
@@ -53,7 +55,7 @@ export function resolveMemberWorkspaceState({
 }) {
   const view: MemberView = params.view === "archived" ? "archived" : "active";
   const team =
-    params.team === ALL_TEAMS_ID || (params.team && visibleTeamIds.includes(params.team))
+    params.team === ALL_TEAMS_ID || params.team === UNASSIGNED_TEAM_ID || (params.team && visibleTeamIds.includes(params.team))
       ? params.team
       : defaultTeamId;
 
@@ -182,7 +184,9 @@ export function filterProfilesForMemberView({
   searchQuery: string;
 }) {
   return profiles.filter((profile) => {
-    if (selectedTeamId !== ALL_TEAMS_ID && getProfileTeamIdForView(profile, memberView) !== selectedTeamId) {
+    if (selectedTeamId === UNASSIGNED_TEAM_ID) {
+      if (getProfileTeamIdForView(profile, memberView)) return false;
+    } else if (selectedTeamId !== ALL_TEAMS_ID && getProfileTeamIdForView(profile, memberView) !== selectedTeamId) {
       return false;
     }
     return profileMatchesSearch(profile, memberView, searchQuery);

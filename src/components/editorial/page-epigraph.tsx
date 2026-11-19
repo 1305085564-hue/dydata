@@ -44,14 +44,6 @@ const MARKS: Record<PageEpigraphKey, React.ReactNode> = {
       <path d="M9.4 6.4C9.6 3.8 11.2 2.4 13.4 2.2 13.4 4.6 12 6.2 9.4 6.4Z" fill={WARM} fillOpacity="0.88" />
     </>
   ),
-  // 成员管理「同行」：三枚大小不一的圆并肩而立，错落如一队人
-  modules: (
-    <>
-      <circle cx="4.4" cy="9.4" r="2.6" fill={SOFT} fillOpacity="0.7" />
-      <circle cx="9.2" cy="6.6" r="3.2" fill={WARM} fillOpacity="0.88" />
-      <circle cx="12.4" cy="11.4" r="2" stroke={INK} strokeWidth="1.2" />
-    </>
-  ),
   // AI 配置「流转」：由心而外舒展的一道旋线，如算力缓缓盘绕
   "ai-config": (
     <>

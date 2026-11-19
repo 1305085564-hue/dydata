@@ -1,9 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ItemHeading } from "@/components/ui/item-heading";
-import { Card } from "@/components/ui/card";
 import {
   PERMISSION_CATEGORIES,
   PERMISSION_CATEGORY_LABELS,
@@ -33,12 +30,16 @@ export function resolveMemberPermissionEditorRole(
 
 function describeDerivedDataScope(member: Pick<PermissionManagerMember, "role" | "company_role">) {
   const companyRole = resolveMemberPermissionEditorRole(member);
-  if (!companyRole) return "角色字段冲突或无效，已停止基于角色推导权限";
-  if (companyRole === "company_owner") return "老板：查看并管理本团队数据";
-  if (companyRole === "admin") return "组长：查看本团队数据；可管理本团队全部成员";
-  return "组员：仅查看自己的数据";
+  if (!companyRole) return "身份记录有冲突，系统没法判断他能看什么，请联系管理员处理";
+  if (companyRole === "company_owner") return "本团队的数据，可查看并管理";
+  if (companyRole === "admin") return "本团队的数据；可管理本团队全部成员";
+  return "只看自己的数据";
 }
 
+/**
+ * 成员抽屉里的「能做的事」：只读说明。看得到哪些数据、能用哪些功能，都跟着身份走（按角色自动派生），
+ * 这里不提供单独开关；要调整就改身份。
+ */
 export function MemberPermissionEditor({
   member,
   draftPermissions,
@@ -47,105 +48,52 @@ export function MemberPermissionEditor({
   const isOwner = companyRole === "company_owner";
 
   const categories = Object.keys(PERMISSION_CATEGORIES) as PermissionCategory[];
+  const allKeys = categories.flatMap((category) => PERMISSION_CATEGORIES[category]);
+  const enabledCount = allKeys.filter((key) => draftPermissions[key] === true).length;
 
   return (
-    <div className="space-y-8">
-      {isOwner && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
-          <Info className="size-4 shrink-0 text-[#78716C]" />
-          <span>超管拥有全站最高权限，无需单独配置</span>
-        </div>
+    <div className="divide-y divide-[#E2E2DF]/60">
+      <div className="flex min-h-9 items-start justify-between gap-3 py-2">
+        <span className="shrink-0 text-[14px] text-[#78716C]">看得到</span>
+        <span className="text-right text-[14px] text-[#1F1E1D]">{describeDerivedDataScope(member)}</span>
+      </div>
+
+      {isOwner ? (
+        <p className="py-2 text-[14px] text-[#78716C]">老板全站都能看、都能管，不用单独配。</p>
+      ) : (
+        <details className="group py-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px]">
+            <span className="text-[#78716C]">能用的功能</span>
+            <span className="text-[#1F1E1D] tabular-nums group-hover:text-[#141413]">
+              {enabledCount} / {allKeys.length} 项
+              <span className="ml-1 text-[#78716C] group-open:hidden">展开</span>
+              <span className="ml-1 hidden text-[#78716C] group-open:inline">收起</span>
+            </span>
+          </summary>
+          <p className="mt-2 text-[12px] text-[#78716C]">跟着身份走，要调整就改身份。</p>
+          <dl className="mt-2 space-y-2">
+            {categories.map((category) => {
+              const keys = PERMISSION_CATEGORIES[category];
+              const enabled = keys.filter((key) => draftPermissions[key] === true);
+              return (
+                <div key={category} className="grid grid-cols-[5rem_1fr] gap-3 text-[14px]">
+                  <dt className="text-[#78716C]">{PERMISSION_CATEGORY_LABELS[category]}</dt>
+                  <dd className={cn(enabled.length > 0 ? "text-[#1F1E1D]" : "text-[#A8A29E]")}>
+                    {enabled.length > 0
+                      ? enabled.map((key, index) => (
+                          <span key={key} title={PERMISSION_DESCRIPTIONS[key] || undefined}>
+                            {index > 0 && "、"}
+                            {PERMISSION_LABELS[key]}
+                          </span>
+                        ))
+                      : "无"}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </details>
       )}
-
-      {/* 板块一：数据范围 (Data Scope) */}
-      <Card variant="cushion" className="p-4 gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <ItemHeading as="h4">数据范围</ItemHeading>
-          <span className="rounded-md bg-white px-2 py-0.5 text-[12px] font-normal text-[#78716C] border border-[#E2E2DF]">
-            按角色自动派生
-          </span>
-        </div>
-        <p className="text-[12px] text-[#78716C] leading-relaxed">
-          数据范围由系统角色自动决定，页面不再提供单独保存入口。
-          <br />
-          {describeDerivedDataScope(member)}
-        </p>
-      </Card>
-
-      {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <ItemHeading as="h4">功能权限</ItemHeading>
-          <span className="text-[12px] text-[#78716C]">
-            按角色固化 · 由角色身份派生
-          </span>
-        </div>
-
-        <Card variant="cushion" className="p-3 gap-0">
-          <div className="text-[12px] text-[#78716C] leading-relaxed">
-            <div className="flex items-start gap-2">
-              <Info className="size-4 shrink-0 text-status-warning mt-0.5" />
-              <div className="flex-1">
-                <span>当前采用<b>按角色固定权限模型</b>，功能由系统角色（组员 / 组长 · 管理 / 团队所有者）直接决定。如需调整功能权限，请在下方修改系统角色。</span>
-              </div>
-            </div>
-
-            <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
-              <summary className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] cursor-pointer list-none flex items-center justify-between transition-colors">
-                <span>查看此角色包含的具体功能明细</span>
-                <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-[transform,color] duration-150">▼</span>
-              </summary>
-              <div className="space-y-4 pt-3">
-                {categories.map((category) => {
-                const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
-                const keys = PERMISSION_CATEGORIES[category];
-                const enabledCount = keys.filter((k) => draftPermissions[k] === true).length;
-
-                return (
-                  <div key={category} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-normal text-[#78716C]">{categoryLabel}</span>
-                      <span className="text-[12px] font-normal text-[#78716C] bg-[#F1F1F0] px-1.5 rounded-md">
-                        {enabledCount} / {keys.length}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                      {keys.map((key) => {
-                        const isChecked = draftPermissions[key] === true;
-                        const label = PERMISSION_LABELS[key];
-                        const desc = PERMISSION_DESCRIPTIONS[key];
-
-                        return (
-                          <div
-                            key={key}
-                            title={desc || undefined}
-                            className={cn(
-                              "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
-                              isChecked
-                                ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#141413] font-normal"
-                                : "bg-transparent border-[#E2E2DF]/60 text-[#78716C]"
-                            )}
-                          >
-                            <span className="truncate">{label}</span>
-                            <span className={cn(
-                              "text-[12px] shrink-0 ml-1 font-normal",
-                              isChecked ? "text-[#D97757]" : "text-[#A8A29E]"
-                            )}>
-                              {isChecked ? "✓" : "—"}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-            </details>
-          </div>
-        </Card>
-      </section>
     </div>
   );
 }

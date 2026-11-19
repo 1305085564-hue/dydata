@@ -10,7 +10,6 @@ export type PageEpigraphKey =
   | "workbench"
   | "pulse"
   | "topics"
-  | "modules"
   | "ai-config"
   | "caliber";
 
@@ -18,7 +17,6 @@ export const PAGE_EPIGRAPH_DEFAULTS: Record<PageEpigraphKey, string> = {
   workbench: "把今天的表达落成一页——从容记下，数据自会沉淀成底稿。",
   pulse: "晨光先落在大盘上——看清昨日的数据涨落与作品表现。",
   topics: "好选题是一粒种子——在飞书生长，成片数据会为它立卷。",
-  modules: "团队是一群人的同行——安放架构、分组与每个人的位置。",
   "ai-config": "让模型安静地待命——挑选渠道与分工，需要时自会流转。",
   caliber: "每个数字都有它的来处——写着算法，数字变了这里跟着变。",
 };
@@ -41,16 +39,5 @@ export function buildPulseEpigraph(summary: PulseSummary, memberCount: number): 
 export function buildTopicsEpigraph(activeCount: number, poolCount: number): string | null {
   if (activeCount === 0 && poolCount === 0) return null;
   return `好选题是一粒种子——${activeCount} 个创作中，题库尚有 ${poolCount} 个待认领。`;
-}
-
-export function buildModulesEpigraph(input: {
-  memberCount: number;
-  teamCount: number;
-  pendingCount: number;
-}): string | null {
-  if (input.memberCount === 0) return null;
-  const parts = [`${input.teamCount} 团队`, `${input.memberCount} 同行`];
-  if (input.pendingCount > 0) parts.push(`${input.pendingCount} 位待审核`);
-  return `团队是一群人的同行——${parts.join("，")}。`;
 }
 

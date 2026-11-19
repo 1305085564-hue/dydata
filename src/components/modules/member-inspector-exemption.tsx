@@ -1,10 +1,8 @@
-import { ShieldOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { Switch } from "@/components/ui/switch";
 import { canManagePermanentExemption, type PermanentExemptionState } from "@/app/(app)/admin/modules/permanent-exemption-logic";
 import type { CompanyRole } from "@/types";
 import type { ProfileSummary } from "@/lib/modules/types";
-import { cn } from "@/lib/utils";
 
 type MemberInspectorExemptionProps = {
   activeMember: ProfileSummary;
@@ -27,86 +25,38 @@ export function MemberInspectorExemption({
   setPermanentReason,
   setPermanentReasonError,
 }: MemberInspectorExemptionProps) {
+  if (!canManagePermanentExemption(currentCompanyRole) || activeMember.membership_status === "archived") return null;
+
+  // 不参与考核：仅公司所有者可见和操作，判定收口在 permanent-exemption-logic
+  const note = activeMemberExemptionState.isPermanent
+    ? activeMember.exempt_reason ? `原因：${activeMember.exempt_reason}` : "已设为不参与考核"
+    : activeMemberExemptionState.isTemporary && activeMember.exempt_end_date
+      ? `临时豁免到 ${activeMember.exempt_end_date}；设为长期会覆盖它`
+      : "打开后不再算应发、缺交";
+
   return (
-    <>
-                      {/* 不参与考核 (仅公司所有者可见和操作，判定收口在 permanent-exemption-logic) */}
-                      {canManagePermanentExemption(currentCompanyRole) && activeMember.membership_status !== "archived" && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
-                          <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
-                            <ShieldOff
-                              className={cn(
-                                "size-3.5 shrink-0",
-                                activeMemberExemptionState.isPermanent
-                                  ? "text-[#1F1E1D]"
-                                  : "text-[#78716C]"
-                              )}
-                            />
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[14px] text-[#1F1E1D]">不参与考核</span>
-                                {activeMemberExemptionState.isPermanent ? (
-                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
-                                    已设置不参与考核
-                                  </span>
-                                ) : activeMemberExemptionState.isTemporary ? (
-                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
-                                    临时豁免中
-                                  </span>
-                                ) : null}
-                              </div>
-                              {activeMemberExemptionState.isPermanent && activeMember.exempt_reason ? (
-                                <span
-                                  className="text-[12px] text-[#78716C] truncate max-w-[280px]"
-                                  title={activeMember.exempt_reason}
-                                >
-                                  原因：{activeMember.exempt_reason}
-                                </span>
-                              ) : activeMemberExemptionState.isTemporary && activeMember.exempt_end_date ? (
-                                <span className="text-[12px] text-[#78716C]">
-                                  临时豁免至 {activeMember.exempt_end_date}，设为永久将优先
-                                </span>
-                              ) : (
-                                <span className="text-[12px] text-[#78716C]">
-                                  开启后不再进入应交与缺交考核统计
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {activeMemberExemptionState.isPermanent ? (
-                              <>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="xs"
-                                  disabled={isPermanentSubmitting}
-                                  onClick={() => setClearPermanentTarget(activeMember)}
-                                  className="h-7 px-2.5 text-[12px] font-normal text-status-danger-text hover:bg-status-danger/[0.10] hover:border-status-danger/30 rounded-md"
-                                >
-                                  撤销
-                                </Button>
-                                <Switch
-                                  checked={true}
-                                  disabled={isPermanentSubmitting}
-                                  onCheckedChange={() => setClearPermanentTarget(activeMember)}
-                                  aria-label="撤销不参与考核"
-                                />
-                              </>
-                            ) : (
-                              <Switch
-                                checked={false}
-                                disabled={isPermanentSubmitting}
-                                onCheckedChange={() => {
-                                  setSetPermanentTarget(activeMember);
-                                  setPermanentReason("");
-                                  setPermanentReasonError(null);
-                                }}
-                                aria-label="设为不参与考核"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      )}
-    </>
-);
+    <section className="space-y-1" aria-labelledby="member-exemption-title">
+      <ItemHeading as="h4" id="member-exemption-title">考核</ItemHeading>
+      <div className="flex min-h-9 items-center justify-between gap-3 py-1">
+        <div className="min-w-0">
+          <p className="text-[14px] text-[#1F1E1D]">不参与考核</p>
+          <p className="truncate text-[12px] text-[#78716C]" title={note}>{note}</p>
+        </div>
+        <Switch
+          checked={activeMemberExemptionState.isPermanent}
+          disabled={isPermanentSubmitting}
+          onCheckedChange={() => {
+            if (activeMemberExemptionState.isPermanent) {
+              setClearPermanentTarget(activeMember);
+              return;
+            }
+            setSetPermanentTarget(activeMember);
+            setPermanentReason("");
+            setPermanentReasonError(null);
+          }}
+          aria-label={activeMemberExemptionState.isPermanent ? "撤销不参与考核" : "设为不参与考核"}
+        />
+      </div>
+    </section>
+  );
 }

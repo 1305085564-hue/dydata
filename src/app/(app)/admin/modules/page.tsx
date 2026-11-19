@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
 import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
 import { canAccessAdminPath } from "@/lib/analytics-access";
@@ -11,7 +10,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import type { UserRole } from "@/types";
 
 import { AdminModulesContentV3 } from "./modules-content-v3";
-import { TeamV2Skeleton } from "./modules-skeleton-v2";
+import { MembersPageSkeleton } from "./modules-skeleton-v2";
 
 export const metadata: Metadata = {
   title: "成员管理 - DYData",
@@ -55,12 +54,8 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   const params = await searchParams;
 
   return (
-    <AdminWorkspaceLayout
-      title="成员管理"
-      description={<PageEpigraph pageKey="modules" />}
-      width="wide"
-    >
-      <Suspense fallback={<TeamV2Skeleton />}>
+    <AdminWorkspaceLayout width="wide">
+      <Suspense fallback={<MembersPageSkeleton />}>
         <ModulesDataContainer
           searchDate={params.date}
           focusMemberId={resolveAdminModulesFocusMemberId(params)}

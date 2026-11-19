@@ -11,6 +11,7 @@ import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 import type { CompanyRole, Permissions } from "@/types";
 import {
   ALL_TEAMS_ID,
+  UNASSIGNED_TEAM_ID,
   filterProfilesForMemberView,
   getSelectableCurrentScreenMemberIds,
   resolveDefaultSelectedTeamId,
@@ -197,6 +198,13 @@ export function useMemberWorkspace(input: MemberWorkspaceInput) {
     [activeMemberId, memberView, searchQuery, selectedTeamId],
   );
 
+  /** 页头「N 人还没分团队」：切回在职并只看没分团队的人 */
+  const showUnassigned = useCallback(() => {
+    setMemberView("active");
+    setSelectedTeamId(UNASSIGNED_TEAM_ID);
+    replaceWorkspaceUrl({ view: "active", team: UNASSIGNED_TEAM_ID, memberId: null });
+  }, [replaceWorkspaceUrl]);
+
   const openMemberDrawer = useCallback(
     (member: ProfileSummary, syncUrl = true) => {
       setActiveMemberId(member.id);
@@ -286,6 +294,7 @@ export function useMemberWorkspace(input: MemberWorkspaceInput) {
     availablePeerGroups,
     availableOperatorGroups,
     replaceWorkspaceUrl,
+    showUnassigned,
     openMemberDrawer,
     closeMemberDrawer,
     resolveSelectedTeamAfterTeamDelete,

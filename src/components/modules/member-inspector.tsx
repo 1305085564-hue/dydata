@@ -2,7 +2,8 @@ import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { getRoleLabel } from "@/lib/role-label";
-import { runtimeRoleForView } from "@/lib/modules/domain/view-rules";
+import { archiveSnapshotRoleLabel, runtimeRoleForView } from "@/lib/modules/domain/view-rules";
+import { describeLastLogin } from "@/app/(app)/admin/modules/members-page-view";
 import type { ProfileSummary } from "@/lib/modules/types";
 import type { MemberAiSuggestionState } from "@/app/(app)/admin/modules/member-ai-dialogs";
 import { MemberInspectorBody, type MemberInspectorBodyProps } from "./member-inspector-body";
@@ -27,6 +28,8 @@ export function MemberInspector({
   closeMemberDrawer,
   ...bodyProps
 }: MemberInspectorProps) {
+  const isArchived = activeMember?.membership_status === "archived";
+  const login = describeLastLogin(activeMember?.last_sign_in_at);
   return (
     <Sheet
       open={activeMember !== null}
@@ -36,65 +39,37 @@ export function MemberInspector({
         }
       }}
     >
-      {/* ── 2. 全功能右侧工作台抽屉 (整合 v4 Inspector Sheet) ── */}
       <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog">
         {activeMember && (
           <div className="flex flex-col h-full overflow-hidden">
-              {/* 抽屉头部 */}
+              {/* 抽屉头部：名字是标题；身份和团队只说一次，在下面一行 */}
               <SheetHeader className="pt-5 pb-4 flex flex-row items-start justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-full bg-[#F1F1F0] text-[#1F1E1D] flex items-center justify-center font-normal text-[14px] shrink-0">
-                    {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <SheetTitle className="truncate">
-                        {activeMember.membership_status === "archived" ? "归档档案 · " : ""}{activeMember.name || "未命名"}
-                      </SheetTitle>
-                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#1F1E1D] shrink-0">
-                        {getRoleLabel(runtimeRoleForView(activeMemberCompanyRole), { membershipStatus: activeMember.membership_status })}
-                      </span>
-                      {activeMember.membership_status === "archived" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
-                          已归档
-                        </span>
-                      )}
-                      {isCompanyOwner && activeMember.membership_status !== "archived" && activeMember.exempt_type === "permanent" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
-                          不参与考核
-                        </span>
-                      )}
-                    </div>
-                    <SheetDescription className="text-[14px] text-[#1F1E1D] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      {activeMember.team_name && <span>{activeMember.team_name}</span>}
-                      {activeMember.email && (
-                        <>
-                          {activeMember.team_name && <span className="text-[#E2E2DF]">·</span>}
-                          <span className="truncate">{activeMember.email}</span>
-                        </>
-                      )}
-                      {activeMember.last_sign_in_at && (
-                        <>
-                          <span className="text-[#E2E2DF]">|</span>
-                          <span className="text-[12px] text-[#78716C]">
-                            上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
-                          </span>
-                        </>
-                      )}
-                    </SheetDescription>
-                  </div>
+                <div className="min-w-0 space-y-1">
+                  <SheetTitle className="truncate">
+                    {activeMember.name || "未命名"}
+                    {isArchived && <span className="text-[#78716C]"> · 已归档</span>}
+                  </SheetTitle>
+                  <SheetDescription className="text-[14px] text-[#1F1E1D]">
+                    {isArchived
+                      ? archiveSnapshotRoleLabel(activeMember.archive_snapshot)
+                      : getRoleLabel(runtimeRoleForView(activeMemberCompanyRole), { membershipStatus: activeMember.membership_status })}
+                    {!isArchived && ` · ${activeMember.team_name || "还没分团队"}`}
+                    {isCompanyOwner && !isArchived && activeMember.exempt_type === "permanent" && " · 不参与考核"}
+                  </SheetDescription>
+                  <p className="text-[12px] text-[#78716C] tabular-nums">
+                    {[activeMember.email, `上次登录 ${login.text}`].filter(Boolean).join(" · ")}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {activeMember.membership_status !== "archived" && !activeMemberIsReadOnly && (
+                <div className="flex items-center gap-1 shrink-0">
+                  {!isArchived && !activeMemberIsReadOnly && (
                     <Button
-                      variant="outline"
-                      size="xs"
+                      variant="ghost"
                       onClick={() => {
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[14px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:border-[#78716C]/40 gap-1 rounded-md"
+                      className="text-[#1F1E1D]"
                     >
                       <Sparkles className="size-3.5 text-[#78716C]" />
                       AI 诊断

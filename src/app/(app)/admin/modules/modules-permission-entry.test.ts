@@ -352,7 +352,7 @@ test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必�
 
   assert.doesNotMatch(modulesSource, /保存数据范围|数据范围配置已保存|handleSavePermissions/);
   assert.doesNotMatch(permissionEditorSource, /DATA_SCOPE_OPTIONS|onChangeDataScope|button[\s\S]*仅自己/);
-  assert.match(permissionEditorSource, /按角色自动派生/);
+  assert.match(permissionEditorSource, /跟着身份走/);
   assert.match(modulesSource, /roleChangeConfirm/);
   assert.match(modulesSource, /功能权限配置将被清空/);
 });
