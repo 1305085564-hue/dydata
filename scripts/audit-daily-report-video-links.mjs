@@ -4,7 +4,7 @@ import "dotenv/config";
 import fs from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { assertProdWriteAllowed } from "../lib/prod-write-guard.mjs";
+import { assertProdWriteAllowed } from "./lib/prod-write-guard.mjs";
 
 const SHANGHAI_TZ = "Asia/Shanghai";
 
