@@ -8,14 +8,8 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  ExternalLink,
-  Flame,
-  PlaySquare,
-  Sparkles,
-  TrendingUp,
-  X,
-} from "lucide-react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 import { buildAuthorCollaborationUrl } from "@/lib/content/author-collaboration-link";
@@ -23,6 +17,7 @@ import { useAuthorWorks } from "./use-author-works";
 import { useContentTopicLibrary } from "./content-topic-library";
 import { interactionRate } from "@/lib/video-metrics";
 import { ContentDetailDialog } from "./content-detail-dialog";
+import { GradeMark } from "./content-list-row-parts";
 import type { AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 
 import { formatCompactNumber, formatPercent, formatDate, type AuthorWorksDrawerProps, type AuthorWorksViewProps } from "./author-works-shared";
@@ -30,6 +25,48 @@ export type { AuthorWorksDrawerProps, AuthorWorksViewProps } from "./author-work
 
 type TimeRangeFilter = "30d" | "thisMonth" | "lastMonth" | "all";
 type SortFilter = "published_at" | "play_count";
+
+function AuthorStat({ label, value, loading }: { label: string; value: string; loading: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[12px] text-[#78716C]">{label}</dt>
+      <dd className="mt-1 text-[20px] leading-[1.20] tabular-nums text-[#141413]">
+        {loading ? <Skeleton className="h-6 w-14 rounded-md" /> : value}
+      </dd>
+    </div>
+  );
+}
+
+function SegmentGroup<K extends string>({
+  ariaLabel,
+  value,
+  options,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: K;
+  options: ReadonlyArray<{ key: K; label: string }>;
+  onChange: (key: K) => void;
+}) {
+  return (
+    <div role="group" aria-label={ariaLabel} className="inline-flex items-center gap-1">
+      {options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          aria-pressed={value === option.key}
+          onClick={() => onChange(option.key)}
+          className={cn(
+            "inline-flex h-7 items-center rounded-md px-2 text-[12px] transition-colors cursor-pointer",
+            value === option.key ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function AuthorWorksView({
   author,
@@ -143,268 +180,151 @@ export function AuthorWorksView({
           selectedVideoId && "invisible pointer-events-none",
         )}
       >
-        {/* 抽屉头部：空间定名 20px Serif，两端对齐 */}
-        <header className="flex flex-row items-center justify-between shrink-0 px-6 py-4 border-b border-[#E2E2DF] bg-[#FCFCFB]">
-          <div className="flex items-center gap-3">
-            <div className="size-8 rounded-full bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF] flex items-center justify-center text-[14px] font-normal">
-              {author?.name?.slice(0, 1) || "作"}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-[20px] font-serif font-normal text-[#141413]">
-                  {author?.name ?? "创作者"}
-                </h2>
-                <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
-                  创作者作品档案
-                </span>
-              </div>
-              <p className="text-[12px] text-[#78716C] mt-1">
-                查看该创作者的历史作品走势与复盘详情
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {canViewCollaboration && collaborationUrl && (
-              <Link
-                href={collaborationUrl}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors"
-                title="在协作管理中查看该作者岗位档案"
-              >
-                <TrendingUp className="size-3.5" />
-                <span>人效档案</span>
-              </Link>
-            )}
-            {onViewInMainList && author?.id && (
+        {/* 抽屉头部：名字即标题（20px Serif），下一行就是答案——这段时间交了几篇、表现如何 */}
+        <header className="shrink-0 border-b border-[#E2E2DF] px-6 pt-5 pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="font-serif text-[20px] leading-[1.20] text-[#141413]">{author?.name ?? "创作者"}</h2>
+            <div className="flex shrink-0 items-center gap-1">
+              {canViewCollaboration && collaborationUrl && (
+                <Link
+                  href={collaborationUrl}
+                  className="inline-flex h-7 items-center rounded-md px-2 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413]"
+                >
+                  个人档案
+                </Link>
+              )}
+              {onViewInMainList && author?.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onViewInMainList(author.id);
+                    onClose();
+                  }}
+                  className="inline-flex h-7 items-center rounded-md px-2 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+                >
+                  列表只看此人
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  onViewInMainList(author.id);
-                  onClose();
-                }}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
-                title="在大盘中筛选并查看该作者全部数据"
+                onClick={onClose}
+                aria-label="关闭"
+                className="flex size-7 shrink-0 items-center justify-center rounded-md text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
               >
-                <ExternalLink className="size-3.5" />
-                <span>在复盘大盘中查看</span>
+                <X className="size-4" />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
-              title="关闭"
-            >
-              <X className="size-4" />
-            </button>
+            </div>
           </div>
+
+          <dl className="mt-4 grid grid-cols-4 gap-4">
+            <AuthorStat label="作品" loading={loading} value={summary ? `${summary.totalWorksCount} 篇` : "—"} />
+            <AuthorStat label="条均播放" loading={loading} value={formatCompactNumber(summary?.averagePlayCount)} />
+            <AuthorStat label="优质作品" loading={loading} value={summary ? `${summary.qualityWorksCount} 篇` : "—"} />
+            <AuthorStat label="完播达标" loading={loading} value={summary ? `${summary.completionRatePassCount} 篇` : "—"} />
+          </dl>
         </header>
 
-        {/* 创作者轻量画像（极简 4 格概览，指标大数 20px） */}
-        <div className="shrink-0 px-6 py-3 bg-[#F7F7F6] border-b border-[#E2E2DF]">
-          <div className="grid grid-cols-4 gap-3">
-            <div className="rounded-xl bg-white border border-[#E2E2DF] p-3">
-              <div className="flex items-center gap-1 text-[12px] text-[#78716C] mb-1">
-                <PlaySquare className="size-3.5 text-[#78716C]" />
-                <span>作品总数</span>
-              </div>
-              <div className="text-[20px] font-normal tabular-nums text-[#141413]">
-                {loading ? <Skeleton className="h-6 w-12 rounded-md" /> : `${summary?.totalWorksCount ?? "—"} 篇`}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-white border border-[#E2E2DF] p-3">
-              <div className="flex items-center gap-1 text-[12px] text-[#78716C] mb-1">
-                <TrendingUp className="size-3.5 text-[#78716C]" />
-                <span>条均播放</span>
-              </div>
-              <div className="text-[20px] font-normal tabular-nums text-[#141413]">
-                {loading ? <Skeleton className="h-6 w-16 rounded-md" /> : formatCompactNumber(summary?.averagePlayCount)}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-white border border-[#E2E2DF] p-3">
-              <div className="flex items-center gap-1 text-[12px] text-[#78716C] mb-1">
-                <Flame className="size-3.5 text-[#D97757]" />
-                <span>优质作品数</span>
-              </div>
-              <div className="text-[20px] font-normal tabular-nums text-[#141413]">
-                {loading ? <Skeleton className="h-6 w-12 rounded-md" /> : `${summary?.qualityWorksCount ?? "—"} 篇`}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-white border border-[#E2E2DF] p-3">
-              <div className="flex items-center gap-1 text-[12px] text-[#78716C] mb-1">
-                <Sparkles className="size-3.5 text-[#4B6B4E]" />
-                <span>完播达标数</span>
-              </div>
-              <div className="text-[20px] font-normal tabular-nums text-[#141413]">
-                {loading ? <Skeleton className="h-6 w-12 rounded-md" /> : `${summary?.completionRatePassCount ?? "—"} 篇`}
-              </div>
-            </div>
-          </div>
+        {/* 时间与排序：视图工具裸铺，激活态浅砂底 + 定名墨（美学宝典 §3.9） */}
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF] px-6 py-2">
+          <SegmentGroup
+            ariaLabel="时间范围"
+            value={timeRange}
+            options={[
+              { key: "30d", label: "近30天" },
+              { key: "thisMonth", label: "本月" },
+              { key: "lastMonth", label: "上月" },
+              { key: "all", label: "全部" },
+            ]}
+            onChange={(key) => { selectVideoWithRetention(null); setTimeRange(key); }}
+          />
+          <SegmentGroup
+            ariaLabel="排序"
+            value={sortField}
+            options={[
+              { key: "published_at", label: "按发布时间" },
+              { key: "play_count", label: "按播放量" },
+            ]}
+            onChange={(key) => { selectVideoWithRetention(null); setSortField(key); }}
+          />
         </div>
 
-        {/* 快速筛选与排序栏：下沉槽分段控件（契约 §3.9：bg-white + shadow-input + #141413） */}
-        <div className="shrink-0 flex items-center justify-between px-6 py-2 border-b border-[#E2E2DF] bg-white">
-          {/* 周期切换 */}
-          <div className="flex items-center gap-2 text-[12px]">
-            <span className="text-[#78716C]">时间范围</span>
-            <div className="inline-flex items-center rounded-md bg-[#F1F1F0] p-0.5">
-              {(
-                [
-                  { key: "30d", label: "近30天" },
-                  { key: "thisMonth", label: "本月" },
-                  { key: "lastMonth", label: "上月" },
-                  { key: "all", label: "全部历史" },
-                ] as const
-              ).map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => { selectVideoWithRetention(null); setTimeRange(t.key); }}
-                  className={cn(
-                    "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
-                    timeRange === t.key
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]",
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 排序方式 */}
-          <div className="flex items-center gap-2 text-[12px]">
-            <span className="text-[#78716C]">排序</span>
-            <div className="inline-flex items-center rounded-md bg-[#F1F1F0] p-0.5">
-              {(
-                [
-                  { key: "published_at", label: "按发布时间" },
-                  { key: "play_count", label: "按播放量" },
-                ] as const
-              ).map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => { selectVideoWithRetention(null); setSortField(s.key); }}
-                  className={cn(
-                    "px-2.5 py-0.5 rounded-md text-[12px] transition cursor-pointer font-normal",
-                    sortField === s.key
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]",
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 作品流列表 */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-3">
+        {/* 作品列表：列序与数据复盘主表一致——作品 → 评级 → 播放 → 互动率 → 留存达成 → 涨粉 */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
           {loading && videos.length === 0 ? (
-            <div className="space-y-3 py-2">
-              <Skeleton className="h-12 w-full rounded-xl" />
-              <Skeleton className="h-12 w-full rounded-xl" />
-              <Skeleton className="h-12 w-full rounded-xl" />
-              <Skeleton className="h-12 w-full rounded-xl" />
+            <div className="space-y-2 py-2">
+              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full rounded-md" />)}
             </div>
           ) : error ? (
-            <div className="py-12 text-center text-[14px] text-status-danger">{error} <button type="button" onClick={() => void retry()}>重试</button></div>
+            <div role="alert" className="flex flex-col items-center gap-2 py-12 text-[14px] text-[#1F1E1D]">
+              <span>{error}</span>
+              <Button type="button" size="s" variant="outline" onClick={() => void retry()}>重试</Button>
+            </div>
           ) : videos.length === 0 ? (
             <div className="py-12">
               <EmptyState
                 variant="compact"
-                title="暂无该创作者的作品"
-                description="所选时间范围内没有找到该创作者发布的作品记录"
+                title="这段时间没有作品"
+                description="换一个时间范围看看"
               />
             </div>
           ) : (
-            <div className="rounded-xl border border-[#E2E2DF] overflow-hidden divide-y divide-[#E2E2DF]">
-              <table className="w-full text-left text-[12px] table-fixed">
-                <thead className="bg-[#F7F7F6] text-[#78716C] font-normal border-b border-[#E2E2DF] select-none">
-                  <tr>
-                    <th className="py-2 px-3 w-[72px] shrink-0 font-normal">发布日期</th>
-                    <th className="py-2 px-3 min-w-[200px] font-normal">作品标题 / 账号</th>
-                    <th className="py-2 px-2 text-right w-[80px] shrink-0 font-normal">播放量</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">涨粉</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">5s完播</th>
-                    <th className="py-2 px-2 text-right w-[72px] shrink-0 font-normal">互动率</th>
-                    <th className="py-2 px-3 text-center w-[60px] shrink-0 font-normal">评级</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E2E2DF] bg-white">
-                  {videos.map((video) => {
-                    const snap = snapshots[video.id];
-                    const quality = qualityMap[video.id];
-                    const play = snap?.play_count ?? null;
-                    const followers = snap?.follower_gain ?? null;
-                    const completion5s = snap?.completion_rate_5s ?? null;
-                    const interaction = snap ? interactionRate(snap) : null;
-                    const grade = quality?.overallGrade ?? null;
-
-                    return (
-                      <tr
-                        key={video.id}
-                        onClick={() => { setDetailError(null); selectVideoWithRetention(video.id); }}
-                        className="hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer group"
-                      >
-                        <td className="py-2 px-3 text-[#78716C] tabular-nums whitespace-nowrap">
-                          {formatDate(video.published_at)}
-                        </td>
-                        <td className="py-2 px-3 min-w-0">
-                          <div className="font-normal text-[#1F1E1D] group-hover:text-[#141413] truncate">
-                            {video.video_title || video.content?.slice(0, 40) || "未命名视频"}
-                          </div>
-                          {video.accounts?.name && (
-                            <div className="text-[12px] text-[#A8A29E] truncate">
-                              @{video.accounts.name}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
-                          {formatCompactNumber(play)}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                          {formatCompactNumber(followers)}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                          {completion5s !== null ? formatPercent(completion5s) : "—"}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                          {interaction !== null ? formatPercent(interaction * 100) : "—"}
-                        </td>
-                        <td className="py-2 px-3 text-center whitespace-nowrap font-normal">
-                          {grade === "优" ? (
-                            <span className="text-[#4B6B4E]">优</span>
-                          ) : grade === "良" ? (
-                            <span className="text-[#43718E]">良</span>
-                          ) : (
-                            <span className="text-[#78716C]">普</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <table className="w-full table-fixed text-left text-[13px] tabular-nums">
+              <thead className="text-[12px] text-[#78716C] select-none">
+                <tr className="border-b border-[#E2E2DF]/60">
+                  <th className="w-[56px] py-2 pr-2">日期</th>
+                  <th className="py-2 px-2">作品 · 账号</th>
+                  <th className="w-[44px] py-2 px-2">评级</th>
+                  <th className="w-[68px] py-2 px-2 text-right">播放量</th>
+                  <th className="w-[64px] py-2 px-2 text-right">互动率</th>
+                  <th className="w-[72px] py-2 px-2 text-right">留存达成</th>
+                  <th className="w-[56px] py-2 pl-2 text-right">涨粉</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E2E2DF]/60">
+                {videos.map((video) => {
+                  const snap = snapshots[video.id];
+                  const quality = qualityMap[video.id];
+                  const interaction = snap ? interactionRate(snap) : null;
+                  return (
+                    <tr
+                      key={video.id}
+                      onClick={() => { setDetailError(null); selectVideoWithRetention(video.id); }}
+                      className="group cursor-pointer transition-colors hover:bg-[#F7F7F6] active:bg-[#EBEBE9]"
+                    >
+                      <td className="py-2.5 pr-2 text-[12px] text-[#1F1E1D] whitespace-nowrap">{formatDate(video.published_at)}</td>
+                      <td className="min-w-0 py-2.5 px-2">
+                        <button
+                          type="button"
+                          onClick={(event) => { event.stopPropagation(); setDetailError(null); selectVideoWithRetention(video.id); }}
+                          className="block w-full truncate text-left text-[14px] text-[#1F1E1D] group-hover:text-[#141413] cursor-pointer outline-none focus-visible:underline focus-visible:underline-offset-2"
+                        >
+                          {video.video_title || video.content?.slice(0, 40) || "未命名视频"}
+                        </button>
+                        {video.accounts?.name && (
+                          <div className="truncate text-[12px] text-[#78716C]">@{video.accounts.name}</div>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-2 text-[14px]"><GradeMark grade={quality?.overallGrade} /></td>
+                      <td className="py-2.5 px-2 text-right text-[14px] text-[#141413] whitespace-nowrap">{formatCompactNumber(snap?.play_count ?? null)}</td>
+                      <td className="py-2.5 px-2 text-right text-[#1F1E1D] whitespace-nowrap">{interaction !== null ? formatPercent(interaction * 100) : "—"}</td>
+                      <td className="py-2.5 px-2 text-right text-[#1F1E1D] whitespace-nowrap">{quality?.contentAchievement != null ? `${Math.round(quality.contentAchievement)}%` : "—"}</td>
+                      <td className="py-2.5 pl-2 text-right text-[#78716C] whitespace-nowrap">{formatCompactNumber(snap?.follower_gain ?? null)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
 
-          {/* 完卷微符 */}
           {data?.hasNextPage && !error && (
-            <button type="button" disabled={loading} onClick={() => void loadMore()} className="w-full py-3 text-[12px] text-[#78716C]">{loading ? "正在加载…" : "加载更多作品"}</button>
-          )}
-          {!loading && !error && !data?.hasNextPage && videos.length > 0 && (
-            <div className="flex items-center justify-center gap-3 py-6 text-[#E2E2DF]">
-              <span className="h-[1px] w-8 bg-[#E2E2DF]" />
-              <span className="text-[12px] text-[#A8A29E]">✦ 档案完卷</span>
-              <span className="h-[1px] w-8 bg-[#E2E2DF]" />
-            </div>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => void loadMore()}
+              className="w-full rounded-md py-3 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:cursor-wait"
+            >
+              {loading ? "正在加载…" : "加载更多作品"}
+            </button>
           )}
         </div>
       </div>
@@ -413,7 +333,13 @@ export function AuthorWorksView({
       {selectedVideoId && (
         <div className="flex flex-col min-h-0 min-w-0 [grid-area:1/1]">
           {detailError ? (
-            <div role="alert" className="p-6">{detailError} <button type="button" onClick={() => { setDetailError(null); setDetailAttempt(n => n + 1); }}>重试详情</button> <button type="button" onClick={() => { setDetailError(null); selectVideoWithRetention(null); }}>返回作品列表</button></div>
+            <div role="alert" className="flex flex-col gap-3 p-6 text-[14px] text-[#1F1E1D]">
+              <p>详情没有加载出来：{detailError}</p>
+              <div className="flex gap-2">
+                <Button type="button" size="s" onClick={() => { setDetailError(null); setDetailAttempt(n => n + 1); }}>重试加载详情</Button>
+                <Button type="button" size="s" variant="outline" onClick={() => { setDetailError(null); selectVideoWithRetention(null); }}>返回作品列表</Button>
+              </div>
+            </div>
           ) : !activeDetail ? (
             <div className="flex flex-col h-full bg-white p-6 space-y-4">
               <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
 import { cn } from "@/lib/utils";
 import { getShanghaiDateString } from "./content-list-filters";
+import { formatDateLabel, formatShortDate } from "./content-headline";
 
 interface DatePaginationProps {
   /** 当前查看的日期（YYYY-MM-DD）；区间模式下作为锚点 */
@@ -38,26 +39,8 @@ interface DatePaginationProps {
   onRangeChange?: (start: string, end: string) => void;
   /** 默认展开弹层（主要用于测试） */
   defaultOpen?: boolean;
-}
-
-const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-
-function parseDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  const date = new Date(`${dateStr}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function formatDateLabel(dateStr: string): string {
-  const date = parseDate(dateStr);
-  if (!date) return dateStr;
-  return `${date.getMonth() + 1}月${date.getDate()}日 ${WEEKDAY_LABELS[date.getDay()]}`;
-}
-
-function formatShortDate(dateStr: string): string {
-  const date = parseDate(dateStr);
-  if (!date) return dateStr;
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
+  /** 按钮文字是否带当天篇数；数据复盘页头已写篇数时关掉，避免同一个数说两遍 */
+  showCountInLabel?: boolean;
 }
 
 function toDateString(year: number, month: number, day: number): string {
@@ -65,7 +48,8 @@ function toDateString(year: number, month: number, day: number): string {
 }
 
 function toYearMonth(dateStr: string): { year: number; month: number } {
-  const date = parseDate(dateStr) ?? new Date();
+  const parsed = dateStr ? new Date(`${dateStr}T00:00:00`) : null;
+  const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
   return { year: date.getFullYear(), month: date.getMonth() };
 }
 
@@ -88,6 +72,7 @@ export function DatePagination({
   onTimeRangeChange,
   onRangeChange,
   defaultOpen = false,
+  showCountInLabel = true,
 }: DatePaginationProps) {
   const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const [open, setOpen] = useState(defaultOpen);
@@ -127,7 +112,7 @@ export function DatePagination({
     hasCounts &&
     typeof filteredCount === "number" &&
     (hasActiveFilters || filteredCount !== totalForDay);
-  const countSuffix = hasCounts
+  const countSuffix = hasCounts && showCountInLabel
     ? showFilteredCount
       ? ` · 命中 ${filteredCount} / 共 ${totalForDay} 条`
       : ` · ${totalForDay} 条`

@@ -87,37 +87,23 @@ export const DEFAULT_SORT_DIR: Record<SortField, "asc" | "desc"> = {
 
 export const DEFAULT_PAGE_SIZE = 20;
 
+/**
+ * 作品状态徽标。`quiet` 为 true 表示正常作品：列表里不再占位显示「正常」，
+ * 只把删稿 / 限流 / 异常 / 未满 24h 这些需要人留意的状态标出来（2026-11-19 数据复盘重写）。
+ */
 export function getStatusDot(video: VideoRow) {
   const status = video.anomaly_status as string;
   // 标签唯一来源：提醒条 tooltip 与本列徽标共用同一映射，避免同一视频两处两个名字
   const label = resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status });
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
-    return {
-      variant: "danger" as const,
-      label,
-    };
+    return { variant: "danger" as const, label, quiet: false };
   }
   if (status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) {
-    return {
-      variant: "warning" as const,
-      label,
-    };
-  }
-  // 「正常」静默化（2026-10-14）：中性灰退居基线背景，把醒目色留给真正的异常作品
-  if (status === "normal" || status === "正常") {
-    return {
-      variant: "neutral" as const,
-      label,
-    };
+    return { variant: "warning" as const, label, quiet: false };
   }
   if (status === "pending" || status === "未满24h") {
-    return {
-      variant: "neutral" as const,
-      label,
-    };
+    return { variant: "neutral" as const, label, quiet: false };
   }
-  return {
-    variant: "neutral" as const,
-    label,
-  };
+  // 「正常」静默化：正常作品不出徽标，把注意力留给真正需要处理的作品
+  return { variant: "neutral" as const, label, quiet: true };
 }

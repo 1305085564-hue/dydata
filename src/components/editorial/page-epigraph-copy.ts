@@ -1,4 +1,4 @@
-import { formatCompactCount } from "@/app/(app)/admin/content/content-editorial-epigraph";
+import { formatCompactCount } from "@/app/(app)/admin/content/content-headline";
 import type { PulseSummary } from "@/app/(app)/admin/pulse/pulse-filters";
 import type { FulfillmentCalendarData } from "@/types/fulfillment";
 

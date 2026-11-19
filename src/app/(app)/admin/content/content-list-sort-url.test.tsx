@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
+import { renderToStaticMarkup } from "react-dom/server";
 import { DEFAULT_SORT_DIR } from "@/lib/content/domain/content-list";
+import { CONTENT_COLUMNS, visibleContentColumns } from "./content-list-columns";
+import { ContentListTableHeader } from "./content-list-table-header";
 import {
   buildAccountDisplayLabels,
   filterAccountsByName,
@@ -14,27 +17,25 @@ import {
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 test("表头暴露 aria-sort：读屏与键盘用户能知道当前按哪列、升序还是降序（审计 M4）", () => {
-  const header = read("src/app/(app)/admin/content/content-list-table-header.tsx");
-
-  // 此前排序状态只由 ▼/▲/↕ 表达，未排序列的 ↕ 还是 opacity-0 只有 hover 才显形
-  assert.match(header, /aria-sort=\{ariaSortFor\(/, "表头缺少 aria-sort");
-  assert.match(header, /"ascending"/, "缺少升序状态");
-  assert.match(header, /"descending"/, "缺少降序状态");
-  assert.match(header, /aria-label=\{/, "排序按钮缺少可读名称");
-
-  // 所有可排序列都要覆盖，不能只给个别列加
-  const sortableFields = [...header.matchAll(/handleSort\("([^"]+)"\)/g)].map((match) => match[1]);
-  for (const field of sortableFields) {
-    assert.match(header, new RegExp(`aria-sort=\\{ariaSortFor\\("${field}"\\)\\}`), `${field} 缺少 aria-sort`);
+  const html = renderToStaticMarkup(
+    <table>
+      <ContentListTableHeader
+        columns={visibleContentColumns(false)}
+        sortField="play_count"
+        sortDir="desc"
+        handleSort={() => {}}
+      />
+    </table>,
+  );
+  const sorts = [...html.matchAll(/<th[^>]*aria-sort="([^"]+)"/g)].map((match) => match[1]);
+  // 完整列集：作品列按设计不排序，其余 15 列全部可排序（含播放占比、留存达成、评级）
+  assert.equal(sorts.length, 15, `可排序列数量应为 15：实际 ${sorts.length}`);
+  assert.deepEqual(sorts.filter((value) => value !== "none"), ["descending"]);
+  assert.match(html, /aria-label="按播放量排序（当前降序，点击改升序）"/);
+  const sortable = CONTENT_COLUMNS.flatMap((column) => column.sortField ? [column.sortField] : []);
+  for (const field of ["avg_play_ratio", "retention_achievement", "overall_grade"] as const) {
+    assert.ok(sortable.includes(field), `${field} 应支持排序`);
   }
-  const ariaSortCount = (header.match(/aria-sort=\{ariaSortFor\(/g) ?? []).length;
-  const sortableCount = sortableFields.length;
-  // 当前完整列集：状态、标题/账号按设计不排序，其余 15 列全部可排序（含播放占比、留存达成、评级）。
-  assert.equal(sortableCount, 15, `可排序列数量应为 15：实际 ${sortableCount}`);
-  assert.equal(ariaSortCount, 15);
-  assert.ok(sortableFields.includes("avg_play_ratio"), "播放占比应支持排序");
-  assert.ok(sortableFields.includes("retention_achievement"), "留存达成应支持排序");
-  assert.ok(sortableFields.includes("overall_grade"), "评级应支持排序");
 });
 
 test("排序进 URL：深链/刷新/分享后排序不变（审计 M1）", () => {

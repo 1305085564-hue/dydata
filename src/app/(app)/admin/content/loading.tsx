@@ -1,34 +1,10 @@
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { ContentEditorialEpigraph } from "./content-editorial-epigraph";
+import { ContentPageSkeleton } from "./content-page-skeleton";
 
 export default function ContentLoading() {
   return (
-    <AdminWorkspaceLayout
-      width="wide"
-      hideHeaderOnMobile={true}
-      title="数据复盘"
-      description={<ContentEditorialEpigraph />}
-    >
-      <div className="space-y-5">
-        {/* 单排顶栏控制舱骨架 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-card-ring">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Skeleton className="h-7 w-20 rounded-md" />
-              <Skeleton className="h-7 w-16 rounded-md" />
-            </div>
-            <Skeleton className="h-7 w-36 rounded-md" />
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <Skeleton className="h-4 w-36 rounded-md" />
-          </div>
-        </div>
-
-        {/* 视频复盘列表表格骨架 */}
-        <TableSkeleton columnCount={10} rowCount={8} showHeader={true} />
-      </div>
+    <AdminWorkspaceLayout width="wide">
+      <ContentPageSkeleton />
     </AdminWorkspaceLayout>
   );
 }
