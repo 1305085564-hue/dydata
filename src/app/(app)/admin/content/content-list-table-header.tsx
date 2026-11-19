@@ -10,7 +10,7 @@ import {
 } from "@/lib/evaluation-standards";
 import { KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD } from "@/lib/breakout-rating";
 import type { SortField } from "@/lib/content/domain/content-list";
-import { SORTED_COL_BG, type ContentColumn, type ContentColumnTip } from "./content-list-columns";
+import { SORTED_COL_BG, SORTED_STICKY_COL_BG, type ContentColumn, type ContentColumnTip } from "./content-list-columns";
 
 type ContentListTableHeaderProps = {
   columns: ContentColumn[];
@@ -100,11 +100,11 @@ export function ContentListTableHeader({
               aria-sort={ariaSort}
               style={{ width: column.width }}
               className={cn(
-                "py-2 whitespace-nowrap",
+                "py-2 font-normal whitespace-nowrap",
                 column.align === "right" ? "text-right" : "text-left",
                 column.groupStart ? "pl-4 pr-2" : "px-2",
                 isTitle && "sticky left-0 z-30 bg-[#FCFCFB] px-3 shadow-[1px_0_0_0_#E2E2DF]",
-                isSorted && SORTED_COL_BG,
+                isSorted && (isTitle ? SORTED_STICKY_COL_BG : SORTED_COL_BG),
               )}
             >
               {column.tip ? (

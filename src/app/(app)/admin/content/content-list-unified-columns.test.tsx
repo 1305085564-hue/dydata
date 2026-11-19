@@ -186,3 +186,38 @@ test("列表保留评级列，无硬编码待采集兜底，无其他·点赞", 
   assert.doesNotMatch(source, /"其他·点赞"/);
   assert.doesNotMatch(source, /status === "unlinked"\s*\?\s*"未关联"/);
 });
+
+test("表头字重严格为 400（font-normal），按发布时间排序时作品整列同享浅底", async () => {
+  const { ContentListTable } = await import("./content-list-table");
+  const renderTable = (sortField: "published_at" | "play_count") => renderToStaticMarkup(
+    <ContentListTable
+      metricViewMode="spacious"
+      visibleRows={[makeRow()]}
+      tableContainerRef={{ current: null }}
+      emptyTitle="空"
+      emptyDescription="空描述"
+      sortField={sortField}
+      sortDir="desc"
+      handleSort={() => {}}
+      isSingleDay
+      onSelectVideoId={() => {}}
+      highlightRules={{}}
+    />,
+  );
+
+  const byPub = renderTable("published_at");
+  const thClasses = [...byPub.matchAll(/<th\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(thClasses.length > 0 && thClasses.every((cls) => cls.includes("font-normal")), "所有表头单元格必须显式声明 font-normal");
+
+  const titleTh = byPub.match(/<th\b[^>]*data-col-key="title"[^>]*class="([^"]+)"/)?.[1] ?? "";
+  const titleTd = byPub.match(/<td\b[^>]*data-col-key="title"[^>]*class="([^"]+)"/)?.[1] ?? "";
+  assert.match(titleTh, /(?:^|\s)bg-\[#F7F7F6\](?:\s|$)/);
+  assert.match(titleTd, /(?:^|\s)bg-\[#F7F7F6\](?:\s|$)/);
+  assert.doesNotMatch(titleTd, /\bbg-white\b/);
+
+  const byPlay = renderTable("play_count");
+  const playTitleTd = byPlay.match(/<td\b[^>]*data-col-key="title"[^>]*class="([^"]+)"/)?.[1] ?? "";
+  const playCountTd = byPlay.match(/<td\b[^>]*data-col-key="play_count"[^>]*class="([^"]+)"/)?.[1] ?? "";
+  assert.match(playTitleTd, /\bbg-white\b/);
+  assert.match(playCountTd, /bg-\[#F7F7F6\]\/70/);
+});

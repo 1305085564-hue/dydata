@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -117,4 +119,9 @@ test("B1: 岗位尚未加载时即使有权限也不显示个人档案，避免�
     />,
   );
   assert.doesNotMatch(htmlWithoutPerm, /个人档案/);
+});
+
+test("作者抽屉表头禁用浏览器默认粗体，保持 400 字重", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/author-works-drawer.tsx"), "utf8");
+  assert.match(source, /\[&_th\]:font-normal/);
 });
