@@ -38,20 +38,16 @@ type SortField =
   | "reportCount"
   | "accountCount"
   | "selfHandledCount"
-  | "effectiveCount"
-  | "excellentCount"
   | "followerConversionRate"
   | "interactionRate";
 
-export const TALENT_TABLE_MIN_WIDTH = "min-w-[1190px]";
+export const TALENT_TABLE_MIN_WIDTH = "min-w-[1030px]";
 
 export function TalentTableColGroup() {
   return (
     <colgroup>
       <col className="min-w-[90px] w-auto" />
       <col className="w-[72px]" />
-      <col className="w-[80px]" />
-      <col className="w-[80px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
@@ -128,34 +124,6 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           条均播放
           {sort.renderSortIcon("avgPlay")}
         </button>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.effectiveCount}>
-          <button
-            type="button"
-            onClick={() => sort.onSort("effectiveCount")}
-            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-              sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-            }`}
-          >
-            有效作品
-            {sort.renderSortIcon("effectiveCount")}
-          </button>
-        </SimpleTooltip>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
-          <button
-            type="button"
-            onClick={() => sort.onSort("excellentCount")}
-            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-              sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-            }`}
-          >
-            优秀作品
-            {sort.renderSortIcon("excellentCount")}
-          </button>
-        </SimpleTooltip>
       </TableHead>
       <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
@@ -255,8 +223,6 @@ export function TalentRowCells({ row, isSelf = false }: { row: TalentRow; isSelf
       <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       <TableCell className="py-2 px-2 text-right tabular-nums text-[#78716C]">
         {row.selfHandledCount}
       </TableCell>

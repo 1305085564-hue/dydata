@@ -1,7 +1,7 @@
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { getPublishedDateForStats } from "@/lib/date-semantics";
 import { STATS_START_DATE } from "./types";
-import { CALIBER, averagePlayOf } from "@/lib/metrics/caliber";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 import type {
   CollaborationAccount,
   CollaborationProfile,
@@ -16,10 +16,6 @@ import type {
 
 export function asCount(value: number | null | undefined) {
   return Number.isFinite(value) ? Math.max(0, Number(value)) : 0;
-}
-
-export function hasPlayCount(row: CollaborationReport) {
-  return Number.isFinite(row.play_count);
 }
 
 export function unique(values: Array<string | null | undefined>) {
@@ -179,33 +175,6 @@ export function buildUnattributedReports(
     operatorUserId: row.operator_user_id,
     operatorName: row.operator_user_id ? names.get(row.operator_user_id) ?? null : null,
   }));
-}
-
-export function countHits(rows: CollaborationReport[], historyRows = rows): number {
-  const byAccount = new Map<string, CollaborationReport[]>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  for (const row of historyRows.filter(hasPlayCount)) {
-    const bucket = byAccount.get(row.account_id) ?? [];
-    bucket.push(row);
-    byAccount.set(row.account_id, bucket);
-  }
-
-  let hits = 0;
-  for (const row of rows.filter(hasPlayCount)) {
-    const rowWorkDate = getCollaborationWorkDate(row);
-    const play = asCount(row.play_count);
-    if (play < CALIBER.hitMinPlay) continue;
-    const prior = (byAccount.get(row.account_id) ?? [])
-      .filter((candidate) => candidate.id !== row.id && (
-        getCollaborationWorkDate(candidate) < rowWorkDate
-        || (getCollaborationWorkDate(candidate) === rowWorkDate && candidate.id < row.id)
-      ))
-      .sort((a, b) => getCollaborationWorkDate(b).localeCompare(getCollaborationWorkDate(a)) || b.id.localeCompare(a.id))
-      .slice(0, CALIBER.hitBaselineSize);
-    if (prior.length < CALIBER.hitMinBaseline) continue;
-    const priorMean = prior.reduce((sum, candidate) => sum + asCount(candidate.play_count), 0) / prior.length;
-    if (priorMean > 0 && play >= priorMean * CALIBER.hitTimesOverMean) hits++;
-  }
-  return hits;
 }
 
 export function monthOverMonth(currentTotal: number, previousRows: CollaborationReport[]) {

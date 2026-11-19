@@ -4,10 +4,10 @@ import {
   CollaborationDiagnosisContext,
   CollaborationWorkReviewLink,
 } from "@/components/admin/collaboration-work-review-link";
-import { TableCellHint as CellWithTooltip } from "@/components/admin/quality-tooltip-content";
 import {
   COLLABORATION_METRIC_HEADER_TIPS,
   CollaborationQualityCells,
+  ExcellentCountCell,
 } from "./collaboration-quality-hints";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { Fragment, useContext, useMemo, useState, type ReactNode } from "react";
@@ -25,10 +25,8 @@ import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from "@/compon
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { ListRow } from "@/components/ui/list-row";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
-import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
 import { formatBigNumber, type StaffRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
@@ -48,7 +46,6 @@ type SortField =
   | "reportCount"
   | "totalPlay"
   | "avgPlay"
-  | "effectiveCount"
   | "excellentCount"
   | "followerConversionRate"
   | "interactionRate"
@@ -60,8 +57,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1180px]",
-  editor: "min-w-[665px]",
+  writer: "min-w-[1080px]",
+  editor: "min-w-[500px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -83,8 +80,6 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
         <col className="w-[76px]" />
         <col className="w-[80px]" />
         <col className="w-[80px]" />
-        <col className="w-[80px]" />
-        <col className="w-[72px]" />
         <col className="w-[74px]" />
         <col className="w-[74px]" />
         <col className="w-[80px]" />
@@ -102,8 +97,6 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="min-w-[120px] w-auto" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
-      <col className="w-[82px]" />
-      <col className="w-[82px]" />
       <col className="w-[82px]" />
     </colgroup>
   );
@@ -154,46 +147,16 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.effectiveCount}>
-          <button
-            type="button"
-            onClick={() => sort.onSort("effectiveCount")}
-            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-          >
-            有效作品{sort.renderSortIcon("effectiveCount")}
-          </button>
-        </SimpleTooltip>
-      </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
-        <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
-          <button
-            type="button"
-            onClick={() => sort.onSort("excellentCount")}
-            className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
-          >
-            优秀作品{sort.renderSortIcon("excellentCount")}
-          </button>
-        </SimpleTooltip>
-      </TableHead>
       {role === "writer" && (
         <>
           <TableHead className="text-right font-normal text-[#78716C]">
-            <SimpleTooltip
-              align="end"
-              contentClassName="text-[12px] max-w-xs text-left"
-              tip={
-                <>
-                  <p className="font-normal text-[#141413] mb-1">文案绩效核算口径：</p>
-                  <p className="text-[#1F1E1D] leading-relaxed">
-                    播放≥500条数 + 优秀作品×2。<br />
-                    <span className="text-[#78716C] text-[12px]">注：未认证文案不计入绩效结算。</span>
-                  </p>
-                </>
-              }
-            >
-              <button type="button" className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
-                绩效条
+            <SimpleTooltip align="end" tip={COLLABORATION_METRIC_HEADER_TIPS.excellentCount}>
+              <button
+                type="button"
+                onClick={() => sort.onSort("excellentCount")}
+                className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
+              >
+                优条数{sort.renderSortIcon("excellentCount")}
               </button>
             </SimpleTooltip>
           </TableHead>
@@ -357,54 +320,9 @@ export function StaffRowCells({
       <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       {role === "writer" && (
         <>
-          <TableCell className="p-0 text-right tabular-nums">
-            {row.billingCount !== null ? (
-              <Tooltip>
-                <TooltipTrigger className="group/cell flex h-full w-full items-center justify-end px-2 py-2 font-normal text-[#141413] hover:text-[#D97757] cursor-pointer">
-                  <span className="border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#D97757]">
-                    {row.billingCount}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  align="end"
-                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-2xl flex-col items-stretch space-y-2 text-left"
-                >
-                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1">
-                    <span className="text-[12px] font-normal text-[#141413]">绩效条数核算明细</span>
-                    <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-2 py-0.5 rounded-md">
-                      {row.name}
-                    </span>
-                  </div>
-                  <div className="space-y-1 text-[12px]">
-                    <ListRow className="py-0.5 text-[#78716C] border-b-0">
-                      <span>计费基数（播放≥500）</span>
-                      <span className="tabular-nums font-normal text-[#141413]">{row.billingCount - row.excellentCount * 2} 条</span>
-                    </ListRow>
-                    <ListRow className="py-0.5 text-[#78716C] border-b-0">
-                      <span>优秀作品加成（{row.excellentCount} × 2）</span>
-                      <span className="tabular-nums font-normal text-[#141413]">+{row.excellentCount * 2} 条</span>
-                    </ListRow>
-                    <ListRow className="border-t border-[#E2E2DF]/60 pt-1 pb-0 border-b-0 font-normal">
-                      <span className="text-[#141413]">最终计费条数</span>
-                      <span className="tabular-nums text-[14px] font-normal text-[#141413]">{row.billingCount} 条</span>
-                    </ListRow>
-                  </div>
-                  {row.certifiedByName && (
-                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded-md border border-[#E2E2DF]/60">
-                      已由 <span className="text-[#141413] font-normal">{row.certifiedByName}</span> 认证生效
-                    </div>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <CellWithTooltip tip="未认证成员不计费" muted>—</CellWithTooltip>
-            )}
-          </TableCell>
+          <ExcellentCountCell writerQuality={row.writerQuality} />
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.followerConversionRate)}</TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.interactionRate)}</TableCell>
           <CollaborationQualityCells writerQuality={row.writerQuality} />
@@ -417,14 +335,14 @@ export function StaffRowCells({
   );
 }
 
-/** 展开行：逐篇作品明细（含文案计费对账）。未展开时返回 null。 */
+/** 展开行：逐篇作品明细。未展开时返回 null。 */
 export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; role: StaffRole; isExpanded: boolean }) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
   if (!isExpanded) return null;
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 15 : 8} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
+      <TableCell colSpan={role === "writer" ? 13 : 6} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
         <div className="px-6 py-2">
           <table className="w-full table-fixed text-[12px]">
             <colgroup>
@@ -432,7 +350,6 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               <col className="w-[160px]" />
               <col />
               <col className="w-[90px]" />
-              {role === "writer" && <col className="w-[150px]" />}
             </colgroup>
             <thead>
               <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
@@ -440,18 +357,11 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                 <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">账号</th>
                 <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">作品</th>
                 <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">播放</th>
-                {role === "writer" && (
-                  <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">
-                    计费对账
-                  </th>
-                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E2DF]/40">
               {row.works.length > 0 ? (
                 row.works.map((work) => {
-                  const quality = getWorkQuality(work.playCount);
-
                   return (
                     <tr
                       key={work.reportId}
@@ -488,36 +398,12 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                         </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
-                      {role === "writer" && (
-                        <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-[12px]">
-                          {!quality.hasPlayData ? (
-                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
-                              无数据·不计
-                            </span>
-                          ) : quality.isExcellent ? (
-                            <Badge
-                              variant="success"
-                              className="text-[#78716C] before:bg-status-success"
-                            >
-                              <span>✓</span> 优秀爆款 (+3条)
-                            </Badge>
-                          ) : quality.billingCount > 0 ? (
-                            <Badge variant="neutral" className="text-[#78716C]">
-                              <span>✓</span> 达标 (+1条)
-                            </Badge>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[#78716C]">
-                              未达标 (差 {formatBigNumber(quality.billingGap)})
-                            </span>
-                          )}
-                        </td>
-                      )}
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={role === "writer" ? 5 : 4} className="px-3 py-2">
+                  <td colSpan={4} className="px-3 py-2">
                     <EmptyState variant="compact" title="暂无作品记录" />
                   </td>
                 </tr>
@@ -557,6 +443,7 @@ export function StaffTab({ rows, role, isLoading, currentUserId = null, isMember
       if (field === "avgInteractionAchievement") return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
       if (field === "avgContentAchievement") return row.writerQuality?.summary?.avgContentAchievement ?? null;
       if (field === "goodExcellentRate") return row.writerQuality?.summary?.goodExcellentRate ?? null;
+      if (field === "excellentCount") return row.writerQuality?.summary?.overallGradeCounts.excellent ?? null;
       return row[field] ?? null;
     };
     const list = [...rows];

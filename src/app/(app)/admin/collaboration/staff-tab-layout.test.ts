@@ -21,18 +21,14 @@ test("达人表支持键盘聚焦与焦点环", () => {
   assert.match(talentSource, /focus-visible:ring-\[#141413\]/);
 });
 
-test("文案绩效条数展示核算明细，未认证时不显示明细", () => {
-  assert.match(source, /绩效条数核算明细/);
-  assert.match(source, /计费基数（播放≥500）/);
-  assert.match(source, /优秀作品加成/);
-  assert.match(source, /最终计费条数/);
-  assert.match(source, /未认证成员不计费/);
-  assert.doesNotMatch(source, /月度基准扣除/);
-});
-
-test("文案作品缺失播放时显示无数据且不进入未达标差额分支", () => {
-  assert.match(source, /无数据·不计/);
-  assert.doesNotMatch(source, /const play = work\.playCount \?\? 0/);
+test("文案表只给出优条数，不再展示按条数计费的核算明细", () => {
+  assert.match(source, /优条数/);
+  assert.match(source, /ExcellentCountCell/);
+  assert.doesNotMatch(source, /绩效条数核算明细/);
+  assert.doesNotMatch(source, /计费基数/);
+  assert.doesNotMatch(source, /计费对账/);
+  assert.doesNotMatch(source, /billingCount/);
+  assert.doesNotMatch(source, /有效作品|优秀作品/);
 });
 
 test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () => {
@@ -48,10 +44,10 @@ test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () =>
 test("岗位四个 Tab 的列名按锁定方案展示，运营展开行仍保留账号级导粉", () => {
   const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  assert.doesNotMatch(talentSource, /爆款作品/);
+  assert.doesNotMatch(talentSource, /爆款作品|有效作品|优秀作品/);
   assert.match(talentSource, /转粉率/);
   assert.match(talentSource, /互动率/);
-  assert.doesNotMatch(operatorSource, /爆款数/);
+  assert.doesNotMatch(operatorSource, /爆款数|有效作品|优秀作品/);
   assert.doesNotMatch(operatorSource, /导粉\s*\{sort/);
   assert.match(operatorSource, /<th[^>]*>\s*导粉\s*<\/th>/);
   assert.match(operatorSource, /转粉率/);
@@ -59,7 +55,7 @@ test("岗位四个 Tab 的列名按锁定方案展示，运营展开行仍保留
   assert.match(source, /const countLabel = "本月篇数"/);
   assert.match(source, /转粉率/);
   assert.match(source, /互动率/);
-  assert.match(source, /绩效条数/);
+  assert.match(source, /优条数/);
   assert.match(source, /认证状态/);
   assert.doesNotMatch(source, /本月条数/);
   assert.match(source, /转粉率/);
@@ -72,10 +68,11 @@ test("岗位表格脚注明确日报产量与快照比率口径不同", () => {
 
 test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  // 运营：展开+姓名+负责账号+本月作品+总播放+条均+有效+优秀+环比+转粉+互动 = 11
-  assert.match(operatorSource, /colSpan=\{11\}/);
-  // 文案：8 基础列（移除了最近作品列） + 绩效 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 15；剪辑不加率为 8
-  assert.match(source, /colSpan=\{role === "writer" \? 15 : 8\}/);
+  // 运营：展开+姓名+负责账号+本月作品+总播放+条均+环比+转粉+互动 = 9
+  assert.match(operatorSource, /colSpan=\{9\}/);
+  // 文案：6 基础列（展开+姓名+账号+总播放+条均+篇数） + 优条数 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 13；剪辑只有 6 基础列
+  assert.match(source, /colSpan=\{role === "writer" \? 13 : 6\}/);
+  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 15 : 8\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 16 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 11 : 9\}/);
@@ -89,20 +86,18 @@ test("岗位表格已移除主表最近作品列，作品明细下沉至展开�
 });
 
 test("岗位表格采用自适应文本列宽（min-w-[90px] w-auto）与紧凑总宽，减少笔记本横向滚动", () => {
-  assert.match(source, /writer:\s*"min-w-\[1180px\]"/);
-  assert.match(source, /editor:\s*"min-w-\[665px\]"/);
+  assert.match(source, /writer:\s*"min-w-\[1080px\]"/);
+  assert.match(source, /editor:\s*"min-w-\[500px\]"/);
   // 列名精简断言
   assert.match(source, /条均播/);
-  assert.match(source, /绩效条/);
+  assert.match(source, /优条数/);
   assert.match(source, /留存数据/);
-  // 有效作品与优秀作品带排序能力
-  assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
+  // 优条数带排序能力
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
   // 文本列 min-w w-auto 自适应 + 数字列规整（writer 收紧数字列给良优率与认证状态留足宽度，editor 保持不变）
   assert.match(source, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(source, /<col className="min-w-\[104px\] w-auto" \/>/);
   assert.match(source, /<col className="w-\[76px\]" \/>/);
-  assert.match(source, /<col className="w-\[72px\]" \/>/);
   assert.match(source, /<col className="w-\[74px\]" \/>/);
   assert.match(source, /<col className="w-\[86px\]" \/>/);
   assert.match(source, /<col className="w-\[126px\]" \/>/);
@@ -116,14 +111,14 @@ test("达人与运营表格统一落地自适应文本列宽、colgroup与py-2�
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
 
   // 达人表规范断言
-  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1190px\]"/);
+  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1030px\]"/);
   assert.match(talentSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(talentSource, /<TalentTableColGroup \/>/);
   assert.match(talentSource, /sticky left-0/);
 
   // 运营表规范断言
-  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[840px\]"/);
+  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[680px\]"/);
   assert.match(operatorSource, /<col className="min-w-\[90px\] w-auto" \/>/);
   assert.match(operatorSource, /<Table className=\{`\$\{OPERATOR_TABLE_MIN_WIDTH\} table-fixed`\}>/);
   assert.match(operatorSource, /<OperatorTableColGroup \/>/);

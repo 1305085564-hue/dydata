@@ -262,7 +262,6 @@ function talentPayload(input: {
     profiles: [talentProfile, otherProfile],
     accounts: talentAccounts,
     videos: [],
-    historyRows: input.reports,
     growthRole: "talents",
     growthReports: [],
     growthSnapshots: input.snapshots ?? new Map(),

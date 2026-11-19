@@ -47,7 +47,7 @@ function MetricPercentValue({ value, playCount, normalClassName, standards = DEF
   return tip ? <SimpleTooltip align="end" tip={tip}>{label}</SimpleTooltip> : label;
 }
 
-/** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
+/** 单项评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
 function BreakoutGradeTag({ rating, metricLabel, targetLabel, hideTooltip = false }: { rating: BreakoutRating | null; metricLabel: string; targetLabel: string; hideTooltip?: boolean }) {
   if (!rating) return null;
   const tag = (
@@ -57,7 +57,7 @@ function BreakoutGradeTag({ rating, metricLabel, targetLabel, hideTooltip = fals
   );
   if (hideTooltip) return tag;
   return (
-    <SimpleTooltip align="end" tip={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}>
+    <SimpleTooltip align="end" tip={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），评级标准 ${targetLabel}`}>
       {tag}
     </SimpleTooltip>
   );
@@ -124,7 +124,7 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                   </Alert>
                 )}
 
-              {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
+              {/* 1. 顶部全景单大卡片 (视频元数据 + 核心数据大盘 融为一体) */}
               <section className="space-y-5">
                 {/* 1.1 视频元信息 header */}
                 <div className="border-b border-[#E2E2DF]/60 pb-4">
@@ -186,13 +186,13 @@ export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_
                   </div>
                 </div>
 
-                {/* 1.2 爆款数据核心大盘 (融于同卡内) */}
+                {/* 1.2 核心数据大盘 (融于同卡内) */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-current text-[#D97757]" />
                       <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
-                        爆款数据核心大盘
+                        核心数据大盘
                       </h3>
                       {overallGrade && (
                         <SimpleTooltip

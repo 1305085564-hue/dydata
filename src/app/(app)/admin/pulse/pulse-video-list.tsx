@@ -127,7 +127,7 @@ export function PulseVideoList({
 
   const capsules: Array<{ key: PulseCap; label: string; count: number }> = [
     { key: "all", label: "全部", count: capsuleVideos.all.length },
-    { key: "hot", label: "昨日爆款", count: capsuleVideos.hot.length },
+    { key: "hot", label: "昨日评优", count: capsuleVideos.hot.length },
     { key: "anomaly", label: "昨日异常", count: capsuleVideos.anomaly.length },
     { key: "unrated", label: "未评级", count: capsuleVideos.unrated.length },
   ];
@@ -155,7 +155,7 @@ export function PulseVideoList({
 
   const getEmptyTitle = () => {
     if (dayVideos.length === 0) return "该日暂无发布作品";
-    if (selectedCap === "hot") return "该日暂无命中「爆款」的作品";
+    if (selectedCap === "hot") return "该日暂无评为「优」的作品";
     if (selectedCap === "anomaly") return "该日暂无命中「异常」的作品";
     if (selectedCap === "unrated") return "该日作品均已完成评级";
     return "该日暂无发布作品";

@@ -123,7 +123,7 @@ export function WriterCertificationButton({
             <AlertCircle className="size-4 shrink-0 mt-0.5 text-status-warning" />
             <div className="space-y-1 leading-relaxed">
               <p className="font-normal text-[#141413]">取消后将影响当月绩效结算</p>
-              <p className="text-[#78716C]">该成员的绩效条数将不再计入结算，已生效的月度绩效将被重置为未认证状态。</p>
+              <p className="text-[#78716C]">该成员的优条数将不再计入结算，已生效的月度绩效将被重置为未认证状态。</p>
             </div>
           </div>
 

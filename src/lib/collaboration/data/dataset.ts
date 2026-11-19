@@ -179,7 +179,6 @@ export async function loadCollaborationMonthDataset(input: {
   return {
     currentRows,
     previousRows,
-    historyRows: rows,
     profiles,
     accounts,
     writerCertifications,

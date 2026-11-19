@@ -106,13 +106,12 @@ test("作品明细日期优先使用上海时区的真实发布时间，不使�
       profiles,
       accounts,
       videos: [],
-      historyRows: [row],
     }).records[0]?.reportDate,
     "2026-10-08",
   );
 });
 
-test("operators 播放未达3万不判爆款，无前5条历史也不判爆款，上月无记录时环比为 null", () => {
+test("operators 汇总作品数与播放，上月无记录时环比为 null", () => {
   const current = [
     report({ id: "a", play_count: 100, operator_user_id: "operator-1" }),
     report({ id: "b", report_date: "2026-07-28", play_count: 1000, operator_user_id: "operator-1" }),
@@ -124,11 +123,10 @@ test("operators 播放未达3万不判爆款，无前5条历史也不判爆款�
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 3);
-  assert.equal(result[0]?.hitCount, 0);
   assert.equal(result[0]?.momChange, null);
 });
 
-test("operators 爆款口径：至少3条历史样本、播放≥3万且≥前5条均值×3才命中", () => {
+test("operators 只负责一个账号也进入岗位月报", () => {
   const current = [
     ...[10000, 10000, 10000].map((playCount, index) =>
       report({
@@ -143,55 +141,8 @@ test("operators 爆款口径：至少3条历史样本、播放≥3万且≥前5�
   const result = buildOperators(current, [], profiles, accounts);
 
   assert.equal(result.length, 1, "只负责一个账号的运营也应进入岗位月报");
-  assert.equal(result[0]?.hitCount, 1);
   assert.equal(result[0]?.momChange, null);
   assert.equal(result[0]?.accountCount, 1);
-});
-
-test("operators 爆款样本不应受历史责任人归属影响", () => {
-  const rows = [
-    report({ id: "prior-1", report_date: "2026-08-01", play_count: 1000, operator_user_id: "operator-2" }),
-    report({ id: "prior-2", report_date: "2026-08-02", play_count: 1000, operator_user_id: "operator-2" }),
-    report({ id: "prior-3", report_date: "2026-08-03", play_count: 1000, operator_user_id: null }),
-    report({ id: "new-operator-hit", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
-  ];
-
-  const result = buildOperators(rows, [], profiles, accounts);
-
-  assert.equal(result.find((row) => row.userId === "operator-1")?.hitCount, 1);
-});
-
-test("达人和运营爆款会使用上月以前的有效同账号样本", () => {
-  const current = [
-    report({ id: "september-hit", report_date: "2026-09-05", play_count: 30000, operator_user_id: "operator-1" }),
-  ];
-  const history = [
-    report({ id: "july-1", report_date: "2026-07-27", play_count: 1000 }),
-    report({ id: "july-2", report_date: "2026-07-28", play_count: 1000 }),
-    report({ id: "july-3", report_date: "2026-07-29", play_count: 1000 }),
-    ...current,
-  ];
-
-  assert.equal(buildOperators(current, [], profiles, accounts, history)[0]?.hitCount, 1);
-  assert.equal(buildTalents(current, profiles, accounts, history)[0]?.hitCount, 1);
-});
-
-test("缺失播放量不能冒充爆款历史样本", () => {
-  const missingSample = (id: string, reportDate: string) => ({
-    ...report({ id, report_date: reportDate }),
-    play_count: null,
-  });
-  const current = [
-    report({ id: "candidate", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
-  ];
-  const history = [
-    missingSample("missing-1", "2026-08-01"),
-    missingSample("missing-2", "2026-08-02"),
-    report({ id: "valid-1", report_date: "2026-08-03", play_count: 1000 }),
-    ...current,
-  ];
-
-  assert.equal(buildOperators(current, [], profiles, accounts, history)[0]?.hitCount, 0);
 });
 
 test("岗位作品明细保留缺失播放，不能在传给绩效收据前伪装成 0", () => {
@@ -204,28 +155,6 @@ test("岗位作品明细保留缺失播放，不能在传给绩效收据前伪�
 
   assert.equal(result[0]?.works[0]?.playCount, null);
   assert.equal(result[0]?.recentWorks[0]?.playCount, null);
-});
-
-test("operators 播放不足3万或历史样本不足3条时不计爆款", () => {
-  const belowThreshold = buildOperators([
-    ...[10000, 10000, 10000].map((playCount, index) =>
-      report({
-        id: `threshold-${index}`,
-        report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
-        play_count: playCount,
-        operator_user_id: "operator-1",
-      }),
-    ),
-    report({ id: "below-threshold", report_date: "2026-08-04", play_count: 29999, operator_user_id: "operator-1" }),
-  ], [], profiles, accounts);
-  const insufficientSamples = buildOperators([
-    report({ id: "sample-1", report_date: "2026-08-01", play_count: 10000, operator_user_id: "operator-1" }),
-    report({ id: "sample-2", report_date: "2026-08-02", play_count: 10000, operator_user_id: "operator-1" }),
-    report({ id: "too-early", report_date: "2026-08-03", play_count: 30000, operator_user_id: "operator-1" }),
-  ], [], profiles, accounts);
-
-  assert.equal(belowThreshold[0]?.hitCount, 0);
-  assert.equal(insufficientSamples[0]?.hitCount, 0);
 });
 
 test("operators 纯自营属于达人，不进入运营岗", () => {
@@ -282,7 +211,7 @@ test("writer 认证后统计本人当月全部署名，不限制自有账号", (
   assert.deepEqual(result[0]?.works.map((work) => work.reportId).sort(), ["w-other", "w-self"]);
 });
 
-test("writer 未认证时有作品仍展示数据，但 billingCount 为 null 且 isCertified 为 false", () => {
+test("writer 未认证时有作品仍展示数据，isCertified 为 false", () => {
   const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
   const rows = [
     report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1", play_count: 1000 }),
@@ -291,9 +220,7 @@ test("writer 未认证时有作品仍展示数据，但 billingCount 为 null �
   const result = buildStaff(rows, "writer", profiles, [writerOwn]);
   assert.equal(result.length, 1);
   assert.equal(result[0].reportCount, 1);
-  assert.equal(result[0].effectiveCount, 1);
   assert.equal(result[0].isCertified, false);
-  assert.equal(result[0].billingCount, null);
   assert.equal(result[0].certifiedByName, null);
 });
 
@@ -902,42 +829,34 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
     range: { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" },
   });
   assert.deepEqual(dataset.previousRows.map((row) => row.id), ["previous"]);
-  assert.deepEqual(dataset.historyRows?.map((row) => row.id), ["old", "previous", "current"]);
 });
 
 
-test("未认证时展示作品但未结算绩效，认证后结算绩效并带署名", () => {
+test("未认证时展示作品，认证后带认证人署名", () => {
   const rows = [report({script_author_user_id:"writer-1", play_count: 1000})];
   const uncertified = buildStaff(rows,"writer",profiles,accounts)[0];
   assert.equal(uncertified.reportCount, 1);
   assert.equal(uncertified.isCertified, false);
-  assert.equal(uncertified.billingCount, null);
   assert.equal(uncertified.certifiedByName, null);
 
   const certified = buildStaff(rows,"writer",profiles,accounts,certifications)[0];
   assert.equal(certified.reportCount, 1);
   assert.equal(certified.isCertified, true);
   assert.equal(certified.certifiedByName, "认证管理员");
-  assert.equal(typeof certified.billingCount, "number");
 });
-test("已认证零作品保留署名和零绩效；仅给自己写也可统计", () => {
+test("已认证零作品保留署名；仅给自己写也可统计", () => {
   const empty = buildStaff([],"writer",profiles,accounts,certifications)[0];
   assert.equal(empty.reportCount, 0);
-  assert.equal(empty.billingCount, 0);
   assert.equal(empty.avgPlay, 0);
   assert.equal(empty.certifiedByName,"认证管理员");
   const own = [{id:"own",name:"自有",profile_id:"writer-1"}];
   const row = buildStaff([report({account_id:"own",script_author_user_id:"writer-1",play_count:30000})],"writer",profiles,own,certifications)[0];
   assert.equal(row.reportCount,1);
-  assert.equal(row.excellentCount,1);
 });
-test("岗位聚合保留来源，优秀计数不冒充原爆款", () => {
+test("岗位聚合保留作品来源", () => {
   const rows = [report({operator_user_id:"operator-1",video_editor_user_id:"writer-1",data_source:"manual",play_count:30000})];
   const operator = buildOperators(rows,[],profiles,accounts)[0];
-  assert.equal(operator.effectiveCount,1);
-  assert.equal(operator.excellentCount,1);
-  assert.equal(operator.hitCount,0);
-  assert.equal(buildTalents(rows,profiles,accounts)[0].excellentCount,1);
+  assert.equal(operator.reportCount,1);
   assert.equal(buildStaff(rows,"editor",profiles,accounts)[0].works[0].dataSource,"manual");
 });
 
@@ -957,11 +876,11 @@ test("岗位比率复用24h快照加权聚合，未同步作品不入分母且�
   assert.equal(writer.interactionRate, 0.01);
 
   const talentRows = [report({ id: "talent-a", video_id: "video-a", account_id: "account-1" })];
-  const talent = buildTalents(talentRows, profiles, accounts, talentRows, snapshots)[0]!;
+  const talent = buildTalents(talentRows, profiles, accounts, snapshots)[0]!;
   assert.equal(talent.followerConversionRate, 0.1);
   assert.equal(talent.interactionRate, 0.1);
 
-  const operators = buildOperators(rows, [], profiles, accounts, rows, snapshots);
+  const operators = buildOperators(rows, [], profiles, accounts, snapshots);
   assert.equal(operators[0]?.followerConversionRate, 0.01);
   assert.equal(operators[0]?.interactionRate, 0.01);
   const empty = buildStaff(rows, "writer", profiles, accounts, certifications, new Map())[0]!;

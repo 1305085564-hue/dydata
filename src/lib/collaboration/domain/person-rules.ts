@@ -168,7 +168,6 @@ export function buildPersonPayload(input: {
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
   videos: CollaborationVideo[];
-  historyRows?: CollaborationReport[];
   writerCertifications?: WriterEligibility[];
   growthRole?: CollaborationRoleTab;
   growthReports?: CollaborationReport[];
@@ -197,7 +196,6 @@ export function buildPersonPayload(input: {
   );
   const currentOperatorRows = currentRows.filter((row) => row.operator_user_id === input.targetUserId);
   const previousOperatorRows = previousRows.filter((row) => row.operator_user_id === input.targetUserId);
-  const historyRows = fromStatsStart(input.historyRows ?? input.reports);
   const anomalies = anomalyIndexes(input.videos);
   const growthToday = input.today ?? formatShanghaiDateOnly();
   const growth =
@@ -217,7 +215,7 @@ export function buildPersonPayload(input: {
       : { works: [] as PersonGrowthWorkItem[], summary: null };
 
   const operator = currentOperatorRows.length > 0
-    ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts, historyRows).find(
+    ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts).find(
         (item) => item.userId === input.targetUserId,
       ) ?? null
     : null;
@@ -227,7 +225,6 @@ export function buildPersonPayload(input: {
         totalPlay: operator.totalPlay,
         avgPlay: operator.avgPlay,
         totalFollowerConvert: operator.totalFollowerConvert,
-        hitCount: operator.hitCount,
         momChange: operator.momChange,
         accountCount: operator.accountCount,
         operatedProfileCount: operator.operatedProfileCount,

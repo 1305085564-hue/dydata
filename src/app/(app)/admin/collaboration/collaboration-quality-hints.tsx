@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
+import { KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
 import type { ContentQualitySummary } from "@/lib/collaboration/content-quality-contract";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
@@ -16,8 +16,15 @@ export type WriterQualityData =
   | undefined;
 
 export const COLLABORATION_METRIC_HEADER_TIPS = {
-  effectiveCount: "播放大于 500 的作品条数",
-  excellentCount: "播放至少 30,000 的作品条数",
+  excellentCount: (
+    <>
+      <p className="font-normal text-[#141413] mb-1">优条数：</p>
+      <p className="text-[#1F1E1D] leading-relaxed">
+        综合评级为「优」的署名作品条数。播放达到 {KPI_PLAY_EXCELLENT.toLocaleString()} 以上，且互动与留存均达标才可评优。<br />
+        <span className="text-[#78716C] text-[12px]">注：未认证文案不计入结算。</span>
+      </p>
+    </>
+  ),
   followerConversionRate: (
     <>
       <p className="font-normal text-[#141413] mb-1">转粉率（加权参考）：</p>
@@ -149,5 +156,32 @@ export function CollaborationQualityCells({
         )}
       </TableCell>
     </>
+  );
+}
+
+/** 文案表「优条数」：综合评级为优的作品条数；质量数据缺失或读取失败时明确显示原因，不折算成 0。 */
+export function ExcellentCountCell({ writerQuality }: { writerQuality: WriterQualityData }) {
+  if (!writerQuality) {
+    return (
+      <TableCell className="p-0 text-right tabular-nums">
+        <TableCellHint tip="质量数据尚未接入" muted>—</TableCellHint>
+      </TableCell>
+    );
+  }
+  if (writerQuality.state === "error" || !writerQuality.summary) {
+    return (
+      <TableCell className="p-0 text-right tabular-nums">
+        <TableCellHint tip="质量数据读取异常" muted>—</TableCellHint>
+      </TableCell>
+    );
+  }
+  const { overallGradeCounts, ratedCount } = writerQuality.summary;
+  const count = overallGradeCounts.excellent;
+  return (
+    <TableCell className="p-0 text-right tabular-nums">
+      <TableCellHint tip={`已评级 ${ratedCount} 篇中，评为优 ${count} 篇`} muted={count === 0}>
+        <span className={count === 0 ? undefined : "font-normal text-[#141413]"}>{count}</span>
+      </TableCellHint>
+    </TableCell>
   );
 }

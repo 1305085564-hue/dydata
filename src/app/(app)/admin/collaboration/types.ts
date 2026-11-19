@@ -39,15 +39,12 @@ export interface OperatorAccount {
 export interface OperatorRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  effectiveCount: number;
-  excellentCount: number;
   userId: string;
   name: string;
   reportCount: number;
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
   momChange: number | null;
   accountCount: number;
   operatedProfileCount: number;
@@ -62,11 +59,8 @@ export interface StaffAccount {
 export interface StaffRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  billingCount: number | null;
   certifiedByName: string | null;
   isCertified?: boolean;
-  effectiveCount: number;
-  excellentCount: number;
   userId: string;
   name: string;
   reportCount: number;
@@ -108,7 +102,6 @@ export interface PersonOperatorSummary {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
   momChange: number | null;
   accountCount: number;
   operatedProfileCount: number;
@@ -176,8 +169,6 @@ export interface TalentAccount {
 export interface TalentRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  effectiveCount: number;
-  excellentCount: number;
   userId: string;
   name: string;
   accountCount: number;
@@ -185,7 +176,6 @@ export interface TalentRow {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
   selfHandledCount: number;
   accounts: TalentAccount[];
   qualitySummary?: import("@/lib/collaboration/content-quality-contract").ContentQualitySummary | null;

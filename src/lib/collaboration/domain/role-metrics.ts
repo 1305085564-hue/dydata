@@ -1,4 +1,3 @@
-import { countWorkQuality } from "@/app/api/admin/collaboration/quality-counts";
 import type {
   CollaborationAccount,
   CollaborationProfile,
@@ -12,7 +11,6 @@ import {
   accountMap,
   asCount,
   buildPerformanceMetrics,
-  countHits,
   fromStatsStart,
   getCollaborationWorkDate,
   isOtherAccount,
@@ -31,7 +29,6 @@ export function buildOperators(
   previousRows: CollaborationReport[],
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
-  historyRows: CollaborationReport[] = [...currentRows, ...previousRows],
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
 ) {
   const names = profileNameMap(profiles);
@@ -90,13 +87,9 @@ export function buildOperators(
         name: names.get(userId) ?? "未命名成员",
         reportCount: operatorRows.length,
         ...pickRateMetrics(buildPerformanceMetrics(operatorRows, snapshots)),
-        effectiveCount: countWorkQuality(operatorRows).effectiveCount,
-        excellentCount: countWorkQuality(operatorRows).excellentCount,
         totalPlay,
         avgPlay: averagePlayOf(operatorRows.map((row) => row.play_count)),
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        // 候选作品只算该运营负责的记录，历史样本要覆盖同账号所有日报，不能随责任人补录而漂移。
-        hitCount: countHits(operatorRows, fromStatsStart(historyRows)),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         accountCount: accountIds.length,
         operatedProfileCount: ownerProfileIds.length,
@@ -154,16 +147,12 @@ export function buildStaff(
           playCount: row.play_count,
           dataSource: row.data_source ?? null,
         }));
-      const quality = countWorkQuality(staffRows);
       const isCertified = role === "writer" ? certifiedWriters.has(userId) : true;
       return {
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: staffRows.length,
         ...pickRateMetrics(buildPerformanceMetrics(staffRows, snapshots)),
-        effectiveCount: quality.effectiveCount,
-        excellentCount: quality.excellentCount,
-        billingCount: role === "writer" ? (isCertified ? quality.billingCount : null) : quality.billingCount,
         certifiedByName: role === "writer" ? certifiedWriters.get(userId)?.certifiedByName ?? null : null,
         isCertified,
         totalPlay,

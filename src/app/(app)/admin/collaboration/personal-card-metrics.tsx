@@ -70,7 +70,7 @@ export function PersonalCardMetrics({
                   </div>
 
                   {data.operatorSummary ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2 px-1 border-b border-[#E2E2DF]/60">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-2 px-1 border-b border-[#E2E2DF]/60">
                       <div>
                         <div className="text-[12px] text-[#78716C] mb-1">总播放</div>
                         <Metric
@@ -90,13 +90,6 @@ export function PersonalCardMetrics({
                         <Metric
                           settleKey="personal-card:follower-convert"
                           value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
-                        />
-                      </div>
-                      <div>
-                        <div className="text-[12px] text-[#78716C] mb-1">爆款作品</div>
-                        <Metric
-                          settleKey="personal-card:hit-count"
-                          value={data.operatorSummary.hitCount}
                         />
                       </div>
                     </div>

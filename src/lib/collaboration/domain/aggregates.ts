@@ -1,4 +1,3 @@
-import { countWorkQuality } from "@/app/api/admin/collaboration/quality-counts";
 import type {
   CollaborationAccount,
   CollaborationMonthDataset,
@@ -14,7 +13,6 @@ import {
   asCount,
   buildPerformanceMetrics,
   buildSummary,
-  countHits,
   fromStatsStart,
   isSelfHandled,
   profileNameMap,
@@ -35,11 +33,9 @@ export function buildCollaborationPageData(
     dataset.previousRows,
     dataset.profiles,
     dataset.accounts,
-    dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows],
     dataset.videoSnapshots,
   );
-  const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
-  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows, dataset.videoSnapshots, dataset.videoTopicTags, evaluationStandards);
+  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, dataset.videoSnapshots, dataset.videoTopicTags, evaluationStandards);
   const staff = staffRole
     ? buildStaff(
         dataset.currentRows,
@@ -64,7 +60,6 @@ export function buildTalents(
   rows: CollaborationReport[],
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
-  historyRows: CollaborationReport[] = rows,
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(), // gate:transient-map 函数内临时聚合，随调用栈释放
   qualityTopics: ContentQualityTopicContext = { state: "error", tags: new Map() },
   evaluationStandards?: EvaluationStandards,
@@ -109,12 +104,9 @@ export function buildTalents(
         accountCount: talentAccounts.length,
         reportCount: talentRows.length,
         ...pickRateMetrics(buildPerformanceMetrics(talentRows, snapshots)),
-        effectiveCount: countWorkQuality(talentRows).effectiveCount,
-        excellentCount: countWorkQuality(talentRows).excellentCount,
         totalPlay,
         avgPlay: averagePlayOf(talentRows.map((row) => row.play_count)),
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        hitCount: countHits(talentRows, fromStatsStart(historyRows)),
         selfHandledCount: talentRows.filter(isSelfHandled).length,
         accounts: talentAccounts,
         writerQuality: {
