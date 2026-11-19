@@ -18,7 +18,10 @@ import {
 } from "./client-routing";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { sanitizeProviderErrorMessage } from "./provider-health";
+import { mapAiErrorKind, recordAiCallAttempt } from "./call-attempt-recorder";
+import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
+import { randomUUID } from "node:crypto";
 
 type TextContent = string;
 type MultimodalBlock =
@@ -508,6 +511,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     ...options,
     messages: [...options.messages],
   };
+  const requestId = randomUUID();
 
   const configuredChannels: ChannelConfig[] = [];
   const pushChannelUnique = (channel: ChannelConfig | null) => {
@@ -566,7 +570,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     if (channels.length === 0) {
       throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）");
     }
-    return sendWithFailover(channels, effectiveOptions, recordHealth);
+    return sendWithFailover(channels, effectiveOptions, recordHealth, sendToChannel, requestId, !recordHealth);
   }
 
   if (!options.databaseOnly && !options.featureKey) {
@@ -580,7 +584,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或在后台配置模型顺位）");
   }
 
-  return sendWithFailover(configuredChannels, effectiveOptions, recordHealth);
+  return sendWithFailover(configuredChannels, effectiveOptions, recordHealth, sendToChannel, requestId, !recordHealth);
 }
 
 async function sendWithFailover(
@@ -588,6 +592,8 @@ async function sendWithFailover(
   effectiveOptions: AiRequestOptions,
   recordHealth = true,
   send = sendToChannel,
+  requestId = randomUUID(),
+  isProbe = !recordHealth,
 ): Promise<AiResponse> {
   const perChannelTimeoutMs = effectiveOptions.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const totalTimeoutMs = effectiveOptions.totalTimeoutMs ?? DEFAULT_TOTAL_TIMEOUT_MS;
@@ -619,12 +625,28 @@ async function sendWithFailover(
       if (!recoveryToken) continue;
     }
     attemptedChannels += 1;
+    const attemptStartedAt = Date.now();
+    const modelId = channel.canonicalModelId?.trim() || toCanonicalModelId(resolveModel(channel, effectiveOptions));
     try {
       const result = await send(channel, {
         ...effectiveOptions,
         timeoutMs: attemptBudgetMs,
       });
       if (recordHealth) await markChannelSuccess(channel);
+      await recordAiCallAttempt({
+        service: getServiceSupabaseClient(),
+        requestId,
+        attemptNo: attemptedChannels,
+        featureKey: effectiveOptions.featureKey?.trim() || null,
+        modelId,
+        keyModelId: channel.providerKeyModelId ?? null,
+        keyId: channel.providerKeyId ?? null,
+        isSuccess: true,
+        errorKind: null,
+        errorMessage: null,
+        durationMs: result.elapsedMs ?? Date.now() - attemptStartedAt,
+        isProbe,
+      });
       return result;
     } catch (error) {
       const aiError =
@@ -637,6 +659,20 @@ async function sendWithFailover(
             );
 
       aiError.message = sanitizeProviderErrorMessage(aiError.message, channels.map((candidate) => candidate.apiKey));
+      await recordAiCallAttempt({
+        service: getServiceSupabaseClient(),
+        requestId,
+        attemptNo: attemptedChannels,
+        featureKey: effectiveOptions.featureKey?.trim() || null,
+        modelId,
+        keyModelId: channel.providerKeyModelId ?? null,
+        keyId: channel.providerKeyId ?? null,
+        isSuccess: false,
+        errorKind: mapAiErrorKind(aiError.errorType, aiError.message),
+        errorMessage: aiError.message,
+        durationMs: Date.now() - attemptStartedAt,
+        isProbe,
+      });
       if (recordHealth) {
         await markChannelFailure(channel, aiError);
         if (channel.providerKeyId) failedProviderKeyIds.add(channel.providerKeyId);

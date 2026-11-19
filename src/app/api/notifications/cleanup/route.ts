@@ -27,5 +27,12 @@ export async function GET(request: NextRequest) {
     await reportCronFailure("OCR 日志清理", ocrErr);
   }
 
+  try {
+    await admin.rpc("cleanup_ai_call_attempts");
+  } catch (aiCallErr) {
+    console.error("[ai_call_attempts/cleanup] failed", aiCallErr);
+    await reportCronFailure("AI 调用台账清理", aiCallErr);
+  }
+
   return NextResponse.json({ ok: true, deleted: data ?? 0, ocr_deleted: ocrDeleted });
 }
