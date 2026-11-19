@@ -65,8 +65,8 @@ test("工作台漏交天数与发布管理履约函数逐日一致", async () =>
     await db.query("insert into public.accounts(id, profile_id, name) values ($1, $2, '履约对账账号')", [accountId, memberId]);
 
     await db.query(
-      `insert into public.daily_reports(user_id, account_id, report_date, title, submitter, play_count)
-       values ($1, $2, $3::date, '已发夹具', '对账成员', 100)`,
+      `insert into public.daily_reports(user_id, account_id, report_date, published_at, title, submitter, play_count)
+       values ($1, $2, $3::date, ($3::date + time '09:00') at time zone 'Asia/Shanghai', '已发夹具', '对账成员', 100)`,
       [memberId, accountId, publishedDate],
     );
 
@@ -123,6 +123,11 @@ test("工作台漏交天数与发布管理履约函数逐日一致", async () =>
        where account_id = $1 and is_void = false and report_date between $2::date and $3::date
        order by report_date`,
       [accountId, joinedDate, today],
+    );
+    assert.equal(new Date(reportRows[0].published_at).toISOString().slice(0, 10), publishedDate);
+    assert.deepEqual(
+      reportRows.map((row: { report_date: string; published_at: string | null }) => getPublishedDateKey(row)),
+      [publishedDate],
     );
     const { rows: markRows } = await db.query(
       `select record_date::text, status, reason
