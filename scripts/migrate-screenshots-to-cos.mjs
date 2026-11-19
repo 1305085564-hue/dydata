@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash, createHmac } from "node:crypto";
+import { assertProdWriteAllowed } from "./lib/prod-write-guard.mjs";
 
 const BUCKET = "submission-screenshots";
 const LIMIT = 1000;
@@ -246,6 +247,8 @@ if (!execute) {
   }, null, 2));
   process.exit(0);
 }
+
+assertProdWriteAllowed(supabaseUrl, "迁移截图到 COS");
 
 const manifest = await fs.open(MANIFEST_PATH, "a");
 const failures = [];

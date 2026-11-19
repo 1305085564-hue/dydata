@@ -30,10 +30,10 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
   interactionRate:
     "参考指标：已同步 24 小时数据的（赞＋评＋转＋藏）合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
   avgInteractionAchievement: "每条作品互动指标对标准线的达成率，按作品平均，不按播放加权。",
-  avgContentAchievement: "播放 2,000 以上且算得出留存的作品，按好标准算达成率后取平均。",
+  avgContentAchievement: `播放 ${KPI_PLAY_FLOOR.toLocaleString()} 以上且算得出留存的作品，按好标准算达成率后取平均。`,
   goodExcellentRate: `综合评级为良或优的篇数 ÷ 已评级篇数。播放不足 ${KPI_PLAY_FLOOR.toLocaleString()} 直接评普，也计入分母。`,
   interactionDetail: "四项与互动率同口径：先加总再相除，四项相加等于互动率。",
-  retentionDetail: "播放达到 2,000 且算得出留存的作品取平均，与「留存达成」同一批作品，不按播放加权。",
+  retentionDetail: `播放达到 ${KPI_PLAY_FLOOR.toLocaleString()} 且算得出留存的作品取平均，与「留存达成」同一批作品，不按播放加权。`,
 } satisfies Record<string, ReactNode>;
 
 const muted = "text-[#A8A29E]";

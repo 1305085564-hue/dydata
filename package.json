@@ -23,15 +23,12 @@
     "gate:browser": "set -a; [ -f .env.ai-test.local ] && . .env.ai-test.local; set +a; node scripts/run-browser-gate.mjs",
     "audit:architecture": "node scripts/maintainability-gate.mjs --report",
     "gate:maintainability": "node scripts/maintainability-gate.mjs",
-    "gate:maintainability:terminal": "node scripts/maintainability-terminal-check.mjs",
     "preflight:release": "node scripts/preflight-release.mjs",
-    "rehearse:rollback": "node scripts/rollback-rehearsal.mjs",
-    "rehearse:fault": "node scripts/fault-injection.mjs",
-    "baseline:architecture": "node scripts/architecture-baseline.mjs",
-    "smoke:runtime": "node scripts/runtime-smoke-test.mjs",
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "seed:roles": "node --env-file-if-exists=.env.ai-test.local node_modules/tsx/dist/cli.mjs scripts/seed-roles-test-data.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
+    "db:replay": "node scripts/db-replay.mjs",
+    "db:drift": "node scripts/audit/db-drift-report.mjs --check --exceptions supabase/migration-ledger-exceptions.json --local-url postgresql://postgres:postgres@127.0.0.1:54322/dydata_replay",
     "analyze": "ANALYZE=true next build",
     "hooks:install": "node scripts/install-git-hooks.mjs"
   },
@@ -65,6 +62,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@next/bundle-analyzer": "16.3.3",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",

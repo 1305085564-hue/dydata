@@ -23,10 +23,6 @@
       "maxLines": 505,
       "category": "source"
     },
-    "src/app/(app)/admin/ai-config/components/providers-dialogs.tsx": {
-      "maxLines": 518,
-      "category": "source"
-    },
     "src/app/(app)/admin/collaboration/collaboration-workbench.tsx": {
       "maxLines": 453,
       "category": "source"
@@ -173,10 +169,6 @@
     },
     "src/components/unified-command-hub.tsx": {
       "maxLines": 1235,
-      "category": "source"
-    },
-    "src/lib/admin-ai/presentation.ts": {
-      "maxLines": 909,
       "category": "source"
     },
     "src/lib/ai/client.ts": {

@@ -10,7 +10,6 @@ const ignored = new Set(["node_modules", ".next", ".git", "output"]);
 const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const allowRawMap = new Set([
   "src/lib/cache-policy.ts",
-  "src/lib/in-flight-request.ts",
   "src/app/(app)/admin/collaboration/person-data.ts",
 ]);
 const execFileAsync = promisify(execFile);

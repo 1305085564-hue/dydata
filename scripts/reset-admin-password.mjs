@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
+import { assertProdWriteAllowed } from './lib/prod-write-guard.mjs';
 
 // Load env vars
 dotenv.config({ path: path.resolve('./.env.local') });
@@ -20,6 +21,8 @@ if (email === OWNER_EMAIL && process.env.DYDATA_CONFIRM_OWNER_RESET !== 'YES') {
   console.error("Refusing to reset owner password without DYDATA_CONFIRM_OWNER_RESET=YES");
   process.exit(1);
 }
+
+assertProdWriteAllowed(supabaseUrl, "重置管理员密码");
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {

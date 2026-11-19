@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError } from "@/lib/errors";
 import { withTimeout } from "@/lib/timeout";
+import { buildEvaluationTargetsPayload } from "@/lib/loaders/admin-content-rpc";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationSettingsKey, parseEvaluationStandards, hasCustomEvaluationTargets, type EvaluationStandards } from "./evaluation-standards";
 
 export type EvaluationSettings = { standards: EvaluationStandards; updatedAt: string | null };
@@ -41,7 +42,7 @@ export async function saveEvaluationSettings(supabase: SupabaseClient, teamId: s
     const probe = await withTimeout(async (signal) => supabase.rpc("admin_content_list_page", {
       p_view: "all", p_page: 1, p_page_size: 20, p_cursor: null,
       p_sort_field: "play_count", p_sort_dir: "desc", p_visible_user_ids: [],
-      p_filters: { evaluationTargets: parsed.data.targets },
+      p_filters: { evaluationTargets: buildEvaluationTargetsPayload(parsed.data) },
     }).abortSignal(signal), queryOptions);
     if (probe.error || probe.data?.diagnostics?.evaluationStandardsVersion !== 2) {
       throw settingsError("达标基准尚未完成数据升级，暂不能保存，请联系负责人");

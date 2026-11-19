@@ -12,10 +12,7 @@ const productionAllowlist = new Set([
 const scriptAllowlist = new Set([
   "scripts/audit/verify-screenshot-coverage.mjs",
   "scripts/audit/screenshot-storage-s0.mjs",
-  "scripts/screenshot-migration.mjs",
   "scripts/migrate-screenshots-to-cos.mjs",
-  // 批次5是显式的历史 Supabase-only 夹具，不作为 COS 主写链路验收工具。
-  "scripts/batch5-fixture-run.ts",
 ]);
 const migrationAllowlist = new Set([
   "supabase/migrations/20260718103000_private_submission_screenshots.sql",

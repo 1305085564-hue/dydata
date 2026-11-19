@@ -84,6 +84,9 @@ video-intro/out/
 # 项目专属 skill 真源（进 git）；通用 skill 走 ~/.agents 全局软链，不放这里
 !.claude/skills/网站体检/
 .workbuddy/
+.claude-cache/
+.trae/
+orbital/
 supabase/.temp/
 supabase/.branches/
 .zcode/

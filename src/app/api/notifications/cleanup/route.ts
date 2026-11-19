@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportCronFailure } from "@/lib/cron-failure";
 
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error("[notifications/cleanup] failed", error);
+    await reportCronFailure("通知清理", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
     ocrDeleted = ocrData ?? 0;
   } catch (ocrErr) {
     console.error("[ocr_logs/cleanup] failed", ocrErr);
+    await reportCronFailure("OCR 日志清理", ocrErr);
   }
 
   return NextResponse.json({ ok: true, deleted: data ?? 0, ocr_deleted: ocrDeleted });

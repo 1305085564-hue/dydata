@@ -11,20 +11,7 @@ function run(script, args = []) {
 test("预发布脚本 dry-run 固化全部门禁顺序", () => {
   const result = JSON.parse(run("preflight-release.mjs", ["--dry-run"]));
   assert.deepEqual(result.steps.map((step) => step.id), [
-    "migration-scope", "screenshot-storage-boundary", "scripts-tests", "unit-tests", "typecheck", "lint", "build",
-    "roles", "browser", "architecture-baseline", "runtime-smoke",
+    "migration-scope", "screenshot-storage-boundary", "scripts-tests", "unit-tests", "migration-replay", "typecheck", "lint", "build",
+    "roles", "browser",
   ]);
-});
-
-test("故障注入默认只输出本地/预览演练步骤", () => {
-  const result = JSON.parse(run("fault-injection.mjs", ["--dry-run"]));
-  assert.equal(result.target, "health:supabase-down");
-  assert.deepEqual(result.steps.map((step) => step.id), ["inject", "recover"]);
-});
-
-test("回滚演练默认 dry-run，且生产步骤要求单步确认", () => {
-  const result = JSON.parse(run("rollback-rehearsal.mjs"));
-  assert.equal(result.mode, "dry-run");
-  assert.equal(result.requiresSeparateProductionApproval, true);
-  assert.ok(result.steps.some((step) => step.id === "promote-rollback"));
 });

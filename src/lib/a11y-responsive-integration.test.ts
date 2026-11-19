@@ -69,9 +69,7 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
 });
 
 test("接入点与渠道开关提供可读标签", () => {
-  const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
   const channelRow = readSource("src/app/(app)/admin/ai-config/components/model-channel-row.tsx");
-  assert.match(dialogs, /aria-label="是否启用接入点/);
   assert.match(channelRow, /aria-label="是否启用渠道/);
 });
 
@@ -133,17 +131,12 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
   ].join("\n");
   const tabBar = readSource("src/components/mobile-tab-bar.tsx");
   const persona = readSource("src/components/user-workspace-popover.tsx");
-  const workspace = readSource("src/components/workspace-picker.tsx");
   assert.match(tabBar, /aria-expanded=\{isMoreOpen\}/);
   assert.match(tabBar, /aria-controls="mobile-navigation-menu"/);
   assert.match(nav, /aria-label="行动中枢：待办、审批与风险"/);
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
-  assert.match(workspace, /type="button"[\s\S]*aria-expanded=\{isOpen\}[\s\S]*aria-controls=\{menuId\}/);
-  assert.match(workspace, /event\.key !== "Escape"[\s\S]*triggerRef\.current\?\.focus\(\)/);
-  assert.match(workspace, /role="group" aria-label="工作账号列表"/);
-  assert.match(workspace, /aria-pressed=\{isSelected\}/);
 });
 
 test("认证页小号状态文字使用 AA 对比色", () => {
@@ -175,7 +168,6 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
     "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
     "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
-    "src/components/workspace-picker.tsx",
   ];
   for (const path of motionPaths) {
     const source = readSource(path);

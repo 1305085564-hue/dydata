@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { buildCompanyRoleProfilePatch } from "../src/lib/company-permissions";
+import { assertProdWriteAllowed } from "./lib/prod-write-guard.mjs";
 
 type TestUserSpec = {
   alias: "组员" | "组长";
@@ -110,6 +111,7 @@ async function createTestUsers() {
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("缺少 Supabase 服务端配置");
   }
+  assertProdWriteAllowed(supabaseUrl, "创建测试账号");
 
   const missing = TEST_USER_SPECS.filter((spec) => !credentials.has(spec.alias));
   if (missing.length > 0) {

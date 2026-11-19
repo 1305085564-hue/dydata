@@ -4,6 +4,7 @@ import "dotenv/config";
 import fs from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { assertProdWriteAllowed } from "../lib/prod-write-guard.mjs";
 
 const SHANGHAI_TZ = "Asia/Shanghai";
 
@@ -618,6 +619,7 @@ async function main() {
   );
 
   if (args.apply) {
+    assertProdWriteAllowed(process.env.NEXT_PUBLIC_SUPABASE_URL, "修正日报与作品绑定");
     const applied = await applyDecisions(supabase, args.apply, args.confirm);
     console.log(JSON.stringify({ mode: "apply", applied }, null, 2));
     return;

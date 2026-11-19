@@ -1,6 +1,21 @@
-import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+import { DEFAULT_RATING_RULE } from "@/lib/breakout-rating";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContentListCursor, ContentListQuery } from "@/lib/content/domain/content-list-query";
+
+export function buildEvaluationTargetsPayload(standards?: EvaluationStandards) {
+  const effectiveStandards = standards ?? DEFAULT_EVALUATION_STANDARDS;
+  return {
+    ...effectiveStandards.targets,
+    bounceRate2s: effectiveStandards.bounceRate2s,
+    completionRate5s: effectiveStandards.completionRate5s,
+    avgPlayDuration: effectiveStandards.avgPlayDuration,
+    avgPlayRatio: effectiveStandards.avgPlayRatio,
+    completionRate: effectiveStandards.completionRate,
+    retentionWeights: effectiveStandards.retentionWeights,
+    ratingRule: DEFAULT_RATING_RULE,
+  };
+}
 
 /** One read operation: the list RPC and independent member options share a rejection boundary. */
 export async function queryAdminContentRpcPage({ supabase, query, scope, cursor, evaluationStandards }: {
@@ -22,17 +37,7 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor,
       p_sort_dir: query.sortDir,
       p_visible_user_ids: scope.visibleUserIds,
       p_filters: {
-        evaluationTargets: evaluationStandards
-          ? {
-              ...evaluationStandards.targets,
-              bounceRate2s: evaluationStandards.bounceRate2s,
-              completionRate5s: evaluationStandards.completionRate5s,
-              avgPlayDuration: evaluationStandards.avgPlayDuration,
-              avgPlayRatio: evaluationStandards.avgPlayRatio,
-              completionRate: evaluationStandards.completionRate,
-              retentionWeights: evaluationStandards.retentionWeights,
-            }
-          : undefined,
+        evaluationTargets: buildEvaluationTargetsPayload(evaluationStandards),
         userId: query.filters.userId,
         accountId: query.filters.accountId,
         keyword: query.filters.keyword,

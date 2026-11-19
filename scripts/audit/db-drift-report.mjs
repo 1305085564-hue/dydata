@@ -14,6 +14,9 @@
  *   --json <path|->       JSON 输出位置；不传则不输出 JSON
  *   --md <path|->         Markdown 输出位置；不传则打印到 stdout
  *   --require-tz <名,...> 必须带 Asia/Shanghai 时区配置的函数名，逗号分隔（默认内置清单）
+ *   --exceptions <path>   例外清单路径（默认 supabase/migration-ledger-exceptions.json）
+ *   --baseline            将本次清单外差异写入 known_drift 基线
+ *   --check               有未登记差异时以非零码退出
  *
  * 安全约束：
  *   - 连接后第一条语句是 `set default_transaction_read_only = on`；
@@ -52,10 +55,22 @@ function parseArgs(argv) {
     else if (a === '--json') args.json = next();
     else if (a === '--md') args.md = next();
     else if (a === '--require-tz') args.requireTz = next().split(',').map((s) => s.trim()).filter(Boolean);
+    else if (a === '--exceptions') args.exceptions = next();
+    else if (a === '--baseline') args.baseline = true;
+    else if (a === '--check') args.check = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else throw new Error(`未知参数: ${a}`);
   }
   return args;
+}
+
+function loadExceptions(file) {
+  if (!fs.existsSync(file)) return { known_drift: [] };
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return {
+    ...parsed,
+    known_drift: Array.isArray(parsed.known_drift) ? parsed.known_drift : [],
+  };
 }
 
 /** 极简 .env 读取，只取值不打印。 */
@@ -174,7 +189,7 @@ const SQL = {
                      coalesce(p.proacl::text,'') as acl,
                      has_function_privilege('anon', p.oid, 'EXECUTE') as anon_exec,
                      has_function_privilege('authenticated', p.oid, 'EXECUTE') as authn_exec,
-                     md5(pg_get_functiondef(p.oid)) as def_md5,
+                     md5(regexp_replace(pg_get_functiondef(p.oid), '\\s+', '', 'g')) as def_md5,
                      pg_get_functiondef(p.oid) as def
               from pg_proc p join pg_namespace n on n.oid = p.pronamespace
               where n.nspname='public' and p.prokind in ('f','p') order by 1,2`,
@@ -280,7 +295,7 @@ function buildMigrationsSection({ prod, local, repoDir, deferredDir }) {
   const appliedWithoutFile = prodVersions.filter((v) => !fileByVersion.has(v))
     .map((v) => ({ version: v, name: prod.rows.find((r) => r.version === v)?.name ?? null }));
 
-  // 生产曾被 apply-single-migration.mjs 之类的手工执行器写入，版本号是“执行时间戳”而非文件名版本，
+  // 生产曾被手工执行器写入，版本号是“执行时间戳”而非文件名版本，
   // 因此按版本号对不上的条目要再用文件名（name）复核一次，避免把同一支迁移误报成两处缺失。
   const prodByName = new Map(prod.rows.map((r) => [r.name, r.version]));
   const repoByName = new Map(repoFiles.map((f) => [f.name, f]));
@@ -447,6 +462,26 @@ function buildColumnsSection({ prod, local }) {
     }
   }
   return { shared_tables_with_column_drift: differing.sort((a, b) => a.table.localeCompare(b.table)), count: differing.length };
+}
+
+function buildIndexesSection({ prod, local }) {
+  const normalize = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+  const key = (row) => `${row.table_name}|${row.indexname}`;
+  const prodMap = new Map(prod.rows.map((row) => [key(row), normalize(row.indexdef)]));
+  const localMap = new Map(local.rows.map((row) => [key(row), normalize(row.indexdef)]));
+  const onlyProd = [...prodMap.keys()].filter((item) => !localMap.has(item)).sort();
+  const onlyLocal = [...localMap.keys()].filter((item) => !prodMap.has(item)).sort();
+  const differing = [...prodMap.keys()]
+    .filter((item) => localMap.has(item) && prodMap.get(item) !== localMap.get(item))
+    .sort()
+    .map((item) => ({ key: item, prod: prodMap.get(item), local: localMap.get(item) }));
+  return {
+    prod_count: prod.rows.length,
+    local_count: local.rows.length,
+    only_prod: onlyProd.map((key) => ({ key, indexdef: prodMap.get(key) })),
+    only_local: onlyLocal.map((key) => ({ key, indexdef: localMap.get(key) })),
+    differing,
+  };
 }
 
 function buildConstraintsSection({ prod, local, prodIndexes, localIndexes, sharedTables }) {
@@ -701,6 +736,11 @@ function buildFindings(sections) {
     add('低', '数据完整性约束', `生产有 ${cons.prod_fk_without_index.length} 个外键没有可用索引`, cons.prod_fk_without_index.map((f) => `${f.table}.${f.constraint}(${f.columns.join(',')})`).join('；'));
   }
 
+  const indexes = sections.indexes;
+  for (const index of indexes.only_prod) add('中', '索引', `只在生产存在：${index.key}`, index.indexdef);
+  for (const index of indexes.only_local) add('低', '索引', `只在本地存在：${index.key}`, index.indexdef);
+  for (const index of indexes.differing) add('中', '索引定义', `索引定义不同：${index.key}`, `生产=${index.prod}；本地=${index.local}`);
+
   const rls = sections.rls;
   for (const t of rls.rls_differing) add('高', '行级权限', `表 RLS 开关不一致：${t.table}`, `生产=${t.prod_rls}，本地=${t.local_rls}`);
   for (const t of rls.prod_no_rls_but_anon_authn_write) add('高', '行级权限', `生产表未开 RLS 但 ${t.grantee} 可写：${t.table}`, `权限=${t.privileges}`);
@@ -725,6 +765,61 @@ function buildFindings(sections) {
   return findings.sort((a, b) => rank[b.severity] - rank[a.severity] || a.area.localeCompare(b.area) || a.title.localeCompare(b.title));
 }
 
+function buildDriftIssues(report, exceptions) {
+  const issues = [];
+  const add = (id, title, detail) => issues.push({ id, title, detail });
+  const ignoredVersions = new Set([
+    ...(exceptions.not_applied ?? []).map((item) => item.version),
+    ...(exceptions.replay_skip ?? []).map((item) => item.version),
+    ...(exceptions.superseded ?? []).map((item) => item.version),
+    ...(exceptions.recorded_as ?? []).map((item) => item.version),
+  ]);
+  const recordedVersions = new Set((exceptions.recorded_as ?? []).map((item) => item.recorded_version));
+  const mig = report.sections.migrations;
+  for (const item of mig.repo_has_no_prod_record) {
+    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_in_prod:${item.version}`, '仓库迁移未在生产记账', item.file);
+  }
+  for (const item of mig.prod_applied_without_repo_file) {
+    if (!recordedVersions.has(item.version)) add(`migration:prod_without_repo_file:${item.version}`, '生产账本没有仓库文件', `${item.version}（${item.name ?? '?' }）`);
+  }
+  for (const item of mig.repo_not_applied_locally) {
+    if (!ignoredVersions.has(item.version)) add(`migration:repo_not_applied_locally:${item.version}`, '仓库迁移未在重放库执行', item.file);
+  }
+  for (const item of mig.version_mismatch_name_matched) {
+    if (!ignoredVersions.has(item.repo_version)) add(`migration:version_mismatch:${item.repo_version}`, '生产账本版本号不同', item.file);
+  }
+  for (const item of report.sections.functions.only_prod) add(`functions:only_prod:${item.key}`, '生产独有函数', item.key);
+  for (const item of report.sections.functions.only_local) add(`functions:only_local:${item.key}`, '本地独有函数', item.key);
+  for (const item of report.sections.functions.differing) add(`functions:differing:${item.key}`, '函数定义或权限不同', item.key);
+  for (const item of report.sections.indexes.only_prod) add(`indexes:only_prod:${item.key}`, '生产独有索引', item.key);
+  for (const item of report.sections.indexes.only_local) add(`indexes:only_local:${item.key}`, '本地独有索引', item.key);
+  for (const item of report.sections.indexes.differing) add(`indexes:differing:${item.key}`, '索引定义不同', item.key);
+  for (const item of report.sections.columns.shared_tables_with_column_drift) add(`columns:${item.table}`, '同名表列定义不同', item.table);
+  for (const item of report.sections.constraints.only_prod_on_shared_table) add(`constraints:only_prod:${item.key}`, '生产独有约束', item.key);
+  for (const item of report.sections.constraints.only_local_on_shared_table) add(`constraints:only_local:${item.key}`, '本地独有约束', item.key);
+  for (const item of report.sections.constraints.differing) add(`constraints:differing:${item.key}`, '约束定义不同', item.key);
+  for (const item of report.sections.rls.rls_differing) add(`rls:toggle:${item.table}`, 'RLS 开关不同', item.table);
+  for (const item of report.sections.rls.policies_only_prod) add(`rls:policy_only_prod:${item.key}`, '生产独有 RLS 策略', item.key);
+  for (const item of report.sections.rls.policies_only_local) add(`rls:policy_only_local:${item.key}`, '本地独有 RLS 策略', item.key);
+  for (const item of report.sections.rls.policies_differing) add(`rls:policy_differing:${item.key}`, 'RLS 策略条件不同', item.key);
+  for (const item of report.sections.triggers.only_prod) add(`triggers:only_prod:${item.key}`, '生产独有触发器', item.key);
+  for (const item of report.sections.triggers.only_local) add(`triggers:only_local:${item.key}`, '本地独有触发器', item.key);
+  for (const item of report.sections.triggers.differing) add(`triggers:differing:${item.key}`, '触发器定义不同', item.key);
+  const known = new Set((exceptions.known_drift ?? []).map((item) => item.version));
+  return issues.filter((item) => !known.has(item.id));
+}
+
+function writeDriftBaseline(file, issues) {
+  const current = loadExceptions(file);
+  const known = new Set((current.known_drift ?? []).map((item) => item.version));
+  for (const issue of issues) {
+    if (known.has(issue.id)) continue;
+    current.known_drift.push({ version: issue.id, type: 'known_drift', reason: `待查：首次生产库与重放库对账记录，${issue.title}（${issue.detail}）。` });
+  }
+  fs.writeFileSync(file, `${JSON.stringify(current, null, 2)}\n`);
+  return current.known_drift.length;
+}
+
 function buildMarkdown(report) {
   const s = report.sections;
   const lines = [];
@@ -745,6 +840,7 @@ function buildMarkdown(report) {
   p(`| 函数 | ${s.functions.prod_function_count} | ${s.functions.local_function_count} | ${s.functions.only_prod.length} 只生产 / ${s.functions.only_local.length} 只本地 / ${s.functions.differing.length} 定义或配置不同 |`);
   p(`| 表 | ${s.rls.prod_table_count} | ${s.rls.local_table_count} | ${s.rls.tables_only_prod.length} 只生产 / ${s.rls.tables_only_local.length} 只本地 / ${s.rls.rls_differing.length} RLS 开关不同 |`);
   p(`| 同名表结构 | - | - | ${s.columns.count} 个表列不一致 |`);
+  p(`| 索引 | ${s.indexes.prod_count} | ${s.indexes.local_count} | ${s.indexes.only_prod.length} 只生产 / ${s.indexes.only_local.length} 只本地 / ${s.indexes.differing.length} 定义不同 |`);
   p(`| 触发器 | ${s.triggers.prod_trigger_count} | ${s.triggers.local_trigger_count} | ${s.triggers.only_prod.length} 只生产 / ${s.triggers.only_local.length} 只本地 |`);
   p();
 
@@ -828,6 +924,12 @@ function buildMarkdown(report) {
   }
   p();
 
+  p(`## 4.2 索引`);
+  p();
+  listBlock('只在生产存在的索引', s.indexes.only_prod, (x) => `${x.key}：${x.indexdef}`);
+  listBlock('只在本地存在的索引', s.indexes.only_local, (x) => `${x.key}：${x.indexdef}`);
+  listBlock('索引定义不同', s.indexes.differing, (x) => `${x.key}：生产 ${x.prod} / 本地 ${x.local}`);
+
   p(`## 5. 行级权限（RLS）`);
   p();
   listBlock('表只在生产存在', s.rls.tables_only_prod, (x) => x);
@@ -875,6 +977,17 @@ function buildMarkdown(report) {
     p(`- **[${f.severity}] ${f.area}**：${f.title} — ${f.detail}`);
   }
   p();
+  if (report.drift) {
+    p(`## 9. 清单外差异`);
+    p();
+    p(`- 检查模式：${report.drift.check ? '是' : '否'}`);
+    p(`- 例外清单：${report.drift.exceptionsFile}`);
+    p(`- 当前清单外差异：${report.drift.unexpected.length}`);
+    if (report.drift.unexpected.length) {
+      for (const item of report.drift.unexpected) p(`- **${item.id}**：${item.title}（${item.detail}）`);
+    }
+    p();
+  }
   p(`## 附录 A. 生产 SECURITY DEFINER 函数全量（anon/authenticated 可执行性）`);
   p();
   p(`| 函数 | anon 可执行 | authenticated 可执行 | 体内见权限判据 |`);
@@ -900,6 +1013,8 @@ async function main() {
     return;
   }
   if (args.envFile) loadEnvFile(path.resolve(args.envFile));
+  const exceptionsFile = path.resolve(args.exceptions ?? 'supabase/migration-ledger-exceptions.json');
+  const exceptions = loadExceptions(exceptionsFile);
 
   const prodUrl = process.env[args.prodUrlEnv];
   const localUrl = args.localUrl || process.env[args.localUrlEnv];
@@ -961,6 +1076,7 @@ async function main() {
       }),
       functions: buildFunctionsSection({ prod: prodFn, local: localFn }),
       timezone: buildTimezoneSection({ prod: prodFn, local: localFn, requiredNames }),
+      indexes: buildIndexesSection({ prod: prodIdx, local: localIdx }),
       constraints: buildConstraintsSection({
         prod: prodCons, local: localCons, prodIndexes: prodIdx, localIndexes: localIdx,
         sharedTables: new Set(prodData.tables.map((t) => t.table_name).filter((t) => localData.tables.some((l) => l.table_name === t))),
@@ -984,6 +1100,18 @@ async function main() {
       findings: [],
     };
     report.findings = buildFindings(sections);
+    let unexpectedDrift = buildDriftIssues(report, exceptions);
+    let baselineCount = null;
+    if (args.baseline && unexpectedDrift.length) {
+      baselineCount = writeDriftBaseline(exceptionsFile, unexpectedDrift);
+      unexpectedDrift = [];
+    }
+    report.drift = {
+      check: args.check === true,
+      unexpected: unexpectedDrift,
+      baselineCount,
+      exceptionsFile,
+    };
 
     const md = buildMarkdown(report);
     const json = JSON.stringify(report, null, 2);
@@ -998,6 +1126,12 @@ async function main() {
       console.log(`已写入：${path.resolve(args.md)}`);
     } else {
       console.log(md);
+    }
+    if (args.check && unexpectedDrift.length) {
+      console.error(`db:drift 发现 ${unexpectedDrift.length} 条清单外差异，已按非零码退出。`);
+      process.exitCode = 1;
+    } else if (args.baseline) {
+      console.log(`db:drift 已写入 ${baselineCount ?? 0} 条 known_drift 基线。`);
     }
   } finally {
     await prod.close();

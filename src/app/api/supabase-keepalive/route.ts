@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { runSupabaseKeepalive, type SupabaseKeepaliveResult } from "@/lib/supabase/keepalive";
+import { reportCronFailure } from "@/lib/cron-failure";
 
 export async function buildSupabaseKeepaliveResponse(
   request: NextRequest,
@@ -23,6 +24,7 @@ export async function buildSupabaseKeepaliveResponse(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "keepalive failed";
+    await reportCronFailure("Supabase 保活", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
