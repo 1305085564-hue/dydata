@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { AvailabilityChannel, AvailabilityModelFamily } from "@/lib/ai-config/availability";
 import type { ChannelCallStats } from "@/lib/ai-config/call-stats-contract";
-import { buildDutyGroups, failureKindLabel, formatAgo, formatRate, rateTone } from "./duty-view";
+import { buildFailureList, buildModelCards, failureKindLabel, formatAgo, formatRate, mergeWindows, modelUsageText, rateTone } from "./duty-view";
 
 const win = (calls: number, successRate: number | null, avgMs: number | null = null) => ({ calls, successRate, avgMs });
 
@@ -50,30 +50,68 @@ function family(modelId: string, channels: AvailabilityChannel[], isShelved = tr
   } as AvailabilityModelFamily;
 }
 
-test("值班表：只列在用模型、去掉已停用渠道；有问题的组排前，其次兜底组；组内按顺位", () => {
-  const groups = buildDutyGroups({
+const line = (stats: ChannelCallStats | null) => stats;
+
+test("模型卡：只列在用模型；现在走 = 顺位最靠前且能调度的那条，其余是备用；已停用不算", () => {
+  const cards = buildModelCards({
     families: [
-      family("ok", [channel("b", "active", 2), channel("a", "active", 1)]),
-      family("fallback", [channel("f", "active", 1)]),
-      family("broken", [channel("x", "invalid", 1), channel("off", "disabled", 2)]),
+      family("ok", [channel("b", "active", 2), channel("x", "invalid", 1), channel("a", "active", 3), channel("off", "disabled", 0)]),
       family("unused", [channel("u", "active", 1)], false),
     ],
-    usage: { fallback: { isFallback: true, features: [] } },
+    usage: {},
     statsByKeyModelId: {},
     failureByKeyModelId: {},
   });
-  assert.deepEqual(groups.map((g) => g.family.modelId), ["broken", "fallback", "ok"]);
-  assert.deepEqual(groups[0].rows.map((r) => r.channel.keyModelId), ["x"]);
-  assert.deepEqual(groups[2].rows.map((r) => [r.channel.keyModelId, r.isFirst]), [["a", true], ["b", false]]);
+  assert.deepEqual(cards.map((c) => c.family.modelId), ["ok"]);
+  assert.equal(cards[0].current?.channel.keyModelId, "b");
+  assert.deepEqual(cards[0].backups.map((l) => l.channel.keyModelId), ["x", "a"]);
+  assert.equal(cards[0].stableBackupCount, 1);
+  assert.equal(cards[0].risk, null);
 });
 
-test("值班表：近期成功率低于 90% 算有问题；最近失败优先用调用记录，没有就用渠道上记的，并标出之后是否恢复", () => {
+test("模型卡风险：没渠道能走、现在走的在出错、没有备用、备用全出错，各说各的", () => {
+  const build = (channels: AvailabilityChannel[], stats: Record<string, ChannelCallStats> = {}) =>
+    buildModelCards({ families: [family("m", channels)], usage: {}, statsByKeyModelId: stats, failureByKeyModelId: {} })[0];
+  assert.equal(build([channel("x", "invalid", 1)]).risk?.text, "没有能用的渠道，用它的功能会失败");
+  assert.equal(build([channel("a", "active", 1)]).risk?.text, "没有备用渠道，这条一断就没后路");
+  assert.equal(build([channel("a", "active", 1), channel("x", "invalid", 2)]).risk?.text, "备用全在出错，这条一断就没后路");
+  const failing = { keyModelId: "a", modelId: "m", recent1000: win(100, 0.9), recent: win(50, 0.5), lastFailure: null };
+  const card = build([channel("a", "active", 1), channel("b", "active", 2)], { a: line(failing)! });
+  assert.equal(card.risk?.text, "现在走的渠道在出错，备用还有能顶的");
+  assert.equal(card.isProblem, true);
+});
+
+test("排序：出问题的模型在前，其次默认模型，其余保持原顺序", () => {
+  const cards = buildModelCards({
+    families: [
+      family("ok", [channel("a", "active", 1), channel("b", "active", 2)]),
+      family("default", [channel("c", "active", 1), channel("d", "active", 2)]),
+      family("broken", [channel("x", "invalid", 1)]),
+    ],
+    usage: { default: { isFallback: true, features: ["A", "B"] } },
+    statsByKeyModelId: {},
+    failureByKeyModelId: {},
+  });
+  assert.deepEqual(cards.map((c) => c.family.modelId), ["broken", "default", "ok"]);
+  assert.equal(modelUsageText(cards[1].usage), "2 个功能都靠它");
+  assert.equal(modelUsageText({ isFallback: false, features: ["截图识别"] }), "截图识别 在用");
+  assert.equal(modelUsageText({ isFallback: true, features: [] }), null);
+});
+
+test("模型整体成功率按调用次数合并，平均耗时按成功次数合并；没有调用为空", () => {
+  assert.deepEqual(mergeWindows([win(100, 1, 4000), win(100, 0.5, 8000), undefined, win(0, null)]), {
+    calls: 200, successRate: 0.75, avgMs: Math.round((4000 * 100 + 8000 * 50) / 150),
+  });
+  assert.deepEqual(mergeWindows([]), { calls: 0, successRate: null, avgMs: null });
+});
+
+test("最近一次失败：调用记录优先，没有就用渠道上记的，并标出之后是否恢复", () => {
   const stats: ChannelCallStats = {
-    keyModelId: "a", modelId: "ok", recent1000: win(1000, 0.99), recent: win(50, 0.8),
+    keyModelId: "a", modelId: "m", recent1000: win(1000, 0.99), recent: win(50, 0.99),
     lastFailure: { at: "2026-11-19T10:00:00Z", kind: "超时", message: "timeout", featureKey: "f" },
   };
-  const groups = buildDutyGroups({
-    families: [family("ok", [channel("a", "active", 1), channel("b", "active", 2)])],
+  const [card] = buildModelCards({
+    families: [family("m", [channel("a", "active", 1), channel("b", "active", 2)])],
     usage: {},
     statsByKeyModelId: { a: stats },
     failureByKeyModelId: {
@@ -81,9 +119,23 @@ test("值班表：近期成功率低于 90% 算有问题；最近失败优先用
       b: { lastFailureAt: "2026-11-19T08:00:00Z", lastSuccessAt: "2026-11-19T08:05:00Z", lastErrorMessage: "  ", consecutiveFailures: 0 },
     },
   });
-  const [a, b] = groups[0].rows;
-  assert.equal(a.isProblem, true);
-  assert.equal(groups[0].isProblem, true);
-  assert.deepEqual(a.lastFailure, { at: "2026-11-19T10:00:00Z", reason: "超时", recoveredAfter: false });
-  assert.deepEqual(b.lastFailure, { at: "2026-11-19T08:00:00Z", reason: "原因没记下", recoveredAfter: true });
+  assert.deepEqual(card.current?.lastFailure, { at: "2026-11-19T10:00:00Z", reason: "超时", recoveredAfter: false });
+  assert.deepEqual(card.backups[0].lastFailure, { at: "2026-11-19T08:00:00Z", reason: "原因没记下", recoveredAfter: true });
+});
+
+test("失败流水：调用记录里还没有的渠道失败也要列出，不能上面说失败、下面说没有", () => {
+  const cards = buildModelCards({
+    families: [family("m", [channel("a", "active", 1), channel("b", "retest", 2)])],
+    usage: {},
+    statsByKeyModelId: {},
+    failureByKeyModelId: {
+      a: { lastFailureAt: "2026-11-19T10:00:00Z", lastSuccessAt: null, lastErrorMessage: "超时", consecutiveFailures: 1 },
+      b: { lastFailureAt: "2026-11-19T09:00:00Z", lastSuccessAt: null, lastErrorMessage: "503", consecutiveFailures: 13 },
+    },
+  });
+  // 调用记录为空：两条渠道的失败都要出来
+  assert.deepEqual(buildFailureList([], cards).map((f) => [f.keyModelId, f.outcome]), [["a", "open"], ["b", "open"]]);
+  // 调用记录里已有 a 同一时间的失败：不重复
+  const recorded = [{ at: "2026-11-19T10:00:00Z", featureKey: "f", modelId: "m", keyModelId: "a", kind: "超时", message: "x", rescued: true, isProbe: false }];
+  assert.deepEqual(buildFailureList(recorded, cards).map((f) => [f.keyModelId, f.outcome]), [["a", "rescued"], ["b", "open"]]);
 });

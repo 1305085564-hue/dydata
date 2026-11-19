@@ -40,3 +40,6 @@ export type CallStats = {
   features: FeatureCallStats[];
   recentFailures: RecentCallFailure[];
 };
+
+/** 逐次调用记录从这天开始攒（迁移 20261119122350 上线日）；此前没有成功率与耗时数据。 */
+export const CALL_RECORDING_SINCE_LABEL = "11 月 19 日";

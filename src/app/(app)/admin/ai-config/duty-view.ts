@@ -1,6 +1,6 @@
 import type { AvailabilityChannel, AvailabilityModelFamily } from "@/lib/ai-config/availability";
-import type { CallStatsWindow, ChannelCallStats } from "@/lib/ai-config/call-stats-contract";
-import { familyNeedsAction, type ModelUsage } from "./ai-config-view";
+import type { CallStatsWindow, ChannelCallStats, RecentCallFailure } from "@/lib/ai-config/call-stats-contract";
+import type { ModelUsage } from "./ai-config-view";
 
 /**
  * 「最近调用」值班表的口径与排序（方案：docs/plans/2026-11-19-AI配置异常优先重排方案.md）。
@@ -63,86 +63,203 @@ export type ChannelFailureState = {
   consecutiveFailures: number;
 };
 
-export type DutyRow = {
+export type ChannelLine = {
   channel: AvailabilityChannel;
-  isFirst: boolean;
   stats: ChannelCallStats | null;
   /** 最近一次失败：调用统计优先，没有就用渠道上记的最后一次失败 */
   lastFailure: { at: string; reason: string; recoveredAfter: boolean } | null;
   consecutiveFailures: number;
-  isProblem: boolean;
+  /** 这条渠道现在稳不稳：能用且近期成功率没有标红 */
+  isStable: boolean;
 };
 
-export type DutyGroup = {
+export type ModelRisk = { tone: "danger" | "warn"; text: string } | null;
+
+export type ModelCard = {
   family: AvailabilityModelFamily;
   isFallback: boolean;
   usage: ModelUsage | undefined;
-  rows: DutyRow[];
+  /** 业务此刻走的那条：顺位最靠前、能调度的渠道；没有就是 null */
+  current: ChannelLine | null;
+  backups: ChannelLine[];
+  stableBackupCount: number;
+  /** 整个模型的近期 / 近 1000 次（各渠道按调用次数合并） */
+  recent: CallStatsWindow;
+  recent1000: CallStatsWindow;
+  risk: ModelRisk;
   isProblem: boolean;
 };
 
-function rowIsProblem(channel: AvailabilityChannel, stats: ChannelCallStats | null): boolean {
-  return (
-    channel.identity === "invalid" ||
-    channel.identity === "sleeping" ||
-    channel.identity === "retest" ||
-    rateTone(stats?.recent, "recent") === "danger"
-  );
+/** 多条渠道的窗口合并：成功率按调用次数加权，平均耗时按成功次数加权。 */
+export function mergeWindows(windows: readonly (CallStatsWindow | undefined)[]): CallStatsWindow {
+  let calls = 0;
+  let successes = 0;
+  let durationTotal = 0;
+  let timedSuccesses = 0;
+  for (const win of windows) {
+    if (!win || win.calls === 0 || win.successRate === null) continue;
+    const ok = win.calls * win.successRate;
+    calls += win.calls;
+    successes += ok;
+    if (win.avgMs !== null && ok > 0) {
+      durationTotal += win.avgMs * ok;
+      timedSuccesses += ok;
+    }
+  }
+  return {
+    calls,
+    successRate: calls > 0 ? successes / calls : null,
+    avgMs: timedSuccesses > 0 ? Math.round(durationTotal / timedSuccesses) : null,
+  };
 }
 
-export function buildDutyGroups(input: {
+function toLine(
+  channel: AvailabilityChannel,
+  stats: ChannelCallStats | null,
+  state: ChannelFailureState | undefined,
+): ChannelLine {
+  const statsFailure = stats?.lastFailure ?? null;
+  const failureAt = statsFailure?.at ?? state?.lastFailureAt ?? null;
+  const lastFailure = failureAt
+    ? {
+        at: failureAt,
+        reason: statsFailure ? failureKindLabel(statsFailure.kind) : state?.lastErrorMessage?.trim() || "原因没记下",
+        recoveredAfter: Boolean(
+          state?.lastSuccessAt && new Date(state.lastSuccessAt).getTime() > new Date(failureAt).getTime(),
+        ),
+      }
+    : null;
+  return {
+    channel,
+    stats,
+    lastFailure,
+    consecutiveFailures: state?.consecutiveFailures ?? 0,
+    isStable: channel.identity === "active" && rateTone(stats?.recent, "recent") !== "danger",
+  };
+}
+
+function modelRisk(current: ChannelLine | null, backups: ChannelLine[], stableBackupCount: number): ModelRisk {
+  if (!current) return { tone: "danger", text: "没有能用的渠道，用它的功能会失败" };
+  if (!current.isStable) {
+    return stableBackupCount > 0
+      ? { tone: "danger", text: "现在走的渠道在出错，备用还有能顶的" }
+      : { tone: "danger", text: "现在走的渠道在出错，备用也顶不上" };
+  }
+  if (backups.length === 0) return { tone: "warn", text: "没有备用渠道，这条一断就没后路" };
+  if (stableBackupCount === 0) return { tone: "warn", text: "备用全在出错，这条一断就没后路" };
+  return null;
+}
+
+/**
+ * 模型为主角（阿禅 2026-11-19：绝大多数功能跟随默认，要看的是模型稳不稳）。
+ * 每个在用模型：现在走哪条、备用几条稳不稳、整体近期与近 1000 次成功率。
+ * 出问题的模型排前；同等情况下默认（兜底）模型排第一。
+ */
+export function buildModelCards(input: {
   families: readonly AvailabilityModelFamily[];
   usage: Record<string, ModelUsage>;
   statsByKeyModelId: Record<string, ChannelCallStats>;
   failureByKeyModelId: Record<string, ChannelFailureState>;
-}): DutyGroup[] {
-  const groups: DutyGroup[] = [];
+}): ModelCard[] {
+  const cards: ModelCard[] = [];
   for (const family of input.families) {
     if (!family.isShelved) continue;
-    // 已停用的渠道不值班，留在渠道维护里
-    const live = family.channels
+    // 已停用的渠道既不在走也不算备用，留在渠道维护里
+    const lines = family.channels
       .filter((channel) => channel.identity !== "disabled")
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-    const rows: DutyRow[] = live.map((channel, index) => {
-      const stats = input.statsByKeyModelId[channel.keyModelId] ?? null;
-      const state = input.failureByKeyModelId[channel.keyModelId];
-      const statsFailure = stats?.lastFailure ?? null;
-      const failureAt = statsFailure?.at ?? state?.lastFailureAt ?? null;
-      const lastFailure = failureAt
-        ? {
-            at: failureAt,
-            reason: statsFailure ? failureKindLabel(statsFailure.kind) : state?.lastErrorMessage?.trim() || "原因没记下",
-            recoveredAfter: Boolean(
-              state?.lastSuccessAt && new Date(state.lastSuccessAt).getTime() > new Date(failureAt).getTime(),
-            ),
-          }
-        : null;
-      return {
-        channel,
-        isFirst: index === 0,
-        stats,
-        lastFailure,
-        consecutiveFailures: state?.consecutiveFailures ?? 0,
-        isProblem: rowIsProblem(channel, stats),
-      };
-    });
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((channel) =>
+        toLine(channel, input.statsByKeyModelId[channel.keyModelId] ?? null, input.failureByKeyModelId[channel.keyModelId]),
+      );
+    const current = lines.find((line) => line.channel.isSchedulable) ?? null;
+    const backups = lines.filter((line) => line !== current);
+    const stableBackupCount = backups.filter((line) => line.isStable).length;
+    const risk = modelRisk(current, backups, stableBackupCount);
     const usage = input.usage[family.modelId];
-    groups.push({
+    cards.push({
       family,
       isFallback: Boolean(usage?.isFallback),
       usage,
-      rows,
-      isProblem: familyNeedsAction(family) || rows.some((row) => row.isProblem),
+      current,
+      backups,
+      stableBackupCount,
+      recent: mergeWindows(lines.map((line) => line.stats?.recent)),
+      recent1000: mergeWindows(lines.map((line) => line.stats?.recent1000)),
+      risk,
+      isProblem: risk?.tone === "danger",
     });
   }
-  // 有问题的组排最前；同等情况下兜底模型排第一；其余保持原顺序。组内按真实顺位排，第一位就是首选。
-  return groups
-    .map((group, index) => ({ group, index }))
+  return cards
+    .map((card, index) => ({ card, index }))
     .sort(
       (a, b) =>
-        Number(b.group.isProblem) - Number(a.group.isProblem) ||
-        Number(b.group.isFallback) - Number(a.group.isFallback) ||
+        Number(b.card.isProblem) - Number(a.card.isProblem) ||
+        Number(b.card.isFallback) - Number(a.card.isFallback) ||
         a.index - b.index,
     )
-    .map(({ group }) => group);
+    .map(({ card }) => card);
+}
+
+/** 模型卡上「谁在用」：默认模型说靠它的功能数，被单独选中的列功能名。 */
+export function modelUsageText(usage: ModelUsage | undefined): string | null {
+  if (!usage) return null;
+  const n = usage.features.length;
+  // 默认身份由卡片上的「默认」标签说，这里只说靠它的功能数
+  if (usage.isFallback) return n > 0 ? `${n} 个功能都靠它` : null;
+  if (n === 0) return null;
+  return n <= 2 ? `${usage.features.join("、")} 在用` : `${usage.features.slice(0, 2).join("、")} 等 ${n} 个功能在用`;
+}
+
+export type FailureItem = {
+  id: string;
+  at: string;
+  keyModelId: string;
+  featureKey: string | null;
+  reason: string;
+  detail: string | null;
+  /** rescued/lost/probe 来自调用记录；recovered/open 来自渠道上记的最后一次失败 */
+  outcome: "rescued" | "lost" | "probe" | "recovered" | "open";
+};
+
+const FAILURE_LIST_LIMIT = 100;
+
+/**
+ * 最近失败流水：调用记录里的失败 + 渠道上已记下、但调用记录里还没有的最后一次失败。
+ * 两处说的是同一件事，必须合在一处说（《效率美学》§1.5），不能上面说失败、下面说没有。
+ */
+export function buildFailureList(
+  recorded: readonly RecentCallFailure[] | null,
+  cards: readonly ModelCard[],
+): FailureItem[] {
+  const items: FailureItem[] = (recorded ?? []).map((f, index) => ({
+    id: `r-${f.at}-${f.keyModelId}-${index}`,
+    at: f.at,
+    keyModelId: f.keyModelId,
+    featureKey: f.featureKey,
+    reason: failureKindLabel(f.kind),
+    detail: f.message || null,
+    outcome: f.isProbe ? "probe" : f.rescued ? "rescued" : "lost",
+  }));
+  const latestRecorded: Record<string, number> = {};
+  for (const item of items) {
+    latestRecorded[item.keyModelId] = Math.max(latestRecorded[item.keyModelId] ?? 0, Date.parse(item.at));
+  }
+  for (const card of cards) {
+    for (const line of [card.current, ...card.backups]) {
+      if (!line?.lastFailure) continue;
+      const at = Date.parse(line.lastFailure.at);
+      // 调用记录里已经有这条渠道同一时间或更新的失败，就不重复列
+      if ((latestRecorded[line.channel.keyModelId] ?? 0) >= at - 1000) continue;
+      items.push({
+        id: `c-${line.channel.keyModelId}`,
+        at: line.lastFailure.at,
+        keyModelId: line.channel.keyModelId,
+        featureKey: null,
+        reason: line.lastFailure.reason,
+        detail: null,
+        outcome: line.lastFailure.recoveredAfter ? "recovered" : "open",
+      });
+    }
+  }
+  return items.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, FAILURE_LIST_LIMIT);
 }

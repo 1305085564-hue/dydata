@@ -10,6 +10,8 @@ import {
   ArrowRight,
   Clock,
   Gauge,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
@@ -173,6 +175,7 @@ export function BusinessFunctionsPanel({
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
   const [testingOcr, setTestingOcr] = useState(false);
   const [speedDrawerOpen, setSpeedDrawerOpen] = useState(false);
+  const [followingExpanded, setFollowingExpanded] = useState(false);
   const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
 
   // 全局默认兜底设置
@@ -403,6 +406,68 @@ export function BusinessFunctionsPanel({
     </div>
   );
 
+  // 绝大多数功能跟随默认：只把单独选了模型的列出来，跟随默认的收成一行；其中有出问题的自动展开
+  const explicitFeatures = businessFeatures.filter((c) => c.modelId);
+  const followingFeatures = businessFeatures.filter((c) => !c.modelId);
+  const followingHasIssue = followingFeatures.some((c) => {
+    const status = assuranceMap[c.key]?.routingStatus;
+    return status !== undefined && status !== "normal";
+  });
+  const showFollowing = followingExpanded || followingHasIssue;
+  const defaultModelName = globalDefaultModelId ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId : "默认模型";
+  const followingToggle = (
+    <button
+      type="button"
+      onClick={() => setFollowingExpanded((v) => !v)}
+      disabled={followingHasIssue}
+      aria-expanded={showFollowing}
+      className="flex w-full items-center gap-2 py-1 text-left text-[12px] text-[#78716C] hover:text-[#141413] disabled:cursor-default"
+    >
+      {showFollowing ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+      <span className="text-[13px] text-[#1F1E1D]">其余 {followingFeatures.length} 个功能跟随默认（{defaultModelName}）</span>
+      {!showFollowing && <span className="truncate">{followingFeatures.map((c) => c.label).join("、")}</span>}
+    </button>
+  );
+
+  const featureRow = (ctrl: AiFeatureControl) => (
+    <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
+      <TableCell className="pl-4">
+        <span className="text-[14px] text-[#141413]" title={ctrl.description}>
+          {ctrl.label}
+        </span>
+      </TableCell>
+      <TableCell>
+        <ModelFamilySelect
+          value={ctrl.modelId}
+          onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+          allowEmptyLabel="跟随全局默认"
+        />
+      </TableCell>
+      <TableCell>
+        <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+      </TableCell>
+      <FeatureCallCells stats={featureStatsMap[ctrl.key]} statsReady={statsReady} />
+      <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
+    </TableRow>
+  );
+
+  const featureCard = (ctrl: AiFeatureControl) => (
+    <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[14px] text-[#141413]">{ctrl.label}</span>
+        {featureActions(ctrl, true)}
+      </div>
+      {ctrl.description && <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>}
+      <ModelFamilySelect
+        value={ctrl.modelId}
+        onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+        allowEmptyLabel="跟随全局默认"
+      />
+      <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+      {featureCallLine(ctrl.key)}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* 桌面端：一行一个功能。说明收进名字的悬停提示，只有兜底行留一句 */}
@@ -467,27 +532,13 @@ export function BusinessFunctionsPanel({
               </TableRow>
             )}
 
-            {businessFeatures.map((ctrl) => (
-              <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
-                <TableCell className="pl-4">
-                  <span className="text-[14px] text-[#141413]" title={ctrl.description}>
-                    {ctrl.label}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <ModelFamilySelect
-                    value={ctrl.modelId}
-                    onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
-                    allowEmptyLabel="跟随全局默认"
-                  />
-                </TableCell>
-                <TableCell>
-                  <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
-                </TableCell>
-                <FeatureCallCells stats={featureStatsMap[ctrl.key]} statsReady={statsReady} />
-                <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
+            {explicitFeatures.map(featureRow)}
+            {followingFeatures.length > 0 && (
+              <TableRow className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
+                <TableCell colSpan={6} className="pl-4">{followingToggle}</TableCell>
               </TableRow>
-            ))}
+            )}
+            {showFollowing && followingFeatures.map(featureRow)}
           </TableBody>
         </Table>
       </div>
@@ -518,22 +569,11 @@ export function BusinessFunctionsPanel({
           </div>
         )}
 
-        {businessFeatures.map((ctrl) => (
-          <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[14px] text-[#141413]">{ctrl.label}</span>
-              {featureActions(ctrl, true)}
-            </div>
-            {ctrl.description && <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>}
-            <ModelFamilySelect
-              value={ctrl.modelId}
-              onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
-              allowEmptyLabel="跟随全局默认"
-            />
-            <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
-            {featureCallLine(ctrl.key)}
-          </div>
-        ))}
+        {explicitFeatures.map(featureCard)}
+        {followingFeatures.length > 0 && (
+          <div className="rounded-xl border border-[#E2E2DF] bg-white px-3 py-2">{followingToggle}</div>
+        )}
+        {showFollowing && followingFeatures.map(featureCard)}
       </div>
 
       {/* 已停用/已归档功能抽屉 */}
