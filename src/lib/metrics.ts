@@ -255,6 +255,7 @@ function groupReportsByAccount(reports: MetricsReport[]) {
 
       return acc
     },
+    // gate:transient-map 单次对标计算内按账号临时分组，不跨调用留存
     new Map<string, MetricsReport[]>()
   )
 }

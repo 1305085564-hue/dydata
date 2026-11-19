@@ -38,6 +38,7 @@ export function buildComparisonMemberOptions({
   videos?: readonly VideoLike[];
   fallbackProfiles?: readonly ProfileLike[];
 }): ComparisonMemberOption[] {
+  // gate:transient-map 单次下拉选项去重用的函数内临时表，返回数组后即释放
   const members = new Map<string, ComparisonMemberOption>();
 
   const addProfile = (profile: ProfileLike) => {

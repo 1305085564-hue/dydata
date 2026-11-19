@@ -72,6 +72,7 @@ function normalizeWarningList(value: unknown) {
 }
 
 export function aggregatePeriodTagMetrics(rows: PeriodAggregationRow[], minSampleSize = 10) {
+  // gate:transient-map 单次周期聚合函数内临时按标签分组，随函数返回释放，非跨请求缓存
   const grouped = new Map<string, PeriodAggregationRow[]>();
 
   for (const row of rows) {
