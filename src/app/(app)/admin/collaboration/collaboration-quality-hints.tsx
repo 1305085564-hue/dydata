@@ -9,8 +9,7 @@ import {
 import { OneTip } from "./one-tip";
 import type { RoleColumn } from "./role-table";
 import { formatBigNumber } from "./types";
-import { formatRate } from "./work-group-list-tab";
-import { INTERACTION_DETAIL_COLUMNS, RETENTION_DETAIL_COLUMNS } from "./work-group-detail-columns";
+import { INTERACTION_DETAIL_COLUMNS, RETENTION_DETAIL_COLUMNS, formatRate } from "./work-group-detail-columns";
 
 export type WriterQualityData =
   | {
@@ -48,8 +47,8 @@ function HintValue({ tip, dim = false, children }: { tip: string; dim?: boolean;
   );
 }
 
-function qualityUnavailable(quality: WriterQualityData): ReactNode | null {
-  if (!quality) return <HintValue tip="质量数据尚未接入" dim>—</HintValue>;
+function qualityUnavailable(quality: WriterQualityData, emptyTip = "质量数据尚未接入"): ReactNode | null {
+  if (!quality) return <HintValue tip={emptyTip} dim>—</HintValue>;
   if (quality.state === "error" || !quality.summary) {
     return (
       <HintValue tip="质量数据读取失败，刷新重试">
@@ -68,6 +67,7 @@ function summaryOf(quality: WriterQualityData) {
 export function qualityColumns<R>(
   getQuality: (row: R) => WriterQualityData,
   rulesEntry?: ReactNode,
+  emptyTip?: string,
 ): RoleColumn<R>[] {
   return [
     {
@@ -78,7 +78,7 @@ export function qualityColumns<R>(
       sortValue: (row) => summaryOf(getQuality(row))?.avgInteractionAchievement ?? null,
       render: (row) => {
         const quality = getQuality(row);
-        const blocked = qualityUnavailable(quality);
+        const blocked = qualityUnavailable(quality, emptyTip);
         if (blocked) return blocked;
         const summary = quality!.summary!;
         if (summary.avgInteractionAchievement == null) {
@@ -102,7 +102,7 @@ export function qualityColumns<R>(
       sortValue: (row) => summaryOf(getQuality(row))?.avgContentAchievement ?? null,
       render: (row) => {
         const quality = getQuality(row);
-        const blocked = qualityUnavailable(quality);
+        const blocked = qualityUnavailable(quality, emptyTip);
         if (blocked) return blocked;
         const summary = quality!.summary!;
         if (summary.avgContentAchievement == null) {
@@ -130,7 +130,7 @@ export function qualityColumns<R>(
       },
       render: (row) => {
         const quality = getQuality(row);
-        const blocked = qualityUnavailable(quality);
+        const blocked = qualityUnavailable(quality, emptyTip);
         if (blocked) return blocked;
         const summary = quality!.summary!;
         if (summary.ratedCount === 0 || summary.goodExcellentRate == null) {
@@ -173,13 +173,15 @@ export function excellentCountColumn<R>(getQuality: (row: R) => WriterQualityDat
 
 type VolumeRow = { reportCount: number; totalPlay: number; avgPlay: number };
 
-/** 本月作品 / 总播放 / 条均播放：四张表同一套。 */
-export function volumeColumns<R extends VolumeRow>(): RoleColumn<R>[] {
+type VolumeTips = Partial<Record<"reportCount" | "totalPlay" | "avgPlay", ReactNode>>;
+
+/** 本月作品 / 总播放 / 条均播放：所有表同一套；小队按快照统计，口径说明可替换。 */
+export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleColumn<R>[] {
   return [
     {
       key: "reportCount",
       label: "本月作品",
-      tip: COLLABORATION_METRIC_HEADER_TIPS.reportCount,
+      tip: tips.reportCount ?? COLLABORATION_METRIC_HEADER_TIPS.reportCount,
       width: 84,
       sortValue: (row) => row.reportCount,
       render: (row) => row.reportCount,
@@ -187,7 +189,7 @@ export function volumeColumns<R extends VolumeRow>(): RoleColumn<R>[] {
     {
       key: "totalPlay",
       label: "总播放",
-      tip: COLLABORATION_METRIC_HEADER_TIPS.totalPlay,
+      tip: tips.totalPlay ?? COLLABORATION_METRIC_HEADER_TIPS.totalPlay,
       width: 88,
       sortValue: (row) => row.totalPlay,
       render: (row) => formatBigNumber(row.totalPlay),
@@ -195,7 +197,7 @@ export function volumeColumns<R extends VolumeRow>(): RoleColumn<R>[] {
     {
       key: "avgPlay",
       label: "条均播放",
-      tip: COLLABORATION_METRIC_HEADER_TIPS.avgPlay,
+      tip: tips.avgPlay ?? COLLABORATION_METRIC_HEADER_TIPS.avgPlay,
       width: 88,
       sortValue: (row) => row.avgPlay,
       render: (row) => formatBigNumber(row.avgPlay),
@@ -261,4 +263,45 @@ export function retentionDetailColumns<R>(getQuality: (row: R) => WriterQualityD
     render: (row: R) =>
       formatRetentionValue(summaryOf(getQuality(row))?.retentionAverages?.[column.key], column.unit),
   }));
+}
+
+/** 小队口径：播放取每条作品最新 24 小时快照，先加总再相除（与数据复盘抽屉同源）。 */
+export const TEAM_VOLUME_TIPS: VolumeTips = {
+  reportCount: "当月作品总数，含还没同步数据复盘的作品。",
+  totalPlay: "每条作品最新 24 小时快照的播放合计；还没同步数据复盘的作品不计。",
+  avgPlay: "总播放 ÷ 已同步数据复盘的作品数。",
+};
+
+type TeamMetricRow = {
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  followerConversionRate: number | null;
+  interactionRate: number | null;
+  likeRate: number | null;
+  commentRate: number | null;
+  shareRate: number | null;
+  favoriteRate: number | null;
+  contentQuality: ContentQualitySummary | null;
+};
+
+const teamQuality = (row: TeamMetricRow): WriterQualityData =>
+  row.contentQuality ? { state: "ready", summary: row.contentQuality } : null;
+
+/** 小队列表与小队详情的列：与文案表同一套列名和口径，只是播放按快照统计。 */
+export function teamMetricColumns<R extends TeamMetricRow>({
+  showDetail,
+  withQuality,
+}: {
+  showDetail: boolean;
+  withQuality: boolean;
+}): RoleColumn<R>[] {
+  const getQuality = (row: R) => teamQuality(row);
+  return [
+    ...volumeColumns<R>(TEAM_VOLUME_TIPS),
+    ...rateColumns<R>(),
+    ...(showDetail ? interactionDetailColumns<R>() : []),
+    ...(withQuality ? qualityColumns<R>(getQuality, undefined, "运营小队不评级") : []),
+    ...(withQuality && showDetail ? retentionDetailColumns<R>(getQuality) : []),
+  ];
 }

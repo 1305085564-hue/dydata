@@ -82,41 +82,22 @@ test("D1: 协作入口诊断把接口返回的 contentQuality 透传到详情状
   assert.match(diagnosisHandler, /contentQuality: payload\.contentQuality \?\? null,/);
 });
 
-test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/转粉率/互动率，明细可展开）", () => {
-  // 列头必须与具体数据字段绑定，改名或接错字段就会红；
-  // 「文案 / 达人 / 人数」这类宽泛词（注释、描述句里也有）不再作为断言，
-  // 徽章与列头的真实渲染改由 work-group-list-tab.test.tsx 用 DOM 断言。
-  assert.match(listTabSource, /WorkGroupKindBadge kind=\{group\.kind\}/);
-  assert.match(listTabSource, /sortableHead\("memberCount", "人数"/);
-  assert.match(listTabSource, /sortableHead\("reportCount", "作品数"/);
-  assert.match(listTabSource, /sortableHead\("totalPlay", "总播放"/);
-  assert.match(listTabSource, /sortableHead\("avgPlay", "条均播放"/);
-  assert.match(listTabSource, /sortableHead\("followerConversionRate", "转粉率"/);
-  assert.match(listTabSource, /sortableHead\("interactionRate", "互动率"/);
-  // 点赞率、收藏率及评论率、转发率、五项留存收进「展开明细」，由共用模块渲染
-  assert.match(listTabSource, /InteractionDetailHeads/);
-  assert.match(listTabSource, /RetentionDetailHeads/);
-  assert.match(listTabSource, /formatRate/);
+test("P3.2: 小队列表接共用表格，列与岗位表同名同口径（明细可展开）", () => {
+  // 列头真实渲染由 work-group-list-tab.test.tsx 用 DOM 断言；这里锁住「同一套表格、同一份列定义」
+  assert.match(listTabSource, /<RoleTable/);
+  assert.match(listTabSource, /teamMetricColumns/);
+  assert.match(listTabSource, /DetailToggle/);
+  assert.match(listTabSource, /workGroupKindLabel\(row\.kind\)/);
+  assert.doesNotMatch(listTabSource, /sortableHead|ArrowUpDown|<p className="px-4 text-\[12px\]/);
   assert.doesNotMatch(listTabSource, /工种关键指标/);
 });
 
-test("P3.3: 小队详情第一行为组综合（浅砂底色），下方为组员行，统一绩效列（不再复用岗位 Tab 列）", () => {
-  assert.match(detailViewSource, /组综合/);
-  // Claude Design System cushion color token #F1F1F0
-  assert.match(detailViewSource, /#F1F1F0/);
-  // 统一绩效列：与视频复盘抽屉同源
-  assert.match(detailViewSource, /DETAIL_COLUMNS/);
-  assert.match(detailViewSource, /作品数/);
-  assert.match(detailViewSource, /转粉率/);
-  assert.match(detailViewSource, /互动率/);
-  assert.match(detailViewSource, /InteractionDetailHeads/);
-  assert.match(detailViewSource, /RetentionDetailHeads/);
-  assert.match(detailViewSource, /formatRate/);
-  // 空小队空态兜底（零产出组员出行由数据层测试锁定）
-  assert.match(detailViewSource, /该小队当前还没有成员/);
-  assert.doesNotMatch(detailViewSource, /StaffRowCells/);
-  assert.doesNotMatch(detailViewSource, /TalentRowCells/);
-  assert.doesNotMatch(detailViewSource, /OperatorRowCells/);
+test("P3.3: 小队详情接共用表格，表头下一行全队合计，下面一行一位组员", () => {
+  assert.match(detailViewSource, /<RoleTable/);
+  assert.match(detailViewSource, /teamMetricColumns/);
+  assert.match(detailViewSource, /summary=\{\{ name: "全队合计"/);
+  assert.match(detailViewSource, /这支小队还没有成员/);
+  assert.doesNotMatch(detailViewSource, /StaffRowCells|TalentRowCells|OperatorRowCells|sortableHead/);
 });
 
 test("P3.4: 小队详情与岗位表都只通往个人档案；作品诊断从档案里的作品行进入", () => {
@@ -225,15 +206,13 @@ test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属，�
   });
 });
 
-test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除冗余的「小队」后缀", () => {
+test("P5.1: 工种只写文案/达人/运营，小队名下灰字统一写成「X小队 · N 人」", () => {
   assert.match(listTabSource, /WorkGroupKindBadge/);
-  assert.doesNotMatch(listTabSource, />\s*文案小队\s*</);
-  assert.doesNotMatch(listTabSource, />\s*达人小队\s*</);
-  assert.doesNotMatch(listTabSource, />\s*运营小队\s*</);
   assert.match(
     listTabSource,
-    /const label = kind === "writer" \? "文案" : kind === "talent" \? "达人" : "运营"/,
+    /return kind === "writer" \? "文案" : kind === "talent" \? "达人" : "运营"/,
   );
+  assert.match(listTabSource, /`\$\{workGroupKindLabel\(row\.kind\)\}小队 · \$\{row\.memberCount\} 人`/);
 });
 
 test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新（零 router.refresh 白屏刷新）", () => {

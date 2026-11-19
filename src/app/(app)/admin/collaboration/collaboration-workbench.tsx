@@ -12,10 +12,11 @@ import type { WriterCandidateRow } from "./writer-tab";
 import {
   buildCollaborationHeadline,
   generateMonthOptions,
+  mergeLocalWorkGroupViews,
+  stepCollaborationMonth,
   WORK_GROUP_ROLE_TAB,
   type TabKey,
 } from "@/lib/collaboration/domain/workbench-state";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 import {
@@ -27,7 +28,6 @@ import {
   type WorkGroupViews,
   type WorkGroupRow,
   type WorkGroupRosterMember,
-  type WorkGroupSummaryRow,
 } from "./types";
 import {
   buildCollaborationSearchParams,
@@ -140,61 +140,10 @@ export function CollaborationWorkbench({
     setSelectedGroupId(defaultGroupId);
   }, [defaultGroupId]);
 
-  const resolvedWorkGroupViews = useMemo(() => {
-    if (!workGroupViews) return undefined;
-    const groups: WorkGroupSummaryRow[] = currentRawGroups.map((rg) => {
-      const existing = workGroupViews.groups.find((g) => g.id === rg.id);
-      const memberCount = currentRoster.filter((m) =>
-        rg.kind === "operator" ? m.operatorGroupId === rg.id : m.peerGroupId === rg.id,
-      ).length;
-      if (existing) {
-        return { ...existing, name: rg.name, kind: rg.kind, memberCount };
-      }
-      return {
-        id: rg.id,
-        name: rg.name,
-        kind: rg.kind,
-        teamId: rg.teamId,
-        memberCount,
-        // 本地新建小队还没有服务端统计，给全零/— 的空绩效
-        aggregate: {
-          reportCount: 0,
-          snapshotCount: 0,
-          totalPlay: 0,
-          avgPlay: 0,
-          followerConversionRate: null,
-          interactionRate: null,
-          likeRate: null,
-          commentRate: null,
-          shareRate: null,
-          favoriteRate: null,
-        },
-        contentQuality: null,
-      };
-    });
-
-    const details = workGroupViews.details.map((detail) => {
-      const groupSummary = groups.find((g) => g.id === detail.summary.id);
-      if (!groupSummary) return detail;
-      return {
-        ...detail,
-        summary: groupSummary,
-      };
-    });
-    // 本地刚建、服务端 details 里还没有的小队补一条空名单 detail，
-    // 否则点进详情会因为找不到而进不去（要等下次刷新）
-    const knownDetailIds = new Set(workGroupViews.details.map((detail) => detail.summary.id));
-    for (const group of groups) {
-      if (knownDetailIds.has(group.id)) continue;
-      details.push({ summary: group, members: [] });
-    }
-
-    return {
-      ready: workGroupViews.ready,
-      groups,
-      details,
-    };
-  }, [workGroupViews, currentRawGroups, currentRoster]);
+  const resolvedWorkGroupViews = useMemo(
+    () => mergeLocalWorkGroupViews(workGroupViews, currentRawGroups, currentRoster),
+    [workGroupViews, currentRawGroups, currentRoster],
+  );
 
   const activeGroupDetail = useMemo(
     () =>
@@ -390,29 +339,9 @@ export function CollaborationWorkbench({
     router.push(buildMonthUrl(Number(y), Number(m)));
   };
 
-  const handlePrevMonth = () => {
-    let prevY = year;
-    let prevM = month - 1;
-    if (prevM < 1) {
-      prevM = 12;
-      prevY--;
-    }
-    if (prevY < 2026 || (prevY === 2026 && prevM < 7)) return;
-    router.push(buildMonthUrl(prevY, prevM));
-  };
-
-  const handleNextMonth = () => {
-    const now = getShanghaiYearMonth();
-    let nextY = year;
-    let nextM = month + 1;
-    if (nextM > 12) {
-      nextM = 1;
-      nextY++;
-    }
-    const currentY = now.year;
-    const currentM = now.month;
-    if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
-    router.push(buildMonthUrl(nextY, nextM));
+  const stepMonth = (delta: -1 | 1) => {
+    const target = stepCollaborationMonth(year, month, delta);
+    if (target) router.push(buildMonthUrl(target.year, target.month));
   };
 
   // 全局键盘快捷翻月（DOET #2）
@@ -420,21 +349,13 @@ export function CollaborationWorkbench({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (manageDrawerOpen || Boolean(selectedPersonId) || Boolean(diagnosisDetail)) return;
       const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) return;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        handlePrevMonth();
+        stepMonth(-1);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        handleNextMonth();
+        stepMonth(1);
       }
     };
     window.addEventListener("keydown", handleKeyDown);

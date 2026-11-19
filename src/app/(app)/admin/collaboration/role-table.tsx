@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { OneTip } from "./one-tip";
 import { SelfMemberBadge } from "./member-self-hint";
 
 /**
- * 四张岗位表共用的骨架：一行一人，点一行只有一个去处（个人档案）。
+ * 协作管理所有表格共用的骨架（四张岗位表、小队列表、小队详情）：一行一个对象，点一行只有一个去处。
  * - 姓名格下方一行灰字放名下/经手账号，不再单独占列；
  * - 说明收进列头悬停，表下不压脚注；
  * - 当前排序列用定名墨，其余正文墨——焦点跟着排序走；
@@ -44,6 +44,12 @@ export interface RoleTableProps<R> {
   currentUserId?: string | null;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
+  /** 首列表头，默认「姓名」（小队列表用「小队」）。 */
+  nameLabel?: string;
+  /** 整行的读屏说明，默认「查看 X 的个人档案」。 */
+  rowAriaLabel?: (row: R) => string;
+  /** 表头下固定的一行合计（如小队「全队合计」），不参与排序、不可点。 */
+  summary?: { name: string; sub?: string | null; row: R };
 }
 
 const NAME_COL_WIDTH = 200;
@@ -60,6 +66,9 @@ export function RoleTable<R>({
   currentUserId = null,
   onSelectPerson,
   onPrefetchPerson,
+  nameLabel = "姓名",
+  rowAriaLabel,
+  summary,
 }: RoleTableProps<R>) {
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -96,14 +105,6 @@ export function RoleTable<R>({
 
   const minWidth = NAME_COL_WIDTH + columns.reduce((sum, c) => sum + c.width, 0);
 
-  const handleRowKey = (event: KeyboardEvent, userId: string) => {
-    if (event.target !== event.currentTarget) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onSelectPerson(userId);
-    }
-  };
-
   return (
     <>
       {/* 宽屏：表格 */}
@@ -117,7 +118,7 @@ export function RoleTable<R>({
           </colgroup>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="pl-4 sticky left-0 z-20 bg-[#FCFCFB]">姓名</TableHead>
+              <TableHead className="pl-4 sticky left-0 z-20 bg-[#FCFCFB]">{nameLabel}</TableHead>
               {columns.map((c) => (
                 <TableHead
                   key={c.key}
@@ -135,26 +136,45 @@ export function RoleTable<R>({
             </TableRow>
           </TableHeader>
           <TableBody>
+            {summary && (
+              <TableRow className="hover:bg-transparent bg-[#FCFCFB]">
+                <TableCell className="pl-4 sticky left-0 z-10 bg-[#FCFCFB]">
+                  <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
+                </TableCell>
+                {columns.map((c) => (
+                  <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums text-[#141413]`}>
+                    {c.render(summary.row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            )}
             {sorted.map((row) => {
               const userId = getId(row);
               const isSelf = Boolean(currentUserId && userId === currentUserId);
               const zero = isZero?.(row) ?? false;
               const sub = getSub?.(row) ?? null;
               return (
+                // 整行可点（鼠标）；键盘与读屏落在名字格里的真按钮上，<tr> 保留表格行语义
                 <TableRow
                   key={userId}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`查看${getName(row)}的个人档案`}
                   data-self={isSelf ? "true" : undefined}
-                  className="group cursor-pointer data-[self=true]:bg-[#F7F7F6] focus-visible:outline-none focus-visible:bg-[#F7F7F6] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[#141413]/10"
+                  className="group cursor-pointer data-[self=true]:bg-[#F7F7F6] focus-within:bg-[#F7F7F6]"
                   onClick={() => onSelectPerson(userId)}
-                  onKeyDown={(event) => handleRowKey(event, userId)}
                   onMouseEnter={() => onPrefetchPerson?.(userId)}
-                  onFocus={() => onPrefetchPerson?.(userId)}
                 >
-                  <TableCell className="pl-4 sticky left-0 z-10 bg-white group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-visible:bg-[#F7F7F6] transition-[background-color] duration-150">
-                    <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} />
+                  <TableCell className="pl-4 sticky left-0 z-10 bg-white group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-within:bg-[#F7F7F6] transition-[background-color] duration-150">
+                    <button
+                      type="button"
+                      aria-label={rowAriaLabel ? rowAriaLabel(row) : `查看${getName(row)}的个人档案`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onSelectPerson(userId);
+                      }}
+                      onFocus={() => onPrefetchPerson?.(userId)}
+                      className="block w-full min-w-0 rounded-md text-left cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-2"
+                    >
+                      <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} />
+                    </button>
                   </TableCell>
                   {columns.map((c) => (
                     <TableCell
@@ -175,22 +195,35 @@ export function RoleTable<R>({
 
       {/* 窄屏：每人一行 */}
       <ul className="sm:hidden divide-y divide-[#E2E2DF]/60 border-y border-[#E2E2DF]/60">
+        {summary && (() => {
+          const s = getMobileSummary(summary.row);
+          return (
+            <li className="flex items-center justify-between gap-3 bg-[#FCFCFB] px-1 py-3">
+              <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
+              <span className="flex shrink-0 flex-col items-end gap-1 tabular-nums">
+                <span className="text-[14px] text-[#141413]">{s.primary}</span>
+                <span className="text-[12px] text-[#78716C]">{s.secondary}</span>
+              </span>
+            </li>
+          );
+        })()}
         {sorted.map((row) => {
           const userId = getId(row);
           const isSelf = Boolean(currentUserId && userId === currentUserId);
           const zero = isZero?.(row) ?? false;
-          const summary = getMobileSummary(row);
+          const mobile = getMobileSummary(row);
           return (
             <li key={userId}>
               <button
                 type="button"
+                aria-label={rowAriaLabel ? rowAriaLabel(row) : undefined}
                 onClick={() => onSelectPerson(userId)}
                 className={`flex w-full items-center justify-between gap-3 px-1 py-3 text-left transition-colors duration-150 hover:bg-[#F7F7F6] cursor-pointer ${isSelf ? "bg-[#F7F7F6]" : ""}`}
               >
                 <PersonName name={getName(row)} sub={getSub?.(row) ?? null} isSelf={isSelf} zero={zero} />
                 <span className="flex shrink-0 flex-col items-end gap-1 tabular-nums">
-                  <span className={`text-[14px] ${zero ? "text-[#A8A29E]" : "text-[#141413]"}`}>{summary.primary}</span>
-                  <span className="text-[12px] text-[#78716C]">{summary.secondary}</span>
+                  <span className={`text-[14px] ${zero ? "text-[#A8A29E]" : "text-[#141413]"}`}>{mobile.primary}</span>
+                  <span className="text-[12px] text-[#78716C]">{mobile.secondary}</span>
                 </span>
               </button>
             </li>

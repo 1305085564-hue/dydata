@@ -1,24 +1,49 @@
-import { getContentOwner } from "@/lib/content/content-owner";
-import { Play, Layers, UserCheck, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { Metric } from "@/components/ui/metric";
-import { ListRow } from "@/components/ui/list-row";
+import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
+import { Metric } from "@/components/ui/metric";
 import { SimpleTooltip } from "@/components/ui/tooltip";
 import {
   InteractionBreakdownContent,
+  OverallGradeBreakdownContent,
   RetentionBreakdownContent,
 } from "@/components/admin/quality-tooltip-content";
+import { getContentOwner } from "@/lib/content/content-owner";
 import { contentQualityRules } from "@/lib/content-quality";
+import { getContentQualityStatusText, type WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import { isImpossibleRatio, describeImpossibleRatio } from "@/lib/metric-bounds";
 import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anomaly";
-import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
+import {
+  BREAKOUT_GRADE_TEXT_CLASS,
+  KPI_PLAY_EXCELLENT,
+  KPI_PLAY_FLOOR,
+  KPI_PLAY_GOOD,
+  formatAchievement,
+  type BreakoutRating,
+} from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
-import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import type { VideoRow } from "@/lib/content/domain/detail";
-import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getAvgPlayRatioClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
+import {
+  formatDateTime,
+  formatDuration,
+  formatNumber,
+  formatPercent,
+  formatPercentagePoints,
+  getAvgPlayDurationClass,
+  getAvgPlayRatioClass,
+  getBounceRate2sClass,
+  getCompletionRate5sClass,
+  getCompletionRateClass,
+  statusBadgeConfig,
+} from "@/lib/content/domain/detail";
 import { avgPlayRatioAsPercentagePoints, DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
+
+/**
+ * 作品诊断正文上半部：这一屏只回答「这条表现怎么样」。
+ * 标题下一句结论（综合评级 + 卡住它的那条线）→ 四个核心数平铺 → 全量指标折成一行摘要。
+ * 不用灰底卡片、不配装饰图标；口径收进悬停。
+ */
 
 function getPlayThresholdLabel(playCount: number | null | undefined): string {
   if (playCount == null || !Number.isFinite(playCount)) return "暂无播放数据";
@@ -33,6 +58,51 @@ function getLowSampleTitle(playCount: number | null | undefined, standards = DEF
   return `播放量不足 ${standards.minPlayCount.toLocaleString("zh-CN")}，样本不足，仅供参考`;
 }
 
+const RETENTION_CALCULATION_TEXT: Record<string, string> = {
+  avg_play_duration_only: "按均播折算",
+  avg_play_ratio_only: "按占比折算",
+  average: "五项加权",
+};
+
+/** 带口径的标签：有说明才出虚线和悬停，没有就是一行灰字。 */
+function TipLabel({ tip, wide = false, children }: { tip?: ReactNode; wide?: boolean; children: ReactNode }) {
+  const label = (
+    <span className={tip ? "cursor-help border-b border-dashed border-[#D6D3D1] hover:border-[#78716C] transition-colors duration-150" : undefined}>
+      {children}
+    </span>
+  );
+  if (!tip) return label;
+  return (
+    <SimpleTooltip
+      align="start"
+      sideOffset={6}
+      contentClassName={wide ? "w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left" : undefined}
+      tip={tip}
+    >
+      {label}
+    </SimpleTooltip>
+  );
+}
+
+function Stat({ label, tip, wideTip, value, settleKey, note }: {
+  label: string;
+  tip?: ReactNode;
+  wideTip?: boolean;
+  value: string;
+  settleKey: string;
+  note: ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="text-[12px] text-[#78716C]">
+        <TipLabel tip={tip} wide={wideTip}>{label}</TipLabel>
+      </span>
+      <Metric settleKey={settleKey} value={value} />
+      <span className="truncate text-[12px] text-[#78716C] tabular-nums">{note}</span>
+    </div>
+  );
+}
+
 /** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
 function MetricPercentValue({ value, playCount, normalClassName, standards = DEFAULT_EVALUATION_STANDARDS, avgPlayRatio = false }: { value: number | null | undefined; playCount?: number | null; normalClassName?: string; standards?: EvaluationStandards; avgPlayRatio?: boolean }) {
   const percentageValue = avgPlayRatio ? avgPlayRatioAsPercentagePoints(value) : value;
@@ -40,29 +110,21 @@ function MetricPercentValue({ value, playCount, normalClassName, standards = DEF
   const lowSampleTitle = value != null ? getLowSampleTitle(playCount, standards) : undefined;
   const tip = dirty ? describeImpossibleRatio() : lowSampleTitle;
   const label = (
-    <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""} ${tip ? "cursor-help" : ""}`}>
+    <span className={`tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2" : normalClassName ?? "text-[#141413]"} ${tip ? "cursor-help" : ""}`}>
       {formatPercentagePoints(percentageValue)}
     </span>
   );
   return tip ? <SimpleTooltip align="end" tip={tip}>{label}</SimpleTooltip> : label;
 }
 
-/** 单项评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
-function BreakoutGradeTag({ rating, metricLabel, targetLabel, hideTooltip = false }: { rating: BreakoutRating | null; metricLabel: string; targetLabel: string; hideTooltip?: boolean }) {
-  if (!rating) return null;
-  const tag = (
-    <span className={`shrink-0 tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]} ${hideTooltip ? "" : "cursor-help border-b border-dashed border-[#D6D3D1]"}`}>
-      {rating.grade}{formatAchievement(rating.achievement)}
-    </span>
-  );
-  if (hideTooltip) return tag;
+function MetricLine({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <SimpleTooltip align="end" tip={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），评级标准 ${targetLabel}`}>
-      {tag}
-    </SimpleTooltip>
+    <div className="flex items-center justify-between gap-3 border-b border-[#E2E2DF]/60 py-1">
+      <span className="text-[#78716C]">{label}</span>
+      {children}
+    </div>
   );
 }
-
 
 export interface ContentDetailMetricsProps {
   evaluationStandards?: EvaluationStandards;
@@ -72,358 +134,216 @@ export interface ContentDetailMetricsProps {
   isPurgeEligible: (trashedAt: string | null | undefined) => boolean;
   followerConv: number | null;
   fanConv: number | null;
-  interaction: number | null;
-  breakoutTargets: { follower: number; interaction: number } | null;
   followerRating: BreakoutRating | null;
-  interactionRating: BreakoutRating | null;
-  overallGrade: BreakoutGrade | null;
   contentQuality?: WorkContentQuality | null;
-  hasAvailableScreenshots?: boolean;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
 }
 
-export function ContentDetailMetrics({ evaluationStandards = DEFAULT_EVALUATION_STANDARDS, video, snapshot, canPurge, isPurgeEligible, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, overallGrade, contentQuality = null, hasAvailableScreenshots = true, onSelectAuthor, ownerNames }: ContentDetailMetricsProps) {
+/** 提醒：为什么点进来要处理这条、回收站保护期。没有就不出。 */
+export function ContentDetailNotices({ video, canPurge, isPurgeEligible }: Pick<ContentDetailMetricsProps, "video" | "canPurge" | "isPurgeEligible">) {
+  // 用户点「去盘 →」是带着「系统认为这条有问题」的预期进来的，口径与提醒条分桶同源（2026-10-11 审计 High）
+  const anomalyReason = describeAnomalyReason(video);
+  const protectedUntil =
+    video.lifecycle_state === "trashed" && canPurge && video.trashed_at && !isPurgeEligible(video.trashed_at)
+      ? new Date(new Date(video.trashed_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleString("zh-CN")
+      : null;
+  if (!anomalyReason && !protectedUntil) return null;
+  return (
+    <div className="space-y-2">
+      {anomalyReason && (
+        <Alert variant="warning" className="items-start text-[12px]">
+          <div>为什么需要处理这条：{anomalyReason}</div>
+        </Alert>
+      )}
+      {protectedUntil && (
+        <Alert variant="warning" className="items-start text-[12px]">
+          <div>
+            回收站保护期内，<span className="tabular-nums text-[#1F1E1D]">{protectedUntil}</span> 之后才能彻底删除。
+          </div>
+        </Alert>
+      )}
+    </div>
+  );
+}
+
+/** 标题区：一行出处、作品标题、一句结论。 */
+export function ContentDetailHeadline({ video, snapshot, contentQuality = null, evaluationStandards = DEFAULT_EVALUATION_STANDARDS, ownerNames, onSelectAuthor }: Pick<ContentDetailMetricsProps, "video" | "snapshot" | "contentQuality" | "evaluationStandards" | "ownerNames" | "onSelectAuthor">) {
   const owner = onSelectAuthor || ownerNames
     ? getContentOwner(video, ownerNames)
     : { id: video.user_id, name: video.profiles.name };
-  const anomalyReason = describeAnomalyReason(video);
+  const statusLabel = resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status });
+  const playCount = contentQuality?.snapshotPlayCount ?? snapshot?.play_count ?? null;
+  const overallGrade = contentQuality?.overallGrade ?? null;
+  const rules = contentQualityRules(evaluationStandards);
+
   return (
-    <>
-              {/* 选中原因说明：用户点「去盘 →」是带着「系统认为这条有问题」的预期进来的，
-                  只给状态徽标不解释依据，用户只能自己猜（2026-10-11 审计 High）。
-                  口径与提醒条分桶同源，不是异常时不显示。 */}
-              {anomalyReason && (
-                <Alert variant="warning" className="items-start text-[12px]">
-                  <div>
-                    <span className="font-normal">为什么需要处理这条：</span>{" "}
-                    {anomalyReason}
-                  </div>
-                </Alert>
-              )}
+    <section className="space-y-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#78716C]">
+        {video.lifecycle_state === "trashed" && <Badge variant="secondary">回收站</Badge>}
+        {statusLabel !== "正常" && (
+          <Badge variant={statusBadgeConfig[statusLabel]?.variant ?? "secondary"}>{statusLabel}</Badge>
+        )}
+        <span className="text-[#1F1E1D]">{video.accounts.name}</span>
+        <span className="text-[#A8A29E]">·</span>
+        {owner.id && onSelectAuthor ? (
+          <SimpleTooltip align="start" tip={`查看 ${owner.name} 的全部作品`}>
+            <button
+              type="button"
+              onClick={() => onSelectAuthor(owner.id, owner.name)}
+              className="text-[#1F1E1D] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors duration-150 cursor-pointer"
+            >
+              {owner.name}
+            </button>
+          </SimpleTooltip>
+        ) : (
+          <span className="text-[#1F1E1D]">{owner.name}</span>
+        )}
+        <span className="text-[#A8A29E]">·</span>
+        <span className="tabular-nums">{formatDateTime(video.published_at ?? null)} 发布</span>
+      </div>
 
-              {/* 锁定提示横幅 */}
-              {video.lifecycle_state === "trashed" &&
-                canPurge &&
-                video.trashed_at &&
-                !isPurgeEligible(video.trashed_at) && (
-                  <Alert variant="warning" className="items-start text-[12px]">
-                    <div>
-                      <span className="font-normal">
-                        作品处于回收站保护期：
-                      </span>{" "}
-                      移入未满 30 天，可于{" "}
-                      <span className="font-normal tabular-nums text-[#1F1E1D]">
-                        {new Date(
-                          new Date(video.trashed_at).getTime() +
-                            30 * 24 * 60 * 60 * 1000,
-                        ).toLocaleString("zh-CN")}
-                      </span>{" "}
-                      之后执行彻底物理销毁。
-                    </div>
-                  </Alert>
-                )}
+      <h2 className="font-serif text-[20px] leading-[1.30] text-[#141413] break-words">
+        {video.video_title?.trim() || "未命名视频"}
+      </h2>
 
-              {/* 1. 顶部全景单大卡片 (视频元数据 + 核心数据大盘 融为一体) */}
-              <section className="space-y-5">
-                {/* 1.1 视频元信息 header */}
-                <div className="border-b border-[#E2E2DF]/60 pb-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {video.lifecycle_state === "trashed" && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#F1F1F0] text-[#1F1E1D] text-[12px] font-normal"
-                        >
-                          回收站
-                        </Badge>
-                      )}
-                      <Badge
-                        variant={
-                          statusBadgeConfig[
-                            resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })
-                          ]?.variant ?? "secondary"
-                        }
-                      >
-                        {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
-                      </Badge>
-                      <SectionHeading as="h2">
-                        {video.video_title?.trim() || "未命名视频"}
-                      </SectionHeading>
-                    </div>
+      <p className="text-[14px] leading-[1.50] text-[#78716C]">
+        {overallGrade && contentQuality ? (
+          <SimpleTooltip
+            align="start"
+            contentClassName="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
+            tip={<OverallGradeBreakdownContent quality={{ ...contentQuality, overallGrade }} playCount={playCount} rules={rules} />}
+          >
+            <span className={`cursor-help border-b border-dashed border-[#D6D3D1] ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}>
+              综合评{overallGrade}
+            </span>
+          </SimpleTooltip>
+        ) : (
+          <span className="text-[#1F1E1D]">
+            暂不评级{contentQuality ? `（${getContentQualityStatusText(contentQuality.status)}）` : ""}
+          </span>
+        )}
+        <span className="mx-2 text-[#A8A29E]">·</span>
+        播放 {getPlayThresholdLabel(playCount)}
+      </p>
+    </section>
+  );
+}
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#78716C]">
-                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
-                        <span className="text-[#78716C]">账号:</span>{" "}
-                        {video.accounts.name}
-                      </span>
-                      <span className="text-[#E2E2DF]">·</span>
-                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
-                        <UserCheck className="size-3.5 text-[#78716C]" />
-                        <span className="text-[#78716C]">责任人:</span>{" "}
-                        {owner.id && onSelectAuthor ? (
-                          <SimpleTooltip align="start" tip={`查看 ${owner.name} 的全部作品`}>
-                            <button
-                              type="button"
-                              onClick={() => onSelectAuthor(owner.id, owner.name)}
-                              className="font-normal text-[#1F1E1D] underline decoration-[#78716C]/40 underline-offset-2 hover:text-[#141413] transition-colors cursor-pointer"
-                            >
-                              {owner.name}
-                            </button>
-                          </SimpleTooltip>
-                        ) : (
-                          <span>{owner.name}</span>
-                        )}
-                      </span>
-                      <span className="text-[#E2E2DF]">·</span>
-                      <span>
-                        <span className="text-[#78716C]">发布时间:</span>{" "}
-                        <span className="tabular-nums">
-                          {formatDateTime(video.published_at ?? null)}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+/** 四个核心数：播放 / 转粉率 / 互动达成 / 留存达成，同一排平铺。 */
+export function ContentDetailCoreStats({ snapshot, contentQuality = null, followerConv, followerRating, evaluationStandards = DEFAULT_EVALUATION_STANDARDS }: Pick<ContentDetailMetricsProps, "snapshot" | "contentQuality" | "followerConv" | "followerRating" | "evaluationStandards">) {
+  const rules = contentQualityRules(evaluationStandards);
+  const hasInteractionDetail = Boolean(contentQuality?.interactionMetrics || contentQuality?.interactionValue != null);
+  const hasRetentionDetail = Boolean(contentQuality?.retentionMetrics);
+  const interactionValue = contentQuality?.interactionValue;
 
-                {/* 1.2 核心数据大盘 (融于同卡内) */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="size-2 rounded-full bg-current text-[#D97757]" />
-                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
-                        核心数据大盘
-                      </h3>
-                      {overallGrade && (
-                        <SimpleTooltip
-                          align="start"
-                          contentClassName="w-[268px] max-w-[268px] flex-col items-stretch gap-1 p-3 text-left leading-relaxed"
-                          tip={
-                            <>
-                              <div className="text-[12px] text-[#141413] border-b border-[#E2E2DF]/80 pb-1">综合评级口径</div>
-                              <p className="text-[12px] text-[#1F1E1D]">互动达成与留存达成取平均：≥100% 且两项均 ≥80% 评优；≥80% 且两项均 ≥60% 评良；其余评普。</p>
-                              <p className="text-[12px] text-[#78716C]">播放 &lt; {KPI_PLAY_FLOOR.toLocaleString()} 直接评普；&lt; {KPI_PLAY_GOOD.toLocaleString()} 最高评普；&lt; {KPI_PLAY_EXCELLENT.toLocaleString()} 最高评良；任一项不完整时不评级。</p>
-                            </>
-                          }
-                        >
-                          <span>
-                            <Badge variant="secondary" className={`bg-[#F1F1F0] text-[12px] cursor-help ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}>
-                              综合{overallGrade}
-                            </Badge>
-                          </span>
-                        </SimpleTooltip>
-                      )}
-                    </div>
-                    <span className="text-[12px] text-[#78716C] font-normal">抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}</span>
-                  </div>
+  return (
+    <section className="grid grid-cols-2 gap-5 border-y border-[#E2E2DF]/60 py-4 sm:grid-cols-4">
+      <Stat
+        label="播放"
+        settleKey="content-detail:play"
+        value={formatNumber(snapshot?.play_count)}
+        tip={`播放 ${KPI_PLAY_FLOOR.toLocaleString()} 以下直接评普，${KPI_PLAY_GOOD.toLocaleString()} 以下最高评普，${KPI_PLAY_EXCELLENT.toLocaleString()} 以下最高评良。`}
+        note={`抓取于 ${formatDateTime(snapshot?.captured_at ?? null)}`}
+      />
+      <Stat
+        label="转粉率"
+        settleKey="content-detail:follower-rate"
+        value={formatPercent(followerConv)}
+        tip={followerRating ? `转粉率达成 ${formatAchievement(followerRating.achievement)}，评${followerRating.grade}` : undefined}
+        note={
+          <>
+            涨粉 +{formatNumber(snapshot?.follower_gain)}
+            {followerRating && (
+              <span className={`ml-2 ${BREAKOUT_GRADE_TEXT_CLASS[followerRating.grade]}`}>
+                {followerRating.grade} {formatAchievement(followerRating.achievement)}
+              </span>
+            )}
+          </>
+        }
+      />
+      <Stat
+        label="互动达成"
+        settleKey="content-detail:interaction-rate"
+        value={formatAchievement(contentQuality?.interactionAchievement)}
+        wideTip
+        tip={hasInteractionDetail ? <InteractionBreakdownContent quality={contentQuality} playCount={snapshot?.play_count} rules={rules} /> : undefined}
+        note={interactionValue != null ? `互动率 ${(interactionValue * 100).toFixed(2)}%` : "赞 评 转 藏合计"}
+      />
+      <Stat
+        label="留存达成"
+        settleKey="content-detail:retention-achievement"
+        value={formatAchievement(contentQuality?.contentAchievement)}
+        wideTip
+        tip={hasRetentionDetail ? <RetentionBreakdownContent quality={contentQuality} rules={rules} /> : undefined}
+        note={
+          <>
+            {RETENTION_CALCULATION_TEXT[contentQuality?.retentionCalculation ?? "average"]}
+            {contentQuality?.contentGrade && (
+              <span className={`ml-2 ${BREAKOUT_GRADE_TEXT_CLASS[contentQuality.contentGrade]}`}>{contentQuality.contentGrade}</span>
+            )}
+          </>
+        }
+      />
+    </section>
+  );
+}
 
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>播放量</span>
-                        <Play className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric settleKey="content-detail:play" value={formatNumber(snapshot?.play_count)} className="mt-1.5" />
-                      <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">{getPlayThresholdLabel(snapshot?.play_count)}</div>
-                    </div>
+/** 全量指标：有截图时默认折成一行摘要让位截图；截图没就绪时自动展开兜底。 */
+export function ContentDetailAllMetrics({ snapshot, fanConv, hasAvailableScreenshots = true, evaluationStandards = DEFAULT_EVALUATION_STANDARDS }: {
+  snapshot: VideoMetricsSnapshot | null;
+  fanConv: number | null;
+  hasAvailableScreenshots?: boolean;
+  evaluationStandards?: EvaluationStandards;
+}) {
+  if (!snapshot) return null;
+  const lowSampleTip = snapshot.avg_play_duration != null ? getLowSampleTitle(snapshot.play_count, evaluationStandards) : undefined;
+  const avgDuration = (
+    <span className={`tabular-nums ${getAvgPlayDurationClass(snapshot.avg_play_duration, snapshot.play_count, evaluationStandards) || "text-[#141413]"} ${lowSampleTip ? "cursor-help" : ""}`}>
+      {formatDuration(snapshot.avg_play_duration)}
+    </span>
+  );
+  return (
+    <details
+      key={hasAvailableScreenshots ? "collapsed" : "expanded"}
+      open={!hasAvailableScreenshots}
+      className="group/metrics"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md py-1 text-[12px] text-[#78716C] select-none hover:text-[#141413] transition-colors duration-150">
+        <span className="min-w-0 truncate tabular-nums">
+          <span className="text-[14px] text-[#141413]">全部指标</span>
+          <span className="ml-2">
+            点赞 {formatNumber(snapshot.likes)} · 评论 {formatNumber(snapshot.comments)} · 完播 {formatPercentagePoints(snapshot.completion_rate)} · 均播 {formatDuration(snapshot.avg_play_duration)}
+          </span>
+        </span>
+        <ChevronDown className="size-4 shrink-0 transition-transform duration-150 group-open/metrics:rotate-180" aria-hidden />
+      </summary>
 
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>转粉率</span>
-                        <Sparkles className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric settleKey="content-detail:follower-rate" value={formatPercent(followerConv)} className="mt-1.5" />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>涨粉量: <span className="tabular-nums font-normal text-[#1F1E1D]">+{formatNumber(snapshot?.follower_gain)}</span></span>
-                        <BreakoutGradeTag rating={followerRating} metricLabel="转粉率" targetLabel={breakoutTargets ? formatTarget(breakoutTargets.follower) : ""} />
-                      </div>
-                    </div>
-
-                    {(() => {
-                      const hasInteractionDetail = Boolean(contentQuality?.interactionMetrics || contentQuality?.interactionValue != null);
-                      const interactionCard = (
-                        <div className={`group/card relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 ${hasInteractionDetail ? "cursor-help" : ""}`}>
-                          <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                            <span className={hasInteractionDetail ? "border-b border-dashed border-[#D6D3D1] group-hover/card:border-[#78716C] transition-colors" : ""}>互动达成</span>
-                            <TrendingUp className="size-3.5 text-[#78716C]" />
-                          </div>
-                          <Metric settleKey="content-detail:interaction-rate" value={formatAchievement(contentQuality?.interactionAchievement)} className="mt-1.5" />
-                          <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                            <span>赞/评/藏/转</span>
-                            <BreakoutGradeTag rating={interactionRating} metricLabel="互动达成" targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""} hideTooltip={hasInteractionDetail} />
-                          </div>
-                        </div>
-                      );
-                      return hasInteractionDetail ? (
-                        <SimpleTooltip
-                          align="end"
-                          sideOffset={6}
-                          contentClassName="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
-                          tip={<InteractionBreakdownContent quality={contentQuality} playCount={snapshot?.play_count} rules={contentQualityRules(evaluationStandards)} />}
-                        >
-                          {interactionCard}
-                        </SimpleTooltip>
-                      ) : interactionCard;
-                    })()}
-
-                    {(() => {
-                      const hasRetentionDetail = Boolean(contentQuality?.retentionMetrics);
-                      const retentionCard = (
-                        <div className={`group/card relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 ${hasRetentionDetail ? "cursor-help" : ""}`}>
-                          <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                            <span className={hasRetentionDetail ? "border-b border-dashed border-[#D6D3D1] group-hover/card:border-[#78716C] transition-colors" : ""}>留存达成</span>
-                            <span className="text-[12px] text-[#78716C]">按快照计算</span>
-                          </div>
-                          <Metric settleKey="content-detail:retention-achievement" value={formatAchievement(contentQuality?.contentAchievement)} className="mt-1.5" />
-                          <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                            <span>{contentQuality?.retentionCalculation === "avg_play_duration_only" ? "按均播折算" : contentQuality?.retentionCalculation === "avg_play_ratio_only" ? "按占比折算" : "五项加权"}</span>
-                            <span className="shrink-0 tabular-nums text-[#78716C]">{contentQuality?.contentGrade ?? "—"}</span>
-                          </div>
-                        </div>
-                      );
-                      return hasRetentionDetail ? (
-                        <SimpleTooltip
-                          align="end"
-                          sideOffset={6}
-                          contentClassName="w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left"
-                          tip={<RetentionBreakdownContent quality={contentQuality} rules={contentQualityRules(evaluationStandards)} />}
-                        >
-                          {retentionCard}
-                        </SimpleTooltip>
-                      ) : retentionCard;
-                    })()}
-                  </div>
-                </div>
-              </section>
-
-              {/* 2. 快照全量指标明细 (有截图时默认折叠为单行摘要以让位首屏截图；无截图或截图异常时自动展开兜底) */}
-              {snapshot && (
-                <details
-                  key={hasAvailableScreenshots ? "collapsed" : "expanded"}
-                  open={!hasAvailableScreenshots}
-                  className="group/metrics border-t border-[#E2E2DF]/60 pt-4 mt-4"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-normal text-[#141413] select-none">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <Layers className="size-4 shrink-0 text-[#78716C]" />
-                      <h3 className="font-normal text-[14px] text-[#141413] tracking-tight shrink-0">
-                        快照全量指标明细
-                      </h3>
-                      <span className="text-[12px] text-[#78716C] font-normal tabular-nums truncate">
-                        点赞 {formatNumber(snapshot.likes)} · 评论 {formatNumber(snapshot.comments)} · 完播 {formatPercentagePoints(snapshot.completion_rate)} · 均播 {formatDuration(snapshot.avg_play_duration)} · 占比 {formatPercentagePoints(avgPlayRatioAsPercentagePoints(snapshot.avg_play_ratio))}
-                      </span>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="hidden sm:inline text-[12px] text-[#78716C] font-normal">
-                        {!hasAvailableScreenshots ? "截图未就绪 · 已自动展开兜底" : `(${snapshot.snapshot_type} 抓取维度)`}
-                      </span>
-                      <ChevronDown className="size-4 text-[#78716C] transition-[transform,color] duration-150 group-open/metrics:rotate-180" />
-                    </div>
-                  </summary>
-
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-3 mt-3 border-t border-[#E2E2DF]/60 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">点赞数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.likes)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">评论数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.comments)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">分享数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.shares)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">收藏数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.favorites)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">涨粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        +{formatNumber(snapshot.follower_gain)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">掉粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        -{formatNumber(snapshot.follower_loss)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">导粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.follower_convert)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">导粉率</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatPercent(fanConv)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">2s 跳出率</span>
-                      <MetricPercentValue
-                        standards={evaluationStandards}
-                        value={snapshot.bounce_rate_2s}
-                        playCount={snapshot.play_count}
-                        normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s, snapshot.play_count, evaluationStandards)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">5s 完播率</span>
-                      <MetricPercentValue
-                        standards={evaluationStandards}
-                        value={snapshot.completion_rate_5s}
-                        playCount={snapshot.play_count}
-                        normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s, snapshot.play_count, evaluationStandards)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">完播率</span>
-                      <MetricPercentValue
-                        standards={evaluationStandards}
-                        value={snapshot.completion_rate}
-                        playCount={snapshot.play_count}
-                        normalClassName={getCompletionRateClass(snapshot.completion_rate, snapshot.play_count, evaluationStandards)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">平均播放时长</span>
-                      {(() => {
-                        const lowSampleTip = snapshot.avg_play_duration != null ? getLowSampleTitle(snapshot.play_count, evaluationStandards) : undefined;
-                        const val = (
-                          <span className={`font-normal tabular-nums ${getAvgPlayDurationClass(snapshot.avg_play_duration, snapshot.play_count, evaluationStandards)} ${lowSampleTip ? "cursor-help" : ""}`}>
-                            {formatDuration(snapshot.avg_play_duration)}
-                          </span>
-                        );
-                        return lowSampleTip ? <SimpleTooltip align="end" tip={lowSampleTip}>{val}</SimpleTooltip> : val;
-                      })()}
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">平均播放占比</span>
-                      <MetricPercentValue
-                        standards={evaluationStandards}
-                        value={snapshot.avg_play_ratio}
-                        playCount={snapshot.play_count}
-                        avgPlayRatio
-                        normalClassName={getAvgPlayRatioClass(snapshot.avg_play_ratio, snapshot.play_count, evaluationStandards)}
-                      />
-                    </ListRow>
-                  </div>
-                </details>
-              )}
-
-              {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}
-    </>
+      <div className="grid grid-cols-2 gap-x-5 pt-2 text-[12px] sm:grid-cols-3">
+        <MetricLine label="点赞"><span className="tabular-nums text-[#141413]">{formatNumber(snapshot.likes)}</span></MetricLine>
+        <MetricLine label="评论"><span className="tabular-nums text-[#141413]">{formatNumber(snapshot.comments)}</span></MetricLine>
+        <MetricLine label="分享"><span className="tabular-nums text-[#141413]">{formatNumber(snapshot.shares)}</span></MetricLine>
+        <MetricLine label="收藏"><span className="tabular-nums text-[#141413]">{formatNumber(snapshot.favorites)}</span></MetricLine>
+        <MetricLine label="涨粉"><span className="tabular-nums text-[#141413]">+{formatNumber(snapshot.follower_gain)}</span></MetricLine>
+        <MetricLine label="掉粉"><span className="tabular-nums text-[#141413]">-{formatNumber(snapshot.follower_loss)}</span></MetricLine>
+        <MetricLine label="导粉"><span className="tabular-nums text-[#141413]">{formatNumber(snapshot.follower_convert)}</span></MetricLine>
+        <MetricLine label="导粉率"><span className="tabular-nums text-[#141413]">{formatPercent(fanConv)}</span></MetricLine>
+        <MetricLine label="2 秒跳出率">
+          <MetricPercentValue standards={evaluationStandards} value={snapshot.bounce_rate_2s} playCount={snapshot.play_count} normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s, snapshot.play_count, evaluationStandards) || undefined} />
+        </MetricLine>
+        <MetricLine label="5 秒完播率">
+          <MetricPercentValue standards={evaluationStandards} value={snapshot.completion_rate_5s} playCount={snapshot.play_count} normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s, snapshot.play_count, evaluationStandards) || undefined} />
+        </MetricLine>
+        <MetricLine label="完播率">
+          <MetricPercentValue standards={evaluationStandards} value={snapshot.completion_rate} playCount={snapshot.play_count} normalClassName={getCompletionRateClass(snapshot.completion_rate, snapshot.play_count, evaluationStandards) || undefined} />
+        </MetricLine>
+        <MetricLine label="平均播放时长">
+          {lowSampleTip ? <SimpleTooltip align="end" tip={lowSampleTip}>{avgDuration}</SimpleTooltip> : avgDuration}
+        </MetricLine>
+        <MetricLine label="平均播放占比">
+          <MetricPercentValue standards={evaluationStandards} value={snapshot.avg_play_ratio} playCount={snapshot.play_count} avgPlayRatio normalClassName={getAvgPlayRatioClass(snapshot.avg_play_ratio, snapshot.play_count, evaluationStandards) || undefined} />
+        </MetricLine>
+      </div>
+    </details>
   );
 }

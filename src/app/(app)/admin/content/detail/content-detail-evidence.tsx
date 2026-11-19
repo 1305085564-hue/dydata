@@ -1,217 +1,98 @@
 "use client";
 
-import { Columns2, ChevronDown, Maximize2, ZoomIn } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ZoomIn } from "lucide-react";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
 
+/**
+ * 数据截图：流量曲线与留存脱落直接摊开，不折叠、不让人选排法。
+ * 有电脑宽图时自动上下排，全是手机竖图时左右并排；点图看大图。
+ */
 export interface ContentDetailEvidenceProps {
   activeScreenshots: { label: string; url: string; subLabel: string }[];
-  hasWideScreenshot: boolean;
-  effectiveLayout: "side-by-side" | "stacked";
+  stacked: boolean;
   curveScreenshot?: { url: string };
   retentionScreenshot?: { url: string };
   aspectRatios: Record<string, number>;
   handleImageLoad: (url: string, ratio: number) => void;
   handleImageError?: (url: string) => void;
   setPreviewIndex: (index: number) => void;
-  setViewLayout: (layout: "auto" | "side-by-side" | "stacked") => void;
 }
 
-export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, effectiveLayout, curveScreenshot, retentionScreenshot, aspectRatios, handleImageLoad, handleImageError, setPreviewIndex, setViewLayout }: ContentDetailEvidenceProps) {
-  const { ready: screenshotGrantReady } = useScreenshotGrant();
-  const pending = (
-    <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[12px] text-[#A8A29E]">
-      正在准备截图授权…
-    </div>
-  );
-  return (
-              <details className="group/details border-t border-[#E2E2DF]/60 pt-5 mt-5" open>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[14px] font-normal text-[#141413] select-none">
-                  <div className="flex items-center gap-2">
-                    <span>数据截图证据</span>
-                    {activeScreenshots.length > 0 && (
-                      <span className="text-[12px] font-normal text-[#78716C]">
-                        {hasWideScreenshot ? "（含电脑宽幅，已智能全宽展开）" : "（点击可全屏放大）"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {activeScreenshots.length > 1 && (
-                      <div
-                        className="hidden sm:inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <button
-                                type="button"
-                                onClick={() => setViewLayout("side-by-side")}
-                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                                  effectiveLayout === "side-by-side"
-                                    ? "bg-white text-[#141413] shadow-input"
-                                    : "text-[#78716C] hover:text-[#141413]"
-                                }`}
-                              />
-                            }
-                          >
-                            <Columns2 className="size-3" />
-                            双列对照
-                          </TooltipTrigger>
-                          <TooltipContent side="top">双列左右并排对照</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <button
-                                type="button"
-                                onClick={() => setViewLayout("stacked")}
-                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                                  effectiveLayout === "stacked"
-                                    ? "bg-white text-[#141413] shadow-input"
-                                    : "text-[#78716C] hover:text-[#141413]"
-                                }`}
-                              />
-                            }
-                          >
-                            <Maximize2 className="size-3" />
-                            单列大图
-                          </TooltipTrigger>
-                          <TooltipContent side="top">单列大画幅展开，字迹更大更清晰</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )}
-                    <ChevronDown className="size-4 text-[#78716C] transition-[transform,color] duration-150 group-open/details:rotate-180" />
-                  </div>
-                </summary>
+const WIDE_RATIO = 1.15;
 
-                <div
-                  className={`mt-3 ${
-                    effectiveLayout === "stacked"
-                      ? "flex flex-col gap-5"
-                      : "grid gap-4 md:grid-cols-2"
+export function ContentDetailEvidence({
+  activeScreenshots,
+  stacked,
+  curveScreenshot,
+  retentionScreenshot,
+  aspectRatios,
+  handleImageLoad,
+  handleImageError,
+  setPreviewIndex,
+}: ContentDetailEvidenceProps) {
+  const { ready: screenshotGrantReady } = useScreenshotGrant();
+
+  const slots = [
+    { key: "curve", label: "流量曲线", shot: curveScreenshot },
+    { key: "retention", label: "留存脱落", shot: retentionScreenshot },
+  ];
+
+  return (
+    <section className="space-y-2">
+      <h3 className="text-[14px] text-[#141413]">
+        数据截图
+        {activeScreenshots.length > 0 && <span className="ml-2 text-[12px] text-[#78716C]">点图看大图</span>}
+      </h3>
+      <div className={stacked ? "flex flex-col gap-5" : "grid gap-3 md:grid-cols-2"}>
+        {slots.map(({ key, label, shot }) => {
+          const wide = shot ? (aspectRatios[shot.url] ?? 0.5) > WIDE_RATIO : false;
+          return (
+            <figure key={key} className="space-y-1">
+              <figcaption className="text-[12px] text-[#78716C]">{label}</figcaption>
+              {!shot ? (
+                <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] px-4 text-[12px] text-[#A8A29E]">
+                  还没上传{label}截图
+                </div>
+              ) : !screenshotGrantReady ? (
+                <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] px-4 text-[12px] text-[#A8A29E]">
+                  正在准备截图授权…
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={`看${label}大图`}
+                  onClick={() => {
+                    const index = activeScreenshots.findIndex((item) => item.url === shot.url);
+                    if (index !== -1) setPreviewIndex(index);
+                  }}
+                  className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl shadow-card-ring bg-white p-0 text-left transition-shadow duration-150 hover:shadow-claude-float focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
+                    stacked && !wide ? "mx-auto max-w-[380px]" : ""
                   }`}
                 >
-                  <div>
-                    <div className="mb-2 flex items-center text-[12px]">
-                      <span className="font-normal text-[#1F1E1D]">流量曲线</span>
-                    </div>
-
-                    {curveScreenshot && screenshotGrantReady ? (
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
-                                if (idx !== -1) setPreviewIndex(idx);
-                              }}
-                              className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                                effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
-                                  ? "max-w-[380px] mx-auto"
-                                  : ""
-                              }`}
-                            />
-                          }
-                        >
-                          <ScreenshotImage
-                            src={curveScreenshot.url}
-                            alt="流量曲线截图"
-                            variant="stage"
-                            placeholderClassName="min-h-[320px] w-full rounded-xl"
-                            onLoad={(e) => {
-                              const img = e.currentTarget;
-                              if (img.naturalWidth && img.naturalHeight) {
-                                handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
-                              }
-                            }}
-                            onError={() => handleImageError?.(curveScreenshot.url)}
-                            className={`w-full object-contain ${
-                              effectiveLayout === "stacked"
-                                ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
-                                  ? "max-h-[440px]"
-                                  : "max-h-[600px]"
-                                : "max-h-[540px]"
-                            }`}
-                          />
-                          <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                            <ZoomIn className="size-3.5 text-[#78716C]" />
-                            <span>全屏查看</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">点击全屏放大预览</TooltipContent>
-                      </Tooltip>
-                    ) : curveScreenshot ? pending : (
-                      <EmptyState
-                        variant="compact"
-                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="暂未上传流量曲线截图"
-                      />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex items-center text-[12px]">
-                      <span className="font-normal text-[#1F1E1D]">留存脱落</span>
-                    </div>
-
-                    {retentionScreenshot && screenshotGrantReady ? (
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
-                                if (idx !== -1) setPreviewIndex(idx);
-                              }}
-                              className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-colors hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                                effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
-                                  ? "max-w-[380px] mx-auto"
-                                  : ""
-                              }`}
-                            />
-                          }
-                        >
-                          <ScreenshotImage
-                            src={retentionScreenshot.url}
-                            alt="留存脱落截图"
-                            variant="stage"
-                            placeholderClassName="min-h-[320px] w-full rounded-xl"
-                            onLoad={(e) => {
-                              const img = e.currentTarget;
-                              if (img.naturalWidth && img.naturalHeight) {
-                                handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
-                              }
-                            }}
-                            onError={() => handleImageError?.(retentionScreenshot.url)}
-                            className={`w-full object-contain ${
-                              effectiveLayout === "stacked"
-                                ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
-                                  ? "max-h-[440px]"
-                                  : "max-h-[600px]"
-                                : "max-h-[540px]"
-                            }`}
-                          />
-                          <div className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white/95 px-2 py-1 text-[12px] text-[#141413] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                            <ZoomIn className="size-3.5 text-[#78716C]" />
-                            <span>全屏查看</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">点击全屏放大预览</TooltipContent>
-                      </Tooltip>
-                    ) : retentionScreenshot ? pending : (
-                      <EmptyState
-                        variant="compact"
-                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="暂未上传留存脱落截图"
-                      />
-                    )}
-                  </div>
-                </div>
-              </details>
+                  <ScreenshotImage
+                    src={shot.url}
+                    alt={`${label}截图`}
+                    variant="stage"
+                    placeholderClassName="min-h-[320px] w-full rounded-xl"
+                    onLoad={(event) => {
+                      const img = event.currentTarget;
+                      if (img.naturalWidth && img.naturalHeight) {
+                        handleImageLoad(shot.url, img.naturalWidth / img.naturalHeight);
+                      }
+                    }}
+                    onError={() => handleImageError?.(shot.url)}
+                    className={`w-full object-contain ${stacked ? (wide ? "max-h-[440px]" : "max-h-[600px]") : "max-h-[540px]"}`}
+                  />
+                  <span className="pointer-events-none absolute bottom-2 right-2 inline-flex size-7 items-center justify-center rounded-md bg-white/95 text-[#78716C] shadow-claude-float opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                    <ZoomIn className="size-3.5" aria-hidden />
+                  </span>
+                </button>
+              )}
+            </figure>
+          );
+        })}
+      </div>
+    </section>
   );
 }

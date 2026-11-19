@@ -1,4 +1,10 @@
-import type { WorkGroupKind } from "@/app/(app)/admin/collaboration/types";
+import type {
+  WorkGroupKind,
+  WorkGroupRosterMember,
+  WorkGroupRow,
+  WorkGroupSummaryRow,
+  WorkGroupViews,
+} from "@/app/(app)/admin/collaboration/types";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 
 export type TabKey = "talents" | "operators" | "writers" | "editors";
@@ -113,4 +119,74 @@ export function buildCollaborationHeadline(input: {
   const rate =
     overview.goodExcellentRate != null ? `，良优率 ${Math.round(overview.goodExcellentRate * 100)}%` : "";
   return `${month}月 · ${scope} ${overview.total} 篇${rate}`;
+}
+
+/** 翻月：最早 2026 年 7 月，最晚本月；越界返回 null。 */
+export function stepCollaborationMonth(
+  year: number,
+  month: number,
+  delta: -1 | 1,
+  now: { year: number; month: number } = getShanghaiYearMonth(),
+): { year: number; month: number } | null {
+  let y = year;
+  let m = month + delta;
+  if (m < 1) {
+    m = 12;
+    y--;
+  } else if (m > 12) {
+    m = 1;
+    y++;
+  }
+  if (y < 2026 || (y === 2026 && m < 7)) return null;
+  if (y > now.year || (y === now.year && m > now.month)) return null;
+  return { year: y, month: m };
+}
+
+/**
+ * 小队编制就地更新后的视图：名字、工种、人数跟本地编制走，统计仍用服务端结果。
+ * 本地刚建、服务端还没有统计的小队给全零/— 的空绩效，并补一条空名单详情，否则点进去要等下次刷新。
+ */
+export function mergeLocalWorkGroupViews(
+  workGroupViews: WorkGroupViews | undefined,
+  rawGroups: WorkGroupRow[],
+  roster: WorkGroupRosterMember[],
+): WorkGroupViews | undefined {
+  if (!workGroupViews) return undefined;
+  const groups: WorkGroupSummaryRow[] = rawGroups.map((rg) => {
+    const existing = workGroupViews.groups.find((g) => g.id === rg.id);
+    const memberCount = roster.filter((m) =>
+      rg.kind === "operator" ? m.operatorGroupId === rg.id : m.peerGroupId === rg.id,
+    ).length;
+    if (existing) return { ...existing, name: rg.name, kind: rg.kind, memberCount };
+    return {
+      id: rg.id,
+      name: rg.name,
+      kind: rg.kind,
+      teamId: rg.teamId,
+      memberCount,
+      aggregate: {
+        reportCount: 0,
+        snapshotCount: 0,
+        totalPlay: 0,
+        avgPlay: 0,
+        followerConversionRate: null,
+        interactionRate: null,
+        likeRate: null,
+        commentRate: null,
+        shareRate: null,
+        favoriteRate: null,
+      },
+      contentQuality: null,
+    };
+  });
+
+  const details = workGroupViews.details.map((detail) => {
+    const groupSummary = groups.find((g) => g.id === detail.summary.id);
+    return groupSummary ? { ...detail, summary: groupSummary } : detail;
+  });
+  const knownDetailIds = new Set(workGroupViews.details.map((detail) => detail.summary.id));
+  for (const group of groups) {
+    if (!knownDetailIds.has(group.id)) details.push({ summary: group, members: [] });
+  }
+  return { ready: workGroupViews.ready, groups, details };
 }

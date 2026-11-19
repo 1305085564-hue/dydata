@@ -9,14 +9,14 @@ const operatorSource = read("./operator-tab.tsx");
 const tableSource = read("./role-table.tsx");
 const hintsSource = read("./collaboration-quality-hints.tsx");
 
-test("四张岗位表共用一行一人的骨架：整行点开档案，键盘可聚焦，窄屏改列表不横拖", () => {
+test("四张岗位表共用一行一人的骨架：整行点开档案，键盘落在名字格的真按钮上，窄屏改列表不横拖", () => {
   for (const tab of [source, talentSource, operatorSource]) {
     assert.match(tab, /<RoleTable/);
     assert.doesNotMatch(tab, /ChevronRight|ExpandedRow|onToggleExpand/, "行首不再有展开箭头，点一行只有一个去处");
   }
-  assert.match(tableSource, /tabIndex=\{0\}/);
-  assert.match(tableSource, /role="button"/);
-  assert.match(tableSource, /aria-label=\{`查看\$\{getName\(row\)\}的个人档案`\}/);
+  // <tr role="button"> 会让读屏丢掉行与列头的关联，键盘入口改为名字格里的原生按钮
+  assert.doesNotMatch(tableSource, /role="button"/);
+  assert.match(tableSource, /<button[\s\S]*?aria-label=\{rowAriaLabel \? rowAriaLabel\(row\) : `查看\$\{getName\(row\)\}的个人档案`\}/);
   assert.match(tableSource, /onClick=\{\(\) => onSelectPerson\(userId\)\}/);
   assert.match(tableSource, /<ul className="sm:hidden/);
   assert.match(tableSource, /hidden sm:flex/);

@@ -1,18 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
 
 import type { ContentQualitySummary } from "@/lib/collaboration/content-quality-contract";
-import {
-  InteractionDetailCells,
-  InteractionDetailHeads,
-  RetentionDetailCells,
-  RetentionDetailHeads,
-} from "./work-group-detail-columns";
+import { teamMetricColumns } from "./collaboration-quality-hints";
+import type { WorkGroupMemberRow } from "./types";
 
-function stripTags(value: string) {
-  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
+/**
+ * 小队列表与小队详情的列：和文案表同一套列名、口径；「展开明细」拆出互动四项与留存五项。
+ */
 
 const quality = {
   retentionAverages: {
@@ -24,81 +19,52 @@ const quality = {
   },
 } as ContentQualitySummary;
 
-test("互动明细：赞、评、转、藏四项表头与数值，缺值显示 —", () => {
-  const html = renderToStaticMarkup(
-    <table>
-      <thead>
-        <tr>
-          <InteractionDetailHeads
-            renderHead={(_field, label) => <th>{label}</th>}
-          />
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <InteractionDetailCells
-            metrics={{ likeRate: 0.025, commentRate: 0.005, shareRate: null, favoriteRate: 0.0125 }}
-          />
-        </tr>
-      </tbody>
-    </table>,
-  );
-  const headers = [...html.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => stripTags(m[1]));
-  assert.deepEqual(headers, ["点赞率", "评论率", "转发率", "收藏率"]);
-  const cells = [...html.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => stripTags(m[1]));
-  assert.deepEqual(cells, ["2.5%", "0.5%", "—", "1.3%"]);
+function member(overrides: Partial<WorkGroupMemberRow> = {}): WorkGroupMemberRow {
+  return {
+    userId: "u-1",
+    name: "张三",
+    contentQuality: null,
+    reportCount: 3,
+    snapshotCount: 3,
+    totalPlay: 30000,
+    avgPlay: 10000,
+    followerConversionRate: 0.01,
+    interactionRate: 0.045,
+    likeRate: 0.025,
+    commentRate: 0.005,
+    shareRate: null,
+    favoriteRate: 0.0125,
+    ...overrides,
+  };
+}
+
+test("默认列：本月作品、总播放、条均播放、转粉率、互动率 + 互动达成、留存达成、良优率", () => {
+  const labels = teamMetricColumns<WorkGroupMemberRow>({ showDetail: false, withQuality: true }).map((c) => c.label);
+  assert.deepEqual(labels, ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "互动达成", "留存达成", "良优率"]);
 });
 
-test("互动明细：只有点赞率和收藏率保留排序入口", () => {
-  const fields: Array<string | null> = [];
-  renderToStaticMarkup(
-    <table>
-      <thead>
-        <tr>
-          <InteractionDetailHeads
-            renderHead={(field, label) => {
-              fields.push(field);
-              return <th>{label}</th>;
-            }}
-          />
-        </tr>
-      </thead>
-    </table>,
-  );
-  assert.deepEqual(fields, ["likeRate", null, null, "favoriteRate"]);
+test("运营小队（全队没有质量数据）不出评级列", () => {
+  const labels = teamMetricColumns<WorkGroupMemberRow>({ showDetail: true, withQuality: false }).map((c) => c.label);
+  assert.deepEqual(labels, ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "转发率", "收藏率"]);
 });
 
-test("留存明细：五项表头，数值带单位，样本内缺项显示 —", () => {
-  const html = renderToStaticMarkup(
-    <table>
-      <thead>
-        <tr>
-          <RetentionDetailHeads />
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <RetentionDetailCells contentQuality={quality} />
-        </tr>
-      </tbody>
-    </table>,
+test("展开明细：互动四项紧跟互动率，留存五项跟在评级列后；缺值显示 —", () => {
+  const columns = teamMetricColumns<WorkGroupMemberRow>({ showDetail: true, withQuality: true });
+  assert.deepEqual(
+    columns.map((c) => c.label),
+    ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "转发率", "收藏率", "互动达成", "留存达成", "良优率", "2秒跳出率", "5秒完播率", "均播时长", "播放占比", "整体完播率"],
   );
-  const headers = [...html.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => stripTags(m[1]));
-  assert.deepEqual(headers, ["2秒跳出率", "5秒完播率", "均播时长", "播放占比", "整体完播率"]);
-  const cells = [...html.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => stripTags(m[1]));
-  assert.deepEqual(cells, ["28.5%", "62%", "14s", "35.3%", "—"]);
+  const row = member({ contentQuality: quality });
+  const pick = (keys: string[]) => keys.map((key) => columns.find((c) => c.key === key)!.render(row));
+  assert.deepEqual(pick(["likeRate", "commentRate", "shareRate", "favoriteRate"]), ["2.5%", "0.5%", "—", "1.3%"]);
+  assert.deepEqual(
+    pick(["bounceRate2s", "completionRate5s", "avgPlayDuration", "avgPlayRatio", "completionRate"]),
+    ["28.5%", "62%", "14s", "35.3%", "—"],
+  );
 });
 
-test("留存明细：没有质量数据（运营或无样本）时整行 —", () => {
-  const html = renderToStaticMarkup(
-    <table>
-      <tbody>
-        <tr>
-          <RetentionDetailCells contentQuality={null} />
-        </tr>
-      </tbody>
-    </table>,
-  );
-  const cells = [...html.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => stripTags(m[1]));
-  assert.deepEqual(cells, ["—", "—", "—", "—", "—"]);
+test("小队口径：播放按快照统计，列头说明与岗位表不同", () => {
+  const columns = teamMetricColumns<WorkGroupMemberRow>({ showDetail: false, withQuality: false });
+  assert.match(String(columns.find((c) => c.key === "totalPlay")!.tip), /最新 24 小时快照/);
+  assert.match(String(columns.find((c) => c.key === "avgPlay")!.tip), /已同步数据复盘的作品数/);
 });

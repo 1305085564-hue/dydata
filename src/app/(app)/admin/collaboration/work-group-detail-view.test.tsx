@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 
 import { WorkGroupDetailView } from "./work-group-detail-view";
 import type {
@@ -12,8 +10,8 @@ import type {
 } from "@/lib/collaboration/domain/types";
 
 /**
- * 组详情改为统一绩效列（与视频复盘抽屉同源），
- * 用真实渲染出的 DOM 做可观察断言：列头、组综合首行、比率格式、空态与口径脚注。
+ * 小队详情和岗位表同一套表格：标题即本月结论，表头下一行「全队合计」，下面一行一位组员。
+ * 用真实渲染出的 DOM 做可观察断言：列头、全队合计、比率格式、键盘入口、空态。
  */
 
 const noop = () => {};
@@ -81,27 +79,26 @@ function renderDetail(detail: WorkGroupDetailViewType) {
   );
 }
 
-test("组详情列为统一绩效列：成员 + 作品数/总播放/条均/转粉率/互动率（点赞等细项在展开明细里）", () => {
-  const html = renderDetail({
-    summary: summary(),
-    members: [member("u-1", "张文案")],
-  });
-
-  assert.deepEqual(tableHeaderLabels(html), [
-    "成员",
-    "作品数",
-    "总播放",
-    "条均播放",
-    "转粉率",
-    "互动率",
-  ]);
-  // 组综合 + 1 个组员行，每行 6 个单元格与列头逐列对齐
+test("小队详情列：姓名 + 与岗位表同名的绩效列；全队合计与组员行逐列对齐", () => {
+  const html = renderDetail({ summary: summary({ kind: "talent" }), members: [member("u-1", "张达人")] });
+  assert.deepEqual(tableHeaderLabels(html), ["姓名", "本月作品", "总播放", "条均播放", "转粉率", "互动率"]);
   assert.deepEqual(bodyRowCellCounts(html), [6, 6]);
 });
 
-test("首行为组综合：底色标识、数值取自 aggregate，比率按加权合计展示", () => {
+test("标题写小队名，下面一行写工种、人数与本月篇数", () => {
+  const html = renderDetail({
+    summary: summary({ memberCount: 2, aggregate: { ...summary().aggregate, reportCount: 7 } }),
+    members: [member("u-1", "张文案"), member("u-2", "李文案")],
+  });
+  assert.match(html, /<h2[^>]*>文案一组<\/h2>/);
+  assert.ok(stripTags(html).includes("文案小队 · 2 人 · 本月 7 篇"));
+  assert.ok(html.includes("全部小队"), "有回到小队列表的入口");
+});
+
+test("表头下第一行是全队合计：数值取自小队合计，比率按合计重算", () => {
   const html = renderDetail({
     summary: summary({
+      kind: "talent",
       aggregate: {
         reportCount: 3,
         snapshotCount: 2,
@@ -115,73 +112,47 @@ test("首行为组综合：底色标识、数值取自 aggregate，比率按加�
         favoriteRate: 750 / 60000,
       },
     }),
-    members: [member("u-1", "张文案")],
+    members: [member("u-1", "张达人")],
   });
-
-  assert.ok(html.includes("组综合"), "首行是组综合");
-  assert.ok(/bg-\[#F1F1F0\]/.test(html), "组综合行有底色标识");
-  const text = stripTags(html);
-  assert.ok(text.includes("6.0万"), "总播放 60000 格式化为 6.0万");
-  assert.ok(text.includes("1.2%"), "转粉率 700/60000 ≈ 1.2%");
-  assert.ok(text.includes("4.5%"), "互动率 2700/60000 = 4.5%");
+  const table = html.slice(html.indexOf("<tbody"), html.indexOf("</tbody>"));
+  const firstRow = stripTags(table.slice(0, table.indexOf("</tr>")));
+  assert.ok(firstRow.startsWith("全队合计"), "第一行是全队合计");
+  assert.ok(firstRow.includes("6.0万") && firstRow.includes("1.2%") && firstRow.includes("4.5%"));
 });
 
-test("组员行零产出出行：数值 0、比率 —；有产出显示加权比率", () => {
+test("组员行零产出照常出行：比率 —；有产出显示加权比率", () => {
   const html = renderDetail({
-    summary: summary({ memberCount: 2 }),
+    summary: summary({ memberCount: 2, kind: "talent" }),
     members: [
-      member("u-1", "张文案", {
+      member("u-1", "张达人", {
         reportCount: 3,
         snapshotCount: 2,
         totalPlay: 60000,
         avgPlay: 30000,
         followerConversionRate: 700 / 60000,
         interactionRate: 2700 / 60000,
-        likeRate: 1500 / 60000,
-        commentRate: 300 / 60000,
-        shareRate: 150 / 60000,
-        favoriteRate: 750 / 60000,
       }),
-      member("u-2", "李文案"),
+      member("u-2", "李达人"),
     ],
   });
-
   const text = stripTags(html);
-  // 零产出组员：作品数 0、播放 0、比率 4 个 —
-  assert.ok(text.includes("李文案"), "零产出组员照常出行");
-  const idleRowStart = text.indexOf("李文案");
-  const idleRow = text.slice(idleRowStart, idleRowStart + 80);
+  assert.ok(text.includes("李达人"), "零产出组员照常出行");
+  const idleRow = text.slice(text.indexOf("李达人"), text.indexOf("李达人") + 80);
   assert.ok(idleRow.includes("—"), "零产出比率显示 —");
   assert.ok(text.includes("1.2%"), "有产出组员显示加权转粉率");
 });
 
-test("组员行带档案卡交互语义（role=button + aria-label，点击/回车进档案）", () => {
-  const html = renderDetail({
-    summary: summary(),
-    members: [member("u-1", "张文案")],
-  });
-
-  assert.ok(html.includes('role="button"'), "组员行是可交互行（Enter 也能进）");
-  assert.ok(html.includes('aria-label="查看张文案的档案卡"'), "组员行有档案卡 aria-label");
+test("组员行进档案：名字格是真按钮，整行不冒充 button，表下不压脚注", () => {
+  const html = renderDetail({ summary: summary(), members: [member("u-1", "张文案")] });
+  assert.match(html, /<button[^>]*aria-label="查看张文案的个人档案"/);
+  assert.equal(html.includes('role="button"'), false);
+  assert.equal(html.includes("与数据复盘抽屉同源"), false, "口径收进列头悬停");
 });
 
 test("空小队展示空态文案，不出表格", () => {
   const html = renderDetail({ summary: summary({ memberCount: 0 }), members: [] });
-
-  assert.ok(html.includes("该小队当前还没有成员"));
+  assert.ok(html.includes("这支小队还没有成员"));
   assert.ok(!html.includes("<table"), "没有成员时不出表格");
-});
-
-test("页面带口径脚注：播放与比率仅统计已同步数据复盘的作品", () => {
-  const html = renderDetail({
-    summary: summary(),
-    members: [member("u-1", "张文案")],
-  });
-
-  assert.ok(
-    html.includes("播放、条均与各比率与数据复盘抽屉同源"),
-    "表格下方有口径说明，避免把未同步作品读成 0 播放",
-  );
 });
 
 test("成员管理入口：canManage 且传入回调时渲染「成员管理」按钮", () => {
@@ -197,19 +168,7 @@ test("成员管理入口：canManage 且传入回调时渲染「成员管理」�
   assert.ok(html.includes("成员管理"));
 });
 
-test("源码断言：组详情不再复用岗位 Tab 行组件，防止旧列回潮", async () => {
-  const source = await readFile(
-    path.join(process.cwd(), "src/app/(app)/admin/collaboration/work-group-detail-view.tsx"),
-    "utf8",
-  );
-  assert.ok(!source.includes('from "./staff-tab"'), "不再引入文案/剪辑 Tab 行组件");
-  assert.ok(!source.includes('from "./talent-tab"'), "不再引入达人 Tab 行组件");
-  assert.ok(!source.includes('from "./operator-tab"'), "不再引入运营 Tab 行组件");
-  assert.ok(source.includes("onSelectPerson"), "保留点击进档案卡交互");
-  assert.ok(source.includes("formatRate"), "比率格式与组列表同源");
-});
-
-test("文案小队含质量数据时：增加「综合达成」列，非文案组不出综合达成", () => {
+test("文案小队含质量数据时：出互动达成、留存达成、良优率三列，标题行写良优率", () => {
   const quality = {
     totalCount: 5,
     achievementSampleCount: 4,
@@ -232,36 +191,9 @@ test("文案小队含质量数据时：增加「综合达成」列，非文案�
     summary: summary({ kind: "writer", contentQuality: quality }),
     members: [member("u-1", "张文案", { contentQuality: quality })],
   });
-
-  assert.deepEqual(tableHeaderLabels(html), [
-    "成员",
-    "作品数",
-    "总播放",
-    "条均播放",
-    "转粉率",
-    "互动率",
-    "综合达成",
-  ]);
-  // 组综合 + 1 个组员行，每行 7 个单元格
-  assert.deepEqual(bodyRowCellCounts(html), [7, 7]);
-
+  assert.deepEqual(tableHeaderLabels(html), ["姓名", "本月作品", "总播放", "条均播放", "转粉率", "互动率", "互动达成", "留存达成", "良优率"]);
+  assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
   const text = stripTags(html);
-  assert.ok(text.includes("互动 95%"));
-  assert.ok(text.includes("留存 93%"));
-  assert.ok(text.includes("优2·良2·普0"));
-
-  // 达人组详情无质量数据时不出综合达成列
-  const talentHtml = renderDetail({
-    summary: summary({ kind: "talent", contentQuality: null }),
-    members: [member("u-2", "张达人", { contentQuality: null })],
-  });
-  assert.deepEqual(tableHeaderLabels(talentHtml), [
-    "成员",
-    "作品数",
-    "总播放",
-    "条均播放",
-    "转粉率",
-    "互动率",
-  ]);
-  assert.deepEqual(bodyRowCellCounts(talentHtml), [6, 6]);
+  assert.ok(text.includes("95%") && text.includes("93%") && text.includes("80%"));
+  assert.ok(text.includes("良优率 80%"), "标题下一行写本月良优率");
 });
