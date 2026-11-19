@@ -6,6 +6,9 @@ import test from "node:test";
 import { parse } from "dotenv";
 
 import { summarizeMonthFulfillment } from "./dashboard-panel-header";
+import { getAllExemptionDates, type ExemptionGrantLike, type ExemptionProfileLike } from "./豁免";
+import { resolveDashboardFulfillmentMarks, type FulfillmentMarkRow } from "./loaders/dashboard-fulfillment-marks";
+import { getPublishedDateKey } from "./date-semantics";
 
 const { Client } = createRequire(import.meta.url)("pg");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,12 +116,52 @@ test("工作台漏交天数与发布管理履约函数逐日一致", async () =>
     const managementMissedCount = rows.filter(
       (row: { record_date: string; status: string }) => row.record_date < today && ["unconfirmed", "absent"].includes(row.status),
     ).length;
+
+    const { rows: reportRows } = await db.query(
+      `select report_date::text, published_at
+       from public.daily_reports
+       where account_id = $1 and is_void = false and report_date between $2::date and $3::date
+       order by report_date`,
+      [accountId, joinedDate, today],
+    );
+    const { rows: markRows } = await db.query(
+      `select record_date::text, status, reason
+       from public.fulfillment_records
+       where user_id = $1 and record_date between $2::date and $3::date
+       order by record_date`,
+      [memberId, joinedDate, today],
+    );
+    const { rows: grantRows } = await db.query(
+      `select user_id, start_date::text, end_date::text, grant_type, exemption_category, status, created_at
+       from public.exemption_grant
+       where user_id = $1 and status = 'active'
+       order by created_at desc`,
+      [memberId],
+    );
+    const profile: ExemptionProfileLike = {
+      id: memberId,
+      status: "active",
+      exempt_type: null,
+      exempt_start_date: null,
+      exempt_end_date: null,
+      exempt_reason: null,
+      exemption_category: null,
+    };
+    const grants = grantRows as ExemptionGrantLike[];
+    const exemptionDates = getAllExemptionDates(profile, grants);
+    const dashboardMarks = resolveDashboardFulfillmentMarks(
+      markRows as FulfillmentMarkRow[],
+      `${joinedDate}T00:00:00+08:00`,
+    );
     const dashboard = summarizeMonthFulfillment({
       today,
-      submittedDates: rows.filter((row: { status: string }) => row.status === "published").map((row: { record_date: string }) => row.record_date),
-      exemptDates: rows.filter((row: { status: string }) => ["leave", "exempted"].includes(row.status)).map((row: { record_date: string }) => row.record_date),
-      manualMarkedDates: rows.filter((row: { status: string }) => row.status === "confirmed_published").map((row: { record_date: string }) => row.record_date),
-      joinedDate,
+      submittedDates: reportRows
+        .map((row: { report_date: string; published_at: string | null }) => getPublishedDateKey(row))
+        .filter((date: string | null): date is string => Boolean(date)),
+      exemptDates: [...exemptionDates.waiveDates, ...exemptionDates.leaveDates],
+      ...dashboardMarks.monthFulfillmentBasis,
+      exemptionProfile: profile,
+      exemptionGrants: grants,
     });
     assert.deepEqual(dashboard, { submittedCount: 1, missedCount: managementMissedCount });
     assert.equal(managementMissedCount, 3);
