@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Monitor, Smartphone, X } from "lucide-react";
-import { useRef, type Dispatch, type SetStateAction } from "react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
@@ -16,6 +16,8 @@ export interface ContentDetailPreviewProps {
 export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRatios, setPreviewIndex, handleImageLoad }: ContentDetailPreviewProps) {
   const { ready: screenshotGrantReady } = useScreenshotGrant();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  // 大图解码完成前 <img> 是 0×0，只剩边框显示成一个小黑点；先给占位，加载完再换上图
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   if (previewIndex === null || !activeScreenshots[previewIndex] || !screenshotGrantReady || typeof document === "undefined") return null;
   return (
     <DialogPrimitive.Root open onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}>
@@ -96,6 +98,11 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
           className="relative flex max-h-[calc(100dvh-4.5rem)] max-w-[calc(100vw-2.5rem)] flex-col items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
+          {loadedUrl !== activeScreenshots[previewIndex].url && (
+            <div className="flex h-[240px] w-[min(80vw,380px)] items-center justify-center rounded-xl border border-white/15 bg-white/10 text-[12px] text-white/80">
+              正在加载大图…
+            </div>
+          )}
           <ScreenshotImage
             src={activeScreenshots[previewIndex].url}
             alt={activeScreenshots[previewIndex].label}
@@ -103,11 +110,12 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
             placeholderClassName="h-[240px] w-[min(80vw,380px)] rounded-xl border border-white/15 bg-white/10 text-white/80"
             onLoad={(e) => {
               const img = e.currentTarget;
+              setLoadedUrl(activeScreenshots[previewIndex].url);
               if (img.naturalWidth && img.naturalHeight) {
                 handleImageLoad(activeScreenshots[previewIndex].url, img.naturalWidth / img.naturalHeight);
               }
             }}
-            className={`rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition duration-150 ${
+            className={`${loadedUrl === activeScreenshots[previewIndex].url ? "" : "hidden"} rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition duration-150 ${
               (aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15
                 ? "max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-3.5rem)] w-auto h-auto"
                 : "max-h-[calc(100dvh-6.5rem)] max-w-[min(90vw,560px)] w-auto h-auto"

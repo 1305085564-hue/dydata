@@ -63,11 +63,14 @@ test("进组：URL 带 view=teams&groupId=，id 被转义，切月仍留在该�
   });
 });
 
-test("页面参数 → 视图：只有显式 view=teams 才进按团队", () => {
+test("页面参数 → 视图：view=teams 或只带小队编号进按团队，其余按岗位", () => {
   assert.equal(resolveCollaborationView("teams"), "teams");
   assert.equal(resolveCollaborationView(undefined), "roles");
   assert.equal(resolveCollaborationView(""), "roles");
   assert.equal(resolveCollaborationView("TEAMS"), "roles");
+  assert.equal(resolveCollaborationView(undefined, "wg-writer"), "teams");
+  assert.equal(resolveCollaborationView(undefined, "  "), "roles");
+  assert.equal(resolveCollaborationView("roles", "wg-writer"), "roles");
 });
 
 test("进组定位：按团队且命中 id 才给详情；按岗位模式与失效 id 都回列表", () => {

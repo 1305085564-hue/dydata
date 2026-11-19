@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
  * 旧做法每个提示各管各的开合，鼠标扫过一排格子时会叠出三四层浮层不消失；
  * 这里用一个页内共享的「当前打开者」，新的一打开，上一个立即关掉。
  * 浮层本身不可悬停停留（disableHoverablePopup），避免盖住相邻格子。
+ * 关闭即卸载（不播退场动画）由 TooltipContent 统一保证。
  */
 let openId: string | null = null;
 const listeners = new Set<() => void>();
@@ -55,15 +56,15 @@ export function OneTip({
         else if (openId === id) setOpenId(null);
       }}
     >
-      <TooltipTrigger render={children} />
+      <TooltipTrigger delay={100} closeDelay={0} render={children} />
       <TooltipContent
         side={side}
         align={align}
-        className={
+        className={`pointer-events-none ${
           wide
-            ? "w-[256px] max-w-[256px] flex-col items-stretch gap-2 p-3 text-left"
+            ? "w-[264px] max-w-[264px] flex-col items-stretch gap-2 p-3 text-left"
             : "max-w-xs text-left leading-relaxed"
-        }
+        }`}
       >
         {tip}
       </TooltipContent>

@@ -241,8 +241,8 @@ export function CollaborationWorkbench({
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const nextView = resolveCollaborationView(params.get("view"));
       const nextGroupId = params.get("groupId")?.trim() || null;
+      const nextView = resolveCollaborationView(params.get("view"), nextGroupId);
       const nextPersonId = params.get("personId")?.trim() || null;
       const rawTab = params.get("tab");
       setView(nextView);

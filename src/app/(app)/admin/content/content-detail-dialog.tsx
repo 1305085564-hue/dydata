@@ -59,6 +59,8 @@ export interface ContentDetailDialogProps {
   onSelectAuthor?: (authorId: string, authorName: string) => void;
   /** 列表或协作入口已经计算好的统一内容质量结果。缺失时不显示综合评级。 */
   contentQuality?: WorkContentQuality | null;
+  /** 已切到下一条、详情还在路上：正文仍是上一条，变淡并提示正在载入，免得误以为没切过去。 */
+  switching?: boolean;
 }
 
 import { useContentVideoStepShortcut } from "./content-video-navigation";
@@ -90,6 +92,7 @@ export function ContentDetailDialog({
   ownerNames,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   contentQuality = null,
+  switching = false,
 }: ContentDetailDialogProps) {
   const {
     isOperating,
@@ -290,7 +293,7 @@ export function ContentDetailDialog({
                 </button>
               </SimpleTooltip>
               <span className="px-1 text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap">
-                {displayCurrent} / {displayTotal}
+                {switching ? "载入中…" : `${displayCurrent} / ${displayTotal}`}
               </span>
               <SimpleTooltip side="bottom" tip={isLast ? "已是最后一条" : "下一条（J 或 ↓）"}>
                 <button type="button" onClick={() => onStepVideo("next")} disabled={!hasNext} aria-label="下一条" className={iconButton}>
@@ -365,7 +368,7 @@ export function ContentDetailDialog({
       )}
 
       {/* 正文：结论 → 四个核心数 → 截图 → 全部指标 → 文案 → 选题库 */}
-      <SheetBody className="px-4 pt-3 sm:px-6 space-y-5 overflow-y-auto max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
+      <SheetBody aria-busy={switching || undefined} className="px-4 pt-3 sm:px-6 space-y-5 overflow-y-auto transition-opacity duration-150 aria-busy:opacity-50 max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
         {video ? (
           <>
             <ContentDetailNotices video={video} canPurge={canPurge} isPurgeEligible={isPurgeEligible} />

@@ -12,7 +12,7 @@ import { SelfMemberBadge } from "./member-self-hint";
  * 协作管理所有表格共用的骨架（四张岗位表、小队列表、小队详情）：一行一个对象，点一行只有一个去处。
  * - 姓名格下方一行灰字放名下/经手账号，不再单独占列；
  * - 说明收进列头悬停，表下不压脚注；
- * - 当前排序列用定名墨，其余正文墨——焦点跟着排序走；
+ * - 当前排序列用定名墨并铺浅底，其余正文墨——焦点跟着排序走；
  * - 窄屏（< sm）改成每人一行的列表，不横向拖动。
  */
 export interface RoleColumn<R> {
@@ -53,6 +53,8 @@ export interface RoleTableProps<R> {
 }
 
 const NAME_COL_WIDTH = 200;
+/** 当前排序列整列铺一层浅底：全站只有一档字重，仅靠墨度差肉眼扫不出哪列在排序。 */
+const SORTED_COL_BG = "bg-[#F7F7F6]/70";
 
 export function RoleTable<R>({
   rows,
@@ -123,7 +125,7 @@ export function RoleTable<R>({
                 <TableHead
                   key={c.key}
                   aria-sort={sortKey === c.key ? (sortOrder === "desc" ? "descending" : "ascending") : undefined}
-                  className={c.align === "left" ? "text-left" : "text-right"}
+                  className={`${c.align === "left" ? "text-left" : "text-right"} ${sortKey === c.key ? SORTED_COL_BG : ""}`}
                 >
                   <ColumnHead
                     column={c}
@@ -142,7 +144,7 @@ export function RoleTable<R>({
                   <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
                 </TableCell>
                 {columns.map((c) => (
-                  <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums text-[#141413]`}>
+                  <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums text-[#141413] ${sortKey === c.key ? SORTED_COL_BG : ""}`}>
                     {c.render(summary.row)}
                   </TableCell>
                 ))}
@@ -181,7 +183,7 @@ export function RoleTable<R>({
                       key={c.key}
                       className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${
                         zero ? "text-[#A8A29E]" : sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]"
-                      }`}
+                      } ${sortKey === c.key ? SORTED_COL_BG : ""}`}
                     >
                       {c.render(row)}
                     </TableCell>

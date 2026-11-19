@@ -78,7 +78,7 @@ export function InteractionBreakdownContent({
                   <span className="text-[#141413]">
                     {count == null ? "—" : count.toLocaleString("zh-CN")}
                   </span>
-                  <span className="w-[48px] text-right text-[#78716C]">{pct}</span>
+                  <span className="min-w-[48px] whitespace-nowrap text-right text-[#78716C]">{pct}</span>
                 </span>
               </div>
             );
@@ -156,7 +156,7 @@ export function RetentionBreakdownContent({
                 </span>
                 <span className="inline-flex items-center gap-2 shrink-0">
                   <span className="text-[#141413]">{item.actualText}</span>
-                  <span className={`w-[58px] text-right ${achColor}`}>{achText}</span>
+                  <span className={`min-w-[58px] whitespace-nowrap text-right ${achColor}`}>{achText}</span>
                 </span>
               </div>
             );

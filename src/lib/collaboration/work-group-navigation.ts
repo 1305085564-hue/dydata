@@ -15,8 +15,14 @@ export type CollaborationAdminView = "roles" | "teams";
 export type CollaborationTabKey = "talents" | "operators" | "writers" | "editors";
 
 /** 页面参数 → 视图：只有显式 `view=teams` 才进按团队，其他一律按岗位。 */
-export function resolveCollaborationView(value: string | null | undefined): CollaborationAdminView {
-  return value === "teams" ? "teams" : "roles";
+/** 只带 groupId 不带 view 的链接也直接进小队：小队编号本身就说明要看小队。 */
+export function resolveCollaborationView(
+  value: string | null | undefined,
+  groupId?: string | null,
+): CollaborationAdminView {
+  if (value === "teams") return "teams";
+  if (value === "roles") return "roles";
+  return groupId?.trim() ? "teams" : "roles";
 }
 
 /**

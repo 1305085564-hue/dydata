@@ -49,8 +49,8 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   const tab = ["talents", "operators", "writers", "editors"].includes(params.tab ?? "")
     ? (params.tab as "talents" | "operators" | "writers" | "editors")
     : "talents";
-  const view = resolveCollaborationView(params.view);
   const groupId = typeof params.groupId === "string" && params.groupId.trim() ? params.groupId.trim() : undefined;
+  const view = resolveCollaborationView(params.view, groupId);
   const personId = typeof params.personId === "string" && params.personId.trim() ? params.personId.trim() : undefined;
 
   return (
