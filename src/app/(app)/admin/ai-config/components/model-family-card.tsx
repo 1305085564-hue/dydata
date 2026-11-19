@@ -22,6 +22,8 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { cn } from "@/lib/utils";
+import { ROW_SELECTED } from "@/components/ui/selection";
+import { MODEL_CARD_ATTR } from "../ai-config-view";
 
 // 渠道行顺序只认真实顺位：身份（待复测/休眠等）变化不改标记，不触发重排
 export function channelOrderResetKey(channels: readonly AvailabilityChannel[]): string {
@@ -47,6 +49,10 @@ export function findMoveTarget(
 
 export interface ModelFamilyCardProps {
   family: AvailabilityModelFamily;
+  /** 「在给 截图识别、文案生成 用」；没有功能在用时为空 */
+  usageText?: string | null;
+  /** 被功能表「去修 →」定位过来：展开渠道并用选中色标出 */
+  focused?: boolean;
   diagnosticMap?: Record<string, ChannelFailureDiagnostic>;
   onToggleSupply?: (keyModelId: string, enabled: boolean) => Promise<void>;
   onToggleModelEnabled?: (modelId: string, enabled: boolean) => Promise<void>;
@@ -67,6 +73,8 @@ export interface ModelFamilyCardProps {
 
 export function ModelFamilyCard({
   family,
+  usageText = null,
+  focused = false,
   diagnosticMap = {},
   onToggleSupply = async () => {},
   onToggleModelEnabled = async () => {},
@@ -83,7 +91,7 @@ export function ModelFamilyCard({
   const [isTogglingModel, setIsTogglingModel] = useState(false);
   const [channelsExpanded, setChannelsExpanded] = useState(false);
 
-  const isChannelsVisible = family.isShelved || channelsExpanded;
+  const isChannelsVisible = family.isShelved || channelsExpanded || focused;
 
   const channels = useMemo(() => family.channels ?? [], [family.channels]);
 
@@ -127,6 +135,7 @@ export function ModelFamilyCard({
   const isSingleSupply = schedulableCount === 1 && activeCount > 0;
   const isNoSupply = schedulableCount === 0;
   const isRetestOnly = isNoSupply === false && activeCount === 0 && retestCount > 0;
+  const needsMoreChannels = family.isShelved && (isNoSupply || isSingleSupply);
 
   // 查找交换对象仍按真实顺位，不用展示快照位置推断相邻关系
   const sortedChannels = useMemo(() => {
@@ -170,8 +179,9 @@ export function ModelFamilyCard({
 
   return (
     <div
+      {...{ [MODEL_CARD_ATTR]: family.modelId }}
       className={cn(
-        "transition-colors",
+        "scroll-mt-[calc(var(--app-top-offset)+64px)] transition-colors",
         !family.isShelved
           ? "bg-[#F7F7F6]/40 opacity-80"
           : isNoSupply
@@ -182,7 +192,10 @@ export function ModelFamilyCard({
       {/* 头部：模型名称、S5 汇总与停用/找渠道操作 */}
       <div
         data-slot="ai-model-header"
-        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-[#FCFCFB]"
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-2 px-4 py-2",
+          focused ? ROW_SELECTED : "bg-[#FCFCFB]",
+        )}
       >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
           {!family.isShelved && (
@@ -271,6 +284,8 @@ export function ModelFamilyCard({
             {retestCount > 0 && <span className="text-[#8A6A2F]">，{retestCount} 条待复测</span>}
           </span>
 
+          {usageText && <span className="text-[12px] text-[#78716C]">· {usageText}</span>}
+
           {/* 恰好 1 条能用时的单点建议 */}
           {isSingleSupply && (
             <span className="text-[12px] text-[#8A6A2F]">
@@ -293,44 +308,56 @@ export function ModelFamilyCard({
           )}
         </div>
 
-        {/* 头部右侧操作 */}
-        <div className="flex items-center gap-2">
-          {/* N2: 为此模型找渠道 */}
-          <Button
-            size="s"
-            variant="outline"
-            onClick={() => setShowFindChannels(!showFindChannels)}
-            className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
-          >
-            <Plus className="size-3" />
-            <span>为此模型找渠道</span>
-          </Button>
+        {/* 头部右侧操作：缺渠道时「为此模型找渠道」是答案，用带字按钮；平时收成图标，不让每张卡都摆两个按钮 */}
+        <div className="flex items-center gap-1">
+          {needsMoreChannels ? (
+            <Button
+              size="s"
+              variant="outline"
+              onClick={() => setShowFindChannels(!showFindChannels)}
+              className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+            >
+              <Plus className="size-3" />
+              <span>为此模型找渠道</span>
+            </Button>
+          ) : (
+            <Button
+              size="icon-s"
+              variant="ghost"
+              onClick={() => setShowFindChannels(!showFindChannels)}
+              className="size-7 text-[#78716C] hover:text-[#141413]"
+              title="为此模型找渠道"
+              aria-label="为此模型找渠道"
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          )}
 
-          {/* N4: 停用模型 / 恢复模型 */}
-          <Button
-            size="s"
-            variant="ghost"
-            disabled={isTogglingModel}
-            onClick={handleToggleModel}
-            className={cn(
-              "h-7 gap-1 text-[12px]",
-              isModelEnabled
-                ? "text-[#78716C] hover:text-status-danger"
-                : "text-[#4B6B4E] hover:bg-[#4B6B4E]/10"
-            )}
-          >
-            {isModelEnabled ? (
-              <>
-                <PowerOff className="size-3" />
-                <span>停用模型</span>
-              </>
-            ) : (
-              <>
-                <Power className="size-3" />
-                <span>恢复模型</span>
-              </>
-            )}
-          </Button>
+          {/* N4: 停用模型 / 恢复模型；停用是低频动作收成图标，恢复是停用模型的答案保留文字 */}
+          {isModelEnabled ? (
+            <Button
+              size="icon-s"
+              variant="ghost"
+              disabled={isTogglingModel}
+              onClick={handleToggleModel}
+              className="size-7 text-[#78716C] hover:text-status-danger"
+              title="停用模型"
+              aria-label="停用模型"
+            >
+              <PowerOff className="size-3.5" />
+            </Button>
+          ) : (
+            <Button
+              size="s"
+              variant="ghost"
+              disabled={isTogglingModel}
+              onClick={handleToggleModel}
+              className="h-7 gap-1 text-[12px] text-[#4B6B4E] hover:bg-[#4B6B4E]/10"
+            >
+              <Power className="size-3" />
+              <span>恢复模型</span>
+            </Button>
+          )}
         </div>
       </div>
 

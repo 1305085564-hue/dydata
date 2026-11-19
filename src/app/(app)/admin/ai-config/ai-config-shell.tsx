@@ -1,8 +1,9 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { useAiConfig } from "./hooks/use-ai-config";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
-import { ComputePoolPanel } from "./components/compute-pool-panel";
+import { ComputePoolPanel, type ModelFocusRequest } from "./components/compute-pool-panel";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { usePublishPageHeadline } from "@/components/editorial/page-headline";
@@ -11,6 +12,12 @@ import { buildAiConfigHeadline } from "./ai-config-headline";
 export function AIConfigShell() {
   const { bundle, isLoading, error, loadData } = useAiConfig();
   usePublishPageHeadline("ai-config", buildAiConfigHeadline(bundle?.availability?.businessSummary));
+
+  // 功能表「去修 →」交给下方模型列表：滚到那个模型、展开、选中。seq 让同一个模型能被反复点到。
+  const [focusRequest, setFocusRequest] = useState<ModelFocusRequest | null>(null);
+  const handleRepairModel = useCallback((modelId: string) => {
+    setFocusRequest((prev) => ({ modelId, seq: (prev?.seq ?? 0) + 1 }));
+  }, []);
 
   if (error && !bundle) {
     return (
@@ -25,22 +32,28 @@ export function AIConfigShell() {
   }
 
   if (isLoading || !bundle) {
+    // 占位块按真实结构排：区块标题 → 功能表 → 区块标题 → 工具栏 → 模型列表，数据到了不整页跳
     return (
-      <div className="space-y-5 py-6">
-        <div className="h-14 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
-        <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
-        <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
+      <div className="w-full space-y-5" aria-busy="true">
+        <div className="space-y-3">
+          <div className="h-7 w-40 rounded-md bg-[#F1F1F0] animate-pulse" />
+          <div className="h-72 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
+        </div>
+        <div className="space-y-3">
+          <div className="h-7 w-48 rounded-md bg-[#F1F1F0] animate-pulse" />
+          <div className="h-12 rounded-md bg-[#F7F7F6] animate-pulse" />
+          <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full space-y-5">
-      {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
-            业务功能调度
+            功能用哪个模型
           </h2>
           <Button
             variant="ghost"
@@ -54,18 +67,17 @@ export function AIConfigShell() {
           </Button>
         </div>
 
-        <BusinessFunctionsPanel />
+        <BusinessFunctionsPanel onRepairModel={handleRepairModel} />
       </section>
 
-      {/* 算力储备与渠道底座 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="font-normal font-serif text-[20px] text-[#141413] tracking-tight">
-            算力储备与渠道底座
+            模型从哪些渠道来
           </h2>
         </div>
 
-        <ComputePoolPanel />
+        <ComputePoolPanel focusRequest={focusRequest} />
       </section>
     </div>
   );

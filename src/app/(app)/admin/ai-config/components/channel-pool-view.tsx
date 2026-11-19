@@ -26,6 +26,7 @@ import type { AvailabilityChannel, AvailabilityKeySummary } from "@/lib/ai-confi
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { cn } from "@/lib/utils";
+import { rowSelectionClass } from "@/components/ui/selection";
 
 export interface ChannelPoolViewProps {
   onOpenSyncModal: (keyId: string, label: string) => void;
@@ -367,9 +368,9 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
                 }}
                 className={cn(
                   "flex items-center justify-between rounded-md px-2 py-2 text-left transition-colors cursor-pointer select-none",
-                  isSelected
-                    ? "bg-[#F1F1F0] border border-[#78716C]/40"
-                    : "border border-transparent hover:bg-[#F7F7F6]"
+                  // 选中统一 Row Selected（《美学宝典》§3.9），不用浅砂加描边冒充
+                  "border border-transparent",
+                  rowSelectionClass(isSelected)
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
