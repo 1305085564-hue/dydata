@@ -481,7 +481,7 @@ export function StaffTab({ rows, role, isLoading, currentUserId = null, isMember
             illustration={role === "writer" ? <DeskStudyIllustration size={96} /> : <CompassConstellationIllustration size={96} />}
             title={`本月暂无${roleLabel}岗位记录`}
             description={role === "writer"
-              ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常结算文案绩效。"
+              ? "当前暂无文案成员记录。管理员可在本表对成员进行认证，认证后将正常计入文案结算。"
               : "剪辑岗位仅统计跨账号协同剪辑的作品。"}
           />
         </div>
