@@ -10,6 +10,7 @@ import {
   overallBreakoutGrade,
   type RatingRule,
 } from "./breakout-rating";
+import { PLAY_BUCKETS } from "../app/(app)/admin/content/content-list-filters";
 
 const migrationsDir = join(process.cwd(), "supabase/migrations");
 const migrationFiles = readdirSync(migrationsDir)
@@ -37,7 +38,7 @@ function dbRankToGrade(rank: number | null): string | null {
 }
 
 async function assertGridMatches(db: PGlite, rule: RatingRule) {
-  const playCounts: Array<number | null> = [null, 0, 1, 1999, 2000, 4999, 5000, 14999, 15000, 100000];
+  const playCounts: Array<number | null> = [null, -1, 0, 1, 1999, 2000, 4999, 5000, 14999, 15000, 100000];
   const achievements: Array<number | null> = [null, 0, 59.99, 60, 79.99, 80, 99.99, 100, 250];
   for (const playCount of playCounts) {
     for (const interaction of achievements) {
@@ -74,21 +75,23 @@ test("数据库评级函数与应用默认规则逐格一致", async () => {
 
 test("数据库评级函数读取自定义规则，不使用兜底门槛", async () => {
   const migration = latestMigrationContaining("content_overall_grade_rank");
-  const db = new PGlite("memory://");
-  const rule: RatingRule = {
-    playFloor: 3000,
-    playGood: 8000,
-    playExcellent: 20000,
-    excellent: 110,
-    good: 85,
-    fair: 65,
-    maxPull: 1,
-  };
-  try {
-    await db.exec(extractGradeFunction(migration.source));
-    await assertGridMatches(db, rule);
-  } finally {
-    await db.close();
+  for (const maxPull of [0, 1, 2]) {
+    const db = new PGlite("memory://");
+    const rule: RatingRule = {
+      playFloor: 3000,
+      playGood: 8000,
+      playExcellent: 20000,
+      excellent: 110,
+      good: 85,
+      fair: 65,
+      maxPull,
+    };
+    try {
+      await db.exec(extractGradeFunction(migration.source));
+      await assertGridMatches(db, rule);
+    } finally {
+      await db.close();
+    }
   }
 });
 
@@ -102,10 +105,16 @@ test("最新列表迁移只调用评级函数，其他播放分档仍与应用�
   assert.ok(ratings, "迁移文件写法变了，找不到 ratings 段");
   assert.doesNotMatch(ratings, /\b(?:2000|5000|15000)\b/, "ratings 段仍写死评级门槛");
 
-  const filters = readFileSync(join(process.cwd(), "src/app/(app)/admin/content/content-list-filters.ts"), "utf8");
-  for (const [min, max] of [[0, 2000], [2000, 5000], [5000, 20000], [20000, 50000], [50000, null] as const]) {
-    assert.match(filters, new RegExp(`min: ${min}, max: ${max === null ? "null" : max}`), `应用播放分档缺少 ${min}-${max ?? "∞"}`);
-    assert.match(migration.source, new RegExp(`>= ${min === 0 ? 0 : min}|< ${max ?? "\\d+"}`), `数据库播放分档缺少 ${min}-${max ?? "∞"}`);
+  const playBucketCase = migration.source.match(/case cfg\.filters->>'playBucket'([\s\S]*?)\n\s*else true/);
+  assert.ok(playBucketCase, "迁移文件写法变了，找不到播放分档 case");
+  for (const bucket of PLAY_BUCKETS) {
+    const lower = `when '${bucket.key}' then d.play_count >= ${bucket.min}`;
+    const upper = bucket.max === null ? "" : ` and d.play_count < ${bucket.max}`;
+    assert.equal(
+      (playBucketCase[1].match(new RegExp(`${lower}${upper.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g")) ?? []).length,
+      1,
+      `数据库播放分档 ${bucket.key} 没有逐格复现应用的 ${bucket.min}-${bucket.max ?? "∞"} 区间`,
+    );
   }
   const loader = readFileSync(join(process.cwd(), "src/lib/loaders/admin-content-page.ts"), "utf8");
   assert.match(loader, /const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000/);

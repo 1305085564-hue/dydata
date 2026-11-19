@@ -179,7 +179,8 @@ export function overallBreakoutGrade(
   if (playCount === null || playCount === undefined || !Number.isFinite(playCount)) {
     return null;
   }
-  if (playCount <= 0) return null;
+  if (playCount < 0) return items[0] && items[1] ? "普" : null;
+  if (playCount === 0) return null;
   if (playCount < rule.playFloor) return "普";
   const [interaction, retention] = items;
   if (!interaction || !retention) return null;
@@ -190,7 +191,7 @@ export function overallBreakoutGrade(
   const weakAchievement = Math.min(interaction.achievement, retention.achievement);
   const weakGradeIndex = weakAchievement < rule.fair
     ? -1
-    : weakAchievement < rule.good ? 0 : 1;
+    : weakAchievement < rule.good ? 0 : weakAchievement < rule.excellent ? 1 : 2;
   const pullCapGrade: BreakoutGrade = GRADE_ORDER[Math.max(
     0,
     Math.min(weakGradeIndex + rule.maxPull, GRADE_ORDER.length - 1),
