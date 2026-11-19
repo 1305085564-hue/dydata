@@ -14,22 +14,32 @@ function readSource(path: string) {
   return readFileSync(resolve(process.cwd(), path), "utf8");
 }
 
+function formatThreshold(value: number) {
+  if (value >= 10_000) return `${value / 10_000} 万`;
+  if (value >= 1_000) return `${value / 1_000} 千`;
+  return value.toLocaleString("zh-CN");
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("评级说明文案中的播放线与应用常量一致", () => {
   const contentDetail = readSource(
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
   );
-  assert.equal(KPI_PLAY_EXCELLENT, 15_000, "优线常量不是 1.5 万，请同步评级规则");
-  assert.equal(KPI_PLAY_GOOD, 5_000, "良线常量不是 5 千，请同步评级规则");
-  assert.equal(KPI_PLAY_FLOOR, 2_000, "起评线常量不是 2 千，请同步评级规则");
-  assert.match(contentDetail, /1\.5 万/, "页面缺少 1.5 万线说明，请同步 content-detail-metrics.tsx");
-  assert.match(contentDetail, /5 千/, "页面缺少 5 千线说明，请同步 content-detail-metrics.tsx");
-  assert.match(contentDetail, /2 千/, "页面缺少 2 千线说明，请同步 content-detail-metrics.tsx");
+  const excellent = `${formatThreshold(KPI_PLAY_EXCELLENT)}线`;
+  const good = `${formatThreshold(KPI_PLAY_GOOD)}线`;
+  const floor = `不足 ${formatThreshold(KPI_PLAY_FLOOR)}`;
+  assert.match(contentDetail, new RegExp(escapeRegExp(excellent)), `页面缺少 ${excellent} 说明，请同步 content-detail-metrics.tsx 的 getPlayThresholdLabel`);
+  assert.match(contentDetail, new RegExp(escapeRegExp(good)), `页面缺少 ${good} 说明，请同步 content-detail-metrics.tsx 的 getPlayThresholdLabel`);
+  assert.match(contentDetail, new RegExp(escapeRegExp(floor)), `页面缺少 ${floor} 说明，请同步 content-detail-metrics.tsx 的 getPlayThresholdLabel`);
 });
 
 test("选题库的 3 万说明与自动收录门槛一致", () => {
   const filters = readSource("src/components/topics-v2/TopicMoreFiltersDrawer.tsx");
   const emptyState = readSource("src/components/topics-v2/pool/PoolEmptyState.tsx");
-  assert.equal(CALIBER.hitMinPlay, 30_000, "选题收录门槛常量不是 3 万，请同步规则");
-  assert.match(filters, /3 万/, "更多筛选缺少 3 万说明，请同步 TopicMoreFiltersDrawer.tsx");
-  assert.match(emptyState, /3 万/, "选题库空态缺少 3 万说明，请同步 PoolEmptyState.tsx");
+  const label = formatThreshold(CALIBER.hitMinPlay);
+  assert.match(filters, new RegExp(escapeRegExp(label)), `更多筛选缺少 ${label} 说明，请同步 TopicMoreFiltersDrawer.tsx`);
+  assert.match(emptyState, new RegExp(escapeRegExp(label)), `选题库空态缺少 ${label} 说明，请同步 PoolEmptyState.tsx`);
 });
