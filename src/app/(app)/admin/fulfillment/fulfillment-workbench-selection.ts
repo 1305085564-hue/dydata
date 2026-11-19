@@ -2,14 +2,14 @@
 
 import { useCallback } from "react";
 import type { FulfillmentMemberSummary } from "@/types/fulfillment";
-import type { StatsFilterMode } from "./components/fulfillment-stats-overview";
+import type { RosterSegment } from "./fulfillment-page-view";
 
 interface FulfillmentWorkbenchSelectionProps {
   exceptionMembers: FulfillmentMemberSummary[];
   today: string;
   setSelectedTeam: (team: string | null) => void;
   setSelectedIds: (value: Set<string> | ((previous: Set<string>) => Set<string>)) => void;
-  setStatsFilterMode: (mode: StatsFilterMode) => void;
+  setSegment: (segment: RosterSegment) => void;
   setSelectedMember: (member: FulfillmentMemberSummary) => void;
   setSelectedDate: (date: string) => void;
   setSource: (source: "queue" | "matrix") => void;
@@ -23,7 +23,7 @@ export function useFulfillmentWorkbenchSelection({
   today,
   setSelectedTeam,
   setSelectedIds,
-  setStatsFilterMode,
+  setSegment,
   setSelectedMember,
   setSelectedDate,
   setSource,
@@ -36,11 +36,10 @@ export function useFulfillmentWorkbenchSelection({
     setSelectedIds(new Set());
   }, [setSelectedIds, setSelectedTeam]);
 
-  // 指标筛选切换会改变队列可见集合，必须同步清空已选，避免批量操作命中隐藏成员
-  const handleStatsFilterChange = useCallback((mode: StatsFilterMode) => {
-    setStatsFilterMode(mode);
-    setSelectedIds(new Set());
-  }, [setSelectedIds, setStatsFilterMode]);
+  // 分段只收窄大表；今天待处理名单不跟着变，已选不必清空
+  const handleSegmentChange = useCallback((next: RosterSegment) => {
+    setSegment(next);
+  }, [setSegment]);
 
   const handleSelectToggle = useCallback((userId: string) => {
     setSelectedIds((prev) => {
@@ -112,7 +111,7 @@ export function useFulfillmentWorkbenchSelection({
 
   return {
     handleTeamChange,
-    handleStatsFilterChange,
+    handleSegmentChange,
     handleSelectToggle,
     handleSelectAll,
     handleQueueMemberClick,

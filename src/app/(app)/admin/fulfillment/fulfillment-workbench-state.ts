@@ -6,9 +6,15 @@ import type {
   FulfillmentAppeal,
   FulfillmentCalendarData,
   FulfillmentMemberSummary,
-  TimeRangePreset,
 } from "@/types/fulfillment";
-import type { StatsFilterMode } from "./components/fulfillment-stats-overview";
+import {
+  collectPendingLeaves,
+  countRosterSegments,
+  filterRosterSegment,
+  sortRoster,
+  type RosterSegment,
+  type RosterSortDir,
+} from "./fulfillment-page-view";
 import { useFulfillmentWorkbenchSelection } from "./fulfillment-workbench-selection";
 import {
   calcStats,
@@ -29,7 +35,6 @@ type Source = "queue" | "matrix";
 
 export interface FulfillmentWorkbenchStateProps {
   initialData: FulfillmentCalendarData;
-  initialRange: TimeRangePreset;
   currentUserId?: string;
   canManageSystem: boolean;
   canManage: boolean;
@@ -37,7 +42,6 @@ export interface FulfillmentWorkbenchStateProps {
 
 export function useFulfillmentWorkbenchState({
   initialData,
-  initialRange,
   currentUserId,
   canManageSystem,
   canManage,
@@ -55,10 +59,9 @@ export function useFulfillmentWorkbenchState({
     return initialData.members.find((m) => m.teamName)?.teamName ?? null;
   }, [currentUserId, initialData.members]);
 
-  // 1. 核心状态：日历数据与范围
+  // 1. 核心状态：整月日历数据（页面始终看整月，翻月在页头）
   const [calendarData, setCalendarData] =
     useState<FulfillmentCalendarData>(initialData);
-  const [range, setRange] = useState<TimeRangePreset>(initialRange);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
   // 2. 飞书自动催交总开关状态 (null 表示无权限配置/非系统管理员)
@@ -73,7 +76,8 @@ export function useFulfillmentWorkbenchState({
   // 4. 选择与抽屉状态
   const [selectedTeam, setSelectedTeam] = useState<string | null>(defaultTeam);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [statsFilterMode, setStatsFilterMode] = useState<StatsFilterMode>("all");
+  const [segment, setSegment] = useState<RosterSegment>("all");
+  const [sortDir, setSortDir] = useState<RosterSortDir>("asc");
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedMember, setSelectedMember] =
@@ -124,11 +128,7 @@ export function useFulfillmentWorkbenchState({
 
   // 8. 客户端无感日历加载器
   const loadCalendar = useCallback(
-    async (
-      targetYear: number,
-      targetMonth: number,
-      targetRange: TimeRangePreset,
-    ) => {
+    async (targetYear: number, targetMonth: number) => {
       setIsLoadingCalendar(true);
       try {
         const res = await fetch(
@@ -142,7 +142,8 @@ export function useFulfillmentWorkbenchState({
         const url = new URL(window.location.href);
         url.searchParams.set("year", String(targetYear));
         url.searchParams.set("month", String(targetMonth));
-        url.searchParams.set("range", targetRange);
+        url.searchParams.delete("range");
+        url.searchParams.delete("view");
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
         toast.error("发布日历没能加载出来，重试一下");
@@ -187,45 +188,30 @@ export function useFulfillmentWorkbenchState({
     };
   }, [refreshVisibleCalendar]);
 
-  // 9. 客户端过滤与统计
+  // 9. 客户端过滤与统计：团队收窄 → 统计与分段计数；分段只收窄大表，不改页头数字
   const filteredMembers = useMemo(
-    () => filterMembers(calendarData.members, selectedTeam, range, today),
-    [calendarData.members, selectedTeam, range, today],
+    () => filterMembers(calendarData.members, selectedTeam),
+    [calendarData.members, selectedTeam],
   );
 
-  // 有待审事项的判定：今日有待审请假或待审申诉（与 StatsBar 待审人数同口径）
-  const isPendingActionable = useCallback(
-    (m: FulfillmentMemberSummary) => {
-      const hasPendingAppeal = (appeals || []).some(
-        (a) => a.status === "pending" && a.user_id === m.userId,
-      );
-      return hasPendingAppeal || Boolean(m.days[today]?.pendingExemption);
-    },
-    [appeals, today],
+  const segmentCounts = useMemo(() => countRosterSegments(filteredMembers), [filteredMembers]);
+
+  const rosterMembers = useMemo(
+    () => sortRoster(filterRosterSegment(filteredMembers, segment), segment, sortDir),
+    [filteredMembers, segment, sortDir],
   );
 
-  const exceptionMembers = useMemo(() => {
-    // 异常队列：待处理 unconfirmed 成员
-    let exceptions = filteredMembers.filter(
-      (m) => m.days[today]?.status === "unconfirmed",
-    );
-    if (statsFilterMode === "missing") {
-      exceptions = exceptions.filter((m) => m.consecutiveMissing > 0);
-    } else if (statsFilterMode === "pending") {
-      exceptions = exceptions.filter(isPendingActionable);
-    }
-
-    return sortExceptions(exceptions, today);
-  }, [filteredMembers, today, statsFilterMode, isPendingActionable]);
-
-  // 与 pending 筛选同口径的待审人数：今日未确认且有待审申诉或待审请假
-  const pendingActionableCount = useMemo(
+  // 今天待处理：今天还没发、也没人标记过的成员
+  const exceptionMembers = useMemo(
     () =>
-      filteredMembers.filter(
-        (m) => m.days[today]?.status === "unconfirmed" && isPendingActionable(m),
-      ).length,
-    [filteredMembers, today, isPendingActionable],
+      sortExceptions(
+        filteredMembers.filter((m) => m.days[today]?.status === "unconfirmed"),
+        today,
+      ),
+    [filteredMembers, today],
   );
+
+  const pendingLeaves = useMemo(() => collectPendingLeaves(filteredMembers), [filteredMembers]);
 
   const stats = useMemo(
     () => calcStats(filteredMembers, today),
@@ -237,7 +223,7 @@ export function useFulfillmentWorkbenchState({
     today,
     setSelectedTeam,
     setSelectedIds,
-    setStatsFilterMode,
+    setSegment,
     setSelectedMember,
     setSelectedDate,
     setSource,
@@ -250,8 +236,6 @@ export function useFulfillmentWorkbenchState({
     today,
     calendarData,
     setCalendarData,
-    range,
-    setRange,
     isLoadingCalendar,
     setIsLoadingCalendar,
     feishuEnabled,
@@ -267,8 +251,10 @@ export function useFulfillmentWorkbenchState({
     selectedTeam,
     selectedIds,
     setSelectedIds,
-    statsFilterMode,
-    setStatsFilterMode,
+    segment,
+    segmentCounts,
+    sortDir,
+    setSortDir,
     sheetOpen,
     setSheetOpen,
     selectedMember,
@@ -283,8 +269,9 @@ export function useFulfillmentWorkbenchState({
     loadCalendar,
     refreshVisibleCalendar,
     filteredMembers,
+    rosterMembers,
     exceptionMembers,
-    pendingActionableCount,
+    pendingLeaves,
     stats,
     ...selection,
   };

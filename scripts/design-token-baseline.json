@@ -33,7 +33,6 @@
       "src/app/(app)/admin/ai-config/components/model-manager-dialog.tsx": 2,
       "src/app/(app)/dashboard/components/monthly-fulfillment-strip.tsx": 2,
       "src/app/(app)/admin/ai-config/components/business-functions-panel.tsx": 9,
-      "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx": 1,
       "src/app/(app)/admin/ai-config/components/channel-pool-view.tsx": 4,
       "src/app/(app)/admin/ai-config/components/model-family-card.tsx": 3,
       "src/app/(app)/admin/ai-config/components/add-key-dialog.tsx": 6,

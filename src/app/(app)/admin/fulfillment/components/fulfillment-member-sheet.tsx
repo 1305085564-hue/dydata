@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
@@ -17,9 +16,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +33,8 @@ import {
   isManualFulfillmentMarkStatus,
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
+import { cn } from "@/lib/utils";
+import { formatMonthDay, isMissingStreak } from "../fulfillment-page-view";
 
 type Source = "queue" | "matrix";
 
@@ -52,45 +51,36 @@ interface FulfillmentMemberSheetProps {
   readOnly?: boolean;
 }
 
-interface ActionConfig {
-  label: string;
-  variant: "default" | "outline" | "destructive";
-  colorClass?: string;
-}
+const ACTION_LABELS: Record<MarkAction, string> = {
+  confirmed_published: "标为已发",
+  leave: "标为请假",
+  waived: "标为豁免",
+  absent: "标为缺勤",
+};
+const ACTION_ORDER: MarkAction[] = ["confirmed_published", "leave", "waived", "absent"];
 
-const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
-  leave: {
-    label: "标记请假",
-    variant: "outline",
-    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[14px] font-normal",
-  },
-  waived: {
-    label: "标记豁免",
-    variant: "outline",
-    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[14px] font-normal",
-  },
-  absent: {
-    label: "确认缺勤",
-    variant: "destructive",
-    colorClass: "rounded-xl text-[14px] text-status-danger bg-status-danger/[0.08] hover:bg-status-danger/15 border border-status-danger/20 font-normal",
-  },
-  confirmed_published: {
-    label: "确认已发",
-    variant: "default",
-    colorClass: "rounded-xl text-[14px] font-normal",
-  },
+const STATUS_LABELS: Record<string, string> = {
+  published: "已发",
+  confirmed_published: "已发（人工确认）",
+  leave: "请假",
+  waived: "豁免",
+  exempted: "豁免期",
+  absent: "缺勤",
+  unconfirmed: "未确认",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; variant: "success" | "accent" | "danger" | "warning" | "neutral" }> = {
-    published: { label: "已发布", variant: "success" }, confirmed_published: { label: "已确认", variant: "success" },
-    leave: { label: "请假", variant: "accent" }, waived: { label: "豁免", variant: "accent" },
-    exempted: { label: "豁免期", variant: "neutral" }, absent: { label: "缺勤", variant: "danger" },
-    unconfirmed: { label: "待确认", variant: "warning" },
-  };
-  const c = config[status] ?? config.unconfirmed;
-  return <Badge variant={c.variant}>{c.label}</Badge>;
+function statusText(status: string) {
+  return STATUS_LABELS[status] ?? STATUS_LABELS.unconfirmed;
 }
+
+function statusTone(status: string) {
+  if (status === "absent") return "text-status-danger";
+  if (status === "unconfirmed") return "text-[#78716C]";
+  return "text-[#1F1E1D]";
+}
+
+const QUIET_ACTION =
+  "h-8 rounded-md border border-[#E2E2DF] bg-white text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]";
 
 export function FulfillmentMemberSheet({
   open,
@@ -242,176 +232,116 @@ export function FulfillmentMemberSheet({
     currentRecord && isManualFulfillmentMarkStatus(currentRecord.status),
   );
 
-  // 考核天数算式
   const assessedDays = member
     ? member.requiredCount + member.leaveDays + member.waivedDays
     : 0;
+  const monthLabel = effectiveDate ? `${Number(effectiveDate.slice(5, 7))}月` : "";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         className="w-full sm:max-w-lg overflow-y-auto"
-        aria-label="成员履约月历与考勤档案"
+        aria-label="成员这个月的发布记录"
       >
         <SheetHeader className="border-b border-[#E2E2DF]/60 pb-3">
           <SheetTitle className="text-[20px] text-[#141413]">
-            {member?.userName || "成员"} · 履约档案
+            {member?.userName || "成员"}{monthLabel ? ` · ${monthLabel}` : ""}
           </SheetTitle>
-          <SheetDescription className="text-[12px] text-[#78716C]">
-            {member?.teamName || "所属团队"} · 全月考勤明细与打卡轨迹
-          </SheetDescription>
+          {member?.teamName && (
+            <SheetDescription className="text-[12px] text-[#78716C]">{member.teamName}</SheetDescription>
+          )}
         </SheetHeader>
 
         {!member ? (
           <SheetBody>
-            <EmptyState title="请选择一位成员查看考勤记录" />
+            <EmptyState title="选一位成员查看这个月的记录" />
           </SheetBody>
         ) : (
-          <SheetBody className="space-y-4 pt-3">
-            {/* 全月考勤核心总览 */}
-            <Card className="p-4 bg-surface-row-hover/60 border border-[#E2E2DF]/60 shadow-card-ring">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E2E2DF]/60">
-                <span className="text-[12px] uppercase font-normal text-[#78716C]">
-                  全月考勤考核明细
-                </span>
-                <Badge
-                  variant={
-                    member.fulfillmentRate >= 80
-                      ? "success"
-                      : member.fulfillmentRate >= 60
-                        ? "warning"
-                        : "danger"
-                  }
-                  className="tabular-nums"
-                >
-                  达成率 {member.fulfillmentRate}%
-                </Badge>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-[12px] text-[#78716C] block">实发作品</span>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-[20px] text-[#141413] tabular-nums">
-                      {member.publishedCount}
-                    </span>
-                    <span className="text-[12px] text-[#78716C]">/ {member.requiredCount} 条应发</span>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-[12px] text-[#78716C] block">考核扣减算式</span>
-                  <div className="mt-1 text-[12px] text-[#141413] font-normal tabular-nums leading-relaxed">
-                    {member.leaveDays > 0 || member.waivedDays > 0 ? (
-                      <span>
-                        考核{assessedDays}天 - 假{member.leaveDays}天
-                        {member.waivedDays > 0 && ` - 免${member.waivedDays}天`}
-                        {" = "}{member.requiredCount}条应发
-                      </span>
-                    ) : (
-                      <span className="text-status-success">
-                        考核 {assessedDays} 天全勤无缺
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-[#E2E2DF]/60 flex items-center justify-between text-[12px] text-[#78716C]">
-                <span>请假 <strong className="font-normal text-[#1F1E1D] tabular-nums">{member.leaveDays}</strong> 天</span>
-                <span>豁免 <strong className="font-normal text-[#1F1E1D] tabular-nums">{member.waivedDays}</strong> 天</span>
-                <span>缺勤 <strong className={`font-normal tabular-nums ${member.absentDays > 0 ? "text-status-danger" : "text-[#1F1E1D]"}`}>{member.absentDays}</strong> 天</span>
-                <span>剩余差额 <strong className="font-normal text-[#D97757] tabular-nums">{member.remainingCount}</strong> 条</span>
-              </div>
-            </Card>
-
-            {/* 连续未发警示 */}
-            {member.consecutiveMissing > 0 && (
-              <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] p-3 flex items-center justify-between">
-                <span className="text-[14px] text-status-danger flex items-center gap-1">
-                  <span className="size-1.5 rounded-full bg-status-danger" />
-                  已连续未发布 {member.consecutiveMissing} 天
-                </span>
-                <span className="text-[12px] text-[#78716C]">建议负责人跟进关注</span>
-              </div>
-            )}
-
-            {/* 历史记录时间轴 */}
-            <div className="space-y-2">
-              <span className="text-[14px] text-[#141413] block">
-                全月打卡足迹时间轴
-              </span>
-              <Card className="max-h-[200px] overflow-y-auto p-0 gap-0 border border-[#E2E2DF]/60">
-                {historyDates.length === 0 ? (
-                  <EmptyState variant="compact" title="本期暂无打卡记录" />
-                ) : (
-                  <div className="divide-y divide-[#E2E2DF]/50">
-                    {historyDates.map((d) => {
-                      const record = member.days[d];
-                      const isSelected = d === effectiveDate;
-                      return (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => handleDateSelect(d)}
-                          className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition ${
-                            isSelected ? "bg-[#F1F1F0] ring-1 ring-inset ring-[#78716C]/50" : "hover:bg-[#F7F7F6]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="tabular-nums text-[#78716C]">{d}</span>
-                            <StatusBadge status={record.status} />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {record.publishedCount > 0 && (
-                              <span className="text-[12px] text-status-success tabular-nums">
-                                发 {record.publishedCount} 条
-                              </span>
-                            )}
-                            {record.reason && (
-                              <span className="text-[12px] text-[#78716C] max-w-[120px] truncate">
-                                {record.reason}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+          <SheetBody className="space-y-5 pt-3">
+            {/* 这个月：一句话 + 一行明细（算式悬停可见） */}
+            <div className="space-y-1">
+              <p className="text-[14px] text-[#141413] tabular-nums">
+                已发 {member.publishedCount} / {member.requiredCount} 条 · {member.fulfillmentRate}%
+                {member.remainingCount > 0 ? ` · 还差 ${member.remainingCount} 条` : " · 已达标"}
+                {isMissingStreak(member) && (
+                  <span className="ml-2 text-status-danger">断 {member.consecutiveMissing} 天</span>
                 )}
-              </Card>
+              </p>
+              <p
+                className="text-[12px] text-[#78716C] tabular-nums"
+                title={`考核 ${assessedDays} 天，请假和豁免的天不算应发，应发 ${member.requiredCount} 条`}
+              >
+                考核 {assessedDays} 天 · 请假 {member.leaveDays} · 豁免 {member.waivedDays} · 缺勤{" "}
+                <span className={member.absentDays > 0 ? "text-status-danger" : undefined}>{member.absentDays}</span>
+              </p>
             </div>
 
-            {/* 选中日期单日详情与操作 */}
-            {effectiveDate && (
-              <div className="rounded-xl border border-[#E2E2DF]/60 p-3.5 space-y-3 bg-white">
-                <div className="flex items-center justify-between border-b border-[#E2E2DF]/50 pb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#141413]">
-                      📅 {effectiveDate} {isToday ? "（今天）" : ""}
-                    </span>
-                    <span className="text-[12px] text-[#78716C]">单日明细与改判</span>
-                  </div>
-                  {currentRecord && <StatusBadge status={currentRecord.status} />}
-                </div>
+            {/* 每天一行，点一天在下面看与改 */}
+            <div className="space-y-1">
+              <p className="text-[12px] text-[#78716C]">每天</p>
+              {historyDates.length === 0 ? (
+                <EmptyState variant="compact" title="这个月还没有记录" />
+              ) : (
+                <ul className="max-h-[240px] overflow-y-auto rounded-xl border border-[#E2E2DF]">
+                  {historyDates.map((d) => {
+                    const record = member.days[d];
+                    const isSelected = d === effectiveDate;
+                    return (
+                      <li key={d}>
+                        <button
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => handleDateSelect(d)}
+                          className={cn(
+                            "flex w-full items-center gap-3 px-3 py-2 text-left text-[14px] transition-colors",
+                            isSelected ? "bg-[#F1F1F0]" : "hover:bg-[#F7F7F6]",
+                          )}
+                        >
+                          <span className="w-16 shrink-0 tabular-nums text-[#78716C]">{formatMonthDay(d)}</span>
+                          <span className={statusTone(record.status)}>{statusText(record.status)}</span>
+                          {record.publishedCount > 0 && (
+                            <span className="text-[12px] tabular-nums text-[#78716C]">发 {record.publishedCount} 条</span>
+                          )}
+                          {record.reason && (
+                            <span className="ml-auto max-w-[140px] truncate text-[12px] text-[#78716C]" title={record.reason}>
+                              {record.reason}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
 
-                {/* 补交处理 */}
+            {/* 选中的这一天 */}
+            {effectiveDate && (
+              <div className="space-y-3 border-t border-[#E2E2DF]/60 pt-4">
+                <p className="text-[14px] text-[#141413]">
+                  {formatMonthDay(effectiveDate)}{isToday ? "（今天）" : ""}
+                  {currentRecord && (
+                    <span className={cn("ml-2", statusTone(currentRecord.status))}>{statusText(currentRecord.status)}</span>
+                  )}
+                </p>
+
                 {dateAppeal && (
-                  <div className="rounded-md border border-status-warning/20 bg-status-warning/5 p-2.5 text-[12px]">
-                    <div className="flex items-center justify-between text-status-warning ">
-                      <span>补交事由</span>
-                      <span>{dateAppeal.status === "pending" ? "待审核" : "已处理"}</span>
-                    </div>
-                    <p className="mt-1 text-[#1F1E1D]">{dateAppeal.reason}</p>
+                  <div className="space-y-2 text-[14px]">
+                    <p className="text-[#1F1E1D]">
+                      <span className="text-[12px] text-[#78716C]">
+                        补交{dateAppeal.status === "pending" ? "待审" : "已处理"}：
+                      </span>
+                      {dateAppeal.reason}
+                    </p>
                     {!readOnly && dateAppeal.status === "pending" && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex gap-2">
+                      <>
+                        <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="xs"
                             disabled={isSubmittingAppeal}
                             onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
-                            className="h-6 text-[12px] text-status-success hover:bg-status-success/10 font-normal"
+                            className="h-7 px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                           >
                             同意补交
                           </Button>
@@ -420,65 +350,56 @@ export function FulfillmentMemberSheet({
                             size="xs"
                             disabled={isSubmittingAppeal}
                             onClick={() => setRejectingAppeal((prev) => (prev?.id === dateAppeal.id ? null : dateAppeal))}
-                            className="h-6 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
+                            className="h-7 px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                           >
-                            {rejectingAppeal?.id === dateAppeal.id ? "收起" : "驳回补交"}
+                            {rejectingAppeal?.id === dateAppeal.id ? "收起" : "驳回"}
                           </Button>
                         </div>
-
                         {rejectingAppeal?.id === dateAppeal.id && (
-                          <div className="pt-2 border-t border-[#E2E2DF]/60">
-                            <InlineFeedbackTray
-                              initialAction="rejected"
-                              title={`驳回 ${member?.userName || "成员"} 的补交`}
-                              scopeHint="驳回原因将通过通知直接发送给成员"
-                              required confirmLabel="确认驳回"
-                              isSubmitting={isSubmittingAppeal}
-                              onConfirm={async (_action, reasonText) => {
-                                await handleHandleAppeal(dateAppeal.id, "reject", reasonText);
-                                setRejectingAppeal(null);
-                              }}
-                              onCancel={() => setRejectingAppeal(null)}
-                            />
-                          </div>
+                          <InlineFeedbackTray
+                            initialAction="rejected"
+                            title={`驳回 ${member?.userName || "成员"} 的补交`}
+                            scopeHint="驳回原因会通过通知发给本人"
+                            required
+                            confirmLabel="确认驳回"
+                            isSubmitting={isSubmittingAppeal}
+                            onConfirm={async (_action, reasonText) => {
+                              await handleHandleAppeal(dateAppeal.id, "reject", reasonText);
+                              setRejectingAppeal(null);
+                            }}
+                            onCancel={() => setRejectingAppeal(null)}
+                          />
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 )}
 
-                {/* 改判动作按钮 */}
-                {!readOnly && <div className="pt-1">
-                  <p className="text-[12px] text-[#78716C] mb-1.5">改判此日状态：</p>
+                {!readOnly && (
                   <div className="grid grid-cols-2 gap-2">
-                    {(Object.keys(ACTION_CONFIG) as MarkAction[]).map((action) => (
+                    {ACTION_ORDER.map((action) => (
                       <Button
                         key={action}
                         variant="outline"
                         size="sm"
                         disabled={isSubmitting}
                         onClick={() => handleActionClick(action)}
-                        className={`text-[12px] h-8 ${ACTION_CONFIG[action].colorClass}`}
+                        className={QUIET_ACTION}
                       >
-                        {ACTION_CONFIG[action].label}
+                        {ACTION_LABELS[action]}
                       </Button>
                     ))}
                   </div>
-                </div>}
+                )}
 
-                {/* 如果已有人工标记，提供醒目的清除入口 */}
                 {!readOnly && isManuallyMarked && (
-                  <div className="pt-2 border-t border-[#E2E2DF]/50 flex items-center justify-between">
-                    <span className="text-[12px] text-[#78716C]">当前状态由人工指定</span>
-                    <button
-                      type="button"
-                      onClick={() => setRemoveConfirmOpen(true)}
-                      className="text-[12px] font-normal text-status-danger hover:bg-status-danger/10 px-2 py-1 rounded-md border border-status-danger/25 transition-colors inline-flex items-center gap-1"
-                    >
-                      <Trash2 className="size-3" />
-                      恢复系统自动判定
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRemoveConfirmOpen(true)}
+                    className="text-[12px] text-[#78716C] underline-offset-2 hover:text-[#141413] hover:underline"
+                  >
+                    这一天是人工标的 · 撤掉，按系统判定
+                  </button>
                 )}
               </div>
             )}
@@ -490,24 +411,23 @@ export function FulfillmentMemberSheet({
           <Dialog open={true} onOpenChange={(open) => !open && setActiveAction(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-[20px] text-[#141413]">
-                  确认改判为「{ACTION_CONFIG[activeAction].label}」
+                <DialogTitle>
+                  把 {member?.userName} {effectiveDate ? formatMonthDay(effectiveDate) : ""}{ACTION_LABELS[activeAction]}
                 </DialogTitle>
                 <DialogDescription className="text-[14px] text-[#78716C]">
-                  正在为 {member?.userName} 的 {effectiveDate} 记录标记为「
-                  {ACTION_CONFIG[activeAction].label}」。
+                  只改这一天，之后可以撤掉，按系统判定。
                 </DialogDescription>
               </DialogHeader>
 
               <div className="py-2">
                 <label className="text-[12px] text-[#78716C] block mb-1">
-                  标记原因（选填）：
+                  备注（选填）
                 </label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="例如：调休 / 系统审核延迟"
+                  placeholder="例如：调休"
                   className="w-full rounded-md border border-[#E2E2DF] px-3 py-1.5 text-[14px] outline-none focus:border-[#141413]"
                 />
               </div>
@@ -527,7 +447,7 @@ export function FulfillmentMemberSheet({
                   onClick={handleConfirmAction}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "正在保存..." : "确认改判"}
+                  {isSubmitting ? "正在保存…" : "确认"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -538,9 +458,9 @@ export function FulfillmentMemberSheet({
         {!readOnly && <ConfirmDialog
           open={removeConfirmOpen}
           onOpenChange={setRemoveConfirmOpen}
-          title="确认清除人工标记？"
-          description={`将清除 ${member?.userName} 在 ${effectiveDate} 的人工改判状态，系统将按实际作品数据自动恢复。`}
-          confirmText={isRemoving ? "正在清除..." : "确认清除"}
+          title="撤掉人工标记？"
+          description={`${member?.userName} ${effectiveDate ? formatMonthDay(effectiveDate) : ""}会改回按实际作品自动判定。`}
+          confirmText={isRemoving ? "正在撤掉…" : "撤掉"}
           onConfirm={handleConfirmRemove}
           destructive={true}
         />}

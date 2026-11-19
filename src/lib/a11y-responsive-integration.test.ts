@@ -109,9 +109,11 @@ test("月度矩阵不再嵌套互动控件", () => {
     assert.doesNotMatch(readSource(path), /role="button"/, `${path} 仍使用含子按钮的伪按钮`);
   }
 
-  const monthly = readSource(paths[0]);
-  assert.match(monthly, /aria-expanded=\{expanded\}/);
-  assert.match(monthly, /aria-controls="monthly-matrix-panel"/);
+  // 2026-11-19 大表不再折叠；能展开的只剩页头下「今天」那一行，它要报告展开状态并指向名单
+  const view = readSource("src/app/(app)/admin/fulfillment/fulfillment-workbench-view.tsx");
+  assert.match(view, /aria-expanded=\{panelOpen\}/);
+  assert.match(view, /aria-controls="fulfillment-today-panel"/);
+  assert.match(readSource("src/app/(app)/admin/fulfillment/components/fulfillment-action-dock.tsx"), /id="fulfillment-today-panel"/);
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
@@ -162,7 +164,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
 
   const motionPaths = [
     "src/components/video-submit/video-submit-panel-body.tsx",
-    "src/app/(app)/admin/fulfillment/components/fulfillment-stats-overview.tsx",
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench-view.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
     "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",

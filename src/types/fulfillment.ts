@@ -112,7 +112,3 @@ export interface FulfillmentAppeal {
   user_name: string | null;
   handler_name: string | null;
 }
-
-// === 前端新增类型 ===
-
-export type TimeRangePreset = "today" | "last7days" | "thisMonth" | "lastMonth" | "custom";

@@ -36,15 +36,6 @@ const MARKS: Record<PageEpigraphKey, React.ReactNode> = {
       <path d="M8 2.2v1.6M3.2 4.4l1 1.1M12.8 4.4l-1 1.1" stroke={SOFT} strokeWidth="1.15" {...stroke} />
     </>
   ),
-  // 发布管理「节拍」：一道起伏的呼吸线，串起三枚落点，当下那枚点亮
-  fulfillment: (
-    <>
-      <path d="M1.8 9.6C3.6 5.8 5.2 5.8 7 9.2S10.4 12.6 14.2 6.4" stroke={INK} strokeWidth="1.25" {...stroke} />
-      <circle cx="3.2" cy="7.6" r="1" fill={SOFT} />
-      <circle cx="7.4" cy="9.9" r="1" fill={SOFT} />
-      <circle cx="12.4" cy="7.6" r="1.7" fill={WARM} fillOpacity="0.88" />
-    </>
-  ),
   // 选题库「萌芽」：一茎柔弯，托起一暖一素两瓣新叶
   topics: (
     <>
