@@ -28,9 +28,8 @@ const modulesSource = [
 test("含子控件的卡片不再把外层伪装成按钮", () => {
   const paths = [
     "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
-    "src/app/(app)/admin/content/content-list-view-controls.tsx",
-    "src/app/(app)/admin/content/content-list-filters-view.tsx",
-    "src/app/(app)/admin/content/content-list-secondary-filters.tsx",
+    "src/app/(app)/admin/content/content-list-toolbar.tsx",
+    "src/app/(app)/admin/content/content-list-more-filters.tsx",
     "src/app/(app)/admin/content/content-list-table-header.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
   ];

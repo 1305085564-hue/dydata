@@ -2,7 +2,6 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import type { SortField } from "@/lib/content/domain/content-list";
@@ -19,15 +18,12 @@ import {
   InteractionRateTooltipCell,
   RatioCell,
   RetentionAchievementTooltipCell,
-  formatCompactDate,
   formatCount,
-  formatFullDateTime,
-  formatTimeOfDay,
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
 import { SORTED_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
 import { ContentListMobile } from "./content-list-mobile";
-import { GradeMark, OwnerLink, StatusMark, TitleButton } from "./content-list-row-parts";
+import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
 
 type ContentListTableProps = {
   metricViewMode: "full" | "spacious";
@@ -72,20 +68,22 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
     case "title":
       return {
         className: cn(
-          "sticky left-0 z-20 py-2.5 px-3 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
+          "sticky left-0 z-20 py-2 px-3 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
           ctx.isSelected
             ? "bg-[#F1F1F0] group-hover:bg-[#EBEBE9]"
             : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
         ),
         content: (
-          <div className="flex min-w-0 items-center gap-2">
-            <StatusMark video={item.video} />
-            <TitleButton video={item.video} onOpen={ctx.onOpen} className="truncate" />
-            <OwnerLink
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <StatusMark video={item.video} />
+              <TitleButton video={item.video} onOpen={ctx.onOpen} className="truncate" />
+            </div>
+            <WorkMetaLine
               video={item.video}
+              isSingleDay={ctx.isSingleDay}
               ownerNames={ctx.ownerNames}
               onSelectAuthor={ctx.onSelectAuthor}
-              className="shrink-0 max-w-[96px] truncate text-[12px]"
             />
           </div>
         ),
@@ -156,22 +154,6 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
         className: "p-0 text-right tabular-nums whitespace-nowrap text-[#78716C]",
         content: <RatioCell fullCell cellClassName={pad} standards={standards} value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={hit("completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />,
       };
-    case "published_at":
-      return {
-        className: "p-0 text-right tabular-nums whitespace-nowrap text-[12px] text-[#1F1E1D]",
-        content: (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <div className={cn("flex h-full w-full items-center justify-end py-2.5", pad)}>
-                  {ctx.isSingleDay ? formatTimeOfDay(item.video.published_at) : formatCompactDate(item.video.published_at)}
-                </div>
-              }
-            />
-            <TooltipContent side="top" align="end">{formatFullDateTime(item.video.published_at)}</TooltipContent>
-          </Tooltip>
-        ),
-      };
   }
 }
 
@@ -222,7 +204,6 @@ export function ContentListTable({
         onSelectAuthor={onSelectAuthor}
         ownerNames={ownerNames}
         highlightRules={highlightRules}
-        evaluationStandards={evaluationStandards}
       />
 
       {/* 桌面与平板（≥768px）：列由 CONTENT_COLUMNS 统一生成，窄屏横向滚动时冻结作品列 */}

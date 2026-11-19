@@ -14,9 +14,8 @@ const source = [
   "src/app/(app)/admin/content/content-list.tsx",
   "src/app/(app)/admin/content/content-list-table.tsx",
   "src/app/(app)/admin/content/content-list-table-header.tsx",
-  "src/app/(app)/admin/content/content-list-view-controls.tsx",
-  "src/app/(app)/admin/content/content-list-filters-view.tsx",
-  "src/app/(app)/admin/content/content-list-secondary-filters.tsx",
+  "src/app/(app)/admin/content/content-list-toolbar.tsx",
+  "src/app/(app)/admin/content/content-list-more-filters.tsx",
   "src/lib/content/domain/content-list.ts",
   "src/lib/content/domain/content-list-state.ts",
   "src/lib/content/data/content-list.ts",
@@ -50,18 +49,17 @@ function makeRow(video: Partial<ProcessedContentRow["video"]> = {}): ProcessedCo
 
 test("视频复盘列表支持完整/宽松指标视图切换，评级与留存达成常驻", () => {
   assert.match(source, /metricViewMode/);
-  assert.match(source, />完整</);
-  assert.match(source, />宽松</);
+  assert.match(source, /互动明细/);
   const full = visibleContentColumns(false).map((column) => column.label);
   const spacious = visibleContentColumns(true).map((column) => column.label);
-  for (const label of ["点赞", "评论", "分享", "收藏", "互动率", "2s跳出", "5s完播", "均播", "完播", "发布时间", "留存达成", "评级"]) {
+  for (const label of ["点赞", "评论", "分享", "收藏", "互动率", "2s跳出", "5s完播", "均播", "完播", "留存达成", "评级"]) {
     assert.ok(full.includes(label), `完整视图缺少 ${label}`);
   }
   assert.deepEqual(full.filter((label) => !spacious.includes(label)), ["点赞", "评论", "分享", "收藏"]);
   assert.ok(spacious.includes("评级") && spacious.includes("留存达成"));
 });
 
-test("列顺序 = 判断顺序：作品 → 评级 → 播放 / 互动率 / 留存达成 → 涨粉 → 明细 → 发布时间", () => {
+test("列顺序 = 判断顺序：作品 → 评级 → 播放 / 互动率 / 留存达成 → 涨粉 → 明细；发布时间并进作品格", () => {
   assert.deepEqual(CONTENT_COLUMNS.map((column) => column.key), [
     "title",
     "overall_grade",
@@ -78,8 +76,8 @@ test("列顺序 = 判断顺序：作品 → 评级 → 播放 / 互动率 / 留�
     "avg_play_duration",
     "avg_play_ratio",
     "completion_rate",
-    "published_at",
   ]);
+  assert.equal(CONTENT_COLUMNS[0].sortField, "published_at", "作品列头负责按发布时间排序");
 });
 
 for (const metricViewMode of ["full", "spacious"] as const) {
@@ -103,7 +101,7 @@ for (const metricViewMode of ["full", "spacious"] as const) {
     const headerOrder = [...html.matchAll(/<th\b[^>]*data-col-key="([^"]+)"/g)].map((m) => m[1]);
     const bodyOrder = [...html.matchAll(/<td\b[^>]*data-col-key="([^"]+)"/g)].map((m) => m[1]);
     assert.deepEqual(headerOrder, bodyOrder, "表头与表体列顺序必须完全一致");
-    assert.equal(headerOrder.length, metricViewMode === "full" ? 16 : 12);
+    assert.equal(headerOrder.length, metricViewMode === "full" ? 15 : 11);
   });
 }
 

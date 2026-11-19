@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import type React from "react";
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,13 @@ interface DatePaginationProps {
   defaultOpen?: boolean;
   /** 按钮文字是否带当天篇数；数据复盘页头已写篇数时关掉，避免同一个数说两遍 */
   showCountInLabel?: boolean;
+  /**
+   * toolbar：工具栏里的小号翻页器（每日大盘）；
+   * headline：日期本身就是页面标题，字号继承所在 h1，箭头放在标题末尾（数据复盘）。
+   */
+  variant?: "toolbar" | "headline";
+  /** headline 模式下紧跟日期的答案文字（如「 · 23 篇」），箭头排在它后面 */
+  suffix?: React.ReactNode;
 }
 
 function toDateString(year: number, month: number, day: number): string {
@@ -52,6 +60,10 @@ function toYearMonth(dateStr: string): { year: number; month: number } {
   const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
   return { year: date.getFullYear(), month: date.getMonth() };
 }
+
+/** 页头模式的翻页箭头：小号方钮，不跟随标题字号，避免抢标题 */
+const HEADLINE_NAV_CLASS =
+  "inline-flex size-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md font-sans text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer";
 
 const NAV_BUTTON_CLASS =
   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md px-2 py-1.5 text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] cursor-pointer";
@@ -73,6 +85,8 @@ export function DatePagination({
   onRangeChange,
   defaultOpen = false,
   showCountInLabel = true,
+  variant = "toolbar",
+  suffix,
 }: DatePaginationProps) {
   const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const [open, setOpen] = useState(defaultOpen);
@@ -157,11 +171,21 @@ export function DatePagination({
 
   const { year, month } = viewMonth;
 
+  const isHeadline = variant === "headline";
+  const prevButton = (
+    <button type="button" onClick={stepPrev} disabled={!isRange && !earlierDate} className={isHeadline ? HEADLINE_NAV_CLASS : NAV_BUTTON_CLASS} aria-label={isRange ? "前一段" : "前一天"}>
+      <ChevronLeft className="size-4" />
+    </button>
+  );
+  const nextButton = (
+    <button type="button" onClick={stepNext} disabled={!isRange && !laterDate} className={isHeadline ? HEADLINE_NAV_CLASS : NAV_BUTTON_CLASS} aria-label={isRange ? "后一段" : "后一天"}>
+      <ChevronRight className="size-4" />
+    </button>
+  );
+
   return (
-    <div className="inline-flex flex-wrap items-center gap-1 select-none">
-      <button type="button" onClick={stepPrev} disabled={!isRange && !earlierDate} className={NAV_BUTTON_CLASS} aria-label="前一天">
-        <ChevronLeft className="size-4" />
-      </button>
+    <span className={cn("inline-flex flex-wrap items-center select-none", isHeadline ? "gap-x-1" : "gap-1")}>
+      {!isHeadline && prevButton}
 
       <Popover
         open={open}
@@ -171,10 +195,20 @@ export function DatePagination({
           if (next) setViewMonth(toYearMonth((isRange ? rangeStart : currentDate) || today));
         }}
       >
-        <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
-          <Calendar className="size-3.5 text-[#78716C]" />
-          <span>{loadingLabel}</span>
-        </PopoverTrigger>
+        {isHeadline ? (
+          <PopoverTrigger
+            aria-label={`选择日期，当前 ${loadingLabel}`}
+            className="group -mx-1 inline-flex items-center gap-1 rounded-md px-1 text-inherit transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#141413]/10"
+          >
+            <span>{loadingLabel}</span>
+            <ChevronDown className="size-4 shrink-0 text-[#A8A29E] transition-colors group-hover:text-[#141413]" aria-hidden="true" />
+          </PopoverTrigger>
+        ) : (
+          <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
+            <Calendar className="size-3.5 text-[#78716C]" />
+            <span>{loadingLabel}</span>
+          </PopoverTrigger>
+        )}
         <PopoverContent align="start" className={CALENDAR_CARD_CLASS}>
           <MonthCalendar
             today={today}
@@ -268,9 +302,15 @@ export function DatePagination({
         </PopoverContent>
       </Popover>
 
-      <button type="button" onClick={stepNext} disabled={!isRange && !laterDate} className={NAV_BUTTON_CLASS} aria-label="后一天">
-        <ChevronRight className="size-4" />
-      </button>
-    </div>
+      {isHeadline ? (
+        <>
+          {suffix}
+          <span className="ml-2 inline-flex items-center gap-1 self-center">
+            {prevButton}
+            {nextButton}
+          </span>
+        </>
+      ) : nextButton}
+    </span>
   );
 }

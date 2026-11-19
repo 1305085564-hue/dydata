@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -60,7 +61,9 @@ export function ContentListTableHeader({
           const ariaSort = column.sortField
             ? isSorted ? (sortDir === "desc" ? "descending" : "ascending") : "none"
             : undefined;
-          const label = column.tip ? (
+          const label = column.sortLabel ? (
+            <span>{column.label}<span className="text-[#A8A29E]"> · 按{column.sortLabel}</span></span>
+          ) : column.tip ? (
             <span className="border-b border-dashed border-[#D6D3D1] group-hover:border-[#78716C] transition-colors">
               {column.label}
             </span>
@@ -69,15 +72,16 @@ export function ContentListTableHeader({
           );
           const indicator = column.sortField ? (
             isSorted ? (
-              <span className="text-[12px] text-[#141413]">{sortDir === "desc" ? "▼" : "▲"}</span>
+              sortDir === "desc" ? <ArrowDown className="size-3 text-[#141413]" aria-hidden /> : <ArrowUp className="size-3 text-[#141413]" aria-hidden />
             ) : (
-              <span className="text-[12px] text-[#A8A29E] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
+              <ArrowDown className="size-3 text-[#A8A29E] opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
             )
           ) : null;
+          const sortName = column.sortLabel ?? column.label;
           const button = column.sortField ? (
             <button
               type="button"
-              aria-label={`按${column.label}排序${isSorted ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+              aria-label={`按${sortName}排序${isSorted ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
               onClick={() => handleSort(column.sortField!)}
               className={cn(
                 "group inline-flex w-full items-center gap-1 transition-colors cursor-pointer",

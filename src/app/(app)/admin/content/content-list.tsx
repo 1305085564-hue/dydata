@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import { useContentListState } from "@/lib/content/domain/content-list-state";
@@ -9,7 +9,9 @@ import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { resolveEffectiveDates } from "./content-list-filters";
-import { buildContentHeadline, countGrades } from "./content-headline";
+import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
+import { activeSegmentOf, segmentBaseKey, type ContentSegmentCounts } from "./content-segments";
+import { DatePagination } from "./date-pagination";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
 function shiftDateString(dateStr: string, days: number): string {
@@ -18,10 +20,13 @@ function shiftDateString(dateStr: string, days: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+const NO_DATES: string[] = [];
+const NO_COUNTS: Array<{ d: string; c: number }> = [];
+
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
-  const availableDates = props.availableDates ?? [];
-  const availableCounts = props.availableCounts ?? [];
+  const availableDates = props.availableDates ?? NO_DATES;
+  const availableCounts = props.availableCounts ?? NO_COUNTS;
   const earliestAvailableDate = availableDates[availableDates.length - 1] ?? "";
   const latestAvailableDate = availableDates[0] ?? "";
   // 按日期分页：先把时间预设解析成实际生效的起止。单日（"昨天"/单日自定义）以那天为锚点；
@@ -109,22 +114,49 @@ export function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
-  // 页头答案：哪天 · 几篇 · 优良几篇。优良只在整批作品都在手上时统计（多页区间只拿到一页，不冒充全部）。
+  // 页头：日期（本身是日期选择器）+ 篇数。篇数是服务端按当前条件数出的总数。
   const view = props.view ?? "all";
   const matchedCount = props.totalVideosCount ?? visibleRows.length;
   const hasActiveFilters = state.hasActiveFilters;
-  const headline = useMemo(() => buildContentHeadline({
+  const dayTotal = useMemo(
+    () => (!isRangeMode && currentDate ? availableCounts.find((item) => item.d === currentDate)?.c ?? null : null),
+    [availableCounts, currentDate, isRangeMode],
+  );
+  const headlineSuffix = buildContentHeadlineSuffix({ view, matchedCount, dayTotal, hasActiveFilters, isRange: isRangeMode });
+  const fallbackHeadline = buildContentHeadline({
     view,
     currentDate,
     rangeStart: isRangeMode ? effectiveStartDate : undefined,
     rangeEnd: isRangeMode ? effectiveEndDate : undefined,
     matchedCount,
-    dayTotal: !isRangeMode && currentDate
-      ? availableCounts.find((item) => item.d === currentDate)?.c ?? null
-      : null,
+    dayTotal,
     hasActiveFilters,
-    grades: totalPages <= 1 ? countGrades(visibleRows) : null,
-  }), [availableCounts, currentDate, effectiveEndDate, effectiveStartDate, hasActiveFilters, isRangeMode, matchedCount, totalPages, view, visibleRows]);
+  });
+
+  // 分段计数：在「全部」下、整批作品都在手上时数一次并记住；切到「优」等分段后，
+  // 只要其余条件（日期、负责人、搜索…）没变，各段继续显示这份数，不会因为只剩优作品而变成 0。
+  const segmentKey = segmentBaseKey(state.filters, view);
+  const canCountSegments = view === "all"
+    && activeSegmentOf(state.filters) === "all"
+    && totalPages <= 1
+    && !props.isViewLoading;
+  const freshCounts = useMemo<ContentSegmentCounts | null>(() => {
+    if (!canCountSegments) return null;
+    const grades = countGrades(visibleRows);
+    return {
+      all: matchedCount,
+      excellent: grades.excellent,
+      good: grades.good,
+      fair: grades.fair,
+      unrated: grades.unrated,
+      anomaly: state.anomalyCountForTime,
+    };
+  }, [canCountSegments, matchedCount, state.anomalyCountForTime, visibleRows]);
+  const [segmentMemo, setSegmentMemo] = useState<{ key: string; counts: ContentSegmentCounts } | null>(null);
+  if (freshCounts && (segmentMemo?.key !== segmentKey || JSON.stringify(segmentMemo.counts) !== JSON.stringify(freshCounts))) {
+    setSegmentMemo({ key: segmentKey, counts: freshCounts });
+  }
+  const segmentCounts = freshCounts ?? (segmentMemo?.key === segmentKey ? segmentMemo.counts : null);
 
   /** 区间模式下自选起止日期 */
   const handleRangeChange = useCallback((start: string, end: string) => {
@@ -135,36 +167,36 @@ export function ContentList(props: ContentListProps) {
     });
   }, [applyFilterPatch]);
 
-  // 日期导航对象：工具栏左段用（统一时间控制器）
-  const dateNav = currentDate && availableDates.length > 0
-    ? {
-        currentDate,
-        availableDates,
-        availableCounts,
-        showCountInLabel: false,
-        rangeStart: isRangeMode ? effectiveStartDate : undefined,
-        rangeEnd: isRangeMode ? effectiveEndDate : undefined,
-        isLoading: props.isViewLoading,
-        onDateChange: handleDateChange,
-        onShiftRange: handleShiftRange,
-        timeRange: state.filters.timeRange,
-        onTimeRangeChange: state.handleTimeRangeChange,
-        onRangeChange: handleRangeChange,
-      }
-    : null;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 页头即答案（效率美学 §2.1）：随日期、筛选、视图变化；手机同样显示 */}
+      {/* 页头即答案（效率美学 §2.1）：日期本身就是日期选择器，后接篇数；手机同样显示 */}
       <h1
         aria-live="polite"
         className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
       >
-        {headline}
+        {view === "all" && currentDate && availableDates.length > 0 ? (
+          <DatePagination
+            variant="headline"
+            currentDate={currentDate}
+            availableDates={availableDates}
+            availableCounts={availableCounts}
+            showCountInLabel={false}
+            rangeStart={isRangeMode ? effectiveStartDate : undefined}
+            rangeEnd={isRangeMode ? effectiveEndDate : undefined}
+            isLoading={props.isViewLoading}
+            onDateChange={handleDateChange}
+            onShiftRange={handleShiftRange}
+            timeRange={state.filters.timeRange}
+            onTimeRangeChange={state.handleTimeRangeChange}
+            onRangeChange={handleRangeChange}
+            suffix={<span>{headlineSuffix}</span>}
+          />
+        ) : (
+          fallbackHeadline
+        )}
       </h1>
 
-      {/* 筛选工具栏：裸放 Canvas，吸顶 */}
-      <ContentListToolbar {...props} {...state} dateNav={dateNav} />
+      <ContentListToolbar {...props} {...state} segmentCounts={segmentCounts} />
 
       {/* 对比表格容器 */}
       <ContentListTable

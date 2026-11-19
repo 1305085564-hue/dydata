@@ -5,6 +5,7 @@ import { getContentOwner } from "@/lib/content/content-owner";
 import { getStatusDot } from "@/lib/content/domain/content-list";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import { cn } from "@/lib/utils";
+import { formatCompactDate, formatFullDateTime, formatTimeOfDay } from "./content-list-cell-content";
 
 /** 数据复盘桌面行与手机卡片共用的小部件：标题、负责人、状态、评级。 */
 
@@ -99,5 +100,33 @@ export function TitleButton({
         {video.accounts?.name ? <div className="text-[#78716C]">账号：@{video.accounts.name}</div> : null}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * 作品格第二行：负责人 · 发布时间。时间不再单占一列，跟着作品走；账号按既定口径只在标题悬停与详情里看。
+ * 单日只写时刻，多日写「月-日 时刻」。
+ */
+export function WorkMetaLine({
+  video,
+  isSingleDay,
+  ownerNames,
+  onSelectAuthor,
+  className,
+}: {
+  video: ProcessedContentRow["video"];
+  isSingleDay: boolean;
+  ownerNames?: Record<string, string>;
+  onSelectAuthor?: (authorId: string, authorName: string) => void;
+  className?: string;
+}) {
+  const time = isSingleDay
+    ? formatTimeOfDay(video.published_at)
+    : `${formatCompactDate(video.published_at)} ${formatTimeOfDay(video.published_at)}`;
+  return (
+    <span className={cn("flex min-w-0 items-center gap-1 text-[12px] leading-[1.50] text-[#78716C]", className)}>
+      <OwnerLink video={video} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} className="shrink-0" />
+      <span className="shrink-0 tabular-nums" title={formatFullDateTime(video.published_at)}>· {time}</span>
+    </span>
   );
 }

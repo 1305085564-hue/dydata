@@ -5,8 +5,9 @@ import type { SortField } from "@/lib/content/domain/content-list";
  * （此前表头、表体各写一遍，2026-11-17 出过第 14–16 列错位。）
  *
  * 顺序 = 判断顺序（效率美学 §1.4）：
- *   作品 → 评级（结论）→ 播放 / 互动率 / 留存达成（评级由这三项决定）→ 涨粉
- *   → 互动明细（完整视图）→ 留存明细 → 发布时间
+ *   作品（两行：标题 / 负责人 · 发布时间）→ 评级（结论）
+ *   → 播放 / 互动率 / 留存达成（评级由这三项决定）→ 涨粉 → 互动明细（完整视图）→ 留存明细
+ * 发布时间并进作品格第二行，作品列头即「按发布时间排序」。
  */
 export type ContentColumnKey =
   | "title"
@@ -23,8 +24,7 @@ export type ContentColumnKey =
   | "completion_rate_5s"
   | "avg_play_duration"
   | "avg_play_ratio"
-  | "completion_rate"
-  | "published_at";
+  | "completion_rate";
 
 export type ContentColumnTip =
   | { kind: "standard"; metric: "bounceRate2s" | "completionRate5s" | "avgPlayDuration" | "avgPlayRatio" | "completionRate" }
@@ -42,13 +42,15 @@ export interface ContentColumn {
   fullOnly?: boolean;
   /** 新一组的第一列：左侧多留白，用留白分组，不画竖线 */
   groupStart?: boolean;
+  /** 排序按钮念出来的名字（默认同 label），作品列按发布时间排 */
+  sortLabel?: string;
   /** 列头悬停说明 */
   tip?: ContentColumnTip;
   align: "left" | "right";
 }
 
 export const CONTENT_COLUMNS: readonly ContentColumn[] = [
-  { key: "title", label: "作品 · 负责人", width: 380, align: "left" },
+  { key: "title", label: "作品", width: 400, sortField: "published_at", sortLabel: "发布时间", align: "left" },
   { key: "overall_grade", label: "评级", width: 56, sortField: "overall_grade", tip: { kind: "grade" }, align: "left" },
   { key: "play_count", label: "播放量", width: 76, sortField: "play_count", align: "right" },
   { key: "interaction_rate", label: "互动率", width: 72, sortField: "interaction_rate", tip: { kind: "interaction" }, align: "right" },
@@ -63,7 +65,6 @@ export const CONTENT_COLUMNS: readonly ContentColumn[] = [
   { key: "avg_play_duration", label: "均播", width: 62, sortField: "avg_play_duration", tip: { kind: "standard", metric: "avgPlayDuration" }, align: "right" },
   { key: "avg_play_ratio", label: "播放占比", width: 78, sortField: "avg_play_ratio", tip: { kind: "standard", metric: "avgPlayRatio" }, align: "right" },
   { key: "completion_rate", label: "完播", width: 62, sortField: "completion_rate", tip: { kind: "standard", metric: "completionRate" }, align: "right" },
-  { key: "published_at", label: "发布时间", width: 72, sortField: "published_at", groupStart: true, align: "right" },
 ];
 
 export function visibleContentColumns(isSpacious: boolean): ContentColumn[] {

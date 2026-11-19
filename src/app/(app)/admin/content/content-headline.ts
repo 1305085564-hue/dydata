@@ -3,8 +3,9 @@ import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 /**
  * 数据复盘页头答案（2026-11-19 重写，取代诗性导语 content-editorial-epigraph）。
  *
- * 一页一问：「这一天发的作品，哪几条值得点开看？」标题直接写答案——
- * 哪天、几篇、几篇优良。异常篇数只在工具栏「只看异常」一处说（效率美学 §1.5）。
+ * 一页一问：「这一天发的作品，哪几条值得点开看？」
+ * 标题 = 日期（本身就是日期选择器）+ 篇数；优 / 良 / 普 / 异常各几篇由下面一排分段说，
+ * 分段既是答案也是筛选，同一个数只说一处（效率美学 §1.5）。
  */
 
 const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -13,6 +14,16 @@ function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
   const date = new Date(`${dateStr}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** 页头里跟在日期后的答案文字：「 · 23 篇」「 · 命中 5 / 23 篇」「 · 没有作品」 */
+export function buildContentHeadlineSuffix(input: Omit<ContentHeadlineInput, "currentDate" | "rangeStart" | "rangeEnd"> & { isRange: boolean }): string {
+  if (input.matchedCount === 0) return input.hasActiveFilters ? " · 没有符合筛选的作品" : " · 没有作品";
+  const showHitRatio = !input.isRange
+    && input.hasActiveFilters
+    && input.dayTotal !== null
+    && input.dayTotal !== input.matchedCount;
+  return showHitRatio ? ` · 命中 ${input.matchedCount} / ${input.dayTotal} 篇` : ` · ${input.matchedCount} 篇`;
 }
 
 /** 11月18日 周二 */
@@ -38,11 +49,16 @@ export function formatCompactCount(val: number): string {
 export function countGrades(rows: ProcessedContentRow[]) {
   let excellent = 0;
   let good = 0;
+  let fair = 0;
+  let unrated = 0;
   for (const row of rows) {
-    if (row.quality?.overallGrade === "优") excellent += 1;
-    else if (row.quality?.overallGrade === "良") good += 1;
+    const grade = row.quality?.overallGrade;
+    if (grade === "优") excellent += 1;
+    else if (grade === "良") good += 1;
+    else if (grade === "普") fair += 1;
+    else unrated += 1;
   }
-  return { excellent, good };
+  return { excellent, good, fair, unrated };
 }
 
 export interface ContentHeadlineInput {
@@ -56,8 +72,6 @@ export interface ContentHeadlineInput {
   /** 单日不含筛选的当天总篇数；未知时为 null */
   dayTotal: number | null;
   hasActiveFilters: boolean;
-  /** 只有整批作品都在手上时才统计优良；分页只拿到一页时传 null，避免拿一页冒充全部 */
-  grades: { excellent: number; good: number } | null;
 }
 
 export function buildContentHeadline(input: ContentHeadlineInput): string {
@@ -70,17 +84,5 @@ export function buildContentHeadline(input: ContentHeadlineInput): string {
     ? `${formatShortDate(input.rangeStart ?? "")} – ${formatShortDate(input.rangeEnd ?? "")}`
     : input.currentDate ? formatDateLabel(input.currentDate) : "全部作品";
 
-  if (input.matchedCount === 0) {
-    return input.hasActiveFilters ? `${dateLabel} · 没有符合筛选的作品` : `${dateLabel} · 没有作品`;
-  }
-
-  const showHitRatio = !isRange
-    && input.hasActiveFilters
-    && input.dayTotal !== null
-    && input.dayTotal !== input.matchedCount;
-  const countText = showHitRatio
-    ? `命中 ${input.matchedCount} / ${input.dayTotal} 篇`
-    : `${input.matchedCount} 篇`;
-  const gradeText = input.grades ? `，优 ${input.grades.excellent} · 良 ${input.grades.good}` : "";
-  return `${dateLabel} · ${countText}${gradeText}`;
+  return `${dateLabel}${buildContentHeadlineSuffix({ ...input, isRange })}`;
 }
