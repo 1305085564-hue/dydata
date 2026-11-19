@@ -42,7 +42,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 其他：
 
-- `docs/reference/` — 可复用事实与证据，包括[架构决策](docs/reference/架构决策.md)、已确认验收和接口契约。
+- `docs/reference/` — 可复用事实与证据，包括[架构决策](docs/reference/架构决策/README.md)、已确认验收和接口契约。
 - `docs/plans/` — 待做与在办。
 - `docs/archive/性能优化历史-截至2026-08-30.md` — 性能优化历史实测记录（仅按需追溯）
 
