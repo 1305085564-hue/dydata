@@ -8,12 +8,14 @@ import {
   ArrowDown,
   Play,
   Trash2,
+  AlertCircle,
+  Clock,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
 import type { AvailabilityChannel } from "@/lib/ai-config/availability";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
-import { ChannelStatusChip } from "./channel-status-chip";
+import { formatSleepCountdown, AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,7 @@ export function ModelChannelRow({
   const isInvalid = channel.identity === "invalid";
   const isSleeping = channel.identity === "sleeping";
   const isRetest = channel.identity === "retest";
+  const isActive = channel.identity === "active";
   const showReason = isInvalid || isSleeping || isRetest;
   const moveLockReason = !channel.isSchedulable
     ? isSleeping
@@ -134,7 +137,39 @@ export function ModelChannelRow({
 
         {/* 中间：口径 5 的四种状态 */}
         <div data-slot="ai-channel-status" className="flex items-center gap-2 shrink-0 md:justify-start">
-          <ChannelStatusChip identity={channel.identity} sleepUntil={channel.sleepUntil} />
+          {isActive && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#4B6B4E]/10 px-2 py-0.5 text-[12px] text-[#4B6B4E]">
+              <span className="size-1.5 rounded-full bg-[#4B6B4E]" />
+              {AI_CONFIG_MESSAGES["channel.usable"]}
+            </span>
+          )}
+
+          {isRetest && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#8A6A2F]/10 px-2 py-0.5 text-[12px] text-[#8A6A2F]">
+              <span className="size-1.5 rounded-full bg-[#8A6A2F]" />
+              {AI_CONFIG_MESSAGES["channel.retest"]}
+            </span>
+          )}
+
+          {isSleeping && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C]">
+              <Clock className="size-3" />
+              {AI_CONFIG_MESSAGES["channel.cooling"]} · {formatSleepCountdown(channel.sleepUntil)}
+            </span>
+          )}
+
+          {isInvalid && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-status-danger/[0.10] px-2 py-0.5 text-[12px] text-status-danger-text">
+              <AlertCircle className="size-3" />
+              {AI_CONFIG_MESSAGES["channel.action_required"]}
+            </span>
+          )}
+
+          {!isEnabled && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#78716C]">
+              {AI_CONFIG_MESSAGES["channel.disabled"]}
+            </span>
+          )}
         </div>
 
         {/* 右侧：单供应开关、测试、删除供应 */}

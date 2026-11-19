@@ -22,10 +22,6 @@ const modelCardSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/model-family-card.tsx"),
   "utf8"
 );
-const channelCommandsSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/admin/ai-config/hooks/use-channel-commands.ts"),
-  "utf8"
-);
 const modelTestListSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/channel-model-test-list.tsx"),
   "utf8"
@@ -67,7 +63,7 @@ test("S5: 模型卡汇总：M 条渠道供货，N 条能用；恰好 1 条能用
 
 test("口径 4: 渠道顺位调整相邻关系按 sortOrder 判断，不按临时恢复数组下标判断", () => {
   assert.match(modelCardSource, /sort\(\(a, b\) => a\.sortOrder - b\.sortOrder\)/);
-  assert.match(channelCommandsSource, /swap_model_channel_order/);
+  assert.match(computePanelSource, /swap_model_channel_order/);
 });
 
 test("口径 5: 渠道状态收敛到四种状态，需要你处理留在主列表，只有已停用可以折叠", () => {

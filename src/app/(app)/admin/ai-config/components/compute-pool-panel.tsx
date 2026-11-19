@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAiConfig, AI_MODEL_BATCH_TIMEOUT_MS, startDetectionRefresh } from "../hooks/use-ai-config";
@@ -15,14 +15,14 @@ import { ModelFamilyCard } from "./model-family-card";
 import { ChannelPoolView } from "./channel-pool-view";
 import { AddKeyDialog } from "./add-key-dialog";
 import { SyncModelsDialog } from "./sync-models-dialog";
-import { DangerousActionDialog } from "./dangerous-action-dialog";
-import { useChannelCommands } from "../hooks/use-channel-commands";
+import { DangerousActionDialog, type ImpactConfirmationState } from "./dangerous-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import type { CheckResultItem } from "./channel-model-test-list";
+import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 // 恢复模型只说响应能证明的结果：零条不等于本来已开，缺字段也不推断
 export function modelToggleSuccessMessage(
@@ -101,8 +101,8 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
     keyLabel: "",
   });
 
-  const { executeWithConfirm, toggleSupply, swapOrder, testSupply, testingKeyModelId, impactConfirm, closeImpactConfirm } =
-    useChannelCommands();
+  const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
+  const [testingKeyModelId, setTestingKeyModelId] = useState<string | null>(null);
 
   // 诊断信息映射表：模型级失败按 keyModelId 对应；key 级失败回落到该渠道下所有模型。
   const diagnosticMap = useMemo(() => {
@@ -122,6 +122,46 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
     }
     return map;
   }, [bundle]);
+
+  // 统一带确认执行命令
+  const executeWithConfirm = useCallback(
+    async (
+      action: string,
+      data: Record<string, unknown>,
+      entity?: "provider" | "key" | "model" | "feature_binding",
+      successMsg?: string | ((body: Record<string, unknown>) => string)
+    ) => {
+      const showSuccess = (body: Record<string, unknown>) => {
+        if (!successMsg) return;
+        feedbackToast.success(typeof successMsg === "function" ? successMsg(body) : successMsg);
+      };
+      const res = await runCommand(action, data, entity);
+      if (res.ok) {
+        showSuccess(res.body);
+        return res;
+      }
+
+      if (res.status === 409 && res.requiresConfirmation) {
+        setImpactConfirm({
+          type: "impact",
+          affectedBusinesses: res.affectedBusinesses || [],
+          onConfirm: async () => {
+            const retryRes = await runCommand(action, { ...data, confirm_impact: true }, entity);
+            if (retryRes.ok) {
+              showSuccess(retryRes.body);
+            } else {
+              feedbackToast.error(retryRes.error || "操作失败");
+            }
+          },
+        });
+        return res;
+      }
+
+      feedbackToast.error(res.error || "操作失败");
+      return res;
+    },
+    [runCommand]
+  );
 
   // S1: 检查一遍
   const handleCheckAll = async () => {
@@ -175,6 +215,16 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
     } else feedbackToast.error("读取失败，页面未同步最新状态", { duration: 6000 });
   };
 
+  // 陷阱 A: 仅开关该供应
+  const handleToggleSupply = async (keyModelId: string, enabled: boolean) => {
+    await executeWithConfirm(
+      "update",
+      { id: keyModelId, is_enabled: enabled },
+      "model",
+      enabled ? "已开启该渠道对此模型的供应" : "已暂停该渠道对此模型的供应"
+    );
+  };
+
   // N4: 整个模型停用 / 恢复
   const handleToggleModelEnabled = async (modelId: string, enabled: boolean) => {
     await executeWithConfirm(
@@ -200,6 +250,52 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
       "model",
       "已更新模型显示名（此模型所有渠道共用）"
     );
+  };
+
+  // 顺位调整
+  const handleSwapOrder = async (
+    modelId: string,
+    keyModelId: string,
+    targetKeyModelId: string
+  ) => {
+    await executeWithConfirm(
+      "swap_model_channel_order",
+      {
+        model_id: modelId,
+        key_model_id: keyModelId,
+        target_key_model_id: targetKeyModelId,
+      },
+      undefined,
+      "已调整渠道顺位"
+    );
+  };
+
+  // 单供应测试
+  const handleTestSupply = async (keyId: string, modelId: string) => {
+    const keyModelId = bundle?.models.find(
+      (m) => m.key_id === keyId && readCanonicalModelId(m.model_id, m.canonical_model_id) === modelId,
+    )?.id;
+    if (keyModelId) setTestingKeyModelId(keyModelId);
+    try {
+      const res = await runCommand("test_key_model", { key_id: keyId, model_id: modelId });
+      if (!res.ok) {
+        feedbackToast.error(`测试未通过: ${res.error || "服务异常"}`, { duration: 6000 });
+        return;
+      }
+      const testRes = (res.body as Record<string, unknown>).testResult as
+        | { ok?: boolean; message?: string; stateWriteError?: string | null }
+        | undefined;
+      if (testRes?.ok) {
+        feedbackToast.success("测试通过，已恢复能用");
+      } else {
+        feedbackToast.error(`测试未通过: ${testRes?.message || "服务未返回测试结果"}`, { duration: 6000 });
+        if (testRes?.stateWriteError) {
+          feedbackToast.error(`测试结果未能写入渠道状态：${testRes.stateWriteError}`, { duration: 6000 });
+        }
+      }
+    } finally {
+      setTestingKeyModelId(null);
+    }
   };
 
   // 删除单条供应
@@ -398,11 +494,11 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
                   usageText={formatModelUsage(modelUsage[family.modelId])}
                   focused={focusedModelId === family.modelId}
                   diagnosticMap={diagnosticMap}
-                  onToggleSupply={toggleSupply}
+                  onToggleSupply={handleToggleSupply}
                   onToggleModelEnabled={handleToggleModelEnabled}
                   onRenameModel={handleRenameModel}
-                  onSwapOrder={swapOrder}
-                  onTestSupply={testSupply}
+                  onSwapOrder={handleSwapOrder}
+                  onTestSupply={handleTestSupply}
                   onDeleteSupply={handleDeleteSupply}
                   onOpenSupply={handleOpenSupply}
                   runCommand={runCommand}
@@ -440,7 +536,7 @@ export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: Model
       {/* 统一高风险影响确认弹窗 */}
       <DangerousActionDialog
         state={impactConfirm}
-        onClose={closeImpactConfirm}
+        onClose={() => setImpactConfirm(null)}
       />
     </div>
   );

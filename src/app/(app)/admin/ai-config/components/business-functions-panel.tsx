@@ -10,8 +10,6 @@ import {
   ArrowRight,
   Clock,
   Gauge,
-  ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
@@ -34,8 +32,6 @@ import { AI_CONFIG_MESSAGES, formatLatency } from "@/lib/ai-config/presentation"
 import type { BusinessAssuranceItem } from "@/lib/ai-config/availability";
 import { cn } from "@/lib/utils";
 import { repairTargetModelId } from "../ai-config-view";
-import { formatRate, rateTone } from "../duty-view";
-import type { FeatureCallStats } from "@/lib/ai-config/call-stats-contract";
 
 const DEFAULT_ROW_HINT = "没指定模型、或指定的不能用时，都用它";
 
@@ -99,68 +95,7 @@ function BusinessStatus({
   );
 }
 
-/** 功能级近期成功率 + 平均耗时；统计没到时显示「—」，不编数。 */
-function FeatureCallCells({ stats, statsReady }: { stats: FeatureCallStats | undefined; statsReady: boolean }) {
-  if (!statsReady) {
-    return (
-      <>
-        <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
-        <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
-      </>
-    );
-  }
-  const rate = formatRate(stats?.recent);
-  const tone = rateTone(stats?.recent, "recent");
-  const avg = stats?.recent.avgMs ?? null;
-  return (
-    <>
-      <TableCell className="text-[12px] tabular-nums">
-        {rate ? (
-          <span
-            className={tone === "danger" ? "text-status-danger-text" : tone === "warn" ? "text-[#8A6A2F]" : "text-[#141413]"}
-            title={`近 3 天最近 ${stats?.recent.calls ?? 0} 次${stats?.recent.rescuedCount ? `，其中 ${stats.recent.rescuedCount} 次靠换渠道救回` : ""}`}
-          >
-            {rate}
-          </span>
-        ) : (
-          <span className="text-[#A8A29E]">近 3 天没调用</span>
-        )}
-      </TableCell>
-      <TableCell className="text-[12px] tabular-nums text-[#1F1E1D]">
-        {avg === null ? <span className="text-[#A8A29E]">—</span> : formatLatency(avg)}
-      </TableCell>
-    </>
-  );
-}
-
-export function BusinessFunctionsPanel({
-  onRepairModel,
-  featureStats = null,
-}: {
-  onRepairModel?: (modelId: string) => void;
-  /** 调用统计里的功能级数据；null = 统计还没到或没接上 */
-  featureStats?: FeatureCallStats[] | null;
-}) {
-  const statsReady = featureStats !== null;
-  const featureStatsMap = useMemo(() => {
-    const map: Record<string, FeatureCallStats> = {};
-    for (const item of featureStats ?? []) map[item.featureKey] = item;
-    return map;
-  }, [featureStats]);
-  // 手机卡片上的一行：近期成功率 · 平均耗时
-  const featureCallLine = (key: string) => {
-    if (!statsReady) return null;
-    const item = featureStatsMap[key];
-    const rate = formatRate(item?.recent);
-    if (!rate) return <p className="text-[12px] text-[#A8A29E]">近 3 天没调用</p>;
-    const avg = item?.recent.avgMs;
-    return (
-      <p className="text-[12px] text-[#78716C]">
-        近期成功 {rate}
-        {avg != null && ` · 平均 ${formatLatency(avg)}`}
-      </p>
-    );
-  };
+export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (modelId: string) => void }) {
   const { bundle, runCommand } = useAiConfig();
   const report = useAvailabilityReport(bundle);
 
@@ -175,7 +110,6 @@ export function BusinessFunctionsPanel({
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
   const [testingOcr, setTestingOcr] = useState(false);
   const [speedDrawerOpen, setSpeedDrawerOpen] = useState(false);
-  const [followingExpanded, setFollowingExpanded] = useState(false);
   const [impactConfirm, setImpactConfirm] = useState<ImpactConfirmationState>(null);
 
   // 全局默认兜底设置
@@ -406,68 +340,6 @@ export function BusinessFunctionsPanel({
     </div>
   );
 
-  // 绝大多数功能跟随默认：只把单独选了模型的列出来，跟随默认的收成一行；其中有出问题的自动展开
-  const explicitFeatures = businessFeatures.filter((c) => c.modelId);
-  const followingFeatures = businessFeatures.filter((c) => !c.modelId);
-  const followingHasIssue = followingFeatures.some((c) => {
-    const status = assuranceMap[c.key]?.routingStatus;
-    return status !== undefined && status !== "normal";
-  });
-  const showFollowing = followingExpanded || followingHasIssue;
-  const defaultModelName = globalDefaultModelId ? modelFamilyNameMap[globalDefaultModelId] || globalDefaultModelId : "默认模型";
-  const followingToggle = (
-    <button
-      type="button"
-      onClick={() => setFollowingExpanded((v) => !v)}
-      disabled={followingHasIssue}
-      aria-expanded={showFollowing}
-      className="flex w-full items-center gap-2 py-1 text-left text-[12px] text-[#78716C] hover:text-[#141413] disabled:cursor-default"
-    >
-      {showFollowing ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-      <span className="text-[13px] text-[#1F1E1D]">其余 {followingFeatures.length} 个功能跟随默认（{defaultModelName}）</span>
-      {!showFollowing && <span className="truncate">{followingFeatures.map((c) => c.label).join("、")}</span>}
-    </button>
-  );
-
-  const featureRow = (ctrl: AiFeatureControl) => (
-    <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
-      <TableCell className="pl-4">
-        <span className="text-[14px] text-[#141413]" title={ctrl.description}>
-          {ctrl.label}
-        </span>
-      </TableCell>
-      <TableCell>
-        <ModelFamilySelect
-          value={ctrl.modelId}
-          onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
-          allowEmptyLabel="跟随全局默认"
-        />
-      </TableCell>
-      <TableCell>
-        <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
-      </TableCell>
-      <FeatureCallCells stats={featureStatsMap[ctrl.key]} statsReady={statsReady} />
-      <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
-    </TableRow>
-  );
-
-  const featureCard = (ctrl: AiFeatureControl) => (
-    <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-[14px] text-[#141413]">{ctrl.label}</span>
-        {featureActions(ctrl, true)}
-      </div>
-      {ctrl.description && <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>}
-      <ModelFamilySelect
-        value={ctrl.modelId}
-        onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
-        allowEmptyLabel="跟随全局默认"
-      />
-      <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
-      {featureCallLine(ctrl.key)}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* 桌面端：一行一个功能。说明收进名字的悬停提示，只有兜底行留一句 */}
@@ -478,8 +350,6 @@ export function BusinessFunctionsPanel({
               <TableHead className="w-[200px] text-[12px] text-[#78716C] pl-4">功能</TableHead>
               <TableHead className="w-[260px] text-[12px] text-[#78716C]">用哪个模型</TableHead>
               <TableHead className="text-[12px] text-[#78716C]">现在状态</TableHead>
-              <TableHead className="w-[96px] text-[12px] text-[#78716C]">近期成功率</TableHead>
-              <TableHead className="w-[80px] text-[12px] text-[#78716C]">平均耗时</TableHead>
               <TableHead className="w-[120px] text-right text-[12px] text-[#78716C] pr-4">操作</TableHead>
             </TableRow>
           </TableHeader>
@@ -504,9 +374,6 @@ export function BusinessFunctionsPanel({
               <TableCell>
                 <BusinessStatus assurance={assuranceMap["default"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
               </TableCell>
-              {/* 兜底本身不是一次调用，成功率看它顶上的各个功能 */}
-              <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
-              <TableCell className="text-[12px] text-[#A8A29E]">—</TableCell>
               <TableCell className="pr-4" />
             </TableRow>
 
@@ -527,18 +394,30 @@ export function BusinessFunctionsPanel({
                 <TableCell>
                   <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
                 </TableCell>
-                <FeatureCallCells stats={featureStatsMap["ocr_screenshot"]} statsReady={statsReady} />
                 <TableCell className="pr-4 text-right">{ocrActions()}</TableCell>
               </TableRow>
             )}
 
-            {explicitFeatures.map(featureRow)}
-            {followingFeatures.length > 0 && (
-              <TableRow className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
-                <TableCell colSpan={6} className="pl-4">{followingToggle}</TableCell>
+            {businessFeatures.map((ctrl) => (
+              <TableRow key={ctrl.key} className="border-b border-[#E2E2DF] hover:bg-[#F7F7F6]/60">
+                <TableCell className="pl-4">
+                  <span className="text-[14px] text-[#141413]" title={ctrl.description}>
+                    {ctrl.label}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <ModelFamilySelect
+                    value={ctrl.modelId}
+                    onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+                    allowEmptyLabel="跟随全局默认"
+                  />
+                </TableCell>
+                <TableCell>
+                  <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+                </TableCell>
+                <TableCell className="pr-4 text-right">{featureActions(ctrl)}</TableCell>
               </TableRow>
-            )}
-            {showFollowing && followingFeatures.map(featureRow)}
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -565,15 +444,24 @@ export function BusinessFunctionsPanel({
             {ocrControl.description && <p className="text-[12px] text-[#78716C]">{ocrControl.description}</p>}
             <ModelFamilySelect value={ocrControl.modelId} onChange={handleOcrModelChange} allowEmptyLabel="跟随全局默认" />
             <BusinessStatus assurance={assuranceMap["ocr_screenshot"]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
-            {featureCallLine("ocr_screenshot")}
           </div>
         )}
 
-        {explicitFeatures.map(featureCard)}
-        {followingFeatures.length > 0 && (
-          <div className="rounded-xl border border-[#E2E2DF] bg-white px-3 py-2">{followingToggle}</div>
-        )}
-        {showFollowing && followingFeatures.map(featureCard)}
+        {businessFeatures.map((ctrl) => (
+          <div key={ctrl.key} className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] text-[#141413]">{ctrl.label}</span>
+              {featureActions(ctrl, true)}
+            </div>
+            {ctrl.description && <p className="text-[12px] text-[#78716C]">{ctrl.description}</p>}
+            <ModelFamilySelect
+              value={ctrl.modelId}
+              onChange={(nextId) => handleModelChange(ctrl.key, nextId)}
+              allowEmptyLabel="跟随全局默认"
+            />
+            <BusinessStatus assurance={assuranceMap[ctrl.key]} modelFamilyNameMap={modelFamilyNameMap} onRepairModel={onRepairModel} />
+          </div>
+        ))}
       </div>
 
       {/* 已停用/已归档功能抽屉 */}
