@@ -13,28 +13,52 @@ export function repairTargetModelId(assurance: BusinessAssuranceItem | undefined
 
 const DEFAULT_KEY = "default";
 
-/** 每个模型被哪些功能配置使用：指定了模型的算它，跟随默认的算默认模型；全局默认本身记为「兜底」。 */
-export function buildModelUsage(assurances: readonly BusinessAssuranceItem[]): Record<string, string[]> {
-  const usage: Record<string, string[]> = {};
+export type ModelUsage = { isFallback: boolean; features: string[] };
+
+/** 每个模型被哪些功能配置使用：指定了模型的算它，跟随默认的算默认模型；兜底职责单独记，不混进功能数。 */
+export function buildModelUsage(assurances: readonly BusinessAssuranceItem[]): Record<string, ModelUsage> {
+  const usage: Record<string, ModelUsage> = {};
   for (const item of assurances) {
-    const modelId = item.key === DEFAULT_KEY ? item.defaultModelId : item.selectedModelId ?? item.defaultModelId;
+    const isDefaultRow = item.key === DEFAULT_KEY;
+    const modelId = isDefaultRow ? item.defaultModelId : item.selectedModelId ?? item.defaultModelId;
     if (!modelId) continue;
-    const label = item.key === DEFAULT_KEY ? "兜底" : item.label;
-    (usage[modelId] ??= []).push(label);
+    const entry = (usage[modelId] ??= { isFallback: false, features: [] });
+    if (isDefaultRow) entry.isFallback = true;
+    else entry.features.push(item.label);
   }
   return usage;
 }
 
-/** 模型卡上的一句「在给谁用」；没人用时不说。 */
-export function formatModelUsage(labels: readonly string[] | undefined): string | null {
-  if (!labels || labels.length === 0) return null;
-  if (labels.length <= 2) return `在给 ${labels.join("、")} 用`;
-  return `在给 ${labels.slice(0, 2).join("、")} 等 ${labels.length} 个功能用`;
+/** 模型卡上的一句「在给谁用」：兜底永远先说，功能多了只列前两个加总数；没人用时不说。 */
+export function formatModelUsage(usage: ModelUsage | undefined): string | null {
+  if (!usage) return null;
+  const { isFallback, features } = usage;
+  const featureText =
+    features.length === 0
+      ? null
+      : features.length <= 2
+      ? `在给 ${features.join("、")} 用`
+      : `在给 ${features.slice(0, 2).join("、")} 等 ${features.length} 个功能用`;
+  if (isFallback) return featureText ? `兜底 · ${featureText}` : "兜底";
+  return featureText;
 }
 
-/** 「要处理」筛选：在用的模型里，有渠道要你处理，或者一条能用的渠道都没有。 */
+/**
+ * 能用的渠道条数：只算绿灯「能用」。待复测虽然仍会被调度，但页面上不算能用，
+ * 筛选与模型卡统一按这个口径，不各说各的。
+ */
+export function usableChannelCount(family: AvailabilityModelFamily): number {
+  return family.identityCounts.active;
+}
+
+/** 「要处理」筛选：在用的模型里，有渠道要你处理，或者没有一条能用的渠道。 */
 export function familyNeedsAction(family: AvailabilityModelFamily): boolean {
-  return family.isShelved && (family.identityCounts.invalid > 0 || family.schedulableChannelCount === 0);
+  return family.isShelved && (family.identityCounts.invalid > 0 || usableChannelCount(family) === 0);
+}
+
+/** 是否该把「为此模型找渠道」摆成带字按钮：在用且能用的渠道不到两条。 */
+export function familyNeedsMoreChannels(family: AvailabilityModelFamily): boolean {
+  return family.isShelved && usableChannelCount(family) <= 1;
 }
 
 /** 模型卡在页面里的定位属性；模型标识里可能有斜杠，用属性选择器而不是 id。 */

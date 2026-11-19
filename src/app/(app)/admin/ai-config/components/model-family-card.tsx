@@ -23,7 +23,7 @@ import type { AiConfigCommandResult } from "@/lib/ai-config/client-command";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { cn } from "@/lib/utils";
 import { ROW_SELECTED } from "@/components/ui/selection";
-import { MODEL_CARD_ATTR } from "../ai-config-view";
+import { familyNeedsMoreChannels, MODEL_CARD_ATTR } from "../ai-config-view";
 
 // 渠道行顺序只认真实顺位：身份（待复测/休眠等）变化不改标记，不触发重排
 export function channelOrderResetKey(channels: readonly AvailabilityChannel[]): string {
@@ -135,7 +135,7 @@ export function ModelFamilyCard({
   const isSingleSupply = schedulableCount === 1 && activeCount > 0;
   const isNoSupply = schedulableCount === 0;
   const isRetestOnly = isNoSupply === false && activeCount === 0 && retestCount > 0;
-  const needsMoreChannels = family.isShelved && (isNoSupply || isSingleSupply);
+  const needsMoreChannels = familyNeedsMoreChannels(family);
 
   // 查找交换对象仍按真实顺位，不用展示快照位置推断相邻关系
   const sortedChannels = useMemo(() => {
