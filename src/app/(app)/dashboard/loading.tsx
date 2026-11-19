@@ -7,18 +7,16 @@ export default function DashboardLoading() {
   const block = "rounded-md bg-[#F1F1F0] animate-pulse-claude";
   return (
     <div className="max-w-5xl mx-auto space-y-5" aria-busy="true" aria-label="工作台加载中">
-      {/* 页头：状态句 + 副行；右侧两个入口 */}
-      <div className="px-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <div className={`h-6 w-40 sm:h-[34px] sm:w-52 ${block}`} />
-            {/* 副行是带上下内边距和边框的月历按钮，实高约 29px */}
-            <div className={`h-[29px] w-72 ${block}`} />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`h-7 w-24 ${block}`} />
-            <div className={`h-7 w-24 ${block}`} />
-          </div>
+      {/* 页头：状态句 + 副行；右侧两个入口（与真实页头同坐轨道边线，不内缩） */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <div className={`h-6 w-40 sm:h-[34px] sm:w-52 ${block}`} />
+          {/* 副行是带上下内边距和边框的月历按钮，实高约 29px */}
+          <div className={`h-[29px] w-72 ${block}`} />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`h-7 w-24 ${block}`} />
+          <div className={`h-7 w-24 ${block}`} />
         </div>
       </div>
 

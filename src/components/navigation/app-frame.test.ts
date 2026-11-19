@@ -34,3 +34,14 @@ test("顶栏导航只有字，当前页只用一种记号（浅砂底 + 深字�
   assert.doesNotMatch(menu, /shadow-input|h-\[2px\]|text-status-info|active:scale/);
   assert.match(menu, /const ITEM_ON = "bg-\[#F1F1F0\] text-\[#141413\]";/);
 });
+
+test("工作台页头与骨架同坐轨道边线：页头不额外内缩，左边线与顶栏 DYData 齐", () => {
+  const toolbar = read("src/components/video-submit/video-submit-panel-toolbar.tsx");
+  const loading = read("src/app/(app)/dashboard/loading.tsx");
+  const headerRow = "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between";
+  // 页头行外再包一层横向内边距，就会把标题推离轨道边线（实测曾偏 0.5rem）
+  assert.doesNotMatch(toolbar, /<div className="px-2">\s*<div className="flex flex-col gap-3/);
+  assert.doesNotMatch(loading, /<div className="px-2">\s*<div className="flex flex-col gap-3/);
+  assert.ok(toolbar.includes(headerRow), "真实页头行必须在");
+  assert.ok(loading.includes(headerRow), "骨架页头行必须与真实页头同结构，首屏不跳");
+});

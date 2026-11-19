@@ -50,8 +50,9 @@ export function VideoSubmitPanelToolbar({
   const menuMotion = useExitMotion(isCalendarOpen);
   return (
     <>
-        {/* 页头：一句话说今天交没交；副行是本月的账，点开看月历（裸铺于底层画布，无卡片外框） */}
-        <div className="px-2">
+        {/* 页头：一句话说今天交没交；副行是本月的账，点开看月历（裸铺于底层画布，无卡片外框）
+            页头坐在轨道边线上（与顶栏 DYData 同轴，美学宝典 §4.3），不额外内缩 */}
+        <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             {/* 左侧：状态句 + 本月履约摘要 */}
             <div className="space-y-1 min-w-0">
@@ -139,7 +140,7 @@ export function VideoSubmitPanelToolbar({
               </Button>
             </FilterBar>
           </div>
-        </div>
+        </>
 
     </>
   );
