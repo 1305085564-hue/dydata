@@ -14,6 +14,8 @@ import { describeLastLogin, memberWorkGroupNames } from "@/app/(app)/admin/modul
 import { archiveSnapshotRoleLabel, resolveProfileCompanyRoleForView, runtimeRoleForView } from "@/lib/modules/domain/view-rules";
 import type { ProfileSummary } from "@/lib/modules/types";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
+import { rowSelectionClass } from "@/components/ui/selection";
+import { MemberAvatar, QuietChip, RoleChip } from "./member-identity";
 
 function emptyTextFor(input: { memberView: "active" | "archived"; searchQuery: string; selectedTeamId: string }) {
   if (input.searchQuery.trim()) return `没找到「${input.searchQuery.trim()}」`;
@@ -121,7 +123,7 @@ export function MemberTable({
       <TableBody>
         {sortedProfiles.map((member) => {
           const isChecked = selectedMemberIds.includes(member.id);
-          const isHighlighted = activeMemberId === member.id || restoredFocusId === member.id;
+          const isHighlighted = isChecked || activeMemberId === member.id || restoredFocusId === member.id;
           const memberCompanyRole = resolveProfileCompanyRoleForView(member);
           const teamName = isArchivedView ? getArchivedTeamName(member) : member.team_name;
           const groups = isArchivedView ? [] : memberWorkGroupNames(member.id, workGroupRoster, workGroups);
@@ -132,7 +134,8 @@ export function MemberTable({
             <TableRow
               key={member.id}
               onClick={() => openMemberDrawer(member)}
-              className={cn("cursor-pointer", isHighlighted && "bg-[#F1F1F0] hover:bg-[#F1F1F0]")}
+              aria-selected={isHighlighted}
+              className={cn("cursor-pointer", rowSelectionClass(isHighlighted))}
             >
               {showCheckbox && (
                 <TableCell className="w-10" onClick={(event) => event.stopPropagation()}>
@@ -149,7 +152,9 @@ export function MemberTable({
                   ) : null}
                 </TableCell>
               )}
-              <TableCell className="max-w-56">
+              <TableCell className="max-w-64">
+                <span className="flex min-w-0 items-center gap-2">
+                <MemberAvatar name={member.name} />
                 <button
                   type="button"
                   onClick={(event) => {
@@ -157,11 +162,12 @@ export function MemberTable({
                     openMemberDrawer(member);
                   }}
                   aria-label={`打开「${member.name}」${isArchivedView ? "归档档案" : "成员详情"}`}
-                  className="max-w-full truncate rounded-md text-left text-[14px] text-[#141413] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                  className="min-w-0 truncate rounded-md text-left text-[14px] text-[#141413] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                 >
                   {member.name || "未命名"}
-                  {member.id === currentUserId && <span className="ml-1 text-[#78716C]">（我）</span>}
                 </button>
+                {member.id === currentUserId && <QuietChip>我</QuietChip>}
+                </span>
               </TableCell>
               <TableCell className="max-w-40 truncate">
                 {teamName ? <span className="text-[#1F1E1D]">{teamName}</span> : <span className="text-[#A8A29E]">还没分团队</span>}
@@ -171,11 +177,18 @@ export function MemberTable({
                   {groups.length > 0 ? groups.join("、") : <span className="text-[#A8A29E]">—</span>}
                 </TableCell>
               )}
-              <TableCell className="text-[#78716C]">
-                {isArchivedView
-                  ? archiveSnapshotRoleLabel(member.archive_snapshot)
-                  : getRoleLabel(runtimeRoleForView(memberCompanyRole), { membershipStatus: member.membership_status })}
-                {isPermanentExempt && <span className="ml-1">· 不参与考核</span>}
+              <TableCell>
+                <span className="flex items-center gap-1">
+                  {isArchivedView ? (
+                    <QuietChip>{archiveSnapshotRoleLabel(member.archive_snapshot)}</QuietChip>
+                  ) : (
+                    <RoleChip
+                      role={memberCompanyRole}
+                      label={getRoleLabel(runtimeRoleForView(memberCompanyRole), { membershipStatus: member.membership_status })}
+                    />
+                  )}
+                  {isPermanentExempt && <QuietChip>不参与考核</QuietChip>}
+                </span>
               </TableCell>
               {isArchivedView ? (
                 <>

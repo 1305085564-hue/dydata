@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Archive, Building2, KeyRound, type LucideIcon, UserCog, Users, UsersRound } from "lucide-react";
 import { getRoleLabel } from "@/lib/role-label";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { MemberPermissionEditor } from "@/app/(app)/admin/components/member-permission-editor";
@@ -10,6 +11,7 @@ import type { CompanyRole, DataScope, Permissions } from "@/types";
 import type { ProfileSummary, TeamOption } from "@/lib/modules/types";
 import type { WorkGroupRow } from "@/lib/work-groups";
 import { MemberInspectorExemption } from "./member-inspector-exemption";
+import { RoleChip } from "./member-identity";
 
 export interface MemberInspectorBodyProps {
   activeMember: ProfileSummary;
@@ -44,16 +46,19 @@ export interface MemberInspectorBodyProps {
 }
 
 const ROW = "flex min-h-9 items-center justify-between gap-3 py-1";
-const ROW_LABEL = "shrink-0 text-[14px] text-[#78716C]";
+const ROW_LABEL = "flex shrink-0 items-center gap-2 text-[14px] text-[#1F1E1D]";
 const SELECT_TRIGGER =
   "h-7 min-w-[140px] justify-end gap-1 border-transparent bg-transparent px-2 text-right text-[14px] text-[#141413] shadow-none hover:bg-[#EBEBE9]";
 const TEXT_ACTION =
   "h-7 rounded-md px-2 text-[14px] text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-50";
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+function Row({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
     <div className={ROW}>
-      <span className={ROW_LABEL}>{label}</span>
+      <span className={ROW_LABEL}>
+        <Icon className="size-3.5 text-[#78716C]" aria-hidden="true" />
+        {label}
+      </span>
       <div className="flex min-w-0 items-center justify-end gap-1 text-[14px] text-[#1F1E1D]">{children}</div>
     </div>
   );
@@ -126,7 +131,7 @@ export function MemberInspectorBody({
         <section className="space-y-1" aria-labelledby="member-position-title">
           <ItemHeading as="h4" id="member-position-title">位置</ItemHeading>
           <div className="divide-y divide-[#E2E2DF]/60">
-            <Row label="团队">
+            <Row icon={Building2} label="团队">
               {canEditActiveMemberTeam ? (
                 <Select
                   value={activeMember.team_id || "__unassigned__"}
@@ -153,7 +158,7 @@ export function MemberInspectorBody({
               )}
             </Row>
 
-            <Row label="工种小队">
+            <Row icon={Users} label="工种小队">
               {canEditWorkGroups && activeMember.team_id ? (
                 <Select value={activeMemberPeerGroup?.id || "__none__"} onValueChange={(val) => { if (val) handleAssignPeerGroup(val); }}>
                   <SelectTrigger aria-label="工种小队" className={SELECT_TRIGGER}>
@@ -175,7 +180,7 @@ export function MemberInspectorBody({
               )}
             </Row>
 
-            <Row label="运营小队">
+            <Row icon={UsersRound} label="运营小队">
               {canEditWorkGroups && activeMember.team_id ? (
                 <Select value={activeMemberOperatorGroup?.id || "__none__"} onValueChange={(val) => { if (val) handleAssignOperatorGroup(val); }}>
                   <SelectTrigger aria-label="运营小队" className={SELECT_TRIGGER}>
@@ -204,8 +209,8 @@ export function MemberInspectorBody({
         <ItemHeading as="h4" id="member-role-title">身份与能做的事</ItemHeading>
         {!isArchived && (
           <div className="border-b border-[#E2E2DF]/60">
-            <Row label="身份">
-              <span>{roleLabel}</span>
+            <Row icon={UserCog} label="身份">
+              <RoleChip role={activeMemberCompanyRole} label={roleLabel} />
               {!activeMemberIsReadOnly && canManageCompany && (
                 <button type="button" onClick={() => handleRoleChangeClick(activeMember)} className={TEXT_ACTION}>
                   {activeMemberCompanyRole === "admin" ? "改为组员" : "升为组长"}
@@ -247,7 +252,7 @@ export function MemberInspectorBody({
         <section className="space-y-1" aria-labelledby="member-account-title">
           <ItemHeading as="h4" id="member-account-title">账号</ItemHeading>
           <div className="divide-y divide-[#E2E2DF]/60">
-            <Row label="登录密码">
+            <Row icon={KeyRound} label="登录密码">
               <button
                 type="button"
                 onClick={() => {
@@ -265,7 +270,10 @@ export function MemberInspectorBody({
 
       {!isArchived && canArchiveTarget(activeMember) && (
         <div className="flex items-center justify-between gap-3 border-t border-[#E2E2DF] pt-4">
-          <span className="text-[14px] text-[#78716C]">人离开了：封禁登录、移出团队，记录都保留</span>
+          <span className="flex items-center gap-2 text-[14px] text-[#78716C]">
+            <Archive className="size-3.5 text-status-danger" aria-hidden="true" />
+            人离开了：封禁登录、移出团队，记录都保留
+          </span>
           <button
             type="button"
             onClick={() => {

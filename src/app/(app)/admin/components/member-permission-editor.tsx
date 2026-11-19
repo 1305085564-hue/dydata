@@ -1,5 +1,7 @@
 "use client";
 
+import { Eye, ListChecks } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import {
   PERMISSION_CATEGORIES,
@@ -54,7 +56,10 @@ export function MemberPermissionEditor({
   return (
     <div className="divide-y divide-[#E2E2DF]/60">
       <div className="flex min-h-9 items-start justify-between gap-3 py-2">
-        <span className="shrink-0 text-[14px] text-[#78716C]">看得到</span>
+        <span className="flex shrink-0 items-center gap-2 text-[14px] text-[#1F1E1D]">
+          <Eye className="size-3.5 text-[#78716C]" aria-hidden="true" />
+          看得到
+        </span>
         <span className="text-right text-[14px] text-[#1F1E1D]">{describeDerivedDataScope(member)}</span>
       </div>
 
@@ -63,7 +68,10 @@ export function MemberPermissionEditor({
       ) : (
         <details className="group py-2">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px]">
-            <span className="text-[#78716C]">能用的功能</span>
+            <span className="flex items-center gap-2 text-[#1F1E1D]">
+              <ListChecks className="size-3.5 text-[#78716C]" aria-hidden="true" />
+              能用的功能
+            </span>
             <span className="text-[#1F1E1D] tabular-nums group-hover:text-[#141413]">
               {enabledCount} / {allKeys.length} 项
               <span className="ml-1 text-[#78716C] group-open:hidden">展开</span>

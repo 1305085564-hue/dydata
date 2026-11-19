@@ -34,6 +34,7 @@ import {
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
 import { cn } from "@/lib/utils";
+import { rowSelectionClass } from "@/components/ui/selection";
 import { formatMonthDay, isMissingStreak } from "../fulfillment-page-view";
 
 type Source = "queue" | "matrix";
@@ -294,7 +295,7 @@ export function FulfillmentMemberSheet({
                           onClick={() => handleDateSelect(d)}
                           className={cn(
                             "flex w-full items-center gap-3 px-3 py-2 text-left text-[14px] transition-colors",
-                            isSelected ? "bg-[#F1F1F0]" : "hover:bg-[#F7F7F6]",
+                            rowSelectionClass(isSelected),
                           )}
                         >
                           <span className="w-16 shrink-0 tabular-nums text-[#78716C]">{formatMonthDay(d)}</span>

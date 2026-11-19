@@ -1,3 +1,4 @@
+import { ShieldOff } from "lucide-react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Switch } from "@/components/ui/switch";
 import { canManagePermanentExemption, type PermanentExemptionState } from "@/app/(app)/admin/modules/permanent-exemption-logic";
@@ -38,9 +39,12 @@ export function MemberInspectorExemption({
     <section className="space-y-1" aria-labelledby="member-exemption-title">
       <ItemHeading as="h4" id="member-exemption-title">考核</ItemHeading>
       <div className="flex min-h-9 items-center justify-between gap-3 py-1">
-        <div className="min-w-0">
-          <p className="text-[14px] text-[#1F1E1D]">不参与考核</p>
-          <p className="truncate text-[12px] text-[#78716C]" title={note}>{note}</p>
+        <div className="flex min-w-0 items-start gap-2">
+          <ShieldOff className="mt-1 size-3.5 shrink-0 text-[#78716C]" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-[14px] text-[#1F1E1D]">不参与考核</p>
+            <p className="truncate text-[12px] text-[#78716C]" title={note}>{note}</p>
+          </div>
         </div>
         <Switch
           checked={activeMemberExemptionState.isPermanent}

@@ -12,6 +12,8 @@ import {
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
 import { cn } from "@/lib/utils";
+import { rowSelectionClass } from "@/components/ui/selection";
+import { MemberAvatar } from "@/components/modules/member-identity";
 import { isMissingStreak, type RosterSortDir } from "../fulfillment-page-view";
 
 export interface FulfillmentAppeal {
@@ -143,7 +145,7 @@ const MENU_ACTIONS: { action: ManualFulfillmentMarkStatus; label: string }[] = [
 const MENU_BUTTON =
   "flex h-8 items-center justify-center rounded-md border border-[#E2E2DF] bg-white text-[14px] text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9]";
 
-const NAME_COL = "w-[112px] min-w-[112px] max-w-[112px]";
+const NAME_COL = "w-[144px] min-w-[144px] max-w-[144px]";
 const MONTH_COL = "w-[148px] min-w-[148px] max-w-[148px]";
 
 /**
@@ -245,7 +247,7 @@ export function FulfillmentMatrixRoster({
               <th className={cn("sticky left-0 z-20 bg-white px-3 py-2.5 text-left font-normal", NAME_COL)}>成员</th>
               <th
                 aria-sort={ariaSort}
-                className={cn("sticky left-[112px] z-20 border-r border-[#E2E2DF] bg-white px-3 py-2.5 text-left font-normal", MONTH_COL)}
+                className={cn("sticky left-[144px] z-20 border-r border-[#E2E2DF] bg-white px-3 py-2.5 text-left font-normal", MONTH_COL)}
               >
                 {sortable ? (
                   <button
@@ -297,31 +299,34 @@ export function FulfillmentMatrixRoster({
                 const isRowActive = member.userId === activeUserId;
                 const assessedDays = member.requiredCount + member.leaveDays + member.waivedDays;
                 const excusedDays = member.leaveDays + member.waivedDays;
-                const stickyBg = isRowActive ? "bg-[#F7F7F6]" : "bg-white";
+                const stickyBg = isRowActive ? "bg-[#E4E4E1]" : "bg-white";
                 return (
                   <tr
                     key={member.userId}
                     className={cn(
                       "border-b border-[#E2E2DF]/60 last:border-b-0",
-                      isRowActive ? "bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]",
+                      rowSelectionClass(isRowActive),
                     )}
                   >
                     <td className={cn("sticky left-0 z-10 px-3 py-2", NAME_COL, stickyBg)}>
                       <button
                         type="button"
                         onClick={() => onCellClick(member, today)}
-                        className="flex w-full flex-col items-start overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-info/20 rounded-md"
+                        className="flex w-full items-center gap-2 overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-info/20 rounded-md"
                       >
-                        <span className="w-full truncate text-[14px] text-[#141413] hover:underline underline-offset-2">
-                          {member.userName}
+                        <MemberAvatar name={member.userName} />
+                        <span className="flex min-w-0 flex-1 flex-col items-start">
+                          <span className="w-full truncate text-[14px] text-[#141413] hover:underline underline-offset-2">
+                            {member.userName}
+                          </span>
+                          {member.teamName && (
+                            <span className="w-full truncate text-[12px] text-[#78716C]">{member.teamName}</span>
+                          )}
                         </span>
-                        {member.teamName && (
-                          <span className="w-full truncate text-[12px] text-[#78716C]">{member.teamName}</span>
-                        )}
                       </button>
                     </td>
 
-                    <td className={cn("sticky left-[112px] z-10 border-r border-[#E2E2DF] px-3 py-2", MONTH_COL, stickyBg)}>
+                    <td className={cn("sticky left-[144px] z-10 border-r border-[#E2E2DF] px-3 py-2", MONTH_COL, stickyBg)}>
                       <div className="flex items-baseline gap-2 tabular-nums">
                         <span className="text-[14px] text-[#141413]">
                           {member.publishedCount}

@@ -98,3 +98,24 @@ test("页面结构：没有固定标题与导语、没有毛玻璃批量条、�
   assert.doesNotMatch(batch, /backdrop-blur/);
   assert.doesNotMatch(alerts, /<Alert|<Badge/);
 });
+
+test("定位锚与选中标准：名单有头像和身份色、表格在托盘里、行选中用 Row Selected", () => {
+  const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
+  const table = read("src/components/modules/member-table.tsx");
+  const content = read("src/app/(app)/admin/modules/modules-content-v3.tsx");
+  const body = read("src/components/modules/member-inspector-body.tsx");
+  const selection = read("src/components/ui/selection.ts");
+  assert.match(table, /<MemberAvatar/);
+  assert.match(table, /<RoleChip/);
+  assert.match(table, /rowSelectionClass\(isHighlighted\)/);
+  assert.match(content, /shadow-card-ring/);
+  assert.match(body, /icon=\{Building2\}/);
+  assert.match(selection, /bg-\[#E4E4E1\]/);
+  for (const path of [
+    "src/components/modules/member-table.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-member-sheet.tsx",
+  ]) {
+    assert.doesNotMatch(read(path), /(isSelected|isRowActive|isHighlighted) \? "bg-\[#F(1F1F0|7F7F6)\]/, path);
+  }
+});

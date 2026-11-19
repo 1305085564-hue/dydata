@@ -1,3 +1,4 @@
+import { Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TeamOption } from "@/lib/modules/types";
 
@@ -65,6 +66,7 @@ export function MemberBatchActions({
           }}
           className="text-status-danger hover:text-status-danger"
         >
+          <Archive className="size-3.5" aria-hidden="true" />
           归档
         </Button>
       )}

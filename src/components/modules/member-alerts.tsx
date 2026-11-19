@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 import type { PendingRequest, TeamOption } from "@/lib/modules/types";
 import { cn } from "@/lib/utils";
+import { Inbox, UserPlus } from "lucide-react";
+import { MemberAvatar } from "./member-identity";
 import {
   buildMembersHeadline,
   buildPendingLine,
@@ -76,14 +78,19 @@ export function MemberAlerts({
             <button
               type="button"
               onClick={onShowUnassigned}
-              className="rounded-md text-[14px] text-[#1F1E1D] tabular-nums hover:text-[#141413] hover:underline underline-offset-4"
+              className="inline-flex items-center gap-1 rounded-md bg-status-warning-bg px-2 py-0.5 text-[14px] text-status-warning-text tabular-nums hover:underline underline-offset-4"
             >
               {unassignedCount} 人还没分团队 →
             </button>
           )}
         </div>
         {showPendingLine && (
-          <p className={cn("text-[14px]", pendingLine.hasWork ? "text-[#1F1E1D]" : "text-[#78716C]")}>
+          <p className={cn("flex items-center gap-2 text-[14px]", pendingLine.hasWork ? "text-[#1F1E1D]" : "text-[#78716C]")}>
+            {pendingLine.hasWork ? (
+              <UserPlus className="size-3.5 text-status-warning" aria-hidden="true" />
+            ) : (
+              <Inbox className="size-3.5 text-[#A8A29E]" aria-hidden="true" />
+            )}
             {pendingLine.text}
           </p>
         )}
@@ -93,8 +100,9 @@ export function MemberAlerts({
         <section aria-label="待批的入团申请" className="divide-y divide-[#E2E2DF]/60 border-y border-[#E2E2DF]/60">
           {pendingRequests.map((req) => (
             <div key={req.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2">
-              <p className="min-w-0 flex-1 text-[14px] text-[#78716C]">
-                <span className="text-[#141413]">{req.applicantName}</span>
+              <p className="flex min-w-0 flex-1 items-center text-[14px] text-[#78716C]">
+                <MemberAvatar name={req.applicantName} />
+                <span className="ml-2 text-[#141413]">{req.applicantName}</span>
                 <span className="mx-2">申请加入 {req.targetTeamName}</span>
                 <span className="tabular-nums">{formatDateKey(req.createdAt.slice(0, 10))}</span>
               </p>
@@ -152,8 +160,9 @@ export function MemberAlerts({
 
               return (
                 <div key={request.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2">
-                  <p className="min-w-0 flex-1 text-[14px] text-[#78716C]">
-                    <span className="text-[#141413]">{request.applicant_name}</span>
+                  <p className="flex min-w-0 flex-1 flex-wrap items-center text-[14px] text-[#78716C]">
+                    <MemberAvatar name={request.applicant_name} />
+                    <span className="ml-2 text-[#141413]">{request.applicant_name}</span>
                     <span className="mx-2">
                       {isArchivedOrDeleted
                         ? request.applicant_membership_status === "archived" ? "已归档" : "账号已注销"

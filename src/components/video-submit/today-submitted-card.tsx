@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ColophonMark } from "@/components/editorial/editorial-illustrations";
 import { cn } from "@/lib/utils";
+import { ROW_SELECTED } from "@/components/ui/selection";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
 
@@ -47,7 +48,7 @@ export function TodaySubmittedCard({
           return (
             <div
               key={report.id || `receipt-${index}`}
-              className={cn("flex items-center gap-3 p-4", reports.length > 1 && isSelected && "bg-[#F7F7F6]")}
+              className={cn("flex items-center gap-3 p-4", reports.length > 1 && isSelected && ROW_SELECTED)}
             >
               {assetUrl ? (
                 <button

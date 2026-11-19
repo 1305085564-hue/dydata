@@ -853,7 +853,8 @@ export function AdminModulesContentV3({
         handleAssignOrphanMember={handleAssignOrphanMember}
         handleRejectOrphanRequest={handleRejectOrphanRequest}
       />
-      <MemberToolbar
+      <section aria-label="成员名单" className="overflow-hidden rounded-xl bg-white shadow-card-ring">
+      <div className="border-b border-[#E2E2DF]/60 px-3 py-2"><MemberToolbar
         selectedTeamId={selectedTeamId}
         setSelectedTeamId={setSelectedTeamId}
         profilesForCurrentView={profilesForCurrentView}
@@ -870,7 +871,7 @@ export function AdminModulesContentV3({
         setMemberView={setMemberView}
         setActiveMemberId={setActiveMemberId}
         setSelectedMemberIds={setSelectedMemberIds}
-      />
+      /></div>
       <MemberTable
         sortedProfiles={sortedProfiles}
         memberView={memberView}
@@ -893,6 +894,7 @@ export function AdminModulesContentV3({
         searchQuery={searchQuery}
         selectedTeamId={selectedTeamId}
       />
+      </section>
 
       <MemberBatchActions
           selectedMemberIds={selectedMemberIds}

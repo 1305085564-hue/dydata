@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { Search, X } from "lucide-react";
+import { Search, Settings, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ALL_TEAMS_ID, UNASSIGNED_TEAM_ID, countProfilesInTeamForView, getProfileTeamIdForView } from "@/app/(app)/admin/modules/team-view-logic";
@@ -68,7 +68,7 @@ export function MemberToolbar({
   };
 
   return (
-    <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-1">
+    <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
       <div role="tablist" aria-label="在职或归档" className="flex items-center gap-1">
         <button
           type="button"
@@ -178,8 +178,9 @@ export function MemberToolbar({
           <button
             type="button"
             onClick={() => setTeamManagementDialogOpen(true)}
-            className={cn(QUIET_BUTTON, "px-2 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]")}
+            className={cn(QUIET_BUTTON, "gap-1 px-2 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]")}
           >
+            <Settings className="size-3.5" aria-hidden="true" />
             管理团队
           </button>
         )}
