@@ -19,8 +19,8 @@ function migrationChangesPresent() {
   return ranges.some((args) => (spawnSync("git", args, { cwd: root, encoding: "utf8" }).stdout ?? "").trim());
 }
 
-// 迁移是批7的正式交付物，预发布脚本只报告范围；真正推送前由入库的
-// scripts/git-hooks/pre-push 强制执行 db:replay，避免这里挡住已获批准的迁移。
+// 迁移审批仍由预发布范围门禁负责；真正推送前再由入库的
+// scripts/git-hooks/pre-push 重放本机数据库，避免未经批准的迁移混入推送。
 
 const scriptTests = readdirSync(path.join(root, "scripts"))
   .filter((file) => file.endsWith(".test.mjs"))
@@ -48,7 +48,8 @@ function runStep(step) {
     const tracked = spawnSync("git", ["diff", "--name-only", "--", "supabase/migrations"], { cwd: root, encoding: "utf8" });
     const untracked = spawnSync("git", ["ls-files", "--others", "--exclude-standard", "--", "supabase/migrations"], { cwd: root, encoding: "utf8" });
     const changed = `${tracked.stdout ?? ""}${untracked.stdout ?? ""}`.trim();
-    console.log(changed ? `[preflight] migration changes detected：${changed}` : "[preflight] migration scope clean");
+    if (changed) throw new Error(`本批禁止修改 supabase/migrations/**：${changed}`);
+    console.log("[preflight] migration scope clean");
     return 0;
   }
   const command = step.command.startsWith("npx ") ? "npx" : step.command.startsWith("node ") ? process.execPath : npmCommand;

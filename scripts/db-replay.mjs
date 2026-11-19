@@ -9,7 +9,9 @@ const LOCAL_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const REPLAY_DATABASE = "dydata_replay";
 const REPLAY_URL = `postgresql://postgres:postgres@127.0.0.1:54322/${REPLAY_DATABASE}`;
 const root = process.cwd();
-const keep = process.argv.includes("--keep");
+// 重放结果供后续 db:drift 和 real-db 测试继续使用，默认保留演练库。
+// 需要清理时显式传 --drop，保留 --keep 作为兼容参数。
+const keep = !process.argv.includes("--drop") || process.argv.includes("--keep");
 const exceptionsPath = path.join(root, "supabase/migration-ledger-exceptions.json");
 const migrationDir = path.join(root, "supabase/migrations");
 const pgBin = "/opt/homebrew/opt/postgresql@17/bin";
