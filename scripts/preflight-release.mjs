@@ -19,6 +19,9 @@ function migrationChangesPresent() {
   return ranges.some((args) => (spawnSync("git", args, { cwd: root, encoding: "utf8" }).stdout ?? "").trim());
 }
 
+// 迁移是批7的正式交付物，预发布脚本只报告范围；真正推送前由入库的
+// scripts/git-hooks/pre-push 强制执行 db:replay，避免这里挡住已获批准的迁移。
+
 const scriptTests = readdirSync(path.join(root, "scripts"))
   .filter((file) => file.endsWith(".test.mjs"))
   .sort()

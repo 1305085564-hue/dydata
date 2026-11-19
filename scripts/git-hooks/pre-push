@@ -10,6 +10,27 @@ cd "$(git rev-parse --show-toplevel)"
 # 已 cd 到仓库根目录，清掉后 git 照常按当前目录找到本仓库。
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
 
+has_migration_changes() {
+  git diff --name-only origin/main...HEAD -- supabase/migrations
+  git diff --name-only HEAD -- supabase/migrations
+  git diff --cached --name-only -- supabase/migrations
+  git ls-files --others --exclude-standard -- supabase/migrations
+}
+
+if [ -n "$(has_migration_changes)" ]; then
+  echo "[pre-push] 迁移改动，先在本机重放"
+  if ! pg_isready -h 127.0.0.1 -p 54322 >/dev/null 2>&1; then
+    echo "[pre-push] 本机数据库未启动，请先 colima start && supabase start，再重试。" >&2
+    exit 1
+  fi
+  npm run db:replay || {
+    echo "[pre-push] 迁移重放失败，已阻断推送。" >&2
+    exit 1
+  }
+else
+  echo "[pre-push] 推送范围没有迁移改动，跳过本机重放"
+fi
+
 echo "[pre-push] 1/6 类型检查"
 npx tsc --noEmit --pretty false
 echo "[pre-push] 2/6 单元测试（不含真实库组）"
