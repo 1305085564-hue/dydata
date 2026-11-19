@@ -269,7 +269,7 @@ export function AuthorWorksView({
             </div>
           ) : (
             <table className="w-full table-fixed text-left text-[13px] tabular-nums">
-              <thead className="text-[12px] text-[#78716C] select-none">
+              <thead className="text-[12px] text-[#78716C] select-none [&_th]:font-normal">
                 <tr className="border-b border-[#E2E2DF]/60">
                   <th className="w-[56px] py-2 pr-2">日期</th>
                   <th className="py-2 px-2">作品 · 账号</th>

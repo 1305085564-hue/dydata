@@ -21,7 +21,7 @@ import {
   formatCount,
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
-import { SORTED_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
+import { SORTED_COL_BG, SORTED_STICKY_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
 import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
 
@@ -38,7 +38,7 @@ type ContentListTableProps = {
   selectedVideoId?: string | null;
   onSelectVideoId: (id: string | null) => void;
   ownerNames?: Record<string, string>;
-  onSelectAuthor?: (authorId: string, authorName: string) => void;
+  onSelectAuthor?: (authorId: string, authorName: string, sourceVideoId?: string | null) => void;
   highlightRules: HighlightRuleMap;
   evaluationStandards?: EvaluationStandards;
 };
@@ -47,10 +47,11 @@ type CellContext = {
   item: ProcessedContentRow;
   isSingleDay: boolean;
   isSelected: boolean;
+  isTitleSorted: boolean;
   standards: EvaluationStandards;
   hit: (key: HighlightFieldKey) => boolean;
   ownerNames?: Record<string, string>;
-  onSelectAuthor?: (authorId: string, authorName: string) => void;
+  onSelectAuthor?: (authorId: string, authorName: string, sourceVideoId?: string | null) => void;
   onOpen: () => void;
 };
 
@@ -71,7 +72,9 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
           "sticky left-0 z-20 py-2 px-3 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
           ctx.isSelected
             ? "bg-[#F1F1F0] group-hover:bg-[#EBEBE9]"
-            : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
+            : ctx.isTitleSorted
+              ? `${SORTED_STICKY_COL_BG} group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]`
+              : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
         ),
         content: (
           <div className="flex min-w-0 flex-col gap-1">
@@ -233,6 +236,7 @@ export function ContentListTable({
                   item,
                   isSingleDay,
                   isSelected,
+                  isTitleSorted: sortField === "published_at",
                   standards: evaluationStandards,
                   hit: (key) => isCellHighlighted(item, key, highlightRules),
                   ownerNames,
