@@ -20,18 +20,32 @@ function TooltipProvider({
   )
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+function Tooltip({ disableHoverablePopup = true, ...props }: TooltipPrimitive.Root.Props) {
+  return (
+    <TooltipPrimitive.Root
+      data-slot="tooltip"
+      disableHoverablePopup={disableHoverablePopup}
+      {...props}
+    />
+  )
 }
 
-/** 默认静止 100ms 即出（与全站 Provider 设定一致；不写时底层默认要 600ms）。 */
-function TooltipTrigger({ delay = 100, ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" delay={delay} {...props} />
+/** 默认静止 100ms 即出（与全站 Provider 设定一致；不写时底层默认要 600ms）；移出立即关闭不滞留。 */
+function TooltipTrigger({ delay = 100, closeDelay = 0, ...props }: TooltipPrimitive.Trigger.Props) {
+  return (
+    <TooltipPrimitive.Trigger
+      data-slot="tooltip-trigger"
+      delay={delay}
+      closeDelay={closeDelay}
+      {...props}
+    />
+  )
 }
 
 /**
  * 关闭不播退场动画、立即卸载：退场动画被下一个浮层打断时，底层组件会漏掉卸载，
  * 旧浮层逻辑上关了却一直不透明地停在画面上（协作管理个人档案作品表快速划过曾叠出 5 层）。
+ * 浮层本身不拦截指针命中（pointer-events-none），避免移动鼠标时遮挡相邻单元格或页头。
  */
 function TooltipContent({
   className,
@@ -53,12 +67,12 @@ function TooltipContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        className="isolate z-[110]"
+        className="pointer-events-none isolate z-[110]"
       >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            "z-[110] inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] text-[#1F1E1D] shadow-claude-float duration-100 has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-[110] **:data-[slot=kbd]:rounded-md data-open:animate-in data-open:fade-in-0 data-instant:animate-none data-instant:duration-0",
+            "pointer-events-none z-[110] inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] text-[#1F1E1D] shadow-claude-float duration-100 has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-[110] **:data-[slot=kbd]:rounded-md data-open:animate-in data-open:fade-in-0 data-instant:animate-none data-instant:duration-0",
             className
           )}
           {...props}

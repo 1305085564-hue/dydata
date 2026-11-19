@@ -71,5 +71,6 @@ export function visibleContentColumns(isSpacious: boolean): ContentColumn[] {
   return CONTENT_COLUMNS.filter((column) => !(isSpacious && column.fullOnly));
 }
 
-/** 当前排序列整列浅底，和协作管理岗位表同一配方 */
+/** 当前排序列整列浅底，和协作管理岗位表同一配方；冻结列需不透明底防止横向滚动透字 */
 export const SORTED_COL_BG = "bg-[#F7F7F6]/70";
+export const SORTED_STICKY_COL_BG = "bg-[#F7F7F6]";
