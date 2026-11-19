@@ -25,8 +25,6 @@ import type { SortByOption, TopicPoolExplorerProps } from "@/lib/topics/domain/p
 export type PoolToolbarProps = Pick<
   TopicPoolExplorerProps,
   | "topics"
-  | "loading"
-  | "totalCount"
   | "searchQuery"
   | "currentView"
   | "currentTimeRange"
@@ -50,8 +48,6 @@ export type PoolToolbarProps = Pick<
 
 export function PoolToolbar({
   topics,
-  loading,
-  totalCount,
   searchQuery,
   currentView,
   currentTimeRange,
@@ -96,17 +92,6 @@ export function PoolToolbar({
             }`}
           >
             <span>全部选题</span>
-            {!loading && totalCount > 0 && (
-              <span
-                className={`text-[12px] tabular-nums ${
-                  currentView === "all"
-                    ? "text-[#D97757] font-normal"
-                    : "text-[#78716C] font-normal"
-                }`}
-              >
-                {totalCount}
-              </span>
-            )}
           </button>
           <button
             type="button"

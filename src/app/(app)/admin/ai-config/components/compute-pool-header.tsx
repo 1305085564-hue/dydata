@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, AlertCircle, ShieldAlert } from "lucide-react";
+import { Plus, RefreshCw, ShieldAlert } from "lucide-react";
 import { LastCheckSummaryCard, type CheckResultItem } from "./channel-model-test-list";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,6 @@ export function ComputePoolHeader({
   checkResult,
   onClearCheckResult,
 }: ComputePoolHeaderProps) {
-  const hasOutage = summary.outage > 0;
   const hasNeedsAttention = summary.needsAttentionChannels > 0;
 
   return (
@@ -42,33 +41,16 @@ export function ComputePoolHeader({
         data-slot="ai-pool-header"
         className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-4 py-2"
       >
-        {/* S3: 顶部摘要一行字 */}
+        {/* S3: 顶部摘要一行字：功能能不能用由页头标题说，这里只说渠道 */}
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
-          <span className="text-[#4B6B4E]">
-            {summary.normal} 个功能正常
-          </span>
-          <span className="text-[#78716C]">·</span>
-          <span className={summary.fallback > 0 ? "text-[#8A6A2F]" : "text-[#78716C]"}>
-            {summary.fallback} 个在顶班
-          </span>
-          <span className="text-[#78716C]">·</span>
-          <span
-            className={cn(
-              hasOutage ? "text-status-danger font-normal inline-flex items-center gap-1" : "text-[#78716C]"
-            )}
-          >
-            {hasOutage && <AlertCircle className="size-3.5" />}
-            {summary.outage} 个停摆
-          </span>
-          <span className="text-[#78716C]">·</span>
-          <span
-            className={cn(
-              hasNeedsAttention ? "text-status-danger font-normal inline-flex items-center gap-1" : "text-[#78716C]"
-            )}
-          >
-            {hasNeedsAttention && <ShieldAlert className="size-3.5" />}
-            {summary.needsAttentionChannels} 条渠道要你处理
-          </span>
+          {hasNeedsAttention ? (
+            <span className="inline-flex items-center gap-1 text-status-danger">
+              <ShieldAlert className="size-3.5" />
+              {summary.needsAttentionChannels} 条渠道要你处理
+            </span>
+          ) : (
+            <span className="text-[#78716C]">渠道没有要处理的</span>
+          )}
         </div>
 
         {/* 顶部操作按钮 */}

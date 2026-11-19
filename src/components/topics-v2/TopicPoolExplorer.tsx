@@ -73,8 +73,6 @@ export function TopicPoolExplorer({
     >
       <PoolToolbar
         topics={topics}
-        loading={loading}
-        totalCount={totalCount}
         searchQuery={searchQuery}
         currentView={currentView}
         currentTimeRange={currentTimeRange}

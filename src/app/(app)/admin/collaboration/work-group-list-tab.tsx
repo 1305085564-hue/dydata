@@ -104,6 +104,7 @@ export function WorkGroupListTab({
         columns={columns}
         defaultSortKey="totalPlay"
         nameLabel="小队"
+        showAvatar={false}
         getId={(row) => row.id}
         getName={(row) => row.name}
         getSub={(row) => `${workGroupKindLabel(row.kind)}小队 · ${row.memberCount} 人`}

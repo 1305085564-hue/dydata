@@ -4,6 +4,8 @@ import { Check, ExternalLink, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { listItemMotion } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
+import { rowSelectionClass } from "@/components/ui/selection";
 import { formatShortDate, type DailyApprovalDetail } from "@/lib/exemption-approvals";
 import { getAppealTriggerText, getMonthContext } from "@/lib/command-hub/domain/workbench-rules";
 import type { ApprovalQueueItem } from "@/lib/command-hub/types";
@@ -39,15 +41,23 @@ export function QueueItem(props: QueueItemProps) {
       onPointerEnter={onFocus}
       onClick={onFocus}
       className={cn(
-        "rounded-xl px-4 py-3 transition-colors duration-150",
-        focused ? "bg-[#F1F1F0]" : "hover:bg-[#F7F7F6]",
+        "flex gap-3 rounded-xl px-4 py-3 transition-colors duration-150",
+        rowSelectionClass(focused),
       )}
     >
-      {item.kind === "exemption" ? (
-        <ExemptionBody {...props} item={item} rejectingThis={rejectingThis} />
-      ) : (
-        <AppealBody {...props} item={item} rejectingThis={rejectingThis} />
-      )}
+      {/* 一列申请人：头像让眼睛先按人找到这一条（《效率美学》§0） */}
+      <InitialAvatar
+        name={item.kind === "exemption" ? item.group.applicant_name : item.appeal.applicant_name}
+        size="xs"
+        className="-mt-0.5"
+      />
+      <div className="min-w-0 flex-1">
+        {item.kind === "exemption" ? (
+          <ExemptionBody {...props} item={item} rejectingThis={rejectingThis} />
+        ) : (
+          <AppealBody {...props} item={item} rejectingThis={rejectingThis} />
+        )}
+      </div>
     </motion.div>
   );
 }

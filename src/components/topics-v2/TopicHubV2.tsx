@@ -2,9 +2,7 @@
 
 import React, { useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { buildTopicsEpigraph } from "@/components/editorial/page-epigraph-copy";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageEpigraph, usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import type { V2TopicLibraryBootstrap } from "@/lib/topics/v2-client-contract";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -14,6 +12,8 @@ import { useTopicHubActions } from "@/lib/topics/data/hub-actions";
 import { TopicHubToolbar } from "./hub/TopicHubToolbar";
 import { TopicHubContent } from "./hub/TopicHubContent";
 import { TopicHubDrawers } from "./hub/TopicHubDrawers";
+import { buildTopicHubHeadline } from "./topic-hub-headline";
+import { hasRealActiveFilters } from "@/lib/topics/domain/pool-view";
 
 export function TopicHubV2({
   canManageTopicLibrary = false,
@@ -28,12 +28,14 @@ export function TopicHubV2({
   initialTopicId?: string | null;
 }) {
   const state = useTopicHubState(initialBootstrapData, initialTopicId);
-  usePublishPageEpigraph(
-    "topics",
-    state.activeTopics
-      ? buildTopicsEpigraph(state.activeTopics.recentlyClaimed.length, state.poolTotalCount)
-      : null,
-  );
+  const headline = buildTopicHubHeadline({
+    loading: state.poolLoading,
+    totalCount: state.poolTotalCount,
+    view: state.poolView,
+    filtered:
+      state.selectedTopicIds.length > 0 ||
+      hasRealActiveFilters(state.poolTimeRange, state.debouncedPoolSearchQuery, state.moreFilters),
+  });
   const {
     fetchActiveData,
     fetchPoolPage,
@@ -123,8 +125,7 @@ export function TopicHubV2({
 
   return (
     <AdminWorkspaceLayout
-      title="选题库"
-      description={<PageEpigraph pageKey="topics" />}
+      title={headline ?? <span className="text-[#A8A29E]">选题库</span>}
       actions={
         <TopicHubToolbar
           activeLoading={state.activeLoading}

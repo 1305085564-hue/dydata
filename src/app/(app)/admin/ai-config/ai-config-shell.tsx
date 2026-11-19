@@ -5,9 +5,12 @@ import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { usePublishPageHeadline } from "@/components/editorial/page-headline";
+import { buildAiConfigHeadline } from "./ai-config-headline";
 
 export function AIConfigShell() {
   const { bundle, isLoading, error, loadData } = useAiConfig();
+  usePublishPageHeadline("ai-config", buildAiConfigHeadline(bundle?.availability?.businessSummary));
 
   if (error && !bundle) {
     return (

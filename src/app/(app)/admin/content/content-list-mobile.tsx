@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/ui/empty-state";
+import { ROW_SELECTED } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
 import { isCellHighlighted, HIGHLIGHT_CELL_CLASS, type HighlightRuleMap } from "@/lib/content/domain/content-list-highlight";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
@@ -54,7 +55,7 @@ export function ContentListMobile({
             onClick={() => onSelectVideoId(video.id)}
             className={cn(
               "group flex cursor-pointer items-start gap-3 px-1 py-3 transition-colors",
-              isSelected ? "bg-[#F1F1F0]" : "active:bg-[#EBEBE9]",
+              isSelected ? ROW_SELECTED : "active:bg-[#EBEBE9]",
             )}
           >
             <span className="w-4 shrink-0 text-[14px] leading-[1.50]">

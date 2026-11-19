@@ -28,10 +28,7 @@ const modelTestListSource = readFileSync(
 );
 
 test("S1 & S3 顶部摘要与操作按钮：检查一遍与接入新渠道", () => {
-  // S3: 顶部摘要一行字
-  assert.match(computeHeaderSource, /个功能正常/);
-  assert.match(computeHeaderSource, /个在顶班/);
-  assert.match(computeHeaderSource, /个停摆/);
+  // S3: 顶部摘要一行字只说渠道；功能正常 / 顶班 / 停摆改由页头标题说（ai-config-headline.ts）
   assert.match(computeHeaderSource, /条渠道要你处理/);
 
   // S1: 合并为一个「检查一遍」按钮，小字只查正在用的模型

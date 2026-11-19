@@ -278,7 +278,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                         variant="ghost"
                         size="icon"
                         aria-label="编辑该日报"
-                        className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                        className="size-7 text-[#A8A29E] transition-colors duration-150 group-hover:text-[#141413]"
                         onClick={(event) => {
                           event.stopPropagation();
                           onReportOpen?.(report);

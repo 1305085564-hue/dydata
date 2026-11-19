@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { OneTip } from "./one-tip";
 import { SelfMemberBadge } from "./member-self-hint";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 
 /**
  * 协作管理所有表格共用的骨架（四张岗位表、小队列表、小队详情）：一行一个对象，点一行只有一个去处。
@@ -46,6 +47,8 @@ export interface RoleTableProps<R> {
   onPrefetchPerson?: (userId: string) => void;
   /** 首列表头，默认「姓名」（小队列表用「小队」）。 */
   nameLabel?: string;
+  /** 一列人名才带首字头像帮眼睛找人；小队列表等非人名行关掉 */
+  showAvatar?: boolean;
   /** 整行的读屏说明，默认「查看 X 的个人档案」。 */
   rowAriaLabel?: (row: R) => string;
   /** 表头下固定的一行合计（如小队「全队合计」），不参与排序、不可点。 */
@@ -69,6 +72,7 @@ export function RoleTable<R>({
   onSelectPerson,
   onPrefetchPerson,
   nameLabel = "姓名",
+  showAvatar = true,
   rowAriaLabel,
   summary,
 }: RoleTableProps<R>) {
@@ -175,7 +179,7 @@ export function RoleTable<R>({
                       onFocus={() => onPrefetchPerson?.(userId)}
                       className="block w-full min-w-0 rounded-md text-left cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-2"
                     >
-                      <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} />
+                      <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} avatar={showAvatar} />
                     </button>
                   </TableCell>
                   {columns.map((c) => (
@@ -222,7 +226,7 @@ export function RoleTable<R>({
                 onClick={() => onSelectPerson(userId)}
                 className={`flex w-full items-center justify-between gap-3 px-1 py-3 text-left transition-colors duration-150 hover:bg-[#F7F7F6] cursor-pointer ${isSelf ? "bg-[#F7F7F6]" : ""}`}
               >
-                <PersonName name={getName(row)} sub={getSub?.(row) ?? null} isSelf={isSelf} zero={zero} />
+                <PersonName name={getName(row)} sub={getSub?.(row) ?? null} isSelf={isSelf} zero={zero} avatar={showAvatar} />
                 <span className="flex shrink-0 flex-col items-end gap-1 tabular-nums">
                   <span className={`text-[14px] ${zero ? "text-[#A8A29E]" : "text-[#141413]"}`}>{mobile.primary}</span>
                   <span className="text-[12px] text-[#78716C]">{mobile.secondary}</span>
@@ -241,19 +245,28 @@ function PersonName({
   sub,
   isSelf,
   zero,
+  avatar = false,
 }: {
   name: string;
   sub: string | null;
   isSelf: boolean;
   zero: boolean;
+  avatar?: boolean;
 }) {
-  return (
+  const text = (
     <span className="flex min-w-0 flex-col gap-1">
       <span className="flex min-w-0 items-center">
         <span className={`truncate text-[14px] leading-[1.40] ${zero ? "text-[#78716C]" : "text-[#141413]"}`}>{name}</span>
         {isSelf && <SelfMemberBadge />}
       </span>
       {sub ? <span className="truncate text-[12px] leading-[1.50] text-[#78716C]">{sub}</span> : null}
+    </span>
+  );
+  if (!avatar) return text;
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <InitialAvatar name={name} size="xs" />
+      {text}
     </span>
   );
 }

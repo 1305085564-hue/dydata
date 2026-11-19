@@ -5,6 +5,7 @@ import { ArrowRight, Circle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { listItemMotion } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { rowSelectionClass } from "@/components/ui/selection";
 import type { ActionItem } from "@/lib/action-center/types";
 import {
   getAppealTodoId,
@@ -46,7 +47,7 @@ export function TodoRow({
       onPointerEnter={onFocus}
       className={cn(
         "flex items-start gap-3 rounded-xl px-4 py-3 transition-colors duration-150",
-        focused ? "bg-[#F1F1F0]" : "hover:bg-[#F7F7F6]",
+        rowSelectionClass(focused),
       )}
     >
       {completable ? (

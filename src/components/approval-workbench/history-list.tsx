@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import {
   formatShortDate,
   resolveApprovalRequestId,
@@ -72,7 +73,9 @@ export function HistoryList({
         const confirming = confirmingId === id;
 
         return (
-          <div key={id} className="rounded-xl px-4 py-3 transition-colors hover:bg-[#F7F7F6]">
+          <div key={id} className="flex gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-[#F7F7F6]">
+            <InitialAvatar name={item.applicant_name} size="xs" className="-mt-0.5" />
+            <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-3">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-[14px] leading-[1.4] text-[#141413]">{item.applicant_name || "成员"}</span>
@@ -130,6 +133,7 @@ export function HistoryList({
                 </button>
               </div>
             )}
+            </div>
           </div>
         );
       })}

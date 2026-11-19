@@ -21,6 +21,7 @@ import {
   formatCount,
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
+import { ROW_HOVER, ROW_SELECTED } from "@/components/ui/selection";
 import { SORTED_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
 import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
@@ -70,7 +71,7 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
         className: cn(
           "sticky left-0 z-20 py-2 px-3 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
           ctx.isSelected
-            ? "bg-[#F1F1F0] group-hover:bg-[#EBEBE9]"
+            ? "bg-[#E4E4E1] group-hover:bg-[#E4E4E1]"
             : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
         ),
         content: (
@@ -247,7 +248,7 @@ export function ContentListTable({
                     onClick={() => onSelectVideoId(item.video.id)}
                     className={cn(
                       "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
-                      isSelected ? "bg-[#F1F1F0] hover:bg-[#EBEBE9]" : "hover:bg-[#F7F7F6] active:bg-[#EBEBE9]",
+                      isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
                     )}
                   >
                     {columns.map((column) => {
