@@ -199,7 +199,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                 onClick={() => sort.onSort("avgContentAchievement")}
                 className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === "avgContentAchievement" ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}
               >
-                留存数据{sort.renderSortIcon("avgContentAchievement")}
+                留存达成{sort.renderSortIcon("avgContentAchievement")}
               </button>
             </SimpleTooltip>
           </TableHead>

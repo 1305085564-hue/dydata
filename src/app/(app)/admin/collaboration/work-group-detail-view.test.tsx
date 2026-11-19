@@ -43,6 +43,8 @@ function member(userId: string, name: string, overrides: Partial<WorkGroupMember
     followerConversionRate: null,
     interactionRate: null,
     likeRate: null,
+    commentRate: null,
+    shareRate: null,
     favoriteRate: null,
     contentQuality: null,
     ...overrides,
@@ -64,6 +66,8 @@ function summary(overrides: Partial<WorkGroupSummaryRow> = {}): WorkGroupSummary
       followerConversionRate: null,
       interactionRate: null,
       likeRate: null,
+      commentRate: null,
+      shareRate: null,
       favoriteRate: null,
     },
     contentQuality: null,
@@ -77,7 +81,7 @@ function renderDetail(detail: WorkGroupDetailViewType) {
   );
 }
 
-test("组详情列为统一绩效列：成员 + 作品数/总播放/条均/转粉率/互动率/点赞率/收藏率", () => {
+test("组详情列为统一绩效列：成员 + 作品数/总播放/条均/转粉率/互动率（点赞等细项在展开明细里）", () => {
   const html = renderDetail({
     summary: summary(),
     members: [member("u-1", "张文案")],
@@ -90,11 +94,9 @@ test("组详情列为统一绩效列：成员 + 作品数/总播放/条均/转�
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
   ]);
-  // 组综合 + 1 个组员行，每行 8 个单元格与列头逐列对齐
-  assert.deepEqual(bodyRowCellCounts(html), [8, 8]);
+  // 组综合 + 1 个组员行，每行 6 个单元格与列头逐列对齐
+  assert.deepEqual(bodyRowCellCounts(html), [6, 6]);
 });
 
 test("首行为组综合：底色标识、数值取自 aggregate，比率按加权合计展示", () => {
@@ -108,6 +110,8 @@ test("首行为组综合：底色标识、数值取自 aggregate，比率按加�
         followerConversionRate: 700 / 60000,
         interactionRate: 2700 / 60000,
         likeRate: 1500 / 60000,
+        commentRate: 300 / 60000,
+        shareRate: 150 / 60000,
         favoriteRate: 750 / 60000,
       },
     }),
@@ -120,8 +124,6 @@ test("首行为组综合：底色标识、数值取自 aggregate，比率按加�
   assert.ok(text.includes("6.0万"), "总播放 60000 格式化为 6.0万");
   assert.ok(text.includes("1.2%"), "转粉率 700/60000 ≈ 1.2%");
   assert.ok(text.includes("4.5%"), "互动率 2700/60000 = 4.5%");
-  assert.ok(text.includes("2.5%"), "点赞率 1500/60000 = 2.5%");
-  assert.ok(text.includes("1.3%"), "收藏率 750/60000 = 1.25% 保留 1 位小数");
 });
 
 test("组员行零产出出行：数值 0、比率 —；有产出显示加权比率", () => {
@@ -136,6 +138,8 @@ test("组员行零产出出行：数值 0、比率 —；有产出显示加权�
         followerConversionRate: 700 / 60000,
         interactionRate: 2700 / 60000,
         likeRate: 1500 / 60000,
+        commentRate: 300 / 60000,
+        shareRate: 150 / 60000,
         favoriteRate: 750 / 60000,
       }),
       member("u-2", "李文案"),
@@ -205,7 +209,7 @@ test("源码断言：组详情不再复用岗位 Tab 行组件，防止旧列回
   assert.ok(source.includes("formatRate"), "比率格式与组列表同源");
 });
 
-test("文案小队含留存数据时：增加「留存数据」列，非文案组保持8列", () => {
+test("文案小队含质量数据时：增加「综合达成」列，非文案组不出综合达成", () => {
   const quality = {
     totalCount: 5,
     achievementSampleCount: 4,
@@ -222,6 +226,7 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
     },
     avgInteractionAchievement: 95,
     avgContentAchievement: 92.5,
+    retentionAverages: null,
   };
   const html = renderDetail({
     summary: summary({ kind: "writer", contentQuality: quality }),
@@ -235,19 +240,17 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
-    "内容质量",
+    "综合达成",
   ]);
-  // 组综合 + 1 个组员行，每行 9 个单元格
-  assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
+  // 组综合 + 1 个组员行，每行 7 个单元格
+  assert.deepEqual(bodyRowCellCounts(html), [7, 7]);
 
   const text = stripTags(html);
   assert.ok(text.includes("互动 95%"));
   assert.ok(text.includes("留存 93%"));
   assert.ok(text.includes("优2·良2·普0"));
 
-  // 达人组详情即使有数据也不出留存数据列
+  // 达人组详情无质量数据时不出综合达成列
   const talentHtml = renderDetail({
     summary: summary({ kind: "talent", contentQuality: null }),
     members: [member("u-2", "张达人", { contentQuality: null })],
@@ -259,8 +262,6 @@ test("文案小队含留存数据时：增加「留存数据」列，非文案�
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
   ]);
-  assert.deepEqual(bodyRowCellCounts(talentHtml), [8, 8]);
+  assert.deepEqual(bodyRowCellCounts(talentHtml), [6, 6]);
 });

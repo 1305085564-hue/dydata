@@ -103,6 +103,7 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
         missingMetrics: 0,
         topicUnavailable: 0,
       },
+      retentionAverages: null,
       avgInteractionAchievement: null,
       avgContentAchievement: null,
       overallGradeCounts: { excellent: 0, good: 0, fair: 0 },

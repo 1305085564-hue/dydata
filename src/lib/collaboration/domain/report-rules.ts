@@ -202,6 +202,8 @@ export function buildPerformanceMetrics(
     followerConversionRate: totalPlay > 0 ? followerGain / totalPlay : null,
     interactionRate: totalPlay > 0 ? (likes + comments + shares + favorites) / totalPlay : null,
     likeRate: totalPlay > 0 ? likes / totalPlay : null,
+    commentRate: totalPlay > 0 ? comments / totalPlay : null,
+    shareRate: totalPlay > 0 ? shares / totalPlay : null,
     favoriteRate: totalPlay > 0 ? favorites / totalPlay : null,
   };
 }

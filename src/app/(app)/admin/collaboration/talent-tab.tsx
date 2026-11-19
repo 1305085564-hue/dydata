@@ -157,7 +157,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           tip={COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement}
         >
           <span className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
-            留存数据
+            留存达成
           </span>
         </SimpleTooltip>
       </TableHead>

@@ -159,6 +159,8 @@ export function CollaborationWorkbench({
           followerConversionRate: null,
           interactionRate: null,
           likeRate: null,
+          commentRate: null,
+          shareRate: null,
           favoriteRate: null,
         },
         contentQuality: null,

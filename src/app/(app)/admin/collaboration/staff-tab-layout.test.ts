@@ -91,7 +91,7 @@ test("岗位表格采用自适应文本列宽（min-w-[90px] w-auto）与紧凑�
   // 列名精简断言
   assert.match(source, /条均播/);
   assert.match(source, /优条数/);
-  assert.match(source, /留存数据/);
+  assert.match(source, /留存达成/);
   // 优条数带排序能力
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
   // 文本列 min-w w-auto 自适应 + 数字列规整（writer 收紧数字列给良优率与认证状态留足宽度，editor 保持不变）

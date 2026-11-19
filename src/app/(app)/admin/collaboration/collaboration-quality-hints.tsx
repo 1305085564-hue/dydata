@@ -51,9 +51,9 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
   ),
   avgContentAchievement: (
     <>
-      <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
+      <p className="font-normal text-[#141413] mb-1">留存达成均值：</p>
       <p className="text-[#1F1E1D] leading-relaxed">
-        播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
+        播放 2000 以上且算得出留存的作品，按好标准计算达成率后合成留存达成均值。
       </p>
     </>
   ),
@@ -68,7 +68,7 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
   ),
 } satisfies Record<string, ReactNode>;
 
-/** 文案表与达人表共用的质量三列（互动达成 / 留存数据 / 良优率）及五态悬停提示。 */
+/** 文案表与达人表共用的质量三列（互动达成 / 留存达成 / 良优率）及五态悬停提示。 */
 export function CollaborationQualityCells({
   writerQuality,
 }: {
@@ -108,13 +108,13 @@ export function CollaborationQualityCells({
             </TableCellHint>
           ) : writerQuality.summary?.avgContentAchievement != null ? (
             <TableCellHint
-              tip={`留存数据样本 ${writerQuality.summary.achievementSampleCount} 篇`}
+              tip={`留存达成样本 ${writerQuality.summary.achievementSampleCount} 篇`}
               muted={writerQuality.summary.achievementSampleCount < 3}
             >
               {Math.round(writerQuality.summary.avgContentAchievement)}%
             </TableCellHint>
           ) : (
-            <TableCellHint tip="尚无留存数据完整样本" muted>
+            <TableCellHint tip="尚无留存达成完整样本" muted>
               —
             </TableCellHint>
           )

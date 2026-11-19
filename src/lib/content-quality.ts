@@ -192,6 +192,33 @@ function incrementGradeCount(
   else counts.fair += 1;
 }
 
+const RETENTION_KEYS = [
+  "bounceRate2s",
+  "completionRate5s",
+  "avgPlayDuration",
+  "avgPlayRatio",
+  "completionRate",
+] as const satisfies ReadonlyArray<keyof RetentionMetrics>;
+
+/** 逐项取作品算术平均，缺值的作品不参与该项；样本为空返回 null。 */
+function averageRetentionMetrics(works: WorkContentQuality[]): RetentionMetrics | null {
+  if (works.length === 0) return null;
+  const result: RetentionMetrics = {
+    bounceRate2s: null,
+    completionRate5s: null,
+    avgPlayDuration: null,
+    avgPlayRatio: null,
+    completionRate: null,
+  };
+  for (const key of RETENTION_KEYS) {
+    const values = works
+      .map((work) => work.retentionMetrics?.[key])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    result[key] = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  }
+  return result;
+}
+
 export function buildContentQualitySummaryFromWorks(
   works: WorkContentQuality[],
   totalCount = works.length,
@@ -231,6 +258,7 @@ export function buildContentQualitySummaryFromWorks(
     interactionSampleCount: interactionWorks.length,
     ratedCount: ratedWorks.length,
     unratedReasons,
+    retentionAverages: averageRetentionMetrics(retentionWorks),
     avgInteractionAchievement: avg(interactionWorks, "interactionAchievement"),
     avgContentAchievement: avg(retentionWorks, "contentAchievement"),
     overallGradeCounts,

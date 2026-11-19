@@ -256,9 +256,9 @@ export function WriterQualityChart({
                     backgroundColor: visibleMetrics.content ? "#D97757" : "#A8A29E",
                   }}
                 />
-                <span>留存数据</span>
+                <span>留存达成</span>
               </TooltipTrigger>
-              <TooltipContent side="top">点击切换留存数据折线显隐</TooltipContent>
+              <TooltipContent side="top">点击切换留存达成折线显隐</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger
@@ -398,21 +398,21 @@ export function WriterQualityChart({
               </div>
             ) : (
               <div className="flex items-center w-full min-w-0">
-                {/* 默认均值带：单行展示，留存数据无样本显示「—」非「0%」 */}
+                {/* 默认均值带：单行展示，留存达成无样本显示「—」非「0%」 */}
                 <div className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                   <Tooltip>
                     <TooltipTrigger render={<span className="text-[#78716C] font-normal shrink-0 cursor-help" />}>
                       近30天作品数据
                     </TooltipTrigger>
                     <TooltipContent side="top" align="start">
-                      留存分均值只统计五项留存数据完整作品；良优率只统计已评级作品
+                      留存达成均值只统计留存数据齐全的作品；良优率只统计已评级作品
                     </TooltipContent>
                   </Tooltip>
                   {summary ? (
                     <>
                       {visibleMetrics.content && summary.avgContentAchievement != null && (
                         <span className="text-[#78716C] tabular-nums">
-                          留存分均值 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
+                          留存达成均值 <span className="font-normal text-[#D97757]">{Math.round(summary.avgContentAchievement)}%</span>
                         </span>
                       )}
                       {visibleMetrics.interaction && summary.avgInteractionAchievement != null && (

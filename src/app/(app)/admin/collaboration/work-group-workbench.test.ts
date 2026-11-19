@@ -82,7 +82,7 @@ test("D1: 协作入口诊断把接口返回的 contentQuality 透传到详情状
   assert.match(diagnosisHandler, /contentQuality: payload\.contentQuality \?\? null,/);
 });
 
-test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/四率）", () => {
+test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/转粉率/互动率，明细可展开）", () => {
   // 列头必须与具体数据字段绑定，改名或接错字段就会红；
   // 「文案 / 达人 / 人数」这类宽泛词（注释、描述句里也有）不再作为断言，
   // 徽章与列头的真实渲染改由 work-group-list-tab.test.tsx 用 DOM 断言。
@@ -93,8 +93,9 @@ test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩�
   assert.match(listTabSource, /sortableHead\("avgPlay", "条均播放"/);
   assert.match(listTabSource, /sortableHead\("followerConversionRate", "转粉率"/);
   assert.match(listTabSource, /sortableHead\("interactionRate", "互动率"/);
-  assert.match(listTabSource, /sortableHead\("likeRate", "点赞率"/);
-  assert.match(listTabSource, /sortableHead\("favoriteRate", "收藏率"/);
+  // 点赞率、收藏率及评论率、转发率、五项留存收进「展开明细」，由共用模块渲染
+  assert.match(listTabSource, /InteractionDetailHeads/);
+  assert.match(listTabSource, /RetentionDetailHeads/);
   assert.match(listTabSource, /formatRate/);
   assert.doesNotMatch(listTabSource, /工种关键指标/);
 });
@@ -108,8 +109,8 @@ test("P3.3: 小队详情第一行为组综合（浅砂底色），下方为组�
   assert.match(detailViewSource, /作品数/);
   assert.match(detailViewSource, /转粉率/);
   assert.match(detailViewSource, /互动率/);
-  assert.match(detailViewSource, /点赞率/);
-  assert.match(detailViewSource, /收藏率/);
+  assert.match(detailViewSource, /InteractionDetailHeads/);
+  assert.match(detailViewSource, /RetentionDetailHeads/);
   assert.match(detailViewSource, /formatRate/);
   // 空小队空态兜底（零产出组员出行由数据层测试锁定）
   assert.match(detailViewSource, /该小队当前还没有成员/);

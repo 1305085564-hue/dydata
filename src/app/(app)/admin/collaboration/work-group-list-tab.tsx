@@ -21,6 +21,14 @@ import {
   type WorkGroupSummaryRow,
   type WorkGroupKind,
 } from "./types";
+import {
+  DETAIL_FOOTNOTE,
+  DetailToggle,
+  InteractionDetailCells,
+  InteractionDetailHeads,
+  RetentionDetailCells,
+  RetentionDetailHeads,
+} from "./work-group-detail-columns";
 
 interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];
@@ -68,6 +76,7 @@ export function WorkGroupListTab({
 }: WorkGroupListTabProps) {
   const [sortField, setSortField] = useState<SortField>("totalPlay");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showDetail, setShowDetail] = useState(false);
 
   const hasContentQuality = useMemo(
     () => groups.some((g) => g.contentQuality !== null),
@@ -167,8 +176,16 @@ export function WorkGroupListTab({
     </TableHead>
   );
 
+  const renderDetailHead = (field: "likeRate" | "favoriteRate" | null, label: string, width: string) =>
+    field ? (
+      sortableHead(field, label, width)
+    ) : (
+      <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>{label}</TableHead>
+    );
+
   return (
     <div className="space-y-2">
+      <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
       <Card className="overflow-hidden p-0 gap-0">
         <Table>
           <TableHeader>
@@ -191,9 +208,9 @@ export function WorkGroupListTab({
               {sortableHead("avgPlay", "条均播放", "w-[85px]")}
               {sortableHead("followerConversionRate", "转粉率", "w-[80px]")}
               {sortableHead("interactionRate", "互动率", "w-[80px]")}
-              {sortableHead("likeRate", "点赞率", "w-[80px]")}
-              {sortableHead("favoriteRate", "收藏率", "w-[80px]")}
-              {hasContentQuality && sortableHead("avgContentAchievement", "内容质量", "w-[120px]")}
+              {showDetail && <InteractionDetailHeads renderHead={renderDetailHead} />}
+              {hasContentQuality && sortableHead("avgContentAchievement", "综合达成", "w-[120px]")}
+              {hasContentQuality && showDetail && <RetentionDetailHeads />}
               <TableHead className="py-2 pl-2 pr-4 text-right font-normal text-[#78716C] w-[70px]">
                 操作
               </TableHead>
@@ -230,17 +247,13 @@ export function WorkGroupListTab({
                 <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.interactionRate)}
                 </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.likeRate)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.favoriteRate)}
-                </TableCell>
+                {showDetail && <InteractionDetailCells metrics={group.aggregate} />}
                 {hasContentQuality && (
                   <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
                     <WorkGroupQualitySummaryCell contentQuality={group.contentQuality} />
                   </TableCell>
                 )}
+                {hasContentQuality && showDetail && <RetentionDetailCells contentQuality={group.contentQuality} />}
                 <TableCell className="py-2 pl-2 pr-4 text-right">
                   <button
                     type="button"
@@ -262,13 +275,14 @@ export function WorkGroupListTab({
         </Table>
       </Card>
       <p className="px-4 text-[12px] text-[#78716C]">
-        播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。
+        播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。「综合达成」里的互动、留存是各自相对标准线的达成比值，不是原始数据。
+        {showDetail && DETAIL_FOOTNOTE}
       </p>
     </div>
   );
 }
 
-/** 内容质量摘要单元格：小队列表与小队详情共用，悬停即时展示 3 行评级拆解，不阻断整行点击。 */
+/** 综合达成摘要单元格：小队列表与小队详情共用，悬停即时展示 3 行评级拆解，不阻断整行点击。 */
 export function WorkGroupQualitySummaryCell({
   contentQuality,
   emptyClassName = "text-[#A8A29E]",

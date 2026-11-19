@@ -460,6 +460,34 @@ const snapshotInputBase = {
   completionRate: 10,
 };
 
+test("小队汇总带五项留存原始值的作品算术平均，样本与留存达成一致（播放不足 2000 的不计入）", () => {
+  const tags = new Map([["a", "复盘"], ["b", "复盘"], ["low", "复盘"]]);
+  const works = [
+    buildWorkContentQualityFromMetrics(
+      { videoId: "a", snapshot: { ...snapshotInputBase, bounceRate2s: 20, completionRate5s: 60, avgPlayDuration: 40, avgPlayRatio: 0.2, completionRate: 10 } },
+      { state: "ready", tags },
+    ),
+    buildWorkContentQualityFromMetrics(
+      { videoId: "b", snapshot: { ...snapshotInputBase, bounceRate2s: 30, completionRate5s: 80, avgPlayDuration: 60, avgPlayRatio: 0.4, completionRate: 20 } },
+      { state: "ready", tags },
+    ),
+    buildWorkContentQualityFromMetrics(
+      { videoId: "low", snapshot: { ...snapshotInputBase, playCount: 1000, bounceRate2s: 90, completionRate5s: 5, avgPlayDuration: 2, avgPlayRatio: 0.01, completionRate: 1 } },
+      { state: "ready", tags },
+    ),
+  ];
+  const summary = buildContentQualitySummaryFromWorks(works);
+  assert.equal(summary.achievementSampleCount, 2);
+  assert.deepEqual(summary.retentionAverages, {
+    bounceRate2s: 25,
+    completionRate5s: 70,
+    avgPlayDuration: 50,
+    avgPlayRatio: 30,
+    completionRate: 15,
+  });
+  assert.equal(buildContentQualitySummaryFromWorks([]).retentionAverages, null, "无样本时整体为空，不伪装成 0");
+});
+
 test("buildStaff 文案行显式返回真实质量汇总，剪辑行不新增文案块", () => {
   const rows = [report()];
   const profiles = [{ id: "writer-1", name: "文案", team_id: "team-1" }];

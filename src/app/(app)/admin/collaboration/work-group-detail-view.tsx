@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, ArrowUpDown, UserPlus } from "lucide-react";
 import {
   Table,
@@ -21,6 +21,14 @@ import {
   formatBigNumber,
   type WorkGroupDetailView as WorkGroupDetailViewType,
 } from "./types";
+import {
+  DETAIL_FOOTNOTE,
+  DetailToggle,
+  InteractionDetailCells,
+  InteractionDetailHeads,
+  RetentionDetailCells,
+  RetentionDetailHeads,
+} from "./work-group-detail-columns";
 
 interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;
@@ -52,8 +60,6 @@ const DETAIL_COLUMNS: Array<{ field: SortField; label: string; width: string }> 
   { field: "avgPlay", label: "条均播放", width: "w-[85px]" },
   { field: "followerConversionRate", label: "转粉率", width: "w-[80px]" },
   { field: "interactionRate", label: "互动率", width: "w-[80px]" },
-  { field: "likeRate", label: "点赞率", width: "w-[80px]" },
-  { field: "favoriteRate", label: "收藏率", width: "w-[80px]" },
 ];
 
 export function WorkGroupDetailView({
@@ -69,6 +75,7 @@ export function WorkGroupDetailView({
 
   const [sortField, setSortField] = useState<SortField>("totalPlay");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showDetail, setShowDetail] = useState(false);
 
   const hasContentQuality = useMemo(
     () =>
@@ -119,6 +126,28 @@ export function WorkGroupDetailView({
       <ArrowUp className="size-3 text-[#141413] ml-1 inline" />
     );
   };
+
+  const sortableHead = (field: SortField, label: string, width: string) => (
+    <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+          sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+        }`}
+      >
+        {label}
+        {renderSortIcon(field)}
+      </button>
+    </TableHead>
+  );
+
+  const renderDetailHead = (field: "likeRate" | "favoriteRate" | null, label: string, width: string) =>
+    field ? (
+      sortableHead(field, label, width)
+    ) : (
+      <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>{label}</TableHead>
+    );
 
   return (
     <div className="space-y-4">
@@ -171,6 +200,7 @@ export function WorkGroupDetailView({
         </Card>
       ) : (
         <div className="space-y-2">
+          <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
           <Card className="overflow-hidden p-0 gap-0">
             <Table>
               <TableHeader>
@@ -188,36 +218,13 @@ export function WorkGroupDetailView({
                     </button>
                   </TableHead>
                   {DETAIL_COLUMNS.map((column) => (
-                    <TableHead
-                      key={column.field}
-                      className={`py-2 px-2 text-right font-normal text-[#78716C] ${column.width}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleSort(column.field)}
-                        className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                          sortField === column.field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-                        }`}
-                      >
-                        {column.label}
-                        {renderSortIcon(column.field)}
-                      </button>
-                    </TableHead>
+                    <Fragment key={column.field}>
+                      {sortableHead(column.field, column.label, column.width)}
+                    </Fragment>
                   ))}
-                  {hasContentQuality && (
-                    <TableHead className="py-2 px-2 text-right font-normal text-[#78716C] w-[90px]">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("goodExcellentRate")}
-                        className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                          sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-                        }`}
-                      >
-                        内容质量
-                        {renderSortIcon("goodExcellentRate")}
-                      </button>
-                    </TableHead>
-                  )}
+                  {showDetail && <InteractionDetailHeads renderHead={renderDetailHead} />}
+                  {hasContentQuality && sortableHead("goodExcellentRate", "综合达成", "w-[120px]")}
+                  {hasContentQuality && showDetail && <RetentionDetailHeads />}
                 </TableRow>
               </TableHeader>
               <TableBody className="text-[13px]">
@@ -241,12 +248,7 @@ export function WorkGroupDetailView({
                   <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.interactionRate)}
                   </TableCell>
-                  <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
-                    {formatRate(summary.aggregate.likeRate)}
-                  </TableCell>
-                  <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
-                    {formatRate(summary.aggregate.favoriteRate)}
-                  </TableCell>
+                  {showDetail && <InteractionDetailCells metrics={summary.aggregate} strong />}
                   {hasContentQuality && (
                     <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
                       <WorkGroupQualitySummaryCell
@@ -254,6 +256,9 @@ export function WorkGroupDetailView({
                         emptyClassName="font-normal text-[#141413]"
                       />
                     </TableCell>
+                  )}
+                  {hasContentQuality && showDetail && (
+                    <RetentionDetailCells contentQuality={summary.contentQuality} strong />
                   )}
                 </TableRow>
                 {sorted.map((member) => {
@@ -294,12 +299,7 @@ export function WorkGroupDetailView({
                     <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {formatRate(member.interactionRate)}
                     </TableCell>
-                    <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                      {formatRate(member.likeRate)}
-                    </TableCell>
-                    <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                      {formatRate(member.favoriteRate)}
-                    </TableCell>
+                    {showDetail && <InteractionDetailCells metrics={member} />}
                     {hasContentQuality && (
                       <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
                         <WorkGroupQualitySummaryCell
@@ -308,6 +308,7 @@ export function WorkGroupDetailView({
                         />
                       </TableCell>
                     )}
+                    {hasContentQuality && showDetail && <RetentionDetailCells contentQuality={member.contentQuality} />}
                   </TableRow>
                   );
                 })}
@@ -315,7 +316,8 @@ export function WorkGroupDetailView({
             </Table>
           </Card>
           <p className="px-4 text-[12px] text-[#78716C]">
-            播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。
+            播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。「综合达成」里的互动、留存是各自相对标准线的达成比值，不是原始数据。
+            {showDetail && DETAIL_FOOTNOTE}
           </p>
         </div>
       )}

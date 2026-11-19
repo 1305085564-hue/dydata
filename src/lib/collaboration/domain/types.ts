@@ -169,6 +169,8 @@ export type WorkGroupPerformanceMetrics = {
   followerConversionRate: number | null;
   interactionRate: number | null;
   likeRate: number | null;
+  commentRate: number | null;
+  shareRate: number | null;
   favoriteRate: number | null;
 };
 

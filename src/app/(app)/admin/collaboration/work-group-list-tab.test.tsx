@@ -36,6 +36,8 @@ function group(overrides: Partial<WorkGroupSummaryRow> = {}): WorkGroupSummaryRo
       followerConversionRate: null,
       interactionRate: null,
       likeRate: null,
+      commentRate: null,
+      shareRate: null,
       favoriteRate: null,
     },
     contentQuality: null,
@@ -60,8 +62,6 @@ test("列表列头为小队名称 + 人数 + 与复盘抽屉同源的绩效列",
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
     "操作",
   ]);
 });
@@ -95,6 +95,8 @@ test("绩效列按数值格式化：比率保留 1 位小数，播放为 0 的�
         followerConversionRate: 700 / 60000,
         interactionRate: 2700 / 60000,
         likeRate: 1500 / 60000,
+        commentRate: 300 / 60000,
+        shareRate: 150 / 60000,
         favoriteRate: 750 / 60000,
       },
     }),
@@ -105,16 +107,14 @@ test("绩效列按数值格式化：比率保留 1 位小数，播放为 0 的�
   assert.ok(text.includes("3.0万"), "条均 30000 格式化为 3.0万");
   assert.ok(text.includes("1.2%"), "转粉率 700/60000 ≈ 1.2%");
   assert.ok(text.includes("4.5%"), "互动率 2700/60000 = 4.5%");
-  assert.ok(text.includes("2.5%"), "点赞率 1500/60000 = 2.5%");
-  assert.ok(text.includes("1.3%"), "收藏率 750/60000 = 1.25% 保留 1 位小数");
 });
 
-test("无快照的组：播放为 0、四个比率显示 —，不显示 0%", () => {
+test("无快照的组：播放为 0、两个比率显示 —，不显示 0%", () => {
   const html = renderList([group({ memberCount: 2 })]);
   const text = stripTags(html);
 
   assert.equal(text.includes("0.0%"), false, "没有快照时不得显示 0.0%");
-  assert.equal((text.match(/—/g) ?? []).length, 4, "转粉率/互动率/点赞率/收藏率四个空值用 — 兜底");
+  assert.equal((text.match(/—/g) ?? []).length, 2, "转粉率/互动率两个空值用 — 兜底");
   assert.ok(text.includes("0 0"), "总播放与条均如实显示 0，不伪装成 —");
 });
 
@@ -151,7 +151,7 @@ test("空态与未就绪态不出表格，文案随权限变化", () => {
   assert.equal(emptyManageable.includes("<table"), false, "没有小队时不出表格");
 });
 
-test("文案小队含留存数据时：增加「留存数据」列，达人/运营保持10列", () => {
+test("文案小队含质量数据时：增加「综合达成」列，达人/运营不出综合达成", () => {
   const writerWithQuality = group({
     id: "wg-w",
     name: "文案一组",
@@ -172,6 +172,7 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
       },
       avgInteractionAchievement: 90,
       avgContentAchievement: 87.5,
+      retentionAverages: null,
     },
   });
 
@@ -184,9 +185,7 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
-    "内容质量",
+    "综合达成",
     "操作",
   ]);
   const textWithQuality = stripTags(htmlWithQuality);
@@ -206,8 +205,6 @@ test("文案小队含留存数据时：增加「留存数据」列，达人/运�
     "条均播放",
     "转粉率",
     "互动率",
-    "点赞率",
-    "收藏率",
     "操作",
   ]);
 });

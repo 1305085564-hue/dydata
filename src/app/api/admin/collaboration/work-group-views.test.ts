@@ -136,6 +136,14 @@ test("组员绩效与抽屉同源：先加总再相除（加权），条均不�
   assertClose(lead.interactionRate, 2700 / 60000, "互动率");
   assertClose(lead.likeRate, 1500 / 60000, "点赞率");
   assertClose(lead.favoriteRate, 750 / 60000, "收藏率");
+  // 展开明细：评论率、转发率同口径，四项相加等于互动率
+  assertClose(lead.commentRate, 300 / 60000, "评论率");
+  assertClose(lead.shareRate, 150 / 60000, "转发率");
+  assertClose(
+    (lead.likeRate ?? 0) + (lead.commentRate ?? 0) + (lead.shareRate ?? 0) + (lead.favoriteRate ?? 0),
+    lead.interactionRate as number,
+    "四项之和",
+  );
 });
 
 test("组综合 = 组内全部署名作品一次聚合，不是成员比率的平均", () => {
@@ -180,6 +188,15 @@ test("文案和达人小队质量汇总按全部作品重算，运营保持空�
   assert.equal(talent?.totalCount, 2);
   assert.equal(talent?.ratedCount, 1, "达人按账号主人归属，只有 v-2 有完整快照");
   assert.equal(viewOf(views, "wg-operator").summary.contentQuality, null);
+  // 展开明细的五项留存原始值：v-1、v-2 两篇都过统计门槛，快照数值相同，平均即原值（平均播放占比按百分数）
+  const lead = memberOf(writer, "writer-1");
+  assert.deepEqual(lead.contentQuality?.retentionAverages, {
+    bounceRate2s: 25,
+    completionRate5s: 60,
+    avgPlayDuration: 40,
+    avgPlayRatio: 25,
+    completionRate: 10,
+  });
 });
 
 test("小队质量按显式公司标准重算互动与留存，不被 60 秒原始数据缓存固化", () => {
@@ -259,6 +276,8 @@ test("零产出组员照常出行：数值 0、比率 —；零产出小队也�
   assert.equal(idle.followerConversionRate, null);
   assert.equal(idle.interactionRate, null);
   assert.equal(idle.likeRate, null);
+  assert.equal(idle.commentRate, null);
+  assert.equal(idle.shareRate, null);
   assert.equal(idle.favoriteRate, null);
 
   const empty = viewOf(views, "wg-writer-empty");
