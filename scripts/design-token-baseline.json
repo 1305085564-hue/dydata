@@ -8,9 +8,7 @@
       "src/app/(app)/admin/collaboration/talent-tab.tsx": 2,
       "src/app/(app)/admin/collaboration/personal-card-works.tsx": 4
     },
-    "ink": {
-      "src/app/(app)/douyin/douyin-accounts-page.tsx": 12
-    },
+    "ink": {},
     "gap-half": {
       "src/components/submission/截图检视器.tsx": 1,
       "src/components/submission/指标输入卡.tsx": 1,
@@ -51,8 +49,7 @@
     "font-weight": {
       "src/lib/design-system-README.md": 3,
       "src/app/terms/page.tsx": 6,
-      "src/app/privacy/page.tsx": 7,
-      "src/app/(app)/douyin/douyin-accounts-page.tsx": 3
+      "src/app/privacy/page.tsx": 7
     },
     "serif-floor": {},
     "rounded": {
@@ -64,7 +61,6 @@
       "src/components/rating-rules/rating-rules-dialog.tsx": 3,
       "src/components/screenshot/screenshot-image.tsx": 1,
       "src/components/topics-v2/breakdown/BreakdownWorksSection.tsx": 1,
-      "src/app/(app)/douyin/douyin-accounts-page.tsx": 1,
       "src/app/(app)/admin/collaboration/personal-card.tsx": 2,
       "src/app/(app)/admin/collaboration/personal-card-works.tsx": 3,
       "src/app/(app)/dashboard/components/monthly-fulfillment-strip.tsx": 1,
@@ -86,7 +82,6 @@
     },
     "shadow": {
       "src/components/submission/截图检视器.tsx": 1,
-      "src/app/(app)/douyin/douyin-accounts-page.tsx": 1,
       "src/app/(app)/dashboard/components/monthly-fulfillment-strip.tsx": 2,
       "src/app/(app)/admin/caliber/page.tsx": 1,
       "src/components/video-submit/video-submit-panel-body.tsx": 1,

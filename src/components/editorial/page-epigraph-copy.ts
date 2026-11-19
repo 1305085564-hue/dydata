@@ -14,8 +14,7 @@ export type PageEpigraphKey =
   | "topics"
   | "modules"
   | "ai-config"
-  | "caliber"
-  | "douyin";
+  | "caliber";
 
 export const PAGE_EPIGRAPH_DEFAULTS: Record<PageEpigraphKey, string> = {
   workbench: "把今天的表达落成一页——从容记下，数据自会沉淀成底稿。",
@@ -25,7 +24,6 @@ export const PAGE_EPIGRAPH_DEFAULTS: Record<PageEpigraphKey, string> = {
   modules: "团队是一群人的同行——安放架构、分组与每个人的位置。",
   "ai-config": "让模型安静地待命——挑选渠道与分工，需要时自会流转。",
   caliber: "每个数字都有它的来处——写着算法，数字变了这里跟着变。",
-  douyin: "绑定一次便有人替你守望——公开作品与趋势按时回到这里。",
 };
 
 export function buildPulseEpigraph(summary: PulseSummary, memberCount: number): string | null {
@@ -67,7 +65,3 @@ export function buildModulesEpigraph(input: {
   return `团队是一群人的同行——${parts.join("，")}。`;
 }
 
-export function buildDouyinEpigraph(accountCount: number, connectedCount: number): string | null {
-  if (accountCount === 0) return null;
-  return `绑定一次便有人替你守望——${accountCount} 个账号已有 ${connectedCount} 个同步中。`;
-}

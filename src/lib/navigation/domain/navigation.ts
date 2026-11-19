@@ -154,13 +154,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     });
   }
 
-  groups.push({
-    key: "douyin",
-    label: "抖音账号",
-    icon: Link2,
-    href: "/douyin",
-    match: (pathname) => pathname === "/douyin" || pathname.startsWith("/douyin/"),
-  });
 
   return groups;
 }

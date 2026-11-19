@@ -81,14 +81,6 @@ const MARKS: Record<PageEpigraphKey, React.ReactNode> = {
       <circle cx="13" cy="4.6" r="1.8" fill={WARM} fillOpacity="0.88" />
     </>
   ),
-  // 抖音账号「牵线」：一枚暖点，一缕柔线，牵向远处的素环
-  douyin: (
-    <>
-      <circle cx="3.8" cy="11.4" r="2" fill={WARM} fillOpacity="0.88" />
-      <path d="M5.6 9.8C7.2 6.2 9 4.6 10.6 4.6" stroke={INK} strokeWidth="1.25" {...stroke} />
-      <circle cx="12" cy="4.6" r="2.1" stroke={SOFT} strokeWidth="1.2" />
-    </>
-  ),
 };
 
 const stores = new Map<PageEpigraphKey, { text: string | null; listeners: Set<() => void> }>();
