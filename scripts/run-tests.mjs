@@ -3,7 +3,7 @@
 //   unit（npm test）：不依赖任何外部服务，任何环境下都必须全绿。
 //   real-db（npm run test:real-db）：连本地隔离库，串行执行；库没起来就明确失败，不静默跳过。
 // 背景：真实库测试曾混在 npm test 里，库没启动时固定 8 红，被当成"预存限制"放行；
-// 库启动后并行执行又会因 DDL 抢锁死锁。见 docs/reference/链路设计与决策/上线与运维（全站通用）.md「测试分组」。
+// 库启动后并行执行又会因 DDL 抢锁死锁。见 docs/reference/全站设计与决策/上线与运维.md「测试分组」。
 import { spawnSync } from "node:child_process";
 import { existsSync, globSync, readFileSync } from "node:fs";
 import net from "node:net";
