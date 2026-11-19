@@ -1,19 +1,12 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
-import {
-  ChevronDown,
-  Check,
-  User,
-  UsersRound,
-  LogOut,
-} from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { clearScreenshotGrant } from "@/components/screenshot-grant";
-import { getRoleLabel } from "@/lib/role-label";
 import { useExitMotion } from "@/hooks/use-exit-motion";
 
 interface Account {
@@ -25,19 +18,17 @@ interface Account {
 
 interface UserWorkspacePopoverProps {
   name: string;
-  role: string;
-  companyRole?: string | null;
-  canAccessTeamManagement?: boolean;
   accounts: Account[];
   selectedAccountId: string;
   onOpenSettings: () => void;
 }
 
+/**
+ * 顶栏右侧的「名字 ▾」。菜单只放三样：切换工作账号（有两个以上才出现）、账号与偏好设置、退出登录。
+ * 成员管理入口只在「管理中心」一处；没权限的人不看到点不了的灰项。
+ */
 export function UserWorkspacePopover({
   name,
-  role,
-  companyRole,
-  canAccessTeamManagement = false,
   accounts = [],
   selectedAccountId,
   onOpenSettings,
@@ -141,17 +132,16 @@ export function UserWorkspacePopover({
     window.location.href = "/login";
   };
 
-  const selectedAccount =
-    accounts.find((a) => a.id === selectedAccountId) || accounts[0] || null;
+  const MENU_ITEM =
+    "flex w-full items-center rounded-md px-2.5 py-2 text-left text-[14px] text-[#1F1E1D] transition-colors duration-150 hover:bg-[#EBEBE9] hover:text-[#141413]";
 
   return (
     <div
-      className="relative animate-in fade-in duration-150"
+      className="relative"
       ref={dropdownRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Integrated Combined Topbar Control Button */}
       <button
         ref={triggerRef}
         type="button"
@@ -159,58 +149,37 @@ export function UserWorkspacePopover({
         aria-controls={menuId}
         onClick={handleTriggerClick}
         className={cn(
-          "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
-          "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#141413] bg-[#F1F1F0]/80",
+          "inline-flex h-8 max-w-[160px] items-center gap-1 rounded-md px-2 text-[14px] outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-status-info/20",
+          isOpen ? "bg-[#F1F1F0] text-[#141413]" : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         )}
       >
-        {/* User Avatar */}
-        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] transition duration-200 group-hover:bg-[#E4E4E1] group-hover:text-[#141413]">
-          {name.trim().slice(0, 1).toUpperCase() || "?"}
-        </div>
-
-        {/* Account Info label */}
-        <div className="hidden sm:flex flex-col min-w-0">
-          <span className="truncate text-[12px] font-normal leading-tight text-[#141413] max-w-[110px]">
-            {selectedAccount?.display_name || name.split(" ")[0]}
-          </span>
-          <span className="truncate text-[12px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[115px] tracking-tight">
-            {getRoleLabel(role, { companyRole })}
-          </span>
-        </div>
-
+        <span className="truncate">{name.trim() || "我的"}</span>
         <ChevronDown
-          size={13}
-          className={cn(
-            "text-[#78716C] transition-[transform,color] duration-150 shrink-0 group-hover:text-[#1F1E1D]",
-            isOpen && "rotate-180 text-[#141413]",
-          )}
+          aria-hidden="true"
+          className={cn("size-3.5 shrink-0 text-[#78716C] transition-transform duration-150", isOpen && "rotate-180")}
         />
       </button>
 
-      {/* Floating Popover Panel */}
       {menuMotion.shown && (
         <div
           id={menuId}
           {...menuMotion.exitProps}
           className={cn(
-            menuMotion.closing ? "animate-out fade-out zoom-out-95 slide-out-to-top-2 pointer-events-none" : "animate-in fade-in zoom-in-95 slide-in-from-top-2",
-            "absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E2E2DF] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#141413]/5 duration-150 backdrop-blur-xl",
+            menuMotion.closing ? "animate-out fade-out pointer-events-none" : "animate-in fade-in",
+            "absolute right-0 top-full z-50 mt-1 w-60 rounded-xl border border-[#E2E2DF] bg-white p-1 shadow-claude-float duration-150",
           )}
         >
-          {/* Section 1: Workspace Selector */}
-          {accounts.length > 0 && (
-            <div>
-              <div className="px-2.5 py-1 text-[12px] font-normal text-[#78716C] uppercase tracking-wider">
-                工作账号 ({accounts.length})
-              </div>
-              <div
-                role="group"
-                aria-label="工作账号列表"
-                className="max-h-52 space-y-0.5 overflow-y-auto"
-              >
+          {accounts.length > 1 && (
+            <>
+              <div className="px-2.5 pb-1 pt-2 text-[12px] text-[#78716C]">工作账号</div>
+              <div role="group" aria-label="工作账号列表" className="max-h-52 overflow-y-auto">
                 {accounts.map((account) => {
                   const isSelected = account.id === selectedAccountId;
+                  const cleanName = account.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
+                  const secondary =
+                    cleanName.toLowerCase() === account.name.trim().toLowerCase()
+                      ? account.content_direction
+                      : `@${account.name}`;
                   return (
                     <button
                       key={account.id}
@@ -221,94 +190,33 @@ export function UserWorkspacePopover({
                         closeMenu();
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
-                        isSelected
-                          ? "bg-status-info/10 text-status-info"
-                          : "hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413]",
+                        "flex w-full flex-col rounded-md px-2.5 py-1.5 text-left transition-colors duration-150",
+                        isSelected ? "bg-[#F1F1F0] text-[#141413]" : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
                       )}
                     >
-                      <div className="flex flex-col min-w-0">
-                        <span
-                          className={cn(
-                            "truncate text-[12px] font-normal tracking-tight",
-                            isSelected
-                              ? "text-status-info"
-                              : "text-[#1F1E1D]",
-                          )}
-                        >
-                          {account.display_name}
-                        </span>
-                        <span className="truncate text-[12px] font-normal text-[#78716C] mt-0.5">
-                          {(() => {
-                            const cleanName = account.display_name
-                              .replace(/^(抖音|小红书|视频号|B站)-/, "")
-                              .trim();
-                            const isDuplicate =
-                              cleanName.toLowerCase() ===
-                              account.name.trim().toLowerCase();
-                            return isDuplicate
-                              ? `方向: ${account.content_direction || "未分类"}`
-                              : `@${account.name}`;
-                          })()}
-                        </span>
-                      </div>
-
-                      {isSelected && (
-                        <Check className="size-3.5 shrink-0 text-status-info" />
-                      )}
+                      <span className="truncate text-[14px]">{account.display_name}</span>
+                      {secondary && <span className="truncate text-[12px] text-[#78716C]">{secondary}</span>}
                     </button>
                   );
                 })}
               </div>
-            </div>
+              <div className="my-1 border-t border-[#E2E2DF]" />
+            </>
           )}
 
-          {/* Separator */}
-          <div className="my-1 border-t border-[#E2E2DF]" />
-
-          {/* Section 2: Account & System Actions */}
-          <div className="space-y-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                closeMenu();
-                onOpenSettings();
-              }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
-            >
-              <User className="size-4 text-[#78716C] group-hover/btn:text-status-info transition-colors" />
-              <span>账号与偏好设置</span>
-            </button>
-
-            {canAccessTeamManagement ? (
-              <a
-                href="/admin/modules"
-                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
-              >
-                <UsersRound className="size-4 text-[#78716C] group-hover/btn:text-status-info transition-colors" />
-                <span>成员与团队架构</span>
-              </a>
-            ) : (
-              <div
-                aria-disabled="true"
-                title="当前账号没有成员管理权限"
-                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[14px] font-normal text-[#78716C]"
-              >
-                <UsersRound className="size-4 text-[#E2E2DF]" />
-                <span>成员与团队架构</span>
-                <span className="ml-auto text-[12px] text-[#78716C]">需权限</span>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-status-danger group/btn"
-            >
-              <LogOut className="size-4 text-[#78716C] group-hover/btn:text-status-danger transition-colors" />
-              <span>退出登录</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              onOpenSettings();
+            }}
+            className={MENU_ITEM}
+          >
+            账号与偏好设置
+          </button>
+          <button type="button" onClick={handleSignOut} className={MENU_ITEM}>
+            退出登录
+          </button>
         </div>
       )}
     </div>

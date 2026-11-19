@@ -198,7 +198,7 @@ export default async function PersonProfilePage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <div data-app-rail="normal" className="mx-auto w-full max-w-5xl space-y-5">
       {/* 1. 人物头部 */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-[#E2E2DF]/60">
         <div className="space-y-1">

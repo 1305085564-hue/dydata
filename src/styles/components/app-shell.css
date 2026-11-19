@@ -1,11 +1,18 @@
 /* app-shell 骨架样式 · 全站通用外壳 */
 
 @layer components {
+  /* 内容轨道：顶栏与正文共用同一条左边线（美学宝典 §4.3 导航同轴）。
+     页面在自己的根节点声明 data-app-rail，顶栏跟着同宽，纯 CSS，首屏不跳。 */
   .app-shell {
+    --app-rail: 80rem;
     min-height: 100dvh;
     background: transparent;
     position: relative;
     isolation: isolate;
+  }
+
+  .app-shell:has([data-app-rail="normal"]) {
+    --app-rail: 64rem;
   }
 
   .app-shell::before {

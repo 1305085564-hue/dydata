@@ -4,14 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  User,
-  Check,
-  LogOut,
-  Bell,
-  Sliders,
-  ChevronRight,
-} from "lucide-react";
-import {
   AdaptiveSheet,
   AdaptiveSheetContent,
   AdaptiveSheetHeader,
@@ -39,6 +31,7 @@ interface MobileMoreDrawerProps {
   name: string;
   role: string;
   companyRole?: string | null;
+  /** 只传底栏放不下的入口；底栏已有的不在这里重复 */
   navGroups: NavGroup[];
   accounts?: Account[];
   selectedAccountId?: string;
@@ -47,6 +40,15 @@ interface MobileMoreDrawerProps {
   bellBadgeCount?: number;
 }
 
+const ROW = "flex min-h-[44px] w-full items-center justify-between rounded-md px-3 text-left text-[14px] transition-colors duration-150";
+const ROW_ON = "bg-[#F1F1F0] text-[#141413]";
+const ROW_OFF = "text-[#1F1E1D] active:bg-[#EBEBE9]";
+const SECTION_LABEL = "px-3 pb-1 text-[12px] text-[#78716C]";
+
+/**
+ * 手机「我的」抽屉：和桌面顶栏同一种说法——只有字、选中只用浅砂底。
+ * 从上到下：待办 → 底栏放不下的页面 → 工作账号（两个以上才出现）→ 设置与退出。
+ */
 export function MobileMoreDrawer({
   open,
   onOpenChange,
@@ -61,10 +63,7 @@ export function MobileMoreDrawer({
   bellBadgeCount = 0,
 }: MobileMoreDrawerProps) {
   const pathname = usePathname();
-
-  const handleAccountSelect = (accountId: string) => {
-    selectDashboardAccount(accountId);
-  };
+  const countLabel = bellBadgeCount > 99 ? "99+" : String(bellBadgeCount);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -73,210 +72,96 @@ export function MobileMoreDrawer({
     window.location.href = "/login";
   };
 
+  const navLink = (item: NavSubItem) => {
+    const active = item.match(pathname);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        onClick={() => onOpenChange(false)}
+        className={cn(ROW, active ? ROW_ON : ROW_OFF)}
+      >
+        {item.label}
+      </Link>
+    );
+  };
+
   return (
     <AdaptiveSheet open={open} onOpenChange={onOpenChange}>
-      <AdaptiveSheetContent
-        id="mobile-navigation-menu"
-        className="max-h-[92dvh] px-4.5 pt-2"
-        aria-label="导航菜单"
-      >
+      <AdaptiveSheetContent id="mobile-navigation-menu" className="max-h-[92dvh] px-4 pt-2" aria-label="导航菜单">
         <AdaptiveSheetHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-normal text-[14px] border border-[#D97757]/20">
-              {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <AdaptiveSheetTitle>
-                  {name || "用户"}
-                </AdaptiveSheetTitle>
-                <span className="rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C] border border-[#E2E2DF]">
-                  {getRoleLabel(role, { companyRole })}
-                </span>
-              </div>
-              <AdaptiveSheetDescription className="text-[12px] text-[#78716C]">
-                DYData 创作工作空间 · 移动导航中心
-              </AdaptiveSheetDescription>
-            </div>
-          </div>
+          <AdaptiveSheetTitle>{name || "我的"}</AdaptiveSheetTitle>
+          <AdaptiveSheetDescription className="text-[12px] text-[#78716C]">
+            {getRoleLabel(role, { companyRole })}
+          </AdaptiveSheetDescription>
         </AdaptiveSheetHeader>
 
         <AdaptiveSheetBody className="space-y-4 py-3">
-          {/* 行动中枢入口 */}
           <button
             type="button"
             onClick={() => {
               onOpenChange(false);
               onOpenCommandHub();
             }}
-            aria-label="打开行动中枢：待办、审批与风险"
-            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition cursor-pointer group"
+            aria-label={`待办${bellBadgeCount > 0 ? ` ${countLabel} 项` : ""}：打开行动中枢（待办、审批与风险）`}
+            className={cn(ROW, ROW_OFF, "border border-[#E2E2DF]")}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-md bg-[#FCFCFB] text-[#141413] border border-[#E2E2DF] group-hover:bg-[#EBEBE9] transition-colors">
-                <Bell className="size-4.5 stroke-[1.8]" />
-              </div>
-              <div>
-                <p className="font-normal text-[#141413] text-[14px]">行动中枢</p>
-                <p className="text-[12px] text-[#78716C]">待办、审批与风险</p>
-              </div>
-            </div>
-            {bellBadgeCount > 0 ? (
-              <span className="text-[#78716C] text-[12px] font-normal tabular-nums">
-                {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
-              </span>
-            ) : (
-              <ChevronRight className="size-4 text-[#78716C]" />
-            )}
+            <span className={bellBadgeCount > 0 ? "text-[#141413]" : "text-[#78716C]"}>待办</span>
+            {bellBadgeCount > 0 && <span className="tabular-nums text-[#141413]">{countLabel}</span>}
           </button>
 
-          {/* 账号切换区 */}
-          {accounts.length > 0 && (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[12px] font-normal text-[#78716C]">当前工作账号</span>
-                <span className="text-[12px] text-[#78716C]/80">点击快速切换</span>
-              </div>
-              <div className="space-y-1 rounded-xl bg-white p-1.5 shadow-card-ring max-h-36 overflow-y-auto">
-                {accounts.map((account) => {
-                  const isSelected =
-                    account.id === selectedAccountId ||
-                    (!selectedAccountId && accounts[0]?.id === account.id);
-                  return (
-                    <button
-                      key={account.id}
-                      type="button"
-                      onClick={() => handleAccountSelect(account.id)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-[14px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
-                        isSelected
-                          ? "bg-status-info/10 text-status-info font-normal"
-                          : "text-[#1F1E1D] hover:bg-[#EBEBE9]",
-                      )}
-                    >
-                      <span className="truncate">{account.display_name || account.name}</span>
-                      {isSelected && <Check className="size-4 text-status-info shrink-0 ml-2" />}
-                    </button>
-                  );
-                })}
-              </div>
+          {navGroups.length > 0 && (
+            <div className="space-y-0.5">
+              {navGroups.map((group) => {
+                if (group.href && group.match) {
+                  return navLink({ href: group.href, label: group.label, match: group.match });
+                }
+                if (!group.children?.length) return null;
+                return (
+                  <div key={group.key} className="space-y-0.5 pt-2">
+                    <div className={SECTION_LABEL}>{group.label}</div>
+                    {group.children.map(navLink)}
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {/* 导航分组（唯一来源于 navGroups，保持与桌面端 100% 权限与入口一致） */}
-          <div className="space-y-3 pt-1">
-            {navGroups.map((group, groupIdx) => {
-              if (group.children && group.children.length > 0) {
+          {accounts.length > 1 && (
+            <div className="space-y-0.5 border-t border-[#E2E2DF]/60 pt-3">
+              <div className={SECTION_LABEL}>工作账号</div>
+              {accounts.map((account) => {
+                const isSelected =
+                  account.id === selectedAccountId || (!selectedAccountId && accounts[0]?.id === account.id);
                 return (
-                  <div
-                    key={group.key}
-                    className={cn(
-                      "space-y-1",
-                      groupIdx > 0 && "pt-3 border-t border-[#E2E2DF]/60",
-                    )}
+                  <button
+                    key={account.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => selectDashboardAccount(account.id)}
+                    className={cn(ROW, isSelected ? ROW_ON : ROW_OFF)}
                   >
-                    <span className="px-1 text-[12px] font-normal text-[#78716C]">
-                      {group.label}
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {group.children.map((child: NavSubItem) => {
-                        const active = child.match(pathname);
-                        const Icon = child.icon;
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            onClick={() => onOpenChange(false)}
-                            className={cn(
-                              "flex items-center gap-2 rounded-xl p-2.5 text-[14px] font-normal transition active:scale-[0.99] active:duration-120",
-                              active
-                                ? "bg-[#D97757]/10 text-[#D97757]"
-                                : "text-[#1F1E1D] hover:bg-[#F1F1F0]",
-                            )}
-                          >
-                            {Icon && (
-                              <Icon
-                                className={cn(
-                                  "size-4 shrink-0",
-                                  active ? "text-[#D97757]" : "text-[#78716C]",
-                                )}
-                              />
-                            )}
-                            <span className="truncate">{child.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
+                    <span className="truncate">{account.display_name || account.name}</span>
+                  </button>
                 );
-              }
+              })}
+            </div>
+          )}
 
-              // 单项根链接
-              if (group.href && group.match) {
-                const active = group.match(pathname);
-                const Icon = group.icon;
-                return (
-                  <div
-                    key={group.key}
-                    className={cn(groupIdx > 0 && "pt-3 border-t border-[#E2E2DF]/60")}
-                  >
-                    <Link
-                      href={group.href}
-                      onClick={() => onOpenChange(false)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-normal transition active:scale-[0.99] active:duration-120",
-                        active
-                          ? "bg-[#D97757]/10 text-[#D97757]"
-                          : "text-[#1F1E1D] hover:bg-[#F1F1F0]",
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        {Icon && (
-                          <Icon
-                            className={cn(
-                              "size-4",
-                              active ? "text-[#D97757]" : "text-[#78716C]",
-                            )}
-                          />
-                        )}
-                        <span>{group.label}</span>
-                      </div>
-                      <ChevronRight className="size-4 text-[#78716C]" />
-                    </Link>
-                  </div>
-                );
-              }
-
-              return null;
-            })}
-          </div>
-
-          {/* 系统设置与退出 */}
-          <div className="space-y-1 pt-2 border-t border-[#E2E2DF]">
+          <div className="space-y-0.5 border-t border-[#E2E2DF]/60 pt-3">
             <button
               type="button"
               onClick={() => {
                 onOpenChange(false);
                 onOpenSettings();
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[14px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors active:scale-[0.99] active:duration-120"
+              className={cn(ROW, ROW_OFF)}
             >
-              <div className="flex items-center gap-2">
-                <Sliders className="size-4 text-[#78716C]" />
-                <span>显示与高级设置</span>
-              </div>
-              <ChevronRight className="size-4 text-[#78716C]" />
+              账号与偏好设置
             </button>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[14px] font-normal text-status-danger hover:bg-status-danger/10 transition-colors active:scale-[0.99] active:duration-120"
-            >
-              <div className="flex items-center gap-2">
-                <LogOut className="size-4" />
-                <span>退出登录</span>
-              </div>
+            <button type="button" onClick={handleSignOut} className={cn(ROW, ROW_OFF)}>
+              退出登录
             </button>
           </div>
         </AdaptiveSheetBody>

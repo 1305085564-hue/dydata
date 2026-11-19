@@ -52,7 +52,6 @@ export function NavBarClient({
 }: NavBarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [commandHubOpen, setCommandHubOpen] = useState(false);
   const [commandHubLoaded, setCommandHubLoaded] = useState(false);
   const [commandHubTab, setCommandHubTab] = useState<"todos" | "approvals" | "history">(showAdmin ? "approvals" : "todos");
@@ -66,12 +65,6 @@ export function NavBarClient({
   const selectedAccountId = snapshot.selectedAccountId || accounts[0]?.id || "";
   const isAdmin = showAdmin;
   const bellBadgeCount = summary?.todoCount ?? 0;
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 15);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     if (accounts.length > 0) initDashboardStore({ accounts });
@@ -130,7 +123,6 @@ export function NavBarClient({
   return (
     <>
       <NavigationHeader
-        isScrolled={isScrolled}
         navGroups={navGroups}
         prefetchOnHover={prefetchOnHover}
         commandHubOpen={commandHubOpen}
@@ -146,9 +138,6 @@ export function NavBarClient({
         onRefreshSummary={() => syncActionCenterSummary({ force: true })}
         onActionCenterChanged={handleActionCenterChanged}
         name={name}
-        role={role}
-        companyRole={companyRole}
-        canAccessTeamManagement={canAccessTeamManagement}
         accounts={accounts}
         selectedAccountId={selectedAccountId}
         onOpenSettings={handleSettingsOpen}

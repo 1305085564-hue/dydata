@@ -9,6 +9,6 @@ test("dashboard 加载失败时提供明确说明与重试入口", () => {
     <DashboardError error={new Error("network failed")} reset={() => {}} />,
   );
 
-  assert.match(html, /工作台内容未能加载/);
+  assert.match(html, /工作台加载失败/);
   assert.match(html, /重试/);
 });

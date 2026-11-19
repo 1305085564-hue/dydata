@@ -18,8 +18,8 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
 
   return (
     <RouteErrorState
-      title="工作台内容未能加载"
-      description="刚才加载时碰到了点问题，你的草稿还在，再试一次通常就好了。"
+      title="工作台加载失败"
+      description="你的草稿还在，再试一次通常就好。"
       reset={reset}
     />
   );

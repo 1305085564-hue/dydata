@@ -132,7 +132,7 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
   const persona = readSource("src/components/user-workspace-popover.tsx");
   assert.match(tabBar, /aria-expanded=\{isMoreOpen\}/);
   assert.match(tabBar, /aria-controls="mobile-navigation-menu"/);
-  assert.match(nav, /aria-label="行动中枢：待办、审批与风险"/);
+  assert.match(nav, /打开行动中枢（待办、审批与风险）/);
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
@@ -278,9 +278,10 @@ test("NavBarClient 在 >=768px 严格保持原版桌面导航，移动端顶底�
   assert.doesNotMatch(source, /mobileMenuButtonRef/);
   assert.doesNotMatch(source, /setIsMobileMenuOpen/);
 
-  // 3. 桌面/平板数字徽章与高度保持规范
-  assert.match(source, /bellBadgeCount > 99 \? "99\+" : bellBadgeCount/);
-  assert.match(source, /py-2\.5/);
+  // 3. 顶栏待办直接写「待办 N」（超过 99 写 99+）；顶栏高度固定，滚动不变高不变色
+  assert.match(source, /todoCount > 99 \? "99\+" : String\(todoCount\)/);
+  assert.doesNotMatch(source, /isScrolled/);
+  assert.doesNotMatch(source, /backdrop-blur/);
 });
 
 test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区", () => {

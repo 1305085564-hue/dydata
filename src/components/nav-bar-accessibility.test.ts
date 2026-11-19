@@ -14,13 +14,14 @@ const source = [
 test("主导航与顶部按钮暴露清晰的语义标签", () => {
   const tabBarSource = readFileSync(resolve(process.cwd(), "src/components/mobile-tab-bar.tsx"), "utf8");
   const moreDrawerSource = readFileSync(resolve(process.cwd(), "src/components/mobile-more-drawer.tsx"), "utf8");
-  assert.match(source, /aria-label="行动中枢：待办、审批与风险"/);
+  // 待办按钮可见文字是「待办 N」，读屏名以同样的字开头（名称包含可见文字）
+  assert.match(source, /aria-label=\{`待办\$\{todoCount > 0 \? ` \$\{countLabel\} 项` : ""\}：打开行动中枢（待办、审批与风险）`\}/);
   assert.match(source, /aria-label="主导航"/);
   assert.match(source, /aria-current=\{isGroupActive \? "page" : undefined\}/);
   assert.match(tabBarSource, /aria-label="移动端主导航"/);
   assert.match(tabBarSource, /aria-expanded=\{isMoreOpen\}/);
   assert.match(tabBarSource, /aria-controls="mobile-navigation-menu"/);
-  assert.match(moreDrawerSource, /aria-label="打开行动中枢：待办、审批与风险"/);
+  assert.match(moreDrawerSource, /打开行动中枢（待办、审批与风险）/);
 });
 
 test("工作账号与行动中枢入口保留键盘可达和无障碍属性", () => {

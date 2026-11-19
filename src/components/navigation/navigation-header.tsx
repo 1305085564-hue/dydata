@@ -6,7 +6,6 @@ import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { DesktopNavMenu } from "@/components/navigation/desktop-nav-menu";
 import { ActionCenterControls } from "@/components/navigation/action-center-controls";
 import type { NavGroup } from "@/lib/navigation/domain/navigation";
-import { cn } from "@/lib/utils";
 
 type ActionCenterTab = "todos" | "approvals" | "history";
 
@@ -19,7 +18,6 @@ interface Account {
 }
 
 interface NavigationHeaderProps {
-  isScrolled: boolean;
   navGroups: NavGroup[];
   prefetchOnHover: (href: string) => void;
   commandHubOpen: boolean;
@@ -35,16 +33,18 @@ interface NavigationHeaderProps {
   onRefreshSummary: () => Promise<ActionCenterSummary | null>;
   onActionCenterChanged: () => void;
   name: string;
-  role: string;
-  companyRole?: string | null;
-  canAccessTeamManagement: boolean;
   accounts: Account[];
   selectedAccountId: string;
   onOpenSettings: () => void;
 }
 
+/**
+ * 顶栏只回答三件事：我在哪一页、要去哪一页、有没有事等我。
+ * 一行：DYData ｜ 导航 ……… 待办 · 名字 ▾
+ * 高度与底色从头到尾不变（滚动不变高、不变色、不模糊）；手机不显示，导航交给底部标签栏。
+ * 左右边线跟正文同一条轨道（--app-rail，由页面 data-app-rail 决定），外层内边距与 <main> 相同。
+ */
 export function NavigationHeader({
-  isScrolled,
   navGroups,
   prefetchOnHover,
   commandHubOpen,
@@ -60,43 +60,27 @@ export function NavigationHeader({
   onRefreshSummary,
   onActionCenterChanged,
   name,
-  role,
-  companyRole,
-  canAccessTeamManagement,
   accounts,
   selectedAccountId,
   onOpenSettings,
 }: NavigationHeaderProps) {
   return (
-    <nav
-      className={cn(
-        "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 border-b pt-[max(env(safe-area-inset-top),0px)] transition duration-200 ease-in-out",
-        isScrolled
-          ? "border-[#E2E2DF] bg-white/95 py-2.5 backdrop-blur-2xl shadow-card-ring"
-          : "border-[#E2E2DF]/60 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",
-      )}
+    <header
+      className="fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 hidden border-b border-[#E2E2DF] bg-[#FCFCFB] pt-[var(--app-safe-top,0px)] md:block"
     >
-      {/* 与正文内容轨道同宽同居中（max-w-7xl mx-auto），lg 不加左内边距即与正文左缘天然对齐（2026-10-24 实测：两侧容器左缘均为 66px，此前多加的 pl-[66px] 反而把导航推歪） */}
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:pl-0 lg:pr-8">
-        <div className="flex items-center justify-between gap-2 md:gap-2 lg:gap-4">
-          <div className="flex min-w-0 items-center gap-2 lg:gap-4">
-            <Link
-              href="/dashboard"
-              prefetch={false}
-              onMouseEnter={() => prefetchOnHover("/dashboard")}
-              className="group flex min-h-[44px] min-w-[44px] shrink-0 items-center gap-2 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-status-info md:min-h-0 md:min-w-0"
-            >
-              <div className="flex flex-col justify-center">
-                <span className="text-[14px] leading-none text-[#141413]">DYData</span>
-                <span className="mt-1 hidden text-[12px] font-normal leading-none tracking-wide text-[#78716C] transition-colors duration-200 group-hover:text-[#1F1E1D] sm:block">
-                  创作数据读本
-                </span>
-              </div>
-            </Link>
-            <DesktopNavMenu navGroups={navGroups} />
-          </div>
+      <div className="px-3.5 sm:px-6">
+        <div className="mx-auto flex h-[var(--app-nav-height)] w-full max-w-[var(--app-rail,80rem)] items-center gap-4">
+          <Link
+            href="/dashboard"
+            prefetch={false}
+            onMouseEnter={() => prefetchOnHover("/dashboard")}
+            className="shrink-0 rounded-md text-[14px] leading-none text-[#141413] outline-none focus-visible:ring-2 focus-visible:ring-status-info/20"
+          >
+            DYData
+          </Link>
+          <DesktopNavMenu navGroups={navGroups} />
 
-          <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <ActionCenterControls
               open={commandHubOpen}
               commandHubLoaded={commandHubLoaded}
@@ -113,9 +97,6 @@ export function NavigationHeader({
             />
             <UserWorkspacePopover
               name={name}
-              role={role}
-              companyRole={companyRole}
-              canAccessTeamManagement={canAccessTeamManagement}
               accounts={accounts}
               selectedAccountId={selectedAccountId}
               onOpenSettings={onOpenSettings}
@@ -123,6 +104,6 @@ export function NavigationHeader({
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

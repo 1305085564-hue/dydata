@@ -67,7 +67,7 @@ export function NetworkStatusBar() {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center gap-2 border border-[#E2E2DF] bg-white/92 px-4 text-[14px] text-[#1F1E1D] backdrop-blur-md shadow-card-ring transition duration-200",
+        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center gap-2 border-b border-[#E2E2DF] bg-white px-4 text-[14px] text-[#1F1E1D]",
       )}
       role="status"
       aria-live="polite"
@@ -75,10 +75,10 @@ export function NetworkStatusBar() {
       <span
         className={cn(
           "size-1.5 rounded-full",
-          isOffline ? "bg-current text-status-danger animate-pulse" : "bg-current text-status-success",
+          isOffline ? "bg-current text-status-danger" : "bg-current text-status-success",
         )}
       />
-      <span className="font-normal text-[#141413]">
+      <span className="text-[#141413]">
         {isOffline ? "网络已断开" : "网络已恢复"}
       </span>
       {isOffline && (

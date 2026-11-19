@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 
 import { captureRouteError } from "@/lib/sentry/capture-route-error";
-import { Card } from "@/components/ui/card";
 
 export default function GlobalError({
   error,
@@ -20,21 +19,16 @@ export default function GlobalError({
   return (
     <html lang="zh-CN">
       <body className="tabular-nums">
-        <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
-          <Card className="flex max-w-md flex-col items-center gap-3  px-8 py-10 text-center">
-            <p className="text-[28px] font-normal leading-none text-[#E2E2DF]">!</p>
-            <h1 className="text-[28px] leading-[1.20] tracking-tight text-[#141413]">页面出错了</h1>
-            <p className="text-[14px] leading-6 text-[#1F1E1D]">
-              刚才碰到了点问题，刷新一下通常就好了。
-            </p>
-            <button
-              type="button"
-              onClick={reset}
-              className="mt-2 inline-flex h-7 items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-3.5 text-[14px] font-normal text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
-            >
-              重试
-            </button>
-          </Card>
+        <main className="flex min-h-screen min-h-dvh flex-col items-center justify-center gap-2 bg-[#FCFCFB] px-4 py-12 text-center">
+          <h1 className="font-serif text-[20px] leading-[1.25] text-[#141413]">页面出错了</h1>
+          <p className="text-[14px] leading-[1.60] text-[#78716C]">刷新一下通常就好。</p>
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-2 inline-flex h-7 cursor-pointer items-center rounded-md border border-[#E2E2DF] bg-white px-3 text-[14px] text-[#1F1E1D] transition-colors duration-150 hover:bg-[#EBEBE9]"
+          >
+            重试
+          </button>
         </main>
       </body>
     </html>
