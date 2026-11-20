@@ -110,6 +110,8 @@ test("迁移归并：同渠道同款重复合并成一条，状态取最保守�
       [key, model],
     )).rows[0].id;
     // 指向两条记录的外键：业务绑定、改写路由、改写运行记录
+    // 旧列 ai_feature_bindings.provider_key_model_id 已由 20261119155000 删除；本用例回放归并迁移，事务内临时补回（回滚即消失）
+    await db.query("alter table public.ai_feature_bindings add column if not exists provider_key_model_id uuid references public.ai_provider_key_models(id) on delete set null");
     const bindingA = (await db.query("insert into public.ai_feature_bindings(feature_key,label,provider_key_model_id) values($1,'merge',$2) returning id", [`merge-a-${uid()}`, prefixed])).rows[0].id;
     const bindingB = (await db.query("insert into public.ai_feature_bindings(feature_key,label,provider_key_model_id) values($1,'merge',$2) returning id", [`merge-b-${uid()}`, plain])).rows[0].id;
     // 夹具里的视图/渠道/会话/用户用随机号，不为它们建整条链：事务内去掉这几条无关外键（回滚后原样恢复），保留指向模型供应的外键

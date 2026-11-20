@@ -20,6 +20,9 @@ test("第一批迁移：保留原开关记忆，空模型不继承钉渠道，�
     .replace(/^begin;$/m, "").replace(/^commit;$/m, "");
   try {
     await db.query("begin");
+    // 旧列已由 20261119155000 删除；本用例回放 20261105062301 的历史迁移，事务内临时补回旧列（回滚即消失）
+    await db.query("alter table public.ai_provider_key_models add column if not exists global_is_enabled boolean");
+    await db.query("alter table public.ai_feature_bindings add column if not exists provider_key_model_id uuid");
     await db.query("insert into public.ai_providers(id,name,base_url) values($1,'local migration fixture','https://fixture.test/v1')", [provider]);
     await db.query("insert into public.ai_provider_keys(id,provider_id,label,api_key) values($1,$2,'local migration fixture','local-only')", [key, provider]);
     await db.query("insert into public.ai_provider_key_models(id,key_id,model_id,is_enabled,global_is_enabled) values($1,$4,$5,true,false),($2,$4,$6,false,false),($3,$4,$7,true,null)", [marked, manual, undecided, key, `marked-${marked}`, `manual-${manual}`, `new-${undecided}`]);

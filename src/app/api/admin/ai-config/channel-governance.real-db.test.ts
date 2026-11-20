@@ -49,9 +49,9 @@ test("渠道治理：真实本地库与管理接口闭环", { skip: !url }, asyn
     const result = await db.from("ai_provider_keys").update(patch).eq("id", keyIds[0]); assert.equal(result.error, null);
   }
   try {
-    assert.equal((await db.from("ai_providers").insert({ id: providerId, name: "本地渠道治理验收", base_url: `http://127.0.0.1:${port}/v1`, is_enabled: true, priority: 0 })).error, null);
-    assert.equal((await db.from("ai_provider_keys").insert(keyIds.map((id) => ({ id, provider_id: providerId, label: `本地验收-${id}`, api_key: "local-only-fixture", priority: 55, available_models: [modelA, modelB], is_enabled: true })))).error, null);
-    assert.equal((await db.from("ai_provider_key_models").insert([modelA, modelB].flatMap((model_id) => keyIds.map((key_id) => ({ key_id, model_id, is_enabled: true, global_is_enabled: true }))))).error, null);
+    assert.equal((await db.from("ai_providers").insert({ id: providerId, name: "本地渠道治理验收", base_url: `http://127.0.0.1:${port}/v1`, is_enabled: true })).error, null);
+    assert.equal((await db.from("ai_provider_keys").insert(keyIds.map((id) => ({ id, provider_id: providerId, label: `本地验收-${id}`, api_key: "local-only-fixture", available_models: [modelA, modelB], is_enabled: true })))).error, null);
+    assert.equal((await db.from("ai_provider_key_models").insert([modelA, modelB].flatMap((model_id) => keyIds.map((key_id) => ({ key_id, model_id, is_enabled: true }))))).error, null);
 
     await t.test("相邻互换再反向完全还原，另一个模型与全局顺位不变", async () => {
       const before = await ordered(modelA); const other = await ordered(modelB); const keyBefore = await keys();

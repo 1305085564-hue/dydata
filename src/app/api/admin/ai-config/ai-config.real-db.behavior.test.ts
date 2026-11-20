@@ -100,7 +100,6 @@ async function createProvider(db: Db, baseUrl: string) {
     id: providerId,
     name: `ai-config-real-${providerId}`,
     base_url: baseUrl,
-    priority: 1,
     is_enabled: true,
   });
   return provider;
@@ -112,7 +111,6 @@ async function createKey(db: Db, providerId: string, label = id()) {
     provider_id: providerId,
     label: `real-${label}`,
     api_key: `real-secret-${label}`,
-    priority: 1,
     is_enabled: true,
   });
 }
@@ -200,7 +198,7 @@ test("真实库 B2：独占模型停用需确认，明确默认可顶班后允�
   const previousBindings = await db.from("ai_feature_bindings").select("*").in("feature_key",[featureKey,"default"]);
   assert.equal(previousBindings.error,null);
   try {
-    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: targetModelId, display_name: "目标", is_enabled: true, global_is_enabled: true });
+    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: targetModelId, display_name: "目标", is_enabled: true });
     await db.from("ai_provider_keys").update({ available_models: [targetModelId] }).eq("id", key.id);
     assert.equal((await db.from("ai_feature_bindings").upsert([
       { feature_key: featureKey, label: "真实库独占业务", model_id: targetModelId, is_enabled: true, lifecycle_state: "active" },
@@ -214,7 +212,7 @@ test("真实库 B2：独占模型停用需确认，明确默认可顶班后允�
     assert.equal((await readModels(db, key.id))[0]?.is_enabled, true);
 
     const backupKey = await createKey(db, provider.id, "b2-backup");
-    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: backupModelId, display_name: "备用", is_enabled: true, global_is_enabled: true });
+    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: backupModelId, display_name: "备用", is_enabled: true });
     await db.from("ai_provider_keys").update({ available_models: [backupModelId] }).eq("id", backupKey.id);
     assert.equal((await db.from("ai_feature_bindings").update({model_id:backupModelId}).eq("feature_key","default")).error,null);
     response = await buildAiConfigResponse(request({
