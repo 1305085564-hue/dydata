@@ -1,0 +1,1473 @@
+{
+  "version": 1,
+  "generatedFrom": "structure-diff-post.json",
+  "generatedAt": "2026-11-20T06:23:32.544Z",
+  "entries": [
+    {
+      "kind": "tables",
+      "key": "schema=public|name=pg_stat_statements",
+      "reason": "CloudBase 平台统计扩展对象"
+    },
+    {
+      "kind": "tables",
+      "key": "schema=public|name=pg_stat_statements_info",
+      "reason": "CloudBase 平台统计扩展对象"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=ai_provider_key_models|name=canonical_model_id",
+      "reason": "canonical_model_id 的非空约束延后到 S7 数据接管，S2 只建可回滚列与唯一约束"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=ai_feature_bindings|name=provider_key_model_id",
+      "reason": "CloudBase 保留的旧兼容列，供已有目标端结构兼容"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=ai_provider_key_models|name=global_is_enabled",
+      "reason": "CloudBase 保留的旧兼容列，供已有目标端结构兼容"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=ai_provider_keys|name=priority",
+      "reason": "CloudBase 保留的旧兼容列，供已有目标端结构兼容"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=ai_providers|name=priority",
+      "reason": "CloudBase 保留的旧兼容列，供已有目标端结构兼容"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=userid",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=dbid",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=toplevel",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=queryid",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=query",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=plans",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=total_plan_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=min_plan_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=max_plan_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=mean_plan_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=stddev_plan_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=calls",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=total_exec_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=min_exec_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=max_exec_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=mean_exec_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=stddev_exec_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=rows",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blks_hit",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blks_read",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blks_dirtied",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blks_written",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blks_hit",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blks_read",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blks_dirtied",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blks_written",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=temp_blks_read",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=temp_blks_written",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blk_read_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=shared_blk_write_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blk_read_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=local_blk_write_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=temp_blk_read_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=temp_blk_write_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=wal_records",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=wal_fpi",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=wal_bytes",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_functions",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_generation_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_inlining_count",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_inlining_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_optimization_count",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_optimization_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_emission_count",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_emission_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_deform_count",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=jit_deform_time",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=stats_since",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements|name=minmax_stats_since",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements_info|name=dealloc",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "columns",
+      "key": "schema=public|table=pg_stat_statements_info|name=stats_reset",
+      "reason": "CloudBase 平台统计扩展字段"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=exemption_grant|name=exemption_grant_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=exemption_request|name=exemption_request_applicant_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=fulfillment_records|name=fulfillment_records_marked_by_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=fulfillment_records|name=fulfillment_records_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=profiles|name=profiles_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=team_join_requests|name=team_join_requests_applicant_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=usage_events|name=usage_events_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_areas|name=yike_areas_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_execution_slots|name=yike_execution_slots_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_item_events|name=yike_item_events_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_items|name=yike_items_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_people|name=yike_people_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_projects|name=yike_projects_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=yike_workspaces|name=yike_workspaces_user_id_fkey",
+      "reason": "CloudBase 认证身份映射到 profiles 的目标端外键适配"
+    },
+    {
+      "kind": "constraints",
+      "key": "schema=public|table=ai_feature_bindings|name=ai_feature_bindings_provider_key_model_id_fkey",
+      "reason": "CloudBase 目标端已有结构适配"
+    },
+    {
+      "kind": "indexes",
+      "key": "schema=public|table=ai_feature_bindings|name=idx_ai_feature_bindings_provider_key_model",
+      "reason": "CloudBase 目标端旧兼容索引"
+    },
+    {
+      "kind": "triggers",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_appeal_write",
+      "reason": "CloudBase 目标端权限看守触发器"
+    },
+    {
+      "kind": "triggers",
+      "key": "schema=public|table=profiles|name=guard_profile_work_group_assignment",
+      "reason": "CloudBase 目标端权限看守触发器"
+    },
+    {
+      "kind": "triggers",
+      "key": "schema=public|table=videos|name=cb_permission_v2_video_write",
+      "reason": "CloudBase 目标端权限看守触发器"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=private|name=can_read_team_actor|identity_args=p_target_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=private|name=can_read_team_claim|identity_args=p_claim_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=private|name=can_read_team_topic|identity_args=p_sub_topic_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=private|name=is_active_topic_member|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=active_visible_user_ids|identity_args=p_actor_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=active_visible_user_ids_v2|identity_args=p_actor_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=apply_exemption_grant_atomically|identity_args=p_user_id uuid, p_grant_start_date date, p_grant_end_date date, p_grant_type text, p_exemption_category text, p_reason text, p_replace_existing boolean",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=apply_exemption_grant_atomically_v2|identity_args=p_user_id uuid, p_grant_start_date date, p_grant_end_date date, p_grant_type text, p_exemption_category text, p_reason text, p_replace_existing boolean, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=case_library_actor_scope|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=case_library_inbox|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=case_library_inbox_counts|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=case_library_processed|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=clear_exemption_grant_atomically|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=clear_exemption_grant_atomically_v2|identity_args=p_user_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=clear_permanent_exemption_owner_atomically|identity_args=p_user_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=company_role_for_user|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=count_remind_logs_for_user|identity_args=p_user_id uuid, p_target_date date, p_days integer",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=exemption_target_in_active_scope|identity_args=p_actor_id uuid, p_target_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=get_data_scope|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=get_leaderboard_rows|identity_args=since_date date, until_date date",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=handle_fulfillment_appeal|identity_args=p_appeal_id uuid, p_decision text, p_handler_id uuid, p_reason text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=has_group_owner_qualification|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=has_permission|identity_args=perm text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=has_violation_permission|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=is_admin|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=is_admin_or_owner|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=is_group_mode_active|identity_args=p_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=is_owner|identity_args=",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=mark_fulfillment_status|identity_args=p_user_id uuid, p_record_date date, p_status text, p_reason text, p_marker_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=mark_fulfillment_status_batch|identity_args=p_user_ids uuid[], p_record_date date, p_status text, p_reason text, p_marker_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=owns_account|identity_args=target_account_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=publish_draft_actor_scope|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=publish_drafts_review_queue|identity_args=p_user_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=re_review_exemption_request_atomically|identity_args=p_request_id uuid, p_decision text, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=remove_fulfillment_mark|identity_args=p_user_id uuid, p_record_date date, p_marker_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=reopen_exemption_request_atomically|identity_args=p_request_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=reopen_fulfillment_appeal_atomically|identity_args=p_appeal_id uuid, p_handler_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=review_exemption_request_atomically|identity_args=p_request_id uuid, p_decision text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=review_exemption_request_atomically_v2|identity_args=p_request_id uuid, p_decision text, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=review_exemption_request_dates_atomically|identity_args=p_request_id uuid, p_decision text, p_dates date[], p_feedback text, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=review_team_join_request|identity_args=p_request_id uuid, p_action text, p_note text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=set_permanent_exemption_owner_atomically|identity_args=p_user_id uuid, p_reason text, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=visible_user_ids|identity_args=p_actor_id uuid",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=visible_user_ids_v2|identity_args=p_actor_id uuid, p_group_mode_token_hash text",
+      "reason": "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=armor|identity_args=bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=armor|identity_args=bytea, text[], text[]",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_auth_user_by_subject|identity_args=p_subject text",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_auth_users_page|identity_args=p_page integer, p_per_page integer",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_current_actor_active_v2|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_guard_appeal_write_v2|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_guard_video_write_v2|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_require_active_actor_v2|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_session_status|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=cloudbase_set_auth_user_status|identity_args=p_subject text, p_status smallint, p_project text",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=crypt|identity_args=text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=dearmor|identity_args=text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=decrypt|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=decrypt_iv|identity_args=bytea, bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=digest|identity_args=bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=digest|identity_args=text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=encrypt|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=encrypt_iv|identity_args=bytea, bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=gen_random_bytes|identity_args=integer",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=gen_random_uuid|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=gen_salt|identity_args=text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=gen_salt|identity_args=text, integer",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=get_leaderboard_rows|identity_args=since_date date",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=guard_profile_work_group_assignment|identity_args=",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=hmac|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=hmac|identity_args=text, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pg_stat_statements|identity_args=showtext boolean, OUT userid oid, OUT dbid oid, OUT toplevel boolean, OUT queryid bigint, OUT query text, OUT plans bigint, OUT total_plan_time double precision, OUT min_plan_time double precision, OUT max_plan_time double precision, OUT mean_plan_time double precision, OUT stddev_plan_time double precision, OUT calls bigint, OUT total_exec_time double precision, OUT min_exec_time double precision, OUT max_exec_time double precision, OUT mean_exec_time double precision, OUT stddev_exec_time double precision, OUT rows bigint, OUT shared_blks_hit bigint, OUT shared_blks_read bigint, OUT shared_blks_dirtied bigint, OUT shared_blks_written bigint, OUT local_blks_hit bigint, OUT local_blks_read bigint, OUT local_blks_dirtied bigint, OUT local_blks_written bigint, OUT temp_blks_read bigint, OUT temp_blks_written bigint, OUT shared_blk_read_time double precision, OUT shared_blk_write_time double precision, OUT local_blk_read_time double precision, OUT local_blk_write_time double precision, OUT temp_blk_read_time double precision, OUT temp_blk_write_time double precision, OUT wal_records bigint, OUT wal_fpi bigint, OUT wal_bytes numeric, OUT jit_functions bigint, OUT jit_generation_time double precision, OUT jit_inlining_count bigint, OUT jit_inlining_time double precision, OUT jit_optimization_count bigint, OUT jit_optimization_time double precision, OUT jit_emission_count bigint, OUT jit_emission_time double precision, OUT jit_deform_count bigint, OUT jit_deform_time double precision, OUT stats_since timestamp with time zone, OUT minmax_stats_since timestamp with time zone",
+      "reason": "CloudBase 平台统计扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pg_stat_statements_info|identity_args=OUT dealloc bigint, OUT stats_reset timestamp with time zone",
+      "reason": "CloudBase 平台统计扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pg_stat_statements_reset|identity_args=userid oid, dbid oid, queryid bigint, minmax_only boolean",
+      "reason": "CloudBase 平台统计扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_armor_headers|identity_args=text, OUT key text, OUT value text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_key_id|identity_args=bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt|identity_args=bytea, bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt|identity_args=bytea, bytea, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt_bytea|identity_args=bytea, bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt_bytea|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_decrypt_bytea|identity_args=bytea, bytea, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_encrypt|identity_args=text, bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_encrypt|identity_args=text, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_encrypt_bytea|identity_args=bytea, bytea",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_pub_encrypt_bytea|identity_args=bytea, bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_decrypt|identity_args=bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_decrypt|identity_args=bytea, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_decrypt_bytea|identity_args=bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_decrypt_bytea|identity_args=bytea, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_encrypt|identity_args=text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_encrypt|identity_args=text, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_encrypt_bytea|identity_args=bytea, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=pgp_sym_encrypt_bytea|identity_args=bytea, text, text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=reassign_member_work_group|identity_args=p_member_id uuid, p_slot text, p_group_id uuid",
+      "reason": "CloudBase 目标端认证、权限与兼容函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_generate_v1|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_generate_v1mc|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_generate_v3|identity_args=namespace uuid, name text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_generate_v4|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_generate_v5|identity_args=namespace uuid, name text",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_nil|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_ns_dns|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_ns_oid|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_ns_url|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "functions",
+      "key": "schema=public|name=uuid_ns_x500|identity_args=",
+      "reason": "CloudBase 平台加密与 UUID 扩展函数"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=管理员管理内容观察",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=管理员读取内容观察",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=Admins manage fulfillment appeals",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=sample_quality_issues_insert_policy",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=sample_quality_issues_select_policy",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=sample_quality_issues_update_policy",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=team_join_requests|name=b3_team_join_requests_insert_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=team_join_requests|name=申请人仅可创建自己的 pending 申请",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=accounts|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=admin_actions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=advice_actions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_channels|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_feature_bindings|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_feature_config|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_feature_config_archives|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_feedback|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_input_bundle|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_insight_result|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_provider_key_models|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_provider_keys|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_providers|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=ai_result|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=audit_logs|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_asset|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_item|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=cb_permission_v2_scope_a",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=cb_permission_v2_scope_d",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=cb_permission_v2_scope_r",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_observations|name=cb_permission_v2_scope_w",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=content_tag_link|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=daily_reports|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=exemption_audit|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=exemption_grant|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=exemption_request|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=exemption_request_date|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_scope_a",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_scope_d",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_scope_r",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_appeals|name=cb_permission_v2_scope_w",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=fulfillment_records|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=group_mode_sessions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=group_permission_qualifications|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=invite_codes|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=market_context_daily|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=member_change_log|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=metric_snapshot|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=notifications|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=profiles|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=profiles_group|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=profiles_team|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=provisional_tag_text|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=publish_drafts|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=remind_logs|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_conversation_skills|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_conversations|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_document_paragraphs|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_document_revisions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_documents|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_generation_runs|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_messages|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_model_routes|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_model_views|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_modes|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_skill_versions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=rewrite_skills|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=cb_permission_v2_scope_a",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=cb_permission_v2_scope_r",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sample_quality_issues|name=cb_permission_v2_scope_w",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=script_document|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=script_purposes|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=script_segment|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=script_usage_records|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sop_checkpoint_submissions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sop_daily_status|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sub_topic_claims|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=sub_topics|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=system_issues|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=tag_definition|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=team_join_requests|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=teams|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=topic_groups|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=topic_import_batches|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=topics|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=usage_events|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=video_content_segments|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=video_metrics_snapshots|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=video_review_tickets|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=video_screenshot_replacement_history|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=video_tags|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=videos|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=violation_case_reason_tags|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=violation_case_visual_tags|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=violation_cases|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=violation_events|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=violation_reason_tags|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=visual_tags|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=weekly_decisions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=work_submissions|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_areas|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_execution_slots|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_item_events|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_items|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_people|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_projects|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "policies",
+      "key": "schema=public|table=yike_workspaces|name=cb_permission_v2_active",
+      "reason": "CloudBase 目标端权限策略适配"
+    },
+    {
+      "kind": "extensions",
+      "key": "name=supabase_vault",
+      "reason": "CloudBase 平台扩展差异"
+    }
+  ],
+  "summary": {
+    "CloudBase 平台统计扩展对象": 2,
+    "canonical_model_id 的非空约束延后到 S7 数据接管，S2 只建可回滚列与唯一约束": 1,
+    "CloudBase 保留的旧兼容列，供已有目标端结构兼容": 4,
+    "CloudBase 平台统计扩展字段": 51,
+    "CloudBase 认证身份映射到 profiles 的目标端外键适配": 14,
+    "CloudBase 目标端已有结构适配": 1,
+    "CloudBase 目标端旧兼容索引": 1,
+    "CloudBase 目标端权限看守触发器": 3,
+    "CloudBase 目标端函数定义适配，保留与目标认证和权限模型一致的实现": 44,
+    "CloudBase 平台加密与 UUID 扩展函数": 46,
+    "CloudBase 目标端认证、权限与兼容函数": 11,
+    "CloudBase 平台统计扩展函数": 3,
+    "CloudBase 目标端权限策略适配": 108,
+    "CloudBase 平台扩展差异": 1
+  }
+}

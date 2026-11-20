@@ -10,7 +10,9 @@
 4. `copyDumpToStatements` 将同归档的 COPY 文本转换为 INSERT，保留 NULL、转义、数组、JSON、identity 与序列状态。生成列不作为普通列插入。
 5. `packSqlBatches` 按 UTF-8 字节分批；本次使用 512 KiB。`runBatches` 接受显式注入的目标执行器和持久回执读取器，每批的业务 SQL 与回执在同一个事务内提交。每次调用独立完成，不使用跨请求会话或临时表。
 6. 数据完成后执行 `target-permissions.sql`、`target-function-guards.sql`、`target-auth-readers.sql`。这些是目标端适配，**不要放进 Supabase 生产迁移目录执行**。
-7. 用 `data-reconciliation.mjs` 对同一归档与目标实际类型做逐表数量和两组摘要对账。补充同参数 RPC 结果对比、真实 JWT 和网站角色测试。
+7. `target-structure-adapter.mjs` 是本轮 S2 的结构差异适配器。它只生成表、列、函数、约束、索引和触发器结构语句，不执行数据变更。先用 `--rehearse` 在单事务内回滚演练，确认对象快照与回执数量不变，再用 `--execute-once` 做唯一一次真实提交。生成顺序固定为扩展与表、列、函数、依赖清理、约束、索引、触发器，约束背后的唯一索引只通过 `ALTER TABLE ... DROP CONSTRAINT` 删除。
+8. `target-structure-adaptations.json` 是结构差异登记表。`structure-diff.mjs` 会把每条差异绑定到登记原因，并输出 `unregisteredCount`，只有 0 才能作为 S2 结构验收依据。登记项逐条保存对象类型、对象键和目标端适配原因。
+9. 用 `data-reconciliation.mjs` 对同一归档与目标实际类型做逐表数量和两组摘要对账。补充同参数 RPC 结果对比、真实 JWT 和网站角色测试。
 
 执行器必须保存 RequestId、批次 ID、SQL 摘要、成功/失败与恢复状态。不要把 SQL 正文、业务行、账号密码或令牌写入公开日志。实际执行时的导出、驱动脚本和完整回执在私有执行包中，位置见本次执行报告。
 
@@ -29,6 +31,8 @@
 本轮生产没有切换，无需生产回滚。隔离库的错误批次在事务内回滚；已提交批次不提供通用 DROP/CASCADE 逆操作。若需要重建，须另行授权使用明确的新隔离库，并从私有一致性归档恢复。当前隔离库中的业务数据不应自动清空。
 
 网站默认仍走 Supabase。测试构建同时设置 `DYDATA_BACKEND=cloudbase` 和 `NEXT_PUBLIC_DYDATA_BACKEND=cloudbase`，并配置同一目标环境 ID。回到旧后端需要恢复两项开关并重新构建，不能仅修改运行时变量。生产切换与最后增量同步须单独授权。
+
+本轮结构适配登记如下。`ai_call_attempts`、`ai_provider_key_model_merge_audit`、模型规范化列与函数、内容评级函数、双日期排行榜函数和相关索引触发器属于生产缺口。CloudBase 已有的认证 UUID 转换、权限策略、旧兼容列、平台扩展保留为目标端适配。`canonical_model_id` 的非空约束依赖 S7 数据接管前的数据整理，S2 只建立可回滚的列和唯一约束，不更新旧行。
 
 ## 定向验证
 
