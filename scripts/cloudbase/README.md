@@ -32,6 +32,22 @@
 
 网站默认仍走 Supabase。测试构建同时设置 `DYDATA_BACKEND=cloudbase` 和 `NEXT_PUBLIC_DYDATA_BACKEND=cloudbase`，并配置同一目标环境 ID。回到旧后端需要恢复两项开关并重新构建，不能仅修改运行时变量。生产切换与最后增量同步须单独授权。
 
+## 云托管发版与通知清理（2026-11-21）
+
+`deploy-service.mjs` 是目标端发布适配：从已推送且干净的 `main` 打包，沿用云托管现有运行变量，只把 `NEXT_PUBLIC_*` 写进 Docker 构建参数；运行私钥不进包。先用 `git archive --format=tar` 取源码、再用系统 `zip` 保留中文路径，避免 `git archive --format=zip` 被构建机解包为 `#Uxxxx`。生成 `/deployment.json`，供默认域名查询实际提交号。该脚本只部署服务，不导出、接管或迁移数据库，不改域名和证书。
+
+正式手动发布命令（先通过六项门禁、构建、文档扫描并正常 push）：
+
+```sh
+CLOUDBASE_MCP_MODULE="$(find "$HOME/.npm/_npx" -path '*/@cloudbase/cloudbase-mcp/dist/index.cjs' -print -quit)" node scripts/cloudbase/deploy-service.mjs
+```
+
+依赖本机已安装的官方 `@cloudbase/cloudbase-mcp` 管理模块；凭据仍从仓库外原位置读取。执行输出只含提交号、包摘要、版本和请求号。部署完成后查默认域名 `/deployment.json` 与 `/api/health?check=cloudbase`，前者等于 `origin/main`，后者 HTTP 200 且 `checks.cloudbase.status="up"`。目前 push 只自动触发 Vercel，云托管须执行上面的命令。
+
+`notifications-cleanup/index.js` 保存已部署云函数的零依赖实现：用 Node `https` 发送 GET，读取 `TARGET_URL` / `CRON_SECRET`，请求超时 35 秒；云函数总超时 60 秒。触发器 `daily-notifications-cleanup` 保留 `0 0 2 * * * *`（北京时间每日 02:00）。手动触发须确认返回 200 和日志中的 `method=GET,status=200`，不是只看部署成功。保活任务仍留在 Vercel。
+
+验证：`node --test scripts/cloudbase/deploy-service.test.mjs`，覆盖中文文件名、提交号、公开参数及密钥不入包。
+
 本轮结构适配登记如下。`ai_call_attempts`、`ai_provider_key_model_merge_audit`、模型规范化列与函数、内容评级函数、双日期排行榜函数和相关索引触发器属于生产缺口。CloudBase 已有的认证 UUID 转换、权限策略、旧兼容列、平台扩展保留为目标端适配。`canonical_model_id` 的非空约束依赖 S7 数据接管前的数据整理，S2 只建立可回滚的列和唯一约束，不更新旧行。
 
 ## 定向验证
