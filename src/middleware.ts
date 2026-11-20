@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cutoverMaintenanceResponse, isApplicationMiddlewarePath } from "@/lib/cutover-maintenance";
+import { isTrustedWrite } from "@/lib/csrf";
 
 import { hasCloudBaseAuthCookie, hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
@@ -31,30 +32,9 @@ const DEV_PROD_WRITE_AUTH_PATHS = new Set([
   "/api/admin/ai-config/check-dependencies",
 ]);
 
-// 飞书回调等外部服务调用的路由，豁免 CSRF 检查
-const CSRF_EXEMPT_PATHS = new Set(["/api/feishu/event"]);
-
 export function isUntrustedApiWriteRequest(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith("/api/") || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
-    return false;
-  }
-
-  if (CSRF_EXEMPT_PATHS.has(request.nextUrl.pathname)) {
-    return false;
-  }
-
-  if (request.headers.get("sec-fetch-site")?.toLowerCase() === "cross-site") {
-    return true;
-  }
-
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-
-  try {
-    return new URL(origin).origin !== request.nextUrl.origin;
-  } catch {
-    return true;
-  }
+  if (!request.nextUrl.pathname.startsWith("/api/")) return false;
+  return !isTrustedWrite(request);
 }
 
 export function shouldBlockDevProductionWrite(request: NextRequest, env: Record<string, string | undefined> = process.env) {

@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 
+// 来源校验只信配置的站点地址，测试需显式给出与请求 Origin 一致的配置。
+process.env.SITE_ORIGIN = "https://dydata.cc";
+
 import { POST as signin } from "./auth/signin/route";
 import { POST as refresh } from "./auth/refresh/route";
 import { POST as signout } from "./auth/signout/route";

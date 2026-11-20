@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isTrustedWrite } from "@/lib/csrf";
+
 import { isCloudBaseInactiveAccountError, validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError } from "@/lib/cloudbase/core";
 import {
@@ -13,12 +15,10 @@ import { GRANT_COOKIE_NAME, GRANT_COOKIE_PATH } from "@/lib/screenshot-grant";
 
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+/** 来源校验统一走 src/lib/csrf.ts 的单一实现。 */
 export function isTrustedCloudBaseWrite(request: NextRequest) {
   if (!WRITE_METHODS.has(request.method.toUpperCase())) return true;
-  if (request.headers.get("sec-fetch-site")?.toLowerCase() === "cross-site") return false;
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-  try { return new URL(origin).origin === request.nextUrl.origin; } catch { return false; }
+  return isTrustedWrite(request);
 }
 
 export function rejectUntrustedCloudBaseWrite(request: NextRequest) {
