@@ -277,6 +277,14 @@ export default function HomePage() {
             >
               粤ICP备2026181409号
             </a>
+            <a
+              href="https://beian.mps.gov.cn/#/query/webSearch?code=44030002019821"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              粤公网安备44030002019821号
+            </a>
           </div>
         </footer>
       </main>
