@@ -15,7 +15,6 @@
     "doc:scan": "node scripts/doc-health-check.mjs",
     "doc:scan-deep": "node scripts/doc-health-check.mjs --deep",
     "handoff:check": "node scripts/handoff-checklist.mjs",
-    "check:session": "node scripts/session-check.mjs",
     "gate:static": "npm test && npm run test:real-db && npx tsx --test \"scripts/*.test.ts\" && npx tsc --noEmit --pretty false && npm run lint && npm run build && npm run gate:design && npm run gate:maintainability",
     "gate:design": "node scripts/design-token-gate.mjs",
     "gate:api-failure": "node scripts/api-failure-path-gate.mjs --base=origin/main",
