@@ -1,52 +1,40 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
 
+/** 骨架与真实结构一一对应：结论标题 → 一排切换 → 一行一人的表格，内容出来时不跳。 */
 export default function CollaborationLoading() {
   return (
-    <AdminWorkspaceLayout width="wide" title="协作管理" description={<PageEpigraph pageKey="collaboration" />}>
-      <div className="space-y-5">
-        {/* 整合型流线控制舱骨架 */}
-        <div className="space-y-3 pb-4 border-b border-[#E2E2DF]/60">
-          {/* 控制舱顶栏骨架 */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E2DF]/60">
-            <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-[#E2E2DF] shadow-input">
-              <Skeleton className="size-7 rounded-md" />
-              <Skeleton className="h-7 w-32 sm:w-36 rounded-md" />
-              <Skeleton className="size-7 rounded-md" />
-            </div>
-            <Skeleton className="h-6 w-32 rounded-full" />
+    <AdminWorkspaceLayout width="wide">
+      <div className="h-6 sm:h-[34px] flex items-center">
+        <Skeleton className="h-5 sm:h-7 w-64 sm:w-96 rounded-md" />
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-7 w-28 rounded-md" />
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-7 w-16 rounded-md" />
+            ))}
           </div>
-
-          {/* 4 个 Tab 骨架 */}
-          <div className="flex flex-wrap items-center gap-1 pt-1">
-            <Skeleton className="h-7 w-20 rounded-md" />
-            <Skeleton className="h-7 w-20 rounded-md" />
-            <Skeleton className="h-7 w-20 rounded-md" />
-            <Skeleton className="h-7 w-20 rounded-md" />
-          </div>
+          <Skeleton className="ml-auto h-7 w-20 rounded-md" />
         </div>
-
-        {/* 表格骨架 */}
         <Card className="overflow-hidden p-0 gap-0">
-          <div className="border-b border-[#E2E2DF]/60 px-4 py-3 flex items-center justify-between">
-            <Skeleton className="h-4 w-16 rounded-md" />
-            <Skeleton className="h-4 w-14 rounded-md" />
-            <Skeleton className="h-4 w-16 rounded-md" />
-            <Skeleton className="h-4 w-16 rounded-md" />
-            <Skeleton className="h-4 w-16 rounded-md" />
-            <Skeleton className="h-4 w-14 rounded-md" />
-          </div>
+          <div className="h-9 border-b border-[#E2E2DF]/60" />
           <div className="divide-y divide-[#E2E2DF]/60">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="px-4 py-3.5 flex items-center justify-between">
-                <Skeleton className="h-4 w-20 rounded-md" />
-                <Skeleton className="h-4 w-12 rounded-md" />
-                <Skeleton className="h-4 w-12 rounded-md" />
-                <Skeleton className="h-4 w-16 rounded-md" />
-                <Skeleton className="h-4 w-16 rounded-md" />
-                <Skeleton className="h-4 w-14 rounded-md" />
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex flex-col gap-1">
+                  <Skeleton className="h-5 w-16 rounded-md" />
+                  <Skeleton className="h-[18px] w-28 rounded-md" />
+                </div>
+                <div className="flex items-center gap-8">
+                  <Skeleton className="h-4 w-10 rounded-md" />
+                  <Skeleton className="h-4 w-12 rounded-md" />
+                  <Skeleton className="h-4 w-12 rounded-md" />
+                  <Skeleton className="hidden md:block h-4 w-12 rounded-md" />
+                  <Skeleton className="hidden md:block h-4 w-12 rounded-md" />
+                </div>
               </div>
             ))}
           </div>

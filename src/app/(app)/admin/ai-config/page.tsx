@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
+import { PageHeadline } from "@/components/editorial/page-headline";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { AIConfigShell } from "./ai-config-shell";
 
 export const metadata: Metadata = {
   title: "AI 配置 - DYData",
-  description: "挑选渠道与分工，让模型在需要时安静流转。",
+  description: "AI 功能用哪个模型、走哪些渠道，现在能不能用。",
 };
 
 export default async function AIConfigPage() {
@@ -19,8 +19,7 @@ export default async function AIConfigPage() {
 
   return (
     <AdminWorkspaceLayout
-      title="AI 配置"
-      description={<PageEpigraph pageKey="ai-config" />}
+      title={<PageHeadline pageKey="ai-config" placeholder="AI 配置" />}
       width="wide"
     >
       <Suspense fallback={null}>

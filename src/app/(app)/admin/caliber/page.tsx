@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { canEditEvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
@@ -24,15 +23,9 @@ const rules = [
   },
   {
     title: "平均播放有效线",
-    rule: <>播放量低于 <strong>{CALIBER.effectiveMinPlay.toLocaleString("zh-CN")}</strong> 的作品，不参与“平均播放”的计算。报表里的“有效作品数”另按超过 <strong>{CALIBER.qualityEffectiveMinPlay.toLocaleString("zh-CN")}</strong> 播放计算</>,
-    reason: "没跑起来的作品不代表真实水平。跑了一万被限流的，数据依然有效；无效的是压根没播放的",
-    value: `平均播放 ≥${CALIBER.effectiveMinPlay.toLocaleString("zh-CN")} · 有效作品数 >${CALIBER.qualityEffectiveMinPlay.toLocaleString("zh-CN")}`,
-  },
-  {
-    title: "爆款判定",
-    rule: <>同时满足两个条件才算爆款：播放达到 <strong>{CALIBER.hitMinPlay.toLocaleString("zh-CN")}</strong>，且超过这个账号自己最近 <strong>{CALIBER.hitBaselineSize}</strong> 条平均水平的 <strong>{CALIBER.hitTimesOverMean} 倍</strong>（不足 <strong>{CALIBER.hitMinBaseline}</strong> 条历史参照不判）</>,
-    reason: "不看绝对量，看的是“相对自己有没有起飞”。大号小号一视同仁",
-    value: `${CALIBER.hitMinPlay.toLocaleString("zh-CN")} 播放 · 最近 ${CALIBER.hitBaselineSize} 条 · ${CALIBER.hitTimesOverMean} 倍 · 至少 ${CALIBER.hitMinBaseline} 条参照`,
+    rule: <>播放量低于 <strong>{CALIBER.effectiveMinPlay.toLocaleString("zh-CN")}</strong> 的作品，不参与“平均播放”的计算</>,
+    reason: "没跑起来的作品不代表真实水平，2000 播放以内的数据多半是被限流造成的",
+    value: `平均播放 ≥${CALIBER.effectiveMinPlay.toLocaleString("zh-CN")}`,
   },
   {
     title: "互动率 / 转粉率",
@@ -83,8 +76,8 @@ export default async function CaliberPage() {
 
   return (
     <AdminWorkspaceLayout
-      title="数据口径"
-      description={<PageEpigraph pageKey="caliber" />}
+      // 一页一问「这个数怎么来的、多少算好」：两个页签各答一半，标题直说
+      title="数字怎么算，多少算好"
       width="wide"
     >
       <EvaluationStandardsTabs

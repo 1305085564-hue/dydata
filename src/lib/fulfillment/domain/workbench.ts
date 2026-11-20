@@ -1,14 +1,13 @@
 import type {
   FulfillmentMemberSummary,
   FulfillmentStatus,
-  TimeRangePreset,
 } from "@/types/fulfillment";
 import {
   countsTowardFulfillmentRequirement,
   isFulfilledFulfillmentStatus,
   isWaivedFulfillmentStatus,
 } from "@/lib/fulfillment-status";
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 export function formatTodayDateOnly() {
   return formatShanghaiDateOnly();
@@ -19,31 +18,13 @@ export function toPercent(numerator: number, denominator: number) {
   return Math.round((numerator / denominator) * 100);
 }
 
+/** 发布管理按团队收窄；看的始终是整月（2026-11-19 去掉「今天/最近7天/自定义」时间预设）。 */
 export function filterMembers(
   members: FulfillmentMemberSummary[],
   teamName: string | null,
-  range: TimeRangePreset,
-  today: string,
 ): FulfillmentMemberSummary[] {
-  let filtered = members;
-
-  if (teamName) {
-    filtered = filtered.filter((m) => m.teamName === teamName);
-  }
-
-  switch (range) {
-    case "today": {
-      return filtered.filter((m) => m.days[today]);
-    }
-    case "last7days": {
-      const cutoffStr = shiftDateOnly(new Date(`${today}T12:00:00+08:00`), -6);
-      return filtered.filter((m) =>
-        Object.keys(m.days).some((d) => d >= cutoffStr && d <= today),
-      );
-    }
-    default:
-      return filtered;
-  }
+  if (!teamName) return members;
+  return members.filter((m) => m.teamName === teamName);
 }
 
 export function sortExceptions(

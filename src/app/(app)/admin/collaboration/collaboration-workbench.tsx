@@ -3,13 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
-import { buildCollaborationEpigraph } from "@/components/editorial/page-epigraph-copy";
-import { CollaborationWorkbenchToolbar } from "./collaboration-workbench-toolbar";
+import { HelpCircle } from "lucide-react";
+import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
+import { CollaborationWorkbenchToolbar, type CollaborationSegment } from "./collaboration-workbench-toolbar";
+import { HealthBar } from "./health-bar";
 import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
 import type { WriterCandidateRow } from "./writer-tab";
-import { generateMonthOptions, WORK_GROUP_ROLE_TAB, type TabKey } from "@/lib/collaboration/domain/workbench-state";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import {
+  buildCollaborationHeadline,
+  generateMonthOptions,
+  mergeLocalWorkGroupViews,
+  stepCollaborationMonth,
+  WORK_GROUP_ROLE_TAB,
+  type TabKey,
+} from "@/lib/collaboration/domain/workbench-state";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 import {
@@ -21,7 +28,6 @@ import {
   type WorkGroupViews,
   type WorkGroupRow,
   type WorkGroupRosterMember,
-  type WorkGroupSummaryRow,
 } from "./types";
 import {
   buildCollaborationSearchParams,
@@ -90,7 +96,7 @@ export function CollaborationWorkbench({
   writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
-  usePublishPageEpigraph("collaboration", buildCollaborationEpigraph(overviewStats ?? summary));
+  const headline = buildCollaborationHeadline({ month, loadFailed, overview: overviewStats });
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [view, setView] = useState<"roles" | "teams">(defaultView);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);
@@ -134,59 +140,10 @@ export function CollaborationWorkbench({
     setSelectedGroupId(defaultGroupId);
   }, [defaultGroupId]);
 
-  const resolvedWorkGroupViews = useMemo(() => {
-    if (!workGroupViews) return undefined;
-    const groups: WorkGroupSummaryRow[] = currentRawGroups.map((rg) => {
-      const existing = workGroupViews.groups.find((g) => g.id === rg.id);
-      const memberCount = currentRoster.filter((m) =>
-        rg.kind === "operator" ? m.operatorGroupId === rg.id : m.peerGroupId === rg.id,
-      ).length;
-      if (existing) {
-        return { ...existing, name: rg.name, kind: rg.kind, memberCount };
-      }
-      return {
-        id: rg.id,
-        name: rg.name,
-        kind: rg.kind,
-        teamId: rg.teamId,
-        memberCount,
-        // 本地新建小队还没有服务端统计，给全零/— 的空绩效
-        aggregate: {
-          reportCount: 0,
-          snapshotCount: 0,
-          totalPlay: 0,
-          avgPlay: 0,
-          followerConversionRate: null,
-          interactionRate: null,
-          likeRate: null,
-          favoriteRate: null,
-        },
-        contentQuality: null,
-      };
-    });
-
-    const details = workGroupViews.details.map((detail) => {
-      const groupSummary = groups.find((g) => g.id === detail.summary.id);
-      if (!groupSummary) return detail;
-      return {
-        ...detail,
-        summary: groupSummary,
-      };
-    });
-    // 本地刚建、服务端 details 里还没有的小队补一条空名单 detail，
-    // 否则点进详情会因为找不到而进不去（要等下次刷新）
-    const knownDetailIds = new Set(workGroupViews.details.map((detail) => detail.summary.id));
-    for (const group of groups) {
-      if (knownDetailIds.has(group.id)) continue;
-      details.push({ summary: group, members: [] });
-    }
-
-    return {
-      ready: workGroupViews.ready,
-      groups,
-      details,
-    };
-  }, [workGroupViews, currentRawGroups, currentRoster]);
+  const resolvedWorkGroupViews = useMemo(
+    () => mergeLocalWorkGroupViews(workGroupViews, currentRawGroups, currentRoster),
+    [workGroupViews, currentRawGroups, currentRoster],
+  );
 
   const activeGroupDetail = useMemo(
     () =>
@@ -284,8 +241,8 @@ export function CollaborationWorkbench({
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const nextView = resolveCollaborationView(params.get("view"));
       const nextGroupId = params.get("groupId")?.trim() || null;
+      const nextView = resolveCollaborationView(params.get("view"), nextGroupId);
       const nextPersonId = params.get("personId")?.trim() || null;
       const rawTab = params.get("tab");
       setView(nextView);
@@ -309,6 +266,9 @@ export function CollaborationWorkbench({
 
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
+    setView("roles");
+    setSelectedGroupId(null);
+    groupEntryPushedRef.current = false;
     // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
     // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
     // 带上 personId：地址栏任何时候都与界面一致，不留「链接丢参数、抽屉还开着」的错位。
@@ -323,6 +283,31 @@ export function CollaborationWorkbench({
     }
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab, personId: selectedPersonId })}`);
   };
+
+  const handleSegmentChange = (next: CollaborationSegment) => {
+    if (next === "teams") handleViewChange("teams");
+    else handleTabChange(next);
+  };
+
+  // 评级规则入口就近放在「良优率」列头旁
+  const rulesEntry = useMemo(
+    () => (
+      <RatingRulesDialog
+        evaluationStandards={evaluationStandards}
+        trigger={
+          <button
+            type="button"
+            aria-label="作品评级规则"
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex size-4 items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] transition-colors duration-150 cursor-pointer"
+          >
+            <HelpCircle className="size-3" aria-hidden />
+          </button>
+        }
+      />
+    ),
+    [evaluationStandards],
+  );
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -354,29 +339,9 @@ export function CollaborationWorkbench({
     router.push(buildMonthUrl(Number(y), Number(m)));
   };
 
-  const handlePrevMonth = () => {
-    let prevY = year;
-    let prevM = month - 1;
-    if (prevM < 1) {
-      prevM = 12;
-      prevY--;
-    }
-    if (prevY < 2026 || (prevY === 2026 && prevM < 7)) return;
-    router.push(buildMonthUrl(prevY, prevM));
-  };
-
-  const handleNextMonth = () => {
-    const now = getShanghaiYearMonth();
-    let nextY = year;
-    let nextM = month + 1;
-    if (nextM > 12) {
-      nextM = 1;
-      nextY++;
-    }
-    const currentY = now.year;
-    const currentM = now.month;
-    if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
-    router.push(buildMonthUrl(nextY, nextM));
+  const stepMonth = (delta: -1 | 1) => {
+    const target = stepCollaborationMonth(year, month, delta);
+    if (target) router.push(buildMonthUrl(target.year, target.month));
   };
 
   // 全局键盘快捷翻月（DOET #2）
@@ -384,21 +349,13 @@ export function CollaborationWorkbench({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (manageDrawerOpen || Boolean(selectedPersonId) || Boolean(diagnosisDetail)) return;
       const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) return;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        handlePrevMonth();
+        stepMonth(-1);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        handleNextMonth();
+        stepMonth(1);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -410,15 +367,17 @@ export function CollaborationWorkbench({
     <CollaborationDiagnosisContext.Provider
       value={{ openDiagnosisByReportId, openingReportId }}
     >
+      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413]">
+          {headline}
+        </h1>
+        <HealthBar summary={summary} year={year} month={month} canEdit={isOwnerOrTeamAdmin} />
+      </header>
+      <div className="space-y-3">
       <CollaborationWorkbenchToolbar
-        year={year}
-        month={month}
         monthOptions={monthOptions}
         currentMonthValue={currentMonthValue}
-        view={view}
-        tab={tab}
-        summary={summary}
-        isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+        segment={view === "teams" ? "teams" : tab}
         loadFailed={loadFailed}
         canManageWorkGroups={canManageWorkGroups}
         hasActiveGroupDetail={Boolean(activeGroupDetail)}
@@ -429,8 +388,7 @@ export function CollaborationWorkbench({
         writerCandidates={writerCandidates}
         editorStaff={editorStaff}
         onMonthChange={handleMonthChange}
-        onViewChange={handleViewChange}
-        onTabChange={handleTabChange}
+        onSegmentChange={handleSegmentChange}
         onLeaderboardOpen={setLeaderboardDialogOpen}
         onOpenManageDrawer={() => {
           setManageDrawerFocusGroupId(null);
@@ -459,7 +417,7 @@ export function CollaborationWorkbench({
         diagnosisDetail={diagnosisDetail}
         openingReportId={openingReportId}
         leaderboardDialogOpen={leaderboardDialogOpen}
-        summary={summary}
+        rulesEntry={rulesEntry}
         talents={talents}
         operators={operators}
         writerStaff={writerStaff}
@@ -486,6 +444,7 @@ export function CollaborationWorkbench({
         onGroupsChange={setCurrentRawGroups}
         onRosterChange={setCurrentRoster}
       />
+      </div>
     </CollaborationDiagnosisContext.Provider>
   );
 }

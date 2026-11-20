@@ -64,6 +64,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
     hasAttemptedSubmit,
     meta,
     updateMeta,
+    videoFieldsEnabled,
   } = props;
   const [manualEntry, setManualEntry] = useState(false);
   const bothSlotsFilled = SLOT_ROLES.every((role) => slots[role].status !== "empty");
@@ -101,6 +102,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
 
   return (
     <div className="space-y-5">
+      {videoFieldsEnabled !== false && (
       <div ref={slotsSectionRef} className="space-y-2">
         <截图槽位区
           slots={slots}
@@ -140,7 +142,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           onPreviewSlot={onPreviewSlot}
           pulseEmptySlots={pulseSlots}
         />
-        <div className="flex h-6 items-center justify-between gap-3 px-2 text-[12px]">
+        <div className="flex min-h-6 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-2 text-[12px]">
           <ol className="flex min-w-0 items-center gap-2 overflow-hidden text-[#A8A29E]" aria-label="提交步骤">
             {SUBMIT_STEPS.map((step, index) => (
               <li key={step} className="flex shrink-0 items-center gap-2">
@@ -196,6 +198,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
           )}
         </div>
       </div>
+      )}
 
       {showDetails && (
         <>
@@ -212,6 +215,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
             onToggle={() => setIsMoreOpen((current) => !current)}
             topicTagMissing={issueSummary.topicTagMissing}
             meta={meta}
+            videoFieldsEnabled={videoFieldsEnabled}
           />
         </>
       )}

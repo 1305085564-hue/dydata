@@ -6,7 +6,7 @@ import test from "node:test";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 test("视图切换给出加载反馈，且不再整块禁用工具栏（审计 H2）", () => {
-  const viewControls = read("src/app/(app)/admin/content/content-list-view-controls.tsx");
+  const viewControls = read("src/app/(app)/admin/content/content-list-toolbar.tsx");
   const pageClient = read("src/app/(app)/admin/content/content-page-client.tsx");
 
   // 切换期间必须有文字级反馈：实测切归档要 11.7 秒，静默期间用户会反复点
@@ -25,8 +25,8 @@ test("视图切换给出加载反馈，且不再整块禁用工具栏（审计 H
 });
 
 test("视图切换期间分段控件不可重复点击，避免重复发起取数", () => {
-  const viewControls = read("src/app/(app)/admin/content/content-list-view-controls.tsx");
+  const viewControls = read("src/app/(app)/admin/content/content-list-toolbar.tsx");
   const buttonCount = (viewControls.match(/disabled=\{isViewLoading\}/g) ?? []).length;
-  assert.ok(buttonCount >= 2, `全部/归档两个按钮都应防重复点击，实际只有 ${buttonCount} 个`);
-  assert.match(viewControls, /aria-pressed/, "分段控件缺少选中态语义");
+  assert.ok(buttonCount >= 3, `分段、归档、返回全部都应防重复点击，实际只有 ${buttonCount} 个`);
+  assert.match(viewControls, /aria-selected=\{active\}/, "分段控件缺少选中态语义");
 });

@@ -1,5 +1,6 @@
 import {
   getVideoSubmissionEditDetailError,
+  type UnboundDailyReportDetail,
   type VideoSubmissionEditDetail,
 } from "@/app/(app)/dashboard/video-submit-form-state";
 import type {
@@ -15,8 +16,20 @@ export async function fetchDashboardActivity(
   if (options.page && options.page > 1) params.set("page", String(options.page));
   if (options.pageSize) params.set("pageSize", String(options.pageSize));
   const query = params.toString();
-  const response = await request(`/api/dashboard/activity${query ? `?${query}` : ""}`);
-  const payload = (await response.json()) as Partial<AsyncActivityData> & { error?: string };
+  // 断网时浏览器抛英文 TypeError（Failed to fetch），服务端 503 返回纯文本会让 json() 抛 SyntaxError；
+  // 两种都换成成员看得懂的话，原样英文不往页面上送。
+  let response: Response;
+  try {
+    response = await request(`/api/dashboard/activity${query ? `?${query}` : ""}`);
+  } catch {
+    throw new Error("网络连不上，检查网络后点重试。");
+  }
+  let payload: Partial<AsyncActivityData> & { error?: string };
+  try {
+    payload = (await response.json()) as Partial<AsyncActivityData> & { error?: string };
+  } catch {
+    throw new Error(response.ok ? "活动记录格式无效" : "服务器暂时没响应，稍后点重试。");
+  }
 
   if (!response.ok) {
     throw new Error(payload.error || "活动记录加载失败");
@@ -44,10 +57,10 @@ export async function fetchVideoSubmissionEditDetail(
   if (!response.ok) {
     throw new Error(payload.error || "加载原视频详情失败");
   }
-  // 日报没有绑定视频：面板的用途是重传视频，没有视频就没有可编辑对象，
-  // 沿用「没有可编辑」文案，交由面板既有的合法缺失分支呈现。
   if (payload.unboundReport !== undefined && payload.unboundReport !== null) {
-    throw new Error("该账号该日期没有可编辑的原视频");
+    const error = getVideoSubmissionEditDetailError(payload.unboundReport, input);
+    if (error) throw new Error(error);
+    return payload.unboundReport as UnboundDailyReportDetail;
   }
   const error = getVideoSubmissionEditDetailError(payload.detail, input);
   if (error) throw new Error(error);

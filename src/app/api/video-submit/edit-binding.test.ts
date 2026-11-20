@@ -6,6 +6,7 @@ import {
   buildSubmissionAssigneeColumns,
   collectAssigneeIdsRequiringValidation,
   editVideoMatchesBizDate,
+  mergePreservedEditMetricFields,
   mergePreservedEditSnapshotFields,
   validateEditSubmissionBinding,
   type EditBindingDbAdapter,
@@ -293,6 +294,13 @@ test("编辑保存时不可编辑旧指标为 null 也必须原样保留，不�
   assert.equal(merged.fan_play_ratio, null);
   assert.equal(merged.cover_click_rate, null);
   assert.equal(merged.avg_play_ratio, 0);
+});
+
+test("编辑模式平均播放占比留空时保留原值", () => {
+  assert.deepEqual(
+    mergePreservedEditMetricFields("edit", { avg_play_ratio: null }, { avg_play_ratio: 0.2302 }),
+    { avg_play_ratio: 0.2302 },
+  );
 });
 
 test("编辑时只按岗位豁免未修改的旧责任人，新岗位复用同一归档成员仍必须校验", () => {

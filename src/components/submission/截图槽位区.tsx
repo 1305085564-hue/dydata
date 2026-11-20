@@ -339,7 +339,13 @@ export function SubmissionSlotsSection({
                 </div>
 
                 {!isEmpty && (
-                  <div className="flex shrink-0 items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                  <div
+                    className={cn(
+                      "flex shrink-0 items-center gap-1 transition-opacity",
+                      // 识别出问题时「重新识别 / 手动填」就是下一步，常显；正常时只剩删除，平时隐藏
+                      !needsAction && "sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+                    )}
+                  >
                     {canRetry && (
                       <button
                         type="button"

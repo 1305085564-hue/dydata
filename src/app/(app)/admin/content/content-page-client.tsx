@@ -314,6 +314,7 @@ export function ContentPageClient({
         evaluationStandards={selectedLoadedDetail?.evaluationStandards ?? data.evaluationStandards}
         currentIndex={videoPosition.currentIndex}
         totalCount={videoPosition.totalCount}
+        switching={!selectedLoadedDetail && selectedVideo.id !== selectedVideoId}
         onStepVideo={handleStepVideo}
         onSelectAuthor={handleSelectAuthor}
         ownerNames={data.ownerNames}

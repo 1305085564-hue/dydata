@@ -18,8 +18,8 @@ export default function FulfillmentError({ error, reset }: FulfillmentErrorProps
 
   return (
     <RouteErrorState
-      title="履约总览暂时未能展开"
-      description="刚才这一页没能翻开，再试一次，多半就好了。"
+      title="发布管理加载失败"
+      description="再试一次通常就好；还不行就刷新整个页面。"
       reset={reset}
     />
   );

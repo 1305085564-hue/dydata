@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
+import { buildPendingExemptionNoticeCopy } from "@/lib/pending-exemption-notice";
 import { WithdrawPendingButton } from "@/components/video-submit/withdraw-pending-button";
 
 export type WorkbenchNoticeItem = {
@@ -334,18 +335,21 @@ export function buildExemptionReviewNoticeItems(
  * 待审批请假/免交提示。面板与表单两处共用同一条，传入 onWithdraw 时带「撤回申请」。
  */
 export function buildPendingExemptionNoticeItem({
+  items,
   onDismiss,
   onWithdraw,
 }: {
+  items: DashboardPageData["pendingExemptionItems"];
   onDismiss?: () => void;
   onWithdraw?: () => Promise<unknown> | void;
 }): WorkbenchNoticeItem {
+  const copy = buildPendingExemptionNoticeCopy(items);
   return {
     id: "pending-exemption",
     type: "exemption_pending",
     statusTone: "amber",
-    title: "特殊豁免申请审批中",
-    description: "· 正在等待管理员审批",
+    title: copy.title,
+    description: copy.description,
     actions: onWithdraw ? <WithdrawPendingButton onWithdraw={onWithdraw} /> : undefined,
     onDismiss,
   };

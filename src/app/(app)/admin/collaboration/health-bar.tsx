@@ -54,11 +54,6 @@ interface HealthBarProps {
   onAttributionUpdated?: () => void;
 }
 
-export function calculateAttributionCompleteness(summary: Pick<SummaryData, "total" | "unattributed">) {
-  if (summary.total <= 0) return 100;
-  return Math.floor(((summary.total - summary.unattributed) / summary.total) * 100);
-}
-
 export function isAttributionComplete(report: Pick<UnattributedReport, "scriptAuthorUserId" | "videoEditorUserId" | "operatorUserId">) {
   return Boolean(report.scriptAuthorUserId && report.videoEditorUserId && report.operatorUserId);
 }
@@ -213,31 +208,21 @@ export function HealthBar({
   if (!summary || summary.unattributed === 0) return null;
 
   const isHealthy = summary.unattributed === 0;
-  const healthRate = calculateAttributionCompleteness(summary);
 
   return (
     <>
-      {/* 控制舱右侧：静默芯片 (Pill Chip) */}
+      {/* 页头右槽：全页唯一一处橙色——署名没写全会影响各岗位统计与文案结算 */}
       <button
         type="button"
         onClick={handleOpen}
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-normal transition cursor-pointer ${
-          isHealthy
-            ? "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9]/70"
-            : "bg-status-warning/10 text-[#78716C] hover:bg-status-warning/15"
+        className={`inline-flex h-7 items-center rounded-md px-2 text-[14px] transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+          canEdit
+            ? "text-[#D97757] hover:bg-[#D97757]/5"
+            : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
         }`}
       >
-        <span
-          aria-hidden="true"
-          className={`size-1.5 shrink-0 rounded-full ${
-            isHealthy ? "bg-[#D6D3D1]" : "bg-status-warning"
-          }`}
-        />
-        <span>
-          {isHealthy
-            ? "岗位归属完整"
-            : `岗位完整度 ${healthRate}%（${summary.unattributed} 条待补）`}
-        </span>
+        <span className="tabular-nums">{summary.unattributed}</span>
+        <span>&nbsp;条作品署名没写全{canEdit ? " · 去补全" : ""}</span>
       </button>
 
       {/* 待补归属速补抽屉 */}

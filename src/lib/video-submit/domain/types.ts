@@ -4,6 +4,7 @@ import type {
   ExemptionProfileLike,
 } from "@/lib/豁免";
 import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
+import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 
 export type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
@@ -37,6 +38,8 @@ export interface VideoSubmitPanelV2Props {
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   pendingExemptionDates?: string[];
+  pendingExemptionItems?: DashboardPageData["pendingExemptionItems"];
+  lastSubmissionPreferencesByAccount?: Record<string, LastSubmittedReportPreferences>;
   absentDates?: string[];
   absentReasons?: Record<string, string>;
   monthFulfillmentBasis?: DashboardPageData["monthFulfillmentBasis"];

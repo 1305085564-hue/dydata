@@ -146,7 +146,6 @@ export async function loadPersonData(input: {
     profiles: [profile],
     accounts,
     videos,
-    historyRows: reports,
     growthRole: input.role,
     growthReports,
     growthSnapshots,

@@ -1,37 +1,12 @@
 "use client";
 
-import { Fragment, useState, useMemo, type ReactNode } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  HelpCircle,
-  ArrowUpDown,
-  ArrowDown,
-  ArrowUp,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
-import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
-import { MemberZeroOutputBanner, SelfMemberBadge } from "./member-self-hint";
-import { formatBigNumber, formatMomChange, type OperatorRow } from "./types";
-import { formatRate } from "./work-group-list-tab";
-import { CALIBER } from "@/lib/metrics/caliber";
+import { rateColumns, volumeColumns } from "./collaboration-quality-hints";
+import { MemberZeroOutputBanner } from "./member-self-hint";
+import { RoleTable, type RoleColumn } from "./role-table";
+import { formatAccountLine } from "./talent-tab";
+import { formatBigNumber, type OperatorRow } from "./types";
 
 interface OperatorTabProps {
   operators: OperatorRow[];
@@ -41,310 +16,11 @@ interface OperatorTabProps {
   onPrefetchPerson?: (userId: string) => void;
 }
 
-type SortField =
-  "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
-
-export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[840px]";
-
-export function OperatorTableColGroup() {
-  return (
-    <colgroup>
-      <col className="w-10" />
-      <col className="min-w-[90px] w-auto" />
-      <col className="w-[82px]" />
-      <col className="w-[82px]" />
-      <col className="w-[80px]" />
-      <col className="w-[82px]" />
-      <col className="w-[80px]" />
-      <col className="w-[80px]" />
-      <col className="w-[78px]" />
-      <col className="w-[78px]" />
-      <col className="w-[78px]" />
-    </colgroup>
-  );
-}
-
-/** 排序是各表自己的状态，列头只接收排序能力（组详情与岗位 Tab 各自排序）。 */
-export interface OperatorColumnSort {
-  sortField: string;
-  sortOrder: "asc" | "desc";
-  onSort: (field: SortField) => void;
-  renderSortIcon: (field: SortField) => ReactNode;
-}
-
-/** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
-export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
-  return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-      <TableHead className="w-10 py-2 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="py-2 text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
-        运营姓名
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger className="inline-flex w-full items-center justify-end gap-1 cursor-help">
-            负责账号
-            <HelpCircle className="size-3 text-[#78716C]" />
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end" className="text-[12px]">
-            只统计该运营为别人孵化、负责的账号
-          </TooltipContent>
-        </Tooltip>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("reportCount")}
-          className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
-            sort.sortField === "reportCount"
-              ? "text-[#141413] font-normal"
-              : "hover:text-[#141413]"
-          }`}
-        >
-          本月作品
-          {sort.renderSortIcon("reportCount")}
-        </button>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("totalPlay")}
-          className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
-            sort.sortField === "totalPlay"
-              ? "text-[#141413] font-normal"
-              : "hover:text-[#141413]"
-          }`}
-        >
-          总播放
-          {sort.renderSortIcon("totalPlay")}
-        </button>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("avgPlay")}
-          className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
-            sort.sortField === "avgPlay"
-              ? "text-[#141413] font-normal"
-              : "hover:text-[#141413]"
-          }`}
-        >
-          条均播放
-          {sort.renderSortIcon("avgPlay")}
-        </button>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
-            有效作品
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            播放大于 500 的作品条数
-          </TooltipContent>
-        </Tooltip>
-      </TableHead>
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
-            优秀作品
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            播放至少 {CALIBER.excellentMinPlay.toLocaleString("zh-CN")} 的作品条数
-          </TooltipContent>
-        </Tooltip>
-      </TableHead>
-      {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
-            {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
-          </button>
-        </TableHead>
-      ))}
-      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
-        <Tooltip>
-          <TooltipTrigger className="inline-flex w-full items-center justify-end cursor-help hover:text-[#141413] transition-colors">
-            环比
-          </TooltipTrigger>
-          <TooltipContent side="top" align="end">
-            本月总播放较上月总播放的变化比例；上月无有效基准时显示 —
-          </TooltipContent>
-        </Tooltip>
-      </TableHead>
-    </TableRow>
-  );
-}
-
-/** 单人数据行：只出单元格，行容器由调用方决定（组详情行整行可点开档案）。 */
-export function OperatorRowCells({
-  row,
-  isSelf = false,
-  isExpanded,
-  onToggleExpand,
-  onSelectPerson,
-  onPrefetchPerson,
-}: {
-  row: OperatorRow;
-  isSelf?: boolean;
-  isExpanded: boolean;
-  onToggleExpand: (userId: string) => void;
-  onSelectPerson: (userId: string) => void;
-  onPrefetchPerson?: (userId: string) => void;
-}) {
-  const canExpand = row.accounts.length > 0;
-  const mom = row.momChange;
-  const isZero = row.reportCount === 0;
-
-  return (
-    <>
-      <TableCell className="w-10 px-2 py-2 text-center sticky left-0 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10">
-        {canExpand ? (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleExpand(row.userId);
-            }}
-            aria-label={
-              isExpanded
-                ? `收起${row.name}的负责账号`
-                : `展开${row.name}的负责账号`
-            }
-            className={`flex size-6 items-center justify-center rounded-md transition-colors cursor-pointer ${
-              isExpanded
-                ? "text-[#141413]"
-                : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-            }`}
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-3.5" />
-            ) : (
-              <ChevronRight className="size-3.5" />
-            )}
-          </button>
-        ) : (
-          <div className="size-6" />
-        )}
-      </TableCell>
-      <TableCell className="text-left font-normal py-2 px-2 sticky left-10 bg-white group-data-[self=true]:bg-[#F7F7F6] group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onSelectPerson(row.userId);
-          }}
-          onMouseEnter={() => onPrefetchPerson?.(row.userId)}
-          onFocus={() => onPrefetchPerson?.(row.userId)}
-          className="inline-flex items-center hover:underline transition-colors cursor-pointer"
-        >
-          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${
-            isZero ? "text-[#78716C]" : "text-[#141413]"
-          }`}>
-            {row.name}
-          </span>
-          {isSelf && <SelfMemberBadge />}
-        </button>
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {row.accountCount}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
-        {row.reportCount}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {formatBigNumber(row.totalPlay)}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {formatBigNumber(row.avgPlay)}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {row.effectiveCount}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
-        {row.excellentCount}
-      </TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className="text-right tabular-nums py-2 px-2">
-        {mom == null ? (
-          <span className="text-[#78716C]">—</span>
-        ) : mom > 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-status-success font-normal text-[12px]">
-            <TrendingUp className="size-3" />+
-            {formatMomChange(mom)}
-          </span>
-        ) : mom < 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-status-danger font-normal text-[12px]">
-            <TrendingDown className="size-3" />
-            {formatMomChange(mom)}
-          </span>
-        ) : (
-          <span className="text-[#78716C] tabular-nums text-[12px]">0.0%</span>
-        )}
-      </TableCell>
-    </>
-  );
-}
-
-/** 展开行：负责账号明细（达人 / 账号 / 条数 / 总播放 / 导粉）。未展开时返回 null。 */
-export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isExpanded: boolean }) {
-  if (!isExpanded) return null;
-
-  return (
-    <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
-        <div className="px-6 py-2">
-          <table className="w-full text-[12px]">
-            <thead>
-              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
-                  达人姓名
-                </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
-                  账号名
-                </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
-                  条数
-                </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
-                  总播放
-                </th>
-                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right pr-4">
-                  导粉
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E2DF]/40">
-              {row.accounts.map((acc) => (
-                <tr
-                  key={acc.accountId}
-                  className="hover:bg-[#F7F7F6] transition-colors duration-100"
-                >
-                  <td className="py-2 px-3 font-normal text-[#1F1E1D]">
-                    {acc.ownerName}
-                  </td>
-                  <td className="py-2 px-3 text-[#1F1E1D]">
-                    {acc.accountName}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-[#141413] font-normal">
-                    {acc.reportCount}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D]">
-                    {formatBigNumber(acc.totalPlay)}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D] pr-4">
-                    {acc.totalFollowerConvert.toLocaleString(
-                      "zh-CN",
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
+/** 运营只统计给别人孵化、负责的账号；逐个账号的条数与导粉放在个人档案里看。 */
+const OPERATOR_COLUMNS: RoleColumn<OperatorRow>[] = [
+  ...volumeColumns<OperatorRow>(),
+  ...rateColumns<OperatorRow>(),
+];
 
 export function OperatorTab({
   operators,
@@ -353,113 +29,46 @@ export function OperatorTab({
   onSelectPerson,
   onPrefetchPerson,
 }: OperatorTabProps) {
-  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [sortField, setSortField] = useState<SortField>("reportCount");
-  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
-
-  const toggleExpand = (userId: string) => {
-    setExpandedUserIds((prev) =>
-      prev.has(userId) ? new Set() : new Set([userId]),
-    );
-  };
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
-    } else {
-      setSortField(field);
-      setSortOrder("desc");
-    }
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C]/40" />;
-    }
-    return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#141413]" />
-    ) : (
-      <ArrowUp className="size-3 text-[#141413]" />
-    );
-  };
-
-  const sortedOperators = useMemo(() => {
-    const list = [...operators];
-    list.sort((left, right) => {
-      const valLeft = left[sortField] ?? 0;
-      const valRight = right[sortField] ?? 0;
-      const diff = valRight - valLeft;
-      return sortOrder === "desc" ? diff : -diff;
-    });
-    return pinCurrentUserFirst(list, currentUserId);
-  }, [operators, sortField, sortOrder, currentUserId]);
-
   const showSelfZeroHint = Boolean(
-    isMemberViewer &&
-      currentUserId &&
-      !operators.some((r) => r.userId === currentUserId && r.reportCount > 0),
+    isMemberViewer && currentUserId && !operators.some((r) => r.userId === currentUserId && r.reportCount > 0),
   );
 
   if (operators.length === 0) {
     return (
       <div className="space-y-3">
         {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
-        <div className="py-16 text-center">
-          <EmptyState
-            illustration={<DeskStudyIllustration size={96} />}
-            title="本月暂无跨账号协同记录"
-            description="这里展示成员跨账号协作的作品表现；自营账号作品在达人专栏查看。"
-          />
-        </div>
+        <EmptyState
+          className="py-16"
+          illustration={<DeskStudyIllustration size={96} />}
+          title="本月还没有跨账号运营记录"
+          description="这里只统计给别人账号做运营的作品；自营账号的作品在「达人」里看。"
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-    {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
-    <Card className="overflow-hidden p-0 gap-0">
-      <Table className={`${OPERATOR_TABLE_MIN_WIDTH} table-fixed`}>
-        <OperatorTableColGroup />
-        <TableHeader>
-          <OperatorHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
-        </TableHeader>
-        <TableBody className="text-[13px]">
-          {sortedOperators.map((op) => {
-            const canExpand = op.accounts.length > 0;
-            const isExpanded = canExpand && expandedUserIds.has(op.userId);
-            const isSelf = Boolean(currentUserId && op.userId === currentUserId);
-
-            return (
-              <Fragment key={op.userId}>
-                <TableRow
-                  data-self={isSelf ? "true" : undefined}
-                  className={`group transition-colors data-[self=true]:bg-[#F7F7F6] ${
-                    isExpanded
-                      ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]"
-                      : "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60"
-                  }`}
-                >
-                  <OperatorRowCells
-                    row={op}
-                    isSelf={isSelf}
-                    isExpanded={isExpanded}
-                    onToggleExpand={toggleExpand}
-                    onSelectPerson={onSelectPerson}
-                    onPrefetchPerson={onPrefetchPerson}
-                  />
-                </TableRow>
-
-                <OperatorExpandedRow row={op} isExpanded={isExpanded} />
-              </Fragment>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
-    <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步数据复盘的作品不参与比率。</p>
+      {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
+      <RoleTable
+        rows={operators}
+        columns={OPERATOR_COLUMNS}
+        defaultSortKey="totalPlay"
+        getId={(row) => row.userId}
+        getName={(row) => row.name}
+        getSub={(row) => {
+          const line = formatAccountLine(row.accounts.map((a) => a.accountName), row.accountCount);
+          return line ? `负责 ${line}` : null;
+        }}
+        isZero={(row) => row.reportCount === 0}
+        getMobileSummary={(row) => ({
+          primary: formatBigNumber(row.totalPlay),
+          secondary: `${row.reportCount} 篇 · 负责 ${row.accountCount} 个账号`,
+        })}
+        currentUserId={currentUserId}
+        onSelectPerson={onSelectPerson}
+        onPrefetchPerson={onPrefetchPerson}
+      />
     </div>
   );
 }

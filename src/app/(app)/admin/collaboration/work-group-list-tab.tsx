@@ -1,26 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ArrowRight } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration, DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
-import {
-  formatBigNumber,
-  type WorkGroupSummaryRow,
-  type WorkGroupKind,
-} from "./types";
+import { teamMetricColumns } from "./collaboration-quality-hints";
+import { goodExcellentText } from "./talent-tab";
+import { RoleTable } from "./role-table";
+import { DetailToggle } from "./work-group-detail-columns";
+import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "./types";
 
 interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];
@@ -30,35 +18,32 @@ interface WorkGroupListTabProps {
   onSelectGroup: (groupId: string) => void;
 }
 
-type SortField =
-  | "name"
-  | "memberCount"
-  | "reportCount"
-  | "totalPlay"
-  | "avgPlay"
-  | "followerConversionRate"
-  | "interactionRate"
-  | "likeRate"
-  | "favoriteRate"
-  | "avgInteractionAchievement"
-  | "avgContentAchievement"
-  | "goodExcellentRate";
-
-/** 与内容复盘抽屉同源：保留 1 位小数，无数据（播放为 0）显示 —。 */
-export function formatRate(value: number | null | undefined) {
-  if (value === null || value === undefined) return "—";
-  return `${(value * 100).toFixed(1)}%`;
+export function workGroupKindLabel(kind: WorkGroupKind) {
+  return kind === "writer" ? "文案" : kind === "talent" ? "达人" : "运营";
 }
 
+/** 工种徽章：管理小队抽屉里用；表格里工种写在小队名下方的灰字里。 */
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
-  const label = kind === "writer" ? "文案" : kind === "talent" ? "达人" : "运营";
   return (
     <Badge className="border-transparent bg-[#F1F1F0] text-[#78716C]">
-      {label}
+      {workGroupKindLabel(kind)}
     </Badge>
   );
 }
 
+/** 表格一行 = 小队合计指标 + 名字、工种、人数（拍平成与岗位表同形的行）。 */
+type GroupRow = WorkGroupSummaryRow["aggregate"] & {
+  id: string;
+  name: string;
+  kind: WorkGroupKind;
+  memberCount: number;
+  contentQuality: WorkGroupSummaryRow["contentQuality"];
+};
+
+/**
+ * 小队列表：一行一个小队，点一行进小队详情。
+ * 和四张岗位表同一套表格：列名、口径、悬停说明一致，窄屏改成列表。
+ */
 export function WorkGroupListTab({
   groups,
   ready = true,
@@ -66,46 +51,30 @@ export function WorkGroupListTab({
   onOpenManageDrawer,
   onSelectGroup,
 }: WorkGroupListTabProps) {
-  const [sortField, setSortField] = useState<SortField>("totalPlay");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showDetail, setShowDetail] = useState(false);
 
-  const hasContentQuality = useMemo(
-    () => groups.some((g) => g.contentQuality !== null),
+  const rows = useMemo<GroupRow[]>(
+    () =>
+      groups.map((group) => ({
+        ...group.aggregate,
+        id: group.id,
+        name: group.name,
+        kind: group.kind,
+        memberCount: group.memberCount,
+        contentQuality: group.contentQuality,
+      })),
     [groups],
   );
 
-  const sorted = useMemo(() => {
-    const list = [...groups];
-    list.sort((a, b) => {
-      let diff = 0;
-      if (sortField === "name") {
-        diff = a.name.localeCompare(b.name, "zh-CN");
-      } else if (sortField === "memberCount") {
-        diff = a.memberCount - b.memberCount;
-      } else if (sortField === "goodExcellentRate") {
-        const aVal = a.contentQuality?.goodExcellentRate ?? -1;
-        const bVal = b.contentQuality?.goodExcellentRate ?? -1;
-        diff = aVal - bVal;
-      } else if (sortField === "avgInteractionAchievement" || sortField === "avgContentAchievement") {
-        const aVal = a.contentQuality?.[sortField] ?? -1;
-        const bVal = b.contentQuality?.[sortField] ?? -1;
-        diff = aVal - bVal;
-      } else {
-        const aVal = a.aggregate[sortField] ?? 0;
-        const bVal = b.aggregate[sortField] ?? 0;
-        diff = aVal - bVal;
-      }
-      return sortOrder === "desc" ? -diff : diff;
-    });
-    return list;
-  }, [groups, sortField, sortOrder]);
+  const withQuality = groups.some((group) => group.contentQuality !== null);
+  const columns = useMemo(() => teamMetricColumns<GroupRow>({ showDetail, withQuality }), [showDetail, withQuality]);
 
   if (!ready) {
     return (
       <EmptyState
         illustration={<CompassConstellationIllustration size={96} />}
-        title="工种小队功能准备就绪中"
-        description="小队的结构还在悄悄落地，稍后就能在这里按小队看见同行们。"
+        title="小队功能还在上线中"
+        description="上线后就能在这里按小队看本月数据。"
       />
     );
   }
@@ -114,234 +83,41 @@ export function WorkGroupListTab({
     return (
       <EmptyState
         illustration={<DeskStudyIllustration size={96} />}
-        title="本月暂未划分工种小队"
+        title="本月还没有划分小队"
         description={
           canManage
-            ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
-            : "当前团队尚未建立工种小队，团队负责人创建后将在此呈现。"
+            ? "点右上角「管理小队」，为一部、二部建文案、达人、运营小队并分配成员。"
+            : "团队负责人建好小队后，会在这里显示。"
         }
-        action={
-          canManage && onOpenManageDrawer
-            ? {
-                label: "新建工种小队",
-                onClick: onOpenManageDrawer,
-              }
-            : undefined
-        }
+        action={canManage && onOpenManageDrawer ? { label: "新建小队", onClick: onOpenManageDrawer } : undefined}
       />
     );
   }
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
-    } else {
-      setSortField(field);
-      setSortOrder("desc");
-    }
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1 inline" />;
-    }
-    return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#141413] ml-1 inline" />
-    ) : (
-      <ArrowUp className="size-3 text-[#141413] ml-1 inline" />
-    );
-  };
-
-  const sortableHead = (field: SortField, label: string, width: string) => (
-    <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>
-      <button
-        type="button"
-        onClick={() => handleSort(field)}
-        className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-          sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-        }`}
-      >
-        {label}
-        {renderSortIcon(field)}
-      </button>
-    </TableHead>
-  );
 
   return (
     <div className="space-y-2">
-      <Card className="overflow-hidden p-0 gap-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
-              <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
-                <button
-                  type="button"
-                  onClick={() => handleSort("name")}
-                  className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
-                    sortField === "name" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
-                  }`}
-                >
-                  小队名称
-                  {renderSortIcon("name")}
-                </button>
-              </TableHead>
-              {sortableHead("memberCount", "人数", "w-[80px]")}
-              {sortableHead("reportCount", "作品数", "w-[80px]")}
-              {sortableHead("totalPlay", "总播放", "w-[80px]")}
-              {sortableHead("avgPlay", "条均播放", "w-[85px]")}
-              {sortableHead("followerConversionRate", "转粉率", "w-[80px]")}
-              {sortableHead("interactionRate", "互动率", "w-[80px]")}
-              {sortableHead("likeRate", "点赞率", "w-[80px]")}
-              {sortableHead("favoriteRate", "收藏率", "w-[80px]")}
-              {hasContentQuality && sortableHead("avgContentAchievement", "内容质量", "w-[120px]")}
-              <TableHead className="py-2 pl-2 pr-4 text-right font-normal text-[#78716C] w-[70px]">
-                操作
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="text-[13px]">
-            {sorted.map((group) => (
-              <TableRow
-                key={group.id}
-                className="border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
-                onClick={() => onSelectGroup(group.id)}
-              >
-                <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">
-                  <div className="flex items-center gap-2">
-                    <ItemHeading as="span" className="truncate max-w-[140px]">{group.name}</ItemHeading>
-                    <WorkGroupKindBadge kind={group.kind} />
-                  </div>
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {group.memberCount} 人
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
-                  {group.aggregate.reportCount}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatBigNumber(group.aggregate.totalPlay)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatBigNumber(group.aggregate.avgPlay)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.followerConversionRate)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.interactionRate)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.likeRate)}
-                </TableCell>
-                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
-                  {formatRate(group.aggregate.favoriteRate)}
-                </TableCell>
-                {hasContentQuality && (
-                  <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-                    <WorkGroupQualitySummaryCell contentQuality={group.contentQuality} />
-                  </TableCell>
-                )}
-                <TableCell className="py-2 pl-2 pr-4 text-right">
-                  <button
-                    type="button"
-                    aria-label={`进入${group.name}小队详情`}
-                    onClick={(event) => {
-                      // 整行同样可点，这里拦住冒泡，避免一次点击进两次
-                      event.stopPropagation();
-                      onSelectGroup(group.id);
-                    }}
-                    className="inline-flex items-center gap-1 rounded-md text-[14px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
-                  >
-                    进入
-                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-      <p className="px-4 text-[12px] text-[#78716C]">
-        播放、条均与各比率与数据复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月作品总数，未同步数据复盘的作品只计入作品数。
-      </p>
-    </div>
-  );
-}
-
-/** 内容质量摘要单元格：小队列表与小队详情共用，悬停即时展示 3 行评级拆解，不阻断整行点击。 */
-export function WorkGroupQualitySummaryCell({
-  contentQuality,
-  emptyClassName = "text-[#A8A29E]",
-}: {
-  contentQuality: WorkGroupSummaryRow["contentQuality"] | null | undefined;
-  emptyClassName?: string;
-}) {
-  if (!contentQuality) {
-    return (
-      <div className="py-2 px-2 text-right">
-        <span className={emptyClassName}>—</span>
+      <div className="hidden sm:block">
+        <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
       </div>
-    );
-  }
-
-  const goodRateText =
-    contentQuality.ratedCount > 0 && contentQuality.goodExcellentRate !== null
-      ? `${Math.round(contentQuality.goodExcellentRate * 100)}%`
-      : "—";
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <div className="group/cell py-2 px-2 text-right cursor-help">
-            <div className="font-normal text-[#141413]">
-              互动{" "}
-              {contentQuality.avgInteractionAchievement == null
-                ? "—"
-                : `${Math.round(contentQuality.avgInteractionAchievement)}%`}
-              <span className="mx-1 text-[#A8A29E]">·</span>
-              留存{" "}
-              {contentQuality.avgContentAchievement == null
-                ? "—"
-                : `${Math.round(contentQuality.avgContentAchievement)}%`}
-            </div>
-            <div className="text-[12px] text-[#78716C] font-normal">
-              <span className="border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
-                良优 {goodRateText}
-                <span className="mx-1 text-[#A8A29E]">·</span>
-                优{contentQuality.overallGradeCounts.excellent}·良
-                {contentQuality.overallGradeCounts.good}·普
-                {contentQuality.overallGradeCounts.fair}
-              </span>
-            </div>
-          </div>
-        }
+      <RoleTable
+        rows={rows}
+        columns={columns}
+        defaultSortKey="totalPlay"
+        nameLabel="小队"
+        showAvatar={false}
+        getId={(row) => row.id}
+        getName={(row) => row.name}
+        getSub={(row) => `${workGroupKindLabel(row.kind)}小队 · ${row.memberCount} 人`}
+        isZero={(row) => row.reportCount === 0}
+        rowAriaLabel={(row) => `进入${row.name}小队详情`}
+        getMobileSummary={(row) => ({
+          primary: formatBigNumber(row.totalPlay),
+          secondary: row.contentQuality
+            ? `${row.reportCount} 篇 · ${goodExcellentText(row.contentQuality)}`
+            : `${row.reportCount} 篇`,
+        })}
+        onSelectPerson={onSelectGroup}
       />
-      <TooltipContent
-        side="top"
-        align="end"
-        sideOffset={4}
-        className="w-[224px] max-w-[224px] flex-col items-stretch gap-1 p-3 text-left"
-      >
-        <div className="flex items-center justify-between text-[12px] text-[#78716C] tabular-nums">
-          <span>综合已评级</span>
-          <span className="text-[#141413]">
-            {contentQuality.ratedCount} / {contentQuality.totalCount} 篇
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-[12px] text-[#78716C] tabular-nums">
-          <span>良优率</span>
-          <span className="text-[#141413]">{goodRateText}</span>
-        </div>
-        <div className="flex items-center justify-between border-t border-[#E2E2DF]/80 pt-1 text-[12px] text-[#78716C] tabular-nums">
-          <span>分档统计</span>
-          <span className="text-[#141413]">
-            优 {contentQuality.overallGradeCounts.excellent} · 良{" "}
-            {contentQuality.overallGradeCounts.good} · 普{" "}
-            {contentQuality.overallGradeCounts.fair}
-          </span>
-        </div>
-      </TooltipContent>
-    </Tooltip>
+    </div>
   );
 }

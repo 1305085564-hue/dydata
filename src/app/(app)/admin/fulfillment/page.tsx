@@ -8,11 +8,9 @@ import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
-import type { TimeRangePreset } from "@/types/fulfillment";
 
 import { FulfillmentWorkbench } from "./fulfillment-workbench";
+import { FulfillmentPageSkeleton } from "./fulfillment-page-skeleton";
 
 export const metadata: Metadata = {
   title: "发布管理 - DYData",
@@ -20,24 +18,7 @@ export const metadata: Metadata = {
 };
 
 interface FulfillmentPageProps {
-  searchParams: Promise<{ year?: string; month?: string; range?: string; view?: string }>;
-}
-
-function resolveYearMonth(year: string | undefined, month: string | undefined) {
-  return resolveFulfillmentYearMonth(year, month);
-}
-
-function resolveRange(range: string | undefined): TimeRangePreset {
-  const validRanges: TimeRangePreset[] = ["today", "last7days", "thisMonth", "lastMonth", "custom"];
-  if (validRanges.includes(range as TimeRangePreset)) {
-    return range as TimeRangePreset;
-  }
-  return "today";
-}
-
-function resolveView(view: string | undefined): "todo" | "matrix" {
-  if (view === "todo") return "todo";
-  return "matrix";
+  searchParams: Promise<{ year?: string; month?: string }>;
 }
 
 export default async function FulfillmentPage({ searchParams }: FulfillmentPageProps) {
@@ -50,18 +31,13 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
     redirect("/dashboard");
   }
 
-  const { year, month } = resolveYearMonth(params.year, params.month);
-  const range = resolveRange(params.range);
-  const view = resolveView(params.view);
+  const { year, month } = resolveFulfillmentYearMonth(params.year, params.month);
   const readOnlyScope = await resolveReadOnlyCompanyScope(createAdminClient(), scope);
 
   return (
-    <AdminWorkspaceLayout
-      title="发布管理"
-      description={<PageEpigraph pageKey="fulfillment" />}
-      width="wide"
-    >
-      <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
+    // 标题由工作台按数据给出（「11月 · 已发 412 / 480 条，达成 86%」），这里不放固定标题与导语
+    <AdminWorkspaceLayout width="wide">
+      <Suspense fallback={<FulfillmentPageSkeleton />}>
         <FulfillmentDataContainer
           year={year}
           month={month}
@@ -69,8 +45,6 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
           currentUserId={permissionInfo.userId}
           canManageSystem={permissionInfo.permissions.manage_system === true}
           canManage={permissionInfo.permissions.manage_fulfillment === true}
-          range={range}
-          view={view}
         />
       </Suspense>
     </AdminWorkspaceLayout>
@@ -84,8 +58,6 @@ async function FulfillmentDataContainer({
   currentUserId,
   canManageSystem,
   canManage,
-  range,
-  view,
 }: {
   year: number;
   month: number;
@@ -93,15 +65,11 @@ async function FulfillmentDataContainer({
   currentUserId: string;
   canManageSystem: boolean;
   canManage: boolean;
-  range: TimeRangePreset;
-  view: "todo" | "matrix";
 }) {
   const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
   return (
     <FulfillmentWorkbench
       initialData={data}
-      initialRange={range}
-      initialView={view}
       currentUserId={currentUserId}
       canManageSystem={canManageSystem}
       canManage={canManage}

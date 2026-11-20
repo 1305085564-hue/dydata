@@ -121,7 +121,7 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
 test("编辑详情读取日报来源与日报自身责任人，供历史表单回填", () => {
   assert.equal(
     EDIT_DETAIL_REPORT_SELECT,
-    "id, user_id, account_id, report_date, video_id, data_source, script_author_user_id, video_editor_user_id, operator_user_id",
+    "id, user_id, account_id, report_date, video_id, data_source, title, content, published_at, uploaded_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, script_author_user_id, video_editor_user_id, operator_user_id",
   );
 });
 

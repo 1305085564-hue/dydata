@@ -2,165 +2,143 @@
 
 import { useMemo } from "react";
 import { Settings, TrendingUp } from "lucide-react";
-import { HealthBar } from "./health-bar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
-import type { OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews } from "./types";
+import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews } from "./types";
 import type { WriterCandidateRow } from "./writer-tab";
 import { partitionWriterCandidates, type TabKey } from "@/lib/collaboration/domain/workbench-state";
+import { OneTip } from "./one-tip";
+
+/** 一排切换：四个岗位与小队并列，少点一层。 */
+export type CollaborationSegment = TabKey | "teams";
 
 interface CollaborationWorkbenchToolbarProps {
-  year: number; month: number;
   monthOptions: Array<{ year: number; month: number; label: string; value: string }>;
   currentMonthValue: string;
-  view: "roles" | "teams"; tab: TabKey; summary: SummaryData | null;
-  isOwnerOrTeamAdmin: boolean; loadFailed: boolean; canManageWorkGroups: boolean; hasActiveGroupDetail: boolean;
+  segment: CollaborationSegment;
+  loadFailed: boolean;
+  canManageWorkGroups: boolean;
+  hasActiveGroupDetail: boolean;
   resolvedWorkGroupViews?: WorkGroupViews;
-  talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; writerCandidates?: WriterCandidateRow[]; editorStaff: StaffRow[];
+  talents: TalentRow[];
+  operators: OperatorRow[];
+  writerStaff: StaffRow[];
+  writerCandidates?: WriterCandidateRow[];
+  editorStaff: StaffRow[];
   onMonthChange: (val: string | null) => void;
-  onViewChange: (view: "roles" | "teams") => void; onTabChange: (tab: TabKey) => void; onOpenManageDrawer: (groupId?: string | null) => void; onLeaderboardOpen: (open: boolean) => void;
+  onSegmentChange: (segment: CollaborationSegment) => void;
+  onOpenManageDrawer: (groupId?: string | null) => void;
+  onLeaderboardOpen: (open: boolean) => void;
 }
 
 export function CollaborationWorkbenchToolbar({
-  year, month, monthOptions, currentMonthValue, view, tab, summary, isOwnerOrTeamAdmin, loadFailed, canManageWorkGroups, hasActiveGroupDetail, resolvedWorkGroupViews, talents, operators, writerStaff, writerCandidates = [], editorStaff, onMonthChange, onViewChange, onTabChange, onOpenManageDrawer, onLeaderboardOpen,
+  monthOptions,
+  currentMonthValue,
+  segment,
+  loadFailed,
+  canManageWorkGroups,
+  hasActiveGroupDetail,
+  resolvedWorkGroupViews,
+  talents,
+  operators,
+  writerStaff,
+  writerCandidates = [],
+  editorStaff,
+  onMonthChange,
+  onSegmentChange,
+  onOpenManageDrawer,
+  onLeaderboardOpen,
 }: CollaborationWorkbenchToolbarProps) {
-
-  const { activeWriterCount: writerCount } = useMemo(
+  const { activeWriterCount } = useMemo(
     () => partitionWriterCandidates(writerStaff, writerCandidates),
     [writerStaff, writerCandidates],
   );
+
+  const segments: Array<{ key: CollaborationSegment; label: string; count: number; tip?: string }> = [
+    { key: "talents", label: "达人", count: talents.length },
+    {
+      key: "writers",
+      label: "文案",
+      count: activeWriterCount,
+      tip: "含已认证但本月还没有产出的文案；其余页签只计本月有产出的人。",
+    },
+    { key: "operators", label: "运营", count: operators.length, tip: "只统计给别人账号做运营的人。" },
+    { key: "editors", label: "剪辑", count: editorStaff.length, tip: "只统计给别人账号剪辑的人。" },
+    { key: "teams", label: "小队", count: resolvedWorkGroupViews?.groups.length ?? 0 },
+  ];
+
   return (
-    <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {/* 月份选择 */}
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="w-fit">
-              <Select value={currentMonthValue} onValueChange={onMonthChange}>
-                <SelectTrigger className="h-7 text-[14px] bg-transparent border-0 shadow-none font-normal hover:bg-[#EBEBE9] transition-colors focus-visible:ring-2 focus-visible:ring-[#1F1E1D]/10 outline-none cursor-pointer">
-                  <SelectValue placeholder="选择月份" />
-                </SelectTrigger>
-                <SelectContent>
-                  {monthOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-[14px]">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {/* 一级视图切换：按岗位 ↔ 按小队 */}
-          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
-            <button
-              type="button"
-              onClick={() => onViewChange("roles")}
-              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
-                view === "roles"
-                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
-                  : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-              }`}
-            >
-              按岗位
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewChange("teams")}
-              className={`h-7 px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] ${
-                view === "teams"
-                  ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
-                  : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-              }`}
-            >
-              按小队 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
-            </button>
-          </div>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Select value={currentMonthValue} onValueChange={onMonthChange}>
+          <SelectTrigger
+            aria-label="选择月份（← → 键也能翻月）"
+            className="h-7 w-fit text-[14px] bg-transparent border-0 shadow-none hover:bg-[#EBEBE9] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[#1F1E1D]/10 outline-none cursor-pointer"
+          >
+            <SelectValue placeholder="选择月份" />
+          </SelectTrigger>
+          <SelectContent>
+            {monthOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value} className="text-[14px]">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          {/* 岗位四页签（仅在按岗位视图展示，与一级视图无缝并排） */}
-          {view === "roles" && (
-            <>
-              <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => onTabChange("talents")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                    tab === "talents"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                  }`}
-                >
-                  达人 ({talents.length})
-                </button>
+        <div role="tablist" aria-label="选择岗位或小队" className="flex flex-wrap items-center gap-1">
+          {segments.map((item) => {
+            const active = segment === item.key;
+            const button = (
+              <button
+                key={item.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onSegmentChange(item.key)}
+                className={`h-7 px-3 rounded-md text-[14px] transition-colors duration-150 cursor-pointer ${
+                  active ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                }`}
+              >
+                {item.label}
+                <span className={`ml-1 tabular-nums ${active ? "text-[#78716C]" : "text-[#A8A29E]"}`}>{item.count}</span>
+              </button>
+            );
+            return item.tip ? (
+              <OneTip key={item.key} tip={item.tip} align="start" side="bottom">
+                {button}
+              </OneTip>
+            ) : (
+              button
+            );
+          })}
+        </div>
 
-                <button
-                  type="button"
-                  onClick={() => onTabChange("operators")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                    tab === "operators"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                  }`}
-                >
-                  运营 ({operators.length})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onTabChange("writers")}
-                  title="含已认证但本月还没有产出的文案（另三个页签只计当月有产出者）"
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                    tab === "writers"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                  }`}
-                >
-                  文案 ({writerCount})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onTabChange("editors")}
-                  className={`h-7 px-2.5 sm:px-3 text-[14px] font-normal rounded-md transition duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                    tab === "editors"
-                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                  }`}
-                >
-                  剪辑 ({editorStaff.length})
-                </button>
-              </div>
-            </>
-          )}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <HealthBar
-            summary={summary}
-            year={year}
-            month={month}
-            canEdit={isOwnerOrTeamAdmin}
-          />
-          {view === "teams" && !hasActiveGroupDetail && canManageWorkGroups && (
+        <div className="ml-auto flex items-center gap-1">
+          {segment === "teams" && !hasActiveGroupDetail && canManageWorkGroups && (
             <button
               type="button"
               onClick={() => onOpenManageDrawer(null)}
-              className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal shadow-input transition duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
             >
-              <Settings className="size-3.5 text-[#78716C]" />
+              <Settings className="size-3.5 text-[#78716C]" aria-hidden />
               管理小队
             </button>
           )}
           <button
             type="button"
             onClick={() => onLeaderboardOpen(true)}
-            className="h-7 px-2.5 sm:px-3 rounded-md hover:bg-[#EBEBE9] text-[#1F1E1D] text-[14px] font-normal transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#1F1E1D]"
+            className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer whitespace-nowrap"
           >
-            <TrendingUp className="size-3.5 text-[#D97757]" />
+            <TrendingUp className="size-3.5 text-[#78716C]" aria-hidden />
             账号排行
           </button>
         </div>
       </div>
       {loadFailed && (
         <Alert variant="error">
-          <span className="font-normal text-[#1F1E1D]">数据加载稍有阻滞</span>
-          <span className="text-[#78716C]">· 当前展示为空，请刷新重试</span>
+          <span className="text-[#1F1E1D]">这个月的数据没加载出来</span>
+          <span className="text-[#78716C]">· 表格暂时为空，刷新重试</span>
         </Alert>
       )}
     </div>

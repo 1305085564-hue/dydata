@@ -78,7 +78,7 @@ export function InteractionBreakdownContent({
                   <span className="text-[#141413]">
                     {count == null ? "—" : count.toLocaleString("zh-CN")}
                   </span>
-                  <span className="w-[48px] text-right text-[#78716C]">{pct}</span>
+                  <span className="min-w-[48px] whitespace-nowrap text-right text-[#78716C]">{pct}</span>
                 </span>
               </div>
             );
@@ -156,7 +156,7 @@ export function RetentionBreakdownContent({
                 </span>
                 <span className="inline-flex items-center gap-2 shrink-0">
                   <span className="text-[#141413]">{item.actualText}</span>
-                  <span className={`w-[58px] text-right ${achColor}`}>{achText}</span>
+                  <span className={`min-w-[58px] whitespace-nowrap text-right ${achColor}`}>{achText}</span>
                 </span>
               </div>
             );
@@ -236,25 +236,16 @@ export function RetentionTooltipCell({
   );
 }
 
-export function OverallGradeTooltipCell({
+/** 综合评级明细（播放门槛 + 互动达成 + 留存达成），评级悬停浮层的内容；协作管理档案也复用这一份。 */
+export function OverallGradeBreakdownContent({
   quality,
   playCount,
   rules,
 }: {
-  quality: WorkContentQuality | null | undefined;
+  quality: WorkContentQuality & { overallGrade: NonNullable<WorkContentQuality["overallGrade"]> };
   playCount: number | null;
   rules: ContentQualityRules | null | undefined;
 }) {
-  if (!quality?.overallGrade) {
-    return (
-      <div className="py-2.5 px-3">
-        <span className="inline-block rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-          {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
-        </span>
-      </div>
-    );
-  }
-
   const effectivePlay = quality.snapshotPlayCount ?? playCount;
   const floors = rules?.playFloors;
   let playNote: string | null = null;
@@ -275,46 +266,69 @@ export function OverallGradeTooltipCell({
   }
 
   return (
+    <>
+      <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
+        <span className={`text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}>
+          综合{quality.overallGrade}
+        </span>
+        {playNote ? <span className="text-[12px] text-[#78716C]">{playNote}</span> : null}
+      </div>
+      <div className="space-y-1 text-[12px] tabular-nums">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1 text-[#1F1E1D]">
+            <span className={`size-1.5 shrink-0 rounded-full ${playDot}`} />
+            <span>播放量</span>
+          </span>
+          <span className="text-[#141413]">{formatBigNumber(effectivePlay)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[#78716C]">互动达成</span>
+          <span className="text-[#141413]">
+            {quality.interactionAchievement != null ? `${Math.round(quality.interactionAchievement)}%` : "—"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[#78716C]">留存达成</span>
+          <span className="text-[#141413]">
+            {quality.contentAchievement != null ? `${Math.round(quality.contentAchievement)}%` : "—"}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function OverallGradeTooltipCell({
+  quality,
+  playCount,
+  rules,
+}: {
+  quality: WorkContentQuality | null | undefined;
+  playCount: number | null;
+  rules: ContentQualityRules | null | undefined;
+}) {
+  if (!quality?.overallGrade) {
+    return (
+      <div className="py-2.5 px-3">
+        <span className="inline-block rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+          {getContentQualityStatusText(quality?.status ?? "pending_snapshot")}
+        </span>
+      </div>
+    );
+  }
+  const graded = quality as WorkContentQuality & { overallGrade: NonNullable<WorkContentQuality["overallGrade"]> };
+
+  return (
     <SimpleTooltip
       align="end"
       contentClassName="w-[248px] max-w-[248px] flex-col items-stretch gap-2 p-3 text-left"
-      tip={
-        <>
-          <div className="flex items-center justify-between border-b border-[#E2E2DF]/80 pb-1">
-            <span className={`text-[12px] ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}>
-              综合{quality.overallGrade}
-            </span>
-            {playNote ? <span className="text-[12px] text-[#78716C]">{playNote}</span> : null}
-          </div>
-          <div className="space-y-1 text-[12px] tabular-nums">
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-[#1F1E1D]">
-                <span className={`size-1.5 shrink-0 rounded-full ${playDot}`} />
-                <span>播放量</span>
-              </span>
-              <span className="text-[#141413]">{formatBigNumber(effectivePlay)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[#78716C]">互动达成</span>
-              <span className="text-[#141413]">
-                {quality.interactionAchievement != null ? `${Math.round(quality.interactionAchievement)}%` : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[#78716C]">留存达成</span>
-              <span className="text-[#141413]">
-                {quality.contentAchievement != null ? `${Math.round(quality.contentAchievement)}%` : "—"}
-              </span>
-            </div>
-          </div>
-        </>
-      }
+      tip={<OverallGradeBreakdownContent quality={graded} playCount={playCount} rules={rules} />}
     >
       <div className="flex h-full w-full items-center justify-end py-2.5 px-3 cursor-default group/cell">
         <span
-          className={`inline-block font-normal border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors ${BREAKOUT_GRADE_TEXT_CLASS[quality.overallGrade]}`}
+          className={`inline-block font-normal border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors ${BREAKOUT_GRADE_TEXT_CLASS[graded.overallGrade]}`}
         >
-          综合{quality.overallGrade}
+          综合{graded.overallGrade}
         </span>
       </div>
     </SimpleTooltip>

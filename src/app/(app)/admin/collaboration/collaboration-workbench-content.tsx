@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useMemo, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { LeaderboardDialog } from "./leaderboard-dialog";
@@ -13,7 +14,7 @@ import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import type { CollaborationDiagnosisDetail } from "@/components/admin/collaboration-work-review-link";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
-import type { OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "./types";
+import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "./types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 import { prefetchPerson } from "@/lib/collaboration/data/workbench";
 
@@ -49,7 +50,7 @@ interface CollaborationWorkbenchContentProps {
   activeGroupDetail: WorkGroupViews["details"][number] | null | undefined; groupIdNotFound: boolean; resolvedWorkGroupViews?: WorkGroupViews;
   canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null; evaluationStandards: EvaluationStandards;
   manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number;
-  diagnosisDetail: CollaborationDiagnosisDetail | null; openingReportId: string | null; leaderboardDialogOpen: boolean; summary: SummaryData | null;
+  diagnosisDetail: CollaborationDiagnosisDetail | null; openingReportId: string | null; leaderboardDialogOpen: boolean; rulesEntry?: ReactNode;
   talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; editorStaff: StaffRow[]; writerCandidates: WriterCandidateRow[]; isOwnerOrTeamAdmin: boolean; currentUserId?: string | null; restrictToSelf?: boolean; loadFailed: boolean;
   onBackToGroupList: () => void; onOpenManageDrawer: (groupId: string | null) => void; onSelectGroup: (id: string) => void; onSelectPerson: (id: string | null) => void;
   onLeaderboardChange: (open: boolean) => void; onCloseDiagnosis: () => void; onLifecycleChanged: () => void; onCloseManageDrawer: () => void;
@@ -57,10 +58,19 @@ interface CollaborationWorkbenchContentProps {
 }
 
 export function CollaborationWorkbenchContent({
-  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
+  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, rulesEntry, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
 }: CollaborationWorkbenchContentProps) {
   const evaluationStandardsKey = JSON.stringify(evaluationStandards);
   const isMemberViewer = Boolean(currentUserId && (!isOwnerOrTeamAdmin || restrictToSelf));
+  // 档案需要的两份旁证都来自首屏已有数据，不另取：
+  // 本人名下账号（判断「常配账号」是不是在给别人干活），运营负责的账号明细（原运营表展开行）。
+  const personContext = useMemo(() => {
+    if (!selectedPersonId) return { ownAccountIds: [] as string[], operatorAccounts: [] as OperatorRow["accounts"] };
+    return {
+      ownAccountIds: talents.find((t) => t.userId === selectedPersonId)?.accounts.map((a) => a.accountId) ?? [],
+      operatorAccounts: operators.find((o) => o.userId === selectedPersonId)?.accounts ?? [],
+    };
+  }, [selectedPersonId, talents, operators]);
   return (
     <>
         {/* Tab / View Content 区域 */}
@@ -101,6 +111,7 @@ export function CollaborationWorkbenchContent({
         ) : tab === "talents" ? (
           <TalentTab
             talents={talents}
+            rulesEntry={rulesEntry}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -119,6 +130,7 @@ export function CollaborationWorkbenchContent({
             rows={writerStaff}
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
+            rulesEntry={rulesEntry}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -128,7 +140,6 @@ export function CollaborationWorkbenchContent({
           <StaffTab
             rows={editorStaff}
             role="editor"
-            isLoading={false}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -151,6 +162,8 @@ export function CollaborationWorkbenchContent({
           year={year}
           month={month}
           activeTab={personRole}
+          ownAccountIds={personContext.ownAccountIds}
+          operatorAccounts={personContext.operatorAccounts}
           refreshTrigger={personCardRefreshKey}
           diagnosisDetail={selectedPersonId ? diagnosisDetail : null}
           evaluationStandards={evaluationStandards}

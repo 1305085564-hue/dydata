@@ -97,7 +97,7 @@ export function formatDuration(seconds: number | null | undefined) {
   return `${seconds.toFixed(1)} s`;
 }
 
-/** 爆款标准线文案：按当前话题标准线格式化为百分比。 */
+/** 评级标准线文案：按当前话题标准线格式化为百分比。 */
 export function formatTarget(target: number) {
   return `${Number((target * 100).toFixed(2))}%`;
 }

@@ -1,7 +1,7 @@
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { getPublishedDateForStats } from "@/lib/date-semantics";
 import { STATS_START_DATE } from "./types";
-import { CALIBER, averagePlayOf } from "@/lib/metrics/caliber";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 import type {
   CollaborationAccount,
   CollaborationProfile,
@@ -18,10 +18,6 @@ export function asCount(value: number | null | undefined) {
   return Number.isFinite(value) ? Math.max(0, Number(value)) : 0;
 }
 
-export function hasPlayCount(row: CollaborationReport) {
-  return Number.isFinite(row.play_count);
-}
-
 export function unique(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
 }
@@ -32,14 +28,6 @@ export function profileNameMap(profiles: CollaborationProfile[]) {
 
 export function accountMap(accounts: CollaborationAccount[]) {
   return new Map(accounts.map((account) => [account.id, account])); // gate:transient-map 函数内临时聚合，随调用栈释放
-}
-
-export function isSelfHandled(row: CollaborationReport) {
-  return (
-    row.script_author_user_id === row.user_id &&
-    row.video_editor_user_id === row.user_id &&
-    row.operator_user_id === row.user_id
-  );
 }
 
 export function fromStatsStart(rows: CollaborationReport[]) {
@@ -117,11 +105,6 @@ export function getMonthRange(year: number, month: number): MonthRange | null {
   return { year, month, start: `${prefix}-01`, end: `${prefix}-${String(lastDay).padStart(2, "0")}` };
 }
 
-export function getPreviousMonthRange(year: number, month: number) {
-  const date = new Date(Date.UTC(year, month - 2, 1));
-  return getMonthRange(date.getUTCFullYear(), date.getUTCMonth() + 1)!;
-}
-
 export function getSixMonthRanges(year: number, month: number) {
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date(Date.UTC(year, month - 6 + index, 1));
@@ -144,7 +127,6 @@ export function buildSummary(rows: CollaborationReport[]) {
     attributed: scopedRows.filter(
       (row) => row.script_author_user_id && row.video_editor_user_id && row.operator_user_id,
     ).length,
-    selfHandled: scopedRows.filter(isSelfHandled).length,
     unattributed: scopedRows.filter(
       (row) => !row.script_author_user_id || !row.video_editor_user_id || !row.operator_user_id,
     ).length,
@@ -181,39 +163,6 @@ export function buildUnattributedReports(
   }));
 }
 
-export function countHits(rows: CollaborationReport[], historyRows = rows): number {
-  const byAccount = new Map<string, CollaborationReport[]>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  for (const row of historyRows.filter(hasPlayCount)) {
-    const bucket = byAccount.get(row.account_id) ?? [];
-    bucket.push(row);
-    byAccount.set(row.account_id, bucket);
-  }
-
-  let hits = 0;
-  for (const row of rows.filter(hasPlayCount)) {
-    const rowWorkDate = getCollaborationWorkDate(row);
-    const play = asCount(row.play_count);
-    if (play < CALIBER.hitMinPlay) continue;
-    const prior = (byAccount.get(row.account_id) ?? [])
-      .filter((candidate) => candidate.id !== row.id && (
-        getCollaborationWorkDate(candidate) < rowWorkDate
-        || (getCollaborationWorkDate(candidate) === rowWorkDate && candidate.id < row.id)
-      ))
-      .sort((a, b) => getCollaborationWorkDate(b).localeCompare(getCollaborationWorkDate(a)) || b.id.localeCompare(a.id))
-      .slice(0, CALIBER.hitBaselineSize);
-    if (prior.length < CALIBER.hitMinBaseline) continue;
-    const priorMean = prior.reduce((sum, candidate) => sum + asCount(candidate.play_count), 0) / prior.length;
-    if (priorMean > 0 && play >= priorMean * CALIBER.hitTimesOverMean) hits++;
-  }
-  return hits;
-}
-
-export function monthOverMonth(currentTotal: number, previousRows: CollaborationReport[]) {
-  if (previousRows.length === 0) return null;
-  const previousTotal = previousRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
-  if (previousTotal <= 0) return null;
-  return (currentTotal - previousTotal) / previousTotal;
-}
 /**
  * 按快照聚合绩效：先加总再相除（加权口径）；未同步作品只计入 reportCount。
  *
@@ -253,6 +202,8 @@ export function buildPerformanceMetrics(
     followerConversionRate: totalPlay > 0 ? followerGain / totalPlay : null,
     interactionRate: totalPlay > 0 ? (likes + comments + shares + favorites) / totalPlay : null,
     likeRate: totalPlay > 0 ? likes / totalPlay : null,
+    commentRate: totalPlay > 0 ? comments / totalPlay : null,
+    shareRate: totalPlay > 0 ? shares / totalPlay : null,
     favoriteRate: totalPlay > 0 ? favorites / totalPlay : null,
   };
 }

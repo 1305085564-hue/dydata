@@ -2,37 +2,50 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const source = readFileSync(new URL("./staff-tab.tsx", import.meta.url), "utf8");
+const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
+const source = read("./staff-tab.tsx");
+const talentSource = read("./talent-tab.tsx");
+const operatorSource = read("./operator-tab.tsx");
+const tableSource = read("./role-table.tsx");
+const hintsSource = read("./collaboration-quality-hints.tsx");
 
-test("岗位表格主表移除最近作品列，作品明细在展开行内保证标题截断", () => {
-  assert.match(source, /<Table className=\{`[^`]*table-fixed/);
-  assert.doesNotMatch(source, /<TableHead[^>]*>最近作品<\/TableHead>/);
-  assert.match(
-    source,
-    /<table className="[^"]*table-fixed[^"]*">[\s\S]*?<CollaborationWorkReviewLink[\s\S]*?className="[^"]*truncate[^"]*"/,
-  );
+test("四张岗位表共用一行一人的骨架：整行点开档案，键盘落在名字格的真按钮上，窄屏改列表不横拖", () => {
+  for (const tab of [source, talentSource, operatorSource]) {
+    assert.match(tab, /<RoleTable/);
+    assert.doesNotMatch(tab, /ChevronRight|ExpandedRow|onToggleExpand/, "行首不再有展开箭头，点一行只有一个去处");
+  }
+  // <tr role="button"> 会让读屏丢掉行与列头的关联，键盘入口改为名字格里的原生按钮
+  assert.doesNotMatch(tableSource, /role="button"/);
+  assert.match(tableSource, /<button[\s\S]*?aria-label=\{rowAriaLabel \? rowAriaLabel\(row\) : `查看\$\{getName\(row\)\}的个人档案`\}/);
+  assert.match(tableSource, /onClick=\{\(\) => onSelectPerson\(userId\)\}/);
+  assert.match(tableSource, /<ul className="sm:hidden/);
+  assert.match(tableSource, /hidden sm:flex/);
 });
 
-test("达人表支持键盘聚焦与焦点环", () => {
-  const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
-  assert.match(talentSource, /tabIndex=\{0\}/);
-  assert.match(talentSource, /role="button"/);
-  assert.match(talentSource, /aria-label=\{`查看\$\{row\.name\}的个人档案`\}/);
-  assert.match(talentSource, /focus-visible:ring-\[#141413\]/);
+test("账号名写在姓名下面一行灰字，不再单独占列", () => {
+  assert.doesNotMatch(talentSource, /名下账号<\/TableHead>/);
+  assert.doesNotMatch(source, /负责账号<\/TableHead>/);
+  assert.match(talentSource, /getSub=\{\(row\) => formatAccountLine/);
+  assert.match(source, /getSub=\{\(row\) =>\s*formatAccountLine/);
+  assert.match(operatorSource, /`负责 \$\{line\}`/);
 });
 
-test("文案绩效条数展示核算明细，未认证时不显示明细", () => {
-  assert.match(source, /绩效条数核算明细/);
-  assert.match(source, /计费基数（播放≥500）/);
-  assert.match(source, /优秀作品加成/);
-  assert.match(source, /最终计费条数/);
-  assert.match(source, /未认证成员不计费/);
-  assert.doesNotMatch(source, /月度基准扣除/);
+test("四张表默认按总播放排序", () => {
+  for (const tab of [source, talentSource, operatorSource]) {
+    assert.match(tab, /defaultSortKey="totalPlay"/);
+  }
 });
 
-test("文案作品缺失播放时显示无数据且不进入未达标差额分支", () => {
-  assert.match(source, /无数据·不计/);
-  assert.doesNotMatch(source, /const play = work\.playCount \?\? 0/);
+test("文案表只给出优条数，不再展示按条数计费的核算明细", () => {
+  assert.match(source, /excellentCountColumn/);
+  assert.match(hintsSource, /label: "优条数"/);
+  assert.doesNotMatch(source, /绩效条数核算明细|计费基数|计费对账|billingCount/);
+  assert.doesNotMatch(source, /有效作品|优秀作品/);
+});
+
+test("认证按钮在可点的行里，点击不冒泡成打开档案", () => {
+  assert.match(source, /onClick=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(source, /<WriterCertificationButton/);
 });
 
 test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () => {
@@ -45,88 +58,38 @@ test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () =>
   assert.doesNotMatch(writerBtnSource, /resetTimerRef/);
 });
 
-test("岗位四个 Tab 的列名按锁定方案展示，运营展开行仍保留账号级导粉", () => {
-  const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
-  const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  assert.doesNotMatch(talentSource, /爆款作品/);
-  assert.match(talentSource, /转粉率/);
-  assert.match(talentSource, /互动率/);
-  assert.doesNotMatch(operatorSource, /爆款数/);
-  assert.doesNotMatch(operatorSource, /导粉\s*\{sort/);
-  assert.match(operatorSource, /<th[^>]*>\s*导粉\s*<\/th>/);
-  assert.match(operatorSource, /转粉率/);
-  assert.match(operatorSource, /互动率/);
-  assert.match(source, /const countLabel = "本月篇数"/);
-  assert.match(source, /转粉率/);
-  assert.match(source, /互动率/);
-  assert.match(source, /绩效条数/);
-  assert.match(source, /认证状态/);
-  assert.doesNotMatch(source, /本月条数/);
-  assert.match(source, /转粉率/);
-  assert.match(source, /互动率/);
+test("岗位表列名按锁定方案：达人/运营不出爆款、有效、优秀、独立完成、环比", () => {
+  assert.doesNotMatch(talentSource, /爆款作品|有效作品|优秀作品|独立完成/);
+  assert.doesNotMatch(operatorSource, /爆款数|有效作品|优秀作品|环比/);
+  assert.match(talentSource, /rateColumns/);
+  assert.match(operatorSource, /rateColumns/);
+  assert.match(source, /rateColumns/);
+  assert.match(hintsSource, /label: "转粉率"/);
+  assert.match(hintsSource, /label: "互动率"/);
+  assert.match(hintsSource, /label: "本月作品"/);
 });
 
-test("岗位表格脚注明确日报产量与快照比率口径不同", () => {
-  assert.match(source, /篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算/);
+test("表下不压脚注：日报产量与快照比率的口径收进列头悬停", () => {
+  for (const tab of [source, talentSource, operatorSource]) {
+    assert.doesNotMatch(tab, /<p className="px-1 text-\[12px\]/);
+  }
+  assert.match(hintsSource, /reportCount: "按日报统计/);
+  assert.match(hintsSource, /未同步数据复盘的作品不参与/);
 });
 
-test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
-  const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-  // 运营：展开+姓名+负责账号+本月作品+总播放+条均+有效+优秀+环比+转粉+互动 = 11
-  assert.match(operatorSource, /colSpan=\{11\}/);
-  // 文案：8 基础列（移除了最近作品列） + 绩效 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 15；剪辑不加率为 8
-  assert.match(source, /colSpan=\{role === "writer" \? 15 : 8\}/);
-  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 16 : 9\}/);
-  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
-  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 11 : 9\}/);
+test("文案表、达人表补上展开明细：互动四项与留存五项，与小队表同一份列定义", () => {
+  for (const tab of [source, talentSource]) {
+    assert.match(tab, /<DetailToggle/);
+    assert.match(tab, /interactionDetailColumns/);
+    assert.match(tab, /retentionDetailColumns/);
+  }
+  assert.match(hintsSource, /INTERACTION_DETAIL_COLUMNS\.map/);
+  assert.match(hintsSource, /RETENTION_DETAIL_COLUMNS\.map/);
+  assert.doesNotMatch(operatorSource, /<DetailToggle/);
 });
 
-test("岗位表格已移除主表最近作品列，作品明细下沉至展开行，行高控制在 ~36px 单行", () => {
-  assert.doesNotMatch(source, /<TableHead[^>]*>最近作品<\/TableHead>/);
-  // 展开按钮尺寸控制在 size-6，单元格 py-2 维持 ~36px 单行高度
-  assert.match(source, /flex size-6 items-center justify-center/);
-  assert.match(source, /TableCell className="w-10 px-2 py-2 sticky/);
-});
-
-test("岗位表格采用自适应文本列宽（min-w-[90px] w-auto）与紧凑总宽，减少笔记本横向滚动", () => {
-  assert.match(source, /writer:\s*"min-w-\[1180px\]"/);
-  assert.match(source, /editor:\s*"min-w-\[665px\]"/);
-  // 列名精简断言
-  assert.match(source, /条均播/);
-  assert.match(source, /绩效条/);
-  assert.match(source, /留存数据/);
-  // 有效作品与优秀作品带排序能力
-  assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
-  assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
-  // 文本列 min-w w-auto 自适应 + 数字列规整（writer 收紧数字列给良优率与认证状态留足宽度，editor 保持不变）
-  assert.match(source, /<col className="min-w-\[90px\] w-auto" \/>/);
-  assert.match(source, /<col className="min-w-\[104px\] w-auto" \/>/);
-  assert.match(source, /<col className="w-\[76px\]" \/>/);
-  assert.match(source, /<col className="w-\[72px\]" \/>/);
-  assert.match(source, /<col className="w-\[74px\]" \/>/);
-  assert.match(source, /<col className="w-\[86px\]" \/>/);
-  assert.match(source, /<col className="w-\[126px\]" \/>/);
-  assert.match(source, /<col className="min-w-\[120px\] w-auto" \/>/);
-  assert.match(source, /<col className="w-\[80px\]" \/>/);
-  assert.match(source, /<col className="w-\[82px\]" \/>/);
-});
-
-test("达人与运营表格统一落地自适应文本列宽、colgroup与py-2单行高度标准", () => {
-  const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
-  const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
-
-  // 达人表规范断言
-  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1190px\]"/);
-  assert.match(talentSource, /<col className="min-w-\[90px\] w-auto" \/>/);
-  assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
-  assert.match(talentSource, /<TalentTableColGroup \/>/);
-  assert.match(talentSource, /sticky left-0/);
-
-  // 运营表规范断言
-  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[840px\]"/);
-  assert.match(operatorSource, /<col className="min-w-\[90px\] w-auto" \/>/);
-  assert.match(operatorSource, /<Table className=\{`\$\{OPERATOR_TABLE_MIN_WIDTH\} table-fixed`\}>/);
-  assert.match(operatorSource, /<OperatorTableColGroup \/>/);
-  assert.match(operatorSource, /flex size-6 items-center justify-center/);
-  assert.match(operatorSource, /<TableCell className="w-10 px-2 py-2 text-center/);
+test("运营负责账号明细（含账号级导粉）挪进个人档案", () => {
+  const worksSource = read("./personal-card-works.tsx");
+  assert.match(worksSource, /<Section title="负责账号">/);
+  assert.match(worksSource, /<th className=\{`\$\{headClass\} text-right`\}>导粉<\/th>/);
 });

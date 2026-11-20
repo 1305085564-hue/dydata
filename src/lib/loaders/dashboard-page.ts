@@ -10,11 +10,18 @@ import {
 } from "@/lib/dashboard-submission-state";
 import {
   getPendingExemptionDatesFromRequests,
+  materializePendingExemptionRequestRows,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
   type PendingExemptionDateLike,
   type PendingExemptionRequestLike,
 } from "@/lib/豁免";
+import type { ExemptionCategory } from "@/types";
+import { loadWithMembershipFallback } from "@/lib/member-lifecycle";
+import {
+  resolveCreateSubmissionPreferences, resolveVisibleActiveMemberIds,
+  type LastSubmittedReportPreferences,
+} from "@/lib/video-submit-preferences";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
@@ -59,6 +66,18 @@ type ProfileWithExemptionRow = {
 };
 
 type ProfileWithoutCategoryRow = Omit<ProfileWithExemptionRow, "exemption_category">;
+
+export type PendingExemptionItem = { date: string; category: ExemptionCategory };
+
+type LatestSubmissionPreferenceReport = {
+  account_id: string;
+  video_id: string | null;
+  script_author_user_id: string | null;
+  video_editor_user_id: string | null;
+  operator_user_id: string | null;
+};
+
+type PendingExemptionRequestRow = PendingExemptionRequestLike & { exemption_category?: string | null };
 
 type ApprovedRequestGrantRow = {
   applicant_user_id: string;
@@ -207,17 +226,28 @@ async function loadUserExemptionGrants(
   return loadApprovedRequestGrantsFallback(supabase, userId);
 }
 
-async function loadPendingExemptionDates(supabase: DashboardSupabase, userId: string): Promise<string[]> {
-  const { data, error } = await supabase
+async function loadPendingExemptionData(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<{ dates: string[]; items: PendingExemptionItem[] }> {
+  const primary = await supabase
     .from("exemption_request")
-    .select("id, start_date, end_date")
+    .select("id, start_date, end_date, exemption_category")
     .eq("applicant_user_id", userId)
     .eq("request_status", "pending")
     .limit(200);
 
-  assertSupabaseQuerySucceeded(error, "加载待审批豁免失败");
+  const requestResult = isMissingExemptionRequestCategoryError(primary.error)
+    ? await supabase
+        .from("exemption_request")
+        .select("id, start_date, end_date")
+        .eq("applicant_user_id", userId)
+        .eq("request_status", "pending")
+        .limit(200)
+    : primary;
+  assertSupabaseQuerySucceeded(requestResult.error, "加载待审批豁免失败");
 
-  const pendingRows = (data ?? []) as PendingExemptionRequestLike[];
+  const pendingRows = (requestResult.data ?? []) as PendingExemptionRequestRow[];
   const requestIds = pendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
   const detailsResult = requestIds.length > 0
     ? await supabase
@@ -228,10 +258,120 @@ async function loadPendingExemptionDates(supabase: DashboardSupabase, userId: st
 
   assertSupabaseQuerySucceeded(detailsResult.error, "加载待审批豁免日期失败");
 
-  return getPendingExemptionDatesFromRequests(
-    pendingRows,
-    (detailsResult.data ?? []) as PendingExemptionDateLike[],
-  );
+  const details = (detailsResult.data ?? []) as PendingExemptionDateLike[];
+  const items = materializePendingExemptionRequestRows(pendingRows, details)
+    .flatMap((row) => row.start_date
+      ? [{ date: row.start_date, category: row.exemption_category === "leave" ? "leave" as const : "waive" as const }]
+      : [])
+    .filter((item, index, rows) => rows.findIndex((candidate) =>
+      candidate.date === item.date && candidate.category === item.category,
+    ) === index)
+    .sort((left, right) => left.date.localeCompare(right.date));
+
+  return { dates: getPendingExemptionDatesFromRequests(pendingRows, details), items };
+}
+
+async function loadLastSubmissionPreferencesByAccount(
+  supabase: DashboardSupabase,
+  membershipSupabase: DashboardSupabase,
+  userId: string,
+  teamId: string | null,
+  accountIds: string[],
+): Promise<Record<string, LastSubmittedReportPreferences>> {
+  if (accountIds.length === 0) return {};
+
+  const latestReportResults = await Promise.all(accountIds.map((accountId) =>
+    supabase
+      .from("daily_reports")
+      .select("account_id, video_id, script_author_user_id, video_editor_user_id, operator_user_id")
+      .eq("account_id", accountId)
+      .eq("user_id", userId)
+      .eq("is_void", false)
+      .order("uploaded_at", { ascending: false, nullsFirst: false })
+      .order("report_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ));
+  for (const result of latestReportResults) {
+    assertSupabaseQuerySucceeded(result.error, "加载最近提交署名失败");
+  }
+  const latestReports = latestReportResults
+    .map((result) => result.data as LatestSubmissionPreferenceReport | null)
+    .filter((report): report is LatestSubmissionPreferenceReport => Boolean(report));
+
+  const videoIds = [...new Set(latestReports
+    .map((report) => report.video_id)
+    .filter((id): id is string => Boolean(id)))];
+  const videosResult = videoIds.length > 0
+    ? await supabase
+        .from("videos")
+        .select("id, script_author_user_id, video_editor_user_id, operator_user_id")
+        .in("id", videoIds)
+    : { data: [], error: null };
+  assertSupabaseQuerySucceeded(videosResult.error, "加载最近作品署名失败");
+  const videos = videosResult.data ?? [];
+
+  const candidateMemberIds = [...new Set(latestReports.flatMap((report) => {
+    const video = report.video_id ? videos.find((candidate) => candidate.id === report.video_id) : null;
+    return [
+      video ? video.script_author_user_id : report.script_author_user_id,
+      video ? video.video_editor_user_id : report.video_editor_user_id,
+      video ? video.operator_user_id : report.operator_user_id,
+    ];
+  }).filter((id): id is string => Boolean(id)))];
+  let visibleMemberIds = new Set([userId]);
+  if (candidateMemberIds.length > 0) {
+    const membershipResult = await loadWithMembershipFallback<{
+      id: string;
+      team_id: string | null;
+      membership_status?: string | null;
+    }>({
+      loadWithMembership: async () => await membershipSupabase
+        .from("profiles")
+        .select("id, team_id, membership_status")
+        .in("id", candidateMemberIds),
+      loadWithoutMembership: async () => await membershipSupabase
+        .from("profiles")
+        .select("id, team_id")
+        .in("id", candidateMemberIds),
+    });
+    visibleMemberIds = resolveVisibleActiveMemberIds({
+      userId,
+      teamId,
+      members: membershipResult.data ?? [],
+    });
+  }
+
+  const tagsResult = videoIds.length > 0
+    ? await supabase
+        .from("video_tags")
+        .select("video_id, tag_value")
+        .eq("tag_dimension", "话题")
+        .eq("source", "manual")
+        .in("video_id", videoIds)
+    : { data: [], error: null };
+  assertSupabaseQuerySucceeded(tagsResult.error, "加载最近提交题材失败");
+  const topicTags = tagsResult.data ?? [];
+
+  return Object.fromEntries(latestReports.map((report) => [
+    report.account_id,
+    (() => {
+      const video = report.video_id ? videos.find((candidate) => candidate.id === report.video_id) : null;
+      const topicTag = report.video_id
+        ? topicTags.find((tag) => tag.video_id === report.video_id)?.tag_value
+        : undefined;
+      return resolveCreateSubmissionPreferences({
+      userId,
+      visibleMemberIds,
+      lastReport: {
+        scriptAuthorUserId: video ? video.script_author_user_id : report.script_author_user_id,
+        videoEditorUserId: video ? video.video_editor_user_id : report.video_editor_user_id,
+        operatorUserId: video ? video.operator_user_id : report.operator_user_id,
+        topicTag: topicTag === "干货" || topicTag === "复盘" ? topicTag : undefined,
+      },
+      });
+    })(),
+  ]));
 }
 
 export type { UserExemptionReviewNotice };
@@ -250,6 +390,8 @@ export interface DashboardPageData {
   history: DashboardActivityReport[];
   hasPendingExemption: boolean;
   pendingExemptionDates: string[];
+  pendingExemptionItems: PendingExemptionItem[];
+  lastSubmissionPreferencesByAccount: Record<string, LastSubmittedReportPreferences>;
   absentDates: string[];
   absentReasons: Record<string, string>;
   monthFulfillmentBasis: MonthFulfillmentBasis;
@@ -326,9 +468,10 @@ export async function loadDashboardPageData({
     monthReportsResult,
     recentDatesResult,
     userExemptionGrants,
-    pendingExemptionDates,
+    pendingExemptionData,
     userExemptionReviewNotices,
     absentRecordsResult,
+    lastSubmissionPreferencesByAccount,
   ] = await Promise.all([
     accountIds.length
       ? supabase
@@ -362,7 +505,7 @@ export async function loadDashboardPageData({
           .eq("is_void", false)
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
-    loadPendingExemptionDates(supabase, userId),
+    loadPendingExemptionData(supabase, userId),
     loadRecentExemptionReviewNotices(supabase, userId),
     adminSupabase
       ? adminSupabase
@@ -372,6 +515,13 @@ export async function loadDashboardPageData({
           .gte("record_date", reportLookupStart)
           .lte("record_date", today)
       : Promise.resolve({ data: [], error: null }),
+    loadLastSubmissionPreferencesByAccount(
+      supabase,
+      adminSupabase ?? supabase,
+      userId,
+      profile?.team_id ?? null,
+      accountIds,
+    ),
   ]);
 
   assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
@@ -379,6 +529,7 @@ export async function loadDashboardPageData({
   assertSupabaseQuerySucceeded(recentDatesResult.error, "加载近期提交日期失败");
   assertSupabaseQuerySucceeded(absentRecordsResult.error, "加载缺勤记录失败");
   const rawTodayReports = todayReportsResult.data;
+  const pendingExemptionDates = pendingExemptionData.dates;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
@@ -412,6 +563,8 @@ export async function loadDashboardPageData({
     history: [],
     hasPendingExemption: pendingExemptionDates.length > 0,
     pendingExemptionDates,
+    pendingExemptionItems: pendingExemptionData.items,
+    lastSubmissionPreferencesByAccount,
     absentDates,
     absentReasons,
     monthFulfillmentBasis,

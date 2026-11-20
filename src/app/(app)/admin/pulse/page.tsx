@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
+import { PageHeadline } from "@/components/editorial/page-headline";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -41,10 +41,8 @@ export default async function AdminPulsePage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      title="每日大盘"
-      description={<PageEpigraph pageKey="pulse" />}
+      title={<PageHeadline pageKey="pulse" placeholder="每日大盘" />}
       width="wide"
-      hideHeaderOnMobile={true}
     >
       <Suspense
         key={selectedDate}

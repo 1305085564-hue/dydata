@@ -181,7 +181,7 @@ export function MobileTabBar({
   return (
     <nav
       aria-label="移动端主导航"
-      className="fixed inset-x-4 bottom-[calc(1rem+var(--app-safe-bottom,0px))] z-40 mx-auto max-w-[340px] rounded-full border border-[#E2E2DF] bg-white/92 px-2 py-1 shadow-claude-float backdrop-blur-xl md:hidden ring-1 ring-black/5"
+      className="fixed inset-x-4 bottom-[calc(1rem+var(--app-safe-bottom,0px))] z-40 mx-auto max-w-[340px] rounded-full border border-[#E2E2DF] bg-white px-2 py-1 shadow-card-ring md:hidden"
     >
       <div className="flex h-13 items-center justify-around">
         {directTabs.map((tab) => {
@@ -192,7 +192,7 @@ export function MobileTabBar({
               key={tab.key}
               href={tab.href}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
+                "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-colors duration-150",
                 active
                   ? "text-[#141413]"
                   : "text-[#78716C] hover:text-[#141413]",
@@ -232,9 +232,9 @@ export function MobileTabBar({
           onClick={onOpenMore}
           aria-expanded={isMoreOpen}
           aria-controls="mobile-navigation-menu"
-          aria-label="更多与个人中心"
+          aria-label={badgeCount > 0 ? `我的：待办 ${badgeCount > 99 ? "99+" : badgeCount} 项` : "我的"}
           className={cn(
-            "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
+            "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-colors duration-150",
             isMoreActive || isMoreOpen
               ? "text-[#141413]"
               : "text-[#78716C] hover:text-[#141413]",
@@ -254,10 +254,10 @@ export function MobileTabBar({
                   : "text-[#78716C]",
               )}
             />
+            {/* 有待办时直接写数字，不用闪烁红点（效率美学禁脉冲） */}
             {badgeCount > 0 && (
-              <span className="absolute -top-0.5 -right-1 flex size-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current text-[#D97757] opacity-75" />
-                <span className="relative inline-flex size-2 rounded-full bg-current text-[#D97757]" />
+              <span className="absolute -right-2.5 -top-1 text-[12px] leading-none tabular-nums text-[#D97757]">
+                {badgeCount > 99 ? "99+" : badgeCount}
               </span>
             )}
           </div>

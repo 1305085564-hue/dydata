@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -15,7 +17,7 @@ test("未指定作者或未打开时 AuthorWorksDrawer 返回空", () => {
   assert.equal(htmlClosed, "");
 });
 
-test("AuthorWorksView 正常渲染创作者档案头部与四项极简画像指标", () => {
+test("AuthorWorksView 头部只有名字与四项数字，不再有装饰标签与说明", () => {
   const html = renderToStaticMarkup(
     <AuthorWorksView
       author={{ id: "author-1", name: "张三" }}
@@ -24,12 +26,11 @@ test("AuthorWorksView 正常渲染创作者档案头部与四项极简画像指�
     />,
   );
   assert.match(html, /张三/);
-  assert.match(html, /创作者作品档案/);
-  assert.match(html, /在复盘大盘中查看/);
-  assert.match(html, /作品总数/);
-  assert.match(html, /条均播放/);
-  assert.match(html, /优质作品数/);
-  assert.match(html, /完播达标数/);
+  assert.match(html, /列表只看此人/);
+  for (const label of ["作品", "条均播放", "优质作品", "完播达标"]) {
+    assert.match(html, new RegExp(`<dt[^>]*>${label}</dt>`));
+  }
+  assert.doesNotMatch(html, /创作者作品档案|查看该创作者的历史作品走势|档案完卷/);
 });
 
 test("ContentListTable 桌面和移动列表只显示可点击的负责人，账号留在详情入口", async () => {
@@ -100,7 +101,7 @@ test("AuthorWorksView 在传入受控 selectedVideoId 时支持内嵌渲染作�
   assert.match(htmlControlled, /李四/);
 });
 
-test("B1: 岗位尚未加载时即使有权限也不显示人效档案，避免猜岗位", () => {
+test("B1: 岗位尚未加载时即使有权限也不显示个人档案，避免猜岗位", () => {
   const htmlWithPerm = renderToStaticMarkup(
     <AuthorWorksView
       author={{ id: "author-1", name: "张三" }}
@@ -108,7 +109,7 @@ test("B1: 岗位尚未加载时即使有权限也不显示人效档案，避免�
       canViewCollaboration={true}
     />,
   );
-  assert.doesNotMatch(htmlWithPerm, /人效档案/);
+  assert.doesNotMatch(htmlWithPerm, /个人档案/);
 
   const htmlWithoutPerm = renderToStaticMarkup(
     <AuthorWorksView
@@ -117,5 +118,10 @@ test("B1: 岗位尚未加载时即使有权限也不显示人效档案，避免�
       canViewCollaboration={false}
     />,
   );
-  assert.doesNotMatch(htmlWithoutPerm, /人效档案/);
+  assert.doesNotMatch(htmlWithoutPerm, /个人档案/);
+});
+
+test("作者抽屉表头禁用浏览器默认粗体，保持 400 字重", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/content/author-works-drawer.tsx"), "utf8");
+  assert.match(source, /\[&_th\]:font-normal/);
 });

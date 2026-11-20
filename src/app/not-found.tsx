@@ -1,23 +1,17 @@
 import Link from "next/link";
-import { DraftRecalibrateIllustration } from "@/components/editorial/editorial-illustrations";
-import { Card } from "@/components/ui/card";
 
+/** 链接打不开时：直说「页面不存在」，给一条回工作台的路。 */
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12 bg-[#FCFCFB]">
-      <Card className="flex max-w-md flex-col items-center gap-3  px-8 py-10 text-center">
-        <DraftRecalibrateIllustration size={96} />
-        <h1 className="font-normal font-serif text-[20px] leading-[1.25] tracking-tight text-[#141413]">未找到对应卷册</h1>
-        <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
-          此处的篇章可能已被归档收卷，或链接有微小出入。
-        </p>
-        <Link
-          href="/"
-          className="mt-3 inline-flex h-7 items-center justify-center rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-[14px] font-normal text-white transition-colors duration-100 shadow-input active:scale-[0.99] active:duration-120"
-        >
-          回到工作台首页
-        </Link>
-      </Card>
+    <main className="flex min-h-screen min-h-dvh flex-col items-center justify-center gap-2 bg-[#FCFCFB] px-4 py-12 text-center">
+      <h1 className="font-serif text-[20px] leading-[1.25] text-[#141413]">这个页面不存在</h1>
+      <p className="text-[14px] leading-[1.60] text-[#78716C]">链接可能有误，或者这个页面已经下线。</p>
+      <Link
+        href="/dashboard"
+        className="mt-2 inline-flex h-7 items-center rounded-md bg-[#D97757] px-3 text-[14px] text-white transition-colors duration-150 hover:bg-[#C46A4D]"
+      >
+        回到工作台
+      </Link>
     </main>
   );
 }

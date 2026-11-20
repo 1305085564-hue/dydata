@@ -12,6 +12,7 @@ import {
   VIDEO_24H_METRIC_DEFINITIONS,
 } from "@/lib/video-24h-metrics-contract";
 import { classifyHistoryData, type HistoryDataCapability } from "@/lib/history-data-capability";
+import { normalizeAssigneeProfiles } from "./edit-detail/assignee-profiles";
 
 const EDIT_REQUIRED_FIELDS = [
   "mode",
@@ -317,6 +318,8 @@ export interface VideoSubmissionEditDetail {
   uploadedAt: string | null;
 }
 
+export { normalizeAssigneeProfiles } from "./edit-detail/assignee-profiles";
+
 export interface VideoSubmissionEditDetailSource {
   video: {
     id: string;
@@ -452,22 +455,6 @@ function buildEditAssets(
   return { ok: true, assets: assets as VideoSubmissionEditDetail["assets"], publishedAtText: publishedAtText ?? null };
 }
 
-type EditDetailAssigneeProfile = NonNullable<VideoSubmissionEditDetail["assigneeProfiles"]>[number];
-
-function normalizeAssigneeProfiles(value: unknown): EditDetailAssigneeProfile[] {
-  if (!Array.isArray(value)) return [];
-  const byUserId = new Map<string, EditDetailAssigneeProfile>();
-  for (const item of value) {
-    if (!isRecord(item) || typeof item.userId !== "string" || !item.userId.trim()) continue;
-    if (byUserId.has(item.userId)) continue;
-    const name = typeof item.name === "string" ? item.name : null;
-    const displayName = typeof item.displayName === "string" ? item.displayName : null;
-    const membershipStatus = typeof item.membershipStatus === "string" ? item.membershipStatus : null;
-    byUserId.set(item.userId, { userId: item.userId, name, displayName, membershipStatus });
-  }
-  return [...byUserId.values()];
-}
-
 export function buildVideoSubmissionEditDetail(
   source: VideoSubmissionEditDetailSource,
 ): VideoSubmissionEditDetailResult {
@@ -562,90 +549,6 @@ export function buildVideoSubmissionEditDetail(
       assets: assetsResult.assets,
       assigneeProfiles: normalizeAssigneeProfiles(source.assigneeProfiles),
       uploadedAt: source.video.uploaded_at,
-    },
-  };
-}
-
-/**
- * 日报没有绑定视频时的合法详情形态。
- *
- * 日报-only 是正常状态（生产上 461 条），不是读取失败。这一支只暴露日报自身
- * 的字段与三个负责人，不提供也不猜测任何视频信息。
- */
-export interface UnboundDailyReportDetail {
-  /** 无绑定视频是合法的日报-only 存量，能力层级明确为只读日报侧。 */
-  historyCapability?: HistoryDataCapability;
-  reportId: string;
-  accountId: string;
-  bizDate: string;
-  dataSource: DailyReportDataSource;
-  scriptAuthorUserId: string | null;
-  videoEditorUserId: string | null;
-  operatorUserId: string | null;
-  assigneeProfiles: EditDetailAssigneeProfile[];
-}
-
-export type UnboundDailyReportDetailResult =
-  | { ok: true; detail: UnboundDailyReportDetail }
-  | { ok: false; error: string };
-
-export interface UnboundDailyReportDetailSource {
-  dailyReport: {
-    id: string;
-    account_id: string;
-    report_date: string;
-    data_source?: unknown;
-    script_author_user_id?: string | null;
-    video_editor_user_id?: string | null;
-    operator_user_id?: string | null;
-  };
-  assigneeProfiles?: unknown;
-  bizDate: string;
-}
-
-function normalizeOptionalAssigneeId(value: unknown): string | null | undefined {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value === "string" && isUuidLike(value)) return value;
-  return undefined;
-}
-
-export function buildUnboundDailyReportDetail(
-  source: UnboundDailyReportDetailSource,
-): UnboundDailyReportDetailResult {
-  const report = source.dailyReport;
-  if (typeof report?.id !== "string" || !report.id.trim()) {
-    return { ok: false, error: "编辑详情不完整：缺少日报 ID" };
-  }
-  if (typeof report.account_id !== "string" || !report.account_id.trim()) {
-    return { ok: false, error: "编辑详情不完整：缺少日报账号" };
-  }
-  if (report.report_date !== source.bizDate) {
-    return { ok: false, error: "编辑详情冲突：日报与请求日期不匹配" };
-  }
-
-  const scriptAuthorUserId = normalizeOptionalAssigneeId(report.script_author_user_id);
-  const videoEditorUserId = normalizeOptionalAssigneeId(report.video_editor_user_id);
-  const operatorUserId = normalizeOptionalAssigneeId(report.operator_user_id);
-  if (
-    scriptAuthorUserId === undefined ||
-    videoEditorUserId === undefined ||
-    operatorUserId === undefined
-  ) {
-    return { ok: false, error: "编辑详情不完整：日报责任人格式错误" };
-  }
-
-  return {
-    ok: true,
-    detail: {
-      historyCapability: "read_only_missing_required_data",
-      reportId: report.id,
-      accountId: report.account_id,
-      bizDate: source.bizDate,
-      dataSource: normalizeDailyReportDataSource(report.data_source),
-      scriptAuthorUserId,
-      videoEditorUserId,
-      operatorUserId,
-      assigneeProfiles: normalizeAssigneeProfiles(source.assigneeProfiles),
     },
   };
 }

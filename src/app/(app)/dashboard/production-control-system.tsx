@@ -47,6 +47,8 @@ interface ProductionControlSystemProps {
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   pendingExemptionDates?: string[];
+  pendingExemptionItems?: DashboardPageData["pendingExemptionItems"];
+  lastSubmissionPreferencesByAccount?: DashboardPageData["lastSubmissionPreferencesByAccount"];
   absentDates: string[];
   absentReasons: Record<string, string>;
   monthFulfillmentBasis?: DashboardPageData["monthFulfillmentBasis"];
@@ -68,6 +70,8 @@ export function ProductionControlSystem({
   accountDisplayNameMap,
   hasPendingExemption = false,
   pendingExemptionDates = [],
+  pendingExemptionItems = [],
+  lastSubmissionPreferencesByAccount = {},
   userExemptionReviewNotices,
   userExemptionProfile,
   userExemptionGrants,
@@ -157,6 +161,8 @@ export function ProductionControlSystem({
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
         pendingExemptionDates={pendingExemptionDates}
+        pendingExemptionItems={pendingExemptionItems}
+        lastSubmissionPreferencesByAccount={lastSubmissionPreferencesByAccount}
         absentDates={absentDates}
         absentReasons={absentReasons}
         monthFulfillmentBasis={monthFulfillmentBasis}

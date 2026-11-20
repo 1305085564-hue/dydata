@@ -1,32 +1,40 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
-import { ItemHeading } from "@/components/ui/item-heading";
-import { SimpleTooltip, TruncatedTooltip } from "@/components/ui/tooltip";
 import type { CollaborationDiagnosisContextValue } from "@/components/admin/collaboration-work-review-link";
-import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
 import {
-  InteractionTooltipCell,
-  OverallGradeTooltipCell,
-  RetentionTooltipCell,
+  InteractionBreakdownContent,
+  OverallGradeBreakdownContent,
+  RetentionBreakdownContent,
 } from "@/components/admin/quality-tooltip-content";
-import type { CollaborationRoleTab, PersonDetailData } from "./types";
-import { formatBigNumber } from "./types";
-import { formatAnomalyStatusText } from "@/lib/video-anomaly";
-import type {
-  ContentQualityRules,
-  ContentQualitySummary,
-  WorkContentQuality,
+import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
+import {
+  getContentQualityStatusShortText,
+  getContentQualityStatusText,
+  type ContentQualityRules,
+  type WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
+import { formatAnomalyStatusText } from "@/lib/video-anomaly";
+import { OneTip } from "./one-tip";
+import type { CollaborationRoleTab, OperatorAccount, PersonDetailData } from "./types";
+import { formatBigNumber } from "./types";
 
+/**
+ * 个人档案的作品区：回答「他这个月交了什么，质量怎么样」。
+ * - 每格只写结论（良/优/普、百分比），明细收进悬停，全页同一时刻只开一个；
+ * - 缺数据的原因只在「综合评级」一格说一次，其余格写「—」；
+ * - 「手工」不再挂标签，收进播放数的悬停里。
+ */
 interface PersonalCardWorksProps {
   data: PersonDetailData;
   activeTab?: CollaborationRoleTab;
+  /** 运营负责的账号明细（来自主表，原运营表展开行） */
+  operatorAccounts?: OperatorAccount[];
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }
 
-interface QualityWorkRow {
+interface WorkRow {
   reportId: string;
   reportDate: string;
   accountName: string;
@@ -36,6 +44,7 @@ interface QualityWorkRow {
   contentQuality?: WorkContentQuality | null;
 }
 
+/** 作品都在本人同名的一个号上时不重复写账号名。 */
 export function shouldShowWorkAccountNames(
   ownerName: string,
   works: ReadonlyArray<{ accountName: string }>,
@@ -51,110 +60,128 @@ function formatShortDate(dateStr: string): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr.slice(5) : dateStr;
 }
 
-function getTopicLabel(q: WorkContentQuality | null | undefined): string {
-  if (q?.topicKind === "dry_goods") return "干货 · 收藏";
-  if (q?.topicKind === "review") return "复盘 · 点赞";
-  if (q?.topicKind === "other") return "其他 · 点赞";
-  return "未识别话题";
+function topicLabel(q: WorkContentQuality | null | undefined): string | null {
+  if (q?.topicKind === "dry_goods") return "干货";
+  if (q?.topicKind === "review") return "复盘";
+  if (q?.topicKind === "other") return "其他";
+  return null;
 }
 
-function QualityMonthSummaryBar({ summary }: { summary: ContentQualitySummary }) {
-  const hasInteraction = summary.avgInteractionAchievement != null;
-  const hasContent = summary.avgContentAchievement != null;
-  const rateText =
-    summary.goodExcellentRate == null
-      ? "—"
-      : `${Math.round(summary.goodExcellentRate * 100)}% (${summary.ratedCount}/${summary.totalCount}篇)`;
+const signal = "text-[#A8A29E]";
 
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-[#78716C] tabular-nums">
-      {hasInteraction ? (
-        <span>
-          互动均值{" "}
-          <span className="text-[#141413]">
-            {Math.round(summary.avgInteractionAchievement!)}%
-          </span>
-        </span>
-      ) : null}
-      {hasContent ? (
-        <span>
-          留存均值{" "}
-          <span className="text-[#141413]">
-            {Math.round(summary.avgContentAchievement!)}%
-          </span>
-        </span>
-      ) : null}
-      <span>
-        良优率 <span className="text-[#141413]">{rateText}</span>
-      </span>
+    <section className="space-y-2">
+      <h3 className="text-[14px] leading-[1.40] text-[#141413]">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function EmptyBlock({ children, danger = false }: { children: ReactNode; danger?: boolean }) {
+  return (
+    <div className={`rounded-xl bg-[#F1F1F0] px-4 py-6 text-center text-[13px] ${danger ? "text-status-danger-text" : "text-[#78716C]"}`}>
+      {children}
     </div>
   );
 }
 
-function WorkTitleCell({
-  work,
-  subtitle,
-  diagnosisContext,
-}: {
-  work: Pick<QualityWorkRow, "reportId" | "title" | "accountName" | "playCount" | "reportDate" | "dataSource">;
-  subtitle: string | null;
-  diagnosisContext: CollaborationDiagnosisContextValue | null;
-}) {
-  const displayTitle = work.title || "未命名作品";
-  const isManual = work.dataSource === "manual";
-
+function TitleCell({ work, subtitle }: { work: WorkRow; subtitle: string | null }) {
+  const title = work.title || "未命名作品";
   return (
     <td className="py-2.5 px-3 min-w-0">
-      <div className="min-w-0">
-        {diagnosisContext ? (
-          <TruncatedTooltip
-            side="top"
-            align="start"
-            tip={displayTitle}
-          >
-            <span className="block min-w-0 truncate text-[13px] text-[#1F1E1D] group-hover:text-[#141413]">
-              {displayTitle}
-            </span>
-          </TruncatedTooltip>
-        ) : (
-          <CollaborationWorkReviewLink
-            reportId={work.reportId}
-            previewMode="title-only"
-            preview={{
-              title: work.title,
-              accountName: work.accountName,
-              playCount: work.playCount,
-              reportDate: work.reportDate,
-              dataSource: work.dataSource,
-            }}
-            className="min-w-0 max-w-full truncate text-left text-[13px] text-[#1F1E1D] group-hover:text-[#141413] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
-          >
-            {displayTitle}
-          </CollaborationWorkReviewLink>
-        )}
-      </div>
-      {subtitle || isManual ? (
-        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-[#78716C]">
-          {subtitle ? (
-            <TruncatedTooltip
-              side="top"
-              align="start"
-              tip={subtitle}
-            >
-              <span className="min-w-0 truncate">{subtitle}</span>
-            </TruncatedTooltip>
-          ) : null}
-          {isManual ? (
-            <SimpleTooltip tip="该数据由人工填写或修改" align="end">
-              <Badge className="shrink-0 cursor-help">手工</Badge>
-            </SimpleTooltip>
-          ) : null}
-        </div>
+      <span title={title} className="block truncate text-[13px] leading-[1.40] text-[#1F1E1D] group-hover:text-[#141413]">
+        {title}
+      </span>
+      {subtitle ? (
+        <span title={subtitle} className="mt-1 block truncate text-[12px] leading-[1.50] text-[#78716C]">
+          {subtitle}
+        </span>
       ) : null}
     </td>
   );
 }
 
+function PlayCell({ work }: { work: WorkRow }) {
+  const value = formatBigNumber(work.playCount);
+  return (
+    <td className="py-2.5 px-3 text-right tabular-nums text-[#141413]">
+      {work.dataSource === "manual" ? (
+        <OneTip tip="这条的数据是人工填写或改过的">
+          <span className="cursor-default">{value}</span>
+        </OneTip>
+      ) : (
+        value
+      )}
+    </td>
+  );
+}
+
+function InteractionCell({ quality, playCount, rules }: { quality: WorkContentQuality | null | undefined; playCount: number | null; rules: ContentQualityRules | null | undefined }) {
+  if (quality?.interactionAchievement == null) return <td className={`py-2.5 px-3 text-right ${signal}`}>—</td>;
+  const text = `${Math.round(quality.interactionAchievement)}%`;
+  const hasDetail = Boolean(quality.interactionMetrics || quality.interactionValue != null);
+  return (
+    <td className="py-2.5 px-3 text-right tabular-nums text-[#1F1E1D]">
+      {hasDetail ? (
+        <OneTip wide tip={<InteractionBreakdownContent quality={quality} playCount={playCount} rules={rules} />}>
+          <span className="cursor-default">{text}</span>
+        </OneTip>
+      ) : (
+        text
+      )}
+    </td>
+  );
+}
+
+function RetentionCell({ quality, rules }: { quality: WorkContentQuality | null | undefined; rules: ContentQualityRules | null | undefined }) {
+  if (quality?.contentAchievement == null) return <td className={`py-2.5 px-3 text-right ${signal}`}>—</td>;
+  const text = `${Math.round(quality.contentAchievement)}%`;
+  return (
+    <td className="py-2.5 px-3 text-right tabular-nums text-[#1F1E1D]">
+      {quality.retentionMetrics ? (
+        <OneTip wide tip={<RetentionBreakdownContent quality={quality} rules={rules} />}>
+          <span className="cursor-default">{text}</span>
+        </OneTip>
+      ) : (
+        text
+      )}
+    </td>
+  );
+}
+
+function GradeCell({ quality, playCount, rules }: { quality: WorkContentQuality | null | undefined; playCount: number | null; rules: ContentQualityRules | null | undefined }) {
+  if (!quality?.overallGrade) {
+    const status = quality?.status ?? "pending_snapshot";
+    return (
+      <td className="py-2.5 px-3 text-right">
+        <OneTip tip={getContentQualityStatusText(status)}>
+          <span className={`cursor-default text-[12px] ${signal}`}>{getContentQualityStatusShortText(status)}</span>
+        </OneTip>
+      </td>
+    );
+  }
+  const graded = quality as WorkContentQuality & { overallGrade: NonNullable<WorkContentQuality["overallGrade"]> };
+  return (
+    <td className="py-2.5 px-3 text-right">
+      <OneTip wide tip={<OverallGradeBreakdownContent quality={graded} playCount={playCount} rules={rules} />}>
+        <span className={`cursor-default ${BREAKOUT_GRADE_TEXT_CLASS[graded.overallGrade]}`}>{graded.overallGrade}</span>
+      </OneTip>
+    </td>
+  );
+}
+
+function rowProps(reportId: string, diagnosisContext: CollaborationDiagnosisContextValue | null) {
+  if (!diagnosisContext) return { className: "group" };
+  return {
+    className: "group cursor-pointer transition-colors duration-150 hover:bg-[#F7F7F6]",
+    onClick: () => void diagnosisContext.openDiagnosisByReportId(reportId),
+  };
+}
+
+const headClass = "h-9 px-3 text-[12px] font-normal text-[#78716C] whitespace-nowrap";
+
+/** 文案、达人：逐条作品 + 互动 / 留存 / 综合评级。 */
 function QualityWorksTable({
   ownerName,
   works,
@@ -162,146 +189,185 @@ function QualityWorksTable({
   diagnosisContext,
 }: {
   ownerName: string;
-  works: QualityWorkRow[];
+  works: WorkRow[];
   rules: ContentQualityRules | null | undefined;
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }) {
   const showAccountName = shouldShowWorkAccountNames(ownerName, works);
-
   return (
-    <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
-        <table className="w-full text-[13px] table-fixed">
-          <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] text-left">
-            <tr className="h-9">
-              <th className="px-3 w-[60px] font-normal whitespace-nowrap">日期</th>
-              <th className="px-3 font-normal">作品</th>
-              <th className="px-2.5 text-right w-[68px] font-normal whitespace-nowrap">播放量</th>
-              <th className="px-2.5 text-right w-[76px] font-normal whitespace-nowrap">互动达成</th>
-              <th className="px-2.5 text-right w-[76px] font-normal whitespace-nowrap">留存达成</th>
-              <th className="px-3 text-right w-[76px] font-normal whitespace-nowrap">综合评级</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E2E2DF]/60">
-            {works.map((work) => {
-              const q = work.contentQuality;
-              const topicText = getTopicLabel(q);
-              const subtitle =
-                showAccountName && work.accountName.trim()
-                  ? `${work.accountName.trim()} · ${topicText}`
-                  : topicText;
+    <Card className="overflow-hidden p-0 gap-0">
+      <table className="w-full table-fixed text-[13px] tabular-nums">
+        <colgroup>
+          <col className="w-[64px]" />
+          <col />
+          <col className="w-[76px]" />
+          <col className="w-[76px]" />
+          <col className="w-[76px]" />
+          <col className="w-[76px]" />
+        </colgroup>
+        <thead className="border-b border-[#E2E2DF]/60">
+          <tr>
+            <th className={`${headClass} text-left`}>日期</th>
+            <th className={`${headClass} text-left`}>作品</th>
+            <th className={`${headClass} text-right`}>播放</th>
+            <th className={`${headClass} text-right`}>互动达成</th>
+            <th className={`${headClass} text-right`}>留存达成</th>
+            <th className={`${headClass} text-right`}>综合评级</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#E2E2DF]/60">
+          {works.map((work) => {
+            const q = work.contentQuality;
+            const subtitle = [showAccountName ? work.accountName.trim() : "", topicLabel(q) ?? ""]
+              .filter(Boolean)
+              .join(" · ");
+            return (
+              <tr key={work.reportId} {...rowProps(work.reportId, diagnosisContext)}>
+                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]" title={work.reportDate}>
+                  {formatShortDate(work.reportDate)}
+                </td>
+                <TitleCell work={work} subtitle={subtitle || null} />
+                <PlayCell work={work} />
+                <InteractionCell quality={q} playCount={work.playCount} rules={rules} />
+                <RetentionCell quality={q} rules={rules} />
+                <GradeCell quality={q} playCount={work.playCount} rules={rules} />
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
 
-              return (
-                <tr
-                  key={work.reportId}
-                  onClick={() => {
-                    if (work.reportId && diagnosisContext) {
-                      void diagnosisContext.openDiagnosisByReportId(work.reportId);
-                    }
-                  }}
-                  className="hover:bg-[#F7F7F6] transition-colors cursor-pointer group"
-                >
-                  <td
-                    className="py-2.5 px-3 text-[12px] text-[#78716C] tabular-nums whitespace-nowrap"
-                    title={work.reportDate}
-                  >
-                    {formatShortDate(work.reportDate)}
-                  </td>
-                  <WorkTitleCell
-                    work={work}
-                    subtitle={subtitle}
-                    diagnosisContext={diagnosisContext}
-                  />
-                  <td className="py-2.5 px-2.5 text-right tabular-nums text-[#141413] whitespace-nowrap">
-                    {formatBigNumber(work.playCount)}
-                  </td>
-                  <td className="p-0 text-right tabular-nums whitespace-nowrap">
-                    <InteractionTooltipCell
-                      quality={q}
-                      playCount={work.playCount}
-                      rules={rules}
-                    />
-                  </td>
-                  <td className="p-0 text-right tabular-nums whitespace-nowrap">
-                    <RetentionTooltipCell quality={q} rules={rules} />
-                  </td>
-                  <td className="p-0 text-right whitespace-nowrap text-[12px]">
-                    <OverallGradeTooltipCell
-                      quality={q}
-                      playCount={work.playCount}
-                      rules={rules}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </Card>
+const ROLE_TEXT = { writer: "文案", editor: "剪辑", operator: "运营" } as const;
+
+/** 运营、剪辑：经手作品 + 担任岗位 + 异常状态。 */
+function InvolvedWorksTable({
+  data,
+  diagnosisContext,
+}: {
+  data: PersonDetailData;
+  diagnosisContext: CollaborationDiagnosisContextValue | null;
+}) {
+  const showAccountName = shouldShowWorkAccountNames(data.name, data.records);
+  return (
+    <Card className="overflow-hidden p-0 gap-0">
+      <table className="w-full table-fixed text-[13px] tabular-nums">
+        <colgroup>
+          <col className="w-[64px]" />
+          <col />
+          <col className="w-[80px]" />
+          <col className="w-[112px]" />
+          <col className="w-[80px]" />
+        </colgroup>
+        <thead className="border-b border-[#E2E2DF]/60">
+          <tr>
+            <th className={`${headClass} text-left`}>日期</th>
+            <th className={`${headClass} text-left`}>作品</th>
+            <th className={`${headClass} text-right`}>播放</th>
+            <th className={`${headClass} text-left`}>担任岗位</th>
+            <th className={`${headClass} text-right`}>状态</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#E2E2DF]/60">
+          {data.records.map((rec) => {
+            const abnormal = rec.anomaly != null && rec.anomaly !== "正常" && rec.anomaly !== "normal";
+            return (
+              <tr key={rec.reportId} {...rowProps(rec.reportId, diagnosisContext)}>
+                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]" title={rec.reportDate}>
+                  {formatShortDate(rec.reportDate)}
+                </td>
+                <TitleCell work={rec} subtitle={showAccountName ? rec.accountName.trim() || null : null} />
+                <PlayCell work={rec} />
+                <td className="py-2.5 px-3 text-left text-[12px] text-[#78716C]">
+                  {rec.roles.map((r) => ROLE_TEXT[r]).join(" · ")}
+                </td>
+                <td className="py-2.5 px-3 text-right text-[12px]">
+                  {abnormal ? (
+                    <span className="inline-flex items-center gap-1 text-status-danger-text">
+                      <span className="size-1.5 rounded-full bg-status-danger" aria-hidden />
+                      {formatAnomalyStatusText(rec.anomaly!)}
+                    </span>
+                  ) : (
+                    <span className={signal}>—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+/** 运营负责的账号：原运营表展开行，挪进档案。 */
+function OperatorAccountsTable({ accounts }: { accounts: OperatorAccount[] }) {
+  return (
+    <Card className="overflow-hidden p-0 gap-0">
+      <table className="w-full table-fixed text-[13px] tabular-nums">
+        <colgroup>
+          <col className="w-[112px]" />
+          <col />
+          <col className="w-[72px]" />
+          <col className="w-[88px]" />
+          <col className="w-[80px]" />
+        </colgroup>
+        <thead className="border-b border-[#E2E2DF]/60">
+          <tr>
+            <th className={`${headClass} text-left`}>达人</th>
+            <th className={`${headClass} text-left`}>账号</th>
+            <th className={`${headClass} text-right`}>条数</th>
+            <th className={`${headClass} text-right`}>总播放</th>
+            <th className={`${headClass} text-right`}>导粉</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#E2E2DF]/60">
+          {accounts.map((acc) => (
+            <tr key={acc.accountId}>
+              <td className="py-2.5 px-3 truncate text-[#1F1E1D]">{acc.ownerName}</td>
+              <td className="py-2.5 px-3 truncate text-[#1F1E1D]" title={acc.accountName}>{acc.accountName}</td>
+              <td className="py-2.5 px-3 text-right text-[#141413]">{acc.reportCount}</td>
+              <td className="py-2.5 px-3 text-right text-[#1F1E1D]">{formatBigNumber(acc.totalPlay)}</td>
+              <td className="py-2.5 px-3 text-right text-[#1F1E1D]">{acc.totalFollowerConvert.toLocaleString("zh-CN")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
   );
 }
 
 export function PersonalCardWorks({
   data,
   activeTab,
+  operatorAccounts = [],
   diagnosisContext,
 }: PersonalCardWorksProps) {
   if (activeTab === "writers") {
-    const works = data.writerQuality?.monthWorks ?? [];
+    const quality = data.writerQuality;
+    const works = quality?.monthWorks ?? [];
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <ItemHeading as="h4">本月文案作品</ItemHeading>
-          <span className="text-[12px] text-[#78716C] tabular-nums">
-            共 {works.length} 篇作品
-          </span>
-        </div>
-
-        {data.writerQuality?.monthSummary ? (
-          <QualityMonthSummaryBar summary={data.writerQuality.monthSummary} />
-        ) : null}
-
-        {!data.writerQuality ? (
-          <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-            质量数据尚未接入
-          </div>
-        ) : data.writerQuality.state === "error" ? (
-          <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-status-danger">
-            文案作品明细暂未能载入，请稍候重试
-          </div>
+      <Section title="本月作品">
+        {!quality ? (
+          <EmptyBlock>质量数据尚未接入</EmptyBlock>
+        ) : quality.state === "error" ? (
+          <EmptyBlock danger>作品明细没能载入，稍后重试</EmptyBlock>
         ) : works.length === 0 ? (
-          <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-            本月暂无文案作品记录
-          </div>
+          <EmptyBlock>本月还没有署名文案的作品</EmptyBlock>
         ) : (
-          <QualityWorksTable
-            ownerName={data.name}
-            works={works}
-            rules={data.writerQuality.rules}
-            diagnosisContext={diagnosisContext}
-          />
+          <QualityWorksTable ownerName={data.name} works={works} rules={quality.rules} diagnosisContext={diagnosisContext} />
         )}
-      </div>
+      </Section>
     );
   }
 
   if (activeTab === "talents") {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <ItemHeading as="h4">本月达人作品</ItemHeading>
-          <span className="text-[12px] text-[#78716C] tabular-nums">
-            共 {data.records.length} 篇作品
-          </span>
-        </div>
-
-        {data.talentQuality?.monthSummary ? (
-          <QualityMonthSummaryBar summary={data.talentQuality.monthSummary} />
-        ) : null}
-
+      <Section title="本月作品">
         {data.records.length === 0 ? (
-          <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-            本月暂无达人作品记录
-          </div>
+          <EmptyBlock>本月还没有达人作品</EmptyBlock>
         ) : (
           <QualityWorksTable
             ownerName={data.name}
@@ -310,89 +376,24 @@ export function PersonalCardWorks({
             diagnosisContext={diagnosisContext}
           />
         )}
-      </div>
+      </Section>
     );
   }
 
-  const showAccountName = shouldShowWorkAccountNames(data.name, data.records);
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <ItemHeading as="h4">本月经手作品明细</ItemHeading>
-        <span className="text-[12px] text-[#78716C] tabular-nums">
-          共 {data.records.length} 条作品
-        </span>
-      </div>
-
-      {data.records.length === 0 ? (
-        <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
-          本月暂无协同作品记录
-        </div>
-      ) : (
-        <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
-          <table className="w-full text-[13px] table-fixed">
-            <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] text-left">
-              <tr className="h-9">
-                <th className="px-3 w-[60px] font-normal whitespace-nowrap">日期</th>
-                <th className="px-3 font-normal">作品</th>
-                <th className="px-2.5 text-right w-[72px] font-normal whitespace-nowrap">播放量</th>
-                <th className="px-2.5 text-center w-[100px] font-normal whitespace-nowrap">担任岗位</th>
-                <th className="px-3 text-right w-[68px] font-normal whitespace-nowrap">状态</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E2DF]/60">
-              {data.records.map((rec) => (
-                <tr
-                  key={rec.reportId}
-                  onClick={() => {
-                    if (rec.reportId && diagnosisContext) {
-                      void diagnosisContext.openDiagnosisByReportId(rec.reportId);
-                    }
-                  }}
-                  className="hover:bg-[#F7F7F6] transition-colors cursor-pointer group"
-                >
-                  <td
-                    className="py-2.5 px-3 text-[12px] text-[#78716C] tabular-nums whitespace-nowrap"
-                    title={rec.reportDate}
-                  >
-                    {formatShortDate(rec.reportDate)}
-                  </td>
-                  <WorkTitleCell
-                    work={rec}
-                    subtitle={showAccountName ? rec.accountName.trim() || null : null}
-                    diagnosisContext={diagnosisContext}
-                  />
-                  <td className="py-2.5 px-2.5 text-right tabular-nums text-[#141413] whitespace-nowrap">
-                    {formatBigNumber(rec.playCount)}
-                  </td>
-                  <td className="py-2.5 px-2.5 text-center whitespace-nowrap">
-                    <span className="inline-block rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#1F1E1D]">
-                      {rec.roles
-                        .map((r) => (r === "writer" ? "文案" : r === "editor" ? "剪辑" : "运营"))
-                        .join(" · ")}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                    {rec.anomaly == null ||
-                    rec.anomaly === "正常" ||
-                    rec.anomaly === "normal" ? (
-                      <span className="text-[#A8A29E]">—</span>
-                    ) : (
-                      <Badge
-                        variant="danger"
-                        className="px-1.5 py-0 text-[#78716C] before:bg-status-danger"
-                      >
-                        {formatAnomalyStatusText(rec.anomaly)}
-                      </Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+    <>
+      {activeTab === "operators" && operatorAccounts.length > 0 && (
+        <Section title="负责账号">
+          <OperatorAccountsTable accounts={operatorAccounts} />
+        </Section>
       )}
-    </div>
+      <Section title="本月经手作品">
+        {data.records.length === 0 ? (
+          <EmptyBlock>本月还没有协同作品</EmptyBlock>
+        ) : (
+          <InvolvedWorksTable data={data} diagnosisContext={diagnosisContext} />
+        )}
+      </Section>
+    </>
   );
 }

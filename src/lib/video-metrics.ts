@@ -84,34 +84,3 @@ export function favoriteRate(
   if (!isPhysicallyPossible(play, [s.favorites])) return null;
   return s.favorites / play;
 }
-
-/** 爆款系数 = 本视频24h播放 / 基线中位数 */
-export function breakoutCoefficient(playCount: number, baselineMedian: number | null): number | null {
-  if (!baselineMedian || baselineMedian === 0) return null;
-  return playCount / baselineMedian;
-}
-
-/** 计算中位数 */
-export function median(values: number[]): number | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
-/** 获取账号基线中位数 */
-export function getAccountBaseline(
-  accountPlayCounts: number[],
-  teamMedian: number | null
-): { median: number | null; strategy: "self" | "mixed" | "insufficient" } {
-  const count = accountPlayCounts.length;
-  if (count >= 10) {
-    return { median: median(accountPlayCounts), strategy: "self" };
-  }
-  if (count >= 3 && teamMedian !== null) {
-    const selfMedian = median(accountPlayCounts);
-    if (selfMedian === null) return { median: teamMedian, strategy: "mixed" };
-    return { median: selfMedian * 0.5 + teamMedian * 0.5, strategy: "mixed" };
-  }
-  return { median: null, strategy: "insufficient" };
-}

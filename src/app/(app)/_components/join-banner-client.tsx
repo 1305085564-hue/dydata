@@ -3,13 +3,9 @@
 import { useCallback, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { cn } from "@/lib/utils";
 import type { TeamOption } from "@/lib/teams";
 
-import { Clock, Users } from "lucide-react";
 import { ApplyJoinDialog } from "./apply-join-dialog";
 import { cancelJoinRequestAction } from "./join-actions";
 
@@ -30,11 +26,12 @@ export function JoinBannerClient(props: Props) {
   // 未通过和未加入都是「可以（重新）申请」的状态，共用申请入口
   const isUnassigned = props.mode === "unassigned" || isRejected;
   const bannerTitle = isRejected ? "入团申请未通过" : isUnassigned ? "你还未加入团队" : "团队申请审核中";
+  // 状态只在标题说一次（不再另挂「未加入/审核中/未通过」标签）；正文只补标题没说的：哪个团队、为什么、能做什么
   const bannerBody = isRejected
-    ? `${props.targetTeamName ? `${props.targetTeamName}：` : ""}未通过${props.reviewNote ? `：${props.reviewNote}` : ""}`
+    ? [props.targetTeamName, props.reviewNote].filter(Boolean).join("：")
     : isUnassigned
-      ? "目前只能查看自己的数据。申请加入团队后，才能参与团队协作和豁免流程。"
-      : `目标团队：${targetTeamName || "未知"}`;
+      ? "目前只能查看自己的数据，加入后才能提交日报、豁免和协作内容。"
+      : `目标团队：${targetTeamName || "未知"}，审核通过前仍可继续使用当前账号。`;
 
   const handleCancel = useCallback(() => {
     if (!requestId) return;
@@ -48,61 +45,21 @@ export function JoinBannerClient(props: Props) {
 
   return (
     <>
-      <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
-        <div className="flex flex-col gap-3 rounded-xl border border-[#E2E2DF]/60 bg-white p-3 text-[14px] text-[#78716C] transition sm:flex-row sm:items-center sm:justify-between">
-          {/* 左侧：图标、标题与说明 */}
-          <div className="flex min-w-0 items-start gap-3 sm:items-center">
-            <div
-              className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-xl",
-                isUnassigned
-                  ? "bg-[#D97757]/10 text-[#D97757]"
-                  : "bg-status-info/10 text-status-info",
-              )}
-            >
-              {isUnassigned ? (
-                <Users className="size-4 stroke-[1.8]" />
-              ) : (
-                <Clock className="size-4 stroke-[1.8]" />
-              )}
-            </div>
-
-            <div className="min-w-0 space-y-0.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <ItemHeading as="h2" className="tracking-tight">
-                  {bannerTitle}
-                </ItemHeading>
-                <Badge variant={isUnassigned ? "warning" : "accent"}>
-                  {isRejected ? "未通过" : isUnassigned ? "未加入" : "审核中"}
-                </Badge>
-              </div>
-              <p className="text-[14px] leading-relaxed text-[#1F1E1D]">
-                {bannerBody}
-              </p>
-            </div>
-          </div>
-
-          {/* 右侧：主操作与辅助提示 */}
-          <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant={isUnassigned ? "default" : "outline"}
-              onClick={isUnassigned ? openApply : handleCancel}
-              className={
-                isUnassigned
-                  ? "px-3.5 text-[12px] sm:text-[14px]"
-                  : "border-[#E2E2DF] px-3.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] sm:text-[14px]"
-              }
-            >
-              {isRejected ? "重新申请加入团队" : isUnassigned ? "申请加入团队" : "撤销申请"}
-            </Button>
-            <span className="hidden text-[12px] text-[#78716C] sm:inline-block">
-              {isUnassigned
-                ? "通过后即可提交日报、豁免和协作内容。"
-                : "审核通过前仍可继续使用当前账号。"}
-            </span>
-          </div>
+      <div className="mx-auto mb-4 w-full max-w-[var(--app-rail,80rem)]">
+        <div className="flex flex-col gap-3 rounded-xl border border-[#E2E2DF] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="min-w-0 text-[14px] leading-[1.60]">
+            <span role="heading" aria-level={2} className="text-[#141413]">{bannerTitle}</span>
+            {bannerBody && <span className="text-[#78716C]"> · {bannerBody}</span>}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant={isUnassigned ? "default" : "outline"}
+            onClick={isUnassigned ? openApply : handleCancel}
+            className="shrink-0 self-start sm:self-auto"
+          >
+            {isRejected ? "重新申请加入团队" : isUnassigned ? "申请加入团队" : "撤销申请"}
+          </Button>
         </div>
       </div>
 

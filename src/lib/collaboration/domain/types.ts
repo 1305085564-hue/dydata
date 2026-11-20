@@ -82,8 +82,6 @@ export type PersonGrowthInput = {
 
 export type CollaborationMonthDataset = {
   currentRows: CollaborationReport[];
-  previousRows: CollaborationReport[];
-  historyRows?: CollaborationReport[];
   writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
@@ -144,8 +142,6 @@ export type TalentAccount = {
 export type TalentRow = {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  effectiveCount: number;
-  excellentCount: number;
   userId: string;
   name: string;
   accountCount: number;
@@ -153,8 +149,6 @@ export type TalentRow = {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
-  selfHandledCount: number;
   accounts: TalentAccount[];
   writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null };
   qualitySummary?: ContentQualitySummary | null;
@@ -175,6 +169,8 @@ export type WorkGroupPerformanceMetrics = {
   followerConversionRate: number | null;
   interactionRate: number | null;
   likeRate: number | null;
+  commentRate: number | null;
+  shareRate: number | null;
   favoriteRate: number | null;
 };
 

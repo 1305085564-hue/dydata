@@ -1,5 +1,10 @@
 import type { MouseHandlerDataParam } from "recharts";
-import type { PersonDetailData, PersonGrowthSummary, PersonGrowthWorkItem } from "@/app/(app)/admin/collaboration/types";
+import type {
+  CollaborationRoleTab,
+  PersonDetailData,
+  PersonGrowthSummary,
+  PersonGrowthWorkItem,
+} from "@/app/(app)/admin/collaboration/types";
 
 export interface ChartWorkPoint {
   index: number;
@@ -96,26 +101,65 @@ export function pickHoveredChartWork<T extends { reportId: string }>(prev: T | n
   return prev && prev.reportId === next.reportId ? prev : next;
 }
 
-export interface SymbiosisInsight {
-  topAccounts: Array<[string, number]>;
-  totalWorks: number;
-}
+/**
+ * 档案头部一句话结论：这个月交了多少、播放多少、质量怎么样。
+ * 「常配账号」只在给别人账号干活时出现（排除本人名下账号），本人自营号不重复说。
+ */
+export function buildPersonHeadline(input: {
+  data: PersonDetailData;
+  role: CollaborationRoleTab | undefined;
+  month: number;
+  ownAccountIds?: readonly string[];
+}): string {
+  const { data, role, month, ownAccountIds = [] } = input;
+  const parts: string[] = [`${month}月`];
+  const rateText = (summary: { ratedCount: number; goodExcellentRate: number | null } | null | undefined) =>
+    summary && summary.ratedCount > 0 && summary.goodExcellentRate != null
+      ? `良优率 ${Math.round(summary.goodExcellentRate * 100)}%`
+      : null;
+  const playOf = (works: ReadonlyArray<{ playCount: number | null }>) =>
+    works.reduce((sum, w) => sum + (w.playCount ?? 0), 0);
 
-// 协同生态边注派生（Editorial #4）
-export function buildSymbiosisInsight(data: PersonDetailData | null) {
-  if (!data || data.records.length === 0) return null;
-  const accountCounts = new Map<string, number>(); // gate:transient-map 函数内临时聚合，随调用栈释放
-  for (const r of data.records) {
-    if (r.accountName) {
-      accountCounts.set(r.accountName, (accountCounts.get(r.accountName) ?? 0) + 1);
+  if (role === "operators") {
+    const op = data.operatorSummary;
+    if (!op || op.reportCount === 0) return `${month}月 · 还没有给别人账号做运营的作品`;
+    parts.push(`负责 ${op.accountCount} 个账号`, `${op.reportCount} 篇`, `总播放 ${formatCompact(op.totalPlay)}`, `导粉 ${op.totalFollowerConvert.toLocaleString("zh-CN")}`);
+    return parts.join(" · ");
+  }
+
+  if (role === "writers") {
+    const works = data.writerQuality?.monthWorks ?? [];
+    if (works.length === 0) return `${month}月 · 还没有署名文案的作品`;
+    parts.push(`${works.length} 篇`, `总播放 ${formatCompact(playOf(works))}`);
+    const rate = rateText(data.writerQuality?.monthSummary);
+    if (rate) parts.push(rate);
+  } else {
+    const records = data.records;
+    if (records.length === 0) return `${month}月 · 还没有作品`;
+    parts.push(`${records.length} 篇`, `总播放 ${formatCompact(playOf(records))}`);
+    if (role === "talents") {
+      const rate = rateText(data.talentQuality?.monthSummary);
+      if (rate) parts.push(rate);
     }
   }
-  const topAccounts = Array.from(accountCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 2);
 
-  return {
-    topAccounts,
-    totalWorks: data.records.length,
-  };
+  if (role !== "talents") {
+    const own = new Set(ownAccountIds);
+    const roleKey = role === "writers" ? "writer" : role === "editors" ? "editor" : null;
+    const counts = new Map<string, number>(); // gate:transient-map 函数内临时聚合，随调用栈释放
+    for (const record of data.records) {
+      if (own.has(record.accountId) || !record.accountName) continue;
+      if (roleKey && !record.roles.includes(roleKey)) continue;
+      counts.set(record.accountName, (counts.get(record.accountName) ?? 0) + 1);
+    }
+    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    if (top.length > 0) parts.push(`常配 ${top.map(([name, n]) => `${name} ${n} 篇`).join("、")}`);
+  }
+  return parts.join(" · ");
+}
+
+function formatCompact(value: number): string {
+  if (value >= 1e8) return `${(value / 1e8).toFixed(1)}亿`;
+  if (value >= 1e4) return `${(value / 1e4).toFixed(1)}万`;
+  return value.toLocaleString("zh-CN");
 }

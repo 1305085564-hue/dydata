@@ -6,8 +6,6 @@ import {
   useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
-import { usePublishPageEpigraph } from "@/components/editorial/page-epigraph";
-import { buildModulesEpigraph } from "@/components/editorial/page-epigraph-copy";
 import type { AdminModulesContentProps, ProfileSummary, TeamOption } from "@/lib/modules/types";
 import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 import { resolveProfileCompanyRoleForView } from "@/lib/modules/domain/view-rules";
@@ -55,6 +53,7 @@ import { useMemberAiActions } from "./member-ai-actions";
 import { ALL_TEAMS_ID, getVisibleTeamOptions, resolveSelectedTeamAfterTeamDelete, type TeamViewTeamOption } from "./team-view-logic";
 import { resolveAdminModulesAccess } from "./member-access";
 import { useMemberWorkspace } from "./member-workspace";
+import { countUnassigned } from "./members-page-view";
 
 export type { AdminModulesContentProps, PendingRequest, ProfileSummary, TeamOption } from "@/lib/modules/types";
 
@@ -192,18 +191,10 @@ export function AdminModulesContentV3({
     availablePeerGroups,
     availableOperatorGroups,
     replaceWorkspaceUrl,
+    showUnassigned,
     openMemberDrawer,
     closeMemberDrawer,
   } = workspace;
-
-  usePublishPageEpigraph(
-    "modules",
-    buildModulesEpigraph({
-      memberCount: localProfiles.length,
-      teamCount: localTeams.length,
-      pendingCount: pendingRequests.length,
-    }),
-  );
 
   const aiActions = useMemberAiActions(activeMemberId);
   const {
@@ -845,9 +836,12 @@ export function AdminModulesContentV3({
   };
 
   return (
-    <div className="w-full space-y-5 relative">
-      <div className="space-y-5">
+    <div className="relative flex w-full flex-col gap-3">
       <MemberAlerts
+        activeCount={localProfiles.length}
+        headlineTeams={localTeams}
+        unassignedCount={countUnassigned(localProfiles)}
+        onShowUnassigned={showUnassigned}
         pendingRequests={pendingRequests}
         canManageMembers={canManageMembers}
         isPending={isPending}
@@ -859,7 +853,8 @@ export function AdminModulesContentV3({
         handleAssignOrphanMember={handleAssignOrphanMember}
         handleRejectOrphanRequest={handleRejectOrphanRequest}
       />
-      <MemberToolbar
+      <section aria-label="成员名单" className="overflow-hidden rounded-xl bg-white shadow-card-ring">
+      <div className="border-b border-[#E2E2DF]/60 px-3 py-2"><MemberToolbar
         selectedTeamId={selectedTeamId}
         setSelectedTeamId={setSelectedTeamId}
         profilesForCurrentView={profilesForCurrentView}
@@ -876,7 +871,7 @@ export function AdminModulesContentV3({
         setMemberView={setMemberView}
         setActiveMemberId={setActiveMemberId}
         setSelectedMemberIds={setSelectedMemberIds}
-      />
+      /></div>
       <MemberTable
         sortedProfiles={sortedProfiles}
         memberView={memberView}
@@ -894,10 +889,14 @@ export function AdminModulesContentV3({
         canArchiveTarget={canArchiveTarget}
         setRestoreTarget={setRestoreTarget}
         isPending={isPending}
-      />      </div>
+        workGroups={localWorkGroups}
+        workGroupRoster={localWorkGroupRoster}
+        searchQuery={searchQuery}
+        selectedTeamId={selectedTeamId}
+      />
+      </section>
 
-      {selectedMemberIds.length > 0 && (
-        <MemberBatchActions
+      <MemberBatchActions
           selectedMemberIds={selectedMemberIds}
           canManageMembers={canManageMembers}
           localTeams={localTeams}
@@ -907,7 +906,6 @@ export function AdminModulesContentV3({
           setBatchArchiveOpen={(open) => setBatchArchiveOpen(open)}
           setSelectedMemberIds={(ids) => setSelectedMemberIds(ids)}
         />
-      )}
       <MemberInspector
         activeMember={activeMember}
         activeMemberCompanyRole={activeMemberCompanyRole}

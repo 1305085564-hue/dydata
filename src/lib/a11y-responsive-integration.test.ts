@@ -28,9 +28,8 @@ const modulesSource = [
 test("含子控件的卡片不再把外层伪装成按钮", () => {
   const paths = [
     "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
-    "src/app/(app)/admin/content/content-list-view-controls.tsx",
-    "src/app/(app)/admin/content/content-list-filters-view.tsx",
-    "src/app/(app)/admin/content/content-list-secondary-filters.tsx",
+    "src/app/(app)/admin/content/content-list-toolbar.tsx",
+    "src/app/(app)/admin/content/content-list-more-filters.tsx",
     "src/app/(app)/admin/content/content-list-table-header.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
   ];
@@ -110,9 +109,11 @@ test("月度矩阵不再嵌套互动控件", () => {
     assert.doesNotMatch(readSource(path), /role="button"/, `${path} 仍使用含子按钮的伪按钮`);
   }
 
-  const monthly = readSource(paths[0]);
-  assert.match(monthly, /aria-expanded=\{expanded\}/);
-  assert.match(monthly, /aria-controls="monthly-matrix-panel"/);
+  // 2026-11-19 大表不再折叠；能展开的只剩页头下「今天」那一行，它要报告展开状态并指向名单
+  const view = readSource("src/app/(app)/admin/fulfillment/fulfillment-workbench-view.tsx");
+  assert.match(view, /aria-expanded=\{panelOpen\}/);
+  assert.match(view, /aria-controls="fulfillment-today-panel"/);
+  assert.match(readSource("src/app/(app)/admin/fulfillment/components/fulfillment-action-dock.tsx"), /id="fulfillment-today-panel"/);
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
@@ -133,7 +134,7 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
   const persona = readSource("src/components/user-workspace-popover.tsx");
   assert.match(tabBar, /aria-expanded=\{isMoreOpen\}/);
   assert.match(tabBar, /aria-controls="mobile-navigation-menu"/);
-  assert.match(nav, /aria-label="行动中枢：待办、审批与风险"/);
+  assert.match(nav, /打开行动中枢（待办、审批与风险）/);
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
@@ -163,7 +164,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
 
   const motionPaths = [
     "src/components/video-submit/video-submit-panel-body.tsx",
-    "src/app/(app)/admin/fulfillment/components/fulfillment-stats-overview.tsx",
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench-view.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
     "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
@@ -279,9 +280,10 @@ test("NavBarClient 在 >=768px 严格保持原版桌面导航，移动端顶底�
   assert.doesNotMatch(source, /mobileMenuButtonRef/);
   assert.doesNotMatch(source, /setIsMobileMenuOpen/);
 
-  // 3. 桌面/平板数字徽章与高度保持规范
-  assert.match(source, /bellBadgeCount > 99 \? "99\+" : bellBadgeCount/);
-  assert.match(source, /py-2\.5/);
+  // 3. 顶栏待办直接写「待办 N」（超过 99 写 99+）；顶栏高度固定，滚动不变高不变色
+  assert.match(source, /todoCount > 99 \? "99\+" : String\(todoCount\)/);
+  assert.doesNotMatch(source, /isScrolled/);
+  assert.doesNotMatch(source, /backdrop-blur/);
 });
 
 test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区", () => {

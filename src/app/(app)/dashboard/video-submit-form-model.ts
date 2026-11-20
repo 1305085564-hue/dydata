@@ -9,10 +9,15 @@ import {
 import {
   buildVideoSubmissionEditRefill,
   getDefaultPublishedAtForBizDate,
+  isDailyReportOnlyEditDetail,
   type ScreenshotUploadSlotRole,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
 } from "./video-submit-form-state";
+import {
+  resolveCreateSubmissionPreferences,
+  type LastSubmittedReportPreferences,
+} from "@/lib/video-submit-preferences";
 
 export type FormMetaState = {
   videoUrl: string;
@@ -88,9 +93,22 @@ export const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = 
   "screenshot_2",
 ];
 
-export function createInitialMeta(today: string, userId: string, bizDate = today): FormMetaState {
+export function createInitialMeta(
+  today: string,
+  userId: string,
+  bizDate = today,
+  lastReportPreferences?: LastSubmittedReportPreferences | null,
+): FormMetaState {
   const normalizedBizDate = /^\d{4}-\d{2}-\d{2}$/.test(bizDate) ? bizDate : today;
   const publishedAt = getDefaultPublishedAtForBizDate(normalizedBizDate, today);
+  const preferences = resolveCreateSubmissionPreferences({ userId, lastReport: lastReportPreferences });
+  const roleOverrides: SubmissionAssigneeRole[] = (Object.entries({
+    script_author: preferences.scriptAuthorUserId,
+    video_editor: preferences.videoEditorUserId,
+    operator: preferences.operatorUserId,
+  }) as Array<[SubmissionAssigneeRole, string | null]>)
+    .filter(([, assigneeId]) => Boolean(assigneeId && assigneeId !== userId))
+    .map(([role]) => role);
 
   return {
     videoUrl: "",
@@ -104,15 +122,15 @@ export function createInitialMeta(today: string, userId: string, bizDate = today
     ocrPublishedAtText: null,
     anomalyStatus: "normal",
     uploadedAt: "",
-    topicTag: "复盘",
+    topicTag: preferences.topicTag,
+    scriptAuthorUserId: preferences.scriptAuthorUserId,
+    videoEditorUserId: preferences.videoEditorUserId,
+    operatorUserId: preferences.operatorUserId,
     videoForm: "出镜",
     contentKeywords: [],
     platformNotice: "",
     appeal: "",
-    scriptAuthorUserId: userId,
-    videoEditorUserId: userId,
-    operatorUserId: userId,
-    roleOverrides: [],
+    roleOverrides,
   };
 }
 
@@ -250,7 +268,9 @@ export function createMetaFromEditDetail(
   today: string,
   userId: string,
 ): FormMetaState {
-  const refill = buildVideoSubmissionEditRefill(detail);
+  const refill = isDailyReportOnlyEditDetail(detail)
+    ? { meta: detail.meta, bizDate: detail.bizDate, uploadedAt: detail.uploadedAt }
+    : buildVideoSubmissionEditRefill(detail);
   const meta = refill.meta;
   const roleOverrides = ([
     ["script_author", meta.scriptAuthorUserId],
@@ -289,9 +309,26 @@ export function createMetaFromEditDetail(
 export function createEditableFieldsFromEditDetail(
   detail: VideoSubmissionEditDetail,
 ): Record<EditableMetricKey, EditableMetricField> {
-  const refill = buildVideoSubmissionEditRefill(detail);
   const fields = createEditableFields();
-  for (const [key, value] of Object.entries(refill.metrics) as Array<[EditableMetricKey, string]>) {
+  const metrics = isDailyReportOnlyEditDetail(detail)
+    ? {
+        play_count: detail.metrics.playCount,
+        likes: detail.metrics.likes,
+        comments: detail.metrics.comments,
+        shares: detail.metrics.shares,
+        favorites: detail.metrics.favorites,
+        follower_gain: detail.metrics.followerGain,
+        follower_convert: detail.metrics.followerConvert,
+        avg_play_duration: detail.metrics.avgPlayDuration,
+        avg_play_ratio: null,
+        bounce_rate_2s: detail.metrics.bounceRate2s,
+        completion_rate_5s: detail.metrics.completionRate5s,
+        completion_rate: detail.metrics.completionRate,
+      }
+    : buildVideoSubmissionEditRefill(detail).metrics;
+  for (const [key, metricValue] of Object.entries(metrics) as Array<[EditableMetricKey, number | null | string]>) {
+    // 绑定作品的回填值已由 buildVideoSubmissionEditRefill 换成百分比（0.325 → "32.5"），这里不再换算。
+    const value = metricValue == null ? "" : String(metricValue);
     fields[key] = {
       ...fields[key],
       value,
@@ -307,6 +344,7 @@ export function createEditableFieldsFromEditDetail(
 export function createEditableSlotsFromEditDetail(
   detail: VideoSubmissionEditDetail,
 ): Record<SubmissionSlotRole, SlotViewState> {
+  if (isDailyReportOnlyEditDetail(detail)) return createEditableSlots();
   const refill = buildVideoSubmissionEditRefill(detail);
   const slots = createEditableSlots();
   for (const role of VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER) {
@@ -333,6 +371,7 @@ export function createEditableSlotsFromEditDetail(
 export function createScreenshotItemsFromEditDetail(
   detail: VideoSubmissionEditDetail,
 ): ScreenshotItem[] {
+  if (isDailyReportOnlyEditDetail(detail)) return [];
   const refill = buildVideoSubmissionEditRefill(detail);
   return VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER.flatMap((role, index) => {
     const asset = refill.assets[role];

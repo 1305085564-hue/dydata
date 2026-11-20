@@ -5,14 +5,13 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import type { TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
-import { ContentEditorialEpigraph, DEFAULT_CONTENT_EPIGRAPH } from "./content-editorial-epigraph";
+import { ContentPageSkeleton } from "./content-page-skeleton";
 import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 export const metadata: Metadata = {
   title: "数据复盘 - DYData",
-  description: DEFAULT_CONTENT_EPIGRAPH,
+  description: "按天查看每条作品的播放、互动与留存表现，挑出值得复盘的作品。",
 };
 
 type ContentView = "all" | "trash";
@@ -51,19 +50,11 @@ export default async function AdminContentPage({ searchParams }: Props) {
   ));
 
   return (
-    <AdminWorkspaceLayout
-      title="数据复盘"
-      description={<ContentEditorialEpigraph />}
-      width="wide"
-      hideHeaderOnMobile={true}
-    >
+    // 页头标题由列表按当前日期与筛选写成答案（ContentList 内的 h1），这里不再放固定标题
+    <AdminWorkspaceLayout width="wide">
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}
-        fallback={
-          <div>
-            <TableSkeleton columnCount={10} rowCount={8} showHeader={true} />
-          </div>
-        }
+        fallback={<ContentPageSkeleton />}
       >
         <ContentDataContainer
           view={view}

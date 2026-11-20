@@ -3,7 +3,7 @@
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { Copy, Check, RotateCcw, Trash2, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { breakoutRating, breakoutTargetsFor } from "@/lib/breakout-rating";
 
@@ -15,11 +15,7 @@ import {
   SheetHeader,
   SheetBody,
 } from "@/components/ui/sheet";
-import {
-  fanConversionRate,
-  followerConversionRate,
-  interactionRate,
-} from "@/lib/video-metrics";
+import { fanConversionRate, followerConversionRate } from "@/lib/video-metrics";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import { Patch24hDialog } from "../videos/patch-24h-dialog";
@@ -63,10 +59,12 @@ export interface ContentDetailDialogProps {
   onSelectAuthor?: (authorId: string, authorName: string) => void;
   /** 列表或协作入口已经计算好的统一内容质量结果。缺失时不显示综合评级。 */
   contentQuality?: WorkContentQuality | null;
+  /** 已切到下一条、详情还在路上：正文仍是上一条，变淡并提示正在载入，免得误以为没切过去。 */
+  switching?: boolean;
 }
 
 import { useContentVideoStepShortcut } from "./content-video-navigation";
-import { ContentDetailMetrics } from "./detail/content-detail-metrics";
+import { ContentDetailAllMetrics, ContentDetailCoreStats, ContentDetailHeadline, ContentDetailNotices } from "./detail/content-detail-metrics";
 import { ContentDetailEvidence } from "./detail/content-detail-evidence";
 import { ContentDetailPreview } from "./detail/content-detail-preview";
 import { useContentDetailLifecycle } from "./content-detail-lifecycle";
@@ -94,6 +92,7 @@ export function ContentDetailDialog({
   ownerNames,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   contentQuality = null,
+  switching = false,
 }: ContentDetailDialogProps) {
   const {
     isOperating,
@@ -148,7 +147,6 @@ export function ContentDetailDialog({
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
   const [failedScreenshots, setFailedScreenshots] = useState<Record<string, boolean>>({});
-  const [viewLayout, setViewLayout] = useState<"auto" | "side-by-side" | "stacked">("auto");
 
   const handleImageLoad = useCallback((url: string, ratio: number) => {
     setAspectRatios((prev) => {
@@ -177,19 +175,9 @@ export function ContentDetailDialog({
     return list;
   }, [curveScreenshot, retentionScreenshot]);
 
-  const hasAvailableScreenshots = useMemo(() => {
-    return activeScreenshots.some((s) => !failedScreenshots[s.url]);
-  }, [activeScreenshots, failedScreenshots]);
-
-  const hasWideScreenshot = useMemo(() => {
-    return activeScreenshots.some((s) => (aspectRatios[s.url] ?? 0.5) > 1.15);
-  }, [activeScreenshots, aspectRatios]);
-
-  const effectiveLayout = useMemo(() => {
-    if (viewLayout === "stacked") return "stacked";
-    if (viewLayout === "side-by-side") return "side-by-side";
-    return hasWideScreenshot ? "stacked" : "side-by-side";
-  }, [viewLayout, hasWideScreenshot]);
+  const hasAvailableScreenshots = activeScreenshots.some((s) => !failedScreenshots[s.url]);
+  // 有电脑宽图就上下排，全是手机竖图就左右并排；不再让人手动切
+  const stackedScreenshots = activeScreenshots.some((s) => (aspectRatios[s.url] ?? 0.5) > 1.15);
 
   useEffect(() => {
     if (!open) return;
@@ -247,316 +235,228 @@ export function ContentDetailDialog({
     }
   };
 
-  const interaction = snapshot ? interactionRate(snapshot) : null;
   const followerConv = snapshot ? followerConversionRate(snapshot) : null;
   const fanConv = snapshot ? fanConversionRate(snapshot) : null;
-
   const breakoutTargets = breakoutTargetsFor(topicKind, evaluationStandards);
   const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
-  const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
 
-  const overallGrade = contentQuality?.overallGrade ?? null;
+  const closeEntirely = onCloseEntirely || (() => onOpenChange(false));
 
   const confirmBanner = !video ? null
     : showConfirmTrash ? {
         action: "trash" as const,
-        iconClass: "text-status-warning",
-        message: "确认移入回收站？该作品将隐藏，关联的成员绩效日报将同步作废。",
+        message: "移入回收站后这条作品会隐藏，关联的成员绩效日报同步作废。",
         cancelLabel: "暂保留",
         confirmLabel: isOperating ? "正在移入..." : "确认移入",
         variant: "destructive" as const,
       }
     : showConfirmPurge ? {
         action: "purge" as const,
-        iconClass: "text-status-danger",
-        message: "确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。",
+        message: "彻底删除后永久隐藏并清理截图，不能撤销。",
         cancelLabel: "暂保留",
         confirmLabel: isOperating ? "正在删除..." : "彻底删除",
         variant: "destructive" as const,
       }
     : showConfirmRestore ? {
         action: "restore" as const,
-        iconClass: "text-status-success",
-        message: "确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。",
+        message: "恢复后这条作品重新出现在列表里，关联的成员绩效日报一并恢复。",
         cancelLabel: "暂不恢复",
         confirmLabel: isOperating ? "正在恢复..." : "确认恢复",
         variant: "secondary" as const,
-        confirmClassName: "bg-status-success/10 text-status-success hover:bg-status-success/20",
       }
     : null;
 
+  const iconButton = "inline-flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150 cursor-pointer disabled:opacity-40 disabled:pointer-events-none";
+  const textButton = "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150 cursor-pointer disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap";
+
   const innerContent = (
-    <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : undefined}>
-      <SheetHeader className="relative py-3 pr-12">
-          <div className="flex w-full flex-wrap items-center gap-2">
-            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-normal text-[#78716C] md:w-auto md:flex-1">
-              {onBack && (
-                <>
-                  <SimpleTooltip side="bottom" align="start" tip="返回上一级">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="s"
-                      onClick={onBack}
-                      className="h-6 px-1.5 -ml-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] shrink-0 gap-0.5"
-                    >
-                      <ChevronLeft className="size-3.5" />
-                      <span>{backLabel ? `返回 ${backLabel}` : "返回"}</span>
-                    </Button>
-                  </SimpleTooltip>
-                  <span className="shrink-0 text-[#A8A29E]">·</span>
-                </>
-              )}
-              <span className="text-[#78716C] font-normal shrink-0">
-                {titlePrefix} · 作品诊断
-              </span>
-            </div>
+    <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : "flex flex-col h-full"}>
+      {/* 头部一行：左边回到哪，右边能做什么；不重复标题 */}
+      <SheetHeader className="shrink-0 gap-2 px-4 py-2 sm:px-6">
+        <div className="flex min-w-0 items-center gap-1">
+          {onBack ? (
+            <button type="button" onClick={onBack} className={`${textButton} -ml-2 text-[14px]`}>
+              <ChevronLeft className="size-3.5" aria-hidden />
+              <span className="truncate">{backLabel ?? "返回"}</span>
+            </button>
+          ) : (
+            <span className="text-[12px] text-[#78716C]">{titlePrefix} · 作品诊断</span>
+          )}
+        </div>
 
-            {video && onStepVideo && (
-              <div className="flex shrink-0 items-center gap-1">
-                <SimpleTooltip side="bottom" tip="上一条（快捷键 K 或 ↑）">
-                  <button
-                    type="button"
-                    onClick={() => onStepVideo("prev")}
-                    disabled={!hasPrev}
-                    className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                    aria-label="上一条"
-                  >
-                    <ChevronLeft className="size-3.5" />
-                  </button>
-                </SimpleTooltip>
-                <span className="text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap px-0.5">
-                  {displayCurrent} / {displayTotal}
-                </span>
-                <SimpleTooltip side="bottom" tip={isLast ? "已是最后一条" : "下一条（快捷键 J 或 ↓）"}>
-                  <button
-                    type="button"
-                    onClick={() => onStepVideo("next")}
-                    disabled={!hasNext}
-                    className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                    aria-label="下一条"
-                  >
-                    <ChevronRight className="size-3.5" />
-                  </button>
-                </SimpleTooltip>
-              </div>
-            )}
-
-            {video?.video_url && (
-              <a
-                href={video.video_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-normal text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors shrink-0"
-              >
-                <ExternalLink className="size-3.5" />
-                打开源视频网页
-              </a>
-            )}
-
-            {video && canOperate && (
-              <div className="flex flex-wrap items-center gap-2">
-                {video.lifecycle_state !== "trashed" && shouldShowPatch24hButton(video, snapshot) ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="s"
-                    onClick={() => setShowPatch24h(true)}
-                  >
-                    补录24h
-                  </Button>
-                ) : null}
-                {video.lifecycle_state === "trashed" ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="s"
-                      onClick={() => requestConfirmation("restore")}
-                      disabled={isOperating}
-                      className="bg-status-success/10 text-status-success hover:bg-status-success/20"
-                    >
-                      <RotateCcw className="size-3" />
-                      恢复作品
-                    </Button>
-                    {canPurge &&
-                      (() => {
-                        const eligible = isPurgeEligible(video.trashed_at ?? null);
-                        const tooltip = getPurgeTooltip(video.trashed_at ?? null);
-                        const purgeButton = (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="s"
-                            onClick={() => requestConfirmation("purge")}
-                            disabled={!eligible || isOperating}
-                          >
-                            <Trash2 className="size-3" />
-                            永久删除
-                          </Button>
-                        );
-                        return tooltip ? (
-                          <SimpleTooltip side="bottom" align="end" tip={tooltip}>{purgeButton}</SimpleTooltip>
-                        ) : purgeButton;
-                      })()}
-                  </>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="s"
-                    onClick={() => requestConfirmation("trash")}
-                    disabled={isOperating}
-                    className="hover:text-status-danger"
-                  >
-                    <Trash2 className="size-3" />
-                    移入回收站
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {renderMode === "inline" && (
-              <SimpleTooltip side="bottom" align="end" tip="关闭抽屉 (Esc)">
-                <button
-                  type="button"
-                  onClick={onCloseEntirely || (() => onOpenChange(false))}
-                  aria-label="关闭作品详情"
-                  className="absolute right-3 top-3 size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
-                >
-                  <X className="size-4" />
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+          {video && onStepVideo && (
+            <span className="inline-flex items-center">
+              <SimpleTooltip side="bottom" tip="上一条（K 或 ↑）">
+                <button type="button" onClick={() => onStepVideo("prev")} disabled={!hasPrev} aria-label="上一条" className={iconButton}>
+                  <ChevronLeft className="size-3.5" aria-hidden />
                 </button>
               </SimpleTooltip>
-            )}
-          </div>
-        </SheetHeader>
+              <span className="px-1 text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap">
+                {switching ? "载入中…" : `${displayCurrent} / ${displayTotal}`}
+              </span>
+              <SimpleTooltip side="bottom" tip={isLast ? "已是最后一条" : "下一条（J 或 ↓）"}>
+                <button type="button" onClick={() => onStepVideo("next")} disabled={!hasNext} aria-label="下一条" className={iconButton}>
+                  <ChevronRight className="size-3.5" aria-hidden />
+                </button>
+              </SimpleTooltip>
+            </span>
+          )}
 
-        {confirmBanner && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[14px] animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className={`size-4 shrink-0 ${confirmBanner.iconClass}`} />
-              <span>{confirmBanner.message}</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button type="button" variant="secondary" size="s" onClick={clearConfirmation} disabled={isOperating}>
-                {confirmBanner.cancelLabel}
-              </Button>
-              <Button
-                type="button"
-                variant={confirmBanner.variant}
-                size="s"
-                onClick={() => handleLifecycleAction(confirmBanner.action)}
-                disabled={isOperating}
-                className={confirmBanner.confirmClassName}
-              >
-                {confirmBanner.confirmLabel}
-              </Button>
-            </div>
-          </div>
-        )}
+          {video?.video_url && (
+            <a href={video.video_url} target="_blank" rel="noreferrer" className={textButton}>
+              <ExternalLink className="size-3" aria-hidden />
+              打开源视频网页
+            </a>
+          )}
 
-        <SheetBody className="p-4 sm:p-6 space-y-5 overflow-y-auto max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
-          {video ? (
+          {/* 写操作只在有管理作品权限时出现 */}
+          {video && canOperate && (
             <>
-              <ContentDetailMetrics
-                evaluationStandards={evaluationStandards}
-                video={video}
-                snapshot={snapshot}
-                onSelectAuthor={onSelectAuthor}
-                ownerNames={ownerNames}
-                canPurge={canPurge}
-                isPurgeEligible={isPurgeEligible}
-                followerConv={followerConv}
-                fanConv={fanConv}
-                interaction={interaction}
-                breakoutTargets={breakoutTargets}
-                followerRating={followerRating}
-                interactionRating={interactionRating}
-                overallGrade={overallGrade}
-                contentQuality={contentQuality}
-                hasAvailableScreenshots={hasAvailableScreenshots}
-              />
-              <ContentDetailEvidence
-                activeScreenshots={activeScreenshots}
-                hasWideScreenshot={hasWideScreenshot}
-                effectiveLayout={effectiveLayout}
-                curveScreenshot={curveScreenshot}
-                retentionScreenshot={retentionScreenshot}
-                aspectRatios={aspectRatios}
-                handleImageLoad={handleImageLoad}
-                handleImageError={handleImageError}
-                setPreviewIndex={setPreviewIndex}
-                setViewLayout={setViewLayout}
-              />
-              <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-[#1F1E1D]" />
-                    <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">
-                      视频文案内容库
-                    </h3>
-                    <span className="text-[12px] text-[#78716C] font-normal">
-                      ({video.content?.length ?? 0} 字)
-                    </span>
-                  </div>
-                  {video.content && (
-                    <button
-                      type="button"
-                      onClick={handleCopyContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-normal text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                    >
-                      {copiedContent ? (
-                        <Check className="size-3.5 text-status-success" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                      {copiedContent ? "已复制" : "复制文案"}
-                    </button>
-                  )}
-                </div>
-
-                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.6] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
-                  {video.content?.trim() || (
-                    <span className="text-[#78716C]">暂未录入视频文案</span>
-                  )}
-                </div>
-              </section>
-
-              {onToggleTopicLibrary && <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-normal text-[14px] text-[#141413]">选题库</h3>
-                    <p className="mt-1 text-[12px] text-[#78716C]">
-                      {topicLibraryStatus === "in_library"
-                        ? "当前作品已自动入选题库"
-                        : topicLibraryStatus === "removed"
-                          ? "当前作品已从题库移出，可恢复入库"
-                          : topicLibraryStatus === "review_excluded"
-                            ? "复盘类型视频不进入干货选题库"
-                            : topicLibraryStatus === "ineligible"
-                              ? "暂未达到入库标准（24h 播放满 3 万自动进入）"
-                              : topicLibraryStatus === "pending_entry"
-                                ? "已满足条件，等待自动入库"
-                                : "暂未取得选题库状态"}
-                    </p>
-                  </div>
-                  {(topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
-                    <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
-                      {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
-                    </Button>
-                  ) : null}
-                </div>
-              </section>}
+              {video.lifecycle_state !== "trashed" && shouldShowPatch24hButton(video, snapshot) && (
+                <button type="button" onClick={() => setShowPatch24h(true)} className={textButton}>
+                  补录24h
+                </button>
+              )}
+              {video.lifecycle_state === "trashed" ? (
+                <>
+                  <button type="button" onClick={() => requestConfirmation("restore")} disabled={isOperating} className={textButton}>
+                    <RotateCcw className="size-3" aria-hidden />
+                    恢复作品
+                  </button>
+                  {canPurge && (() => {
+                    const eligible = isPurgeEligible(video.trashed_at ?? null);
+                    const tooltip = getPurgeTooltip(video.trashed_at ?? null);
+                    const purgeButton = (
+                      <button type="button" onClick={() => requestConfirmation("purge")} disabled={!eligible || isOperating} className={`${textButton} hover:text-status-danger`}>
+                        <Trash2 className="size-3" aria-hidden />
+                        永久删除
+                      </button>
+                    );
+                    return tooltip ? <SimpleTooltip side="bottom" align="end" tip={tooltip}>{purgeButton}</SimpleTooltip> : purgeButton;
+                  })()}
+                </>
+              ) : (
+                <button type="button" onClick={() => requestConfirmation("trash")} disabled={isOperating} className={`${textButton} hover:text-status-danger`}>
+                  <Trash2 className="size-3" aria-hidden />
+                  移入回收站
+                </button>
+              )}
             </>
-          ) : null}
-        </SheetBody>
-        <ContentDetailPreview
-          previewIndex={previewIndex}
-          activeScreenshots={activeScreenshots}
-          aspectRatios={aspectRatios}
-          setPreviewIndex={setPreviewIndex}
-          handleImageLoad={handleImageLoad}
-        />
+          )}
+
+          <SimpleTooltip side="bottom" align="end" tip="关闭（Esc）">
+            <button type="button" onClick={closeEntirely} aria-label="关闭作品诊断" className={iconButton}>
+              <X className="size-4" aria-hidden />
+            </button>
+          </SimpleTooltip>
+        </div>
+      </SheetHeader>
+
+      {confirmBanner && (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-y border-[#E2E2DF]/60 bg-[#FCFCFB] px-4 py-2 text-[14px] sm:px-6 animate-in fade-in slide-in-from-top-1 duration-150">
+          <span className="min-w-0 text-[#1F1E1D]">{confirmBanner.message}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button type="button" variant="secondary" size="s" onClick={clearConfirmation} disabled={isOperating}>
+              {confirmBanner.cancelLabel}
+            </Button>
+            <Button type="button" variant={confirmBanner.variant} size="s" onClick={() => handleLifecycleAction(confirmBanner.action)} disabled={isOperating}>
+              {confirmBanner.confirmLabel}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 正文：结论 → 四个核心数 → 截图 → 全部指标 → 文案 → 选题库 */}
+      <SheetBody aria-busy={switching || undefined} className="px-4 pt-3 sm:px-6 space-y-5 overflow-y-auto transition-opacity duration-150 aria-busy:opacity-50 max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
+        {video ? (
+          <>
+            <ContentDetailNotices video={video} canPurge={canPurge} isPurgeEligible={isPurgeEligible} />
+            <ContentDetailHeadline
+              video={video}
+              snapshot={snapshot}
+              contentQuality={contentQuality}
+              evaluationStandards={evaluationStandards}
+              ownerNames={ownerNames}
+              onSelectAuthor={onSelectAuthor}
+            />
+            <ContentDetailCoreStats
+              snapshot={snapshot}
+              contentQuality={contentQuality}
+              followerConv={followerConv}
+              followerRating={followerRating}
+              evaluationStandards={evaluationStandards}
+            />
+            <ContentDetailEvidence
+              activeScreenshots={activeScreenshots}
+              stacked={stackedScreenshots}
+              curveScreenshot={curveScreenshot}
+              retentionScreenshot={retentionScreenshot}
+              aspectRatios={aspectRatios}
+              handleImageLoad={handleImageLoad}
+              handleImageError={handleImageError}
+              setPreviewIndex={setPreviewIndex}
+            />
+            <ContentDetailAllMetrics
+              snapshot={snapshot}
+              fanConv={fanConv}
+              hasAvailableScreenshots={hasAvailableScreenshots}
+              evaluationStandards={evaluationStandards}
+            />
+
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-[14px] text-[#141413]">
+                  文案
+                  <span className="ml-2 text-[12px] text-[#78716C] tabular-nums">{video.content?.length ?? 0} 字</span>
+                </h3>
+                {video.content && (
+                  <button type="button" onClick={handleCopyContent} className={textButton}>
+                    {copiedContent ? <Check className="size-3" aria-hidden /> : <Copy className="size-3" aria-hidden />}
+                    {copiedContent ? "已复制" : "复制文案"}
+                  </button>
+                )}
+              </div>
+              <div className="max-h-[460px] overflow-y-auto rounded-xl bg-[#FCFCFB] px-4 py-3 text-[13px] leading-[1.6] text-[#1F1E1D] whitespace-pre-wrap break-words">
+                {video.content?.trim() || <span className="text-[#A8A29E]">还没有录入文案</span>}
+              </div>
+            </section>
+
+            {onToggleTopicLibrary && (
+              <section className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-[14px] text-[#141413]">选题库</h3>
+                  <p className="mt-1 text-[12px] text-[#78716C]">
+                    {topicLibraryStatus === "in_library"
+                      ? "已自动入选题库"
+                      : topicLibraryStatus === "removed"
+                        ? "已从选题库移出，可以恢复"
+                        : topicLibraryStatus === "review_excluded"
+                          ? "复盘类视频不进干货选题库"
+                          : topicLibraryStatus === "ineligible"
+                            ? "还没达到入库标准（24 小时播放满 3 万自动入库）"
+                            : topicLibraryStatus === "pending_entry"
+                              ? "已满足条件，等待自动入库"
+                              : "暂未取得选题库状态"}
+                  </p>
+                </div>
+                {(topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
+                  <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
+                    {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
+                  </Button>
+                ) : null}
+              </section>
+            )}
+          </>
+        ) : null}
+      </SheetBody>
+      <ContentDetailPreview
+        previewIndex={previewIndex}
+        activeScreenshots={activeScreenshots}
+        aspectRatios={aspectRatios}
+        setPreviewIndex={setPreviewIndex}
+        handleImageLoad={handleImageLoad}
+      />
     </div>
   );
   return (
@@ -590,6 +490,7 @@ export function ContentDetailDialog({
             ref={sheetContentRef}
             tabIndex={-1}
             initialFocus={sheetContentRef}
+            showCloseButton={false}
             overlayClassName="md:pointer-events-none md:bg-transparent"
             className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
           >

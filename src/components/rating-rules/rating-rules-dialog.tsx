@@ -130,7 +130,8 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
           <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">三、作品等级如何确定</h3>
           <ol className="list-decimal list-outside pl-5 space-y-2 text-[13px] text-[#1F1E1D]">
             <li>播放量低于 {KPI_PLAY_FLOOR.toLocaleString()}，直接评为普。</li>
-            <li>{KPI_PLAY_FLOOR.toLocaleString()} 至不足 {formatPlayWan(KPI_PLAY_GOOD)}，最高记为普；达到 {formatPlayWan(KPI_PLAY_EXCELLENT)} 以上不再受播放量上限影响。</li>
+            <li>{KPI_PLAY_FLOOR.toLocaleString()} 至不足 {formatPlayWan(KPI_PLAY_GOOD)}，最高记为普。</li>
+            <li>{formatPlayWan(KPI_PLAY_GOOD)} 至不足 {formatPlayWan(KPI_PLAY_EXCELLENT)}，最高记为良；达到 {formatPlayWan(KPI_PLAY_EXCELLENT)} 以上不再受播放量上限影响，才可能评优。</li>
             <li>互动达成率和留存达成率取平均后，≥{BREAKOUT_GRADE_THRESHOLDS.excellent}% 为优、≥{BREAKOUT_GRADE_THRESHOLDS.good}% 为良、其余为普。要拿优，两项都需 ≥80%；要拿良，两项都需 ≥60%。</li>
             <li>没有完整快照数据时，页面显示待处理状态，不用其他数据代替。</li>
           </ol>

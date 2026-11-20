@@ -4,10 +4,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { PageEpigraph } from "@/components/editorial/page-epigraph";
-import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
-import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
@@ -47,38 +44,18 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   if (!canAccessAdminPath("/admin/collaboration", permissionInfo.role, permissionInfo.permissions)) {
     redirect("/dashboard");
   }
-  const evaluationStandards = await readEvaluationStandards(context.scope.teamId);
 
   const { year, month } = resolveYearMonth(params.year, params.month);
   const tab = ["talents", "operators", "writers", "editors"].includes(params.tab ?? "")
     ? (params.tab as "talents" | "operators" | "writers" | "editors")
     : "talents";
-  const view = resolveCollaborationView(params.view);
   const groupId = typeof params.groupId === "string" && params.groupId.trim() ? params.groupId.trim() : undefined;
+  const view = resolveCollaborationView(params.view, groupId);
   const personId = typeof params.personId === "string" && params.personId.trim() ? params.personId.trim() : undefined;
 
   return (
-    <AdminWorkspaceLayout
-      title="协作管理"
-      description={
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[#78716C]">
-          <PageEpigraph pageKey="collaboration" />
-          <span className="text-[#A8A29E] select-none" aria-hidden="true">·</span>
-          <RatingRulesDialog
-            evaluationStandards={evaluationStandards}
-            trigger={
-              <button
-                type="button"
-                className="inline-flex items-center text-[#78716C] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal"
-              >
-                作品评级规则
-              </button>
-            }
-          />
-        </div>
-      }
-      width="wide"
-    >
+    // 页头由工作台自己画：标题是本月事实结论，要等数据回来才写得出（加载骨架里有等高占位）。
+    <AdminWorkspaceLayout width="wide">
       {/* Suspense key 只随年月变化：首屏已备齐全部页签/视图/小队数据，
           切「岗位↔小组 / 四页签 / 进组」都是客户端就地命中，不再重挂整块露出加载骨架。
           翻月才改变服务器取数，仍走一次重取。 */}

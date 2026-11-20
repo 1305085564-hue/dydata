@@ -85,7 +85,7 @@ export interface RetentionSubMetricDetail {
   status: RetentionSubMetricStatus;
 }
 
-function formatRetentionValue(value: number | null, unit: "%" | "s"): string {
+export function formatRetentionValue(value: number | null | undefined, unit: "%" | "s"): string {
   if (value == null || !Number.isFinite(value)) return "—";
   if (unit === "s") return `${Math.round(value)}s`;
   return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
@@ -276,6 +276,11 @@ export interface ContentQualitySummary {
     missingMetrics: number;
     topicUnavailable?: number;
   };
+  /**
+   * 五项留存原始值的作品算术平均（与留存达成均值同一批作品：播放达到统计门槛且算得出留存分）。
+   * 单位同 RetentionMetrics（% 或秒）；某项在样本内全缺时为 null；无样本时整体为 null。
+   */
+  retentionAverages: RetentionMetrics | null;
   /** 互动达成率均值（百分数数值，如 92.4 表示 92.4%） */
   avgInteractionAchievement: number | null;
   /** 留存分均值（百分数，可超过 100） */

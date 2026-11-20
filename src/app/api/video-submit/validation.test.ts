@@ -615,7 +615,6 @@ test("edit 模式必填指标为 null 时允许进入写入层，并由服务端
     { play_count: result.normalized.metrics.play_count, completion_rate: null },
     { play_count: 321, completion_rate: "55%" },
   );
-
   assert.equal(preservedSnapshot.play_count, 321);
   assert.equal(preservedReport.play_count, 321);
   assert.equal(preservedReport.completion_rate, "55%");

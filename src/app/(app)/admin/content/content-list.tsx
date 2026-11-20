@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import { useContentListState } from "@/lib/content/domain/content-list-state";
@@ -9,12 +9,9 @@ import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { resolveEffectiveDates } from "./content-list-filters";
-import {
-  ContentEditorialEpigraph,
-  resetContentEditorialEpigraph,
-  setContentEditorialEpigraphState,
-  summarizeContentEpigraph,
-} from "./content-editorial-epigraph";
+import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
+import { activeSegmentOf, segmentBaseKey, type ContentSegmentCounts } from "./content-segments";
+import { DatePagination } from "./date-pagination";
 
 /** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
 function shiftDateString(dateStr: string, days: number): string {
@@ -23,18 +20,21 @@ function shiftDateString(dateStr: string, days: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+const NO_DATES: string[] = [];
+const NO_COUNTS: Array<{ d: string; c: number }> = [];
+
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
-  const availableDates = props.availableDates ?? [];
-  const availableCounts = props.availableCounts ?? [];
+  const availableDates = props.availableDates ?? NO_DATES;
+  const availableCounts = props.availableCounts ?? NO_COUNTS;
   const earliestAvailableDate = availableDates[availableDates.length - 1] ?? "";
   const latestAvailableDate = availableDates[0] ?? "";
   // 按日期分页：先把时间预设解析成实际生效的起止。单日（"昨天"/单日自定义）以那天为锚点；
   // 多日区间（近7天/近30天/本月/自定义起止）交给区间标签与整体平移；"最近一天"(all) 取名单里最新一天。
-  const effectiveDates = resolveEffectiveDates(state.filters);
+  const { effectiveStartDate, effectiveEndDate } = resolveEffectiveDates(state.filters);
   const isRangeMode =
-    Boolean(effectiveDates.effectiveStartDate && effectiveDates.effectiveEndDate)
-    && effectiveDates.effectiveStartDate !== effectiveDates.effectiveEndDate;
+    Boolean(effectiveStartDate && effectiveEndDate)
+    && effectiveStartDate !== effectiveEndDate;
   // 单日视图：末列显示时刻、底部页码栏隐藏。单日最多 30 条、整页数据都在手上，
   // 排序由前端按当前表头直接排（服务端的排序键来自 URL，单日默认排序不写 URL）
   const isSingleDay = !isRangeMode;
@@ -53,12 +53,12 @@ export function ContentList(props: ContentListProps) {
   const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange, applyFilterPatch } = state;
   const currentDate = isRangeMode
     ? availableDates[0] ?? ""
-    : effectiveDates.effectiveStartDate || availableDates[0] || "";
+    : effectiveStartDate || availableDates[0] || "";
 
   /** 区间模式下按窗口自身长度整体前后平移，平移后自动转为自定义区间 */
   const handleShiftRange = useCallback((direction: -1 | 1) => {
-    const start = effectiveDates.effectiveStartDate || earliestAvailableDate;
-    const end = effectiveDates.effectiveEndDate || latestAvailableDate;
+    const start = effectiveStartDate || earliestAvailableDate;
+    const end = effectiveEndDate || latestAvailableDate;
     if (!start || !end) return;
     const windowDays = Math.round(
       (new Date(`${end}T00:00:00`).getTime() - new Date(`${start}T00:00:00`).getTime()) / 86400000,
@@ -69,7 +69,7 @@ export function ContentList(props: ContentListProps) {
       startDate: shiftDateString(start, shiftDays),
       endDate: shiftDateString(end, shiftDays),
     });
-  }, [applyFilterPatch, earliestAvailableDate, latestAvailableDate, effectiveDates.effectiveEndDate, effectiveDates.effectiveStartDate]);
+  }, [applyFilterPatch, earliestAvailableDate, latestAvailableDate, effectiveEndDate, effectiveStartDate]);
   const onQueryChange = props.onQueryChange;
   const queryKey = JSON.stringify([state.filters, state.sortField, state.sortDir, state.currentPage, state.pageSize]);
   const lastQueryKey = useRef(queryKey);
@@ -114,22 +114,49 @@ export function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
-  const { updateFilter, toggleOnlyAnomaly } = state;
-  useEffect(() => {
-    const snapshot = summarizeContentEpigraph(visibleRows, {
-      anomalyCount: state.anomalyCountForTime,
-      isExcellentActive: state.filters.qualityGrade === "excellent",
-      isAnomalyActive: state.filters.onlyAnomaly,
-    });
-    setContentEditorialEpigraphState(snapshot, {
-      onToggleExcellent: () =>
-        updateFilter("qualityGrade", state.filters.qualityGrade === "excellent" ? "all" : "excellent"),
-      onToggleAnomaly: toggleOnlyAnomaly,
-    });
-    return () => {
-      resetContentEditorialEpigraph();
+  // 页头：日期（本身是日期选择器）+ 篇数。篇数是服务端按当前条件数出的总数。
+  const view = props.view ?? "all";
+  const matchedCount = props.totalVideosCount ?? visibleRows.length;
+  const hasActiveFilters = state.hasActiveFilters;
+  const dayTotal = useMemo(
+    () => (!isRangeMode && currentDate ? availableCounts.find((item) => item.d === currentDate)?.c ?? null : null),
+    [availableCounts, currentDate, isRangeMode],
+  );
+  const headlineSuffix = buildContentHeadlineSuffix({ view, matchedCount, dayTotal, hasActiveFilters, isRange: isRangeMode });
+  const fallbackHeadline = buildContentHeadline({
+    view,
+    currentDate,
+    rangeStart: isRangeMode ? effectiveStartDate : undefined,
+    rangeEnd: isRangeMode ? effectiveEndDate : undefined,
+    matchedCount,
+    dayTotal,
+    hasActiveFilters,
+  });
+
+  // 分段计数：在「全部」下、整批作品都在手上时数一次并记住；切到「优」等分段后，
+  // 只要其余条件（日期、负责人、搜索…）没变，各段继续显示这份数，不会因为只剩优作品而变成 0。
+  const segmentKey = segmentBaseKey(state.filters, view);
+  const canCountSegments = view === "all"
+    && activeSegmentOf(state.filters) === "all"
+    && totalPages <= 1
+    && !props.isViewLoading;
+  const freshCounts = useMemo<ContentSegmentCounts | null>(() => {
+    if (!canCountSegments) return null;
+    const grades = countGrades(visibleRows);
+    return {
+      all: matchedCount,
+      excellent: grades.excellent,
+      good: grades.good,
+      fair: grades.fair,
+      unrated: grades.unrated,
+      anomaly: state.anomalyCountForTime,
     };
-  }, [state.anomalyCountForTime, state.filters.onlyAnomaly, state.filters.qualityGrade, toggleOnlyAnomaly, updateFilter, visibleRows]);
+  }, [canCountSegments, matchedCount, state.anomalyCountForTime, visibleRows]);
+  const [segmentMemo, setSegmentMemo] = useState<{ key: string; counts: ContentSegmentCounts } | null>(null);
+  if (freshCounts && (segmentMemo?.key !== segmentKey || JSON.stringify(segmentMemo.counts) !== JSON.stringify(freshCounts))) {
+    setSegmentMemo({ key: segmentKey, counts: freshCounts });
+  }
+  const segmentCounts = freshCounts ?? (segmentMemo?.key === segmentKey ? segmentMemo.counts : null);
 
   /** 区间模式下自选起止日期 */
   const handleRangeChange = useCallback((start: string, end: string) => {
@@ -140,34 +167,36 @@ export function ContentList(props: ContentListProps) {
     });
   }, [applyFilterPatch]);
 
-  // 日期导航对象：工具栏左段用（统一时间控制器）
-  const dateNav = currentDate && availableDates.length > 0
-    ? {
-        currentDate,
-        availableDates,
-        availableCounts,
-        filteredCount: visibleRows.length,
-        hasActiveFilters: state.hasActiveFilters,
-        rangeStart: isRangeMode ? effectiveDates.effectiveStartDate : undefined,
-        rangeEnd: isRangeMode ? effectiveDates.effectiveEndDate : undefined,
-        isLoading: props.isViewLoading,
-        onDateChange: handleDateChange,
-        onShiftRange: handleShiftRange,
-        timeRange: state.filters.timeRange,
-        onTimeRangeChange: state.handleTimeRangeChange,
-        onRangeChange: handleRangeChange,
-      }
-    : null;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 手机端保留精简实时摘要行（桌面端由 AdminWorkspaceLayout 页头承载） */}
-      <div className="md:hidden text-[13px] leading-[1.40]">
-        <ContentEditorialEpigraph />
-      </div>
+      {/* 页头即答案（效率美学 §2.1）：日期本身就是日期选择器，后接篇数；手机同样显示 */}
+      <h1
+        aria-live="polite"
+        className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
+      >
+        {view === "all" && currentDate && availableDates.length > 0 ? (
+          <DatePagination
+            variant="headline"
+            currentDate={currentDate}
+            availableDates={availableDates}
+            availableCounts={availableCounts}
+            showCountInLabel={false}
+            rangeStart={isRangeMode ? effectiveStartDate : undefined}
+            rangeEnd={isRangeMode ? effectiveEndDate : undefined}
+            isLoading={props.isViewLoading}
+            onDateChange={handleDateChange}
+            onShiftRange={handleShiftRange}
+            timeRange={state.filters.timeRange}
+            onTimeRangeChange={state.handleTimeRangeChange}
+            onRangeChange={handleRangeChange}
+            suffix={<span>{headlineSuffix}</span>}
+          />
+        ) : (
+          fallbackHeadline
+        )}
+      </h1>
 
-      {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
-      <ContentListToolbar {...props} {...state} dateNav={dateNav} />
+      <ContentListToolbar {...props} {...state} segmentCounts={segmentCounts} />
 
       {/* 对比表格容器 */}
       <ContentListTable

@@ -1,5 +1,3 @@
-import { Plus } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -7,7 +5,6 @@ import { DashboardActivityError } from "./dashboard-activity-error";
 import { TodaySubmittedCard } from "./today-submitted-card";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
 import { WorkbenchNoticeBar, buildExemptionReviewNoticeItems, buildPendingExemptionNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
-import { cn } from "@/lib/utils";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 
@@ -17,6 +14,8 @@ export function VideoSubmitPanelBody({
   formAnchorRef,
   shouldShowForm,
   isExemptionPending,
+  pendingExemptionItems,
+  lastSubmissionPreferences,
   dismissedPendingExemption,
   userExemptionReviewNotices,
   dismissedReviewNotice,
@@ -60,21 +59,28 @@ export function VideoSubmitPanelBody({
   onViewVideo,
   onFormProgressChange,
 }: VideoSubmitPanelBodyProps) {
+  const editDetailMissing = Boolean(editDetailLoadState.error?.includes("没有可编辑"));
+  const backToToday = () => {
+    clearSubmittedEditTarget();
+    setRequestedMode(null);
+    if (activeBizDate !== today) onActiveBizDateChange?.(today);
+  };
+
   return (
     <>
-        {/* 主内容区 - 试点：撤外围围合，直接落底纸，与页头/日历条共用同一条对齐轴 */}
-        <div className="space-y-4 sm:space-y-5" ref={formAnchorRef}>
+        <div className="space-y-5" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
                 (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice)) && (
                 <WorkbenchNoticeBar
                   notices={[
+                    // 审批中排第一：折叠时也能直接看到、直接撤回
+                    ...(isExemptionPending && !dismissedPendingExemption
+                      ? [buildPendingExemptionNoticeItem({ items: pendingExemptionItems, onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
+                      : []),
                     ...(userExemptionReviewNotices.length > 0 && !dismissedReviewNotice
                       ? buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice)
-                      : []),
-                    ...(isExemptionPending && !dismissedPendingExemption
-                      ? [buildPendingExemptionNoticeItem({ onDismiss: dismissPendingExemption, onWithdraw: onWithdrawPendingExemption })]
                       : []),
                   ]}
                 />
@@ -92,143 +98,91 @@ export function VideoSubmitPanelBody({
               />
             ) : null}
 
-            {/* 豁免/请假状态摘要 - 第二轮：已上移至履约辅助带（video-submit-panel-v2） */}
-
             {shouldShowActivityErrorCard ? (
-              <div className="py-8">
+              <div className="py-5">
                 <DashboardActivityError
-                  message={activeDateStatus.errorMessage ?? "历史记录加载稍有阻滞，请重试后再补交。"}
+                  message={activeDateStatus.errorMessage ?? "交过的记录没加载出来，点重试后再补交。"}
                   onRetry={() => void loadActivity()}
                 />
               </div>
             ) : null}
 
+            {/* 等待态：中性灰点，不用警示色；只说在查什么、查完能干什么 */}
             {shouldShowActivityLoadingCard ? (
-              <Card className="flex flex-row items-center gap-2 p-3">
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/10 text-status-warning">
-                  <span className="size-1.5 rounded-full bg-current text-status-warning animate-pulse" />
-                </span>
-                <span className="font-normal text-[#1F1E1D]">正在核对历史纪事</span>
-                <span className="text-[#78716C]">· 正在确认 {activeBizDate} 是否已有日报，核对完成前暂不开放补交</span>
-              </Card>
+              <div className="flex items-center gap-2 px-2 text-[14px] text-[#78716C]">
+                <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E] motion-safe:animate-pulse" aria-hidden />
+                正在查这天交过没有，查完就能补交
+              </div>
             ) : null}
 
+            {/* 过去某天已交：页头已经说了状态，这里只列交了什么，每条一个「修改」 */}
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <Card className="mb-6 p-4 sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
-                      <span className="text-[14px] font-normal text-[#1F1E1D]">已立卷手稿 · 发布日 {getPublishedDateKey(activeDateReport) ?? "未知"}</span>
-                    </div>
-                    <p className="text-[14px] text-[#141413]">
-                      {activeDateReport.title || "未命名手稿"}
-                    </p>
-                    {activeDateReports.length > 1 ? (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {activeDateReports.map((report) => (
-                          <button
-                            key={report.id}
-                            type="button"
-                            onClick={() => setSelectedReportId(report.id)}
-                            className={cn(
-                              "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#78716C]/40",
-                              report.id === activeDateReport.id
-                                ? "border-[#E2E2DF] bg-[#F1F1F0] text-[#141413]"
-                                : "border-[#E2E2DF] bg-white text-[#1F1E1D]",
-                            )}
-                          >
-                            {report.title || "未命名作品"}
-                          </button>
-                        ))}
+              <div className="max-w-3xl space-y-3">
+                <Card className="divide-y divide-[#E2E2DF]/60 p-0">
+                  {(activeDateReports.length > 0 ? activeDateReports : [activeDateReport]).map((report) => (
+                    <div key={report.id} className="flex items-center gap-3 p-4">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="truncate text-[14px] text-[#141413]">{report.title || "未填标题"}</p>
+                        <p className="truncate text-[12px] tabular-nums text-[#78716C]">
+                          {getPublishedDateKey(report) ?? report.report_date} 发布
+                        </p>
                       </div>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="default"
-                      className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                      onClick={() => setRequestedMode("createAnother")}
-                    >
-                      <Plus className="mr-1 size-3" />
-                      再传一条
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="default"
-                      className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                      onClick={() => setRequestedMode("editToday")}
-                    >
-                      查看并修改
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ) : null}
-
-            {shouldShowEditDetailLoading ? (
-              <div className="py-14 flex flex-col items-center justify-center text-center space-y-3">
-                <div className="relative flex h-10 w-10 items-center justify-center">
-                  <span className="size-2 rounded-full bg-current text-[#78716C] motion-safe:animate-ping" />
-                  <span className="absolute size-2 rounded-full bg-current text-[#78716C]" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[14px] font-normal text-[#1F1E1D]">正在调阅作品原稿档案</p>
-                  <p className="text-[12px] text-[#78716C]">正在核对旧视频、24小时指标与创作伙伴信息...</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="m"
+                        className="shrink-0"
+                        onClick={() => {
+                          setSelectedReportId(report.id);
+                          setRequestedMode("editToday");
+                        }}
+                      >
+                        修改
+                      </Button>
+                    </div>
+                  ))}
+                </Card>
+                <div className="px-2 text-[14px]">
+                  <button
+                    type="button"
+                    onClick={() => setRequestedMode("createAnother")}
+                    className="cursor-pointer text-[#78716C] hover:text-[#141413] hover:underline"
+                  >
+                    这天再交一条
+                  </button>
                 </div>
               </div>
             ) : null}
 
+            {/* 固定高度的等待位，和下面表单首块等高，打开时不跳 */}
+            {shouldShowEditDetailLoading ? (
+              <div className="flex h-[136px] items-center gap-2 px-2 text-[14px] text-[#78716C]">
+                <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E] motion-safe:animate-pulse" aria-hidden />
+                正在打开这条作品，读取原来的截图、数据和署名
+              </div>
+            ) : null}
+
             {shouldShowEditDetailError ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
+              <div className="py-5">
                 <EmptyState
-                  title={
-                    editDetailLoadState.error?.includes("没有可编辑")
-                      ? "未寻得该日期的视频底稿"
-                      : "作品底稿载入暂缓"
-                  }
+                  title={editDetailMissing ? "这天没有能修改的作品" : "这条作品没打开"}
                   description={
-                    editDetailLoadState.error?.includes("没有可编辑")
-                      ? "该归属日未收录可编辑的原视频手稿，您可返回概览或切换其他日期。"
-                      : (editDetailLoadState.error || "数据调阅稍有滞碍，原视频与指标底稿暂未就绪。")
+                    editDetailMissing
+                      ? "这一天没有交过作品。可以回到今天，或在月历里换一天。"
+                      : (editDetailLoadState.error || "原来的记录没读到，点「重新打开」再试一次。")
                   }
                   action={
-                    !editDetailLoadState.error?.includes("没有可编辑")
-                      ? {
-                          label: "重新载入",
-                          onClick: () => setEditDetailRequestVersion((v) => v + 1),
-                        }
-                      : {
-                          label: "返回概览",
-                          onClick: () => {
-                            clearSubmittedEditTarget();
-                            setRequestedMode(null);
-                            if (activeBizDate !== today) {
-                              onActiveBizDateChange?.(today);
-                            }
-                          },
-                        }
+                    editDetailMissing
+                      ? { label: "回到今天", onClick: backToToday }
+                      : { label: "重新打开", onClick: () => setEditDetailRequestVersion((v) => v + 1) }
                   }
                 />
-                {!editDetailLoadState.error?.includes("没有可编辑") && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      clearSubmittedEditTarget();
-                      setRequestedMode(null);
-                      if (activeBizDate !== today) {
-                        onActiveBizDateChange?.(today);
-                      }
-                    }}
-                    className="mt-2 text-[12px] text-[#78716C] hover:text-[#1F1E1D]"
-                  >
-                    返回概览
-                  </Button>
+                {!editDetailMissing && (
+                  <div className="mt-2 flex justify-center">
+                    <Button type="button" variant="ghost" size="m" onClick={backToToday}>
+                      回到今天
+                    </Button>
+                  </div>
                 )}
               </div>
             ) : null}
@@ -254,6 +208,8 @@ export function VideoSubmitPanelBody({
                 submittedViewActive={submittedViewActive}
                 userExemptionReviewNotices={userExemptionReviewNotices}
                 isExemptionPending={isExemptionPending && !dismissedPendingExemption}
+                pendingExemptionItems={pendingExemptionItems}
+                lastSubmissionPreferences={lastSubmissionPreferences}
                 onDismissPendingExemption={dismissPendingExemption}
                 onWithdrawPendingExemption={onWithdrawPendingExemption}
                 onSubmitted={handleSubmitted}

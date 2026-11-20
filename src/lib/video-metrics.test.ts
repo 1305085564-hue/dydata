@@ -2,14 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  breakoutCoefficient,
   fanConversionRate,
   favoriteRate,
   followerConversionRate,
-  getAccountBaseline,
   interactionRate,
   likeRate,
-  median,
 } from "./video-metrics";
 import type { VideoMetricsSnapshot } from "@/types";
 
@@ -97,48 +94,6 @@ test("指标未采集(null)时比率返回 null，不把缺失当成 0", () => {
   assert.equal(fanConversionRate(snapshot), null);
   assert.equal(likeRate(snapshot), null);
   assert.equal(favoriteRate(snapshot), null);
-});
-
-test("爆款系数按播放除以基线中位数计算", () => {
-  assert.equal(breakoutCoefficient(1200, 300), 4);
-});
-
-test("基线为空或 0 时爆款系数返回 null", () => {
-  assert.equal(breakoutCoefficient(1200, null), null);
-  assert.equal(breakoutCoefficient(1200, 0), null);
-});
-
-test("中位数支持奇数和偶数样本", () => {
-  assert.equal(median([9, 1, 5]), 5);
-  assert.equal(median([9, 1, 5, 7]), 6);
-});
-
-test("空数组中位数返回 null", () => {
-  assert.equal(median([]), null);
-});
-
-test("样本量至少 10 条时账号基线采用自身中位数", () => {
-  const result = getAccountBaseline([100, 120, 140, 160, 180, 200, 220, 240, 260, 280], 150);
-
-  assert.deepEqual(result, { median: 190, strategy: "self" });
-});
-
-test("样本量 3 到 9 条且有团队中位数时账号基线采用混合策略", () => {
-  const result = getAccountBaseline([100, 200, 400], 300);
-
-  assert.deepEqual(result, { median: 250, strategy: "mixed" });
-});
-
-test("样本不足或缺少团队中位数时返回 insufficient", () => {
-  assert.deepEqual(getAccountBaseline([100, 200], 300), {
-    median: null,
-    strategy: "insufficient",
-  });
-
-  assert.deepEqual(getAccountBaseline([100, 200, 300], null), {
-    median: null,
-    strategy: "insufficient",
-  });
 });
 
 test("脏数据：互动数超过播放量时各项比率被判为无效（返回 null，不产出天文数字）", () => {

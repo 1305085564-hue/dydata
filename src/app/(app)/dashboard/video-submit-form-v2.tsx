@@ -30,6 +30,7 @@ import {
   type WorkbenchNoticeItem,
 } from "./components/workbench-notice-bar";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
+import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
 // 保留所有原有的业务逻辑导入
 import {
@@ -41,13 +42,11 @@ import {
 } from "@/components/submission/提交状态机";
 import {
   getSlotRoleForMetric,
-  parseMetric,
   resolveCompleteEditPayload,
 } from "@/lib/video-submit/domain/form-rules";
 import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
-  isInteractionExceedingPlayCount,
   restoreOcrFieldValue,
   summarizeSubmissionIssues,
   toManualFieldState,
@@ -57,6 +56,7 @@ import {
   getHiddenRoleRestoreLabel,
   resolveAssigneeDisplay,
   resolveVideoSubmitMode,
+  isDailyReportOnlyEditDetail,
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
@@ -133,11 +133,14 @@ interface VideoSubmitFormProps {
   submittedViewActive?: boolean;
   userExemptionReviewNotices?: DashboardPageData["userExemptionReviewNotices"];
   isExemptionPending?: boolean;
+  pendingExemptionItems?: DashboardPageData["pendingExemptionItems"];
+  lastSubmissionPreferences?: LastSubmittedReportPreferences | null;
   onDismissPendingExemption?: () => void;
   onWithdrawPendingExemption?: () => Promise<unknown>;
   onSubmitted: (
     video: Video | null,
     summaryOverride?: TodaySubmissionReportLike | null,
+    submissionPreferences?: LastSubmittedReportPreferences & { accountId: string },
   ) => void;
   onCancel?: () => void;
   onCreateAnother?: () => void;
@@ -166,6 +169,8 @@ export function VideoSubmitFormV2({
   submittedViewActive = false,
   userExemptionReviewNotices = [],
   isExemptionPending = false,
+  pendingExemptionItems = [],
+  lastSubmissionPreferences = null,
   onDismissPendingExemption,
   onWithdrawPendingExemption,
   onSubmitted,
@@ -191,7 +196,7 @@ export function VideoSubmitFormV2({
     const initial =
       editDetail
         ? createMetaFromEditDetail(editDetail, today, userId)
-        : createInitialMeta(today, userId, initialBizDate ?? today);
+        : createInitialMeta(today, userId, initialBizDate ?? today, mode === "editToday" ? null : lastSubmissionPreferences);
     const appealSuccessTitle = !editDetail
       ? getBrowserAppealSuccessTitle(account?.id ?? "", initialBizDate ?? today)
       : null;
@@ -474,7 +479,6 @@ export function VideoSubmitFormV2({
     setRoleUser,
     hideRole,
     showAllRoles,
-    setOperatorToSelf,
     setOperatorUser,
     setScriptAuthorUser,
   } = useAssigneeController({
@@ -485,6 +489,10 @@ export function VideoSubmitFormV2({
     setHasManualOperatorSelection,
     setHiddenRoles,
   });
+  const visibleMemberIds = useMemo(
+    () => operatorMembers.length > 0 ? new Set(operatorMembers.map((member) => member.id)) : undefined,
+    [operatorMembers],
+  );
 
   // 历史责任人档案：GET 编辑详情返回的旧责任人姓名与状态
   const historicalAssigneeProfiles: HistoricalAssigneeProfile[] = useMemo(
@@ -503,28 +511,12 @@ export function VideoSubmitFormV2({
     [historicalAssigneeProfiles, operatorMembers, userId, selfLabel],
   );
 
-  // 初始化 operator
-  useEffect(() => {
-    if (mode === "editToday") return;
-    setOperatorToSelf();
-  }, [mode, setOperatorToSelf]);
-
   const metricsGroupRef = useRef<MetricGroupHandle | null>(null);
   const metaVideoTitleRef = useRef<HTMLInputElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const publishedAtSectionRef = useRef<HTMLDivElement | null>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const [interactionConfirm, setInteractionConfirm] = useState<{
-    open: boolean;
-    interactions: number;
-    playCount: number;
-  }>({
-    open: false,
-    interactions: 0,
-    playCount: 0,
-  });
 
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -600,13 +592,13 @@ export function VideoSubmitFormV2({
 
   const deadlinePrecheck = useMemo(
     () => resolveVideoSubmitDeadline({
-      mode: resolveVideoSubmitMode({ panelMode: mode, anomalyStatus: meta.anomalyStatus, videoId: editDetail?.videoId ?? null }) === "edit" ? "edit" : "create",
+      mode: resolveVideoSubmitMode({ panelMode: mode, anomalyStatus: meta.anomalyStatus, videoId: editDetail?.videoId ?? null, dailyReportOnly: isDailyReportOnlyEditDetail(editDetail) }) === "edit" ? "edit" : "create",
       publishedAt: meta.publishedAt,
       businessDate: meta.bizDate,
       publishedAtConfirmed: isPublishedAtConfirmed(meta.publishedAtText),
       publishedAtSource: meta.publishedAtSource,
     }),
-    [editDetail?.videoId, meta.anomalyStatus, meta.bizDate, meta.publishedAt, meta.publishedAtSource, meta.publishedAtText, mode],
+    [editDetail, meta.anomalyStatus, meta.bizDate, meta.publishedAt, meta.publishedAtSource, meta.publishedAtText, mode],
   );
 
   useEffect(() => {
@@ -620,11 +612,13 @@ export function VideoSubmitFormV2({
     accountId: account?.id ?? null,
     today,
     mode,
-    videoId: editDetail?.videoId ?? null,
+    videoId: editDetail?.videoId ?? editDetail?.reportId ?? null,
     workflow,
     isSubmitted,
     submittedViewActive,
     hasInitialSummary: Boolean(initialSummary),
+    lastReportPreferences: lastSubmissionPreferences,
+    visibleMemberIds,
     dispatchWorkflow,
   });
 
@@ -689,7 +683,7 @@ export function VideoSubmitFormV2({
     } catch {
       // 暂时的网络失败留给下一次轮询或页面聚焦处理。
     }
-  }, [account, appealStatus, clearDraft, meta.bizDate, onSubmitted, pauseSaving, setAppealResultReason, setAppealStatus, setIsSubmitted]);
+  }, [account, appealStatus, clearDraft, meta.bizDate, meta.publishedAt, meta.videoTitle, onSubmitted, pauseSaving, setAppealResultReason, setAppealStatus, setIsSubmitted]);
 
   useEffect(() => {
     if (appealStatus !== "pending") return;
@@ -738,14 +732,18 @@ export function VideoSubmitFormV2({
       });
     }
 
-    // 2. 请假/豁免审批结果通知
-    if (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice) {
-      items.push(...buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice));
+    // 2. 待审批中提示：还能撤回、正在发生，排在已出结果的通知前面，折叠时也露在第一条
+    if (isExemptionPending) {
+      items.push(buildPendingExemptionNoticeItem({
+        items: pendingExemptionItems,
+        onDismiss: onDismissPendingExemption,
+        onWithdraw: onWithdrawPendingExemption,
+      }));
     }
 
-    // 3. 待审批中提示
-    if (isExemptionPending) {
-      items.push(buildPendingExemptionNoticeItem({ onDismiss: onDismissPendingExemption, onWithdraw: onWithdrawPendingExemption }));
+    // 3. 请假/豁免审批结果通知
+    if (userExemptionReviewNotices.length > 0 && !dismissedReviewNotice) {
+      items.push(...buildExemptionReviewNoticeItems(userExemptionReviewNotices, handleDismissReviewNotice));
     }
 
     // 4. 选题带入上下文提示
@@ -769,6 +767,7 @@ export function VideoSubmitFormV2({
     handleRestoreDraft,
     initialTopicId,
     initialTopicTitle,
+    pendingExemptionItems,
     selectedTopicId,
     selectedTopicTitle,
     isExemptionPending,
@@ -814,7 +813,7 @@ export function VideoSubmitFormV2({
 
     const nextMeta = editDetail
       ? createMetaFromEditDetail(editDetail, today, userId)
-      : createInitialMeta(today, userId, initialBizDate ?? today);
+      : createInitialMeta(today, userId, initialBizDate ?? today, mode === "editToday" ? null : lastSubmissionPreferences);
     if (initialBizDate) {
       nextMeta.bizDate = initialBizDate;
     }
@@ -858,6 +857,8 @@ export function VideoSubmitFormV2({
     initialBizDate,
     initialSummary,
     isBackfillMode,
+    lastSubmissionPreferences,
+    mode,
     setIsSubmitted,
     setQualityCheck,
     setSubmittedReportId,
@@ -869,7 +870,8 @@ export function VideoSubmitFormV2({
 
   // 提交验证相关计算
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
-  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
+  const isDailyReportOnly = isDailyReportOnlyEditDetail(editDetail);
+  const screenshotsRequired = isDailyReportOnly ? false : areSubmissionScreenshotsRequired(meta.anomalyStatus);
   // 与后端同一判定：只有 create 会因「发布时间未确认」被拒
   // （edit = 编辑历史、abnormal = 异常上报，后端都跳过该门禁）。
   const publishedAtConfirmed = isPublishedAtConfirmed(meta.publishedAtText);
@@ -878,6 +880,7 @@ export function VideoSubmitFormV2({
     panelMode: mode,
     anomalyStatus: meta.anomalyStatus,
     videoId: editDraftVideoId,
+    dailyReportOnly: isDailyReportOnly,
   });
   const issueSummary = useMemo(
     () =>
@@ -888,6 +891,9 @@ export function VideoSubmitFormV2({
         content: meta.content,
         submissionMode: submitMode,
         publishedAtConfirmed,
+        screenshotsRequired,
+        topicTagRequired: !isDailyReportOnly,
+        contentRequired: !isDailyReportOnly,
       }),
     [
       submissionState,
@@ -897,6 +903,8 @@ export function VideoSubmitFormV2({
       meta.content,
       submitMode,
       publishedAtConfirmed,
+      screenshotsRequired,
+      isDailyReportOnly,
     ],
   );
   const appealPrecheckRequired = deadlinePrecheck.decision === "requires_appeal" && appealStatus === "idle";
@@ -916,6 +924,9 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
     submissionMode: submitMode,
     publishedAtConfirmed,
+    screenshotsRequired,
+    topicTagRequired: !isDailyReportOnly,
+    contentRequired: !isDailyReportOnly,
   });
   const canActuallySubmit = issueSummary.canSubmit;
   const submitButtonLabel = isSubmitting
@@ -990,7 +1001,6 @@ export function VideoSubmitFormV2({
   }
 
   // controller 只保存事件回调；refs 只会在用户点击质量检查/修复时读取。
-  // eslint-disable-next-line react-hooks/refs
   const { handleQualityCheck, handleFixIssue } = createQualityCheckController({
     submittedReportId,
     setHasUserInteracted,
@@ -1059,12 +1069,12 @@ export function VideoSubmitFormV2({
         feedbackToast.error("剪贴板内容为空");
       }
     } catch {
-      feedbackToast.error("无法读取剪贴板，请手动粘贴");
+      feedbackToast.error("浏览器没给读取剪贴板的权限，请在文案框里手动粘贴");
+      contentTextareaRef.current?.focus();
     }
   }
 
   // Controller receives event-time callbacks; refs are read only when submit/appeal handlers run.
-  // eslint-disable-next-line react-hooks/refs
   const { executeSubmit, requestLateSubmission, handleConfirmAppeal, resumeAppeal } = createSubmitController({
     account,
     userId,
@@ -1141,7 +1151,7 @@ export function VideoSubmitFormV2({
       return;
     }
 
-    if (!meta.topicTag) {
+    if (!isDailyReportOnly && !meta.topicTag) {
       triggerFormShake();
       scrollToIssueAnchor("topicTag");
       const topicBtn = topicTagSectionRef.current?.querySelector("button");
@@ -1165,21 +1175,9 @@ export function VideoSubmitFormV2({
             bizDate: meta.bizDate,
           })
         : null;
-    if (editDetailError || (mode === "editToday" && !editPayload)) {
+    if (editDetailError || (mode === "editToday" && !isDailyReportOnly && !editPayload)) {
       triggerFormShake();
       feedbackToast.error(editDetailError ?? "缺少原视频完整详情，已停止保存以避免覆盖旧数据");
-      return;
-    }
-
-    const interactionCheck = isInteractionExceedingPlayCount({
-      play_count: fields.play_count?.value ?? null,
-      likes: fields.likes?.value ?? null,
-      comments: fields.comments?.value ?? null,
-      shares: fields.shares?.value ?? null,
-      favorites: fields.favorites?.value ?? null,
-    });
-    if (interactionCheck.exceeded) {
-      setInteractionConfirm({ open: true, ...interactionCheck });
       return;
     }
 
@@ -1423,6 +1421,8 @@ export function VideoSubmitFormV2({
                 handlePasteContent={handlePasteContent}
                 isPastedFeedback={isPastedFeedback}
                 contentTextareaRef={contentTextareaRef}
+                videoFieldsEnabled={!isDailyReportOnly}
+                disabledMetricKeys={isDailyReportOnly ? ["avg_play_ratio"] : []}
               />
 
               <FormV2RolePicker
@@ -1475,22 +1475,6 @@ export function VideoSubmitFormV2({
           </motion.form>
         </>
       )}
-      <ConfirmDialog
-        open={interactionConfirm.open}
-        title="互动数据异常确认"
-        description={`点赞+评论+转发+收藏总和（${interactionConfirm.interactions}）超过了播放量（${interactionConfirm.playCount}），请核对是否存在识别错误。确认无误后继续提交？`}
-        confirmText="确认提交"
-        cancelText="取消"
-        onConfirm={async () => {
-          setInteractionConfirm((prev) => ({ ...prev, open: false }));
-          await executeSubmit();
-        }}
-        onOpenChange={(open) => {
-          if (!open) {
-            setInteractionConfirm((prev) => ({ ...prev, open: false }));
-          }
-        }}
-      />
       <ConfirmDialog
         open={discardConfirmOpen}
         title="确定丢弃未保存的草稿？"

@@ -8,7 +8,6 @@ import {
   isActiveTeamMembership,
   TEAM_MEMBERSHIP_REQUIRED_MESSAGE,
 } from "@/app/api/topics/_shared";
-import { normalizePublishedAtForStorage } from "@/lib/日报";
 import {
   buildRequestDraft,
   buildRequestDraftsForDates,
@@ -19,23 +18,18 @@ import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
-import { sendFeishuWebhook } from "@/lib/飞书webhook";
-import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
 import {
-  buildHistoryReportPayload,
-  resolveHistoryReportDate,
-  resolveImmutablePublishedAt,
-} from "@/lib/video-submit-workflow/history";
+  findChangedExternalDailyReportAssigneeIds,
+  resolveDailyReportOnlyEditAccessError,
+} from "@/lib/daily-report-only-edit";
 import {
-  buildHistoryReport24hSnapshotPatch,
-  isHistorySnapshotSyncFailure,
-  preserveExistingHistoryReportAvgPlayRatio,
-  resolveHistorySnapshotSyncStatus,
-  type HistoryReportSnapshotMetricInput,
-  type HistorySnapshotSyncStatus,
-} from "@/lib/history-report-snapshot-sync";
+  REPORT_TEXT_MAX_LENGTH,
+  REPORT_TITLE_MAX_LENGTH,
+  validateReportMetricBoundaries,
+  validateTextBoundary,
+} from "@/lib/input-boundaries";
 import {
   createAccount as createAccountAction,
   updateAccountName as updateAccountNameAction,
@@ -49,13 +43,9 @@ function isUuidLike(value: string) {
 
 function parseRequiredNumber(value: string | null | undefined, fieldName: string): number {
   const trimmed = value?.trim();
-  if (trimmed === "") {
-    throw new Error(`必填数字字段 ${fieldName} 不能为空`);
-  }
+  if (trimmed === "") throw new Error(`必填数字字段 ${fieldName} 不能为空`);
   const num = Number(trimmed);
-  if (!Number.isFinite(num)) {
-    throw new Error(`字段 ${fieldName} 必须是有效数字`);
-  }
+  if (!Number.isFinite(num)) throw new Error(`字段 ${fieldName} 必须是有效数字`);
   return num;
 }
 
@@ -67,320 +57,172 @@ const ASSIGNEE_FORM_FIELDS = [
 
 type AssigneeFormField = (typeof ASSIGNEE_FORM_FIELDS)[number];
 
-type AssigneeFieldParse =
-  | { kind: "absent" }
-  | { kind: "value"; userId: string | null }
-  | { kind: "invalid" };
-
-/**
- * 三岗位字段的提交语义：字段缺失 = 未提交（保留原值）；字段存在但为空 = 明确清空（写 null）。
- * 不区分这两者，就是「详情没加载出来也能把原负责人清空」那条数据丢失路径。
- *
- * 设计耦合点（2026-09-22 复核标注）：
- * submitReport 是全仓唯一写三列的入口，唯一调用方 history-report-edit-form 的
- * handleSubmit 无条件 set 三列 → touchAssignees 恒为 true。
- * 若未来新增「只改标题不改署名」的入口且忘记 set 三列，touchAssignees 会变 false，
- * 三列被保留（不会误清空，但不会按用户意图更新）。新增入口必须 set 三列。
- */
-function parseAssigneeField(formData: FormData, field: AssigneeFormField): AssigneeFieldParse {
-  if (!formData.has(field)) return { kind: "absent" };
-  const raw = String(formData.get(field) ?? "").trim();
-  if (!raw) return { kind: "value", userId: null };
-  if (!isUuidLike(raw)) return { kind: "invalid" };
-  return { kind: "value", userId: raw };
-}
-
-export async function submitReport(formData: FormData) {
+export async function saveDailyReportOnlyEdit(formData: FormData) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "请先登录" };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "请先登录" };
+  const accountId = String(formData.get("account_id") ?? "").trim();
+  const reportId = String(formData.get("report_id") ?? "").trim();
+  const reportDate = String(formData.get("report_date") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const content = String(formData.get("content") ?? "") || null;
+  if (!isUuidLike(accountId) || !isUuidLike(reportId) || !/^\d{4}-\d{2}-\d{2}$/.test(reportDate)) {
+    return { error: "日报编号或日期格式不正确，请重新打开修改" };
   }
+  const titleBoundary = validateTextBoundary({
+    label: "视频标题",
+    value: title,
+    maxLength: REPORT_TITLE_MAX_LENGTH,
+    required: true,
+  });
+  if (!titleBoundary.ok) return { error: titleBoundary.error };
+  const contentBoundary = validateTextBoundary({
+    label: "文案",
+    value: content,
+    maxLength: REPORT_TEXT_MAX_LENGTH,
+  });
+  if (!contentBoundary.ok) return { error: contentBoundary.error };
 
-  const account_id = formData.get("account_id") as string;
-  const video_id = formData.get("video_id") as string | null;
-  const report_id = ((formData.get("report_id") as string | null) ?? "").trim() || null;
-  const title = formData.get("title") as string;
-  const report_date = formData.get("report_date") as string;
-  let play_count: number;
+  let playCount: number;
   let likes: number;
   let comments: number;
   let shares: number;
   let favorites: number;
-  let follower_gain: number;
+  let followerGain: number;
   try {
-    play_count = parseRequiredNumber(formData.get("play_count") as string | null, "play_count");
-    likes = parseRequiredNumber(formData.get("likes") as string | null, "likes");
-    comments = parseRequiredNumber(formData.get("comments") as string | null, "comments");
-    shares = parseRequiredNumber(formData.get("shares") as string | null, "shares");
-    favorites = parseRequiredNumber(formData.get("favorites") as string | null, "favorites");
-    follower_gain = parseRequiredNumber(formData.get("follower_gain") as string | null, "follower_gain");
-  } catch (err: unknown) {
-    return { error: err instanceof Error ? err.message : "数字字段解析失败" };
+    playCount = parseRequiredNumber(String(formData.get("play_count") ?? ""), "play_count");
+    likes = parseRequiredNumber(String(formData.get("likes") ?? ""), "likes");
+    comments = parseRequiredNumber(String(formData.get("comments") ?? ""), "comments");
+    shares = parseRequiredNumber(String(formData.get("shares") ?? ""), "shares");
+    favorites = parseRequiredNumber(String(formData.get("favorites") ?? ""), "favorites");
+    followerGain = parseRequiredNumber(String(formData.get("follower_gain") ?? ""), "follower_gain");
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "数字字段解析失败" };
   }
-  const completion_rate = formData.get("completion_rate") ? `${formData.get("completion_rate")}%` : null;
-  const avg_play_duration = formData.get("avg_play_duration") ? `${formData.get("avg_play_duration")}秒` : null;
-  const bounce_rate_2s = formData.get("bounce_rate_2s") ? `${formData.get("bounce_rate_2s")}%` : null;
-  const completion_rate_5s = formData.get("completion_rate_5s") ? `${formData.get("completion_rate_5s")}%` : null;
-  const followerConvertRaw = formData.get("follower_convert") as string;
-  const follower_convert = parseNullableMetricInput(followerConvertRaw);
-  // 快照侧存数值（不带 % / 秒），与 daily_reports 的带单位文本分开解析
-  const snapshotMetrics: HistoryReportSnapshotMetricInput = {
-    play_count,
+  if (followerGain < 0) return { error: "涨粉数不能小于 0" };
+
+  const parseOptionalMetric = (key: string) => parseNullableMetricInput(String(formData.get(key) ?? ""));
+  const metricBoundary = validateReportMetricBoundaries({
+    play_count: playCount,
     likes,
     comments,
     shares,
     favorites,
-    follower_gain,
-    follower_convert,
-    avg_play_duration: parseNullableMetricInput(formData.get("avg_play_duration") as string | null),
-    bounce_rate_2s: parseNullableMetricInput(formData.get("bounce_rate_2s") as string | null),
-    completion_rate: parseNullableMetricInput(formData.get("completion_rate") as string | null),
-    completion_rate_5s: parseNullableMetricInput(formData.get("completion_rate_5s") as string | null),
-    avg_play_ratio: parseNullableMetricInput(formData.get("avg_play_ratio") as string | null),
-  };
-  const content = (formData.get("content") as string) || null;
-  const submittedPublishedAt = normalizePublishedAtForStorage(formData.get("published_at"));
+    follower_gain: followerGain,
+    follower_convert: parseOptionalMetric("follower_convert"),
+    avg_play_duration: parseOptionalMetric("avg_play_duration"),
+    bounce_rate_2s: parseOptionalMetric("bounce_rate_2s"),
+    completion_rate_5s: parseOptionalMetric("completion_rate_5s"),
+    completion_rate: parseOptionalMetric("completion_rate"),
+  });
+  if (!metricBoundary.ok) return { error: metricBoundary.error };
 
-  // 三岗位第二道闸：未提交的字段保留原值，只有明确提交（含明确选「未指定」）才写。
-  const assigneeValues: Record<AssigneeFormField, string | null> = {
+  const assignees: Record<AssigneeFormField, string | null> = {
     script_author_user_id: null,
     video_editor_user_id: null,
     operator_user_id: null,
   };
-  let providedAssigneeCount = 0;
   for (const field of ASSIGNEE_FORM_FIELDS) {
-    const parsed = parseAssigneeField(formData, field);
-    if (parsed.kind === "invalid") {
-      return { error: "岗位责任人格式不正确，请重新打开编辑窗口" };
-    }
-    if (parsed.kind === "value") {
-      providedAssigneeCount += 1;
-      assigneeValues[field] = parsed.userId;
-    }
+    if (!formData.has(field)) return { error: "岗位责任人未完整提交，请重新打开修改" };
+    const value = String(formData.get(field) ?? "").trim();
+    if (value && !isUuidLike(value)) return { error: "岗位责任人格式不正确，请重新打开修改" };
+    assignees[field] = value || null;
   }
-  if (providedAssigneeCount !== 0 && providedAssigneeCount !== ASSIGNEE_FORM_FIELDS.length) {
-    return { error: "三个岗位责任人必须同时提交" };
-  }
-  const touchAssignees = providedAssigneeCount === ASSIGNEE_FORM_FIELDS.length;
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
     .select("id, profile_id")
-    .eq("id", account_id)
-    .single();
+    .eq("id", accountId)
+    .maybeSingle();
+  if (accountError) return { error: "账号读取失败，请重新打开修改" };
 
-  if (accountError || !account || account.profile_id !== user.id) {
-    return { error: "账号不存在或无权限提交" };
-  }
-
-  const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-  const submitter = profile?.name ?? "未知";
-
-  if (!account_id || !title || !report_date) {
-    return { error: "账号、标题和日期为必填项" };
-  }
-  if (video_id && !isUuidLike(video_id)) {
-    return { error: "原视频编号格式不正确，请重新打开编辑窗口" };
-  }
-
-  if (!Number.isFinite(follower_gain) || follower_gain < 0) {
-    return { error: "涨粉为必填项" };
-  }
-
-  const lookupReportDate = resolveHistoryReportDate({
-    requestedDate: report_date,
-    publishedAt: submittedPublishedAt,
-    isEdit: Boolean(report_id),
-  });
-  const existingQuery = supabase
+  const { data: report, error: reportError } = await supabase
     .from("daily_reports")
-    .select("id, account_id, report_date, published_at")
-    .eq("is_void", false);
-  const { data: existing } = await (report_id
-    ? existingQuery.eq("id", report_id).maybeSingle()
-    : existingQuery
-        .eq("account_id", account_id)
-        .eq("report_date", lookupReportDate)
-        .maybeSingle());
+    .select("id, user_id, account_id, report_date, video_id, published_at, is_void, script_author_user_id, video_editor_user_id, operator_user_id")
+    .eq("id", reportId)
+    .eq("account_id", accountId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (reportError) return { error: "日报读取失败，请重新打开修改" };
 
-  if (report_id && (!existing || existing.account_id !== account_id)) {
-    return { error: "日报与当前账号不匹配，请重新打开编辑窗口" };
-  }
-
-  // 发布时间是平台截图识别出的事实。历史编辑只改日报数据，不能用表单值覆盖它。
-  const published_at = resolveImmutablePublishedAt(existing?.published_at, submittedPublishedAt);
-  const reportDate = resolveHistoryReportDate({
-    requestedDate: report_date,
-    publishedAt: published_at,
-    isEdit: Boolean(report_id),
-  });
-
-  const uploadedAt = new Date().toISOString();
-  // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id
-  const boundVideoId = video_id && isUuidLike(video_id) ? video_id : null;
-
-  // 历史编辑没有改动平均播放占比时，保留已有 24h 快照值，避免空表单把它覆盖成 null。
-  let snapshotMetricsForSync = snapshotMetrics;
-  if (boundVideoId && snapshotMetrics.avg_play_ratio == null) {
-    const existingSnapshot = await createAdminClient()
-      .from("video_metrics_snapshots")
-      .select("avg_play_ratio")
-      .eq("video_id", boundVideoId)
-      .eq("snapshot_type", "24h")
-      .maybeSingle();
-    if (existingSnapshot.error) {
-      return { error: "读取原 24h 快照失败，历史编辑未保存" };
-    }
-    snapshotMetricsForSync = preserveExistingHistoryReportAvgPlayRatio(
-      snapshotMetrics,
-      existingSnapshot.data?.avg_play_ratio,
-    );
-  }
-  const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetricsForSync);
-
-  // 带 report_id 的历史手稿编辑走原子 RPC：日报与绑定视频一次事务写完，
-  // 不再出现「日报已保存，但视频没同步」的半成功。
-  if (report_id && isUuidLike(report_id)) {
-    if (!existing || existing.id !== report_id) {
-      return { error: "日报与当前账号日期不匹配，请重新打开编辑窗口" };
-    }
-
-    const { error: rpcError } = await createAdminClient().rpc("update_history_report_edit_atomic", {
-      p_report_id: report_id,
-      p_actor_id: user.id,
-      p_video_id: boundVideoId,
-      p_title: title,
-      p_content: content,
-      p_published_at: published_at,
-      p_uploaded_at: uploadedAt,
-      p_submitter: submitter,
-      p_play_count: play_count,
-      p_likes: likes,
-      p_comments: comments,
-      p_shares: shares,
-      p_favorites: favorites,
-      p_follower_gain: follower_gain,
-      p_follower_convert: follower_convert,
-      p_completion_rate: completion_rate,
-      p_avg_play_duration: avg_play_duration,
-      p_bounce_rate_2s: bounce_rate_2s,
-      p_completion_rate_5s: completion_rate_5s,
-      p_script_author_user_id: assigneeValues.script_author_user_id,
-      p_video_editor_user_id: assigneeValues.video_editor_user_id,
-      p_operator_user_id: assigneeValues.operator_user_id,
-      p_touch_assignees: touchAssignees,
-    });
-
-    if (!rpcError) {
-      // 业务口径（2026-09-24）：手稿保存同步写 24h 快照，避免导出与管理端两本账
-      const admin = createAdminClient();
-      const snapshotResult = boundVideoId
-        ? await admin
-            .from("video_metrics_snapshots")
-            .update(snapshotPatch)
-            .eq("video_id", boundVideoId)
-            .eq("snapshot_type", "24h")
-            .select("id")
-        : { data: null, error: null };
-
-      if (isHistorySnapshotSyncFailure(boundVideoId, snapshotResult)) {
-        return { error: "历史手稿已保存，但 24h 快照同步失败，请重试" };
-      }
-
-      revalidatePath("/dashboard");
-      return {
-        success: true,
-        isUpdate: true,
-        snapshotSyncStatus: resolveHistorySnapshotSyncStatus(boundVideoId, snapshotResult),
-      };
-    }
-
-    return { error: resolveHistoryEditRpcErrorMessage(rpcError, "历史编辑原子保存未就绪，请联系管理员执行迁移") };
-  }
-
-  const payload = buildHistoryReportPayload({
-    userId: user.id,
-    accountId: account_id,
-    title,
-    submitter,
+  const accessError = resolveDailyReportOnlyEditAccessError({
+    actorId: user.id,
+    accountId,
+    reportId,
     reportDate,
-    playCount: play_count,
-    completionRate: completion_rate,
-    avgPlayDuration: avg_play_duration,
-    bounceRate2s: bounce_rate_2s,
-    completionRate5s: completion_rate_5s,
-    likes,
-    comments,
-    shares,
-    favorites,
-    followerGain: follower_gain,
-    followerConvert: follower_convert,
-    content,
-    publishedAt: published_at,
-    uploadedAt,
-    assignees: touchAssignees ? assigneeValues : undefined,
+    account,
+    report,
   });
+  if (accessError || !report) return { error: accessError ?? "日报不存在，请重新打开修改" };
 
-  const { error } = existing
-    ? await supabase.from("daily_reports").update(payload).eq("id", existing.id)
-    : await supabase.from("daily_reports").insert(payload);
-
-  if (error) {
-    return { error: error.message };
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("name, membership_status, team_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profileError || !profile || !isActiveTeamMembership(profile)) {
+    return { error: "当前账号暂不能修改日报" };
   }
 
-  // H2 修复：历史编辑必须有 video_id 才能写 videos 表，禁止按 published_at 猜写
-  // 旧逻辑：video_id 为空时走 .eq("published_at", ...) 可能改错多视频或静默 0 行
-  // 新逻辑：video_id 为空时跳过 videos 写入，只更新日报
-  const videoClient = boundVideoId ? createAdminClient() : null;
-  const videoResult = videoClient
-    ? await videoClient
-        .from("videos")
-        .update({
-          video_title: title,
-          content,
-          ...(touchAssignees ? assigneeValues : {}),
-        })
-        .eq("id", boundVideoId)
-        .eq("account_id", account_id)
-        .eq("lifecycle_state", "active")
-        .select("id")
-        .maybeSingle()
-    : { data: null, error: null };
-
-  if (isHistoryVideoSyncFailure(boundVideoId, videoResult)) {
-    return { error: "日报已保存，但原视频责任人同步失败，请重试" };
-  }
-
-  let snapshotSyncStatus: HistorySnapshotSyncStatus = "not_applicable";
-
-  // 与 RPC 路径同口径：手稿指标同步写入 24h 快照（只更新已有，不新建）
-  if (boundVideoId) {
-    const snapshotResult = await videoClient!
-      .from("video_metrics_snapshots")
-      .update(snapshotPatch)
-      .eq("video_id", boundVideoId)
-      .eq("snapshot_type", "24h")
-      .select("id");
-
-    if (isHistorySnapshotSyncFailure(boundVideoId, snapshotResult)) {
-      return { error: "日报已保存，但 24h 快照同步失败，请重试" };
+  const changedExternalAssigneeIds = findChangedExternalDailyReportAssigneeIds({
+    assignees,
+    originalAssignees: {
+      script_author_user_id: report.script_author_user_id,
+      video_editor_user_id: report.video_editor_user_id,
+      operator_user_id: report.operator_user_id,
+    },
+    actorId: user.id,
+  });
+  if (changedExternalAssigneeIds.length > 0) {
+    const { data: members, error: memberError } = await supabase
+      .from("profiles")
+      .select("id, team_id, membership_status")
+      .in("id", changedExternalAssigneeIds);
+    const validIds = new Set((members ?? [])
+      .filter((member) => member.team_id === profile.team_id && member.membership_status === "active")
+      .map((member) => member.id));
+    if (memberError || changedExternalAssigneeIds.some((id) => !validIds.has(id))) {
+      return { error: "责任人必须是当前团队中的在职成员" };
     }
-
-    snapshotSyncStatus = resolveHistorySnapshotSyncStatus(boundVideoId, snapshotResult);
   }
 
-  if (!existing) {
-    notifyFeishu(submitter, title, play_count).catch(() => {});
+  const withUnit = (key: string, unit: string) => {
+    const value = parseOptionalMetric(key);
+    return value === null ? null : `${value}${unit}`;
+  };
+  const { error: rpcError } = await createAdminClient().rpc("update_history_report_edit_atomic", {
+    p_report_id: reportId,
+    p_actor_id: user.id,
+    p_video_id: null,
+    p_title: title,
+    p_content: content,
+    // 已保存发布时间是事实字段，编辑请求不接受浏览器改写。
+    p_published_at: report.published_at,
+    p_uploaded_at: new Date().toISOString(),
+    p_submitter: profile.name ?? "未知",
+    p_play_count: playCount,
+    p_likes: likes,
+    p_comments: comments,
+    p_shares: shares,
+    p_favorites: favorites,
+    p_follower_gain: followerGain,
+    p_follower_convert: parseOptionalMetric("follower_convert"),
+    p_completion_rate: withUnit("completion_rate", "%"),
+    p_avg_play_duration: withUnit("avg_play_duration", "秒"),
+    p_bounce_rate_2s: withUnit("bounce_rate_2s", "%"),
+    p_completion_rate_5s: withUnit("completion_rate_5s", "%"),
+    p_script_author_user_id: assignees.script_author_user_id,
+    p_video_editor_user_id: assignees.video_editor_user_id,
+    p_operator_user_id: assignees.operator_user_id,
+    p_touch_assignees: true,
+  });
+  if (rpcError) {
+    return { error: resolveHistoryEditRpcErrorMessage(rpcError, "修改没能保存，请稍后重试") };
   }
 
   revalidatePath("/dashboard");
-  return { success: true, isUpdate: !!existing, snapshotSyncStatus };
+  return { success: true, isUpdate: true, snapshotSyncStatus: "not_applicable" as const };
 }
 
 export interface SubmitExemptionRequestInput {
@@ -567,34 +409,4 @@ export async function updateAccountName(accountId: string, newName: string) {
 
 export async function updateAccountRemark(accountId: string, newRemark: string) {
   return updateAccountRemarkAction(accountId, newRemark);
-}
-
-async function notifyFeishu(submitter: string, title: string, playCount: number) {
-  const content = `**${submitter}** 提交了日报\n视频：${title}\n播放量：${playCount.toLocaleString("zh-CN")}`;
-
-  const result = await sendFeishuWebhook({
-    msg_type: "interactive",
-    card: {
-      header: {
-        title: { tag: "plain_text", content: "日报提交通知" },
-        template: "green",
-      },
-      elements: [{ tag: "div", text: { tag: "lark_md", content } }],
-    },
-  });
-
-  // 通知失败不影响日报提交主流程，但必须留下真实失败记录，禁止静默伪装成功
-  if (!result.ok) {
-    console.error(
-      JSON.stringify({
-        level: "error",
-        kind: "api",
-        ts: new Date().toISOString(),
-        route: "dashboard/actions.notifyFeishu",
-        outcome: "feishu_notify_failed",
-        reason: result.reason,
-        httpStatus: result.status ?? null,
-      }),
-    );
-  }
 }

@@ -89,7 +89,7 @@ function enumerateMonthDatesUntil(monthPrefix: string, until: string) {
 
 /**
  * 本月履约摘要：本月已交 x 天，漏 y 天。
- * 口径对齐管理端发布管理的"未确认"（`get_fulfillment_range`，口径见《数据口径与计算规则》）：
+ * 口径对齐管理端发布管理的"未确认"（`get_fulfillment_range`，口径见 docs/reference/链路设计与决策/数据上传链路.md「履约」）：
  * 公司要求每天都发作品，周末和节假日不豁免，所以按自然日算，不看工作日历；
  * 从入职日（joinedDate）起算；今天不算漏（作品第二天才上传）；
  * 有提交、已批准免交/请假、待审批、管理员人工标记过（请假/豁免/确认已发）的日子不算漏；

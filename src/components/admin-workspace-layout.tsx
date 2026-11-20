@@ -31,7 +31,7 @@ export function AdminWorkspaceLayout({
   const hasHeader = title || description || actions;
 
   return (
-    <div className={cn("min-w-0 space-y-5", widthMap[width], className)}>
+    <div data-app-rail={width} className={cn("min-w-0 space-y-5", widthMap[width], className)}>
       {hasHeader ? (
         <header className={cn("flex flex-col gap-1 lg:flex-row lg:items-start lg:justify-between", hideHeaderOnMobile && "hidden md:flex")}>
           <div className="space-y-1 min-w-0">

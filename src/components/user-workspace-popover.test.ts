@@ -7,14 +7,13 @@ const source = readFileSync(
   "utf8",
 );
 
-test("无成员管理权限时不再无条件显示成员与团队架构链接", () => {
-  assert.match(source, /canAccessTeamManagement \? \(/);
-  assert.match(source, /需权限/);
-});
-
-test("有成员管理权限时仍保留成员与团队架构链接", () => {
-  assert.match(source, /<a[\s\S]*href="\/admin\/modules"/);
-  assert.doesNotMatch(source, /import Link from "next\/link"/);
+// 2026-11-19 外框改版：成员管理入口只留「管理中心」一处；个人菜单不再放重复入口，也不给没权限的人看灰项。
+test("个人菜单只放切换账号、账号与偏好设置、退出登录", () => {
+  assert.doesNotMatch(source, /\/admin\/modules/);
+  assert.doesNotMatch(source, /需权限/);
+  assert.match(source, /账号与偏好设置/);
+  assert.match(source, /退出登录/);
+  assert.match(source, /accounts\.length > 1 &&/);
 });
 
 // 与顶栏下拉同源：悬停只做「临时展开」，点击做「锁定展开」。

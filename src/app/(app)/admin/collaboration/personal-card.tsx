@@ -12,19 +12,18 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, Copy, ExternalLink, X } from "lucide-react";
-import { toast } from "sonner";
+import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PersonalCardMetrics } from "./personal-card-metrics";
+import { PersonalCardGrowth } from "./personal-card-growth";
 import { PersonalCardWorks } from "./personal-card-works";
 import {
   buildGrowthChartData,
   buildGrowthAverages,
-  buildSymbiosisInsight,
+  buildPersonHeadline,
   pickHoveredChartWork,
   type ChartWorkPoint,
 } from "@/lib/collaboration/domain/person-metrics";
-import { type CollaborationRoleTab, type PersonDetailData } from "./types";
+import { type CollaborationRoleTab, type OperatorAccount, type PersonDetailData } from "./types";
 import {
   clearPersonDataCache,
   loadPersonData,
@@ -44,6 +43,10 @@ interface PersonalCardProps {
   year: number;
   month: number;
   activeTab?: CollaborationRoleTab;
+  /** 本人名下账号：头部「常配账号」排除自营号，只在给别人干活时出现 */
+  ownAccountIds?: string[];
+  /** 运营负责的账号明细（主表已有，不另取） */
+  operatorAccounts?: OperatorAccount[];
   onClose: () => void;
   refreshTrigger?: number;
   onPersonNameLoaded?: (name: string) => void;
@@ -59,6 +62,8 @@ export function PersonalCard({
   year,
   month,
   activeTab,
+  ownAccountIds,
+  operatorAccounts,
   onClose,
   refreshTrigger = 0,
   onPersonNameLoaded,
@@ -85,7 +90,6 @@ export function PersonalCard({
     like: true,
     favorite: true,
   });
-  const [copied, setCopied] = useState(false);
 
   // B2: 检测从复盘跳来的来源视频并做静默有效性预检
   const searchParams = useSearchParams();
@@ -95,19 +99,6 @@ export function PersonalCard({
 
   useEffect(() => precheckReturnVideo(Boolean(userId), fromSource, returnVideoId, setReturnVideoValid),
     [userId, fromSource, returnVideoId]);
-
-  const handleCopyLink = useCallback(async () => {
-    if (!userId) return;
-    const url = `${window.location.origin}/people/${userId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      toast.success("已复制成员主页链接");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("复制失败，请手动打开页面复制");
-    }
-  }, [userId]);
 
   const toggleMetric = (key: "interaction" | "like" | "favorite") => {
     setVisibleMetrics((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -204,7 +195,10 @@ export function PersonalCard({
   // 不会每次渲染都写入新对象，避免 setState → 重渲染 → 再上报的更新风暴（Maximum update depth exceeded）
   const growthChartData = useMemo(() => buildGrowthChartData(data?.growthWorks), [data]);
   const growthAverages = useMemo(() => buildGrowthAverages(data?.growthSummary), [data]);
-  const symbiosisInsight = useMemo(() => buildSymbiosisInsight(data), [data]);
+  const headline = useMemo(
+    () => (data ? buildPersonHeadline({ data, role: activeTab, month, ownAccountIds }) : ""),
+    [data, activeTab, month, ownAccountIds],
+  );
 
   // 同一作品（reportId 相同）保持原状态引用，不因对象身份变化而重复触发重渲染
   const handleHoverWork = useCallback((point: ChartWorkPoint) => {
@@ -239,122 +233,91 @@ export function PersonalCard({
             min-w-0：本单元是自动列宽的网格项，默认 min-width:auto 会取内容 min-content，被悬停行情带里的
             长标题/宽指标顶到 849px，ResponsiveContainer 随父容器变宽导致折线图横向重排（"各种跳"）。 */}
         <div className={cn("flex flex-col min-h-0 min-w-0 [grid-area:1/1]", diagnosisDetail && "invisible pointer-events-none")}>
-          {/* Header */}
-          <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
-          {loading ? (
-            <div className="space-y-1">
-              <Skeleton className="h-6 w-32 rounded-md" />
-              <Skeleton className="h-4 w-48 rounded-md" />
-            </div>
-          ) : error ? (
-            <div>
-              <SheetTitle className="text-status-danger">
-                加载失败
-              </SheetTitle>
-              <SheetDescription className="text-[12px] text-status-danger">{error}</SheetDescription>
-            </div>
-          ) : data ? (
-            <div className="flex items-center justify-between w-full pr-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <SheetTitle>
-                    {data.name}
-                  </SheetTitle>
-                  <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
-                    个人岗位档案
-                  </span>
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <button
-                      type="button"
-                      onClick={handleCopyLink}
-                      title="复制成员主页链接"
-                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#F1F1F0] hover:text-[#141413] cursor-pointer"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="size-3 text-[#D97757]" />
-                          <span className="text-[#D97757]">已复制</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="size-3" />
-                          <span>复制主页</span>
-                        </>
-                      )}
-                    </button>
-                    <Link
-                      href={`/people/${data.userId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="新窗口打开完整主页"
-                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#F1F1F0] hover:text-[#141413]"
-                    >
-                      <ExternalLink className="size-3" />
-                      <span>新窗口打开</span>
-                    </Link>
-                    {fromSource === "video" && returnVideoId && returnVideoValid && (
-                      <Link
-                        href={`/admin/content?videoId=${encodeURIComponent(returnVideoId)}`}
-                        title="返回原数据复盘详情"
-                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal text-[#D97757] hover:bg-[#F1F1F0] transition-colors"
-                      >
-                        <span>返回该数据复盘 ↩</span>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-                {/* 头部单行内联信息流 */}
-                <div className="mt-1 text-[12px] text-[#78716C] tabular-nums">
-                  <span>{year} 年 {month} 月 · 文案 {data.currentMonth.writerCount} · 剪辑 {data.currentMonth.editorCount} · 运营 {data.currentMonth.operatorCount}</span>
-                </div>
-                {symbiosisInsight && symbiosisInsight.topAccounts.length > 0 && (
-                  <div className="mt-1 text-[12px] text-[#78716C] flex items-center gap-1">
-                    <span>
-                      协同常配账号：
-                      {symbiosisInsight.topAccounts.map(([accName, count]: [string, number], idx: number) => (
-                        <span key={accName} className="text-[#1F1E1D] font-normal">
-                          {idx > 0 ? "、" : ""}
-                          {accName} ({count}篇)
-                        </span>
-                      ))}
-                    </span>
-                  </div>
-                )}
+          {/* 头部：名字 + 一句话结论；右侧只留「打开主页」与关闭 */}
+          <SheetHeader className="flex flex-row items-start justify-between gap-3 shrink-0 px-6 pt-5 pb-3">
+            {loading ? (
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-[26px] w-28 rounded-md" />
+                <Skeleton className="h-[18px] w-72 rounded-md" />
               </div>
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
-          >
-            <X className="size-4" />
-          </button>
-        </SheetHeader>
-
-        {/* Content Body：单层自然阅读延伸 */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-3 pb-6 space-y-4">
-          {loading ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
+            ) : error ? (
+              <div className="flex flex-col gap-1">
+                <SheetTitle>没能打开档案</SheetTitle>
+                <SheetDescription className="text-[12px] text-status-danger-text">{error}</SheetDescription>
               </div>
-              <Skeleton className="h-60 w-full rounded-xl" />
-              <Skeleton className="h-44 w-full rounded-xl" />
+            ) : data ? (
+              <div className="flex min-w-0 flex-col gap-1">
+                <SheetTitle>{data.name}</SheetTitle>
+                <SheetDescription className="text-[12px] leading-[1.50] text-[#78716C] tabular-nums">
+                  {headline}
+                </SheetDescription>
+              </div>
+            ) : (
+              <SheetTitle className="sr-only">个人档案</SheetTitle>
+            )}
+
+            <div className="flex shrink-0 items-center gap-1">
+              {fromSource === "video" && returnVideoId && returnVideoValid && (
+                <Link
+                  href={`/admin/content?videoId=${encodeURIComponent(returnVideoId)}`}
+                  className="inline-flex h-7 items-center rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150"
+                >
+                  返回数据复盘
+                </Link>
+              )}
+              {data && (
+                <Link
+                  href={`/people/${data.userId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150"
+                >
+                  <ExternalLink className="size-3" aria-hidden />
+                  打开主页
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="关闭档案"
+                className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
             </div>
+          </SheetHeader>
+
+        {/* 正文：本月作品 → 近 30 天曲线；骨架与真实结构一致，内容出来时不跳 */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-2 pb-6 space-y-5">
+          {loading ? (
+            <>
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-16 rounded-md" />
+                <div className="rounded-xl shadow-card-ring overflow-hidden">
+                  <div className="h-9 border-b border-[#E2E2DF]/60" />
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-3 border-b border-[#E2E2DF]/60 px-3 py-2.5 last:border-b-0">
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <div className="flex flex-1 flex-col gap-1">
+                        <Skeleton className="h-[18px] w-3/4 rounded-md" />
+                        <Skeleton className="h-[18px] w-1/3 rounded-md" />
+                      </div>
+                      <Skeleton className="h-4 w-48 rounded-md" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Skeleton className="h-72 w-full rounded-xl" />
+            </>
           ) : data ? (
             <>
               <PersonalCardWorks
                 data={data}
                 activeTab={activeTab}
+                operatorAccounts={operatorAccounts}
                 diagnosisContext={diagnosisContext}
               />
-
-              <PersonalCardMetrics
+              <PersonalCardGrowth
                 data={data}
                 activeTab={activeTab}
                 roleLabel={roleLabel}
@@ -367,13 +330,6 @@ export function PersonalCard({
                 diagnosisContext={diagnosisContext}
                 onClearHover={() => setHoveredWork(null)}
               />
-
-              {/* 完卷微符 */}
-              <div className="flex items-center justify-center gap-3 py-4 text-[#E2E2DF]">
-                <span className="h-[1px] w-8 bg-[#E2E2DF]" />
-                <span className="text-[12px] text-[#A8A29E]">✦ 档案完卷</span>
-                <span className="h-[1px] w-8 bg-[#E2E2DF]" />
-              </div>
             </>
           ) : null}
         </div>

@@ -4,14 +4,8 @@ import test from "node:test";
 
 import {
   applyAttributionUpdate,
-  calculateAttributionCompleteness,
   isAttributionComplete,
 } from "./health-bar";
-
-test("岗位仍有待补归属时完整度不能四舍五入成 100%", () => {
-  assert.equal(calculateAttributionCompleteness({ total: 201, unattributed: 1 }), 99);
-  assert.equal(calculateAttributionCompleteness({ total: 201, unattributed: 0 }), 100);
-});
 
 test("补录单个角色后只更新本地行，三岗补齐时标记待移除", () => {
   const report = {

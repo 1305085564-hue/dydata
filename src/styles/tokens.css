@@ -33,7 +33,8 @@
   --sidebar-accent-foreground: #141413;
   --sidebar-border: #E2E2DF;
   --sidebar-ring: rgba(28, 25, 23, 0.1);
-  --app-nav-height: 4rem;
+  /* 桌面顶栏固定高度：滚动时不变高、不变色（外框不自己动） */
+  --app-nav-height: 3.5rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
   --app-bottom-nav-height: 0px;
@@ -50,8 +51,8 @@
 
 @media (max-width: 767.98px) {
   :root {
-    /* 移动顶栏实测高度：44px 触控热区按钮 + 24px 上下内边距 + 1px 边框（收起态 65px，取大值防遮挡） */
-    --app-nav-height: 69px;
+    /* 手机不放顶栏：导航全在底部标签栏，第一屏留给页面自己的标题 */
+    --app-nav-height: 0px;
     /* 移动底栏实测占用：62px 悬浮 pill + 16px 底距 */
     --app-bottom-nav-height: 78px;
   }

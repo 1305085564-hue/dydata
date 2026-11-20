@@ -8,7 +8,7 @@ import {
   KPI_PLAY_FLOOR,
   KPI_PLAY_GOOD,
 } from "./breakout-rating";
-import { CALIBER } from "./metrics/caliber";
+import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./topics/metrics";
 
 function readSource(path: string) {
   return readFileSync(resolve(process.cwd(), path), "utf8");
@@ -39,7 +39,7 @@ test("评级说明文案中的播放线与应用常量一致", () => {
 test("选题库的 3 万说明与自动收录门槛一致", () => {
   const filters = readSource("src/components/topics-v2/TopicMoreFiltersDrawer.tsx");
   const emptyState = readSource("src/components/topics-v2/pool/PoolEmptyState.tsx");
-  const label = formatThreshold(CALIBER.hitMinPlay);
+  const label = formatThreshold(TOPIC_LIBRARY_QUALIFY_PLAY_COUNT);
   assert.match(filters, new RegExp(escapeRegExp(label)), `更多筛选缺少 ${label} 说明，请同步 TopicMoreFiltersDrawer.tsx`);
   assert.match(emptyState, new RegExp(escapeRegExp(label)), `选题库空态缺少 ${label} 说明，请同步 PoolEmptyState.tsx`);
 });

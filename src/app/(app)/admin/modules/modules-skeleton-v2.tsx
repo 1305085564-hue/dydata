@@ -1,58 +1,24 @@
-export function TeamV2Skeleton() {
-  return (
-    <div className="w-full space-y-5">
-      {/* 满宽成员面板骨架（与 modules-content-v3 1:1 对齐） */}
-      <div className="rounded-xl border border-[#E2E2DF] bg-transparent p-5">
-        {/* 工具栏骨架 */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#E2E2DF]/60">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="h-8 w-24 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-            <span className="text-[#E2E2DF] select-none">|</span>
-            <div className="h-8 w-20 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-            <span className="text-[#E2E2DF] select-none">|</span>
-            <div className="h-8 w-48 sm:w-56 animate-pulse-claude rounded-full bg-[#F1F1F0]" />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="h-4 w-28 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-            <div className="h-4 w-12 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-          </div>
-        </div>
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
-        {/* 成员表格骨架：与真实单列表格对齐 */}
-        <div className="pt-1">
-          <div>
-            <div className="hidden lg:flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2 mb-2 px-3">
-              <div className="h-3.5 w-10 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-              <div className="flex items-center gap-4">
-                <div className="h-3.5 w-8 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-                <div className="h-3.5 w-12 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-                <div className="w-8" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={`left-${index}`}
-                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-md min-h-[40px]"
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="size-3.5 animate-pulse-claude rounded-md bg-[#F1F1F0] shrink-0" />
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="h-4 w-24 animate-pulse-claude rounded-md bg-[#E2E2DF]" />
-                      <div className="h-3 w-36 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="h-4 w-10 animate-pulse-claude rounded-md bg-[#F1F1F0] shrink-0" />
-                    <div className="h-3.5 w-20 animate-pulse-claude rounded-md bg-[#F1F1F0] shrink-0" />
-                    <div className="h-4 w-8 animate-pulse-claude rounded-md bg-[#F1F1F0] shrink-0" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+/**
+ * 成员管理加载骨架：和真实页面同序（页头 → 待处理一行 → 工具栏 → 成员表），
+ * 数据到了只换内容不挪位置（效率美学 §2.5 布局零跳动）。
+ */
+export function MembersPageSkeleton() {
+  return (
+    <div className="flex flex-col gap-3" aria-busy="true">
+      <div className="space-y-1">
+        <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#A8A29E]">
+          成员管理
+        </h1>
+        <Skeleton className="h-5 w-40 rounded-md" />
       </div>
+      <div className="flex flex-wrap items-center gap-2 py-1">
+        <Skeleton className="h-7 w-36 rounded-md" />
+        <Skeleton className="ml-auto h-7 w-56 rounded-md" />
+      </div>
+      <TableSkeleton columnCount={5} rowCount={8} showHeader={true} />
     </div>
   );
 }

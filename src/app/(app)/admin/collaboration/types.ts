@@ -15,7 +15,6 @@ import type {
 export interface SummaryData {
   total: number;
   attributed: number;
-  selfHandled: number;
   unattributed: number;
 }
 
@@ -39,16 +38,17 @@ export interface OperatorAccount {
 export interface OperatorRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  effectiveCount: number;
-  excellentCount: number;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   userId: string;
   name: string;
   reportCount: number;
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
-  momChange: number | null;
   accountCount: number;
   operatedProfileCount: number;
   accounts: OperatorAccount[];
@@ -62,17 +62,18 @@ export interface StaffAccount {
 export interface StaffRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  billingCount: number | null;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   certifiedByName: string | null;
   isCertified?: boolean;
-  effectiveCount: number;
-  excellentCount: number;
   userId: string;
   name: string;
   reportCount: number;
   totalPlay: number;
   avgPlay: number;
-  selfHandledCount: number;
   involvedAccounts: StaffAccount[];
   involvedAccountTotal: number;
   recentWorks: Array<{
@@ -108,8 +109,6 @@ export interface PersonOperatorSummary {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
-  momChange: number | null;
   accountCount: number;
   operatedProfileCount: number;
 }
@@ -176,8 +175,11 @@ export interface TalentAccount {
 export interface TalentRow {
   followerConversionRate: number | null;
   interactionRate: number | null;
-  effectiveCount: number;
-  excellentCount: number;
+  /** 互动率拆项（与互动率同口径，四项相加等于互动率）；旧数据缺省为 undefined。 */
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
   userId: string;
   name: string;
   accountCount: number;
@@ -185,8 +187,6 @@ export interface TalentRow {
   totalPlay: number;
   avgPlay: number;
   totalFollowerConvert: number;
-  hitCount: number;
-  selfHandledCount: number;
   accounts: TalentAccount[];
   qualitySummary?: import("@/lib/collaboration/content-quality-contract").ContentQualitySummary | null;
   writerQuality?: StaffRow["writerQuality"];
@@ -197,15 +197,6 @@ export function formatBigNumber(val: number | null | undefined): string {
   if (val >= 1e8) return `${(val / 1e8).toFixed(1)}亿`;
   if (val >= 1e4) return `${(val / 1e4).toFixed(1)}万`;
   return val.toLocaleString("zh-CN");
-}
-
-/**
- * 环比展示：涨幅达到 1000%（10 倍）时改用倍数。
- * 「+2462.6%」这类四位数增幅出现在管理看板上，第一反应是数据出错；
- * 「+24.6 倍」量级一眼可读，信息也不丢（跌幅不可能超过 -100%，无需处理）。
- */
-export function formatMomChange(mom: number): string {
-  return mom >= 10 ? `${mom.toFixed(1)} 倍` : `${(mom * 100).toFixed(1)}%`;
 }
 
 export type {

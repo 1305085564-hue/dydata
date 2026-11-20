@@ -17,10 +17,10 @@ test("单次渠道尝试的预算取「渠道超时」与「整链剩余预算�
   assert.equal(resolveAttemptBudgetMs(15_000, -1), 0);
 });
 
-test("后台试跑沿正式顺位切换，但不改变调度健康状态", async () => {
+test("后台试跑沿正式顺位切换，只写探针台账不改变调度健康状态", async () => {
   let writes = 0;
   const attempts: string[] = [];
-  __internal.setServiceClientForTests({ from() { writes++; throw new Error("不应写库"); }, rpc() { writes++; throw new Error("不应写库"); } });
+  __internal.setServiceClientForTests({ from() { return { insert() { writes++; return Promise.resolve({ error: null }); } }; }, rpc() { writes++; throw new Error("不应写健康状态"); } });
   try {
     const result = await __internal.sendWithFailoverForTests([
       { id: "a", name: "first", baseUrl: "https://example.com", apiKey: "private-first", source: "provider_key_model", providerKeyId: "key-a", providerKeyModelId: "model-a" },
@@ -32,7 +32,7 @@ test("后台试跑沿正式顺位切换，但不改变调度健康状态", async
     });
     assert.deepEqual(attempts, ["first", "second"]);
     assert.equal(result.channelName, "second");
-    assert.equal(writes, 0);
+    assert.equal(writes, 2);
   } finally { __internal.setServiceClientForTests(null); }
 });
 

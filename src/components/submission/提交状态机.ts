@@ -101,6 +101,10 @@ interface SubmissionIssueMeta {
   submissionMode?: "create" | "edit" | "abnormal";
   /** 由 `isPublishedAtConfirmed(meta.publishedAtText)` 得出；不传即视为不校验 */
   publishedAtConfirmed?: boolean;
+  /** 日报-only 历史记录没有视频截图和选题标签，这两个字段不参与保存就绪判定。 */
+  screenshotsRequired?: boolean;
+  topicTagRequired?: boolean;
+  contentRequired?: boolean;
 }
 
 export function areSubmissionScreenshotsRequired(anomalyStatus?: string) {
@@ -161,7 +165,7 @@ export function summarizeSubmissionIssues(
   state: SubmissionState,
   meta: SubmissionIssueMeta = {}
 ): SubmissionIssueSummary {
-  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
+  const screenshotsRequired = meta.screenshotsRequired ?? areSubmissionScreenshotsRequired(meta.anomalyStatus);
   const requiredSlots = screenshotsRequired
     ? Object.values(state.slots).filter((slot) => slot.required)
     : [];
@@ -185,13 +189,13 @@ export function summarizeSubmissionIssues(
     (key) => !isMetricInputValueValid(state.fields[key].value, METRIC_INPUT_TYPE_BY_FIELD[key]),
   );
 
-  const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
+  const topicTagMissing = meta.topicTagRequired !== false && meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
   const missingRequiredMeta: RequiredMetaKey[] = [];
 
   if (meta.anomalyStatus !== "abnormal" && meta.videoTitle !== undefined && !meta.videoTitle.trim()) {
     missingRequiredMeta.push("videoTitle");
   }
-  if (meta.content !== undefined && !meta.content.trim()) {
+  if (meta.contentRequired !== false && meta.content !== undefined && !meta.content.trim()) {
     missingRequiredMeta.push("content");
   }
 

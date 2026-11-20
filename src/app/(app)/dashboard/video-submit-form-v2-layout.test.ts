@@ -53,6 +53,9 @@ const panelSource = [
     "utf8",
   ),
 ].join("\n");
+const panelNavigationSource = readSource(
+  "src/app/(app)/dashboard/video-submit-panel-navigation.ts",
+);
 const productionSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/production-control-system.tsx"),
   "utf8",
@@ -124,7 +127,7 @@ test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁�
   assert.match(panelSource, /onSubmitRequest=/);
   assert.match(panelSource, /submitExemptionRequest\(/);
   assert.doesNotMatch(panelSource, /fetch\(["']\/api\/exemptions\/apply/);
-  assert.match(panelSource, /title="可申请停笔调养；已在审批中的日期会被锁定"/);
+  assert.match(panelSource, /title="请假或报备免交；已在审批中的日期不能重复申请"/);
   assert.doesNotMatch(panelSource, /disabled=\{isExemptionPending\}/);
 });
 
@@ -178,7 +181,7 @@ test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时�
   assert.match(controllerSource, /\[accountId, userId, today\]/);
   assert.match(
     pageSource,
-    /accountId:\s*account\?\.id \?\? null,[\s\S]*today,[\s\S]*mode,[\s\S]*videoId:\s*editDetail\?\.videoId \?\? null/,
+    /accountId:\s*account\?\.id \?\? null,[\s\S]*today,[\s\S]*mode,[\s\S]*videoId:\s*editDetail\?\.videoId \?\? editDetail\?\.reportId \?\? null/,
   );
   assert.match(source, /`已自动保存 \$\{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\$\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}`/);
 });
@@ -226,6 +229,10 @@ test("dashboard V2 四类业务编排由 controller 承担，页面只保留接�
 test("历史日报参与主工作台日期状态合并，跨月记录不会伪装成漏交", () => {
   assert.match(panelSource, /activityData\?\.history/);
   assert.match(panelSource, /initialReports:\s*\[\.\.\.monthReports, \.\.\.history\]/);
+  assert.match(panelSource, /useVideoSubmitPanelNavigation\(/);
+  assert.match(panelNavigationSource, /setActiveBizDate\(target\.reportDate\)/);
+  assert.match(panelNavigationSource, /setSelectedReportId\(target\.reportId\)/);
+  assert.match(panelNavigationSource, /setRequestedMode\("editToday"\)/);
 });
 
 test("dashboard V2 的成员加载不再反向依赖历史编辑表单，质量检查由独立 controller 承担", () => {
@@ -238,13 +245,5 @@ test("dashboard V2 的成员加载不再反向依赖历史编辑表单，质量�
   assert.match(
     controllerSource,
     /export function createQualityCheckController\(/,
-  );
-  assert.match(
-    readSource("src/app/(app)/dashboard/history-report-edit-form.tsx"),
-    /from "@\/lib\/video-submit-workflow\/operator-members"/,
-  );
-  assert.doesNotMatch(
-    readSource("src/app/(app)/dashboard/history-report-edit-form.tsx"),
-    /export async function fetchCachedOperatorMembers/,
   );
 });

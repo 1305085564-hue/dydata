@@ -91,7 +91,7 @@ export function buildCapsuleFilters(date: string, cap: PulseCap): ContentListFil
     startDate: date,
     endDate: date,
   };
-  if (cap === "hot") return { ...base, qualityGrade: "excellent" }; // 爆款=综合评级"优"
+  if (cap === "hot") return { ...base, qualityGrade: "excellent" }; // 昨日评优=综合评级"优"
   if (cap === "anomaly") return { ...base, onlyAnomaly: true }; // 内部即 classifyVideoAnomalyBucket
   if (cap === "unrated") return { ...base, qualityGrade: "unrated" }; // 复盘页现行口径：overallGrade=null 且排除 unlinked/无质量记录
   return base;

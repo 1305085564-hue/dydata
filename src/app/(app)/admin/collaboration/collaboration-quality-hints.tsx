@@ -1,12 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
-import { CALIBER } from "@/lib/metrics/caliber";
-import type { ContentQualitySummary } from "@/lib/collaboration/content-quality-contract";
-import { Badge } from "@/components/ui/badge";
-import { TableCell } from "@/components/ui/table";
-import { TableCellHint } from "@/components/admin/quality-tooltip-content";
+import { KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
+import {
+  formatRetentionValue,
+  type ContentQualitySummary,
+} from "@/lib/collaboration/content-quality-contract";
+import { OneTip } from "./one-tip";
+import type { RoleColumn } from "./role-table";
+import { formatBigNumber } from "./types";
+import { INTERACTION_DETAIL_COLUMNS, RETENTION_DETAIL_COLUMNS, formatRate } from "./work-group-detail-columns";
 
 export type WriterQualityData =
   | {
@@ -16,139 +19,289 @@ export type WriterQualityData =
   | null
   | undefined;
 
+/** 列头口径：表下脚注全部收进这里，就近悬停可见。 */
 export const COLLABORATION_METRIC_HEADER_TIPS = {
-  effectiveCount: "播放大于 500 的作品条数",
-  excellentCount: `播放至少 ${CALIBER.excellentMinPlay.toLocaleString("zh-CN")} 的作品条数`,
-  followerConversionRate: (
-    <>
-      <p className="font-normal text-[#141413] mb-1">转粉率（加权参考）：</p>
-      <p className="text-[#1F1E1D] leading-relaxed">
-        按已同步 24h 快照的涨粉合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动数据」按作品算术平均（不按播放加权）。
-      </p>
-    </>
-  ),
-  interactionRate: (
-    <>
-      <p className="font-normal text-[#141413] mb-1">互动率（加权参考）：</p>
-      <p className="text-[#1F1E1D] leading-relaxed">
-        按已同步 24h 快照的（赞+评+转+藏）合计 ÷ 播放合计计算，受高播作品权重影响；区别于右侧「互动数据」按作品算术平均（不按播放加权）。
-      </p>
-    </>
-  ),
-  avgInteractionAchievement: (
-    <>
-      <p className="font-normal text-[#141413] mb-1">互动数据均值：</p>
-      <p className="text-[#1F1E1D] leading-relaxed">
-        有互动数据作品的互动指标达成率算术平均，不按播放加权。
-      </p>
-    </>
-  ),
-  avgContentAchievement: (
-    <>
-      <p className="font-normal text-[#141413] mb-1">留存数据均值：</p>
-      <p className="text-[#1F1E1D] leading-relaxed">
-        播放 {KPI_PLAY_FLOOR} 以上且算得出留存的作品，按好标准计算达成率后合成留存数据均值。
-      </p>
-    </>
-  ),
-  goodExcellentRate: (
-    <>
-      <p className="font-normal text-[#141413] mb-1">良优率口径：</p>
-      <p className="text-[#1F1E1D] leading-relaxed">
-        留存数据评级为良或优的署名日报篇数 ÷ 留存数据已评级署名日报篇数。<br />
-        播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接评普并计入良优率分母；无已评级作品时显示「—」。
-      </p>
-    </>
-  ),
+  reportCount: "按日报统计，含还没同步数据复盘的作品。",
+  totalPlay: "本月作品播放合计（按日报填报的播放量）。",
+  avgPlay: "总播放 ÷ 本月作品数。",
+  excellentCount: `综合评级为「优」的署名作品条数。播放达到 ${KPI_PLAY_EXCELLENT.toLocaleString()} 以上、互动与留存均达标才可评优；未认证文案不计入结算。`,
+  followerConversionRate:
+    "参考指标：已同步 24 小时数据的涨粉合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
+  interactionRate:
+    "参考指标：已同步 24 小时数据的（赞＋评＋转＋藏）合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
+  avgInteractionAchievement: "每条作品互动指标对标准线的达成率，按作品平均，不按播放加权。",
+  avgContentAchievement: `播放 ${KPI_PLAY_FLOOR.toLocaleString()} 以上且算得出留存的作品，按好标准算达成率后取平均。`,
+  goodExcellentRate: `综合评级为良或优的篇数 ÷ 已评级篇数。播放不足 ${KPI_PLAY_FLOOR.toLocaleString()} 直接评普，也计入分母。`,
+  interactionDetail: "四项与互动率同口径：先加总再相除，四项相加等于互动率。",
+  retentionDetail: `播放达到 ${KPI_PLAY_FLOOR.toLocaleString()} 且算得出留存的作品取平均，与「留存达成」同一批作品，不按播放加权。`,
 } satisfies Record<string, ReactNode>;
 
-/** 文案表与达人表共用的质量三列（互动数据 / 留存数据 / 良优率）及五态悬停提示。 */
-export function CollaborationQualityCells({
-  writerQuality,
-}: {
-  writerQuality: WriterQualityData;
-}) {
+const muted = "text-[#A8A29E]";
+
+/** 单元格内容：数字 + 悬停说明样本量；样本不足 3 篇时数字降为信号墨。 */
+function HintValue({ tip, dim = false, children }: { tip: string; dim?: boolean; children: ReactNode }) {
   return (
-    <>
-      <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-        {writerQuality ? (
-          writerQuality.state === "error" ? (
-            <TableCellHint tip="质量数据读取异常">
-              <Badge variant="warning">异常</Badge>
-            </TableCellHint>
-          ) : writerQuality.summary?.avgInteractionAchievement != null ? (
-            <TableCellHint
-              tip={`互动数据样本 ${writerQuality.summary.interactionSampleCount} 篇`}
-              muted={writerQuality.summary.interactionSampleCount < 3}
-            >
-              {Math.round(writerQuality.summary.avgInteractionAchievement)}%
-            </TableCellHint>
-          ) : (
-            <TableCellHint tip="尚无互动数据完整样本" muted>
-              —
-            </TableCellHint>
-          )
-        ) : (
-          <TableCellHint tip="质量数据尚未接入" muted>
-            —
-          </TableCellHint>
-        )}
-      </TableCell>
-      <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-        {writerQuality ? (
-          writerQuality.state === "error" ? (
-            <TableCellHint tip="质量数据读取异常" muted>
-              —
-            </TableCellHint>
-          ) : writerQuality.summary?.avgContentAchievement != null ? (
-            <TableCellHint
-              tip={`留存数据样本 ${writerQuality.summary.achievementSampleCount} 篇`}
-              muted={writerQuality.summary.achievementSampleCount < 3}
-            >
-              {Math.round(writerQuality.summary.avgContentAchievement)}%
-            </TableCellHint>
-          ) : (
-            <TableCellHint tip="尚无留存数据完整样本" muted>
-              —
-            </TableCellHint>
-          )
-        ) : (
-          <TableCellHint tip="质量数据尚未接入" muted>
-            —
-          </TableCellHint>
-        )}
-      </TableCell>
-      <TableCell className="p-0 text-right tabular-nums text-[#1F1E1D]">
-        {writerQuality ? (
-          writerQuality.state === "error" ? (
-            <TableCellHint tip="质量数据读取异常" muted>
-              —
-            </TableCellHint>
-          ) : writerQuality.summary &&
-            writerQuality.summary.ratedCount > 0 &&
-            writerQuality.summary.goodExcellentRate != null ? (
-            <TableCellHint
-              tip={`良优率分母 ${writerQuality.summary.ratedCount} 篇`}
-              muted={writerQuality.summary.ratedCount < 3}
-            >
-              <span>
-                {Math.round(writerQuality.summary.goodExcellentRate * 100)}%
-                <span className="ml-1 text-[12px] text-[#78716C]">
-                  {writerQuality.summary.ratedCount}/{writerQuality.summary.totalCount}篇
-                </span>
-              </span>
-            </TableCellHint>
-          ) : (
-            <TableCellHint tip="尚无可评级作品或参评样本" muted>
-              —
-            </TableCellHint>
-          )
-        ) : (
-          <TableCellHint tip="质量数据尚未接入" muted>
-            —
-          </TableCellHint>
-        )}
-      </TableCell>
-    </>
+    <OneTip tip={tip}>
+      <span className={`cursor-default ${dim ? muted : ""}`}>{children}</span>
+    </OneTip>
   );
+}
+
+function qualityUnavailable(quality: WriterQualityData, emptyTip = "质量数据尚未接入"): ReactNode | null {
+  if (!quality) return <HintValue tip={emptyTip} dim>—</HintValue>;
+  if (quality.state === "error" || !quality.summary) {
+    return (
+      <HintValue tip="质量数据读取失败，刷新重试">
+        <span className="text-[12px] text-[#78716C]">读取失败</span>
+      </HintValue>
+    );
+  }
+  return null;
+}
+
+function summaryOf(quality: WriterQualityData) {
+  return quality && quality.state === "ready" ? quality.summary : null;
+}
+
+/** 互动达成 / 留存达成 / 良优率：文案表与达人表共用。 */
+export function qualityColumns<R>(
+  getQuality: (row: R) => WriterQualityData,
+  rulesEntry?: ReactNode,
+  emptyTip?: string,
+): RoleColumn<R>[] {
+  return [
+    {
+      key: "avgInteractionAchievement",
+      label: "互动达成",
+      tip: COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement,
+      width: 88,
+      sortValue: (row) => summaryOf(getQuality(row))?.avgInteractionAchievement ?? null,
+      render: (row) => {
+        const quality = getQuality(row);
+        const blocked = qualityUnavailable(quality, emptyTip);
+        if (blocked) return blocked;
+        const summary = quality!.summary!;
+        if (summary.avgInteractionAchievement == null) {
+          return <HintValue tip="还没有互动数据完整的作品" dim>—</HintValue>;
+        }
+        return (
+          <HintValue
+            tip={`按 ${summary.interactionSampleCount} 篇有互动数据的作品平均`}
+            dim={summary.interactionSampleCount < 3}
+          >
+            {Math.round(summary.avgInteractionAchievement)}%
+          </HintValue>
+        );
+      },
+    },
+    {
+      key: "avgContentAchievement",
+      label: "留存达成",
+      tip: COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement,
+      width: 88,
+      sortValue: (row) => summaryOf(getQuality(row))?.avgContentAchievement ?? null,
+      render: (row) => {
+        const quality = getQuality(row);
+        const blocked = qualityUnavailable(quality, emptyTip);
+        if (blocked) return blocked;
+        const summary = quality!.summary!;
+        if (summary.avgContentAchievement == null) {
+          return <HintValue tip="还没有算得出留存的作品" dim>—</HintValue>;
+        }
+        return (
+          <HintValue
+            tip={`按 ${summary.achievementSampleCount} 篇算得出留存的作品平均`}
+            dim={summary.achievementSampleCount < 3}
+          >
+            {Math.round(summary.avgContentAchievement)}%
+          </HintValue>
+        );
+      },
+    },
+    {
+      key: "goodExcellentRate",
+      label: "良优率",
+      tip: COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate,
+      headExtra: rulesEntry,
+      width: 96,
+      sortValue: (row) => {
+        const summary = summaryOf(getQuality(row));
+        return summary && summary.ratedCount > 0 ? summary.goodExcellentRate : null;
+      },
+      render: (row) => {
+        const quality = getQuality(row);
+        const blocked = qualityUnavailable(quality, emptyTip);
+        if (blocked) return blocked;
+        const summary = quality!.summary!;
+        if (summary.ratedCount === 0 || summary.goodExcellentRate == null) {
+          return <HintValue tip="还没有已评级的作品" dim>—</HintValue>;
+        }
+        return (
+          <HintValue
+            tip={`已评级 ${summary.ratedCount} 篇（本月共 ${summary.totalCount} 篇）`}
+            dim={summary.ratedCount < 3}
+          >
+            {Math.round(summary.goodExcellentRate * 100)}%
+          </HintValue>
+        );
+      },
+    },
+  ];
+}
+
+/** 文案表「优条数」：综合评级为优的条数；数据缺失或读取失败时说清原因，不折算成 0。 */
+export function excellentCountColumn<R>(getQuality: (row: R) => WriterQualityData): RoleColumn<R> {
+  return {
+    key: "excellentCount",
+    label: "优条数",
+    tip: COLLABORATION_METRIC_HEADER_TIPS.excellentCount,
+    width: 80,
+    sortValue: (row) => summaryOf(getQuality(row))?.overallGradeCounts.excellent ?? null,
+    render: (row) => {
+      const quality = getQuality(row);
+      const blocked = qualityUnavailable(quality);
+      if (blocked) return blocked;
+      const { overallGradeCounts, ratedCount } = quality!.summary!;
+      return (
+        <HintValue tip={`已评级 ${ratedCount} 篇中，评为优 ${overallGradeCounts.excellent} 篇`}>
+          {overallGradeCounts.excellent}
+        </HintValue>
+      );
+    },
+  };
+}
+
+type VolumeRow = { reportCount: number; totalPlay: number; avgPlay: number };
+
+type VolumeTips = Partial<Record<"reportCount" | "totalPlay" | "avgPlay", ReactNode>>;
+
+/** 本月作品 / 总播放 / 条均播放：所有表同一套；小队按快照统计，口径说明可替换。 */
+export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleColumn<R>[] {
+  return [
+    {
+      key: "reportCount",
+      label: "本月作品",
+      tip: tips.reportCount ?? COLLABORATION_METRIC_HEADER_TIPS.reportCount,
+      width: 84,
+      sortValue: (row) => row.reportCount,
+      render: (row) => row.reportCount,
+    },
+    {
+      key: "totalPlay",
+      label: "总播放",
+      tip: tips.totalPlay ?? COLLABORATION_METRIC_HEADER_TIPS.totalPlay,
+      width: 88,
+      sortValue: (row) => row.totalPlay,
+      render: (row) => formatBigNumber(row.totalPlay),
+    },
+    {
+      key: "avgPlay",
+      label: "条均播放",
+      tip: tips.avgPlay ?? COLLABORATION_METRIC_HEADER_TIPS.avgPlay,
+      width: 88,
+      sortValue: (row) => row.avgPlay,
+      render: (row) => formatBigNumber(row.avgPlay),
+    },
+  ];
+}
+
+type RateRow = { followerConversionRate: number | null; interactionRate: number | null };
+
+/** 转粉率 / 互动率（参考指标，按播放加权）。 */
+export function rateColumns<R extends RateRow>(): RoleColumn<R>[] {
+  return [
+    {
+      key: "followerConversionRate",
+      label: "转粉率",
+      tip: COLLABORATION_METRIC_HEADER_TIPS.followerConversionRate,
+      width: 80,
+      sortValue: (row) => row.followerConversionRate,
+      render: (row) => formatRate(row.followerConversionRate),
+    },
+    {
+      key: "interactionRate",
+      label: "互动率",
+      tip: COLLABORATION_METRIC_HEADER_TIPS.interactionRate,
+      width: 80,
+      sortValue: (row) => row.interactionRate,
+      render: (row) => formatRate(row.interactionRate),
+    },
+  ];
+}
+
+type InteractionDetailRow = {
+  likeRate?: number | null;
+  commentRate?: number | null;
+  shareRate?: number | null;
+  favoriteRate?: number | null;
+};
+
+function formatDetailRate(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+/** 展开明细·互动四项：与小队表同一份列定义与口径。 */
+export function interactionDetailColumns<R extends InteractionDetailRow>(): RoleColumn<R>[] {
+  return INTERACTION_DETAIL_COLUMNS.map((column) => ({
+    key: column.key,
+    label: column.label,
+    tip: COLLABORATION_METRIC_HEADER_TIPS.interactionDetail,
+    width: 80,
+    sortValue: (row: R) => row[column.key] ?? null,
+    render: (row: R) => formatDetailRate(row[column.key]),
+  }));
+}
+
+/** 展开明细·留存五项：与小队表同一份列定义与口径。 */
+export function retentionDetailColumns<R>(getQuality: (row: R) => WriterQualityData): RoleColumn<R>[] {
+  return RETENTION_DETAIL_COLUMNS.map((column) => ({
+    key: column.key,
+    label: column.label,
+    tip: COLLABORATION_METRIC_HEADER_TIPS.retentionDetail,
+    width: 88,
+    render: (row: R) =>
+      formatRetentionValue(summaryOf(getQuality(row))?.retentionAverages?.[column.key], column.unit),
+  }));
+}
+
+/** 小队口径：播放取每条作品最新 24 小时快照，先加总再相除（与数据复盘抽屉同源）。 */
+export const TEAM_VOLUME_TIPS: VolumeTips = {
+  reportCount: "当月作品总数，含还没同步数据复盘的作品。",
+  totalPlay: "每条作品最新 24 小时快照的播放合计；还没同步数据复盘的作品不计。",
+  avgPlay: "总播放 ÷ 已同步数据复盘的作品数。",
+};
+
+type TeamMetricRow = {
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  followerConversionRate: number | null;
+  interactionRate: number | null;
+  likeRate: number | null;
+  commentRate: number | null;
+  shareRate: number | null;
+  favoriteRate: number | null;
+  contentQuality: ContentQualitySummary | null;
+};
+
+const teamQuality = (row: TeamMetricRow): WriterQualityData =>
+  row.contentQuality ? { state: "ready", summary: row.contentQuality } : null;
+
+/** 小队列表与小队详情的列：与文案表同一套列名和口径，只是播放按快照统计。 */
+export function teamMetricColumns<R extends TeamMetricRow>({
+  showDetail,
+  withQuality,
+}: {
+  showDetail: boolean;
+  withQuality: boolean;
+}): RoleColumn<R>[] {
+  const getQuality = (row: R) => teamQuality(row);
+  return [
+    ...volumeColumns<R>(TEAM_VOLUME_TIPS),
+    ...rateColumns<R>(),
+    ...(showDetail ? interactionDetailColumns<R>() : []),
+    ...(withQuality ? qualityColumns<R>(getQuality, undefined, "运营小队不评级") : []),
+    ...(withQuality && showDetail ? retentionDetailColumns<R>(getQuality) : []),
+  ];
 }

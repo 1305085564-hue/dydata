@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
-import { Bell } from "lucide-react";
 import type { ActionCenterSummary } from "@/lib/action-center/types";
 import { cn } from "@/lib/utils";
 
@@ -42,32 +41,31 @@ export function ActionCenterControls({
   onRefreshSummary,
   onActionCenterChanged,
 }: ActionCenterControlsProps) {
-  const bellBadgeCount = summary?.todoCount ?? 0;
+  const todoCount = summary?.todoCount ?? 0;
+  const countLabel = todoCount > 99 ? "99+" : String(todoCount);
+  // 「有没有事等我」是外框唯一的答案：直接写字「待办 3」，不让人先认铃铛再找角标。
+  // 有事深字，没事浅字；位置不动，只换墨色。行动中枢面板本身不在这里改。
   return (
     <>
-      <div className="relative group">
-        <button
-          type="button"
-          onClick={onOpen}
-          className={cn(
-            "relative flex h-8 w-8 cursor-pointer select-none items-center justify-center rounded-md outline-none transition duration-150 group focus-visible:ring-2 focus-visible:ring-status-info/20 active:scale-[0.99] active:duration-120",
-            open
-              ? "bg-[#F1F1F0] text-[#141413] shadow-input"
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-expanded={open}
+        aria-label={`待办${todoCount > 0 ? ` ${countLabel} 项` : ""}：打开行动中枢（待办、审批与风险）`}
+        className={cn(
+          "inline-flex h-8 items-center gap-1 rounded-md px-2 text-[14px] outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-status-info/20",
+          open
+            ? "bg-[#F1F1F0] text-[#141413]"
+            : todoCount > 0
+              ? "text-[#141413] hover:bg-[#EBEBE9]"
               : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
-          )}
-          title="行动中枢：待办、审批与风险"
-          aria-label="行动中枢：待办、审批与风险"
-        >
-          <Bell className={cn("size-4 stroke-[1.8] transition-transform duration-200 ease-out group-hover:rotate-6 group-hover:scale-105", open ? "text-[#141413]" : "text-[#78716C] group-hover:text-[#141413]")} />
-          {bellBadgeCount > 0 && (
-            <span className="absolute -right-1 -top-1 select-none text-[12px] font-normal leading-none tabular-nums text-[#78716C]">
-              {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
-            </span>
-          )}
-        </button>
-      </div>
-      {/* 工作台必须挂到 body：导航栏带 backdrop-blur，会给 position:fixed 建包含块，
-          留在 nav 内会让对话框按 63px 高的导航条定位（实测面板 top ≈ -329px，几乎全在屏幕外）。 */}
+        )}
+      >
+        待办
+        {todoCount > 0 && <span className="tabular-nums">{countLabel}</span>}
+      </button>
+      {/* 行动中枢必须挂到 body：顶栏在手机上整体隐藏（display:none），留在顶栏里手机抽屉就打不开它；
+          旧顶栏的毛玻璃还曾给 position:fixed 建包含块，把面板定位到屏幕外（实测 top ≈ -329px）。 */}
       {commandHubLoaded &&
         typeof document !== "undefined" &&
         createPortal(

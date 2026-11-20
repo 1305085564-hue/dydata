@@ -27,20 +27,19 @@ const modelTestListSource = readFileSync(
   "utf8"
 );
 
-test("S1 & S3 顶部摘要与操作按钮：检查一遍与接入新渠道", () => {
-  // S3: 顶部摘要一行字
-  assert.match(computeHeaderSource, /个功能正常/);
-  assert.match(computeHeaderSource, /个在顶班/);
-  assert.match(computeHeaderSource, /个停摆/);
-  assert.match(computeHeaderSource, /条渠道要你处理/);
+test("S1 & S3 工具栏：要处理筛选替代单独的摘要条，检查一遍与接入新渠道收在同一行", () => {
+  // S3: 渠道要不要处理由「要处理 N」筛选说；功能正常 / 顶班 / 停摆由页头标题说（ai-config-headline.ts）
+  assert.match(computePanelSource, /要处理 \$\{needsActionCount\}/);
+  assert.doesNotMatch(computeHeaderSource, /条渠道要你处理/);
 
-  // S1: 合并为一个「检查一遍」按钮，小字只查正在用的模型
+  // S1: 一个「检查一遍」按钮，悬停说明只查正在用的模型
   assert.match(computeHeaderSource, /检查一遍/);
   assert.match(computeHeaderSource, /只查正在用的模型/);
   assert.match(computePanelSource, /check_all_in_use/);
 
-  // 接入新渠道
+  // 接入新渠道是低频动作：描边按钮，不用陶土橙实底抢焦点
   assert.match(computeHeaderSource, /接入新渠道/);
+  assert.doesNotMatch(computeHeaderSource, /bg-\[#D97757\]/);
 });
 
 test("S2 最近一次检查结果组件：正确呈现总数、通过数与失败数", () => {
@@ -49,9 +48,9 @@ test("S2 最近一次检查结果组件：正确呈现总数、通过数与失�
   assert.match(modelTestListSource, /共查.*组，.*组通过，.*组失败/);
 });
 
-test("D1: 模型管理与上下架弹窗已删除，改为列表上方只看在用/全部切换", () => {
-  assert.match(computePanelSource, /只看在用/);
-  assert.match(computePanelSource, /全部模型/);
+test("D1: 模型管理与上下架弹窗已删除，改为列表上方在用/要处理/全部切换", () => {
+  assert.match(computePanelSource, /在用 \$\{inUseCount\}/);
+  assert.match(computePanelSource, /全部 \$\{report\?\.modelFamilies\.length/);
   assert.doesNotMatch(computePanelSource, /ModelManagerDialog/);
   assert.doesNotMatch(computePanelSource, /ShelfModelsDialog/);
 });
@@ -295,4 +294,22 @@ test("模型显示名是模型级字段：渠道行不再持有改名回调，�
   assert.ok(modelCardSource.includes("onRenameModel(renameAnchorId, trimmed)"));
   assert.ok(computePanelSource.includes("已更新模型显示名（此模型所有渠道共用）"));
   assert.equal(computePanelSource.includes("已更新渠道供应名称"), false);
+});
+
+test("模型卡：缺渠道时「为此模型找渠道」是带字按钮，渠道充足时收成图标；被定位时展开并加深", () => {
+  const healthy = makeFamily([makeChannel("A", "active", 1), makeChannel("B", "active", 2)]);
+  const healthyMarkup = renderToStaticMarkup(<ModelFamilyCard family={healthy} usageText="在给 截图识别 用" />);
+  assert.match(healthyMarkup, /aria-label="为此模型找渠道"/);
+  assert.doesNotMatch(healthyMarkup, /<span>为此模型找渠道<\/span>/);
+  assert.match(healthyMarkup, /在给 截图识别 用/);
+  assert.match(healthyMarkup, /data-model-card="model-x"/);
+
+  const single = makeFamily([makeChannel("only", "active", 1)]);
+  assert.match(renderToStaticMarkup(<ModelFamilyCard family={single} />), /<span>为此模型找渠道<\/span>/);
+
+  const shelvedOff = { ...healthy, isShelved: false };
+  assert.doesNotMatch(renderToStaticMarkup(<ModelFamilyCard family={shelvedOff} />), /data-slot="ai-channel-row"/);
+  const focusedMarkup = renderToStaticMarkup(<ModelFamilyCard family={shelvedOff} focused />);
+  assert.match(focusedMarkup, /data-slot="ai-channel-row"/);
+  assert.match(focusedMarkup, /bg-\[#E4E4E1\]/);
 });

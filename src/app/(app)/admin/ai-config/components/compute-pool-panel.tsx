@@ -2,12 +2,15 @@
 
 import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { useAiConfig, AI_MODEL_BATCH_TIMEOUT_MS, startDetectionRefresh } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { compareModelFamilies } from "@/lib/ai-config/list-order";
-import { PoolViewSwitcher, type PoolViewMode } from "./pool-view-switcher";
-import { ComputePoolHeader } from "./compute-pool-header";
+import { PoolViewSwitcher, SEGMENT_TRACK, segmentClass, type PoolViewMode } from "./pool-view-switcher";
+import { ComputePoolActions } from "./compute-pool-header";
+import { LastCheckSummaryCard } from "./channel-model-test-list";
+import { buildModelUsage, familyNeedsAction, formatModelUsage, MODEL_CARD_ATTR } from "../ai-config-view";
 import { ModelFamilyCard } from "./model-family-card";
 import { ChannelPoolView } from "./channel-pool-view";
 import { AddKeyDialog } from "./add-key-dialog";
@@ -20,7 +23,6 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import type { CheckResultItem } from "./channel-model-test-list";
 import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
-import { cn } from "@/lib/utils";
 
 // 恢复模型只说响应能证明的结果：零条不等于本来已开，缺字段也不推断
 export function modelToggleSuccessMessage(
@@ -36,7 +38,12 @@ export function modelToggleSuccessMessage(
     : "本次未恢复任何渠道供应；手动停用的渠道需逐条开启";
 }
 
-export function ComputePoolPanel() {
+/** 功能表「去修 →」发来的定位请求；seq 每次加一，同一个模型可以反复定位。 */
+export type ModelFocusRequest = { modelId: string; seq: number };
+
+type ShelveFilter = "in_use" | "needs_action" | "all";
+
+export function ComputePoolPanel({ focusRequest = null }: { focusRequest?: ModelFocusRequest | null }) {
   const { bundle, runCommand, loadData } = useAiConfig();
   const report = useAvailabilityReport(bundle);
   const searchParams = useSearchParams();
@@ -65,8 +72,10 @@ export function ComputePoolPanel() {
   };
 
   // 模型筛选：D1 只看在用 / 全部，默认只看在用（isShelved=true）
-  const [shelveFilter, setShelveFilter] = useState<"in_use" | "all">("in_use");
+  const [shelveFilter, setShelveFilter] = useState<ShelveFilter>("in_use");
   const [searchQuery, setSearchQuery] = useState("");
+  // 被「去修 →」定位过来的模型：选中色标出，换筛选或搜索时清掉
+  const [focusedModelId, setFocusedModelId] = useState<string | null>(null);
 
   // 检查测试状态
   const [isCheckingAll, setIsCheckingAll] = useState(false);
@@ -316,9 +325,11 @@ export function ComputePoolPanel() {
   const filteredFamilies = useMemo(() => {
     let list = orderedFamilies;
 
-    // D1: 只看在用 / 全部
+    // D1: 在用 / 要处理 / 全部
     if (shelveFilter === "in_use") {
       list = list.filter((f) => f.isShelved);
+    } else if (shelveFilter === "needs_action") {
+      list = list.filter(familyNeedsAction);
     }
 
     // 搜索过滤
@@ -334,25 +345,44 @@ export function ComputePoolPanel() {
     return list;
   }, [orderedFamilies, shelveFilter, searchQuery]);
 
+  const inUseCount = useMemo(() => (report?.modelFamilies ?? []).filter((f) => f.isShelved).length, [report]);
+  const needsActionCount = useMemo(() => (report?.modelFamilies ?? []).filter(familyNeedsAction).length, [report]);
+  const modelUsage = useMemo(() => buildModelUsage(report?.businessAssurances ?? []), [report]);
+
+  const changeShelveFilter = (next: ShelveFilter) => {
+    setShelveFilter(next);
+    setFocusedModelId(null);
+  };
+
+  // 「去修 →」：切到模型视角，保证目标模型在列表里，再滚过去
+  const handledFocusSeq = useRef(0);
+  useEffect(() => {
+    if (!focusRequest || focusRequest.seq === handledFocusSeq.current) return;
+    handledFocusSeq.current = focusRequest.seq;
+    const target = report?.modelFamilies.find((f) => f.modelId === focusRequest.modelId);
+    setViewMode("model");
+    setSearchQuery("");
+    setShelveFilter(target && !target.isShelved ? "all" : "in_use");
+    setFocusedModelId(focusRequest.modelId);
+  }, [focusRequest, report]);
+
+  useEffect(() => {
+    if (!focusedModelId || viewMode !== "model") return;
+    const frame = requestAnimationFrame(() => {
+      const card = document.querySelector(`[${MODEL_CARD_ATTR}="${CSS.escape(focusedModelId)}"]`);
+      card?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusedModelId, viewMode, focusRequest?.seq]);
+
+  const filterOptions: Array<{ value: ShelveFilter; label: string }> = [
+    { value: "in_use", label: `在用 ${inUseCount}` },
+    { value: "needs_action", label: `要处理 ${needsActionCount}` },
+    { value: "all", label: `全部 ${report?.modelFamilies.length ?? 0}` },
+  ];
+
   return (
     <div className="space-y-3">
-      {/* 顶部摘要与检查条 */}
-      <ComputePoolHeader
-        summary={
-          report?.businessSummary || {
-            normal: 0,
-            fallback: 0,
-            outage: 0,
-            needsAttentionChannels: 0,
-          }
-        }
-        onCheckAll={handleCheckAll}
-        onOpenAddKey={() => setAddKeyOpen(true)}
-        isChecking={isCheckingAll}
-        checkResult={checkResult}
-        onClearCheckResult={() => setCheckResult(null)}
-      />
-
       {/* 检测未完整收齐：保留说明和手动重新读取入口 */}
       {detectionState !== "idle" && (
         <div
@@ -377,7 +407,7 @@ export function ComputePoolPanel() {
         </div>
       )}
 
-      {/* 合并后的筛选与视角切换工具行 */}
+      {/* 一条吸顶工具栏：视角 · 在用/要处理/全部 · 搜索 ｜ 检查一遍 · 接入新渠道 */}
       <div
         data-slot="ai-pool-toolbar"
         className="sticky top-[var(--app-top-offset)] z-[var(--z-sticky-nav)] -mx-1 px-1 py-2 bg-[#FCFCFB]/85 backdrop-blur-md flex flex-wrap items-center gap-3"
@@ -386,47 +416,43 @@ export function ComputePoolPanel() {
 
         {viewMode === "model" && (
           <>
-            {/* 只看在用 / 全部 切换 */}
-            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F1F1F0] text-[12px]">
-              <button
-                type="button"
-                onClick={() => setShelveFilter("in_use")}
-                className={cn(
-                  "px-3 py-1 rounded-md transition-colors text-[12px]",
-                  shelveFilter === "in_use"
-                    ? "bg-white text-[#141413] shadow-input font-normal"
-                    : "text-[#78716C] hover:text-[#141413]"
-                )}
-              >
-                只看在用
-              </button>
-              <button
-                type="button"
-                onClick={() => setShelveFilter("all")}
-                className={cn(
-                  "px-3 py-1 rounded-md transition-colors text-[12px]",
-                  shelveFilter === "all"
-                    ? "bg-white text-[#141413] shadow-input font-normal"
-                    : "text-[#78716C] hover:text-[#141413]"
-                )}
-              >
-                全部模型 ({report?.modelFamilies.length ?? 0})
-              </button>
+            <div className={SEGMENT_TRACK} role="group" aria-label="筛选模型">
+              {filterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={shelveFilter === option.value}
+                  onClick={() => changeShelveFilter(option.value)}
+                  className={cn(
+                    segmentClass(shelveFilter === option.value),
+                    // 有要处理的模型时这一格用红字，眼睛第一下就落在这
+                    option.value === "needs_action" && needsActionCount > 0 && shelveFilter !== option.value && "text-status-danger-text",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
 
-            {/* 搜索框 */}
-            <div className="relative min-w-[220px] ml-auto">
+            <div className="relative w-[220px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索模型名称或标识..."
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setFocusedModelId(null);
+                }}
+                placeholder="搜索模型名称或标识"
                 className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFocusedModelId(null);
+                  }}
+                  aria-label="清除搜索"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
                 >
                   <X className="size-3" />
@@ -435,7 +461,19 @@ export function ComputePoolPanel() {
             </div>
           </>
         )}
+
+        <div className="ml-auto">
+          <ComputePoolActions
+            onCheckAll={handleCheckAll}
+            onOpenAddKey={() => setAddKeyOpen(true)}
+            isChecking={isCheckingAll}
+          />
+        </div>
       </div>
+
+      {checkResult && (
+        <LastCheckSummaryCard checkResult={checkResult} onDismiss={() => setCheckResult(null)} />
+      )}
 
       {/* 模型视角内容 */}
       {viewMode === "model" && (
@@ -443,7 +481,9 @@ export function ComputePoolPanel() {
           {/* 模型卡列表 */}
           {filteredFamilies.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
-              未找到匹配的模型。可切换至「全部模型」或调整搜索词。
+              {shelveFilter === "needs_action" && !searchQuery.trim()
+                ? "没有要处理的模型。"
+                : "未找到匹配的模型。可切换至「全部」或调整搜索词。"}
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white divide-y divide-[#E2E2DF]">
@@ -451,6 +491,8 @@ export function ComputePoolPanel() {
                 <ModelFamilyCard
                   key={family.modelId}
                   family={family}
+                  usageText={formatModelUsage(modelUsage[family.modelId])}
+                  focused={focusedModelId === family.modelId}
                   diagnosticMap={diagnosticMap}
                   onToggleSupply={handleToggleSupply}
                   onToggleModelEnabled={handleToggleModelEnabled}

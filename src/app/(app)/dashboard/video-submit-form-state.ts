@@ -4,11 +4,19 @@ import {
   isNullableVideo24hApiKey,
   VIDEO_24H_METRIC_DEFINITIONS,
 } from "@/lib/video-24h-metrics-contract";
-import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
+import type { VideoSubmissionEditDetail as BoundVideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
+import type { UnboundDailyReportDetail } from "@/app/api/video-submit/unbound-daily-report-detail";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 
 export type { ConfidenceLevel, EditableMetricField } from "./video-submit-form-model";
-export type { UnboundDailyReportDetail, VideoSubmissionEditDetail };
+export type { UnboundDailyReportDetail };
+export type VideoSubmissionEditDetail = BoundVideoSubmissionEditDetail | UnboundDailyReportDetail;
+
+export function isDailyReportOnlyEditDetail(
+  detail: VideoSubmissionEditDetail | null | undefined,
+): detail is UnboundDailyReportDetail {
+  return Boolean(detail && detail.videoId === null && detail.reportId);
+}
 
 export const SUBMISSION_ASSIGNEE_ROLES = ["script_author", "video_editor", "operator"] as const;
 export type SubmissionAssigneeRole = (typeof SUBMISSION_ASSIGNEE_ROLES)[number];
@@ -102,12 +110,14 @@ export function resolveVideoSubmitMode({
   panelMode,
   anomalyStatus,
   videoId,
+  dailyReportOnly = false,
 }: {
   panelMode: SubmitPanelMode;
   anomalyStatus: AnomalyStatus;
   videoId?: string | null;
+  dailyReportOnly?: boolean;
 }) {
-  if (panelMode === "editToday" && videoId) return "edit";
+  if (panelMode === "editToday" && (videoId || dailyReportOnly)) return "edit";
   if (anomalyStatus === "abnormal") return "abnormal";
   return "create";
 }
@@ -218,9 +228,25 @@ function isNullableString(value: unknown): value is string | null {
  */
 export function getVideoSubmissionEditDetailError(
   value: unknown,
-  expected: { accountId: string; bizDate: string },
+  expected: { accountId: string; bizDate: string; reportId?: string | null },
 ): string | null {
   if (!isRecord(value)) return "编辑详情格式错误，未读取到原视频记录";
+  if (value.videoId === null && typeof value.reportId === "string") {
+    if (
+      value.accountId !== expected.accountId ||
+      value.bizDate !== expected.bizDate ||
+      (expected.reportId && value.reportId !== expected.reportId)
+    ) {
+      return "编辑详情与当前账号或日期不一致，不能安全保存";
+    }
+    if (value.historyCapability !== "read_only_missing_required_data") {
+      return "日报编辑详情的能力标记不正确，不能安全保存";
+    }
+    if (!isRecord(value.meta) || !isRecord(value.metrics) || !Array.isArray(value.assets) || !Array.isArray(value.assigneeProfiles)) {
+      return "日报编辑详情不完整，不能安全保存";
+    }
+    return null;
+  }
   if (typeof value.videoId !== "string" || !value.videoId.trim()) {
     return "编辑详情缺少原视频 ID，不能安全保存";
   }
@@ -306,7 +332,7 @@ export function getVideoSubmissionEditDetailError(
 }
 
 export function buildVideoSubmissionEditRefill(
-  detail: VideoSubmissionEditDetail,
+  detail: BoundVideoSubmissionEditDetail,
 ): VideoSubmissionEditRefill {
   const metrics = {} as Record<EditableMetricName, string>;
   for (const metric of EDIT_DETAIL_METRICS) {

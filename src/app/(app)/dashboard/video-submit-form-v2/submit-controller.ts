@@ -5,11 +5,13 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { Video } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
-import { parseMetric, resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
+import { resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
 import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh } from "@/lib/video-submit-workflow/selectors";
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
+import { isDailyReportOnlyEditDetail } from "../video-submit-form-state";
+import { saveDailyReportOnlyEdit } from "../actions";
 
 type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string; reason?: string; appealId?: string };
 type Setter<T> = (next: T | ((current: T) => T)) => void;
@@ -21,7 +23,17 @@ export type SubmitControllerOptions = {
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setAppealStatus: Setter<"idle" | "pending" | "resume_pending" | "approved" | "rejected">; setAppealId: Setter<string | null>; setAppealResultReason: Setter<string | null>; setAppealReason: Setter<string>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
-  onSubmitted: (video: Video | null, summaryOverride?: TodaySubmissionReportLike | null) => void;
+  onSubmitted: (
+    video: Video | null,
+    summaryOverride?: TodaySubmissionReportLike | null,
+    submissionPreferences?: {
+      accountId: string;
+      scriptAuthorUserId: string | null;
+      videoEditorUserId: string | null;
+      operatorUserId: string | null;
+      topicTag: string;
+    },
+  ) => void;
   clearDraft: () => void; pauseDraftSaving: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
@@ -30,6 +42,8 @@ export function createSubmitController(options: SubmitControllerOptions) {
   const { meta, fields, slots, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
+
+    const dailyReportOnly = isDailyReportOnlyEditDetail(editDetail) ? editDetail : null;
 
     const editPayload =
       mode === "editToday" && account
@@ -64,6 +78,39 @@ export function createSubmitController(options: SubmitControllerOptions) {
 
       if (!user && !userId) {
         throw new Error("登录状态已失效，请刷新页面后重试");
+      }
+
+      if (dailyReportOnly) {
+        const formData = new FormData();
+        formData.set("account_id", account.id);
+        formData.set("report_id", dailyReportOnly.reportId);
+        formData.set("report_date", dailyReportOnly.bizDate);
+        formData.set("title", meta.videoTitle);
+        formData.set("content", meta.content);
+        formData.set("published_at", dailyReportOnly.meta.publishedAt ?? meta.publishedAt);
+        for (const [key, field] of Object.entries(fields)) {
+          formData.set(key, field.value);
+        }
+        formData.set("script_author_user_id", meta.scriptAuthorUserId ?? "");
+        formData.set("video_editor_user_id", meta.videoEditorUserId ?? "");
+        formData.set("operator_user_id", meta.operatorUserId ?? "");
+
+        const result = await saveDailyReportOnlyEdit(formData);
+        if (result?.error) throw new Error(result.error);
+
+        const summaryOverride = {
+          ...createSummaryOverride(account.id, meta, fields),
+          id: dailyReportOnly.reportId,
+          report_date: dailyReportOnly.bizDate,
+        };
+        setSubmittedReportId(dailyReportOnly.reportId);
+        setSubmittedReportDate(dailyReportOnly.bizDate);
+        setSubmittedVideoId(null);
+        setIsSubmitted(true);
+        pauseDraftSaving();
+        onSubmitted(null, summaryOverride);
+        clearDraft();
+        return;
       }
 
       const submissionPayload = buildVideoSubmitPayload({
@@ -178,7 +225,17 @@ export function createSubmitController(options: SubmitControllerOptions) {
       setSubmittedVideoId(submittedVideo.id);
       setIsSubmitted(true);
       pauseDraftSaving();
-      onSubmitted(submittedVideo, summaryOverride);
+      onSubmitted(
+        submittedVideo,
+        summaryOverride,
+        mode === "editToday" ? undefined : {
+          accountId: account.id,
+          scriptAuthorUserId: meta.scriptAuthorUserId,
+          videoEditorUserId: meta.videoEditorUserId,
+          operatorUserId: meta.operatorUserId,
+          topicTag: meta.topicTag,
+        },
+      );
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
     } catch (error) {

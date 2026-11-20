@@ -50,9 +50,10 @@ export function VideoSubmitPanelToolbar({
   const menuMotion = useExitMotion(isCalendarOpen);
   return (
     <>
-        {/* 页头：一句话说今天交没交；副行是本月的账，点开看月历（裸铺于底层画布，无卡片外框） */}
-        <div className="px-2">
-          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* 页头：一句话说今天交没交；副行是本月的账，点开看月历（裸铺于底层画布，无卡片外框）
+            页头坐在轨道边线上（与顶栏 DYData 同轴，美学宝典 §4.3），不额外内缩 */}
+        <>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             {/* 左侧：状态句 + 本月履约摘要 */}
             <div className="space-y-1 min-w-0">
               <h1 className="flex items-center gap-2 font-normal font-serif text-[20px] sm:text-[28px] leading-[1.20] text-[#141413] tracking-tight">
@@ -93,7 +94,7 @@ export function VideoSubmitPanelToolbar({
                       "absolute left-0 top-full mt-2 z-50 origin-top-left duration-150",
                     )}
                   >
-                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
+                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
@@ -117,19 +118,17 @@ export function VideoSubmitPanelToolbar({
 
             {/* 右侧：仅留两个入口 */}
             <FilterBar>
-              {/* 停笔调养申请按钮 */}
               <Button
                 type="button"
                 variant="ghost"
                 size="m"
                 onClick={() => setIsExemptionDialogOpen(true)}
-                title="可申请停笔调养；已在审批中的日期会被锁定"
+                title="请假或报备免交；已在审批中的日期不能重复申请"
               >
                 <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
                 请假/报备
               </Button>
 
-              {/* 历史手稿按钮 */}
               <Button
                 type="button"
                 variant="ghost"
@@ -141,7 +140,7 @@ export function VideoSubmitPanelToolbar({
               </Button>
             </FilterBar>
           </div>
-        </div>
+        </>
 
     </>
   );

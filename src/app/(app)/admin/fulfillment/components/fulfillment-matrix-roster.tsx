@@ -1,30 +1,20 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  ArrowUpDown,
-  RotateCcw,
-} from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
-import type {
-  FulfillmentMemberSummary,
-  FulfillmentStatus,
-  TimeRangePreset,
-} from "@/types/fulfillment";
-import { shiftDateOnly } from "@/lib/loaders/shared";
+import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { SectionHeading } from "@/components/ui/section-heading";
 import {
   isFulfilledFulfillmentStatus,
   isWaivedFulfillmentStatus,
   isManualFulfillmentMarkStatus,
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
+import { cn } from "@/lib/utils";
+import { rowSelectionClass } from "@/components/ui/selection";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
+import { isMissingStreak, type RosterSortDir } from "../fulfillment-page-view";
 
 export interface FulfillmentAppeal {
   id: string;
@@ -39,40 +29,20 @@ export interface FulfillmentAppeal {
 interface FulfillmentMatrixRosterProps {
   year: number;
   month: number;
+  /** 已按分段收窄、按排序排好的成员 */
   members: FulfillmentMemberSummary[];
   today: string;
   onCellClick: (member: FulfillmentMemberSummary, date: string) => void;
-  onMonthChange: (year: number, month: number) => void;
   appeals?: FulfillmentAppeal[];
-  onQuickMarkCell?: (
-    userId: string,
-    date: string,
-    action: ManualFulfillmentMarkStatus,
-  ) => Promise<void>;
+  onQuickMarkCell?: (userId: string, date: string, action: ManualFulfillmentMarkStatus) => Promise<void>;
   onClearManualOverride?: (userId: string, date: string) => Promise<void>;
-  onReviewPendingExemption?: (
-    requestId: string,
-    action: "approved" | "rejected",
-  ) => Promise<void>;
-  range?: TimeRangePreset;
+  onReviewPendingExemption?: (requestId: string, action: "approved" | "rejected") => Promise<void>;
+  sortDir: RosterSortDir;
+  /** 断更分段按连续未发天数排，此时「本月」列不可排序 */
+  onSortDirChange?: (dir: RosterSortDir) => void;
+  isLoading?: boolean;
+  emptyText: string;
 }
-
-export function isDayFocused(
-  dateKey: string,
-  today: string,
-  range?: TimeRangePreset,
-): boolean {
-  if (!range) return false;
-  if (range === "today") {
-    return dateKey === today;
-  }
-  if (range === "last7days") {
-    const cutoff = shiftDateOnly(new Date(`${today}T12:00:00+08:00`), -6);
-    return dateKey >= cutoff && dateKey <= today;
-  }
-  return false;
-}
-
 
 export interface ActiveCellData {
   member: FulfillmentMemberSummary;
@@ -89,18 +59,12 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 function formatDateKey(year: number, month: number, day: number) {
-  const m = String(month).padStart(2, "0");
-  const d = String(day).padStart(2, "0");
-  return `${year}-${m}-${d}`;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 const TOOLTIP_ESTIMATED_HEIGHT = 220;
 
-export function getTooltipPlacement(
-  rect: DOMRect,
-  viewportWidth: number,
-  viewportHeight: number,
-) {
+export function getTooltipPlacement(rect: DOMRect, viewportWidth: number, viewportHeight: number) {
   const centerX = Math.min(
     Math.max(138, viewportWidth - 138),
     Math.max(138, rect.left + rect.width / 2),
@@ -125,92 +89,110 @@ export function getTooltipPlacement(
   };
 }
 
-function getStatusColor(
-  status: FulfillmentStatus | undefined,
-  hasPendingExemption = false,
-): string {
-  if (hasPendingExemption) return "bg-status-warning/25 border-status-warning/60 border-dashed";
-  if (!status) return "border-transparent bg-transparent";
-  if (isFulfilledFulfillmentStatus(status)) return "bg-status-success/20 border-status-success/35 text-status-success";
-  if (isWaivedFulfillmentStatus(status)) return "bg-status-warning/40 border-status-warning/60";
-  switch (status) {
-    case "leave": return "bg-status-info/45 border-status-info/65";
-    case "absent": return "bg-status-danger/45 border-status-danger/65";
-    case "unconfirmed": return "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C]";
-    default: return "bg-[#FCFCFB] border-[#E2E2DF]/60 text-[#78716C]";
-  }
+/**
+ * 格子只有四种底 + 一种框（原来五种颜色 + 今日橙圈 + 申诉黄圈）：
+ * 已发（绿）· 请假/豁免（不计考核，浅砂）· 缺勤（红）· 未确认（白底细边）；有待审的（补交或请假）加虚线框。
+ * 红绿按「异常信号」用：绿=没问题，红=缺勤。
+ */
+export type CellTone = "published" | "excused" | "absent" | "unconfirmed" | "none";
+
+export function getCellTone(status: FulfillmentStatus | undefined): CellTone {
+  if (!status) return "none";
+  if (isFulfilledFulfillmentStatus(status)) return "published";
+  if (status === "leave" || isWaivedFulfillmentStatus(status)) return "excused";
+  if (status === "absent") return "absent";
+  return "unconfirmed";
 }
 
+const CELL_TONE_CLASS: Record<CellTone, string> = {
+  published: "bg-status-success/25 border-status-success/40",
+  excused: "bg-[#E2E2DF] border-[#E2E2DF]",
+  absent: "bg-status-danger/40 border-status-danger/55",
+  unconfirmed: "bg-white border-[#E2E2DF]",
+  none: "bg-transparent border-transparent",
+};
+
+const PENDING_CELL_CLASS = "border-dashed border-status-warning";
+
+const LEGEND: { tone: CellTone; label: string }[] = [
+  { tone: "published", label: "已发" },
+  { tone: "excused", label: "请假 / 豁免" },
+  { tone: "absent", label: "缺勤" },
+  { tone: "unconfirmed", label: "未确认" },
+];
+
 function getStatusLabel(status: FulfillmentStatus | undefined): string {
-  if (!status) return "无记录";
+  if (!status) return "不在考核内";
   const labels: Record<FulfillmentStatus, string> = {
-    published: "已发布",
-    confirmed_published: "已确认",
+    published: "已发",
+    confirmed_published: "已发（人工确认）",
     leave: "请假",
     waived: "豁免",
     exempted: "豁免期",
     absent: "缺勤",
-    unconfirmed: "待确认",
+    unconfirmed: "未确认",
   };
   return labels[status] ?? status;
 }
 
-type SortMode = "rate_asc" | "rate_desc" | "missing_desc" | "default";
+const MENU_ACTIONS: { action: ManualFulfillmentMarkStatus; label: string }[] = [
+  { action: "confirmed_published", label: "标为已发" },
+  { action: "leave", label: "标为请假" },
+  { action: "waived", label: "标为豁免" },
+  { action: "absent", label: "标为缺勤" },
+];
 
+const MENU_BUTTON =
+  "flex h-8 items-center justify-center rounded-md border border-[#E2E2DF] bg-white text-[14px] text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9]";
+
+const NAME_COL = "w-[144px] min-w-[144px] max-w-[144px]";
+const MONTH_COL = "w-[148px] min-w-[148px] max-w-[148px]";
+
+/**
+ * 全员月历大表：一行一人，左两列固定（成员 · 本月），右边是这个月每一天。
+ * 标题、翻月、分段都在页头和工具栏，这里不再自带标题、排序胶囊和月份切换。
+ */
 export function FulfillmentMatrixRoster({
   year,
   month,
   members,
   today,
   onCellClick,
-  onMonthChange,
   appeals = [],
   onQuickMarkCell,
   onClearManualOverride,
   onReviewPendingExemption,
-  range,
+  sortDir,
+  onSortDirChange,
+  isLoading = false,
+  emptyText,
 }: FulfillmentMatrixRosterProps) {
-  const [expanded, setExpanded] = useState(true);
   const [hoveredCell, setHoveredCell] = useState<ActiveCellData | null>(null);
   const [openMenuCell, setOpenMenuCell] = useState<ActiveCellData | null>(null);
   const [reviewingRequestId, setReviewingRequestId] = useState<string | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>("rate_asc");
 
-  const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const dayNumbers = useMemo(
-    () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
-    [daysInMonth],
+    () => Array.from({ length: getDaysInMonth(year, month) }, (_, i) => i + 1),
+    [year, month],
   );
 
-  // 构建申诉缓存映射
   const appealMap = useMemo(() => {
     const map = new Map<string, FulfillmentAppeal>();
-    if (Array.isArray(appeals)) {
-      for (const appeal of appeals) {
-        map.set(`${appeal.user_id}_${appeal.record_date}`, appeal);
-      }
+    for (const appeal of appeals) {
+      if (appeal.status === "pending") map.set(`${appeal.user_id}_${appeal.record_date}`, appeal);
     }
     return map;
   }, [appeals]);
 
-  // 排序逻辑：默认达成率升序（让落后者最优先浮现）
-  const sortedMembers = useMemo(() => {
-    const list = [...members];
-    if (sortMode === "rate_asc") {
-      return list.sort((a, b) => (a.fulfillmentRate !== b.fulfillmentRate ? a.fulfillmentRate - b.fulfillmentRate : b.remainingCount - a.remainingCount));
-    }
-    if (sortMode === "rate_desc") return list.sort((a, b) => b.fulfillmentRate - a.fulfillmentRate);
-    if (sortMode === "missing_desc") return list.sort((a, b) => b.consecutiveMissing - a.consecutiveMissing);
-    return list;
-  }, [members, sortMode]);
-
-  // 监听滚动与 Escape 自动关闭悬浮弹窗
+  // 滚动时收起悬停卡片，Esc 收起菜单
   useEffect(() => {
     const handleScrollOrKey = (e: Event) => {
-      if (e instanceof KeyboardEvent && e.key === "Escape") {
-        setOpenMenuCell(null);
-        setHoveredCell(null);
-      } else if (!(e instanceof KeyboardEvent)) {
+      if (e instanceof KeyboardEvent) {
+        if (e.key === "Escape") {
+          setOpenMenuCell(null);
+          setHoveredCell(null);
+        }
+      } else {
         setHoveredCell(null);
       }
     };
@@ -222,472 +204,214 @@ export function FulfillmentMatrixRoster({
     };
   }, []);
 
-  const handlePrevMonth = () => {
-    setOpenMenuCell(null);
-    setHoveredCell(null);
-    if (month === 1) {
-      onMonthChange(year - 1, 12);
-    } else {
-      onMonthChange(year, month - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    setOpenMenuCell(null);
-    setHoveredCell(null);
-    if (month === 12) {
-      onMonthChange(year + 1, 1);
-    } else {
-      onMonthChange(year, month + 1);
-    }
-  };
-
-  const handleCurrentMonth = () => {
-    setOpenMenuCell(null);
-    setHoveredCell(null);
-    const now = new Date();
-    onMonthChange(now.getFullYear(), now.getMonth() + 1);
-  };
-
-  const isCurrentMonth = () => {
-    const now = new Date();
-    return year === now.getFullYear() && month === now.getMonth() + 1;
-  };
-
   const activeCell = openMenuCell || hoveredCell;
+  const activeDay = activeCell?.day;
+  const activeUserId = activeCell?.member.userId;
   const tooltipPosition =
     activeCell && typeof window !== "undefined"
-      ? getTooltipPlacement(
-          activeCell.rect,
-          window.innerWidth,
-          window.innerHeight,
-        )
+      ? getTooltipPlacement(activeCell.rect, window.innerWidth, window.innerHeight)
       : undefined;
 
+  const runAndClose = async (task: () => Promise<void>) => {
+    await task();
+    setOpenMenuCell(null);
+  };
+
+  const reviewLeave = async (action: "approved" | "rejected") => {
+    const reqId = openMenuCell?.record?.pendingExemption?.id;
+    if (!reqId || !onReviewPendingExemption) return;
+    setReviewingRequestId(reqId);
+    try {
+      await onReviewPendingExemption(reqId, action);
+      setOpenMenuCell(null);
+    } finally {
+      setReviewingRequestId(null);
+    }
+  };
+
+  const sortable = Boolean(onSortDirChange);
+  const ariaSort = sortable ? (sortDir === "asc" ? "ascending" : "descending") : undefined;
+
   return (
-    <div className="space-y-3">
-      {/* 矩阵标题、排序器与月度切换栏 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 pb-3">
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-controls="monthly-matrix-panel"
-          onClick={() => setExpanded((current) => !current)}
-          className="flex items-center gap-2 text-left rounded-md transition-colors cursor-pointer group"
-        >
-          <SectionHeading as="h3" className="group-hover:text-[#D97757] transition-colors">
-            全员发布战况主表
-          </SectionHeading>
-          <span className="text-[12px] font-normal text-[#78716C]">
-            {year}年{month}月 · {members.length} 位成员
-          </span>
-          {expanded ? (
-            <ChevronUp className="size-4 text-[#78716C] group-hover:text-[#1F1E1D] transition-transform" />
-          ) : (
-            <ChevronDown className="size-4 text-[#78716C] group-hover:text-[#1F1E1D] transition-transform" />
-          )}
-        </button>
-
-        {expanded && (
-          <div className="flex shrink-0 items-center gap-2">
-            {/* 快速排序下拉/切换（遵循 Claude 哲学：浅砂底座 + 浮起纯白激活触点） */}
-            <div className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF]/60 bg-[#F1F1F0] p-0.5 text-[12px] shadow-input">
-              <span className="px-2 text-[#78716C] flex items-center gap-1">
-                <ArrowUpDown className="size-3 text-[#78716C]" />
-                排序:
-              </span>
-              <button
-                type="button"
-                onClick={() => setSortMode("rate_asc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
-                  sortMode === "rate_asc"
-                    ? "bg-white text-[#141413] shadow-input"
-                    : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
-                }`}
-              >
-                落后优先
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortMode("rate_desc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
-                  sortMode === "rate_desc"
-                    ? "bg-white text-[#141413] shadow-input"
-                    : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
-                }`}
-              >
-                高达成优先
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortMode("missing_desc")}
-                className={`rounded-md px-2.5 py-1 text-[12px] transition cursor-pointer ${
-                  sortMode === "missing_desc"
-                    ? "bg-white text-[#141413] shadow-input"
-                    : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
-                }`}
-              >
-                断更优先
-              </button>
-            </div>
-
-            {/* 月份切换器 */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label="上一月"
-                className="h-7 w-7 text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md"
-                onClick={handlePrevMonth}
-              >
-                <ChevronLeft className="size-3.5" />
-              </Button>
-              <span className="min-w-[68px] text-center text-[12px] font-normal tabular-nums text-[#1F1E1D]">
-                {year}年{month}月
-              </span>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label="下一月"
-                className="h-7 w-7 text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md"
-                onClick={handleNextMonth}
-              >
-                <ChevronRight className="size-3.5" />
-              </Button>
-              {!isCurrentMonth() && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={handleCurrentMonth}
-                  className="ml-1 text-[12px] h-6 px-2 text-[#D97757] hover:bg-[#D97757]/10 rounded-md"
-                >
-                  回到当月
-                </Button>
-              )}
-            </div>
-          </div>
+    <div className="space-y-2">
+      <div
+        className={cn(
+          "overflow-x-auto rounded-xl border border-[#E2E2DF] bg-white transition-opacity duration-150",
+          isLoading && "opacity-50",
         )}
-      </div>
-
-      {/* 展开的表格大盘 */}
-      {expanded && (
-        <div id="monthly-matrix-panel" className="space-y-3">
-          <Card className="overflow-x-auto p-0 gap-0 shadow-card-ring border-[#E2E2DF]/60">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-[#E2E2DF]/60 bg-surface-row-hover/90 text-[12px]">
-                  {/* 左侧第一列：成员身份（紧凑 6 成留白，姓名部门舒展不折行） */}
-                  <th className="sticky left-0 z-20 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
-                    成员
+        aria-busy={isLoading || undefined}
+      >
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-[#E2E2DF] text-[12px] text-[#78716C]">
+              <th className={cn("sticky left-0 z-20 bg-white px-3 py-2.5 text-left font-normal", NAME_COL)}>成员</th>
+              <th
+                aria-sort={ariaSort}
+                className={cn("sticky left-[144px] z-20 border-r border-[#E2E2DF] bg-white px-3 py-2.5 text-left font-normal", MONTH_COL)}
+              >
+                {sortable ? (
+                  <button
+                    type="button"
+                    onClick={() => onSortDirChange?.(sortDir === "asc" ? "desc" : "asc")}
+                    className="inline-flex items-center gap-1 rounded-md text-[#1F1E1D] hover:text-[#141413] cursor-pointer"
+                    title={sortDir === "asc" ? "落后的在前，点一下改成领先的在前" : "领先的在前，点一下改成落后的在前"}
+                  >
+                    本月
+                    {sortDir === "asc" ? (
+                      <ArrowUp className="size-3 text-[#141413]" aria-hidden />
+                    ) : (
+                      <ArrowDown className="size-3 text-[#141413]" aria-hidden />
+                    )}
+                  </button>
+                ) : (
+                  <span>本月 · 按断更天数</span>
+                )}
+              </th>
+              {dayNumbers.map((day, index) => {
+                const dateKey = formatDateKey(year, month, day);
+                const isToday = dateKey === today;
+                return (
+                  <th
+                    key={day}
+                    aria-current={isToday ? "date" : undefined}
+                    className={cn(
+                      "min-w-[26px] py-2.5 text-center text-[12px] font-normal tabular-nums",
+                      index === 0 ? "pl-2.5 pr-0.5" : index === dayNumbers.length - 1 ? "pl-0.5 pr-2.5" : "px-0.5",
+                      isToday || day === activeDay ? "bg-[#F1F1F0] text-[#141413]" : "text-[#A8A29E]",
+                    )}
+                  >
+                    {day}
                   </th>
+                );
+              })}
+            </tr>
+          </thead>
 
-                  {/* 左侧第二列：实发 / 应发、状态徽章与考核天数算式 */}
-                  <th className="sticky left-[104px] z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 bg-surface-row-hover/95 backdrop-blur-md px-3.5 py-3 text-left font-normal uppercase tracking-wider text-[#78716C]">
-                    实发 / 应发 · 算式
-                  </th>
-
-                  {/* 中间 1~31 天表头（首日增起跑留白②，末日增收尾留白③） */}
-                  {dayNumbers.map((day) => {
-                    const dateKey = formatDateKey(year, month, day);
-                    const isToday = dateKey === today;
-                    const isColHovered = day === (hoveredCell?.day ?? openMenuCell?.day);
-                    const isFirstDay = day === 1;
-                    const isLastDay = day === dayNumbers[dayNumbers.length - 1];
-                    const isFocused = isDayFocused(dateKey, today, range);
-
-                    return (
-                      <th
-                        key={day}
-                        className={`min-w-[26px] py-2.5 text-center text-[12px] font-normal tabular-nums transition-colors duration-150 ${
-                          isFirstDay ? "pl-2.5 pr-0.5" : isLastDay ? "pl-0.5 pr-2.5" : "px-0.5"
-                        } ${
-                          isColHovered
-                            ? "text-[#D97757] font-normal bg-[#F1F1F0]"
-                            : isFocused && range === "today"
-                              ? "text-[#D97757] bg-[#D97757]/10 rounded-t-md"
-                              : isToday
-                                ? "text-[#D97757] bg-[#F1F1F0]"
-                                : isFocused && range === "last7days"
-                                  ? "text-[#141413] font-normal bg-[#F1F1F0]/80"
-                                  : "text-[#78716C] font-normal"
-                        }`}
+          <tbody>
+            {members.length === 0 ? (
+              <tr>
+                <td colSpan={dayNumbers.length + 2} className="px-3 py-10 text-center text-[14px] text-[#78716C]">
+                  {emptyText}
+                </td>
+              </tr>
+            ) : (
+              members.map((member) => {
+                const isRowActive = member.userId === activeUserId;
+                const assessedDays = member.requiredCount + member.leaveDays + member.waivedDays;
+                const excusedDays = member.leaveDays + member.waivedDays;
+                const stickyBg = isRowActive ? "bg-[#E4E4E1]" : "bg-white";
+                return (
+                  <tr
+                    key={member.userId}
+                    className={cn(
+                      "border-b border-[#E2E2DF]/60 last:border-b-0",
+                      rowSelectionClass(isRowActive),
+                    )}
+                  >
+                    <td className={cn("sticky left-0 z-10 px-3 py-2", NAME_COL, stickyBg)}>
+                      <button
+                        type="button"
+                        onClick={() => onCellClick(member, today)}
+                        className="flex w-full items-center gap-2 overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-info/20 rounded-md"
                       >
-                        <div className="flex flex-col items-center">
-                          <span>{day}</span>
-                          {isToday && (
-                            <span className="size-1 rounded-full bg-current text-[#D97757] mt-0.5" />
-                          )}
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-
-              <tbody>
-                {sortedMembers.map((member) => {
-                  const isRowHovered =
-                    member.userId === (hoveredCell?.member.userId ?? openMenuCell?.member.userId);
-
-                  // 考核天数精准算式：考核天数 = 应发 + 请假 + 豁免
-                  const assessedDays = member.requiredCount + member.leaveDays + member.waivedDays;
-
-                  // 梯队标签分级
-                  const tier =
-                    member.requiredCount === 0 || member.publishedCount >= member.requiredCount
-                      ? { label: "达标", color: "bg-status-success/10 text-status-success border-status-success/20" }
-                      : member.fulfillmentRate >= 80
-                        ? { label: "冲刺", color: "bg-[#D97757]/10 text-[#D97757] border-[#D97757]/20" }
-                        : member.fulfillmentRate >= 60
-                          ? { label: "预警", color: "bg-status-warning/15 text-status-warning border-status-warning/30" }
-                          : { label: "断更", color: "bg-status-danger/10 text-status-danger border-status-danger/20" };
-
-                  return (
-                    <tr
-                      key={member.userId}
-                      className={`border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors duration-100 ${
-                        isRowHovered ? "bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]/60"
-                      }`}
-                    >
-                      {/* 左侧第一列：成员身份（紧凑 6 成留白，姓名部门舒展不折行） */}
-                      <td
-                        className={`sticky left-0 z-10 w-[104px] min-w-[104px] max-w-[104px] border-r border-[#E2E2DF]/60 px-3 py-2.5 transition-colors ${
-                          isRowHovered
-                            ? "bg-[#FCFCFB] text-[#D97757]"
-                            : "bg-white/95 backdrop-blur-sm"
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onCellClick(member, today)}
-                          className="flex flex-col items-start text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer group/name w-full overflow-hidden"
-                        >
-                          <span
-                            className={`text-[14px] font-normal transition-colors group-hover/name:text-[#D97757] truncate w-full whitespace-nowrap ${
-                              isRowHovered ? "text-[#D97757]" : "text-[#141413]"
-                            }`}
-                          >
+                        <InitialAvatar name={member.userName} />
+                        <span className="flex min-w-0 flex-1 flex-col items-start">
+                          <span className="w-full truncate text-[14px] text-[#141413] hover:underline underline-offset-2">
                             {member.userName}
                           </span>
                           {member.teamName && (
-                            <span className="text-[12px] text-[#78716C] font-normal truncate w-full whitespace-nowrap mt-0.5">
-                              {member.teamName}
-                            </span>
+                            <span className="w-full truncate text-[12px] text-[#78716C]">{member.teamName}</span>
                           )}
-                        </button>
-                      </td>
+                        </span>
+                      </button>
+                    </td>
 
-                      {/* 左侧第二列：实发 / 应发、状态徽章与考核天数算式 */}
-                      <td
-                        className={`sticky left-[104px] z-10 w-[240px] min-w-[240px] max-w-[240px] border-r border-[#E2E2DF]/60 px-3.5 py-2.5 transition-colors ${
-                          isRowHovered
-                            ? "bg-[#FCFCFB]"
-                            : "bg-white/95 backdrop-blur-sm"
-                        }`}
+                    <td className={cn("sticky left-[144px] z-10 border-r border-[#E2E2DF] px-3 py-2", MONTH_COL, stickyBg)}>
+                      <div className="flex items-baseline gap-2 tabular-nums">
+                        <span className="text-[14px] text-[#141413]">
+                          {member.publishedCount}
+                          <span className="text-[12px] text-[#A8A29E]"> / {member.requiredCount}</span>
+                        </span>
+                        <span className="text-[12px] text-[#78716C]">{member.fulfillmentRate}%</span>
+                        {isMissingStreak(member) && (
+                          <span className="text-[12px] text-status-danger">断 {member.consecutiveMissing} 天</span>
+                        )}
+                      </div>
+                      <div
+                        className="text-[12px] tabular-nums text-[#A8A29E]"
+                        title={`考核 ${assessedDays} 天，请假 ${member.leaveDays} 天、豁免 ${member.waivedDays} 天不算应发，应发 ${member.requiredCount} 条`}
                       >
-                        <div className="flex flex-col items-start gap-1 w-full">
-                          {/* 顶行：实发 / 应发数值与达标、断更徽章两端对齐展示 */}
-                          <div className="flex items-center justify-between gap-1 w-full">
-                            <div className="flex items-baseline gap-1 text-[14px] tabular-nums shrink-0">
-                              <span
-                                className={`${
-                                  member.requiredCount > 0 &&
-                                  member.publishedCount >= member.requiredCount
-                                    ? "text-status-success"
-                                    : member.fulfillmentRate >= 60
-                                      ? "text-[#141413]"
-                                      : "text-status-danger"
-                                }`}
-                              >
-                                {member.publishedCount}
-                              </span>
-                              <span className="text-[12px] text-[#A8A29E]">/</span>
-                              <span className="text-[12px] text-[#78716C] font-normal">
-                                {member.requiredCount} 条应发
-                              </span>
-                            </div>
+                        考核 {assessedDays} 天{excusedDays > 0 ? ` · 假免 ${excusedDays}` : ""}
+                      </div>
+                    </td>
 
-                            {/* 状态徽章紧随其后 */}
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span
-                                className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal border tabular-nums ${tier.color}`}
-                              >
-                                {tier.label} {member.fulfillmentRate}%
-                              </span>
-                              {member.consecutiveMissing >= 2 && (
-                                <span className="rounded-md bg-status-danger/10 px-1.5 py-0.5 text-[12px] text-status-danger tabular-nums">
-                                  断{member.consecutiveMissing}天
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 中行：饱满的进度条（横向延展，消除右侧空洞） */}
-                          <div className="h-1 w-full overflow-hidden rounded-full bg-[#F1F1F0]">
-                            <div
-                              className={`h-full rounded-full transition-[width,background-color] duration-200 ${
-                                member.fulfillmentRate >= 100
-                                  ? "bg-status-success"
-                                  : member.fulfillmentRate >= 80
-                                    ? "bg-[#D97757]"
-                                    : member.fulfillmentRate >= 60
-                                      ? "bg-status-warning"
-                                      : "bg-status-danger"
-                              }`}
-                              style={{ width: `${Math.min(100, Math.max(0, member.fulfillmentRate))}%` }}
-                            />
-                          </div>
-
-                          {/* 底行：严谨透明的考核天数算式 */}
-                          <div className="text-[12px] text-[#78716C] font-normal tabular-nums leading-tight">
-                            {member.leaveDays > 0 || member.waivedDays > 0 ? (
-                              <span>
-                                考核{assessedDays}
-                                {member.leaveDays > 0 && ` - 假${member.leaveDays}`}
-                                {member.waivedDays > 0 && ` - 免${member.waivedDays}`}
-                                {" = "}{member.requiredCount}
-                              </span>
-                            ) : (
-                              <span className="text-[#78716C]">
-                                考核{assessedDays}天全勤
+                    {dayNumbers.map((day, index) => {
+                      const dateKey = formatDateKey(year, month, day);
+                      const record = member.days[dateKey];
+                      const status = record?.status;
+                      const appeal = appealMap.get(`${member.userId}_${dateKey}`);
+                      const hasPending = Boolean(record?.pendingExemption) || Boolean(appeal);
+                      const cell = { member, dateKey, day, status, record, appeal };
+                      return (
+                        <td
+                          key={day}
+                          className={cn(
+                            "py-1.5",
+                            index === 0 ? "pl-2.5 pr-0.5" : index === dayNumbers.length - 1 ? "pl-0.5 pr-2.5" : "px-0.5",
+                            (dateKey === today || day === activeDay) && !isRowActive && "bg-[#F7F7F6]",
+                          )}
+                        >
+                          <button
+                            type="button"
+                            data-date={dateKey}
+                            aria-label={`${member.userName} ${month}月${day}日：${getStatusLabel(status)}${hasPending ? "，有待审" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuCell({ ...cell, rect: e.currentTarget.getBoundingClientRect() });
+                              setHoveredCell(null);
+                            }}
+                            onMouseEnter={(e) => {
+                              if (openMenuCell) return;
+                              setHoveredCell({ ...cell, rect: e.currentTarget.getBoundingClientRect() });
+                            }}
+                            onMouseLeave={() => setHoveredCell(null)}
+                            className={cn(
+                              "relative mx-auto flex size-[22px] items-center justify-center rounded-md border cursor-pointer transition-colors duration-150 hover:border-[#78716C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-info/20",
+                              CELL_TONE_CLASS[getCellTone(status)],
+                              hasPending && PENDING_CELL_CLASS,
+                            )}
+                          >
+                            {record?.publishedCount != null && record.publishedCount >= 2 && (
+                              <span className="pointer-events-none text-[12px] leading-none tabular-nums text-[#1F1E1D]">
+                                {record.publishedCount}
                               </span>
                             )}
-                          </div>
-                        </div>
-                      </td>
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-                      {/* 1~31 天网格小格子（首日增起跑留白②，末日增收尾留白③，间距缩30%，方块轻微扩大至22px） */}
-                      {dayNumbers.map((day) => {
-                        const dateKey = formatDateKey(year, month, day);
-                        const record = member.days[dateKey];
-                        const status = record?.status;
-                        const isToday = dateKey === today;
-                        const isColHovered = day === (hoveredCell?.day ?? openMenuCell?.day);
-                        const appeal = appealMap.get(`${member.userId}_${dateKey}`);
-                        const isFirstDay = day === 1;
-                        const isLastDay = day === dayNumbers[dayNumbers.length - 1];
-                        const isFocused = isDayFocused(dateKey, today, range);
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[12px] text-[#78716C]">
+        {LEGEND.map((item) => (
+          <span key={item.tone} className="inline-flex items-center gap-1">
+            <span className={cn("inline-block size-3 rounded-md border", CELL_TONE_CLASS[item.tone])} />
+            {item.label}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1">
+          <span className={cn("inline-block size-3 rounded-md border bg-white", PENDING_CELL_CLASS)} />
+          有待审
+        </span>
+        <span className="text-[#A8A29E]">格子里的数字 = 当天发了几条 · 点格子可改判</span>
+      </div>
 
-                        return (
-                          <td
-                            key={day}
-                            className={`py-1.5 transition-colors duration-100 ${
-                              isFirstDay ? "pl-2.5 pr-0.5" : isLastDay ? "pl-0.5 pr-2.5" : "px-0.5"
-                            } ${
-                              isColHovered || isRowHovered
-                                ? "bg-[#FCFCFB]"
-                                : isFocused && range === "today"
-                                  ? "bg-surface-row-hover/80"
-                                  : isFocused && range === "last7days"
-                                    ? "bg-surface-row-hover/50"
-                                    : ""
-                            }`}
-                          >
-                            <button
-                              type="button"
-                              data-date={dateKey}
-                              aria-label={`查看 ${member.userName} ${month}月${day}日发布状态`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setOpenMenuCell({
-                                  member,
-                                  dateKey,
-                                  day,
-                                  status,
-                                  record,
-                                  appeal,
-                                  rect,
-                                });
-                                setHoveredCell(null);
-                              }}
-                              onMouseEnter={(e) => {
-                                if (openMenuCell) return;
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredCell({
-                                  member,
-                                  dateKey,
-                                  day,
-                                  status,
-                                  record,
-                                  appeal,
-                                  rect,
-                                });
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredCell(null);
-                              }}
-                              className={`mx-auto flex size-[22px] items-center justify-center rounded-md border transition duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 relative ${getStatusColor(
-                                status,
-                                Boolean(record?.pendingExemption),
-                              )} ${
-                                isToday
-                                  ? "ring-1.5 ring-[#D97757] ring-offset-1 z-10"
-                                  : ""
-                              } ${
-                                appeal
-                                  ? "ring-1.5 ring-status-warning ring-offset-1"
-                                  : ""
-                              }`}
-                            >
-                              {/* 发布2篇及以上时，右上角显示数字 */}
-                              {record?.publishedCount != null && record.publishedCount >= 2 && (
-                                <span className="absolute top-[1px] right-[1px] text-[12px] text-[#1F1E1D] leading-none opacity-90 pointer-events-none">
-                                  {record.publishedCount}
-                                </span>
-                              )}
-                              {/* 待审批请假：右上角显示橙色待办角标圆点 */}
-                              {Boolean(record?.pendingExemption) && (
-                                <span
-                                  className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-status-warning ring-1 ring-white pointer-events-none"
-                                  title="请假申请待审批"
-                                />
-                              )}
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Card>
-
-          {/* 底部轻量图例说明 */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F1F1F0]/80 border border-[#E2E2DF]/60 px-3.5 py-2 text-[12px] text-[#78716C]">
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-success/20 border border-status-success/40" />
-              已发布 / 确认
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-info/45 border border-status-info/65" />
-              请假
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-warning/40 border border-status-warning/60" />
-              豁免期
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-danger/45 border border-status-danger/65" />
-              缺勤
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-warning/25 border border-status-warning/60 border-dashed" />
-              待审批请假
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/60" />
-              待确认
-            </span>
-            <span className="ml-auto text-[12px] text-[#A8A29E]">
-              提示：点击表格内任意方格可快速改判或审批请假
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* 悬停微卡片 Tooltip */}
       {hoveredCell && tooltipPosition && !openMenuCell && (
         <div
           style={{
@@ -697,51 +421,32 @@ export function FulfillmentMatrixRoster({
             transform: tooltipPosition.transform,
             zIndex: 50,
           }}
-          className="pointer-events-none w-64 rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float"
+          className="pointer-events-none w-64 space-y-1 rounded-xl border border-[#E2E2DF] bg-white p-3 text-[12px] text-[#78716C] shadow-claude-float"
         >
-          <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
-            <span className="text-[12px] font-normal text-[#141413]">
-              {hoveredCell.member.userName} · {hoveredCell.dateKey}
-            </span>
-            <span
-              className={`rounded-md px-1.5 py-0.5 text-[12px] font-normal ${getStatusColor(
-                hoveredCell.status,
-              )}`}
-            >
-              {getStatusLabel(hoveredCell.status)}
-            </span>
-          </div>
-
-          <div className="mt-2 space-y-1 text-[12px] text-[#78716C]">
-            <p>
-              实发作品：
-              <span className="font-normal text-[#141413] tabular-nums">
-                {hoveredCell.record?.publishedCount || 0}
-              </span>{" "}
-              条
+          <p className="text-[14px] text-[#141413]">
+            {hoveredCell.member.userName} · {month}月{hoveredCell.day}日 · {getStatusLabel(hoveredCell.status)}
+          </p>
+          <p>
+            发了 <span className="tabular-nums text-[#141413]">{hoveredCell.record?.publishedCount || 0}</span> 条
+            {hoveredCell.record?.markedByName ? ` · ${hoveredCell.record.markedByName} 标记` : ""}
+          </p>
+          {hoveredCell.record?.reason && <p>备注：{hoveredCell.record.reason}</p>}
+          {hoveredCell.record?.pendingExemption && (
+            <p className="text-[#1F1E1D]">
+              {hoveredCell.record.pendingExemption.exemption_type === "leave" ? "请假" : "免交"}待批
+              {hoveredCell.record.pendingExemption.reason ? `：${hoveredCell.record.pendingExemption.reason}` : ""}
             </p>
-            {hoveredCell.record?.reason && (
-              <p className="text-[12px] text-[#A8A29E]">
-                备注：{hoveredCell.record.reason}
-              </p>
-            )}
-            {hoveredCell.appeal && (
-              <p className="rounded-md bg-status-warning/10 p-1 text-[12px] text-status-warning">
-                补交：{hoveredCell.appeal.reason}
-              </p>
-            )}
-          </div>
+          )}
+          {hoveredCell.appeal && <p className="text-[#1F1E1D]">补交待审：{hoveredCell.appeal.reason}</p>}
         </div>
       )}
 
-      {/* 点击弹出的单日改判快捷菜单（保持既有写流程完整） */}
       {openMenuCell && tooltipPosition && (
         <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpenMenuCell(null)} />
           <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpenMenuCell(null)}
-          />
-          <div
+            role="dialog"
+            aria-label={`${openMenuCell.member.userName} ${month}月${openMenuCell.day}日`}
             style={{
               position: "fixed",
               top: tooltipPosition.top,
@@ -749,61 +454,26 @@ export function FulfillmentMatrixRoster({
               transform: tooltipPosition.transform,
               zIndex: 50,
             }}
-            className="w-72 rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float max-h-[calc(100dvh-1rem)] overflow-y-auto"
+            className="max-h-[calc(100dvh-1rem)] w-72 space-y-3 overflow-y-auto rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float"
           >
-            <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2">
-              <div>
-                <p className="text-[14px] font-normal text-[#141413]">
-                  {openMenuCell.member.userName}
-                </p>
-                <p className="text-[12px] text-[#78716C]">
-                  {openMenuCell.dateKey}
-                </p>
-              </div>
-              <span
-                className={`rounded-md px-1.5 py-0.5 text-[12px] font-normal ${getStatusColor(
-                  openMenuCell.status,
-                )}`}
-              >
-                {getStatusLabel(openMenuCell.status)}
-              </span>
-            </div>
+            <p className="text-[14px] text-[#141413]">
+              {openMenuCell.member.userName} · {month}月{openMenuCell.day}日
+              <span className="ml-2 text-[12px] text-[#78716C]">{getStatusLabel(openMenuCell.status)}</span>
+            </p>
 
-            {/* 待审批请假操作 */}
             {openMenuCell.record?.pendingExemption && onReviewPendingExemption && (
-              <div className="mt-2.5 rounded-md border border-status-warning/20 bg-status-warning/5 p-2 space-y-1">
-                <div className="flex items-center justify-between text-[12px]">
-                  <span className="text-status-warning font-normal">
-                    请假申请待批
-                  </span>
-                  <span className="text-[#A8A29E]">
-                    {openMenuCell.record.pendingExemption.exemption_type === "leave"
-                      ? "请假"
-                      : "免交"}
-                  </span>
-                </div>
-                {openMenuCell.record.pendingExemption.reason && (
-                  <p className="text-[12px] text-[#78716C]">
-                    事由：{openMenuCell.record.pendingExemption.reason}
-                  </p>
-                )}
-                <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="space-y-1 border-t border-[#E2E2DF]/60 pt-2">
+                <p className="text-[12px] text-[#78716C]">
+                  {openMenuCell.record.pendingExemption.exemption_type === "leave" ? "请假" : "免交"}待批
+                  {openMenuCell.record.pendingExemption.reason ? `：${openMenuCell.record.pendingExemption.reason}` : ""}
+                </p>
+                <div className="flex justify-end gap-1">
                   <Button
                     variant="ghost"
                     size="xs"
                     disabled={Boolean(reviewingRequestId)}
-                    className="text-[12px] h-6 px-2 text-status-success hover:bg-status-success/10 font-normal"
-                    onClick={async () => {
-                      const reqId = openMenuCell.record?.pendingExemption?.id;
-                      if (!reqId) return;
-                      setReviewingRequestId(reqId);
-                      try {
-                        await onReviewPendingExemption(reqId, "approved");
-                        setOpenMenuCell(null);
-                      } finally {
-                        setReviewingRequestId(null);
-                      }
-                    }}
+                    className="h-7 px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                    onClick={() => void reviewLeave("approved")}
                   >
                     批准
                   </Button>
@@ -811,18 +481,8 @@ export function FulfillmentMatrixRoster({
                     variant="ghost"
                     size="xs"
                     disabled={Boolean(reviewingRequestId)}
-                    className="text-[12px] h-6 px-2 text-status-danger hover:bg-status-danger/10 font-normal"
-                    onClick={async () => {
-                      const reqId = openMenuCell.record?.pendingExemption?.id;
-                      if (!reqId) return;
-                      setReviewingRequestId(reqId);
-                      try {
-                        await onReviewPendingExemption(reqId, "rejected");
-                        setOpenMenuCell(null);
-                      } finally {
-                        setReviewingRequestId(null);
-                      }
-                    }}
+                    className="h-7 px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                    onClick={() => void reviewLeave("rejected")}
                   >
                     驳回
                   </Button>
@@ -830,87 +490,50 @@ export function FulfillmentMatrixRoster({
               </div>
             )}
 
-            {/* 改判状态动作列表 */}
             {onQuickMarkCell && (
-              <div className="mt-2.5 space-y-1">
-                <p className="text-[12px] text-[#78716C] px-1">快捷改判此日：</p>
-                <div className="grid grid-cols-2 gap-1 text-[12px]">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "confirmed_published");
-                      setOpenMenuCell(null);
-                    }}
-                    className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-success/10 hover:text-status-success text-[#1F1E1D] transition-colors"
-                  >
-                    标为已发
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "leave");
-                      setOpenMenuCell(null);
-                    }}
-                    className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-info/10 hover:text-status-info text-[#1F1E1D] transition-colors"
-                  >
-                    标为请假
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "waived");
-                      setOpenMenuCell(null);
-                    }}
-                    className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-info/10 hover:text-status-info text-[#1F1E1D] transition-colors"
-                  >
-                    标为豁免
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "absent");
-                      setOpenMenuCell(null);
-                    }}
-                    className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-danger/10 hover:text-status-danger text-[#1F1E1D] transition-colors"
-                  >
-                    标为缺勤
-                  </button>
+              <div className="space-y-2 border-t border-[#E2E2DF]/60 pt-2">
+                <div className="grid grid-cols-2 gap-1">
+                  {MENU_ACTIONS.map(({ action, label }) => (
+                    <button
+                      key={action}
+                      type="button"
+                      className={MENU_BUTTON}
+                      onClick={() =>
+                        void runAndClose(() => onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, action))
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
-                {Boolean(openMenuCell.record && isManualFulfillmentMarkStatus(openMenuCell.record.status)) && onClearManualOverride && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onClearManualOverride(openMenuCell.member.userId, openMenuCell.dateKey);
-                      setOpenMenuCell(null);
-                    }}
-                    className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-md border border-status-danger/25 bg-status-danger/5 py-1.5 text-[12px] text-status-danger hover:bg-status-danger/10 transition-colors"
-                  >
-                    <RotateCcw className="size-3" />
-                    恢复系统自动判定
-                  </button>
-                )}
+                {Boolean(openMenuCell.record && isManualFulfillmentMarkStatus(openMenuCell.record.status)) &&
+                  onClearManualOverride && (
+                    <button
+                      type="button"
+                      className={cn(MENU_BUTTON, "w-full")}
+                      onClick={() =>
+                        void runAndClose(() => onClearManualOverride(openMenuCell.member.userId, openMenuCell.dateKey))
+                      }
+                    >
+                      撤掉人工标记，按系统判定
+                    </button>
+                  )}
               </div>
             )}
 
-            {/* 查看当月详情 */}
-            <div className="mt-3 border-t border-[#E2E2DF]/60 pt-2 flex justify-between items-center text-[12px]">
+            <div className="flex items-center justify-between border-t border-[#E2E2DF]/60 pt-2 text-[12px]">
               <button
                 type="button"
                 onClick={() => {
-                  const m = openMenuCell.member;
-                  const d = openMenuCell.dateKey;
+                  const { member, dateKey } = openMenuCell;
                   setOpenMenuCell(null);
-                  onCellClick(m, d);
+                  onCellClick(member, dateKey);
                 }}
-                className="text-[#D97757] hover:underline font-normal text-[12px]"
+                className="text-[#1F1E1D] hover:underline underline-offset-2"
               >
-                查看该成员完整月历档案 →
+                看 {openMenuCell.member.userName} 这个月 →
               </button>
-              <button
-                type="button"
-                onClick={() => setOpenMenuCell(null)}
-                className="text-[#78716C] hover:text-[#141413] text-[12px]"
-              >
+              <button type="button" onClick={() => setOpenMenuCell(null)} className="text-[#78716C] hover:text-[#141413]">
                 关闭
               </button>
             </div>

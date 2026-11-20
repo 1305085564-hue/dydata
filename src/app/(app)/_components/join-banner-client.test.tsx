@@ -12,7 +12,7 @@ test("未分配账号会渲染可见的入团入口", () => {
 
   assert.match(html, /你还未加入团队/);
   assert.match(html, /申请加入团队/);
-  assert.match(html, /通过后即可提交日报、豁免和协作内容。/);
+  assert.match(html, /加入后才能提交日报、豁免和协作内容。/);
 });
 
 test("待审核账号会渲染撤销申请入口", () => {
@@ -25,13 +25,14 @@ test("待审核账号会渲染撤销申请入口", () => {
   assert.match(html, /目标团队：内容一部/);
 });
 
-test("入团申请被驳回：横幅显示「未通过：原因」并可重新申请", () => {
+test("入团申请被驳回：横幅标题说未通过，正文只写「团队：原因」", () => {
   const html = renderToStaticMarkup(
     <JoinBannerClient mode="rejected" teams={[{ id: "team-1", name: "内容一部" }]} targetTeamName="内容一部" reviewNote="名额已满，下月再申请" />,
   );
 
   assert.match(html, /入团申请未通过/);
-  assert.match(html, /未通过：名额已满，下月再申请/);
+  assert.match(html, /内容一部：名额已满，下月再申请/);
+  assert.equal(html.split("未通过").length - 1, 1, "「未通过」只在标题说一次");
   assert.match(html, /重新申请加入团队/);
 });
 
