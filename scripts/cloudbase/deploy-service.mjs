@@ -22,7 +22,7 @@ export function injectPublicBuildArgs(dockerfile, env) {
 }
 
 export function prepareDeployment(repo, env) {
-  const git = (...args) => execFileSync('git', args, { cwd: repo });
+  const git = (...args) => execFileSync('git', args, { cwd: repo, maxBuffer: 100 * 1024 * 1024 });
   if (git('status', '--porcelain').length) throw new Error('先提交本轮改动，再从干净 main 发版');
   if (git('branch', '--show-current').toString().trim() !== 'main') throw new Error('只发布 main');
   const commit = git('rev-parse', 'HEAD').toString().trim();
