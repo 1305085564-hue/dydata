@@ -14,6 +14,7 @@ const REAL_DB = /\.real-db\.test\.tsx?$/;
 const SCRIPT_TESTS = [
   "scripts/maintainability-gate.test.mjs",
   "scripts/git-hooks.test.mjs",
+  "scripts/session-check.test.mjs",
   "scripts/screenshot-storage-boundary.test.mjs",
   "scripts/doc-health-check.test.mjs",
   "scripts/api-failure-path-gate.test.mjs",

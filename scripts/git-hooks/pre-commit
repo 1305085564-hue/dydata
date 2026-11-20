@@ -1,0 +1,19 @@
+#!/bin/sh
+# 提交前拦截（由 `npm run hooks:install` 安装到 .git/hooks/pre-commit）。
+# 规则：主目录只停在 main（AGENTS.md「协作」）。在主目录的支线上提交会被拦下；
+# 隔离区（git worktree）里随意。合并、变基、拣选进行中不拦。
+# 2026-11-20 实测：主目录停在落后主线 28 次的支线上，新写的方案提交到这条支线后，从主线开工的 AI 根本看不到。
+top=$(git rev-parse --show-toplevel) || exit 0
+common=$(cd "$top" && cd "$(git rev-parse --git-common-dir)" && pwd -P)
+primary=$(dirname "$common")
+here=$(cd "$top" && pwd -P)
+[ "$here" = "$primary" ] || exit 0
+gitdir=$(git rev-parse --git-dir)
+for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+  [ -e "$gitdir/$marker" ] && exit 0
+done
+branch=$(git symbolic-ref --quiet --short HEAD || echo "")
+[ "$branch" = "main" ] && exit 0
+echo "[pre-commit] 主目录不在 main（当前：${branch:-detached}），已拦下这次提交。" >&2
+echo "[pre-commit] 主目录只停在 main：先 git switch main && git pull --ff-only；要并行开发就用隔离区（git worktree）。" >&2
+exit 1
