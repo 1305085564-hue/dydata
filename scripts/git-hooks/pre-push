@@ -39,8 +39,9 @@ echo "[pre-push] 3/6 代码检查"
 npm run lint --silent
 echo "[pre-push] 4/6 设计令牌门禁"
 npm run gate:design --silent
-echo "[pre-push] 5/6 可维护性门禁（对比 origin/main）"
+echo "[pre-push] 5/6 可维护性与文档体量门禁（对比 origin/main）"
 node scripts/maintainability-gate.mjs --base=origin/main
+node scripts/doc-size-check.mjs
 echo "[pre-push] 6/6 新增接口失败路径门禁（对比 origin/main）"
 node scripts/api-failure-path-gate.mjs --base=origin/main
 echo "[pre-push] 全部通过"

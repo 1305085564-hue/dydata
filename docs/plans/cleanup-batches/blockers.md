@@ -65,9 +65,9 @@ src/lib/team-management.ts
 src/lib/video-lifecycle.ts
 src/lib/writer-certifications.test.ts
 src/lib/writer-certifications.ts
-日志/2026-09-15.md
-日志/2026-09-16.md
-日志/2026-09-17.md
+docs/archive/日志/2026-09/2026-09-15.md
+docs/archive/日志/2026-09/2026-09-16.md
+docs/archive/日志/2026-09/2026-09-17.md
 ```
 
 **已删除（D）**

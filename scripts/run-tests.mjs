@@ -15,6 +15,8 @@ const SCRIPT_TESTS = [
   "scripts/maintainability-gate.test.mjs",
   "scripts/git-hooks.test.mjs",
   "scripts/pre-commit-hook.test.mjs",
+  "scripts/doc-size-check.test.mjs",
+  "scripts/archive-old-logs.test.mjs",
   "scripts/screenshot-storage-boundary.test.mjs",
   "scripts/doc-health-check.test.mjs",
   "scripts/api-failure-path-gate.test.mjs",

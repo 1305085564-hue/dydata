@@ -127,14 +127,14 @@ const globalEnabled = m.global_is_enabled === undefined
 
 - [src/lib/ai-config/availability.ts](src/lib/ai-config/availability.ts) — 聚合逻辑（已修改但可能不够）
 - [src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx](src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx) — 模型视角渲染
-- [日志/2026-10-10.md](日志/2026-10-10.md) — 今天的完整操作日志
+- [日志/2026-10-10.md](docs/archive/日志/2026-10/2026-10-10.md) — 今天的完整操作日志
 
 ## 注意事项
 
 1. **不要改动数据库** — 数据层面已确认正确，问题在代码逻辑或部署
 2. **验证 Vercel 部署** — 确保线上运行的是最新代码
 3. **硬刷新浏览器** — 修复后让阿禅硬刷新（Cmd+Shift+R）清除缓存
-4. **记录日志** — 修复完成后更新 [日志/2026-10-10.md](日志/2026-10-10.md)
+4. **记录日志** — 修复完成后更新 [日志/2026-10-10.md](docs/archive/日志/2026-10/2026-10-10.md)
 
 ---
 

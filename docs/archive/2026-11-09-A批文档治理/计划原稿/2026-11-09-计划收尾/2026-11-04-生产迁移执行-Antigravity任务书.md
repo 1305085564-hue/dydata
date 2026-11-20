@@ -74,7 +74,7 @@ PGPASSWORD=... psql "<SUPABASE_DB_URL>" -v ON_ERROR_STOP=1 -q -f supabase/migrat
 ## 第 3 步：留档与上报
 
 - 证据目录写入：`before-snapshot.json`、`after-checks.json`、迁移执行的完整 stdout/stderr（脱敏连接串后）。
-- `日志/2026-11-04.md` 追加一行 `[An]`：执行时间、迁移文件名与提交号、六项核对结果、结论。
+- `docs/archive/日志/2026-11/2026-11-04.md` 追加一行 `[An]`：执行时间、迁移文件名与提交号、六项核对结果、结论。
 - 向阿禅/CC 上报：**只报告迁移完成，应用尚未发布**；push 与上线是独立步骤，需另行授权，不得顺手执行。
 
 ## 回滚预案（仅供了解，未触发不得操作）

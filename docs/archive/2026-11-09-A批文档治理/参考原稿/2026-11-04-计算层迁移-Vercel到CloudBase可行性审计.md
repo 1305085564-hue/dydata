@@ -51,7 +51,7 @@
 | 长任务声明 | 仅 2 个路由写了 `maxDuration = 60`（OCR、补交审批） | `grep` |
 | 定时任务 | 3 条，写在 `vercel.json`，UTC 时区 | `vercel.json` |
 | 环境变量 | 113 个唯一变量名；`NEXT_PUBLIC_*` 参与浏览器构建 | `grep` |
-| 数据层 | 已切 CloudBase PG 上海（2026-11-04 03:31 完成，99 表 63,190 行） | `日志/2026-11-04.md` |
+| 数据层 | 已切 CloudBase PG 上海（2026-11-04 03:31 完成，99 表 63,190 行） | `docs/archive/日志/2026-11/2026-11-04.md` |
 | 认证 | 已自建 CloudBase 代理登录 + HttpOnly 会话 Cookie | `src/app/api/cloudbase/auth/*` |
 | 截图存储 | 腾讯云 COS，**地域 ap-singapore**，桶 `dydata-screenshot-sg-*` | `.env.local`（只读变量名与地域） |
 | 域名链路 | `dydata.cc` → Cloudflare 代理 → Vercel；动态请求落 `sin1` | `curl -I`：`server: cloudflare`、`cf-ray`、`x-vercel-id: fra1::sin1` |
