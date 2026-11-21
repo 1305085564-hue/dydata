@@ -47,7 +47,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 ## 开发纪律（摘要）
 
-- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、性能预算和证据边界见 `docs/reference/全站设计与决策/工程底座.md`「性能预算与加载」，后端写法硬规矩见 `docs/reference/全站设计与决策/后端工程规范.md`。
-- 数据库变更和发布顺序见[项目规则](AGENTS.md)与[后端工程规范](docs/reference/全站设计与决策/后端工程规范.md)。
+- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、性能预算和证据边界见 `docs/reference/工程底座.md`「性能预算与加载」，后端写法硬规矩见 `docs/reference/后端工程规范.md`。
+- 数据库变更和发布顺序见[项目规则](AGENTS.md)与[后端工程规范](docs/reference/后端工程规范.md)。
 - 成员当前操作用 `activeVisibleUserIds`，历史查询用 `visibleUserIds`（统一复用 `src/lib/data-access-scope.ts`）。
 - 提交只精确 add 自己改过的文件，禁止 `git add .`；push `main` 需项目负责人确认。
