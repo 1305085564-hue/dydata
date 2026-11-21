@@ -85,7 +85,7 @@ test("结构化日志输出单行 JSON 且不含敏感值", () => {
     });
     logApiError(
       { requestId: "req-2", route: "/api/health" },
-      new Error("boom"),
+      new Error("boom api_key=secret123 Bearer bearer-secret"),
     );
   } finally {
     console.info = originalInfo;
@@ -105,5 +105,6 @@ test("结构化日志输出单行 JSON 且不含敏感值", () => {
 
   const second = JSON.parse(lines[1] ?? "{}") as Record<string, unknown>;
   assert.equal(second.level, "error");
-  assert.equal(second.error, "boom");
+  assert.equal(second.error, "boom api_key=[REDACTED] Bearer [REDACTED]");
+  assert.doesNotMatch(String(second.error), /secret123|bearer-secret/);
 });

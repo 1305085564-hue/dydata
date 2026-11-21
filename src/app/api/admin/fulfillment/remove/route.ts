@@ -37,7 +37,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
   if (scoped) return scoped;
 
   observation.mark("review-rpc");
-  const result = await auth.supabase.rpc("remove_fulfillment_mark", {
+  const result = await auth.userSupabase.rpc("remove_fulfillment_mark", {
     p_user_id: payload.data.userId,
     p_record_date: payload.data.recordDate,
     p_marker_id: auth.actor.userId,

@@ -7,6 +7,7 @@ import { buildPermissionContextForActor } from "@/lib/current-permission-context
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toStringErrorResponse } from "@/lib/errors";
 import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import {
   CollaborationNotFoundError,
@@ -65,7 +66,15 @@ export async function buildPersonResponse(
     }));
   } catch (error) {
     if (error instanceof CollaborationNotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return toStringErrorResponse({
+        code: "NOT_FOUND",
+        route: "/api/admin/collaboration/person",
+        operation: "load-person-data",
+        request,
+        status: 404,
+        message: error.message,
+        error: error.message,
+      });
     }
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载个人岗位数据失败";
     return NextResponse.json({ error: message }, { status: 500 });

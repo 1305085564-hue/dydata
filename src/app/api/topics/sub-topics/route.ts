@@ -28,14 +28,14 @@ export async function buildSubTopicsResponse(
     observation?.mark("validate");
     body = await request.json();
   } catch {
-    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "请求体格式不正确" }), observation);
+    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "请求体格式不正确" }, observation?.requestId), observation);
   }
 
   observation?.mark("write-request");
   let response: Response;
   try {
     const result = await deps.createSubTopic(auth.context.supabase, auth.context.userId, body);
-    response = jsonResult(result);
+    response = jsonResult(result, observation?.requestId);
   } catch {
     response = Response.json({ error: "创建选题失败" }, { status: 500 });
   }

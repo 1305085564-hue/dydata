@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { filterScopedRows } from "../../cockpit/_shared";
+import { filterScopedRows } from "@/lib/admin/cockpit";
 import { requireAdminServiceClient, requireOwnerOrAdminRole } from "../_shared";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
     return response;
   } catch (error) {
-    const inactive = inactiveCloudBaseAccountResponse(error);
+    const inactive = inactiveCloudBaseAccountResponse(error, request, "/api/cloudbase/auth/signin");
     if (inactive) return inactive;
     const status = error instanceof Error && "status" in error && typeof (error as { status?: unknown }).status === "number"
       ? (error as { status: number }).status

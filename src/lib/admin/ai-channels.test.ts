@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { maskApiKey, normalizeChannelRow, requireSystemActor, type AiChannelRow } from "./_shared";
+import { maskApiKey, normalizeChannelRow, requireSystemActor, type AiChannelRow } from "./ai-channels";
 
 test("AI 系统配置要求 manage_system 权限", async () => {
   let requiredPermission: string | undefined;

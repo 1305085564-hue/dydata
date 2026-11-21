@@ -17,7 +17,8 @@ function deps(result: { data: unknown; error: unknown } | Error, emit?: (input: 
     requireAdminServiceClient: async () => ({
       actor: { userId: "admin-1", role: "admin", companyRole: "admin" },
       scope: { activeVisibleUserIds: [UID], visibleUserIds: [UID], kind: "team" },
-      supabase: { rpc: async () => result instanceof Error ? Promise.reject(result) : result },
+      supabase: { rpc: () => { throw new Error("不能用管理员连接标记发布状态"); } },
+      userSupabase: { rpc: async () => result instanceof Error ? Promise.reject(result) : result },
     }) as never,
     requireOwnerOrAdminRole: () => null,
     requireActiveVisibleUsers: () => null,
@@ -25,7 +26,7 @@ function deps(result: { data: unknown; error: unknown } | Error, emit?: (input: 
   } as never;
 }
 
-test("履约标记成功返回 RPC 结果", async () => {
+test("履约标记使用本人身份调用，成功返回 RPC 结果", async () => {
   const response = await buildFulfillmentMarkResponse(base, deps({ data: { ok: true }, error: null }));
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
@@ -73,7 +74,8 @@ test("普通成员在通知边界前被角色门禁拦截，管理员合成正�
       requireAdminServiceClient: async () => ({
         actor: { userId: `${role}-synthetic`, role, companyRole: role, name: "合成账号" },
         scope: { activeVisibleUserIds: [UID], visibleUserIds: [UID], kind: "team" },
-        supabase: {
+        supabase: { rpc: () => { throw new Error("不能用管理员连接标记发布状态"); } },
+        userSupabase: {
           rpc: async () => {
             counts.rpc += 1;
             return { data: { ok: true }, error: null };

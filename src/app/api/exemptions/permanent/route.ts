@@ -11,6 +11,7 @@ import {
   setPermanentExemptionAtomically,
 } from "@/lib/exemption-review";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
+import { errorCodeForStatus, toStringErrorResponse } from "@/lib/errors";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type PermanentDeps = {
@@ -58,6 +59,7 @@ function parseSetPayload(input: unknown): { data: { userId: string; reason: stri
 export async function buildPermanentExemptionResponse(
   input: unknown,
   deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "setPermanentExemptionAtomically"> = defaultPermanentExemptionDeps,
+  requestId?: string,
 ) {
   const payload = parseSetPayload(input);
   if ("response" in payload) return payload.response;
@@ -72,13 +74,24 @@ export async function buildPermanentExemptionResponse(
     userId: payload.data.userId,
     reason: payload.data.reason,
   });
-  if (!result.ok) return NextResponse.json({ error: result.message }, { status: result.status });
+  if (!result.ok) {
+    return toStringErrorResponse({
+      code: errorCodeForStatus(result.status),
+      route: "/api/exemptions/permanent",
+      operation: "set-permanent-exemption",
+      requestId,
+      status: result.status,
+      message: result.status >= 500 ? undefined : result.message,
+      error: result.cause ?? result.message,
+    });
+  }
   return NextResponse.json({ data: result.data });
 }
 
 export async function buildClearPermanentExemptionResponse(
   input: unknown,
   deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "clearPermanentExemptionAtomically"> = defaultPermanentExemptionDeps,
+  requestId?: string,
 ) {
   const payload = parseUserId(input);
   if ("response" in payload) return payload.response;
@@ -92,7 +105,17 @@ export async function buildClearPermanentExemptionResponse(
     supabase: auth.supabase,
     userId: payload.userId,
   });
-  if (!result.ok) return NextResponse.json({ error: result.message }, { status: result.status });
+  if (!result.ok) {
+    return toStringErrorResponse({
+      code: errorCodeForStatus(result.status),
+      route: "/api/exemptions/permanent",
+      operation: "clear-permanent-exemption",
+      requestId,
+      status: result.status,
+      message: result.status >= 500 ? undefined : result.message,
+      error: result.cause ?? result.message,
+    });
+  }
   return NextResponse.json({ data: result.data });
 }
 
@@ -108,7 +131,7 @@ export async function POST(request: Request) {
     let response: Response;
     try {
       observation.mark("write-request");
-      response = await buildPermanentExemptionResponse(body.data);
+      response = await buildPermanentExemptionResponse(body.data, defaultPermanentExemptionDeps, observation.requestId);
     } catch {
       response = Response.json({ error: "永久豁免设置失败" }, { status: 500 });
     }
@@ -129,7 +152,7 @@ export async function DELETE(request: Request) {
     let response: Response;
     try {
       observation.mark("write-request");
-      response = await buildClearPermanentExemptionResponse(body.data);
+      response = await buildClearPermanentExemptionResponse(body.data, defaultPermanentExemptionDeps, observation.requestId);
     } catch {
       response = Response.json({ error: "永久豁免撤销失败" }, { status: 500 });
     }

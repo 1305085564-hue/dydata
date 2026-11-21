@@ -1,4 +1,4 @@
-import { requireSystemActor } from "@/app/api/admin/ai-channels/_shared";
+import { requireSystemActor } from "@/lib/admin/ai-channels";
 import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "./feature-controls";
 import { computeAvailability } from "./availability";
 import { describeChannelFailure } from "./failure-diagnostic";

@@ -1,4 +1,12 @@
-import { requestContextLogFields, type RequestContext } from "./request-context";
+import { NextResponse } from "next/server";
+
+import { logApiError } from "./api-logger";
+import {
+  createRequestContext,
+  requestContextHeaders,
+  requestContextLogFields,
+  type RequestContext,
+} from "./request-context";
 
 export type AppErrorCode =
   | "UNAUTHENTICATED"
@@ -79,6 +87,18 @@ function statusForCode(code: AppErrorCode) {
   }
 }
 
+export function errorCodeForStatus(status: number): AppErrorCode {
+  switch (status) {
+    case 400: return "INVALID_INPUT";
+    case 401: return "UNAUTHENTICATED";
+    case 403: return "FORBIDDEN";
+    case 404: return "NOT_FOUND";
+    case 409: return "CONFLICT";
+    case 504: return "TIMEOUT";
+    default: return "DEPENDENCY_FAILED";
+  }
+}
+
 export function normalizeAppError(error: unknown, fallback = PUBLIC_MESSAGES.INTERNAL_ERROR) {
   if (error instanceof AppError) return error;
   return new AppError({ code: "INTERNAL_ERROR", message: fallback, publicMessage: fallback, cause: error });
@@ -95,6 +115,48 @@ export function toErrorResponse(error: unknown, context: RequestContext) {
   }, {
     status: normalized.status,
     headers: { "x-dydata-request-id": context.requestId },
+  });
+}
+
+export function toStringErrorResponse(input: {
+  code: AppErrorCode;
+  route: string;
+  operation: string;
+  error: unknown;
+  request?: Request;
+  requestId?: string | null;
+  status?: number;
+  message?: string;
+  extraFields?: Record<string, unknown>;
+}) {
+  const context = createRequestContext({
+    request: input.request,
+    requestId: input.requestId,
+    route: input.route,
+    operation: input.operation,
+  });
+  const status = input.status ?? 500;
+  const errorMessage = input.error instanceof Error
+    ? input.error.message
+    : input.error && typeof input.error === "object" && "message" in input.error && typeof input.error.message === "string"
+      ? input.error.message
+      : String(input.error);
+
+  logApiError({
+    ...requestContextLogFields(context),
+    status,
+    outcome: status >= 500 ? "failed" : "rejected",
+    detail: { code: input.code },
+  }, errorMessage);
+
+  const publicMessage = input.message ?? publicMessageForCode(input.code);
+  return NextResponse.json({
+    error: `${publicMessage}（编号：${context.requestId}）`,
+    requestId: context.requestId,
+    ...input.extraFields,
+  }, {
+    status,
+    headers: { [requestContextHeaders.requestId]: context.requestId },
   });
 }
 

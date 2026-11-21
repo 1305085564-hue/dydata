@@ -63,7 +63,10 @@ test("打回 RPC 失败按状态码透出安全文案", async () => {
   );
 
   assert.equal(response.status, 409);
-  assert.deepEqual(await response.json(), { error: "该成员已有重叠的待审批申请，无法打回" });
+  const body = await response.json();
+  assert.match(body.requestId, /^[0-9a-f-]{36}$/i);
+  assert.equal(body.error, `该成员已有重叠的待审批申请，无法打回（编号：${body.requestId}）`);
+  assert.equal(response.headers.get("x-dydata-request-id"), body.requestId);
 });
 
 test("打回请求体校验：缺失字段/非法 uuid 被 400 拒绝", async () => {

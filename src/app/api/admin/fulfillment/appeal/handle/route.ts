@@ -208,7 +208,7 @@ function defaultLoadAppealOwner(auth: AdminAuth, appealId: string, signal: Abort
 
 export function defaultHandleAppealRpc(auth: AdminAuth, payload: HandleFulfillmentAppealPayload) {
   if ("response" in auth) return Promise.resolve({ data: null, error: auth.response });
-  return Promise.resolve(auth.supabase.rpc("handle_fulfillment_appeal", {
+  return Promise.resolve(auth.userSupabase.rpc("handle_fulfillment_appeal", {
     p_appeal_id: payload.appealId,
     p_decision: payload.decision,
     p_handler_id: auth.actor.userId,

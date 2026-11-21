@@ -32,7 +32,7 @@ import {
   toBoolean,
   toNullableString,
   toTrimmedString,
-} from "../ai-channels/_shared";
+} from "@/lib/admin/ai-channels";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { auditRollbackMessage } from "@/lib/audit-log";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";

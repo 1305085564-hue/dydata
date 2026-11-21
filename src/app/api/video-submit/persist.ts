@@ -22,6 +22,12 @@ export type SubmissionPersistencePipelineResult =
   | { ok: true }
   | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string; compensated: boolean };
 
+export function stripSubmissionId<T extends Record<string, unknown>>(row: T) {
+  const rest = { ...row };
+  delete rest.id;
+  return rest;
+}
+
 export type ScreenshotReplacementHistoryRow = {
   video_id: string;
   account_id: string;

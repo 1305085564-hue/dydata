@@ -79,6 +79,12 @@ function assertLayered(body: Record<string, unknown>, label: string) {
   for (const field of LAYERED_FIELDS) assert.ok(field in body, `${label} 缺少 ${field}`);
 }
 
+function assertNumberedError(body: Record<string, unknown>, message: string) {
+  assert.equal(typeof body.requestId, "string");
+  assert.match(String(body.requestId), /^[0-9a-f-]{36}$/i);
+  assert.equal(body.error, `${message}（编号：${body.requestId}）`);
+}
+
 test("topics/sub-topics 失败路径：鉴权失败透传，非法 JSON / 校验失败 / 写入异常分别 400 与 500", async () => {
   const denied = await buildSubTopicsResponse(request("POST", {}), {
     requireActiveTeamContext: async () => ({
@@ -102,14 +108,14 @@ test("topics/sub-topics 失败路径：鉴权失败透传，非法 JSON / 校验
     },
   );
   assert.equal(invalidJson.status, 400);
-  assert.equal((await bodyOf(invalidJson)).error, "请求体格式不正确");
+  assertNumberedError(await bodyOf(invalidJson), "请求体格式不正确");
 
   const validationFailed = await buildSubTopicsResponse(request("POST", { title: "" }), {
     requireActiveTeamContext: async () => context(),
     createSubTopic: async () => ({ ok: false, status: 400, message: "title 为必填项" }),
   });
   assert.equal(validationFailed.status, 400);
-  assert.equal((await bodyOf(validationFailed)).error, "title 为必填项");
+  assertNumberedError(await bodyOf(validationFailed), "title 为必填项");
 
   const writeThrew = await buildSubTopicsResponse(request("POST", { title: "题目" }), {
     requireActiveTeamContext: async () => context(),
@@ -130,7 +136,8 @@ test("topics/sub-topics：依赖失败和成功都走真实 handler 并补齐分
   const failedBody = await bodyOf(failure);
   assertLayered(failedBody, "sub-topics failure");
   assert.equal(failedBody.businessSucceeded, false);
-  assert.equal(failedBody.error, "创建失败");
+  assertNumberedError(failedBody, "后台服务暂时不可用，稍后重试");
+  assert.doesNotMatch(String(failedBody.error), /创建失败/);
 
   const success = await buildSubTopicsResponse(request("POST", { title: "题目" }), {
     requireActiveTeamContext: async () => context(),
@@ -154,7 +161,7 @@ test("topics/sub-topics/[id]：PATCH/DELETE 失败不静默，成功结果保留
   const patchBody = await bodyOf(patchFailure);
   assertLayered(patchBody, "sub-topics/[id] PATCH");
   assert.equal(patchBody.businessSucceeded, false);
-  assert.equal(patchBody.error, "更新冲突");
+  assertNumberedError(patchBody, "更新冲突");
 
   const deleteSuccess = await buildSubTopicDeleteResponse(request("DELETE"), ctx, deps);
   assert.equal(deleteSuccess.status, 200);
@@ -199,6 +206,7 @@ test("topics 认领链：claim/return/start-scripting 均传播依赖失败和�
     const failedBody = await bodyOf(failed);
     assertLayered(failedBody, item.label);
     assert.equal(failedBody.businessSucceeded, false);
+    assertNumberedError(failedBody, item.label === "return" ? "未找到正在写的记录" : "后台服务暂时不可用，稍后重试");
 
     const successDeps = item.label === "return"
       ? { ...base, cancelWritingClaim: async () => item.success() }

@@ -12,6 +12,15 @@ const SENSITIVE_KEY_PATTERN =
   /(authorization|token|secret|password|api[_-]?key|cookie)/i;
 
 const SENSITIVE_PLACEHOLDER = "[REDACTED]";
+const SENSITIVE_ERROR_VALUE_PATTERN = /\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|authorization)\b(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;]+)/gi;
+
+function redactErrorMessage(message: string) {
+  return message
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]")
+    .replace(SENSITIVE_ERROR_VALUE_PATTERN, "$1$2[REDACTED]")
+    .replace(/\bsk-[A-Za-z0-9_-]{8,}\b/g, "[REDACTED]")
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED]");
+}
 
 export function isSensitiveKey(key: string) {
   return SENSITIVE_KEY_PATTERN.test(key);
@@ -80,8 +89,8 @@ export function logApiRequest(entry: ApiLogEntry) {
   console.info(serialize(entry, "info"));
 }
 
-/** 仅记录错误 message 本身；禁止携带堆栈、数据库原始错误或请求体 */
+/** 仅记录经过凭据脱敏的错误 message；禁止携带堆栈或请求体 */
 export function logApiError(entry: ApiLogEntry, error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = redactErrorMessage(error instanceof Error ? error.message : String(error));
   console.error(serialize(entry, "error", message));
 }

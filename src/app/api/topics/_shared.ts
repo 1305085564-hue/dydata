@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { CurrentPermissionContext } from "@/lib/current-permission-context";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadTopicsTeamScope } from "@/lib/topics/team-scope";
+import { errorCodeForStatus, toStringErrorResponse } from "@/lib/errors";
 
 export const TEAM_MEMBERSHIP_REQUIRED = "TEAM_MEMBERSHIP_REQUIRED" as const;
 export const TEAM_MEMBERSHIP_REQUIRED_MESSAGE = "请先申请加入团队" as const;
@@ -104,9 +105,20 @@ export async function requireActiveTeamContext(
   return auth;
 }
 
-export function jsonResult<T>(result: { ok: true; value: T } | { ok: false; status: number; message: string }) {
+export function jsonResult<T>(
+  result: { ok: true; value: T } | { ok: false; status: number; message: string },
+  requestId?: string,
+) {
   if (!result.ok) {
-    return NextResponse.json({ error: result.message }, { status: result.status });
+    return toStringErrorResponse({
+      code: errorCodeForStatus(result.status),
+      route: "/api/topics",
+      operation: "topics-request",
+      requestId,
+      status: result.status,
+      message: result.status >= 500 ? undefined : result.message,
+      error: result.message,
+    });
   }
   return NextResponse.json(result.value);
 }

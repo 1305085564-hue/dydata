@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { toStringErrorResponse } from "@/lib/errors";
 import { requireScopedAdminVideo } from "@/lib/admin-scoped-video";
 import {
   ContentAnalysisError,
@@ -52,7 +53,17 @@ export async function buildContentAnalysisResponse(
     return finish(NextResponse.json(result));
   } catch (error) {
     if (error instanceof ContentAnalysisError) {
-      return finish(NextResponse.json({ error: error.message, code: error.code }, { status: error.status }));
+      return finish(toStringErrorResponse({
+        code: error.code === "NO_24H_SNAPSHOT" ? "INVALID_INPUT" : error.status >= 500 ? "DEPENDENCY_FAILED" : "INTERNAL_ERROR",
+        route: "/api/admin/content-analysis",
+        operation: "generate-content-analysis",
+        request,
+        requestId: observation?.requestId,
+        status: error.status,
+        message: error.code === "NO_24H_SNAPSHOT" ? error.message : undefined,
+        error: error.message,
+        extraFields: { code: error.code },
+      }));
     }
     return finish(NextResponse.json({ error: error instanceof Error ? error.message : "辅助分析失败", code: "CONTENT_ANALYSIS_FAILED" }, { status: 500 }));
   }

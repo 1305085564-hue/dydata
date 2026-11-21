@@ -8,6 +8,7 @@ import {
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
 import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
+import { errorCodeForStatus, toStringErrorResponse } from "@/lib/errors";
 import { EXEMPTION_FEEDBACK_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
 import type { MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
@@ -66,6 +67,7 @@ export async function buildReviewExemptionResponse(
   input: unknown,
   deps: ReviewExemptionDeps = defaultDeps,
   observation?: MutationObservation,
+  requestId?: string,
 ): Promise<NextResponse> {
   observation?.mark("validate");
   const payload = parseReviewExemptionPayload(input);
@@ -87,7 +89,15 @@ export async function buildReviewExemptionResponse(
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.message }, { status: result.status });
+    return toStringErrorResponse({
+      code: errorCodeForStatus(result.status),
+      route: "/api/exemptions/review",
+      operation: "review-exemption-request",
+      requestId,
+      status: result.status,
+      message: result.status >= 500 ? undefined : result.message,
+      error: result.cause ?? result.message,
+    });
   }
 
   observation?.mark("finalize");
@@ -105,7 +115,7 @@ export async function POST(request: Request) {
       );
     }
     return appendObservedMutationResult(
-      await buildReviewExemptionResponse(body.data, defaultDeps, observation),
+      await buildReviewExemptionResponse(body.data, defaultDeps, observation, observation.requestId),
       observation,
     );
   });

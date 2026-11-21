@@ -121,11 +121,12 @@ test("驳回原因只进入通知和审计详情，不进入补交单 payload", 
   );
 });
 
-test("回归：defaultHandleAppealRpc 必须传 p_reason，否则命中 3 参重载致驳回理由永不落库", async () => {
+test("申诉用本人身份调用，且传 p_reason 保留驳回理由", async () => {
   let rpcArgs: Record<string, unknown> | null = null;
   const auth = {
     actor: { userId: ACTOR_ID },
-    supabase: {
+    supabase: { rpc: () => { throw new Error("不能用管理员连接处理申诉"); } },
+    userSupabase: {
       rpc: async (_name: string, args: Record<string, unknown>) => {
         rpcArgs = args;
         return { data: null, error: null };

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
+import { requireSystemActor, toTrimmedString } from "@/lib/admin/ai-channels";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { groupModelIdAliases } from "@/lib/ai/model-discovery";

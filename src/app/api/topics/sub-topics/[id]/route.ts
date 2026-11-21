@@ -69,19 +69,19 @@ export async function buildSubTopicPatchResponse(
     observation?.mark("validate");
     body = await request.json();
   } catch {
-    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "请求体格式不正确" }), observation);
+    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "请求体格式不正确" }, observation?.requestId), observation);
   }
 
   const { id } = await context.params;
   if (!isUuidLike(id)) {
-    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }), observation);
+    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }, observation?.requestId), observation);
   }
 
   observation?.mark("scope");
   let response: Response;
   try {
     observation?.mark("write-request");
-    response = jsonResult(await deps.updateSubTopic(auth.context.supabase, mutationActor(auth), id, body));
+    response = jsonResult(await deps.updateSubTopic(auth.context.supabase, mutationActor(auth), id, body), observation?.requestId);
   } catch {
     response = Response.json({ error: "更新选题失败" }, { status: 500 });
   }
@@ -107,14 +107,14 @@ export async function buildSubTopicDeleteResponse(
 
   const { id } = await context.params;
   if (!isUuidLike(id)) {
-    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }), observation);
+    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }, observation?.requestId), observation);
   }
 
   observation?.mark("scope");
   let response: Response;
   try {
     observation?.mark("write-request");
-    response = jsonResult(await deps.removeSubTopic(auth.context.supabase, mutationActor(auth), id));
+    response = jsonResult(await deps.removeSubTopic(auth.context.supabase, mutationActor(auth), id), observation?.requestId);
   } catch {
     response = Response.json({ error: "移出选题失败" }, { status: 500 });
   }

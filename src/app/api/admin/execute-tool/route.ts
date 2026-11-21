@@ -10,6 +10,7 @@ import {
   type RequireAdminActorSuccess,
 } from "@/app/api/admin/auth-helper";
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
+import { toStringErrorResponse } from "@/lib/errors";
 import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { executeAdminTool } from "@/lib/admin-tools";
 import { observeMutation } from "@/lib/observed-mutation";
@@ -148,6 +149,7 @@ async function loadPendingAction(
 export async function buildExecuteToolResponse(
   input: ExecuteToolBody,
   deps: RouteDeps = defaultExecuteToolDeps,
+  requestId?: string,
 ) {
   const auth = await deps.requireAdminActor({ requiredPermission: "use_ai_assist" });
   if (isAuthError(auth)) {
@@ -201,7 +203,13 @@ export async function buildExecuteToolResponse(
       .eq("id", confirmationToken);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/execute-tool",
+        operation: "update-confirmed-action",
+        requestId,
+        error: error.message,
+      });
     }
 
     return NextResponse.json({
@@ -308,7 +316,13 @@ export async function buildExecuteToolResponse(
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/execute-tool",
+      operation: "record-tool-execution",
+      requestId,
+      error: error.message,
+    });
   }
 
   return NextResponse.json({
@@ -337,7 +351,7 @@ export async function POST(request: NextRequest) {
       toolName: toTrimmedString(body.toolName),
       toolArgs: toObject(body.toolArgs),
       confirmationToken: toTrimmedString(body.confirmationToken),
-    }, defaultExecuteToolDeps);
+    }, defaultExecuteToolDeps, observation.requestId);
     let businessSucceeded = response.ok;
     try {
       const payload = await response.clone().json() as { success?: unknown };

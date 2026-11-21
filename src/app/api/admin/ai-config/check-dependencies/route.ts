@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
+import { requireSystemActor, toTrimmedString } from "@/lib/admin/ai-channels";
 import { buildDependencyPreview } from "@/lib/ai-config/key-dependencies";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 

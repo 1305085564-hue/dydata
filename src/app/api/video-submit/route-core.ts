@@ -41,6 +41,7 @@ import {
 } from "@/lib/daily-report-data-source";
 import { appendObservedMutationResult, observeMutationRequest, type MutationObservation } from "@/lib/observed-mutation-result";
 import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
+import { videoSubmitErrorResponse } from "./error-response";
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
@@ -48,14 +49,9 @@ import {
   persistSubmissionTags,
   runSubmissionPersistenceStep,
   SUBMISSION_PERSISTENCE_ERROR_CODES,
+  stripSubmissionId,
 } from "./persist";
 type RollbackAction = () => Promise<void>;
-
-function stripId<T extends Record<string, unknown>>(row: T) {
-  const rest = { ...row };
-  delete rest.id;
-  return rest;
-}
 
 /**
  * 业务键判重的发布日窗口：按上海自然日（与数据复盘页的日期分组口径一致）。
@@ -214,7 +210,7 @@ async function handleVideoSubmit(
     .single();
 
   if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 });
+    return videoSubmitErrorResponse(request, observation?.requestId, "load-submitter-profile", profileError.message);
   }
 
   const membershipResponse = resolveVideoSubmitMembershipResponse(profile);
@@ -418,7 +414,7 @@ async function handleVideoSubmit(
     // V3：只校验选题真实存在且在库；排他认领已废除，允许多人同时写同一题
     const topicAssociation = await validateTopicForSubmission(deps.createAdminClient(), normalized.topic_id);
     if (!topicAssociation.ok) {
-      return NextResponse.json({ error: topicAssociation.message }, { status: topicAssociation.status });
+      return videoSubmitErrorResponse(request, observation?.requestId, "validate-topic-association", topicAssociation.message, topicAssociation.status, topicAssociation.message);
     }
   }
 
@@ -519,7 +515,7 @@ async function handleVideoSubmit(
       .maybeSingle();
 
     if (existingVideoError) {
-      return NextResponse.json({ error: existingVideoError.message }, { status: 500 });
+      return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-video", existingVideoError.message);
     }
 
     if (fetchedVideo && fetchedVideo.user_id !== userId) {
@@ -556,7 +552,7 @@ async function handleVideoSubmit(
 
   if (existingVideo) {
     rollbackActions.push(async () => {
-      const { error } = await adminSupabase.from("videos").update(stripId(existingVideo)).eq("id", existingVideo.id);
+      const { error } = await adminSupabase.from("videos").update(stripSubmissionId(existingVideo)).eq("id", existingVideo.id);
       if (error) throw error;
     });
   } else {
@@ -569,7 +565,7 @@ async function handleVideoSubmit(
   const videoStep = await runSubmissionPersistenceStep("video", async () => existingVideo
     ? await supabase
       .from("videos")
-      .update(stripId({
+      .update(stripSubmissionId({
         ...videoPayload,
         topic_id: resolveEditTopicId(normalized.mode, normalized.topic_id, existingVideo.topic_id ?? null),
       }))
@@ -598,7 +594,7 @@ async function handleVideoSubmit(
 
   if (existingSnapshotError) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: existingSnapshotError.message }, { status: 500 });
+    return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-snapshot", existingSnapshotError.message);
   }
 
   // 编辑模式由服务端保留数据库中不可编辑指标的原值，不信任前端默认值
@@ -659,7 +655,7 @@ async function handleVideoSubmit(
 
   if (existingSnapshot) {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("video_metrics_snapshots").update(stripId(existingSnapshot)).eq("id", existingSnapshot.id);
+      const { error } = await supabase.from("video_metrics_snapshots").update(stripSubmissionId(existingSnapshot)).eq("id", existingSnapshot.id);
       if (error) throw error;
     });
   } else {
@@ -725,7 +721,7 @@ async function handleVideoSubmit(
 
   if (existingReport) {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("daily_reports").update(stripId(existingReport)).eq("id", existingReport.id);
+      const { error } = await supabase.from("daily_reports").update(stripSubmissionId(existingReport)).eq("id", existingReport.id);
       if (error) throw error;
     });
   } else {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireSystemActor } from "../../ai-channels/_shared";
+import { toStringErrorResponse } from "@/lib/errors";
+import { requireSystemActor } from "@/lib/admin/ai-channels";
 
 type CallStatsDeps = {
   requireSystemActor: typeof requireSystemActor;
@@ -10,6 +11,7 @@ type CallStatsDeps = {
 
 export async function buildCallStatsResponse(
   deps: CallStatsDeps = { requireSystemActor },
+  request?: Request,
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -18,7 +20,13 @@ export async function buildCallStatsResponse(
 
   const { data, error } = await (deps.createAdminClient ?? createAdminClient)().rpc("get_ai_call_stats");
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/ai-config/call-stats",
+      operation: "load-call-stats",
+      request,
+      error: error.message,
+    });
   }
 
   return NextResponse.json(data ?? {
@@ -29,6 +37,6 @@ export async function buildCallStatsResponse(
   });
 }
 
-export async function GET() {
-  return buildCallStatsResponse();
+export async function GET(request: Request) {
+  return buildCallStatsResponse(undefined, request);
 }

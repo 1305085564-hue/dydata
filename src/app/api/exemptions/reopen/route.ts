@@ -7,6 +7,7 @@ import {
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
 import { reopenExemptionRequestAtomically } from "@/lib/exemption-review";
+import { errorCodeForStatus, toStringErrorResponse } from "@/lib/errors";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type ReopenDeps = {
@@ -35,6 +36,7 @@ function parseReopenPayload(input: unknown): { data: { requestId: string } } | {
 export async function buildReopenExemptionResponse(
   input: unknown,
   deps: ReopenDeps = defaultReopenExemptionDeps,
+  requestId?: string,
 ) {
   const payload = parseReopenPayload(input);
   if ("response" in payload) return payload.response;
@@ -50,7 +52,15 @@ export async function buildReopenExemptionResponse(
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.message }, { status: result.status });
+    return toStringErrorResponse({
+      code: errorCodeForStatus(result.status),
+      route: "/api/exemptions/reopen",
+      operation: "reopen-exemption-request",
+      requestId,
+      status: result.status,
+      message: result.status >= 500 ? undefined : result.message,
+      error: result.cause ?? result.message,
+    });
   }
 
   return NextResponse.json({ data: result.data });
@@ -68,7 +78,7 @@ export async function POST(request: Request) {
     let response: Response;
     try {
       observation.mark("review-rpc");
-      response = await buildReopenExemptionResponse(body.data);
+      response = await buildReopenExemptionResponse(body.data, defaultReopenExemptionDeps, observation.requestId);
     } catch {
       response = Response.json({ error: "打回豁免申请失败" }, { status: 500 });
     }

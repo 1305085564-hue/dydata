@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireSystemActor } from "../../ai-channels/_shared";
+import { toStringErrorResponse } from "@/lib/errors";
+import { requireSystemActor } from "@/lib/admin/ai-channels";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireSystemActor();
   } catch (error) {
@@ -30,7 +31,13 @@ export async function GET() {
       .limit(1000);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/ai-config/ocr-logs",
+        operation: "load-ocr-logs",
+        request,
+        error: error.message,
+      });
     }
 
     const records = recent1000 ?? [];

@@ -43,7 +43,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
   }
 
   observation.mark("review-rpc");
-  const rpc = await auth.supabase.rpc("reopen_fulfillment_appeal_atomically", {
+  const rpc = await auth.userSupabase.rpc("reopen_fulfillment_appeal_atomically", {
     p_appeal_id: appealId,
     p_handler_id: auth.actor.userId,
   });

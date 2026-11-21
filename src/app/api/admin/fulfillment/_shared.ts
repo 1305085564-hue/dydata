@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { jsonBadRequest, requireAdminServiceClient, unwrapRpc } from "../cockpit/_shared";
+import { jsonBadRequest, requireAdminServiceClient, unwrapRpc } from "@/lib/admin/cockpit";
 import {
   MANUAL_FULFILLMENT_MARK_STATUS_MESSAGE,
   MANUAL_FULFILLMENT_MARK_STATUSES,

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { reportCronFailure } from "@/lib/cron-failure";
+import { toStringErrorResponse } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
@@ -13,9 +14,14 @@ export async function GET(request: NextRequest) {
   const { data, error } = await admin.rpc("cleanup_expired_notifications");
 
   if (error) {
-    console.error("[notifications/cleanup] failed", error);
     await reportCronFailure("通知清理", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/notifications/cleanup",
+      operation: "cleanup-expired-notifications",
+      request,
+      error: error.message,
+    });
   }
 
   let ocrDeleted = 0;

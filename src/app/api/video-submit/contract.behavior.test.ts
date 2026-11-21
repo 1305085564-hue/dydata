@@ -137,17 +137,36 @@ test("video-submit 参数校验失败时 400，不进入落库", async () => {
   assert.equal(typeof (await response.json()).error, "string");
 });
 
-test("video-submit 读取成员资料失败时 500，不伪装成参数错误", async () => {
+test("video-submit 读取成员资料失败时返回字符串错误并可按编号查日志", async () => {
   const deps: VideoSubmitDeps = {
     ...defaultVideoSubmitDeps,
     createClient: async () => fakeMemberClient({
       data: null,
-      error: { message: "读取个人资料失败" },
+      error: { message: "database connection failed api_key=hidden-key" },
     }),
   };
-  const response = await buildVideoSubmitResponse(makeRequest(), deps);
-  assert.equal(response.status, 500);
-  assert.equal((await response.json()).error, "读取个人资料失败");
+  const serverLogs: string[] = [];
+  const originalError = console.error;
+  console.error = (line: string) => serverLogs.push(line);
+  try {
+    const { response, logs } = observe((observation) =>
+      buildVideoSubmitResponse(makeRequest(), deps, observation),
+    );
+    const result = await response;
+    const body = await result.json() as { error: unknown; requestId: string };
+    assert.equal(result.status, 500);
+    assert.equal(typeof body.error, "string");
+    const errorText = String(body.error);
+    assert.match(errorText, /后台服务暂时不可用/);
+    assert.doesNotMatch(errorText, /database connection failed|hidden-key/);
+    assert.equal(body.requestId, "123e4567-e89b-42d3-a456-426614174000");
+    assert.equal(logs.length, 1);
+    const apiLog = JSON.parse(serverLogs[0] ?? "{}") as Record<string, unknown>;
+    assert.equal(apiLog.requestId, body.requestId);
+    assert.equal(apiLog.error, "database connection failed api_key=[REDACTED]");
+  } finally {
+    console.error = originalError;
+  }
 });
 
 for (const membership of ["unauthenticated", "archived"] as const) {

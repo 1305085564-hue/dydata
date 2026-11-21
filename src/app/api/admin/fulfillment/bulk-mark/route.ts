@@ -39,7 +39,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
   if (scoped) return scoped;
 
   observation.mark("review-rpc");
-  const result = await auth.supabase.rpc("mark_fulfillment_status_batch", {
+  const result = await auth.userSupabase.rpc("mark_fulfillment_status_batch", {
     p_user_ids: payload.data.userIds,
     p_record_date: payload.data.recordDate,
     p_status: payload.data.status,

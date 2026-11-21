@@ -38,6 +38,7 @@ export async function requireAdminServiceClient() {
 
   return {
     supabase,
+    userSupabase: auth.supabase,
     actor: auth.actor,
     permissionInfo: permissionContext.permissionInfo,
     scope: permissionContext.scope,

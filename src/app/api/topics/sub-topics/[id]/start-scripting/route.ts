@@ -38,13 +38,13 @@ export async function buildStartScriptingResponse(
   observation?.mark("validate");
   const { id } = await context.params;
   if (!isUuidLike(id)) {
-    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }), observation);
+    return appendObservedMutationResult(jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" }, observation?.requestId), observation);
   }
   // V3：开始写作（幂等，允许多人同时写同一题），端点名保留以兼容前端调用
   let response: Response;
   try {
     observation?.mark("write-request");
-    response = jsonResult(await deps.startWritingClaim(auth.context.supabase, auth.context.userId, id, auth.context.teamScope));
+    response = jsonResult(await deps.startWritingClaim(auth.context.supabase, auth.context.userId, id, auth.context.teamScope), observation?.requestId);
   } catch {
     response = Response.json({ error: "开始写作失败" }, { status: 500 });
   }

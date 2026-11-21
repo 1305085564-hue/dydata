@@ -46,7 +46,10 @@ test("个人卡失败路径：参数、鉴权、权限范围、成员不存在�
     loadPersonData: async () => { throw new CollaborationNotFoundError("成员不存在"); },
   }));
   assert.equal(missingMember.status, 404);
-  assert.equal((await missingMember.json()).error, "成员不存在");
+  const missingBody = await missingMember.json();
+  assert.match(missingBody.requestId, /^[0-9a-f-]{36}$/i);
+  assert.equal(missingBody.error, `成员不存在（编号：${missingBody.requestId}）`);
+  assert.equal(missingMember.headers.get("x-dydata-request-id"), missingBody.requestId);
 
   const dependencyFailed = await buildPersonResponse(new NextRequest(url), makeDeps({
     loadPersonData: async () => { throw new SupabaseQueryFailure("加载个人资料失败", new Error("db down")); },

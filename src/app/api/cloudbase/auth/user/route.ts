@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const verification = await requireVerifiedCloudBaseSession(request);
   const { result, error } = verification;
   if ("accountError" in verification) {
-    const inactive = inactiveCloudBaseAccountResponse(verification.accountError);
+    const inactive = inactiveCloudBaseAccountResponse(verification.accountError, request, "/api/cloudbase/auth/user");
     if (inactive) return inactive;
   }
   if (!result) {

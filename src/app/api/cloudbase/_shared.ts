@@ -12,6 +12,7 @@ import {
 } from "@/lib/cloudbase/core";
 import { KEEP_LOGGED_IN_COOKIE_NAME, isKeepLoggedInCookieValue } from "@/lib/supabase/session-cookie";
 import { GRANT_COOKIE_NAME, GRANT_COOKIE_PATH } from "@/lib/screenshot-grant";
+import { toStringErrorResponse } from "@/lib/errors";
 
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -42,11 +43,23 @@ export function clearCloudBaseCookies(response: NextResponse) {
   });
 }
 
-export function inactiveCloudBaseAccountResponse(error: unknown) {
+export function inactiveCloudBaseAccountResponse(
+  error: unknown,
+  request?: Request,
+  route = "/api/cloudbase/auth",
+) {
   if (!isCloudBaseInactiveAccountError(error)) return null;
-  const response = NextResponse.json({ error: error.message, code: error.code }, {
-    status: 401, headers: { "Cache-Control": "no-store" },
+  const response = toStringErrorResponse({
+    code: "UNAUTHENTICATED",
+    route,
+    operation: "verify-active-account",
+    request,
+    status: 401,
+    message: error.message,
+    error: error.message,
+    extraFields: { code: error.code },
   });
+  response.headers.set("Cache-Control", "no-store");
   clearCloudBaseCookies(response);
   return response;
 }

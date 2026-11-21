@@ -220,7 +220,10 @@ test("buildReviewExemptionResponse: 团队 A 主管审批团队 B 组员申请�
 
   assert.equal(response.status, 403);
   const json = await response.json();
-  assert.equal(json.error, "不能操作当前管理范围外的成员");
+  assert.equal(typeof json.requestId, "string");
+  assert.match(json.requestId, /^[0-9a-f-]{36}$/i);
+  assert.equal(json.error, `不能操作当前管理范围外的成员（编号：${json.requestId}）`);
+  assert.equal(response.headers.get("x-dydata-request-id"), json.requestId);
 });
 
 test("buildReviewExemptionResponse: 恶意篡改请求体 (非 UUID / 非法 action) 被前置严格拦截", async () => {
