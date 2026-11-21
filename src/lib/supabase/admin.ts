@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
 import { cloudBaseEnvironmentId, isCloudBaseBackend } from "@/lib/cloudbase/core";
 import { createCloudBaseUserManagement } from "@/lib/cloudbase/management";
+import { guardAdminRpc } from "@/lib/admin-rpc-guard";
 
 export function createAdminClient() {
   if (isCloudBaseBackend()) {
@@ -35,10 +36,10 @@ export function createAdminClient() {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return guardAdminRpc(createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  });
+  }), "supabase");
 }

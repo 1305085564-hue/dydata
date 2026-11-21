@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 import { cloudBaseRestUrl } from "./core";
+import { guardAdminRpc } from "@/lib/admin-rpc-guard";
 
 export type CloudBaseDataRole = "user" | "admin" | "browser";
 type AuthShape = Record<string, unknown> & { admin?: Record<string, unknown> };
@@ -149,11 +150,12 @@ export function createCloudBaseDataClient(options: {
   fetcher?: typeof fetch;
   auth?: AuthShape;
 }) {
-  const client = createSupabaseClient("https://cloudbase-adapter.invalid", "cloudbase-adapter-public-key", {
+  const rawClient = createSupabaseClient("https://cloudbase-adapter.invalid", "cloudbase-adapter-public-key", {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
     global: { fetch: createCloudBaseFetch(options) },
     db: { schema: "public" },
   });
+  const client = options.role === "admin" ? guardAdminRpc(rawClient, "cloudbase") : rawClient;
 
   const auth = options.auth ?? defaultCloudBaseAuth();
   if (options.role === "admin") auth.admin = createCloudBaseAdminAuth(client as unknown as CloudBaseRpcClient) as unknown as Record<string, unknown>;
