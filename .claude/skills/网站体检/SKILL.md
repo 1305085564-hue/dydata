@@ -54,6 +54,6 @@ compatibility: claude-code-only
 
 ## 边界
 
-- 只管「慢」。白屏/报错/登录异常走 debugging-and-error-recovery skill。
+- 只管「慢」。白屏/报错/登录异常走后端排障流程。
 - 只做性能领域改动，业务规则和数据含义不动。
 - 不批量优化全站；一次体检一个页面，记账后再下一个。
