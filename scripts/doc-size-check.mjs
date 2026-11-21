@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 文档体量检查（推送前第 5 项与可维护性门禁一起跑）：
-//  1) 行数：超过上限只提醒（退出码 0）；超过上限 1.5 倍才拦。上限表见 docs/reference/全站设计与决策/文档与维护规范.md「行数上限」。
+//  1) 行数：超过上限只提醒（退出码 0）；超过上限 1.5 倍才拦。上限表见 docs/reference/设计与决策.md「行数上限」。
 //  2) 日志：`日志/` 里出现超过 45 天的文件就拦，修复方法 `npm run logs:archive`。
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -16,7 +16,6 @@ const SMALL = 100;
 
 const FIXED = new Map([
   ["AGENTS.md", MID],
-  ["docs/reference/DYData产品全书.md", SMALL],
   ["docs/通用管理/待办清单.md", SMALL],
   ["docs/通用管理/上下文交接.md", SMALL],
   ["docs/reference/设计与决策.md", MID],
@@ -26,8 +25,6 @@ const FIXED = new Map([
   ["docs/reference/全站设计与决策/上线与运维.md", BIG],
   ["docs/reference/全站设计与决策/后端工程规范.md", MID],
   ["docs/reference/全站设计与决策/纠错索引.md", MID],
-  ["docs/reference/全站设计与决策/文档与维护规范.md", MID],
-  ["docs/reference/全站设计与决策/CLAUDE.md写作指南.md", MID],
 ]);
 
 export function limitFor(file) {

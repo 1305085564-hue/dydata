@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const INDEX = "docs/reference/文档归口现状.md";
+const INDEX = "docs/reference/设计与决策.md";
 const SKIP_DIRS = new Set([".git", "node_modules", ".next", "dist", "coverage", "output", ".turbo"]);
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql", ".sh", ".py"]);
 const FILE_EXTENSIONS = new Set([".md", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql", ".sh", ".py", ".json", ".css", ".scss", ".html", ".yaml", ".yml", ".toml"]);
@@ -116,9 +116,9 @@ function extractCurrentBasis(root = ROOT) {
   const indexPath = path.join(root, INDEX);
   const rows = linesOutsideFences(readFileSync(indexPath, "utf8"));
   let inSection = false;
-  const documents = new Set();
+  const documents = new Set([indexPath]);
   for (const row of rows) {
-    if (/^##\s+一、当前依据/.test(row.line)) {
+    if (/^###\s+文件清单/.test(row.line)) {
       inSection = true;
       continue;
     }

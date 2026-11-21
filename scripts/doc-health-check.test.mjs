@@ -12,12 +12,13 @@ test("文档引用检查只核对当前依据，并识别文件、链接、表�
     mkdirSync(path.join(root, "docs/guide"), { recursive: true });
     mkdirSync(path.join(root, "src"), { recursive: true });
     mkdirSync(path.join(root, "supabase/migrations"), { recursive: true });
-    writeFileSync(path.join(root, "docs/reference/文档归口现状.md"), [
-      "## 一、当前依据（施工只读这里）",
+    writeFileSync(path.join(root, "docs/reference/设计与决策.md"), [
+      "### 文件清单（全站模块地图）",
       "| [依据](../guide/current.md) |",
-      "## 二、历史",
-      "| [不扫描](../missing.md) |",
+      "## 三、维护规范",
+      "| [不扫描](../guide/not-basis.md) |",
     ].join("\n"));
+    writeFileSync(path.join(root, "docs/guide/not-basis.md"), "表 `unscanned_table`。\n");
     writeFileSync(path.join(root, "docs/guide/current.md"), [
       "[有效链接](./page-(x).md)",
       "[失效链接](./missing.md)",
@@ -46,7 +47,7 @@ test("文档引用检查只核对当前依据，并识别文件、链接、表�
     ].join("\n"));
 
     const shallow = scan(root);
-    assert.equal(shallow.docs, 1);
+    assert.equal(shallow.docs, 2);
     assert.deepEqual(shallow.issues.map(({ category, target }) => `${category}:${target}`), [
       "内部链接:./missing.md",
       "文件路径:src/missing.ts",
@@ -61,6 +62,7 @@ test("文档引用检查只核对当前依据，并识别文件、链接、表�
     assert.ok(deep.issues.some(({ category, target }) => category === "函数签名" && target === "mismatch_signature"));
     assert.ok(!deep.issues.some(({ category, target }) => category === "函数签名" && target === "known_signature"));
     assert.ok(!deep.issues.some(({ target }) => target === "not-a-real-link.md"));
+    assert.ok(!deep.issues.some(({ target }) => target === "unscanned_table"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
