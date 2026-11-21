@@ -25,23 +25,28 @@ test("COS 写失败时上传接口必须报错，不得伪成功", async () => {
   process.env.COS_BUCKET = "test-bucket-1250000000";
   process.env.COS_REGION = "ap-singapore";
 
-  const originalCreateClient = defaultSubmissionScreenshotDeps.createClient;
+  const originalUserContext = defaultSubmissionScreenshotDeps.getCurrentUserContext;
+  const originalPermissionContext = defaultSubmissionScreenshotDeps.getCurrentPermissionContext;
+  const originalAdminClient = defaultSubmissionScreenshotDeps.createAdminClient;
   const originalFetch = globalThis.fetch;
   const originalInfo = console.info;
   const originalError = console.error;
   const logs: string[] = [];
   const calls: { url: string; method: string }[] = [];
 
-  defaultSubmissionScreenshotDeps.createClient = async () => ({
-    auth: { getUser: async () => ({ data: { user: { id: "user-1" } } }) },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: async () => ({ data: { id: "account-1", profile_id: "user-1" }, error: null }),
-        }),
-      }),
-    }),
+  defaultSubmissionScreenshotDeps.getCurrentUserContext = async () => ({ user: { id: "user-1" } }) as never;
+  defaultSubmissionScreenshotDeps.getCurrentPermissionContext = async () => ({
+    permissionInfo: { userId: "user-1" },
+    scope: { activeVisibleUserIds: ["user-1"], visibleUserIds: ["user-1"] },
   }) as never;
+  defaultSubmissionScreenshotDeps.createAdminClient = () => {
+    const query = {
+      select: () => query,
+      eq: () => query,
+      single: async () => ({ data: { id: "account-1", profile_id: "user-1" }, error: null }),
+    };
+    return { from: () => query } as never;
+  };
 
   // COS 写失败：不发真实请求，直接让 COS PUT 拿到 500。
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -83,7 +88,9 @@ test("COS 写失败时上传接口必须报错，不得伪成功", async () => {
       `日志缺少 write_failed + backend=cos：${storageLogs.join(" | ")}`,
     );
   } finally {
-    defaultSubmissionScreenshotDeps.createClient = originalCreateClient;
+    defaultSubmissionScreenshotDeps.getCurrentUserContext = originalUserContext;
+    defaultSubmissionScreenshotDeps.getCurrentPermissionContext = originalPermissionContext;
+    defaultSubmissionScreenshotDeps.createAdminClient = originalAdminClient;
     globalThis.fetch = originalFetch;
     console.info = originalInfo;
     console.error = originalError;

@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { getTeamOptions } from "@/lib/teams";
 
 export type Result<T, E = string> = { ok: true; data: T } | { ok: false; error: E };
@@ -64,6 +66,26 @@ type ProfileSelectBuilder = {
   };
 };
 
+type PendingRequestQuery = {
+  or(filters: string): PendingRequestQuery;
+  eq(column: string, value: string): PendingRequestQuery;
+  order(column: string, options: { ascending: boolean }): QueryResult<TeamJoinRow[]>;
+};
+
+type PendingRequestSelectBuilder = {
+  select(columns: string): {
+    eq(column: string, value: string): PendingRequestQuery;
+  };
+};
+
+type TeamSelectBuilder = {
+  select(columns: string): {
+    eq(column: string, value: string): {
+      maybeSingle(): QueryResult<{ id: string; name: string | null }>;
+    };
+  };
+};
+
 type RpcClient = {
   rpc(
     name: "review_team_join_request",
@@ -77,6 +99,8 @@ type ServerClient = RpcClient & {
 
 type AdminClient = {
   from(table: "profiles"): ProfileSelectBuilder;
+  from(table: "team_join_requests"): PendingRequestSelectBuilder;
+  from(table: "teams"): TeamSelectBuilder;
   auth: {
     admin: {
       getUserById(userId: string): Promise<{
@@ -90,12 +114,14 @@ type AdminClient = {
 type ClientFactories = {
   createServerClient: () => Promise<ServerClient>;
   createServiceClient: () => AdminClient;
+  getCurrentPermissionContext: typeof getCurrentPermissionContext;
   getTeamOptions: typeof getTeamOptions;
 };
 
 const defaultFactories: ClientFactories = {
   createServerClient: async () => (await createClient()) as unknown as ServerClient,
   createServiceClient: () => createAdminClient() as unknown as AdminClient,
+  getCurrentPermissionContext,
   getTeamOptions,
 };
 
@@ -208,26 +234,42 @@ export async function getMyPendingRequest(applicantUserId: string): Promise<Resu
 }
 
 export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequestRow[]>> {
-  // Select requests with the caller's JWT so RLS applies before privileged
-  // profile/email enrichment. The page guard alone does not limit data scope.
-  const serverClient = await clientFactories.createServerClient();
-  const { data, error } = await serverClient
+  const permissionContext = await clientFactories.getCurrentPermissionContext();
+  if (
+    !permissionContext
+    || permissionContext.permissionInfo.membershipStatus !== "active"
+    || permissionContext.scope.userId !== permissionContext.permissionInfo.userId
+    || !getActiveVisibleUserIds(permissionContext.scope).includes(permissionContext.permissionInfo.userId)
+  ) {
+    return { ok: false, error: "SCOPE_UNAVAILABLE" };
+  }
+
+  const { userId, teamId, permissions } = permissionContext.permissionInfo;
+  const canReadTeamRequests = permissions.manage_members === true && teamId !== null;
+  const adminClient = clientFactories.createServiceClient();
+  let query = adminClient
     .from("team_join_requests")
-    .select("id, applicant_user_id, target_team_id, created_at, teams:target_team_id(name)")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true });
+    .select("id, applicant_user_id, target_team_id, created_at")
+    .eq("status", "pending");
+  query = canReadTeamRequests
+    ? query.or(`applicant_user_id.eq.${userId},target_team_id.eq.${teamId}`)
+    : query.eq("applicant_user_id", userId);
+  const { data, error } = await query.order("created_at", { ascending: true });
 
   if (error) {
     return { ok: false, error: error.message ?? "SELECT_FAILED" };
   }
 
-  if (!data?.length) return { ok: true, data: [] };
+  const visibleRequests = (data ?? []).filter((row) =>
+    row.applicant_user_id === userId
+    || (canReadTeamRequests && row.target_team_id === teamId),
+  );
+  if (!visibleRequests.length) return { ok: true, data: [] };
 
-  const supabase = clientFactories.createServiceClient();
-  const applicantUserIds = Array.from(new Set((data ?? []).map((row) => row.applicant_user_id)));
+  const applicantUserIds = Array.from(new Set(visibleRequests.map((row) => row.applicant_user_id)));
   const nameByUserId = new Map<string, string>();
   if (applicantUserIds.length > 0) {
-    const { data: profiles, error: profilesError } = await supabase.from("profiles").select("id, name").in("id", applicantUserIds);
+    const { data: profiles, error: profilesError } = await adminClient.from("profiles").select("id, name").in("id", applicantUserIds);
     if (profilesError) {
       return { ok: false, error: profilesError.message ?? "SELECT_FAILED" };
     }
@@ -236,11 +278,22 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
     }
   }
 
+  let teamName = "";
+  if (teamId) {
+    const { data: team, error: teamError } = await adminClient
+      .from("teams")
+      .select("id, name")
+      .eq("id", teamId)
+      .maybeSingle();
+    if (teamError) return { ok: false, error: teamError.message ?? "SELECT_FAILED" };
+    teamName = team?.name ?? "";
+  }
+
   const emailEntries = await mapWithConcurrency(
     applicantUserIds,
     AUTH_LOOKUP_CONCURRENCY,
     async (userId): Promise<readonly [string, string | null]> => {
-      const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(userId);
+      const { data: userResult, error: userError } = await adminClient.auth.admin.getUserById(userId);
       if (userError) {
         console.error("[team-join] failed to load applicant email", { userId, error: userError });
         return [userId, null];
@@ -252,13 +305,13 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
 
   return {
     ok: true,
-    data: (data ?? []).map((row) => ({
+    data: visibleRequests.map((row) => ({
       id: row.id,
       applicantUserId: row.applicant_user_id,
       applicantName: nameByUserId.get(row.applicant_user_id) ?? "",
       applicantEmail: emailByUserId.get(row.applicant_user_id) ?? null,
       targetTeamId: row.target_team_id,
-      targetTeamName: row.teams?.name ?? "",
+      targetTeamName: row.target_team_id === teamId ? teamName : "",
       createdAt: row.created_at,
     })),
   };

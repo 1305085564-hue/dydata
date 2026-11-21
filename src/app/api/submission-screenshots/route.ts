@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserContext } from "@/lib/current-user-context";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access";
 import { hasMatchingImageSignature } from "@/lib/file-signatures";
 import type { SubmissionAssetRole } from "@/types";
@@ -15,12 +17,14 @@ const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const JPEG_OPTIMIZE_THRESHOLD = 250 * 1024;
 
 type SubmissionScreenshotDeps = {
-  createClient: typeof createClient;
+  getCurrentUserContext: typeof getCurrentUserContext;
+  getCurrentPermissionContext: typeof getCurrentPermissionContext;
   createAdminClient: typeof createAdminClient;
 };
 
 export const defaultSubmissionScreenshotDeps: SubmissionScreenshotDeps = {
-  createClient,
+  getCurrentUserContext,
+  getCurrentPermissionContext,
   createAdminClient,
 };
 
@@ -73,12 +77,18 @@ export async function buildSubmissionScreenshotResponse(
       appendObservedMutationResult(response, observation);
 
     observation.mark("auth");
-    const supabase = await deps.createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { user } = await deps.getCurrentUserContext();
 
     if (!user) return respond(NextResponse.json({ error: "未登录" }, { status: 401 }));
+
+    const permissionContext = await deps.getCurrentPermissionContext();
+    if (
+      !permissionContext
+      || permissionContext.permissionInfo.userId !== user.id
+      || !getActiveVisibleUserIds(permissionContext.scope).includes(user.id)
+    ) {
+      return respond(NextResponse.json({ error: "当前账号暂不能使用" }, { status: 403 }));
+    }
 
     let formData: FormData;
     try {
@@ -100,13 +110,14 @@ export async function buildSubmissionScreenshotResponse(
     if (file.size > MAX_FILE_SIZE) return respond(NextResponse.json({ error: "图片不能超过 8MB" }, { status: 400 }));
 
     observation.mark("scope");
-    const { data: account, error: accountError } = await supabase
+    const { data: account, error: accountError } = await deps.createAdminClient()
       .from("accounts")
       .select("id, profile_id")
       .eq("id", accountId)
+      .eq("profile_id", user.id)
       .single();
 
-    if (accountError || !account || account.profile_id !== user.id) {
+    if (accountError || !account) {
       return respond(NextResponse.json({ error: "账号不存在或无权限上传" }, { status: 403 }));
     }
 

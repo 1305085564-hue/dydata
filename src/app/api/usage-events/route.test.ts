@@ -13,11 +13,9 @@ test("usage events skips invalid payloads", async () => {
       body: JSON.stringify({ path: "/dashboard", eventType: "bad" }),
     }),
     {
-      createClient: async () =>
+      getCurrentUserContext: async () => ({ user: { id: "user-1" } }) as never,
+      createAdminClient: () =>
         ({
-          auth: {
-            getUser: async () => ({ data: { user: { id: "user-1" } } }),
-          },
           from: () => ({
             insert: async () => {
               insertCalled = true;
@@ -42,11 +40,9 @@ test("usage events skips when user is not signed in", async () => {
       body: JSON.stringify({ path: "/dashboard", eventType: "page_view" }),
     }),
     {
-      createClient: async () =>
+      getCurrentUserContext: async () => ({ user: null }) as never,
+      createAdminClient: () =>
         ({
-          auth: {
-            getUser: async () => ({ data: { user: null } }),
-          },
           from: () => ({
             insert: async () => {
               insertCalled = true;
@@ -74,11 +70,9 @@ test("usage events writes normalized row for signed-in users", async () => {
       }),
     }),
     {
-      createClient: async () =>
+      getCurrentUserContext: async () => ({ user: { id: "user-1" } }) as never,
+      createAdminClient: () =>
         ({
-          auth: {
-            getUser: async () => ({ data: { user: { id: "user-1" } } }),
-          },
           from: (table: string) => ({
             insert: async (payload: Record<string, unknown>) => {
               assert.equal(table, "usage_events");

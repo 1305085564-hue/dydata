@@ -77,10 +77,8 @@ test("permission-requests/apply：真实 POST 未登录明确失败并补齐分�
 });
 
 test("usage-events：真实 POST 未登录保持明确跳过结果并补齐分层字段", async () => {
-  const original = defaultUsageEventsDeps.createClient;
-  defaultUsageEventsDeps.createClient = async () => ({
-    auth: { getUser: async () => ({ data: { user: null } }) },
-  }) as never;
+  const original = defaultUsageEventsDeps.getCurrentUserContext;
+  defaultUsageEventsDeps.getCurrentUserContext = async () => ({ user: null }) as never;
   try {
     const response = await postUsage(new Request("https://dydata.cc/api/usage-events", {
       method: "POST",
@@ -92,6 +90,6 @@ test("usage-events：真实 POST 未登录保持明确跳过结果并补齐分�
     assert.equal(body.ok, false);
     assertLayered(body);
   } finally {
-    defaultUsageEventsDeps.createClient = original;
+    defaultUsageEventsDeps.getCurrentUserContext = original;
   }
 });

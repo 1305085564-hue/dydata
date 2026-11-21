@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserContext } from "@/lib/current-user-context";
 import { parseUsageEventPayload } from "@/lib/usage-events/shared";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
-type UsageEventsClient = Awaited<ReturnType<typeof createClient>>;
-
 type UsageEventsDeps = {
-  createClient: () => Promise<UsageEventsClient>;
+  getCurrentUserContext: typeof getCurrentUserContext;
+  createAdminClient: typeof createAdminClient;
 };
 
-export const defaultUsageEventsDeps: UsageEventsDeps = { createClient };
+export const defaultUsageEventsDeps: UsageEventsDeps = { getCurrentUserContext, createAdminClient };
 
 export async function buildUsageEventResponse(
   request: Request,
@@ -29,17 +29,14 @@ export async function buildUsageEventResponse(
     return NextResponse.json({ ok: false, skipped: true }, { status: 202 });
   }
 
-  const supabase = await deps.createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await deps.getCurrentUserContext();
 
   if (!user) {
     return NextResponse.json({ ok: false, skipped: true }, { status: 202 });
   }
 
   try {
-    await supabase.from("usage_events").insert({
+    await deps.createAdminClient().from("usage_events").insert({
       user_id: user.id,
       path: parsed.data.path,
       event_type: parsed.data.eventType,

@@ -14,6 +14,41 @@ import {
 type ClientFactories = Parameters<typeof setTeamJoinServiceClientsForTest>[0];
 type ServerClient = Awaited<ReturnType<ClientFactories["createServerClient"]>>;
 type QueryResult<T> = { data: T | null; error: { code?: string; message?: string } | null; count?: number | null };
+type PermissionContext = Awaited<ReturnType<ClientFactories["getCurrentPermissionContext"]>>;
+
+function createPermissionContext(options: {
+  userId?: string;
+  teamId?: string | null;
+  role?: "admin" | "member";
+  membershipStatus?: "active" | "archived";
+  activeVisibleUserIds?: string[];
+} = {}): PermissionContext {
+  const userId = options.userId ?? "admin-1";
+  const teamId = options.teamId === undefined ? "team-1" : options.teamId;
+  const role = options.role ?? "admin";
+  const permissions = { manage_members: role === "admin" };
+  return {
+    permissionInfo: {
+      userId,
+      name: "测试用户",
+      role,
+      permissions,
+      dataScope: teamId ? "team" : "self",
+      teamId,
+      companyRole: role,
+      membershipStatus: options.membershipStatus ?? "active",
+    },
+    scope: {
+      userId,
+      role,
+      permissions,
+      teamId,
+      kind: teamId ? "team" : "self",
+      visibleUserIds: [userId],
+      activeVisibleUserIds: options.activeVisibleUserIds ?? [userId],
+    },
+  } as unknown as PermissionContext;
+}
 
 afterEach(() => {
   resetTeamJoinServiceClientsForTest();
@@ -24,10 +59,11 @@ function createFactories(serverClient: ServerClient): ClientFactories {
   return {
     createServerClient: async () => serverClient,
     getTeamOptions: async () => [],
+    getCurrentPermissionContext: async () => createPermissionContext(),
     createServiceClient: () => ({
       from: () => createDefaultServiceFromBuilder(),
       auth: { admin: { getUserById: async () => ({ data: { user: null }, error: null }) } },
-    }),
+    }) as unknown as ReturnType<ClientFactories["createServiceClient"]>,
   };
 }
 
@@ -53,26 +89,66 @@ function createAdminListFactories(params: {
   profiles: Array<{ id: string; name: string | null }>;
   users: Array<{ id: string; email?: string }>;
   requestSelects: string[];
+  requestFilters?: string[];
+  profileLookups?: string[];
+  teamLookups?: string[];
   authLookups?: string[];
-  visibleRequests?: Array<{ id: string; applicant_user_id: string; target_team_id: string; created_at: string; teams?: { name: string | null } | null }>;
   requestError?: { message: string };
+  permissionContext?: PermissionContext;
+  teamName?: string;
 }): ClientFactories {
   return {
-    createServerClient: async () => ({
-      from: () => ({ select: (columns: string) => {
-        params.requestSelects.push(columns);
-        return { eq: () => ({ order: async () => ({
-          data: params.requestError ? null : params.visibleRequests ?? params.requests,
-          error: params.requestError ?? null,
-        }) }) };
-      } }),
-    }) as unknown as ServerClient,
+    createServerClient: async () => ({} as ServerClient),
+    getCurrentPermissionContext: async () => params.permissionContext === undefined
+      ? createPermissionContext()
+      : params.permissionContext,
     getTeamOptions: async () => [],
     createServiceClient: () => ({
-      from: () => {
+      from: (table: string) => {
+        if (table === "team_join_requests") {
+          return {
+            select: (columns: string) => {
+              params.requestSelects.push(columns);
+              const query = {
+                eq: (column: string, value: string) => {
+                  params.requestFilters?.push(`eq:${column}:${value}`);
+                  return query;
+                },
+                or: (filters: string) => {
+                  params.requestFilters?.push(`or:${filters}`);
+                  return query;
+                },
+                order: async () => ({
+                  data: params.requestError ? null : params.requests,
+                  error: params.requestError ?? null,
+                }),
+              };
+              return query;
+            },
+          };
+        }
+        if (table === "profiles") {
+          return {
+            select: () => ({
+              in: async (_column: string, ids: string[]) => {
+                params.profileLookups?.push(...ids);
+                return { data: params.profiles.filter((profile) => ids.includes(profile.id)), error: null };
+              },
+            }),
+          };
+        }
         return {
           select: () => ({
-            in: async () => ({ data: params.profiles, error: null }),
+            eq: (_column: string, id: string) => ({
+              maybeSingle: async () => {
+                params.teamLookups?.push(id);
+                const teamId = params.permissionContext?.permissionInfo.teamId ?? "team-1";
+                return {
+                  data: id === teamId ? { id, name: params.teamName ?? "本团队" } : null,
+                  error: null,
+                };
+              },
+            }),
           }),
         };
       },
@@ -87,7 +163,7 @@ function createAdminListFactories(params: {
           },
         },
       },
-    }) as ClientFactories["createServiceClient"] extends () => infer T ? T : never,
+    }) as unknown as ReturnType<ClientFactories["createServiceClient"]>,
   };
 }
 
@@ -231,9 +307,11 @@ test("reviewRequest RPC approved 返回 ok", async () => {
   assert.deepEqual(result, { ok: true, data: { status: "approved" } });
 });
 
-test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的嵌套关系", async () => {
+test("listPendingRequestsForAdmin 按固定团队范围读取并补全申请人资料", async () => {
   const requestSelects: string[] = [];
   const authLookups: string[] = [];
+  const requestFilters: string[] = [];
+  const teamLookups: string[] = [];
   setTeamJoinServiceClientsForTest(
     createAdminListFactories({
       requests: [
@@ -242,13 +320,16 @@ test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的�
           applicant_user_id: "user-1",
           target_team_id: "team-1",
           created_at: "2026-05-11T08:00:00.000Z",
-          teams: { name: "深圳一部" },
         },
       ],
       profiles: [{ id: "user-1", name: "小陈" }],
       users: [{ id: "user-1", email: "chen@example.com" }],
       requestSelects,
+      requestFilters,
+      teamLookups,
       authLookups,
+      permissionContext: createPermissionContext({ userId: "admin-1", teamId: "team-1" }),
+      teamName: "深圳一部",
     }),
   );
 
@@ -268,7 +349,12 @@ test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的�
       },
     ],
   });
-  assert.equal(requestSelects[0].includes("profiles:applicant_user_id"), false);
+  assert.deepEqual(requestSelects, ["id, applicant_user_id, target_team_id, created_at"]);
+  assert.deepEqual(requestFilters, [
+    "eq:status:pending",
+    "or:applicant_user_id.eq.admin-1,target_team_id.eq.team-1",
+  ]);
+  assert.deepEqual(teamLookups, ["team-1"]);
   assert.deepEqual(authLookups, ["user-1"]);
 });
 
@@ -278,8 +364,8 @@ test("待审批人邮箱按去重后的申请人 ID 查询，不扫描全部 Aut
     createAdminListFactories({
       requests: [
         { id: "request-1", applicant_user_id: "user-1", target_team_id: "team-1", created_at: "2026-05-11", teams: null },
-        { id: "request-2", applicant_user_id: "user-1", target_team_id: "team-2", created_at: "2026-05-12", teams: null },
-        { id: "request-3", applicant_user_id: "user-2", target_team_id: "team-2", created_at: "2026-05-13", teams: null },
+        { id: "request-2", applicant_user_id: "user-1", target_team_id: "team-1", created_at: "2026-05-12", teams: null },
+        { id: "request-3", applicant_user_id: "user-2", target_team_id: "team-1", created_at: "2026-05-13", teams: null },
       ],
       profiles: [],
       users: [
@@ -288,6 +374,7 @@ test("待审批人邮箱按去重后的申请人 ID 查询，不扫描全部 Aut
       ],
       requestSelects: [],
       authLookups,
+      permissionContext: createPermissionContext({ userId: "admin-1", teamId: "team-1" }),
     }),
   );
 
@@ -296,21 +383,77 @@ test("待审批人邮箱按去重后的申请人 ID 查询，不扫描全部 Aut
   assert.deepEqual(authLookups.sort(), ["user-1", "user-2"]);
 });
 
-test("待审批列表只补全真实登录身份可见的申请，不读取另一团队申请人资料", async () => {
+test("待审批列表保留本人申请与本团队申请，不补全其他团队申请人", async () => {
   const requests = [
-    { id: "own-request", applicant_user_id: "own-user", target_team_id: "own-team", created_at: "2026-11-01", teams: { name: "本团队" } },
-    { id: "foreign-request", applicant_user_id: "foreign-user", target_team_id: "foreign-team", created_at: "2026-11-01", teams: { name: "其他团队" } },
+    { id: "own-request", applicant_user_id: "admin-1", target_team_id: "other-team", created_at: "2026-11-01" },
+    { id: "team-request", applicant_user_id: "team-applicant", target_team_id: "team-1", created_at: "2026-11-02" },
+    { id: "foreign-request", applicant_user_id: "foreign-applicant", target_team_id: "foreign-team", created_at: "2026-11-03" },
   ];
   const authLookups: string[] = [];
+  const profileLookups: string[] = [];
+  const requestFilters: string[] = [];
   setTeamJoinServiceClientsForTest(createAdminListFactories({
-    requests, visibleRequests: requests.slice(0, 1), requestSelects: [], authLookups,
-    profiles: [{ id: "own-user", name: "本团队申请人" }],
-    users: [{ id: "own-user", email: "own@example.invalid" }],
+    requests, requestSelects: [], requestFilters, profileLookups, authLookups,
+    permissionContext: createPermissionContext({ userId: "admin-1", teamId: "team-1" }),
+    profiles: [
+      { id: "admin-1", name: "管理员本人" },
+      { id: "team-applicant", name: "本团队申请人" },
+      { id: "foreign-applicant", name: "外团队申请人" },
+    ],
+    users: [
+      { id: "admin-1", email: "admin@example.invalid" },
+      { id: "team-applicant", email: "team@example.invalid" },
+      { id: "foreign-applicant", email: "foreign@example.invalid" },
+    ],
   }));
   const result = await listPendingRequestsForAdmin();
   assert.equal(result.ok, true);
-  if (result.ok) assert.deepEqual(result.data.map(row => row.id), ["own-request"]);
-  assert.deepEqual(authLookups, ["own-user"]);
+  if (result.ok) {
+    assert.deepEqual(result.data.map((row) => row.id), ["own-request", "team-request"]);
+    assert.deepEqual(result.data.map((row) => row.targetTeamName), ["", "本团队"]);
+  }
+  assert.deepEqual(profileLookups.sort(), ["admin-1", "team-applicant"]);
+  assert.deepEqual(authLookups.sort(), ["admin-1", "team-applicant"]);
+  assert.deepEqual(requestFilters, [
+    "eq:status:pending",
+    "or:applicant_user_id.eq.admin-1,target_team_id.eq.team-1",
+  ]);
+});
+
+test("没有团队管理权限时只保留本人申请", async () => {
+  const requestFilters: string[] = [];
+  const teamLookups: string[] = [];
+  setTeamJoinServiceClientsForTest(createAdminListFactories({
+    requests: [
+      { id: "own-request", applicant_user_id: "member-1", target_team_id: "team-2", created_at: "2026-11-01" },
+      { id: "team-request", applicant_user_id: "other-1", target_team_id: "team-1", created_at: "2026-11-02" },
+    ],
+    requestSelects: [], requestFilters, teamLookups,
+    profiles: [{ id: "member-1", name: "成员本人" }],
+    users: [{ id: "member-1", email: "member@example.invalid" }],
+    permissionContext: createPermissionContext({ userId: "member-1", teamId: null, role: "member" }),
+  }));
+  const result = await listPendingRequestsForAdmin();
+  assert.equal(result.ok, true);
+  if (result.ok) assert.deepEqual(result.data.map((row) => row.id), ["own-request"]);
+  assert.deepEqual(requestFilters, ["eq:status:pending", "eq:applicant_user_id:member-1"]);
+  assert.deepEqual(teamLookups, []);
+});
+
+test("归档或失效身份在查询前拒绝", async () => {
+  const requestSelects: string[] = [];
+  const activeButArchivedContext = createPermissionContext({
+    userId: "archived-1",
+    membershipStatus: "archived",
+    activeVisibleUserIds: ["archived-1"],
+  });
+  for (const permissionContext of [null, activeButArchivedContext]) {
+    setTeamJoinServiceClientsForTest(createAdminListFactories({
+      requests: [], requestSelects, profiles: [], users: [], permissionContext,
+    }));
+    assert.deepEqual(await listPendingRequestsForAdmin(), { ok: false, error: "SCOPE_UNAVAILABLE" });
+  }
+  assert.deepEqual(requestSelects, []);
 });
 
 test("待审批身份查询被拒绝时直接返回错误，不能退回高权限全量查询", async () => {
