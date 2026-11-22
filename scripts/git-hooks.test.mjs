@@ -117,9 +117,10 @@ test("文档链接检查失败时阻断推送，且不再往下跑类型检查�
   assert.equal(result.gatePass, null);
 });
 
-test("pre-push 全部通过后把当前提交号写入 dydata-gate-pass 标记文件", async () => {
+test("pre-push 全部通过后把当前提交号写入 dydata-gate-pass 标记文件，并接入源码测试门禁", async () => {
   const result = await runHook({ migration: "no", database: "down" });
   assert.equal(result.status, 0, result.stderr);
+  assert.match(result.commands, /node scripts\/source-text-test-gate\.mjs/);
   assert.equal(result.gatePass?.trim(), "deadbeef00000000000000000000000000000000");
 });
 
