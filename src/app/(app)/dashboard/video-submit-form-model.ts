@@ -408,7 +408,7 @@ function resolveEditScreenshotType(
 }
 
 function slotFromScreenshotItem(item: ScreenshotItem, role: SubmissionSlotRole): SlotViewState {
-  const hasAsset = Boolean(item.assetUrl || item.previewUrl);
+  const hasAsset = Boolean(item.assetUrl);
   const status = item.status === "failed" && hasAsset
     ? "pending_confirm"
     : item.status === "done"

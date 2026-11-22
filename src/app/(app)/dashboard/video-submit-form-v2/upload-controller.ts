@@ -14,13 +14,15 @@ import {
   type SlotViewState,
 } from "../video-submit-form-model";
 import { uploadSubmissionScreenshot } from "@/lib/video-submit/data/screenshots";
+import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import { resolveOcrPublishedAt } from "@/lib/video-submit-deadline";
 import { toDateTimeLocalValue } from "@/lib/video-submit/domain/form-rules";
-import type { OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
+import type { OcrTaskHandle, OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 import type { WorkflowAction } from "@/lib/video-submit-workflow/types";
 
 type Slots = Record<SubmissionSlotRole, SlotViewState>;
 type UpdateItemsState = (updater: (current: ScreenshotItem[]) => ScreenshotItem[]) => void;
+type OcrRequestMode = "multipart" | "storage";
 
 type OcrApiPayload = {
   data?: {
@@ -51,6 +53,15 @@ export function buildOcrStorageRequestBody(input: {
     asset_role: input.role,
     screenshot_type: SCREENSHOT_TYPE_BY_SLOT[input.role],
   } as const;
+}
+
+/** 并行直传本地文件进行识别：显式携带 file、asset_role 与 screenshot_type。 */
+export function buildOcrMultipartFormData(input: { file: File; role: SubmissionSlotRole }) {
+  const formData = new FormData();
+  formData.append("file", input.file);
+  formData.append("asset_role", input.role);
+  formData.append("screenshot_type", SCREENSHOT_TYPE_BY_SLOT[input.role]);
+  return formData;
 }
 
 export type UploadControllerOptions = {
@@ -86,71 +97,123 @@ function revokePreview(item: ScreenshotItem, blobUrlsRef: MutableRefObject<Set<s
   }
 }
 
+function resolvePersistedTarget(item: ScreenshotItem): { bucket: string; path: string } | null {
+  if (!item.assetUrl) return null;
+  if (item.bucket && item.path) return { bucket: item.bucket, path: item.path };
+  const parsedPath = parseSubmissionScreenshotPath(item.assetUrl);
+  return parsedPath ? { bucket: "submission-screenshots", path: parsedPath } : null;
+}
+
 export function createUploadHandler({
   account,
   userId,
   initialSummary,
   supabase,
   ocrTasksRef,
-  slotsRef,
+  slotsRef: _slotsRef,
   itemsRef,
   blobUrlsRef,
   updateItemsState,
   dispatchWorkflow,
 }: UploadControllerOptions): UploadHandler {
+  void _slotsRef;
   const updateItem = (id: string, updater: (item: ScreenshotItem) => ScreenshotItem) => {
     updateItemsState((current) => current.map((item) => item.id === id ? updater(item) : item));
   };
 
-  const requestOcr = async (input: {
-    item: ScreenshotItem;
+  const logOcrTiming = (input: {
     itemId: string;
-    bucket: string;
-    path: string;
-    ocrTask: ReturnType<OcrTaskRegistry["begin"]>;
+    mode: OcrRequestMode;
     uploadMs?: number;
+    requestMs: number;
+    payload: OcrApiPayload;
   }) => {
-    const requestStart = performance.now();
-    const response = await fetch("/api/ocr-screenshot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildOcrStorageRequestBody({
-        bucket: input.bucket,
-        path: input.path,
-        role: input.item.storageRole,
-      })),
-      signal: input.ocrTask.signal,
-    });
-    const requestMs = Math.round(performance.now() - requestStart);
-    const payload = (await response.json()) as OcrApiPayload;
-    if (!input.ocrTask.isCurrent(input.item.assetUrl ?? undefined)) return;
-    const serverTimings = payload.timings;
+    const serverTimings = input.payload.timings;
     console.log("[OCR 耗时]", {
       item_id: input.itemId,
+      mode: input.mode,
       upload_ms: input.uploadMs,
-      ocr_request_ms: requestMs,
+      ocr_request_ms: input.requestMs,
       server_download_ms: serverTimings?.download_ms,
       server_ocr_ms: serverTimings?.ocr_ms,
       server_parse_ms: serverTimings?.parse_ms,
       server_total_ms: serverTimings?.total_ms,
     });
-    if (!response.ok || !payload.data) throw new Error(toOcrErrorMessage(payload.error_code ?? payload.error));
+  };
 
-    const { data } = payload;
+  const fetchOcrPayload = async (
+    input:
+      | { mode: "multipart"; file: File; role: SubmissionSlotRole; signal: AbortSignal }
+      | { mode: "storage"; bucket: string; path: string; role: SubmissionSlotRole; signal: AbortSignal },
+  ) => {
+    const requestStart = performance.now();
+    const response = input.mode === "multipart"
+      ? await fetch("/api/ocr-screenshot", {
+          method: "POST",
+          body: buildOcrMultipartFormData({ file: input.file, role: input.role }),
+          signal: input.signal,
+        })
+      : await fetch("/api/ocr-screenshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildOcrStorageRequestBody({ bucket: input.bucket, path: input.path, role: input.role })),
+          signal: input.signal,
+        });
+    const requestMs = Math.round(performance.now() - requestStart);
+    const payload = (await response.json().catch(() => ({}))) as OcrApiPayload;
+    return { ok: response.ok, payload, requestMs };
+  };
+
+  const markItemFailed = (
+    item: ScreenshotItem,
+    opts: { error: string; assetUrl: string | null; bucket: string | null; path: string | null; ocrFallback: boolean },
+  ) => {
+    updateItem(item.id, (current) => ({
+      ...current,
+      status: "failed",
+      confirmed: false,
+      requiresManualConfirmation: true,
+      assetUrl: opts.assetUrl,
+      bucket: opts.bucket,
+      path: opts.path,
+      previewUrl: item.previewUrl ?? current.previewUrl,
+      finishedAt: Date.now(),
+      error: opts.error,
+      ocrFallback: opts.ocrFallback,
+    }));
+  };
+
+  const applyOcrSuccess = (input: {
+    itemId: string;
+    role: SubmissionSlotRole;
+    assetUrl: string;
+    bucket: string;
+    path: string;
+    payload: OcrApiPayload;
+    mode: OcrRequestMode;
+    requestMs: number;
+    uploadMs?: number;
+  }) => {
+    logOcrTiming({ itemId: input.itemId, mode: input.mode, uploadMs: input.uploadMs, requestMs: input.requestMs, payload: input.payload });
+    const data = input.payload.data!;
     const recognizedFields = data.recognized_fields;
     const recognizedPublishedAt = typeof recognizedFields?.published_at === "string" ? toDateTimeLocalValue(recognizedFields.published_at) : null;
     const recognizedPublishedAtText = typeof recognizedFields?.published_at_text === "string" ? recognizedFields.published_at_text : null;
     const recognizedVideoTitle = typeof recognizedFields?.video_title === "string" ? recognizedFields.video_title.trim() : "";
     const resolvedPublishedAt = resolveOcrPublishedAt(recognizedPublishedAt, recognizedPublishedAtText);
+
     if (resolvedPublishedAt && !initialSummary) {
-      dispatchWorkflow({ type: "ocr/commit", meta: (current) => ({
-        ...current,
-        publishedAt: resolvedPublishedAt.publishedAt,
-        publishedAtText: resolvedPublishedAt.publishedAtText,
-        publishedAtSource: "ocr",
-        ocrPublishedAt: resolvedPublishedAt.publishedAt,
-        ocrPublishedAtText: resolvedPublishedAt.publishedAtText,
-      }) });
+      dispatchWorkflow({
+        type: "ocr/commit",
+        meta: (current) => ({
+          ...current,
+          publishedAt: resolvedPublishedAt.publishedAt,
+          publishedAtText: resolvedPublishedAt.publishedAtText,
+          publishedAtSource: "ocr",
+          ocrPublishedAt: resolvedPublishedAt.publishedAt,
+          ocrPublishedAtText: resolvedPublishedAt.publishedAtText,
+        }),
+      });
     }
     if (recognizedVideoTitle && !initialSummary) {
       dispatchWorkflow({ type: "ocr/commit", meta: (current) => current.videoTitle.trim() ? current : { ...current, videoTitle: recognizedVideoTitle } });
@@ -158,7 +221,7 @@ export function createUploadHandler({
 
     const resolvedError = data.error_code ? resolveOcrErrorMessage(data.error_code) : data.error ? toOcrErrorMessage(data.error) : null;
     // 类型跟着槽位走，不采信识别结果里的类型
-    const targetRole = input.item.storageRole;
+    const targetRole = input.role;
     const slotType = SCREENSHOT_TYPE_BY_SLOT[targetRole];
     updateItemsState((current) => current.map((candidate) => candidate.id === input.itemId ? {
       ...candidate,
@@ -172,6 +235,7 @@ export function createUploadHandler({
       error: data.slot_status === "failed" ? (resolvedError ?? OCR_FAIL_MESSAGE) : resolvedError,
       ocrSummary: buildOcrSummary(slotType, recognizedFields),
       ocrFallback: data.slot_status === "failed",
+      assetUrl: input.assetUrl,
       bucket: input.bucket,
       path: input.path,
     } : candidate));
@@ -194,37 +258,135 @@ export function createUploadHandler({
     if (data.slot_status === "failed") feedbackToast.warning("截图已留存，部分指标请直接在右侧/下方核对或补全");
   };
 
-  // 每次都重新上传再识别：首次放图和「重新识别」走同一条路
+  const ensureAuthenticated = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user && !userId) throw new Error("登录状态已失效，请刷新页面后重试");
+  };
+
+  const runParallelUploadAndOcr = async (item: ScreenshotItem, ocrTask: OcrTaskHandle) => {
+    const startedAt = item.startedAt ?? Date.now();
+    updateItem(item.id, (current) => ({ ...current, status: "uploading", error: null, startedAt, phaseStartedAt: startedAt, finishedAt: undefined }));
+
+    try {
+      if (!item.file) throw new Error("截图文件已失效，请重新选择");
+      await ensureAuthenticated();
+
+      const file = item.file;
+      const uploadPromise = (async () => {
+        const uploadStart = performance.now();
+        const uploaded = await uploadSubmissionScreenshot({ accountId: account!.id, role: item.storageRole, file, signal: ocrTask.signal });
+        const uploadMs = Math.round(performance.now() - uploadStart);
+        if (!ocrTask.isCurrent()) return { ...uploaded, uploadMs };
+        if (!uploaded.bucket || !uploaded.path) throw new Error("截图地址已失效，请重新上传");
+        ocrTask.bindAsset(uploaded.url);
+        updateItem(item.id, (current) => ({
+          ...current,
+          status: current.status === "uploading" ? "recognizing" : current.status,
+          assetUrl: uploaded.url,
+          bucket: uploaded.bucket,
+          path: uploaded.path,
+          phaseStartedAt: Date.now(),
+          error: null,
+        }));
+        return { ...uploaded, uploadMs };
+      })();
+
+      const ocrPromise = fetchOcrPayload({ mode: "multipart", file, role: item.storageRole, signal: ocrTask.signal });
+      const [uploadResult, ocrResult] = await Promise.allSettled([uploadPromise, ocrPromise]);
+      const expectedAssetUrl = uploadResult.status === "fulfilled" ? uploadResult.value.url : undefined;
+      if (!ocrTask.isCurrent(expectedAssetUrl)) return;
+
+      if (uploadResult.status === "rejected") {
+        if (ocrResult.status === "fulfilled") {
+          logOcrTiming({ itemId: item.id, mode: "multipart", requestMs: ocrResult.value.requestMs, payload: ocrResult.value.payload });
+        }
+        markItemFailed(item, { error: toScreenshotUploadErrorMessage(uploadResult.reason), assetUrl: null, bucket: null, path: null, ocrFallback: false });
+        return;
+      }
+
+      const uploaded = uploadResult.value;
+      if (ocrResult.status === "rejected" || !ocrResult.value.ok || !ocrResult.value.payload.data) {
+        if (ocrResult.status === "fulfilled") {
+          logOcrTiming({ itemId: item.id, mode: "multipart", uploadMs: uploaded.uploadMs, requestMs: ocrResult.value.requestMs, payload: ocrResult.value.payload });
+        }
+        const errorReason = ocrResult.status === "rejected"
+          ? ocrResult.reason
+          : new Error(toOcrErrorMessage(ocrResult.value.payload.error_code ?? ocrResult.value.payload.error));
+        markItemFailed(item, {
+          error: `${toOcrErrorMessage(errorReason)}，截图已保留，可直接手动填写指标`,
+          assetUrl: uploaded.url,
+          bucket: uploaded.bucket,
+          path: uploaded.path,
+          ocrFallback: true,
+        });
+        return;
+      }
+
+      applyOcrSuccess({
+        itemId: item.id,
+        role: item.storageRole,
+        assetUrl: uploaded.url,
+        bucket: uploaded.bucket,
+        path: uploaded.path,
+        payload: ocrResult.value.payload,
+        mode: "multipart",
+        requestMs: ocrResult.value.requestMs,
+        uploadMs: uploaded.uploadMs,
+      });
+    } catch (error) {
+      if (!ocrTask.isCurrent()) return;
+      markItemFailed(item, { error: toScreenshotUploadErrorMessage(error), assetUrl: null, bucket: null, path: null, ocrFallback: false });
+    }
+  };
+
+  const runExistingAssetOcr = async (item: ScreenshotItem, persisted: { bucket: string; path: string }, ocrTask: OcrTaskHandle) => {
+    const assetUrl = item.assetUrl!;
+    ocrTask.bindAsset(assetUrl);
+    updateItem(item.id, (current) => ({ ...current, status: "recognizing", error: null, phaseStartedAt: Date.now(), finishedAt: undefined }));
+    const mode: OcrRequestMode = item.file ? "multipart" : "storage";
+
+    try {
+      await ensureAuthenticated();
+      const response = item.file
+        ? await fetchOcrPayload({ mode: "multipart", file: item.file, role: item.storageRole, signal: ocrTask.signal })
+        : await fetchOcrPayload({ mode: "storage", bucket: persisted.bucket, path: persisted.path, role: item.storageRole, signal: ocrTask.signal });
+
+      if (!ocrTask.isCurrent(assetUrl)) return;
+      if (!response.ok || !response.payload.data) {
+        logOcrTiming({ itemId: item.id, mode, requestMs: response.requestMs, payload: response.payload });
+        throw new Error(toOcrErrorMessage(response.payload.error_code ?? response.payload.error));
+      }
+
+      applyOcrSuccess({
+        itemId: item.id,
+        role: item.storageRole,
+        assetUrl,
+        bucket: persisted.bucket,
+        path: persisted.path,
+        payload: response.payload,
+        mode,
+        requestMs: response.requestMs,
+      });
+    } catch (error) {
+      if (!ocrTask.isCurrent(assetUrl)) return;
+      markItemFailed(item, {
+        error: `${toOcrErrorMessage(error)}，截图已保留，可直接手动填写指标`,
+        assetUrl,
+        bucket: persisted.bucket,
+        path: persisted.path,
+        ocrFallback: true,
+      });
+    }
+  };
+
   const runRecognition = async (itemId: string) => {
     const item = itemsRef.current.find((candidate) => candidate.id === itemId);
     if (!item || !account) return;
     const ocrTask = ocrTasksRef.current!.begin(item.id);
-    const startedAt = item.startedAt ?? Date.now();
-    let phase: "upload" | "ocr" = "upload";
-    let uploadedAssetUrl: string | null = item.assetUrl;
-    let uploadedPreviewUrl: string | null = item.previewUrl;
-
-    updateItem(item.id, (current) => ({ ...current, status: "uploading", error: null, startedAt, phaseStartedAt: startedAt, finishedAt: undefined }));
     try {
-      if (!item.file) throw new Error("截图文件已失效，请重新选择");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user && !userId) throw new Error("登录状态已失效，请刷新页面后重试");
-      const uploadStart = performance.now();
-      const uploaded = await uploadSubmissionScreenshot({ accountId: account.id, role: item.storageRole, file: item.file, signal: ocrTask.signal });
-      const uploadMs = Math.round(performance.now() - uploadStart);
-      uploadedAssetUrl = uploaded.url;
-      const { bucket, path } = uploaded;
-      ocrTask.bindAsset(uploaded.url);
-      if (!ocrTask.isCurrent(uploaded.url)) return;
-      phase = "ocr";
-      updateItem(item.id, (current) => ({ ...current, status: "recognizing", assetUrl: uploaded.url, bucket, path, phaseStartedAt: Date.now(), error: null }));
-      uploadedPreviewUrl = item.previewUrl;
-      if (!bucket || !path) throw new Error("截图地址已失效，请重新上传");
-      await requestOcr({ item: { ...item, assetUrl: uploadedAssetUrl }, itemId, bucket, path, ocrTask, uploadMs });
-    } catch (error) {
-      if (!ocrTask.isCurrent(uploadedAssetUrl ?? undefined)) return;
-      const message = phase === "upload" ? toScreenshotUploadErrorMessage(error) : toOcrErrorMessage(error);
-      updateItem(item.id, (current) => ({ ...current, status: "failed", confirmed: false, requiresManualConfirmation: true, assetUrl: uploadedAssetUrl ?? current.assetUrl, previewUrl: uploadedPreviewUrl ?? current.previewUrl, finishedAt: Date.now(), error: uploadedAssetUrl ? `${message}，截图已保留，可直接手动填写指标` : message, ocrFallback: Boolean(uploadedAssetUrl) }));
+      const persisted = resolvePersistedTarget(item);
+      if (persisted) await runExistingAssetOcr(item, persisted, ocrTask);
+      else await runParallelUploadAndOcr(item, ocrTask);
     } finally {
       ocrTasksRef.current?.finish(item.id, ocrTask.requestId);
     }

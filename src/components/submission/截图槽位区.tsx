@@ -198,7 +198,7 @@ export function SubmissionSlotsSection({
             const isProcessing = isUploading || isRecognizing;
             const hasImage = Boolean(slot.assetUrl || slot.previewUrl);
             // 只要有图，哪怕识别有缺失，也归为待核对，不亮红灯误导用户重传
-            const isError = slot.status === "failed" && !hasImage;
+            const isError = slot.status === "failed" && !slot.assetUrl;
             const isWarning =
               hasImage &&
               (slot.status === "pending_confirm" ||
