@@ -32,7 +32,7 @@ export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDep
   const scoped = deps.requireActiveVisibleUsers(auth, [payload.data.userId]);
   if (scoped) return scoped;
   try {
-    const result = await auth.userSupabase.rpc("mark_fulfillment_status", {
+    const result = await auth.supabase.rpc("mark_fulfillment_status", {
       p_user_id: payload.data.userId,
       p_record_date: payload.data.recordDate,
       p_status: payload.data.status,
