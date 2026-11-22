@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { syncModelsForKey } from "@/lib/ai-config/sync-models";
+import { discoverModelIds, syncModelsForKey } from "@/lib/ai-config/sync-models";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 type Row = Record<string, unknown>;
@@ -81,4 +81,24 @@ test("Clairic 协议渠道同步走 probeClairicOcr 探针而非 /models，并�
   assert.equal(result.allModels[0]?.modelId, "clairic");
   assert.equal(result.allModels[0]?.displayName, "Cloudflare Clairic");
   assert.equal(tables.ai_provider_keys[0]?.consecutive_failures, 2);
+});
+
+test("Clairic 探测默认不绕过 SSRF 防护，拒绝内网回环地址", async () => {
+  await assert.rejects(
+    () =>
+      discoverModelIds(
+        {
+          name: "Bad",
+          base_url: "http://127.0.0.1:8080/ai/run",
+          protocol: "cloudflare_clairic",
+        },
+        "cf-tok-secret",
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /探测 Clairic 失败/);
+      assert.doesNotMatch(error.message, /cf-tok-secret/);
+      return true;
+    },
+  );
 });

@@ -172,6 +172,7 @@ async function applyMutation(
   entity: AiConfigEntity,
   data: Record<string, unknown>,
   actorId?: string,
+  fetcher?: typeof fetch,
 ): Promise<MutationResult> {
   if (entity === "feature_binding") throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
   const table = { provider: "ai_providers", key: "ai_provider_keys", model: "ai_provider_key_models", feature_binding: "ai_feature_bindings" }[entity];
@@ -197,7 +198,7 @@ async function applyMutation(
     if (error) throw new Error(error.message);
     return {};
   }
-  if (action === "create" && entity === "key") return handleCreateKey(supabase, data);
+  if (action === "create" && entity === "key") return handleCreateKey(supabase, data, fetcher);
 
   const patch = entity === "provider" ? providerPatch(data, action) : entity === "key" ? buildAiKeyPatch(data, action) : modelPatch(data, action);
   if (Object.keys(patch).length === 0 && !(entity === "key" && data.base_url !== undefined)) {
@@ -296,7 +297,7 @@ export async function GET() {
 
 export async function buildAiConfigResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; probeClairicOcr?: typeof probeClairicOcr; createAdminClient?: typeof createAdminClient } = { requireSystemActor }
+  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; probeClairicOcr?: typeof probeClairicOcr; createAdminClient?: typeof createAdminClient; fetcher?: typeof fetch } = { requireSystemActor }
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -324,7 +325,7 @@ export async function buildAiConfigResponse(
       if (error || !provider) throw new Error(error?.message || "接入点不存在");
       if (!(provider as { is_enabled?: boolean }).is_enabled) throw new Error("接入点已停用");
       effectiveProtocol = normalizeProviderProtocol((provider as { protocol?: unknown }).protocol);
-      const upstreamModelIds = await discoverModelIds(provider as { name?: string; base_url?: string; protocol?: string | null }, apiKey);
+      const upstreamModelIds = await discoverModelIds(provider as { name?: string; base_url?: string; protocol?: string | null }, apiKey, deps.fetcher);
       const modelIds = [...new Set(upstreamModelIds.map(toCanonicalModelId))];
       return NextResponse.json({ modelIds, upstreamModelIds, modelGroups: groupModelIdAliases(upstreamModelIds) });
     } catch (error) {
@@ -547,7 +548,7 @@ export async function buildAiConfigResponse(
   if (!entity) return NextResponse.json({ error: "entity 不正确" }, { status: 400 });
 
   try {
-    const mutationResult = await applyMutation((deps.createAdminClient ?? createAdminClient)(), action, entity, asRecord(body.data), auth.actor.userId);
+    const mutationResult = await applyMutation((deps.createAdminClient ?? createAdminClient)(), action, entity, asRecord(body.data), auth.actor.userId, deps.fetcher);
     aiClientInternal.resetCache();
     const bundle = await loadAiConfig(auth.supabase);
     return NextResponse.json({

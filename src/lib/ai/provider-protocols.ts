@@ -30,7 +30,12 @@ export function normalizeProtocolBaseUrl(
   rawUrl: unknown,
 ): string {
   const input = typeof rawUrl === "string" ? rawUrl.trim() : "";
-  const url = new URL(input);
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new Error("渠道地址须为合法的 HTTP/HTTPS 地址");
+  }
   if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
     throw new Error("渠道地址须为 HTTP/HTTPS 地址，不能带钥匙、查询参数或片段");
   }

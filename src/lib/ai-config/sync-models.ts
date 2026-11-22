@@ -45,7 +45,7 @@ function firstProvider(value: ProviderInfo | ProviderInfo[] | null | undefined) 
 export async function discoverModelIds(
   provider: ProviderInfo | null | undefined,
   apiKey: string | null | undefined,
-  fetcher: typeof fetch = fetch,
+  fetcher?: typeof fetch,
 ) {
   if (!provider?.base_url || !apiKey?.trim()) {
     throw syncError("探测模型列表失败：渠道 URL 或 API Key 缺失", 502);
@@ -53,6 +53,7 @@ export async function discoverModelIds(
 
   const protocol: AiProviderProtocol = normalizeProviderProtocol(provider.protocol);
   if (protocol === "cloudflare_clairic") {
+    // 生产未传入测试 fetcher 时保持 fetchImpl=undefined，强制走 withPinnedExternalResponse 的 SSRF 防护。
     const probe = await probeClairicOcr({
       baseUrl: provider.base_url,
       apiKey: apiKey.trim(),
@@ -71,11 +72,12 @@ export async function discoverModelIds(
     throw syncError(`探测 Clairic 失败：${safeMsg}`, 502);
   }
 
+  const effectiveFetch = fetcher ?? fetch;
   const baseUrlClean = provider.base_url.replace(/\/+$/, "");
   const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
   let response: Response;
   try {
-    response = await fetcher(targetUrl, {
+    response = await effectiveFetch(targetUrl, {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(6000),
     });
@@ -116,7 +118,7 @@ type SyncInput = {
 export async function syncModelsForKey(
   supabase: SyncSupabase,
   input: SyncInput,
-  fetcher: typeof fetch = fetch,
+  fetcher?: typeof fetch,
 ) {
   const { data: keyData, error: keyErr } = await supabase
     .from("ai_provider_keys")

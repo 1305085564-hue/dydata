@@ -91,7 +91,7 @@ function mergeDiscoveredAndSelectedModels(discovered: string[], selectedCanonica
   return Array.from(byCanonical.values());
 }
 
-export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<string, unknown>): Promise<AiConfigMutationResult> {
+export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<string, unknown>, fetcher?: typeof fetch): Promise<AiConfigMutationResult> {
   let providerId = toTrimmedString(data.provider_id) || null;
   let protocol: AiProviderProtocol = "openai_compatible";
   const hasExplicitProtocol = data.protocol !== undefined && data.protocol !== null && toTrimmedString(data.protocol) !== "";
@@ -132,7 +132,7 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
   const selectedModelIdSet = new Set(selectedModelIds);
   const hasSelectionPayload = Array.isArray(data.selectedModelIds) || Array.isArray(data.selected_model_ids);
   // Discovery is read-only and happens before any write, so upstream failure leaves no orphan group/key.
-  const discovered = hasSelectionPayload ? await discoverModelIds({ base_url: baseUrl, protocol }, String(patch.api_key)) : [];
+  const discovered = hasSelectionPayload ? await discoverModelIds({ base_url: baseUrl, protocol }, String(patch.api_key), fetcher) : [];
   const allModels = mergeDiscoveredAndSelectedModels(discovered, selectedModelIds);
   const explicitProviderName = toTrimmedString(data.provider_name);
   const providerName = explicitProviderName

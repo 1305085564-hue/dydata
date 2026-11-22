@@ -337,15 +337,15 @@ test("Clairic 协议探测与入池建渠、能力隔离（仅限 ocr_screenshot
   };
 
   // 1. probe_provider_models with protocol=cloudflare_clairic
-  const prevFetch = globalThis.fetch;
-  globalThis.fetch = async (input) => {
+  const mockClairicFetch: typeof fetch = async (input) => {
     assert.equal(
       String(input),
       "https://api.cloudflare.com/client/v4/accounts/acc-1/ai/run/@cf/cloudflare/clairic",
     );
     return Response.json({ success: true, result: { answers: { probe_text: { value: null, confidence: 0.99, p_null: 0.99 } } } });
   };
-  try {
+  const clairicDeps = { ...actorDeps, fetcher: mockClairicFetch };
+  {
     const probeRes = await buildAiConfigResponse(
       new NextRequest("http://localhost/api/admin/ai-config", {
         method: "POST",
@@ -359,7 +359,7 @@ test("Clairic 协议探测与入池建渠、能力隔离（仅限 ocr_screenshot
           },
         }),
       }),
-      actorDeps,
+      clairicDeps,
     );
     assert.equal(probeRes.status, 200);
     const probeBody = await probeRes.json() as { modelIds: string[]; upstreamModelIds: string[] };
@@ -383,11 +383,9 @@ test("Clairic 协议探测与入池建渠、能力隔离（仅限 ocr_screenshot
           },
         }),
       }),
-      actorDeps,
+      clairicDeps,
     );
     assert.equal(createRes.status, 200);
-  } finally {
-    globalThis.fetch = prevFetch;
   }
   const rpcCall = db.rpcCalls.find((c) => c.fn === "create_ai_config_channel");
   assert.equal(rpcCall?.args.p_protocol, "cloudflare_clairic");
