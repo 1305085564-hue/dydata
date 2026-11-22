@@ -289,6 +289,12 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           </p>
         </div>
 
+        {state.error ? (
+          <p className="text-[12px] font-normal text-status-danger leading-relaxed select-text" role="alert">
+            {state.error}
+          </p>
+        ) : null}
+
         <div className="pt-2">
           <SubmitButton disabled={isLoadingTeams || teams.length === 0} />
         </div>
