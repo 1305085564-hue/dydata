@@ -10,7 +10,7 @@ import net from "node:net";
 import process from "node:process";
 
 const mode = process.argv[2] ?? "unit";
-const REAL_DB = /\.real-db\.test\.tsx?$/;
+const REAL_DB = /\.real-db(?:\.[^.]+)?\.test\.tsx?$/;
 const SCRIPT_TESTS = [
   "scripts/maintainability-gate.test.mjs",
   "scripts/git-hooks.test.mjs",
