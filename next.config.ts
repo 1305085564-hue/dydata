@@ -8,8 +8,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
-  // 2026-11-14 迁移验证：产出 .next/standalone，用于腾讯云云托管 node 独立启动。
-  output: process.env.NEXT_OUTPUT_STANDALONE === "0" ? undefined : "standalone",
   outputFileTracingRoot: path.join(__dirname),
   turbopack: {
     root: path.join(__dirname),
