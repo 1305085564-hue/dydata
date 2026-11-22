@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { createClient } from "@/lib/supabase/client";
+import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScreenshotImport, type ScreenshotImportEditableValues } from "@/components/screenshot-import";
-import {
-  build24hSnapshotPayload,
-  build24hSnapshotUpdatePatch,
-  parsePatch24hMetrics,
-  type Patch24hMetricsFormState,
-} from "@/lib/video-admin";
+import type { Patch24hMetricsFormState } from "@/lib/video-admin";
 import type { Video, VideoMetricsSnapshot } from "@/types";
 
 const METRIC_FIELDS = [
@@ -80,7 +75,6 @@ function toScreenshotInitialValues(form: FormState): ScreenshotImportEditableVal
 }
 
 export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }: Patch24hDialogProps) {
-  const supabase = useMemo(() => createClient(), []);
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(() => createInitialState(snapshot));
 
@@ -114,31 +108,34 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
     if (!video) return;
 
     startTransition(async () => {
-      const metrics = parsePatch24hMetrics(form);
-
-      const snapshotPayload = build24hSnapshotPayload(video.id, metrics, null);
-      const snapshotUpdatePatch = build24hSnapshotUpdatePatch(metrics);
-
-      const snapshotQuery = snapshot
-        ? supabase.from("video_metrics_snapshots").update(snapshotUpdatePatch).eq("id", snapshot.id)
-        : supabase.from("video_metrics_snapshots").insert(snapshotPayload);
-
-      const { error: snapshotError } = await snapshotQuery;
-      if (snapshotError) {
-        feedbackToast.error(snapshotError.message || "24h 数据保存失败");
+      let response: Response;
+      try {
+        response = await fetchWithTimeout(`/api/admin/videos/${video.id}/patch-24h`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            snapshotId: snapshot?.id ?? null,
+            metrics: form,
+          }),
+        });
+      } catch (error) {
+        feedbackToast.error(error instanceof Error ? error.message : "24h 数据保存失败");
         return;
       }
 
-      if (video.anomaly_status === "未满24h") {
-        const { error: videoError } = await supabase
-          .from("videos")
-          .update({ anomaly_status: "正常" })
-          .eq("id", video.id);
+      const payload = await response.json().catch(() => null) as {
+        ok?: boolean;
+        error?: string | { message?: string };
+        video?: { anomaly_status?: VideoRow["anomaly_status"] };
+        snapshot?: VideoMetricsSnapshot;
+      } | null;
 
-        if (videoError) {
-          feedbackToast.error(videoError.message || "状态更新失败");
-          return;
-        }
+      if (!response.ok || !payload?.ok) {
+        const message = typeof payload?.error === "string"
+          ? payload.error
+          : payload?.error?.message;
+        feedbackToast.error(message || "24h 数据保存失败");
+        return;
       }
 
       // Topics V3：24h 数据补全后触发干货自动入库评估（幂等，失败不影响本次补录结果）
@@ -152,17 +149,39 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         // 评估失败仅意味着入库延迟，补录数据本身已保存成功
       }
 
-      const savedSnapshot: VideoMetricsSnapshot = snapshot
-        ? { ...snapshot, ...snapshotUpdatePatch, captured_at: new Date().toISOString() }
-        : {
-            id: `temp-${video.id}`,
-            ...snapshotPayload,
-            captured_at: new Date().toISOString(),
-          };
+      const savedSnapshot: VideoMetricsSnapshot = payload.snapshot ?? {
+        ...(snapshot ?? {
+          id: `temp-${video.id}`,
+          video_id: video.id,
+          snapshot_type: "24h",
+          play_count: null,
+          likes: null,
+          comments: null,
+          shares: null,
+          favorites: null,
+          follower_gain: null,
+          follower_loss: null,
+          fan_play_ratio: null,
+          homepage_visits: 0,
+          follower_convert: null,
+          cover_click_rate: null,
+          avg_play_duration: null,
+          completion_rate: null,
+          bounce_rate_2s: null,
+          completion_rate_5s: null,
+          avg_play_ratio: null,
+          vs_previous: null,
+          screenshot_urls: null,
+          curve_screenshot_url: null,
+          retention_screenshot_url: null,
+          captured_at: new Date().toISOString(),
+        }),
+        captured_at: new Date().toISOString(),
+      };
 
       const savedVideo: VideoRow = {
         ...video,
-        anomaly_status: video.anomaly_status === "未满24h" ? "正常" : video.anomaly_status,
+        anomaly_status: payload.video?.anomaly_status ?? (video.anomaly_status === "未满24h" ? "正常" : video.anomaly_status),
       };
 
       onOpenChange(false);

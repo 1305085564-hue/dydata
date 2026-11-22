@@ -34,6 +34,7 @@ const CONTRACT_ROUTES = [
   "admin/topics-library/toggle/route.ts",
   "admin/video-assets/[videoId]/route.ts",
   "admin/videos/[videoId]/lifecycle/route.ts",
+  "admin/videos/[videoId]/patch-24h/route.ts",
   "dashboard/sample-quality-check/route.ts",
   "fulfillment/appeal/withdraw/route.ts",
   "exemptions/apply/route.ts",

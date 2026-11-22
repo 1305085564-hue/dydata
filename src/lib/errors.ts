@@ -19,6 +19,7 @@ export type AppErrorCode =
   | "AUDIT_FAILED"
   | "EMPLOYEE_NOTIFICATION_FAILED"
   | "CONFLICT"
+  | "PATCH_24H_STATUS_UPDATE_FAILED"
   | "TIMEOUT"
   | "DEPENDENCY_FAILED"
   | "INTERNAL_ERROR";
@@ -60,6 +61,7 @@ const PUBLIC_MESSAGES: Record<AppErrorCode, string> = {
   AUDIT_FAILED: "申请已经处理好了，但留档没成功，请联系管理员核对",
   EMPLOYEE_NOTIFICATION_FAILED: "申请已经处理好了，但通知没发出去，请联系管理员",
   CONFLICT: "状态刚刚变了，刷新后重试",
+  PATCH_24H_STATUS_UPDATE_FAILED: "数据已保存，状态未更新，请刷新重试",
   TIMEOUT: "请求超时，请稍后重试",
   DEPENDENCY_FAILED: "后台服务暂时不可用，稍后重试",
   INTERNAL_ERROR: "刚才出了点问题，重试一下",
@@ -79,7 +81,8 @@ function statusForCode(code: AppErrorCode) {
     case "APPEAL_OUT_OF_SCOPE": return 403;
     case "RPC_FAILED":
     case "AUDIT_FAILED":
-    case "EMPLOYEE_NOTIFICATION_FAILED": return 500;
+    case "EMPLOYEE_NOTIFICATION_FAILED":
+    case "PATCH_24H_STATUS_UPDATE_FAILED": return 500;
     case "CONFLICT": return 409;
     case "TIMEOUT": return 504;
     case "DEPENDENCY_FAILED": return 502;
