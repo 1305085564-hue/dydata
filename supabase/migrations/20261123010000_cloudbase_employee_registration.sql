@@ -31,12 +31,12 @@ BEGIN
   v_email := pg_catalog.lower(pg_catalog.btrim(coalesce(p_email, '')));
   v_name := pg_catalog.btrim(coalesce(p_name, ''));
 
-  IF v_project = '' OR pg_catalog.length(v_project) > 128 OR v_project !~ '^[a-zA-Z0-9-]+$' THEN
+  IF v_project = '' OR pg_catalog.length(v_project) > 64 OR v_project !~ '^[a-zA-Z0-9-]+$' THEN
     RETURN pg_catalog.jsonb_build_object('ok', false, 'code', 'invalid_input', 'detail', 'invalid_project');
   END IF;
 
   IF v_email = ''
-    OR pg_catalog.length(v_email) > 320
+    OR pg_catalog.length(v_email) > 64
     OR pg_catalog.strpos(v_email, '@') <= 1
     OR v_email ~ '[[:space:]]' THEN
     RETURN pg_catalog.jsonb_build_object('ok', false, 'code', 'invalid_input', 'detail', 'invalid_email');

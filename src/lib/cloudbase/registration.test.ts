@@ -47,16 +47,16 @@ async function createRegistrationDb() {
 
     CREATE TABLE auth.users (
       id bigserial PRIMARY KEY,
-      project varchar NOT NULL,
-      sub varchar,
-      name varchar,
-      username varchar,
-      email varchar,
+      project varchar(64) NOT NULL,
+      sub varchar(255),
+      name varchar(255),
+      username varchar(64),
+      email varchar(512),
       email_verified boolean,
-      password varchar,
+      password varchar(255),
       status smallint,
       providers jsonb,
-      type varchar,
+      type varchar(64),
       created_at timestamptz,
       updated_at timestamptz
     );
@@ -412,4 +412,58 @@ test("浏览器端 CloudBase Auth 保持禁止直接注册，建号唯一出口�
   const result = await createCloudBaseBrowserAuth().signUp();
   assert.equal(result.data, null);
   assert.equal(result.error?.code, "unsupported_operation");
+});
+
+test("SQL 真实字段长度边界：64 字符邮箱通过，65 字符邮箱/项目与 101 字符姓名拦截且无残留", async () => {
+  const db = await createRegistrationDb();
+  try {
+    const email64 = `${"a".repeat(52)}@example.com`;
+    assert.equal(email64.length, 64);
+
+    const okRes = await db.query<{ res: Record<string, unknown> }>(
+      "SELECT public.cloudbase_register_employee($1, $2, $3, $4, $5) AS res",
+      [PROJECT_ID, email64, "secret123", "陈".repeat(100), TEAM_ID],
+    );
+    assert.equal(okRes.rows[0].res.ok, true);
+    assert.equal(okRes.rows[0].res.email, email64);
+
+    const email65 = `${"a".repeat(53)}@example.com`;
+    assert.equal(email65.length, 65);
+    const badEmailRes = await db.query<{ res: Record<string, unknown> }>(
+      "SELECT public.cloudbase_register_employee($1, $2, $3, $4, $5) AS res",
+      [PROJECT_ID, email65, "secret123", "小陈", TEAM_ID],
+    );
+    assert.deepEqual(badEmailRes.rows[0].res, {
+      ok: false,
+      code: "invalid_input",
+      detail: "invalid_email",
+    });
+
+    const badProjectRes = await db.query<{ res: Record<string, unknown> }>(
+      "SELECT public.cloudbase_register_employee($1, $2, $3, $4, $5) AS res",
+      ["p".repeat(65), "other@example.com", "secret123", "小陈", TEAM_ID],
+    );
+    assert.deepEqual(badProjectRes.rows[0].res, {
+      ok: false,
+      code: "invalid_input",
+      detail: "invalid_project",
+    });
+
+    const badNameRes = await db.query<{ res: Record<string, unknown> }>(
+      "SELECT public.cloudbase_register_employee($1, $2, $3, $4, $5) AS res",
+      [PROJECT_ID, "other2@example.com", "secret123", "陈".repeat(101), TEAM_ID],
+    );
+    assert.deepEqual(badNameRes.rows[0].res, {
+      ok: false,
+      code: "invalid_input",
+      detail: "invalid_name",
+    });
+
+    const counts = await db.query<{ users: string; profiles: string }>(
+      "SELECT (SELECT count(*)::text FROM auth.users) AS users, (SELECT count(*)::text FROM public.profiles) AS profiles",
+    );
+    assert.deepEqual(counts.rows[0], { users: "1", profiles: "1" });
+  } finally {
+    await db.close();
+  }
 });

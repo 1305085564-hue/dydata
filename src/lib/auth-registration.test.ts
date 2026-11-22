@@ -255,3 +255,64 @@ test("Supabase 兼容路径：重复邮箱返回带编号的具体中文提示",
   );
   assert.equal(logs.length, 1);
 });
+
+test("R1 长度限制：64 字符邮箱通过并建号，65 字符邮箱与 101 字符姓名直接拦截且不调用建号函数", async () => {
+  const email64 = `${"a".repeat(52)}@example.com`;
+  assert.equal(email64.length, 64);
+
+  const okCase = cloudBaseDependencies();
+  await assert.rejects(
+    () =>
+      registerUser(
+        { error: null },
+        form({ name: "陈".repeat(100), email: email64, password: "secret123", teamId: "t1" }),
+        okCase.deps,
+        "/topics",
+      ),
+    /redirect:\/topics/,
+  );
+  assert.equal(okCase.calls.registerInput?.email, email64);
+
+  const email65 = `${"a".repeat(53)}@example.com`;
+  assert.equal(email65.length, 65);
+  const longEmailCase = cloudBaseDependencies();
+  const longEmailRes = await registerUser(
+    { error: null },
+    form({ name: "小陈", email: email65, password: "secret123", teamId: "t1" }),
+    longEmailCase.deps,
+  );
+  assert.deepEqual(longEmailRes, { error: "邮箱太长，最多 64 个字符" });
+  assert.equal(longEmailCase.calls.registerInput, null);
+  assert.equal(longEmailCase.calls.signInInput, null);
+
+  const longNameCase = cloudBaseDependencies();
+  const longNameRes = await registerUser(
+    { error: null },
+    form({ name: "陈".repeat(101), email: "ok@example.com", password: "secret123", teamId: "t1" }),
+    longNameCase.deps,
+  );
+  assert.deepEqual(longNameRes, { error: "姓名太长，最多 100 个字符" });
+  assert.equal(longNameCase.calls.registerInput, null);
+});
+
+test("R10 团队查询异常：返回带请求编号的中文提示并记录服务端原因", async () => {
+  const { calls, deps } = cloudBaseDependencies({
+    createRequestId: () => "req-team-err",
+    getTeamOptions: async () => {
+      throw new Error("teams query timeout");
+    },
+  });
+
+  const result = await registerUser(
+    { error: null },
+    form({ name: "小陈", email: "ok@example.com", password: "secret123", teamId: "t1" }),
+    deps,
+  );
+
+  assert.deepEqual(result, { error: "团队列表加载失败，请稍后重试或联系管理员（编号 req-team-err）" });
+  assert.equal(calls.registerInput, null);
+  assert.equal(calls.logs.length, 1);
+  assert.match(JSON.stringify(calls.logs[0]), /req-team-err/);
+  assert.match(JSON.stringify(calls.logs[0]), /team-options/);
+  assert.match(JSON.stringify(calls.logs[0]), /teams query timeout/);
+});

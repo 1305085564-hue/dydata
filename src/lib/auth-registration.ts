@@ -206,16 +206,32 @@ export async function registerUser(
   const email = (formData.get("email")?.toString().trim() ?? "").toLowerCase();
   const password = formData.get("password")?.toString() ?? "";
   const teamId = formData.get("teamId")?.toString().trim() ?? "";
-  const teams = await dependencies.getTeamOptions();
-  const selectedTeam = teams.find((team) => team.id === teamId);
 
   if (!name || !email || !password) return { error: "请完整填写姓名、邮箱和密码。" };
+  if (name.length > 100) return { error: "姓名太长，最多 100 个字符" };
+  if (email.length > 64) return { error: "邮箱太长，最多 64 个字符" };
   if (!email.includes("@") || /\s/.test(email)) return { error: "请输入有效的邮箱地址。" };
   if (password.length < 6) return { error: "密码至少需要 6 位。" };
   if (Buffer.byteLength(password, "utf8") > 72) return { error: "密码长度不能超过 72 位。" };
-  if (!selectedTeam) return { error: "还没选要申请加入的团队。" };
+  if (!teamId) return { error: "还没选要申请加入的团队。" };
 
   const requestId = (dependencies.createRequestId ?? createRegistrationRequestId)();
+  let teams: Awaited<ReturnType<typeof getTeamOptions>>;
+  try {
+    teams = await dependencies.getTeamOptions();
+  } catch (error) {
+    recordFailure(dependencies.logError, {
+      requestId,
+      stage: "team-options",
+      outcome: "team_options_failed",
+      cause: error,
+    });
+    return { error: withRequestId("团队列表加载失败，请稍后重试或联系管理员", requestId) };
+  }
+
+  const selectedTeam = teams.find((team) => team.id === teamId);
+  if (!selectedTeam) return { error: "还没选要申请加入的团队。" };
+
   const returnPath = sanitizeNextPath(next, "");
 
   if ((dependencies.isCloudBaseBackend ?? isCloudBaseBackend)()) {

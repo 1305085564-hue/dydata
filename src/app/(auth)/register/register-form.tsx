@@ -170,6 +170,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           <Input
             autoComplete="name"
             id="name"
+            maxLength={100}
             name="name"
             placeholder="请输入您的真实姓名"
             required
@@ -183,6 +184,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           <Input
             autoComplete="email"
             id="email"
+            maxLength={64}
             name="email"
             placeholder="name@example.com"
             required
