@@ -1,7 +1,7 @@
 import { normalizeChannelAddress } from "./channel-address";
 import { runAiConfigWrite } from "./atomic-write";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
-import { discoverModelIds, syncModelsForKey } from "@/app/api/admin/ai-config/sync-models/route";
+import { discoverModelIds, syncModelsForKey } from "@/lib/ai-config/sync-models";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
 import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-config/key-dependencies";

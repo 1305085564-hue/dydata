@@ -3,7 +3,7 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import { buildAiConfigResponse } from "./route";
-import { syncModelsForKey } from "./sync-models/route";
+import { syncModelsForKey } from "@/lib/ai-config/sync-models";
 import { getChannelGovernance } from "@/lib/ai/channel-governance";
 import { actor, configTables, request, type Row } from "./ai-config.behavior.fixture";
 

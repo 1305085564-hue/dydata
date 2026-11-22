@@ -1,10 +1,10 @@
-import type { FormMetaState } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 import {
   getVideoSubmissionEditDetailError,
   isDailyReportOnlyEditDetail,
   normalizeOptionalText,
   type VideoSubmissionEditDetail,
-} from "@/app/(app)/dashboard/video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-state";
 import type {
   SubmissionSlotRole,
   SubmissionState,

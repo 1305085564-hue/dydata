@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { getRoleLabel } from "@/lib/role-label";
 import { archiveSnapshotRoleLabel, runtimeRoleForView } from "@/lib/modules/domain/view-rules";
-import { describeLastLogin } from "@/app/(app)/admin/modules/members-page-view";
+import { describeLastLogin } from "@/lib/modules/domain/members-page-view";
 import { MemberAvatar, QuietChip, RoleChip } from "./member-identity";
 import type { ProfileSummary } from "@/lib/modules/types";
-import type { MemberAiSuggestionState } from "@/app/(app)/admin/modules/member-ai-dialogs";
+import type { MemberAiSuggestionState } from "@/components/modules/member-ai-dialogs";
 import { MemberInspectorBody, type MemberInspectorBodyProps } from "./member-inspector-body";
 
 export interface MemberInspectorProps extends Omit<MemberInspectorBodyProps, "activeMember"> {

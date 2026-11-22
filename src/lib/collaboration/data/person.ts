@@ -1,7 +1,7 @@
 "use client";
 
-import type { PersonDetailData } from "@/app/(app)/admin/collaboration/types";
-import type { CollaborationRoleTab } from "@/app/(app)/admin/collaboration/types";
+import type { PersonDetailData } from "@/lib/collaboration/types";
+import type { CollaborationRoleTab } from "@/lib/collaboration/types";
 import { BoundedTtlCache } from "@/lib/cache-policy";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 

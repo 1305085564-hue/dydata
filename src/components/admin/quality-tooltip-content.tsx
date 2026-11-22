@@ -8,7 +8,7 @@ import {
   type WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
-import { formatBigNumber } from "@/app/(app)/admin/collaboration/types";
+import { formatBigNumber } from "@/lib/collaboration/types";
 import { SimpleTooltip } from "@/components/ui/tooltip";
 
 export function InteractionBreakdownContent({

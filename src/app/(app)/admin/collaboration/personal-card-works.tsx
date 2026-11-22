@@ -17,8 +17,8 @@ import {
 } from "@/lib/collaboration/content-quality-contract";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import { OneTip } from "./one-tip";
-import type { CollaborationRoleTab, OperatorAccount, PersonDetailData } from "./types";
-import { formatBigNumber } from "./types";
+import type { CollaborationRoleTab, OperatorAccount, PersonDetailData } from "@/lib/collaboration/types";
+import { formatBigNumber } from "@/lib/collaboration/types";
 
 /**
  * 个人档案的作品区：回答「他这个月交了什么，质量怎么样」。

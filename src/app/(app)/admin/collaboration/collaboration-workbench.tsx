@@ -28,7 +28,7 @@ import {
   type WorkGroupViews,
   type WorkGroupRow,
   type WorkGroupRosterMember,
-} from "./types";
+} from "@/lib/collaboration/types";
 import {
   buildCollaborationSearchParams,
   buildCollaborationUrl,

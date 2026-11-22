@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   resolveAssigneeDisplay,
   type HistoricalAssigneeProfile,
-} from "./video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-state";
 
 const USER_ID = "user-self";
 const ACTIVE_PEER_ID = "member-active";

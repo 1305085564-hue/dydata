@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { UUID_PATTERN } from "@/app/api/production/_shared";
+import { UUID_PATTERN } from "@/lib/api-path-validation";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { AttributionPayload, AttributionReport } from "../domain/types";

@@ -13,7 +13,7 @@ import {
   formatBigNumber,
   type WorkGroupDetailView as WorkGroupDetailViewType,
   type WorkGroupMemberRow,
-} from "./types";
+} from "@/lib/collaboration/types";
 
 interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;

@@ -20,7 +20,7 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
-import type { SummaryData } from "./types";
+import type { SummaryData } from "@/lib/collaboration/types";
 import { clearPersonDataCache } from "./person-data";
 
 interface UnattributedReport {

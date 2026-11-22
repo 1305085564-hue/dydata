@@ -22,7 +22,7 @@ import {
   validatePermanentExemptionReason,
   requestSetPermanentExemption,
   requestClearPermanentExemption,
-} from "./permanent-exemption-logic";
+} from "@/lib/modules/domain/permanent-exemption-logic";
 
 import {
   createTeam,
@@ -50,10 +50,10 @@ import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
 
 import { useMemberAiActions } from "./member-ai-actions";
 
-import { ALL_TEAMS_ID, getVisibleTeamOptions, resolveSelectedTeamAfterTeamDelete, type TeamViewTeamOption } from "./team-view-logic";
+import { ALL_TEAMS_ID, getVisibleTeamOptions, resolveSelectedTeamAfterTeamDelete, type TeamViewTeamOption } from "@/lib/modules/domain/team-view-logic";
 import { resolveAdminModulesAccess } from "./member-access";
 import { useMemberWorkspace } from "./member-workspace";
-import { countUnassigned } from "./members-page-view";
+import { countUnassigned } from "@/lib/modules/domain/members-page-view";
 
 export type { AdminModulesContentProps, PendingRequest, ProfileSummary, TeamOption } from "@/lib/modules/types";
 

@@ -23,7 +23,7 @@ import type {
   WorkGroupViews,
   WorkGroupRow,
   WorkGroupRosterMember,
-} from "./types";
+} from "@/lib/collaboration/types";
 
 interface CollaborationDataContainerProps {
   year: number;

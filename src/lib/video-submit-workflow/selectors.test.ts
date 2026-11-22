@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh, serializeVideoSubmitDraft } from "./selectors";
-import { createEditableFields, createEditableSlots, createInitialMeta } from "@/app/(app)/dashboard/video-submit-form-model";
+import { createEditableFields, createEditableSlots, createInitialMeta } from "@/lib/video-submit/domain/video-submit-form-model";
 
 test("buildSubmissionState keeps the canonical slot and metric references", () => {
   const slots = createEditableSlots();

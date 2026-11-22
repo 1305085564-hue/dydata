@@ -11,7 +11,7 @@ import {
   resolveContentVideoStepKey,
   type ContentVideoNavigationAction,
 } from "./content-video-navigation";
-import { parseContentListFilters } from "./content-list-filters";
+import { parseContentListFilters } from "@/lib/content/domain/content-list-filters";
 
 test("按篇穿梭切换作品时保留当前列表参数并使用 replace 操作", () => {
   const nav = buildStepContentVideoNavigation({

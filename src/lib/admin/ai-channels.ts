@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 export { toPriority } from "@/lib/ai-config/priority";
-import { requireAdminActor } from "@/app/api/admin/auth-helper";
+import { requireAdminActor } from "@/lib/admin-auth";
 import { __internal as serverUrlSecurity, withPinnedExternalResponse } from "@/lib/server-url-security";
 
 export { toBoolean, toTrimmedString };

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
-import { parseContentListFilters, writeContentListFilters, type ContentListFilterValue } from "./content-list-filters";
+import { parseContentListFilters, writeContentListFilters, type ContentListFilterValue } from "@/lib/content/domain/content-list-filters";
 
 type ContentView = "all" | "trash";
 

@@ -4,7 +4,7 @@ import { getPublishedDateForStats } from "@/lib/date-semantics";
 import {
   DEFAULT_CONTENT_LIST_FILTERS,
   type ContentListFilterValue,
-} from "../content/content-list-filters";
+} from "@/lib/content/domain/content-list-filters";
 
 export type PulseVideoRow = AdminContentPageData["videos"][number];
 

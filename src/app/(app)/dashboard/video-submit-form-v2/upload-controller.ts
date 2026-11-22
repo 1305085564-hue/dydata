@@ -12,7 +12,7 @@ import {
   SCREENSHOT_TYPE_BY_SLOT,
   type ScreenshotItem,
   type SlotViewState,
-} from "../video-submit-form-model";
+} from "@/lib/video-submit/domain/video-submit-form-model";
 import { uploadSubmissionScreenshot } from "@/lib/video-submit/data/screenshots";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import { resolveOcrPublishedAt } from "@/lib/video-submit-deadline";

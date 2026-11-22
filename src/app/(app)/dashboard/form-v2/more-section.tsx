@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TopicSelectDropdown, type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
 import { cn } from "@/lib/utils";
-import type { FormMetaState } from "../video-submit-form-model";
-import type { AssigneeDisplay, SubmissionAssigneeRole } from "../video-submit-form-state";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
+import type { AssigneeDisplay, SubmissionAssigneeRole } from "@/lib/video-submit/domain/video-submit-form-state";
 import { RoleItemRow, VideoStatusSegmented } from "./role-controls";
 
 type RoleSelection = { role: SubmissionAssigneeRole; label: string; selectedUserId: string | null };

@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { buildReviewQueue, buildSnapshotMap, type VideoRow } from "@/lib/review-queue";
-import { filterContentVideos, type ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
+import { filterContentVideos, type ContentListFilterValue } from "@/lib/content/domain/content-list-filters";
 import { isHighlightRuleMapEmpty, rowMatchesAllHighlightRules } from "@/lib/content/domain/content-list-highlight";
 import { toSortableRatio } from "@/lib/metric-bounds";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";

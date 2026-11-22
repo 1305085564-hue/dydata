@@ -9,8 +9,8 @@ import {
   UNASSIGNED_TEAM_ID,
   getArchivedTeamName,
   isMemberTargetReadOnly,
-} from "@/app/(app)/admin/modules/team-view-logic";
-import { describeLastLogin, memberWorkGroupNames } from "@/app/(app)/admin/modules/members-page-view";
+} from "@/lib/modules/domain/team-view-logic";
+import { describeLastLogin, memberWorkGroupNames } from "@/lib/modules/domain/members-page-view";
 import { archiveSnapshotRoleLabel, resolveProfileCompanyRoleForView, runtimeRoleForView } from "@/lib/modules/domain/view-rules";
 import type { ProfileSummary } from "@/lib/modules/types";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";

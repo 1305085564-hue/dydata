@@ -29,7 +29,7 @@ import {
   type PulseVideoRow,
   type SortDirection,
 } from "./pulse-filters";
-import { filterContentVideos } from "../content/content-list-filters";
+import { filterContentVideos } from "@/lib/content/domain/content-list-filters";
 
 interface PulseVideoListProps {
   date: string;

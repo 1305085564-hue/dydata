@@ -6,7 +6,7 @@ import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-wo
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
-import { formatBigNumber } from "@/app/(app)/admin/collaboration/types";
+import { formatBigNumber } from "@/lib/collaboration/types";
 import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "@/lib/breakout-rating";
 import { loadPersonProfileData } from "@/lib/collaboration/data/person-profile-loader";
 import type {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createEditableSlots } from "@/app/(app)/dashboard/video-submit-form-model";
+import { createEditableSlots } from "@/lib/video-submit/domain/video-submit-form-model";
 import { getUploadProgress } from "./upload-progress";
 
 test("长等待严格超过 10 秒才触发，并列出当前处理槽位", () => {

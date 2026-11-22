@@ -8,7 +8,7 @@ import { teamMetricColumns } from "./collaboration-quality-hints";
 import { goodExcellentText } from "./talent-tab";
 import { RoleTable } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
-import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "./types";
+import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "@/lib/collaboration/types";
 
 interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];

@@ -1,6 +1,6 @@
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import type { SubmissionSlotRole, SubmissionState } from "@/components/submission/提交状态机";
-import type { SlotViewState } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 import type {
   SubmissionWorkflowState,
   VideoSubmitDraftData,

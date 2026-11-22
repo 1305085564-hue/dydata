@@ -8,7 +8,7 @@ import { useContentListData } from "@/lib/content/data/content-list";
 import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
-import { resolveEffectiveDates } from "./content-list-filters";
+import { resolveEffectiveDates } from "@/lib/content/domain/content-list-filters";
 import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
 import { activeSegmentOf, segmentBaseKey, type ContentSegmentCounts } from "./content-segments";
 import { DatePagination } from "./date-pagination";

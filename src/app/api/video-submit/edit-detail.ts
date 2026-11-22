@@ -1,18 +1,16 @@
 import type { SubmissionAssetMeta } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
-import {
-  normalizeDailyReportDataSource,
-  type DailyReportDataSource,
-} from "@/lib/daily-report-data-source";
+import { normalizeDailyReportDataSource } from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";
 import { REQUIRED_METRIC_KEYS, type VideoSubmitValidationMetrics } from "./validation";
 import {
   isNullableVideo24hMetric,
   VIDEO_24H_METRIC_DEFINITIONS,
 } from "@/lib/video-24h-metrics-contract";
-import { classifyHistoryData, type HistoryDataCapability } from "@/lib/history-data-capability";
-import { normalizeAssigneeProfiles } from "./edit-detail/assignee-profiles";
+import { classifyHistoryData } from "@/lib/history-data-capability";
+import { normalizeAssigneeProfiles } from "@/lib/video-submit/domain/assignee-profiles";
+import type { VideoSubmissionEditDetail } from "@/lib/video-submit/domain/edit-detail-types";
 
 const EDIT_REQUIRED_FIELDS = [
   "mode",
@@ -261,64 +259,7 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
   return { ok: true, dto };
 }
 
-export interface VideoSubmissionEditDetail {
-  /** 历史数据能力分层；缺失时兼容旧调用方夹具。 */
-  historyCapability?: HistoryDataCapability;
-  videoId: string;
-  accountId: string;
-  bizDate: string;
-  dataSource: DailyReportDataSource;
-  meta: {
-    videoUrl: string | null;
-    videoTitle: string | null;
-    content: string;
-    publishedAt: string | null;
-    publishedAtText: string | null;
-    anomalyStatus: "normal" | "abnormal";
-    punishType: string | null;
-    platformNotice: string | null;
-    appeal: string | null;
-    topicTag: string | null;
-    videoForm: string | null;
-    contentKeywords: string[];
-    scriptAuthorUserId: string | null;
-    videoEditorUserId: string | null;
-    operatorUserId: string | null;
-  };
-  metrics: {
-    playCount: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    favorites: number;
-    followerGain: number;
-    followerLoss: number;
-    /** 选填指标：留空即落库为 null（写入侧见 `指标分组区.tsx` 的 optional）。 */
-    followerConvert: number | null;
-    avgPlayDuration: number | null;
-    avgPlayRatio?: number | null;
-    bounceRate2s: number | null;
-    completionRate5s: number | null;
-    completionRate: number | null;
-  };
-  assets: Array<{
-    role: "screenshot_1" | "screenshot_2";
-    url: string;
-    confirmed: boolean;
-    confidenceScore: number | null;
-    recognizedFields: Record<string, unknown> | null;
-    screenshotType: "data" | "curve" | "retention" | null;
-  }>;
-  assigneeProfiles?: Array<{
-    userId: string;
-    name: string | null;
-    displayName: string | null;
-    membershipStatus: string | null;
-  }>;
-  uploadedAt: string | null;
-}
-
-export { normalizeAssigneeProfiles } from "./edit-detail/assignee-profiles";
+export { normalizeAssigneeProfiles } from "@/lib/video-submit/domain/assignee-profiles";
 
 export interface VideoSubmissionEditDetailSource {
   video: {

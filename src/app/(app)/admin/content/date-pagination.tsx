@@ -6,7 +6,7 @@ import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CALENDAR_CARD_CLASS, MonthCalendar } from "@/components/calendar/month-calendar";
 import { cn } from "@/lib/utils";
-import { getShanghaiDateString } from "./content-list-filters";
+import { getShanghaiDateString } from "@/lib/content/domain/content-list-filters";
 import { formatDateLabel, formatShortDate } from "./content-headline";
 
 interface DatePaginationProps {

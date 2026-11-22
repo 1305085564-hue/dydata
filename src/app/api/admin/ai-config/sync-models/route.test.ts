@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
-import { buildSyncModelsResponse, syncModelsForKey } from "./route";
+import { buildSyncModelsResponse } from "./route";
+import { syncModelsForKey } from "@/lib/ai-config/sync-models";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 type Row = Record<string, unknown>;

@@ -1,7 +1,7 @@
 import { ShieldOff } from "lucide-react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Switch } from "@/components/ui/switch";
-import { canManagePermanentExemption, type PermanentExemptionState } from "@/app/(app)/admin/modules/permanent-exemption-logic";
+import { canManagePermanentExemption, type PermanentExemptionState } from "@/lib/modules/domain/permanent-exemption-logic";
 import type { CompanyRole } from "@/types";
 import type { ProfileSummary } from "@/lib/modules/types";
 

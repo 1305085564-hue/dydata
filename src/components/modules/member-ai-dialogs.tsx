@@ -6,7 +6,7 @@ import {
   DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { formatAiToolPreview, getAiToolDisplayName, type MemberAiProfile } from "./member-ai-preview";
+import { formatAiToolPreview, getAiToolDisplayName, type MemberAiProfile } from "@/lib/modules/domain/member-ai-preview";
 
 export type AiSuggestionItem = {
   label: string;

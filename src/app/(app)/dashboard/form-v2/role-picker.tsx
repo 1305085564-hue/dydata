@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Search } from "lucide-react";
-import type { SubmissionAssigneeRole } from "../video-submit-form-state";
+import type { SubmissionAssigneeRole } from "@/lib/video-submit/domain/video-submit-form-state";
 import { cn } from "@/lib/utils";
 
 type RoleSelection = {

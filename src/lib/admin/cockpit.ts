@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/auth-helper";
+import { requireAdminActor } from "@/lib/admin-auth";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";

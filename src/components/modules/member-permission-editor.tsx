@@ -11,7 +11,7 @@ import {
 } from "@/types";
 import type { CompanyRole, PermissionCategory, PermissionKey, Permissions } from "@/types";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
-import type { PermissionManagerMember } from "../权限管理";
+import type { PermissionManagerMember } from "@/lib/admin-permission-policy";
 
 export interface MemberPermissionEditorProps {
   member: PermissionManagerMember;

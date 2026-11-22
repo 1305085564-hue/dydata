@@ -1,6 +1,6 @@
 import { useState, useTransition, type Dispatch, type SetStateAction } from "react";
 
-import { ExemptionDialogV2 } from "@/app/(app)/dashboard/redesign/exemption-dialog-v2";
+import { ExemptionDialogV2 } from "@/components/video-submit/exemption-dialog-v2";
 import { submitExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { ExemptionDateBuckets } from "@/lib/豁免";
 import type { PendingExemptionItem } from "@/lib/loaders/dashboard-page";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_CONTENT_LIST_FILTERS } from "./content-list-filters";
+import { DEFAULT_CONTENT_LIST_FILTERS } from "@/lib/content/domain/content-list-filters";
 import { activeSegmentOf, segmentBaseKey, segmentCountText, segmentFilterPatch } from "./content-segments";
 
 test("分段互斥：选评级会关掉只看异常，选异常会清掉评级", () => {

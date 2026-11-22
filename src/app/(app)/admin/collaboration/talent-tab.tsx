@@ -13,7 +13,7 @@ import {
 import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
-import { formatBigNumber, type TalentRow } from "./types";
+import { formatBigNumber, type TalentRow } from "@/lib/collaboration/types";
 
 interface TalentTabProps {
   talents: TalentRow[];

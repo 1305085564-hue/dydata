@@ -13,7 +13,7 @@ import {
   buildPendingLine,
   describeOrphanRequest,
   formatDateKey,
-} from "@/app/(app)/admin/modules/members-page-view";
+} from "@/lib/modules/domain/members-page-view";
 
 /**
  * 成员管理页头：标题即答案（在职多少人、几个团队），旁边「N 人还没分团队」点了就筛出这些人；

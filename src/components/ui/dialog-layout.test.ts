@@ -23,7 +23,7 @@ test("Dialog 基座限制在安全动态视口内，同时允许业务弹窗覆�
 });
 
 test("申请豁免弹窗保留移动端全屏，并固定标题、滚动正文与底部操作", () => {
-  const mountedSource = readSource("src/app/(app)/dashboard/redesign/exemption-dialog-v2.tsx");
+  const mountedSource = readSource("src/components/video-submit/exemption-dialog-v2.tsx");
 
   assert.match(mountedSource, /<Dialog open=\{isOpen\}/);
   assert.match(mountedSource, /<DialogContent[\s\S]*<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);

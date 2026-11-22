@@ -1,5 +1,5 @@
-import { MemberAiDialogs } from "@/app/(app)/admin/modules/member-ai-dialogs";
-import type { AiSuggestionItem } from "@/app/(app)/admin/modules/member-ai-dialogs";
+import { MemberAiDialogs } from "@/components/modules/member-ai-dialogs";
+import type { AiSuggestionItem } from "@/components/modules/member-ai-dialogs";
 
 import type { ModuleDialogsProps } from "./module-dialogs.types";
 import { ModuleDialogsAccount } from "./module-dialogs-account";

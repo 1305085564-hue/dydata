@@ -14,9 +14,9 @@ import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import type { CollaborationDiagnosisDetail } from "@/components/admin/collaboration-work-review-link";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
-import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "./types";
+import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
-import { prefetchPerson } from "@/lib/collaboration/data/workbench";
+import { prefetchPerson } from "@/app/(app)/admin/collaboration/workbench-prefetch";
 
 // 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
 const PersonalCard = dynamic(

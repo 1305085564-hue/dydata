@@ -3,7 +3,7 @@ import type {
   ExemptionGrantLike,
   ExemptionProfileLike,
 } from "@/lib/豁免";
-import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
+import type { VideoSubmissionEditDetail } from "@/lib/video-submit/domain/video-submit-form-state";
 import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 

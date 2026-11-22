@@ -83,7 +83,7 @@
       "maxLines": 978,
       "category": "source"
     },
-    "src/app/(app)/dashboard/redesign/exemption-dialog-v2.tsx": {
+    "src/components/video-submit/exemption-dialog-v2.tsx": {
       "maxLines": 695,
       "category": "source"
     },
@@ -97,6 +97,10 @@
     },
     "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
       "maxLines": 1130,
+      "category": "test"
+    },
+    "src/app/api/admin/ai-config/ai-config.model-health.behavior.test.ts": {
+      "maxLines": 768,
       "category": "test"
     },
     "src/app/api/admin/ai-config/route.ts": {
@@ -231,7 +235,7 @@
       "maxLines": 576,
       "category": "source"
     },
-    "src/components/video-submit/video-submit-panel-body.tsx": {
+    "src/app/(app)/dashboard/video-submit-panel-body.tsx": {
       "maxLines": 537,
       "category": "source"
     },
@@ -263,7 +267,7 @@
       "maxLines": 522,
       "category": "source"
     },
-    "src/app/(app)/admin/content/content-list-filters.ts": {
+    "src/lib/content/domain/content-list-filters.ts": {
       "maxLines": 526,
       "category": "source"
     },

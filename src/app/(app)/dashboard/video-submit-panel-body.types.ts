@@ -10,7 +10,7 @@ import type {
 import type { MonthReport } from "@/lib/video-submit/domain/types";
 import type { Video } from "@/types";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
-import type { VideoSubmissionEditDetail } from "@/app/(app)/dashboard/video-submit-form-state";
+import type { VideoSubmissionEditDetail } from "@/lib/video-submit/domain/video-submit-form-state";
 import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
 export type VideoSubmitPanelBodyProps = {

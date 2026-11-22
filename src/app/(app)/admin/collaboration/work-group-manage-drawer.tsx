@@ -12,14 +12,12 @@ import { ListRow } from "@/components/ui/list-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
-import {
-  describeBatchAssignFeedback, describeCandidateAssignment, summarizeMemberNames, WorkGroupRuleHint,
-} from "./work-group-membership-copy";
+import { describeBatchAssignFeedback, describeCandidateAssignment, summarizeMemberNames, WorkGroupRuleHint } from "./work-group-membership-copy";
 import { rollbackWorkGroupSlots, snapshotWorkGroupSlots } from "@/lib/work-groups/slots";
 import {
   createWorkGroupAction, renameWorkGroupAction, deleteWorkGroupAction, assignWorkGroupMembersAction, unassignWorkGroupMemberAction,
 } from "./work-group-actions";
-import type { WorkGroupRow, WorkGroupKind, WorkGroupRosterMember } from "./types";
+import type { WorkGroupRow, WorkGroupKind, WorkGroupRosterMember } from "@/lib/collaboration/types";
 
 interface WorkGroupManageDrawerProps {
   open: boolean;

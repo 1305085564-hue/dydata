@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { DashboardActivityError } from "./dashboard-activity-error";
-import { TodaySubmittedCard } from "./today-submitted-card";
+import { DashboardActivityError } from "@/components/video-submit/dashboard-activity-error";
+import { TodaySubmittedCard } from "@/components/video-submit/today-submitted-card";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
-import { WorkbenchNoticeBar, buildExemptionReviewNoticeItems, buildPendingExemptionNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
+import { WorkbenchNoticeBar, buildExemptionReviewNoticeItems, buildPendingExemptionNoticeItem } from "@/components/video-submit/workbench-notice-bar";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 

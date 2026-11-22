@@ -11,7 +11,7 @@ const workbenchSource = [
   "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx",
   "src/app/(app)/admin/collaboration/collaboration-workbench-content.tsx",
   "src/lib/collaboration/domain/workbench-state.ts",
-  "src/lib/collaboration/data/workbench.ts",
+  "src/app/(app)/admin/collaboration/workbench-prefetch.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 const collaborationWorkbenchSource = readFileSync(

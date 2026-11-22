@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { StaffTab } from "./staff-tab";
-import type { StaffRow, ContentQualitySummary } from "./types";
+import type { StaffRow, ContentQualitySummary } from "@/lib/collaboration/types";
 import { partitionWriterCandidates } from "@/lib/collaboration/domain/workbench-state";
 
 export type WriterCandidateRow = {

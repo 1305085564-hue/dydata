@@ -10,7 +10,7 @@ import {
   overallBreakoutGrade,
   type RatingRule,
 } from "./breakout-rating";
-import { PLAY_BUCKETS } from "../app/(app)/admin/content/content-list-filters";
+import { PLAY_BUCKETS } from "./content/domain/content-list-filters";
 
 const migrationsDir = join(process.cwd(), "supabase/migrations");
 const migrationFiles = readdirSync(migrationsDir)

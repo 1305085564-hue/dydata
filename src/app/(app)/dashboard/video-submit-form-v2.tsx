@@ -28,7 +28,7 @@ import {
   buildExemptionReviewNoticeItems,
   buildPendingExemptionNoticeItem,
   type WorkbenchNoticeItem,
-} from "./components/workbench-notice-bar";
+} from "@/components/video-submit/workbench-notice-bar";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
@@ -60,7 +60,7 @@ import {
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
-} from "./video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-state";
 
 import {
   createEditableFields,
@@ -76,7 +76,7 @@ import {
   type FormMetaState,
   type SlotViewState,
   type ScreenshotItem,
-} from "./video-submit-form-model";
+} from "@/lib/video-submit/domain/video-submit-form-model";
 
 import type {
   SubmitPanelMode,

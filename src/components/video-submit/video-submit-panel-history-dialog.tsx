@@ -10,7 +10,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
-import { HistoryList } from "@/app/(app)/dashboard/history-list";
+import { HistoryList } from "@/components/video-submit/history-list";
 import { cn } from "@/lib/utils";
 import { DashboardActivityError } from "./dashboard-activity-error";
 

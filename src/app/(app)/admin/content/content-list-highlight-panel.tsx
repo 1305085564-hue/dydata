@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SimpleTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { ContentListFilterValue } from "./content-list-filters";
+import type { ContentListFilterValue } from "@/lib/content/domain/content-list-filters";
 import {
   HIGHLIGHT_FIELDS,
   formatHighlightRuleLabel,

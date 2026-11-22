@@ -8,7 +8,7 @@ import {
 } from "@/lib/collaboration/content-quality-contract";
 import { OneTip } from "./one-tip";
 import type { RoleColumn } from "./role-table";
-import { formatBigNumber } from "./types";
+import { formatBigNumber } from "@/lib/collaboration/types";
 import { INTERACTION_DETAIL_COLUMNS, RETENTION_DETAIL_COLUMNS, formatRate } from "./work-group-detail-columns";
 
 export type WriterQualityData =

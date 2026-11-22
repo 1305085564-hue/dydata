@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createEditableSlots } from "../video-submit-form-model";
+import { createEditableSlots } from "@/lib/video-submit/domain/video-submit-form-model";
 import { createQualityCheckController } from "./quality-check-controller";
 
 test("quality check controller keeps a failed check non-blocking and clears loading", async () => {
