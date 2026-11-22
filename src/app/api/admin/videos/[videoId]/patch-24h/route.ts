@@ -217,12 +217,43 @@ export async function buildPatch24hResponse(
   const snapshotUpdatePatch = build24hSnapshotUpdatePatch(metrics);
 
   observation?.mark("write-snapshot");
-  const snapshotResult = parsedBody.data.snapshotId
+  let existingSnapshotId = parsedBody.data.snapshotId ?? null;
+  if (!existingSnapshotId) {
+    const existingSnapshotResult = await userSupabase
+      .from("video_metrics_snapshots")
+      .select("id")
+      .eq("video_id", normalizedVideoId)
+      .eq("snapshot_type", "24h")
+      .order("captured_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingSnapshotResult.error) {
+      return appErrorResponse(new AppError({
+        code: "DEPENDENCY_FAILED",
+        status: 500,
+        message: existingSnapshotResult.error.message,
+        publicMessage: "24h 数据保存失败，请稍后重试",
+        operation: "patch_24h_load_snapshot",
+        targetId: normalizedVideoId,
+        cause: existingSnapshotResult.error,
+      }), {
+        partialSuccess: false,
+        snapshotSaved: false,
+        statusUpdated: false,
+      });
+    }
+
+    existingSnapshotId = existingSnapshotResult.data?.id ?? null;
+  }
+
+  const snapshotResult = existingSnapshotId
     ? await userSupabase
         .from("video_metrics_snapshots")
         .update(snapshotUpdatePatch)
-        .eq("id", parsedBody.data.snapshotId)
+        .eq("id", existingSnapshotId)
         .eq("video_id", normalizedVideoId)
+        .eq("snapshot_type", "24h")
         .select("*")
         .maybeSingle()
     : await userSupabase

@@ -209,6 +209,16 @@ test("成功：新增 24h 快照并把「未满24h」更新为「正常」，保
 
       assert.equal(table, "video_metrics_snapshots");
       return {
+        select() {
+          return {
+            eq() { return this; },
+            order() { return this; },
+            limit() { return this; },
+            async maybeSingle() {
+              return { data: null, error: null };
+            },
+          };
+        },
         insert(payload: Record<string, unknown>) {
           captured.insertedPayload = payload;
           return {
@@ -387,6 +397,16 @@ test("快照保存失败时返回 500 且不再更新视频状态", async () => 
       }
 
       return {
+        select() {
+          return {
+            eq() { return this; },
+            order() { return this; },
+            limit() { return this; },
+            async maybeSingle() {
+              return { data: null, error: null };
+            },
+          };
+        },
         insert() {
           return {
             select() { return this; },
