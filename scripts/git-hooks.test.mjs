@@ -8,7 +8,7 @@ import path from "node:path";
 
 const hookPath = path.resolve("scripts/git-hooks/pre-push");
 
-async function runHook({ migration, database }) {
+async function runHook({ migration, database, docCheck = "pass" }) {
   const root = await mkdtemp(path.join(os.tmpdir(), "dydata-pre-push-"));
   const bin = path.join(root, "bin");
   await (await import("node:fs/promises")).mkdir(bin);
@@ -25,13 +25,20 @@ esac
 printf '%s\\n' "$0 $*" >> "${log}"
 exit 0
 `;
+  const nodeStub = `#!/bin/sh
+printf '%s\\n' "$0 $*" >> "${log}"
+case "$*" in
+  *doc-health-check*) [ "${docCheck}" = "fail" ] && { echo "stub: 链接失效"; exit 1; } ;;
+esac
+exit 0
+`;
   const pgreadyStub = `#!/bin/sh
 [ "${database}" = "up" ]
 `;
   await writeFile(path.join(bin, "git"), gitStub);
   await writeFile(path.join(bin, "npx"), commandStub);
   await writeFile(path.join(bin, "npm"), commandStub);
-  await writeFile(path.join(bin, "node"), commandStub);
+  await writeFile(path.join(bin, "node"), nodeStub);
   await writeFile(path.join(bin, "pg_isready"), pgreadyStub);
   await Promise.all(["git", "npx", "npm", "node", "pg_isready"].map((name) => chmod(path.join(bin, name), 0o755)));
   const child = spawn("/bin/sh", [hookPath], {
@@ -80,4 +87,20 @@ test("有迁移改动但本机库未启动时用大白话阻断推送", async ()
   assert.equal(result.status, 1);
   assert.match(result.stderr, /先 colima start && supabase start/);
   assert.doesNotMatch(result.commands, /db:replay/);
+});
+
+test("文档链接检查是第一项检查，排在类型检查和单测之前", async () => {
+  const result = await runHook({ migration: "no", database: "down" });
+  assert.equal(result.status, 0, result.stderr);
+  const lines = result.commands.split("\n").filter(Boolean);
+  assert.match(lines[0], /node scripts\/doc-health-check\.mjs --links/);
+  assert.match(result.stdout, /1\/7 文档链接检查/);
+});
+
+test("文档链接检查失败时阻断推送，且不再往下跑类型检查和单测", async () => {
+  const result = await runHook({ migration: "no", database: "down", docCheck: "fail" });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /文档里有链接指向不存在的文件，已阻断推送/);
+  assert.match(result.stderr, /--links --fix-links/);
+  assert.doesNotMatch(result.commands, /tsc|npm test/);
 });
