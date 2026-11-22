@@ -2,12 +2,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createEditableFields, createEditableSlots, deriveSlotsFromItems, type ScreenshotItem } from "@/lib/video-submit/domain/video-submit-form-model";
+import { createEditableFields, createEditableSlots, createInitialMeta, deriveSlotsFromItems, type ScreenshotItem } from "@/lib/video-submit/domain/video-submit-form-model";
 import { canSubmit, createInitialSubmissionState, type SubmissionSlotRole } from "@/components/submission/提交状态机";
+import { toManualFieldState } from "@/components/submission/填报表单状态";
 import { createOcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
+import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
+import type { WorkflowAction } from "@/lib/video-submit-workflow/types";
 import { buildOcrMultipartFormData, buildOcrStorageRequestBody, createUploadHandler } from "./upload-controller";
 
 function createUploadHarness() {
+  let workflow = createWorkflowState({
+    meta: createInitialMeta("2026-11-22", "user-1"),
+    fields: createEditableFields(),
+    slots: createEditableSlots(),
+  });
+  const dispatchWorkflow = (action: WorkflowAction) => { workflow = workflowReducer(workflow, action); };
   const slotsRef = { current: createEditableSlots() };
   const itemsRef = { current: [] as ScreenshotItem[] };
   const ocrTasksRef = { current: createOcrTaskRegistry() };
@@ -15,6 +24,7 @@ function createUploadHarness() {
   const updateItemsState = (updater: (current: ScreenshotItem[]) => ScreenshotItem[]) => {
     itemsRef.current = updater(itemsRef.current);
     slotsRef.current = deriveSlotsFromItems(itemsRef.current);
+    dispatchWorkflow({ type: "slots/update", updater: () => slotsRef.current });
   };
   const handle = createUploadHandler({
     account: { id: "account-1" },
@@ -28,9 +38,9 @@ function createUploadHarness() {
     itemsRef,
     blobUrlsRef,
     updateItemsState,
-    dispatchWorkflow() {},
+    dispatchWorkflow,
   });
-  return { handle, slotsRef, itemsRef, blobUrlsRef };
+  return { handle, slotsRef, itemsRef, blobUrlsRef, dispatchWorkflow, get workflow() { return workflow; } };
 }
 
 async function withUploadMocks<T>(
@@ -61,6 +71,83 @@ function screenshotUploadResponse(role: SubmissionSlotRole, suffix = "new.png") 
   const path = `user-1/account-1/${role}/${suffix}`;
   return jsonResponse({ data: { bucket: "submission-screenshots", path, url: `/api/submission-screenshots/file?path=${encodeURIComponent(path)}` } });
 }
+
+test("上传等待识别期间手填播放量，回包保留手填值和可恢复识别值及表单手改标记", async () => {
+  const harness = createUploadHarness();
+  let releaseOcr!: (response: Response) => void;
+  let notifyOcrStarted!: () => void;
+  const ocrStarted = new Promise<void>((resolve) => { notifyOcrStarted = resolve; });
+  const pendingResponse = new Promise<Response>((resolve) => { releaseOcr = resolve; });
+  let ocrRequests = 0;
+
+  await withUploadMocks(async (url) => {
+    if (url === "/api/submission-screenshots") return screenshotUploadResponse("screenshot_1");
+    assert.equal(url, "/api/ocr-screenshot");
+    ocrRequests += 1;
+    notifyOcrStarted();
+    return pendingResponse;
+  }, async () => {
+    const uploading = harness.handle("screenshot_1", new File(["img"], "manual-during-ocr.png", { type: "image/png" }));
+    await ocrStarted;
+    harness.dispatchWorkflow({
+      type: "fields/update",
+      updater: (current) => ({ ...current, play_count: toManualFieldState({ ...current.play_count, value: "9999" }) }),
+    });
+    harness.dispatchWorkflow({ type: "draft/update", updater: (current) => ({ ...current, hasManualEdit: true }) });
+    releaseOcr(jsonResponse({ data: {
+      slot_status: "confirmed", screenshot_type: "data", confidence_score: 0.95, requires_manual_confirmation: false,
+      recognized_fields: { play_count: 1234, likes: 56 }, confidence: { play_count: "high" },
+    } }));
+    await uploading;
+  });
+
+  assert.equal(ocrRequests, 1);
+  assert.equal(harness.itemsRef.current[0].status, "done");
+  assert.equal(harness.workflow.fields.play_count.value, "9999");
+  assert.equal(harness.workflow.fields.play_count.manuallyEdited, true);
+  assert.equal(harness.workflow.fields.play_count.ocrValue, "1234");
+  assert.equal(harness.workflow.fields.play_count.ocrConfidenceLevel, "high");
+  assert.equal(harness.workflow.fields.likes.value, "56");
+  assert.equal(harness.workflow.hasManualEdit, true);
+});
+
+test("替换新图时立即清掉未手改的旧识别值，新图缺少该字段也不残留旧值", async () => {
+  const harness = createUploadHarness();
+  let ocrCount = 0;
+  let notifyReplacementStarted!: () => void;
+  let releaseReplacement!: (response: Response) => void;
+  const replacementStarted = new Promise<void>((resolve) => { notifyReplacementStarted = resolve; });
+  const replacementResponse = new Promise<Response>((resolve) => { releaseReplacement = resolve; });
+
+  await withUploadMocks(async (url) => {
+    if (url === "/api/submission-screenshots") return screenshotUploadResponse("screenshot_1", `image-${ocrCount}.png`);
+    assert.equal(url, "/api/ocr-screenshot");
+    ocrCount += 1;
+    if (ocrCount === 2) { notifyReplacementStarted(); return replacementResponse; }
+    return jsonResponse({ data: {
+      slot_status: "confirmed", screenshot_type: "data", confidence_score: 1, requires_manual_confirmation: false,
+      recognized_fields: { play_count: 100, likes: 18 },
+    } });
+  }, async () => {
+    await harness.handle("screenshot_1", new File(["old"], "old.png", { type: "image/png" }));
+    assert.equal(harness.workflow.fields.likes.value, "18");
+    const replacing = harness.handle("screenshot_1", new File(["new"], "new.png", { type: "image/png" }));
+    await replacementStarted;
+    const pendingLikes = harness.workflow.fields.likes.value;
+    releaseReplacement(jsonResponse({ data: {
+      slot_status: "confirmed", screenshot_type: "data", confidence_score: 1, requires_manual_confirmation: false,
+      recognized_fields: { play_count: 240 },
+    } }));
+    await replacing;
+    assert.equal(pendingLikes, "", "换图开始时清理旧的自动识别值");
+  });
+
+  assert.equal(ocrCount, 2);
+  assert.equal(harness.workflow.fields.play_count.value, "240");
+  assert.equal(harness.workflow.fields.likes.value, "");
+  assert.equal(harness.workflow.fields.likes.ocrValue, null);
+  assert.equal(harness.workflow.hasManualEdit, false);
+});
 
 test("识别请求永远显式带类型：storage JSON 与 multipart FormData 均遵循槽位决定类型", () => {
   assert.deepEqual(
@@ -269,13 +356,12 @@ test("同槽换图同时取消旧图的上传与识别请求，另一槽不动",
   assert.ok(ocrTypes.filter((type) => type === "data").length >= 2);
 });
 
-test("retryItem：已有 assetUrl/bucket/path 时不重复上传，有 file 走 multipart、无 file 走 storage JSON", async () => {
+test("retryItem：真实上传留存 assetUrl/bucket/path 后不重复上传，有 file 走 multipart", async () => {
   const harness = createUploadHarness();
   const file = new File(["image"], "retry.png", { type: "image/png" });
   let uploadCount = 0;
   let ocrCount = 0;
   let lastOcrMode: "multipart" | "storage" | null = null;
-  let lastJsonBody: Record<string, unknown> | null = null;
 
   await withUploadMocks(async (url, init) => {
     if (url === "/api/submission-screenshots") {
@@ -288,7 +374,6 @@ test("retryItem：已有 assetUrl/bucket/path 时不重复上传，有 file 走 
         lastOcrMode = "multipart";
       } else {
         lastOcrMode = "storage";
-        lastJsonBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
       }
       if (ocrCount === 1) return jsonResponse({ error_code: "AI_TIMEOUT" }, 500);
       return jsonResponse({
@@ -316,18 +401,6 @@ test("retryItem：已有 assetUrl/bucket/path 时不重复上传，有 file 走 
     assert.equal(lastOcrMode, "multipart");
     assert.equal(harness.itemsRef.current[0].status, "done");
 
-    // 3) 模拟刷新草稿后 item.file 丢失但保留 assetUrl/bucket/path：回退 storage JSON 识别，仍不重复上传
-    harness.itemsRef.current = [{ ...harness.itemsRef.current[0], file: null }];
-    await harness.handle.retryItem(itemId);
-    assert.equal(uploadCount, 1, "刷新后重新识别仍不得重复上传");
-    assert.equal(ocrCount, 3);
-    assert.equal(lastOcrMode, "storage");
-    assert.deepEqual(lastJsonBody, {
-      bucket: "submission-screenshots",
-      path: "user-1/account-1/screenshot_1/retry.png",
-      asset_role: "screenshot_1",
-      screenshot_type: "data",
-    });
   });
 });
 

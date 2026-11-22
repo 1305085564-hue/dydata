@@ -1,4 +1,5 @@
 import type { AnomalyStatus } from "@/types";
+import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import {
   createInitialSubmissionState,
   type EditableMetricKey,
@@ -48,6 +49,8 @@ export type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   fileName?: string;
   error?: string | null;
   assetUrl?: string | null;
+  bucket?: string | null;
+  path?: string | null;
   previewUrl?: string | null;
   file?: File | null;
   startedAt?: number;
@@ -387,7 +390,7 @@ export function createScreenshotItemsFromEditDetail(
       assetUrl: asset.url,
       previewUrl: asset.url,
       bucket: null,
-      path: null,
+      path: parseSubmissionScreenshotPath(asset.url),
       storageRole: role,
       fileName: "已保存截图",
       confidenceScore: asset.confidenceScore,
@@ -395,6 +398,28 @@ export function createScreenshotItemsFromEditDetail(
       confirmed: asset.confirmed,
       ocrSummary: buildOcrSummary(screenshotType, asset.recognizedFields),
       ocrFallback: !asset.confirmed,
+    }];
+  });
+}
+
+/** 草稿不持有 File；恢复持久化截图后，重试继续读取已存档的图片。 */
+export function createScreenshotItemsFromSlots(slots: Record<SubmissionSlotRole, SlotViewState>): ScreenshotItem[] {
+  return VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER.flatMap((role, index) => {
+    const slot = slots[role];
+    if (!slot.assetUrl) return [];
+    return [{
+      id: slot.itemId ?? `restored-${role}`, seq: index + 1, file: null,
+      status: slot.status === "uploading" || slot.status === "recognizing" || slot.status === "failed"
+        ? slot.status : "done",
+      screenshotType: SCREENSHOT_TYPE_BY_SLOT[role],
+      recognizedFields: slot.recognizedFields ?? null,
+      assetUrl: slot.assetUrl, previewUrl: slot.assetUrl,
+      bucket: slot.bucket ?? null,
+      path: slot.path ?? parseSubmissionScreenshotPath(slot.assetUrl),
+      storageRole: role, fileName: slot.fileName,
+      error: slot.error ?? null, confidenceScore: slot.confidenceScore,
+      requiresManualConfirmation: slot.requiresManualConfirmation, confirmed: slot.confirmed,
+      ocrSummary: slot.ocrSummary, ocrFallback: slot.ocrFallback,
     }];
   });
 }
@@ -425,6 +450,8 @@ function slotFromScreenshotItem(item: ScreenshotItem, role: SubmissionSlotRole):
     fileName: item.fileName,
     error: item.error ?? null,
     assetUrl: item.assetUrl,
+    bucket: item.bucket,
+    path: item.path,
     previewUrl: item.previewUrl,
     file: item.file,
     startedAt: item.startedAt,

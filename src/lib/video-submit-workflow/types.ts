@@ -53,7 +53,7 @@ export type WorkflowAction =
       meta?: WorkflowUpdater<FormMetaState>;
       fields?: WorkflowUpdater<Record<EditableMetricKey, EditableMetricField>>;
       slots?: WorkflowUpdater<Record<SubmissionSlotRole, SlotViewState>>;
-      /** 重新上传截图触发的识别要把手工标记交还给机器，见 daily-report-data-source 的来源判定。 */
+      /** 未显式指定时，字段识别提交按保留的手填字段推导；纯元数据提交保留原标记。 */
       hasManualEdit?: boolean;
     }
   | {

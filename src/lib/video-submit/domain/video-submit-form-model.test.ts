@@ -9,6 +9,7 @@ import {
   createEditableSlotsFromEditDetail,
   createInitialMeta,
   createMetaFromEditDetail,
+  createScreenshotItemsFromEditDetail,
   METRIC_SUMMARY_LABELS,
 } from "./video-submit-form-model";
 import type { VideoSubmissionEditDetail } from "./video-submit-form-state";
@@ -114,6 +115,11 @@ test("旧截图复用同一地址且不持有 File，待确认截图不被提升
   assert.equal(slots.screenshot_2.status, "pending_confirm");
   assert.equal(slots.screenshot_2.confirmed, false);
   assert.equal(slots.screenshot_2.ocrFallback, true);
+  const items = createScreenshotItemsFromEditDetail({ ...detail, assets: [{
+    ...detail.assets[0], url: "/api/submission-screenshots/file?path=user-1%2Fedit.png",
+  }] });
+  assert.equal(items[0].path, "user-1/edit.png");
+  assert.equal(items[0].file, null);
 });
 
 test("空 assets 保持初始空槽", () => {

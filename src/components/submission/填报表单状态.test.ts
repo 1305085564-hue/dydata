@@ -105,10 +105,10 @@ test("手改标记不会被后续手改清掉，OCR 原值也保留在手改字�
   assert.equal(edited.ocrValue, "3.00");
 });
 
-test("刷新互动截图时该槽旧数字清空、采用新识别值，完播截图数字保留", () => {
+test("刷新互动截图时保留手填值，更新可恢复识别值并清空未手改旧数字", () => {
   const fields = createEditableFields();
-  fields.play_count = { ...fields.play_count, value: "120", manuallyEdited: true };
-  fields.likes = { ...fields.likes, value: "18", manuallyEdited: true };
+  fields.play_count = toManualFieldState({ ...fields.play_count, value: "9999" });
+  fields.likes = { ...fields.likes, value: "18", source: "ocr", ocrValue: "18" };
   fields.completion_rate = { ...fields.completion_rate, value: "26" };
 
   const refreshed = applyOcrMetricValues(fields, { play_count: 240 }, null, {
@@ -116,8 +116,10 @@ test("刷新互动截图时该槽旧数字清空、采用新识别值，完播�
     screenshotRole: "screenshot_1",
   });
 
-  assert.equal(refreshed.play_count.value, "240");
-  assert.equal(refreshed.play_count.manuallyEdited, false);
+  assert.equal(refreshed.play_count.value, "9999");
+  assert.equal(refreshed.play_count.manuallyEdited, true);
+  assert.equal(refreshed.play_count.ocrValue, "240");
+  assert.equal(refreshed.play_count.source, "manual");
   assert.equal(refreshed.likes.value, "");
   assert.equal(refreshed.likes.manuallyEdited, false);
   assert.equal(refreshed.completion_rate.value, "26");
@@ -125,7 +127,8 @@ test("刷新互动截图时该槽旧数字清空、采用新识别值，完播�
 
 test("刷新截图但识别失败仍清空该槽旧数字，不影响另一槽", () => {
   const fields = createEditableFields();
-  fields.likes = { ...fields.likes, value: "18", manuallyEdited: true };
+  fields.likes = { ...fields.likes, value: "18", source: "ocr", ocrValue: "18" };
+  fields.play_count = toManualFieldState({ ...fields.play_count, value: "9999" });
   fields.completion_rate = { ...fields.completion_rate, value: "26" };
 
   const refreshed = applyOcrMetricValues(fields, null, null, {
@@ -135,5 +138,7 @@ test("刷新截图但识别失败仍清空该槽旧数字，不影响另一槽",
 
   assert.equal(refreshed.likes.value, "");
   assert.equal(refreshed.likes.manuallyEdited, false);
+  assert.equal(refreshed.play_count.value, "9999");
+  assert.equal(refreshed.play_count.manuallyEdited, true);
   assert.equal(refreshed.completion_rate.value, "26");
 });

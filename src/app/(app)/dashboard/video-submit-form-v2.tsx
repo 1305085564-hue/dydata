@@ -620,6 +620,9 @@ export function VideoSubmitFormV2({
     lastReportPreferences: lastSubmissionPreferences,
     visibleMemberIds,
     dispatchWorkflow,
+    screenshotItemsRef,
+    slotsRef,
+    setScreenshotItems,
   });
 
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);

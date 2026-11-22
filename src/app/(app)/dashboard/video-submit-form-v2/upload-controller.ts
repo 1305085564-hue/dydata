@@ -244,14 +244,12 @@ export function createUploadHandler({
     if (visibleSlots[targetRole].itemId === input.itemId) {
       dispatchWorkflow({
         type: "ocr/commit",
-        hasManualEdit: false,
         fields: (current) => applyOcrMetricValues(
           current,
           targetRole === "screenshot_1"
             ? recognizedFields as Record<string, string | number | boolean | null> | null
             : recognizedFields?.retention_metrics as Record<string, string | number | boolean | null> | undefined,
           data.confidence,
-          { screenshotRefreshed: true, screenshotRole: targetRole },
         ),
       });
     }
@@ -403,6 +401,14 @@ export function createUploadHandler({
       ocrTasksRef.current?.cancel(old.id);
       revokePreview(old, blobUrlsRef);
     }
+    // 换图时清理旧的自动识别值；识别等待期间新输入的手填值不在回包时重置。
+    dispatchWorkflow({
+      type: "ocr/commit",
+      fields: (current) => applyOcrMetricValues(current, null, null, {
+        screenshotRefreshed: true,
+        screenshotRole: role,
+      }),
+    });
     const seq = Math.max(0, ...itemsRef.current.map((item) => item.seq)) + 1;
     const previewUrl = URL.createObjectURL(file);
     blobUrlsRef.current.add(previewUrl);

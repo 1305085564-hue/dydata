@@ -8,6 +8,8 @@ const USER_IDENTITY_RPCS = new Set([
   "reopen_exemption_request_atomically",
   "set_permanent_exemption_owner_atomically",
   "clear_permanent_exemption_owner_atomically",
+  "apply_exemption_grant_atomically",
+  "clear_exemption_grant_atomically",
   "handle_fulfillment_appeal",
   "reopen_fulfillment_appeal_atomically",
   "review_team_join_request",
@@ -21,14 +23,18 @@ export function guardAdminRpc<T extends { rpc: (...args: never[]) => unknown }>(
       const value = Reflect.get(target, property, receiver);
       if (property === "rpc") {
         return (name: string, ...args: unknown[]) => {
-          if (USER_IDENTITY_RPCS.has(name)) {
-            const context = createRequestContext({ route: "database/rpc", operation: name });
-            const error = new Error(`${name} 必须使用本人身份连接`);
-            logApiError({ requestId: context.requestId, route: context.route, outcome: "rejected", detail: { rpc: name, backend } }, error);
+          const normalizedName = name.trim().toLowerCase().replace(/^[^.]+\./, "");
+          if (USER_IDENTITY_RPCS.has(normalizedName)) {
+            const context = createRequestContext({ route: "database/rpc", operation: normalizedName });
+            const error = new Error(`${normalizedName} 必须使用本人身份连接`);
+            logApiError({ requestId: context.requestId, route: context.route, outcome: "rejected", detail: { rpc: normalizedName, backend } }, error);
             throw error;
           }
           return Reflect.apply(target.rpc, target, [name, ...args]);
         };
+      }
+      if (property === "schema" && typeof value === "function") {
+        return (...args: unknown[]) => guardAdminRpc(Reflect.apply(value, target, args), backend);
       }
       return typeof value === "function" ? value.bind(target) : value;
     },
