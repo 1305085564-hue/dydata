@@ -1,7 +1,7 @@
 # 算力池统一纳管 Cloudflare Clairic 与下线百度 OCR 实施方案
 
-> **状态**：实施中（2026-11-22 阿禅拍板）
-> **工作分支**：`feat/clairic-pool-retire-baidu`（隔离区 `/Users/mac/Projects/dydata/.claude/worktrees/clairic-pool`）
+> **状态**：已上线待外部独立验收（2026-11-22，提交 `005f23b94` / CloudBase `dydata-023`）
+> **交付与迁移**：`feat/clairic-pool-retire-baidu` 已合并至 `main` 并清理隔离区；CloudBase PostgreSQL 两步迁移（结构回执 `f37bb83f` / 数据清理与 Clairic 入池回执 `7ec0746f`）已完成并校验通过；按阿禅要求交外部独立 AI 验收
 > **合并前端交互稿**：产品经理交互规范 + 架构师三项审定收口（不加脆弱纯文本正则、编辑地址保持原协议支持自定义代理、历史普通记录不加噪音文案）
 
 ---
@@ -143,6 +143,6 @@ POST /api/ocr-screenshot（multipart 本地直传 或 bucket+path 云端重识�
 | 9 | Clairic 全不可用自动兜底全局默认 | 全部 Clairic 账号 429/超时时，无缝回退到「全局默认」视觉模型完成识别；业务全空（`slot_status: "failed"`）直接返回不错误回退 |
 | 10 | 测速台账真实耗时与回退拆解 | 发生回退时 `ocr_recognition_logs.ocr_ms` 为所有尝试之和，`fallback_detail` 记录每段渠道/原因/耗时；抽屉「耗时」列清晰展示拆解路径，历史 90 天无 `fallback_detail` 记录正常渲染不报错 |
 | 11 | 截图槽位区「重试 / 重新识别」按钮修复 | 上传失败（有本地 file 无 assetUrl）与刷新草稿后（有 assetUrl 无本地 file）两个场景下，按钮均可见并能触发重试/云端重识（单测 + 浏览器实测） |
-| 12 | 线上零中断与真实识别验收 | 发布 CloudBase 上海后，`/api/health?check=cloudbase` 返回 200 `up`；Ego Lite 实测管理后台接入/切换/测试/台账全流程 + `/dashboard` 真实传图识别闭环 |
+| 12 | 线上零中断与真实识别验收 | 发布 CloudBase 上海后，`/api/health?check=cloudbase` 返回 200 `up`；实测管理后台接入/切换/测试/台账全流程 + `/dashboard` 真实传图识别闭环 |
 | 13 | 全部 7 项推送门禁 + 构建全绿 | `doc:links`、`tsc --noEmit`、`npm test`、`eslint`、`gate:design`、`gate:maintainability`、`gate:api-error`、`npm run build` 全部通过，零绕过 |
 | 14 | 测试数据净零与日志留档 | 验后清除测试渠道/草稿/COS 测试图，生产原有渠道与业务表零污染；更新 `docs/reference/上线与运维.md` 与 `日志/2026-11-22.md` |
