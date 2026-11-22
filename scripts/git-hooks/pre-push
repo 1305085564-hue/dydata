@@ -10,6 +10,13 @@ cd "$(git rev-parse --show-toplevel)"
 # 已 cd 到仓库根目录，清掉后 git 照常按当前目录找到本仓库。
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
 
+# 文档链接检查放最前：秒级，失效链接让代理顺着死链找不到资料，没必要等 tsc 和单测跑完才发现。
+echo "[pre-push] 1/7 文档链接检查"
+node scripts/doc-health-check.mjs --links || {
+  echo "[pre-push] 文档里有链接指向不存在的文件，已阻断推送。按上面逐条提示改；文件只是挪了位置的可一键修：node scripts/doc-health-check.mjs --links --fix-links" >&2
+  exit 1
+}
+
 has_migration_changes() {
   git diff --name-only origin/main...HEAD -- supabase/migrations
   git diff --name-only HEAD -- supabase/migrations
@@ -31,17 +38,17 @@ else
   echo "[pre-push] 推送范围没有迁移改动，跳过本机重放"
 fi
 
-echo "[pre-push] 1/6 类型检查"
+echo "[pre-push] 2/7 类型检查"
 npx tsc --noEmit --pretty false
-echo "[pre-push] 2/6 单元测试（不含真实库组）"
+echo "[pre-push] 3/7 单元测试（不含真实库组）"
 npm test --silent > /tmp/dydata-pre-push-test.log 2>&1 || { tail -60 /tmp/dydata-pre-push-test.log; echo "[pre-push] 单元测试失败，完整输出：/tmp/dydata-pre-push-test.log"; exit 1; }
-echo "[pre-push] 3/6 代码检查"
+echo "[pre-push] 4/7 代码检查"
 npm run lint --silent
-echo "[pre-push] 4/6 设计令牌门禁"
+echo "[pre-push] 5/7 设计令牌门禁"
 npm run gate:design --silent
-echo "[pre-push] 5/6 可维护性与文档体量门禁（对比 origin/main）"
+echo "[pre-push] 6/7 可维护性与文档体量门禁（对比 origin/main）"
 node scripts/maintainability-gate.mjs --base=origin/main
 node scripts/doc-size-check.mjs
-echo "[pre-push] 6/6 新增接口失败路径门禁（对比 origin/main）"
+echo "[pre-push] 7/7 新增接口失败路径门禁（对比 origin/main）"
 node scripts/api-failure-path-gate.mjs --base=origin/main
 echo "[pre-push] 全部通过"

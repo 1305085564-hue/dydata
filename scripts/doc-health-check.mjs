@@ -1,11 +1,22 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
+// 文档引用检查。三种用法：
+//   node scripts/doc-health-check.mjs                    基础扫描：链接、文件路径、表名、函数名（npm run doc:scan）
+//   node scripts/doc-health-check.mjs --deep             再加类型定义、函数声明与签名（npm run doc:scan-deep）
+//   node scripts/doc-health-check.mjs --links            快速模式：只查链接是否指向存在的文件，秒级，推送前门禁用
+//   加 --fix-links                                        先把「文件已挪位置」的链接自动改对；
+//   再加 --missing-as-text                                仓库里已找不到的原稿，把链接改成纯文字并注明「原稿已不在仓库」
+import { execFileSync } from "node:child_process";
+import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  brokenLinksInLine, describeFix, fileTarget, isSkippedDirectory, lazyFileIndex, linesOutsideFences,
+  markdownLinks, maskInlineCode, maskMarkdownTargets, rewriteLine,
+} from "./doc-links.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const INDEX = "docs/reference/设计与决策.md";
-const SKIP_DIRS = new Set([".git", "node_modules", ".next", "dist", "coverage", "output", ".turbo"]);
+const ENTRY_DOC = "AGENTS.md";
+const REFERENCE_DIR = "docs/reference";
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql", ".sh", ".py"]);
 const FILE_EXTENSIONS = new Set([".md", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql", ".sh", ".py", ".json", ".css", ".scss", ".html", ".yaml", ".yml", ".toml"]);
 const BUILTIN_FUNCTIONS = new Set(["btrim", "cache", "floor", "includes", "lower", "max", "min", "toISOString"]);
@@ -14,131 +25,30 @@ function relative(file, root = ROOT) {
   return path.relative(root, file).split(path.sep).join("/");
 }
 
-function linesOutsideFences(text) {
-  let fence = null;
-  return text.split(/\r?\n/).map((line, index) => {
-    const opening = line.match(/^\s*(```+|~~~+)/)?.[1];
-    const inside = fence !== null;
-    if (opening && (!fence || opening.startsWith(fence))) fence = fence ? null : opening.slice(0, 3);
-    return { line, number: index + 1, insideFence: inside || Boolean(opening) };
-  });
-}
-
-function maskInlineCode(line) {
-  return line.replace(/`+[^`]*`+/g, (match) => " ".repeat(match.length));
-}
-
-function markdownLinks(line) {
-  const links = [];
-  for (let cursor = 0; cursor < line.length;) {
-    const start = line.indexOf("](", cursor);
-    if (start < 0) break;
-    let index = start + 2;
-    let target = "";
-    if (line[index] === "<") {
-      const end = line.indexOf(">", index + 1);
-      if (end < 0 || line[end + 1] !== ")") {
-        cursor = index + 1;
-        continue;
-      }
-      target = line.slice(index + 1, end);
-      cursor = end + 2;
-    } else {
-      let depth = 1;
-      const targetStart = index;
-      while (index < line.length && depth > 0) {
-        if (line[index] === "\\") {
-          index += 2;
-          continue;
-        }
-        if (line[index] === "(") depth += 1;
-        else if (line[index] === ")") depth -= 1;
-        index += 1;
-      }
-      if (depth !== 0) {
-        cursor = targetStart;
-        continue;
-      }
-      target = line.slice(targetStart, index - 1).trim().split(/\s+/, 1)[0];
-      cursor = index;
-    }
-    if (target) links.push(target);
-  }
-  return links;
-}
-
-function maskMarkdownTargets(line) {
-  const masked = line.split("");
-  for (let cursor = 0; cursor < line.length;) {
-    const start = line.indexOf("](", cursor);
-    if (start < 0) break;
-    const targetStart = start + 2;
-    let end = targetStart;
-    if (line[end] === "<") {
-      const close = line.indexOf(">", end + 1);
-      if (close >= 0 && line[close + 1] === ")") end = close + 1;
-      else { cursor = targetStart; continue; }
-    } else {
-      let depth = 1;
-      while (end < line.length && depth > 0) {
-        if (line[end] === "\\") { end += 2; continue; }
-        if (line[end] === "(") depth += 1;
-        else if (line[end] === ")") depth -= 1;
-        end += 1;
-      }
-      if (depth !== 0) { cursor = targetStart; continue; }
-      end -= 1;
-    }
-    for (let index = targetStart; index < end; index += 1) masked[index] = " ";
-    cursor = end + 1;
-  }
-  return masked.join("");
-}
-
-function decodeTarget(target) {
-  try {
-    return decodeURIComponent(target);
-  } catch {
-    return target;
-  }
-}
-
-function fileTarget(raw) {
-  let target = decodeTarget(raw.trim());
-  if (!target || /^(?:https?:|mailto:|data:|javascript:|#)/i.test(target)) return null;
-  target = target.split("#", 1)[0].split("?", 1)[0];
-  target = target.replace(/:\d+(?:-\d+)?$/, "");
-  if (!target) return null;
-  return target.startsWith("/") ? target.slice(1) : target;
-}
-
+// 当前依据 = 规则入口 AGENTS.md + docs/reference 下全部 Markdown。
+// 2026-11-21 文档重构删掉了「设计与决策.md」里的文件清单，不能再靠清单圈范围，改为按目录圈。
 function extractCurrentBasis(root = ROOT) {
-  const indexPath = path.join(root, INDEX);
-  const rows = linesOutsideFences(readFileSync(indexPath, "utf8"));
-  let inSection = false;
-  const documents = new Set([indexPath]);
-  for (const row of rows) {
-    if (/^###\s+文件清单/.test(row.line)) {
-      inSection = true;
-      continue;
+  const documents = [];
+  const entry = path.join(root, ENTRY_DOC);
+  if (existsSync(entry)) documents.push(entry);
+  const visit = (directory) => {
+    if (!existsSync(directory)) return;
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) visit(absolute);
+      else if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) documents.push(absolute);
     }
-    if (inSection && /^##\s+/.test(row.line)) break;
-    if (!inSection || row.insideFence) continue;
-    for (const href of markdownLinks(maskInlineCode(row.line))) {
-      const target = fileTarget(href);
-      if (!target || !target.toLowerCase().endsWith(".md")) continue;
-      documents.add(path.resolve(path.dirname(indexPath), target));
-    }
-  }
-  return [...documents].sort();
+  };
+  visit(path.join(root, REFERENCE_DIR));
+  return documents.sort();
 }
 
 function walkSourceFiles(root) {
   const files = [];
   const visit = (directory) => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue;
       const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory() && isSkippedDirectory(root, absolute, entry.name)) continue;
       if (entry.isDirectory()) visit(absolute);
       else if (entry.isFile() && SOURCE_EXTENSIONS.has(path.extname(entry.name))
           && !/(?:\.test|\.spec)\.[^.]+$/i.test(entry.name)) files.push(absolute);
@@ -246,8 +156,8 @@ function walkRepoFiles(root) {
   const files = [];
   const visit = (directory) => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue;
       const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory() && isSkippedDirectory(root, absolute, entry.name)) continue;
       if (entry.isDirectory()) visit(absolute);
       else if (entry.isFile()) files.push(absolute);
     }
@@ -262,19 +172,75 @@ function addIssue(issues, doc, line, category, target, detail) {
   issues.push({ key, doc, line, category, target, detail });
 }
 
+// 被 .gitignore 明确忽略的路径是本地私有文件（如含明文密码的测试账号），本来就不会在仓库里。
+function isGitIgnored(root, relativePath) {
+  try {
+    execFileSync("git", ["check-ignore", "-q", "--no-index", relativePath], { cwd: root, stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function addLinkIssues(issues, { doc, docPath, number, line, root, getIndex }) {
+  for (const item of brokenLinksInLine({ line, docPath, root, getIndex })) {
+    addIssue(issues, doc, number, "内部链接", item.target, `指向的文件不存在 → ${describeFix(item)}`);
+  }
+}
+
+// 快速模式：只查链接，不读源码、不扫全仓文件，推送前门禁用。
+function scanLinks(root = ROOT) {
+  const docs = extractCurrentBasis(root);
+  const getIndex = lazyFileIndex(root);
+  const issues = [];
+  for (const docPath of docs) {
+    const doc = relative(docPath, root);
+    for (const { line, number, insideFence } of linesOutsideFences(readFileSync(docPath, "utf8"))) {
+      if (!insideFence) addLinkIssues(issues, { doc, docPath, number, line, root, getIndex });
+    }
+  }
+  return { docs: docs.length, issues };
+}
+
+// 自动修链接：文件已挪位置的改成新路径；原稿找不到的，加 missingAsText 才改成纯文字。
+function fixLinks(root = ROOT, { missingAsText = false } = {}) {
+  const getIndex = lazyFileIndex(root);
+  const totals = { files: 0, moved: 0, text: 0, manual: 0 };
+  for (const docPath of extractCurrentBasis(root)) {
+    const original = readFileSync(docPath, "utf8");
+    const raw = original.split("\n");
+    const rows = linesOutsideFences(original);
+    let changed = false;
+    rows.forEach(({ insideFence }, index) => {
+      if (insideFence) return;
+      const broken = brokenLinksInLine({ line: raw[index], docPath, root, getIndex });
+      if (broken.length === 0) return;
+      const result = rewriteLine(raw[index], broken, { missingAsText });
+      totals.moved += result.stats.moved;
+      totals.text += result.stats.text;
+      totals.manual += result.stats.manual;
+      if (result.line !== raw[index]) {
+        raw[index] = result.line;
+        changed = true;
+      }
+    });
+    if (changed) {
+      writeFileSync(docPath, raw.join("\n"));
+      totals.files += 1;
+    }
+  }
+  return totals;
+}
+
 function scan(root = ROOT, deep = false) {
-  const indexPath = path.join(root, INDEX);
   const docs = extractCurrentBasis(root);
   const code = collectCode(root);
   const repoFiles = walkRepoFiles(root);
   const repoFileSet = new Set(repoFiles.map((file) => path.resolve(file)));
   const repoBasenames = new Set(repoFiles.map((file) => path.basename(file)));
+  const getIndex = lazyFileIndex(root);
   const issues = [];
   for (const docPath of docs) {
-    if (!existsSync(docPath) || !statSync(docPath).isFile()) {
-      addIssue(issues, INDEX, 1, "当前依据", relative(docPath, root), "归口清单列出的文档不存在");
-      continue;
-    }
     const doc = relative(docPath, root);
     const rows = linesOutsideFences(readFileSync(docPath, "utf8"));
     let tableSection = false;
@@ -285,13 +251,7 @@ function scan(root = ROOT, deep = false) {
       else if (/^#{1,6}\s+/.test(line)) tableSection = false;
 
       if (!insideFence) {
-        const visibleLine = maskInlineCode(line);
-        for (const href of markdownLinks(visibleLine)) {
-          const target = fileTarget(href);
-          if (!target) continue;
-          const absolute = path.resolve(path.dirname(docPath), target);
-          if (!existsSync(absolute)) addIssue(issues, doc, number, "内部链接", target, "指向的文件不存在");
-        }
+        addLinkIssues(issues, { doc, docPath, number, line, root, getIndex });
 
         const filePaths = new Set(findInlineCode(line).flatMap(pathCandidates));
         const plainText = maskInlineCode(maskMarkdownTargets(line));
@@ -300,14 +260,14 @@ function scan(root = ROOT, deep = false) {
         }
         for (const candidate of filePaths) {
           const target = fileTarget(candidate);
-          if (!target) continue;
+          if (!target || /YYYY|MM-DD/.test(target)) continue; // 日期占位符（如 日志/YYYY-MM-DD.md）不是真路径
           const absolute = path.resolve(root, target);
           const suffix = `/${target.replace(/^\.\//, "")}`;
           const exists = target.includes("/")
             ? repoFileSet.has(absolute) || existsSync(absolute) || [...repoFileSet].some((file) => file.endsWith(suffix))
             : repoBasenames.has(target);
           const explicitlyHistorical = /(?:已删除|已下线|已退役|不存在|查无此项)/.test(line);
-          if (!exists && !explicitlyHistorical) addIssue(issues, doc, number, "文件路径", candidate, "仓库中找不到该路径");
+          if (!exists && !explicitlyHistorical && !isGitIgnored(root, target)) addIssue(issues, doc, number, "文件路径", candidate, "仓库中找不到该路径");
         }
       }
 
@@ -367,11 +327,12 @@ function scan(root = ROOT, deep = false) {
       }
     }
   }
-  return { docs: docs.length, issues, indexPath };
+  return { docs: docs.length, issues };
 }
 
-function printResult(result, deep) {
-  if (deep) console.log(`深度扫描（${result.docs} 份当前依据）：函数声明、文档显式参数签名与类型定义（可能误报：方法、生成代码和历史迁移无法仅靠静态文本完全判定）`);
+function printResult(result, mode) {
+  if (mode === "links") console.log(`快速链接检查（${result.docs} 份当前依据）：只核对链接指向的文件是否存在`);
+  else if (mode === "deep") console.log(`深度扫描（${result.docs} 份当前依据）：函数声明、文档显式参数签名与类型定义（可能误报：方法、生成代码和历史迁移无法仅靠静态文本完全判定）`);
   else console.log(`基础扫描（${result.docs} 份当前依据）：链接、文件路径、表名和函数名（可能误报：历史别名或生成文件）`);
   if (result.issues.length === 0) {
     console.log("✅ 文档引用检查通过");
@@ -381,24 +342,46 @@ function printResult(result, deep) {
   for (const issue of result.issues) {
     console.log(`- ${issue.doc}:${issue.line} ${issue.category}「${issue.target}」：${issue.detail}`);
   }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const deep = process.argv.includes("--deep");
-  const unknownArgs = process.argv.slice(2).filter((arg) => arg !== "--deep");
-  if (unknownArgs.length) {
-    console.error(`未知参数：${unknownArgs.join(" ")}；可用参数：--deep`);
-    process.exitCode = 2;
-  } else {
-    try {
-      const result = scan(ROOT, deep);
-      printResult(result, deep);
-      if (result.issues.length) process.exitCode = 1;
-    } catch (error) {
-      console.error(`❌ 文档引用检查无法完成：${error.message}`);
-      process.exitCode = 2;
-    }
+  if (result.issues.some((issue) => issue.category === "内部链接")) {
+    console.log("修法：逐条按上面的提示改；文件挪位置的可一键修：node scripts/doc-health-check.mjs --links --fix-links（原稿已删的再加 --missing-as-text），改完看 git diff 再提交。");
   }
 }
 
-export { extractCurrentBasis, fileTarget, markdownLinks, pathCandidates, scan };
+const FLAGS = ["--deep", "--links", "--fix-links", "--missing-as-text"];
+
+function main(args) {
+  const unknownArgs = args.filter((arg) => !FLAGS.includes(arg));
+  if (unknownArgs.length) {
+    console.error(`未知参数：${unknownArgs.join(" ")}；可用参数：${FLAGS.join(" ")}`);
+    return 2;
+  }
+  const deep = args.includes("--deep");
+  const linksOnly = args.includes("--links");
+  if (deep && linksOnly) {
+    console.error("--deep 和 --links 不能同时用：--links 是只查链接的快速模式");
+    return 2;
+  }
+  if (args.includes("--missing-as-text") && !args.includes("--fix-links")) {
+    console.error("--missing-as-text 要和 --fix-links 一起用");
+    return 2;
+  }
+  try {
+    if (args.includes("--fix-links")) {
+      const fixed = fixLinks(ROOT, { missingAsText: args.includes("--missing-as-text") });
+      console.log(`自动修链接：改成新路径 ${fixed.moved} 条，改成纯文字 ${fixed.text} 条，仍需人工 ${fixed.manual} 条（涉及 ${fixed.files} 份文档）`);
+    }
+    const mode = linksOnly ? "links" : deep ? "deep" : "base";
+    const result = linksOnly ? scanLinks(ROOT) : scan(ROOT, deep);
+    printResult(result, mode);
+    return result.issues.length ? 1 : 0;
+  } catch (error) {
+    console.error(`❌ 文档引用检查无法完成：${error.message}`);
+    return 2;
+  }
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = main(process.argv.slice(2));
+}
+
+export { extractCurrentBasis, fileTarget, fixLinks, markdownLinks, pathCandidates, scan, scanLinks };
