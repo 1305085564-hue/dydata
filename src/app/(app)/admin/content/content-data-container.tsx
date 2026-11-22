@@ -7,8 +7,6 @@ import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
-import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
-import type { FirstScreenObservation } from "@/lib/admin-first-screen-observability";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
 import { ContentPageClient } from "./content-page-client";
@@ -24,13 +22,7 @@ interface ContentDataContainerProps {
   teams: TeamOption[];
   permissionInfo: UserPermissionInfo;
   directVideoId: string | null;
-  initialAuthMs: number;
-  totalStartMs: number;
   query: Omit<ContentListQuery, "perspective" | "teamId">;
-}
-
-function nowMs() {
-  return performance.now();
 }
 
 type ContentInitialDataArgs = Parameters<typeof loadAdminContentFirstScreenData>[0];
@@ -53,16 +45,6 @@ export async function loadAdminContentInitialData(
   });
 }
 
-export function buildAdminContentFirstScreenObservation(
-  input: Omit<FirstScreenObservation, "route" | "statusCode">,
-): FirstScreenObservation {
-  return {
-    ...input,
-    route: "/admin/content",
-    statusCode: 200,
-  };
-}
-
 export async function ContentDataContainer({
   view,
   requestedPerspective,
@@ -71,8 +53,6 @@ export async function ContentDataContainer({
   teams,
   permissionInfo,
   directVideoId,
-  initialAuthMs,
-  totalStartMs,
   query,
 }: ContentDataContainerProps) {
   const scope = resolveAdminDataPerspective({
@@ -87,18 +67,15 @@ export async function ContentDataContainer({
     fallbackTeamId: permissionInfo.teamId,
   });
 
-  const contextStart = nowMs();
   const scopedPermissionContext = await buildPermissionContextFromPermissionInfo(permissionInfo, {
     perspective: scope.perspective,
     teamId: scope.teamId,
   });
-  const contextMs = nowMs() - contextStart;
 
   if (!scopedPermissionContext) {
     return null; // Next.js redirects are handled in page.tsx
   }
 
-  const dataStart = nowMs();
   const readOnlyScope = await resolveVideoReviewReadOnlyScope(
     createAdminClient(),
     scopedPermissionContext.scope,
@@ -122,24 +99,6 @@ export async function ContentDataContainer({
       : Promise.resolve(null),
   ]);
   if (directVideoId && !directVideoDetail) notFound();
-  const dataMs = nowMs() - dataStart;
-  const totalMs = nowMs() - totalStartMs;
-
-  queueFirstScreenObservation(buildAdminContentFirstScreenObservation({
-    metrics: {
-      auth: initialAuthMs,
-      context: contextMs,
-      data: dataMs,
-      total: totalMs,
-    },
-    actorUserId: scopedPermissionContext.permissionInfo.userId,
-    scopeKind: readOnlyScope.kind,
-    metadata: {
-      view,
-      perspective: scope.perspective,
-      teamId: scope.teamId,
-    },
-  }));
 
   return (
     <ContentPageClient

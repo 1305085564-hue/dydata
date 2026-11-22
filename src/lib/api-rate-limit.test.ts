@@ -45,11 +45,11 @@ test("AI 成本接口按端点收紧限制", () => {
 
 test("cron / 外部回调路径豁免限流（它们各自有密钥鉴权）", () => {
   assert.equal(isApiRateLimitExempt("/api/notifications/cleanup"), true);
-  assert.equal(isApiRateLimitExempt("/api/admin/first-screen-monitor"), true);
   assert.equal(isApiRateLimitExempt("/api/feishu/event"), true);
   assert.equal(isApiRateLimitExempt("/api/health"), true);
-  // 已经下线的旧保活路径不再在豁免列表里
+  // 已经下线的旧保活路径和页面速度监控不再在豁免列表里
   assert.equal(isApiRateLimitExempt("/api/supabase-keepalive"), false);
+  assert.equal(isApiRateLimitExempt("/api/admin/first-screen-monitor"), false);
   // AI 成本接口不豁免
   assert.equal(isApiRateLimitExempt("/api/ocr-screenshot"), false);
   assert.equal(isApiRateLimitExempt("/api/video-submit"), false);

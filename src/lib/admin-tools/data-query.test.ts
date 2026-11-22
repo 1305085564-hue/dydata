@@ -79,12 +79,13 @@ test("异常查询即使收到跨团队行也只返回当前范围", async () =>
 });
 
 test("任务状态查询在缺服务端配置时明确失败", async () => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const oldKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  delete process.env.CLOUDBASE_SERVICE_API_KEY;
   try { await assert.rejects(() => getTaskStatus({ taskType: "" }), /Missing/); }
-  finally { process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl; process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey; }
+  finally {
+    if (oldKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldKey;
+  }
 });
 
 test("异常数据查询失败时返回 success:false，不伪装成没有异常", async () => {

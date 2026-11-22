@@ -14,64 +14,38 @@ type FakeRow = Record<string, unknown>;
 function createWritingFake(db: Record<string, FakeRow[]>) {
   function filterChain(rows: FakeRow[]) {
     const query: Record<string, unknown> = {
-      eq(col: string, val: unknown) {
-        return filterChain(rows.filter((row) => row[col] === val));
-      },
-      in(col: string, vals: unknown[]) {
-        return filterChain(rows.filter((row) => vals.includes(row[col])));
-      },
+      eq: (col: string, val: unknown) => filterChain(rows.filter((row) => row[col] === val)),
+      in: (col: string, vals: unknown[]) => filterChain(rows.filter((row) => vals.includes(row[col]))),
       maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
       single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
-      select() {
-        return {
-          maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
-          single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
-        };
-      },
-      then(resolve: (value: { data: FakeRow[]; error: null }) => unknown) {
-        return Promise.resolve({ data: rows, error: null }).then(resolve);
-      },
+      select: () => ({
+        maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
+        single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
+      }),
+      then: (resolve: (value: { data: FakeRow[]; error: null }) => unknown) => Promise.resolve({ data: rows, error: null }).then(resolve),
     };
     return query;
   }
-
   return {
     client: {
       from(table: string) {
         const rows = db[table] ?? (db[table] = []);
         return {
-          select() {
-            return filterChain([...rows]);
-          },
-          insert(payload: FakeRow) {
+          select: () => filterChain([...rows]),
+          insert: (payload: FakeRow) => {
             const inserted = { id: "claim-new", ...payload };
-            return {
-              select() {
-                return {
-                  single: async () => {
-                    rows.push(inserted);
-                    return { data: inserted, error: null };
-                  },
-                };
-              },
-            };
+            return { select: () => ({ single: async () => { rows.push(inserted); return { data: inserted, error: null }; } }) };
           },
           update(patch: FakeRow) {
-            function updateChain(current: FakeRow[]): Record<string, unknown> {
-              return {
-                eq(col: string, val: unknown) {
-                  return updateChain(current.filter((row) => row[col] === val));
+            const updateChain = (current: FakeRow[]): Record<string, unknown> => ({
+              eq: (col: string, val: unknown) => updateChain(current.filter((row) => row[col] === val)),
+              select: () => ({
+                maybeSingle: async () => {
+                  if (current[0]) Object.assign(current[0], patch);
+                  return { data: current[0] ?? null, error: null };
                 },
-                select() {
-                  return {
-                    maybeSingle: async () => {
-                      if (current[0]) Object.assign(current[0], patch);
-                      return { data: current[0] ?? null, error: null };
-                    },
-                  };
-                },
-              };
-            }
+              }),
+            });
             return updateChain([...rows]);
           },
         };
@@ -397,16 +371,7 @@ function createFakeSupabase(results: Record<string, Array<{ data?: unknown; erro
 }
 
 function createScope(kind: DataAccessScope["kind"] = "team", visibleUserIds = ["user-1"]) {
-  return {
-    userId: "user-1",
-    role: "member",
-    permissions: {},
-    accessLevel: 1,
-    teamId: null,
-    groupId: null,
-    kind,
-    visibleUserIds,
-  } as DataAccessScope;
+  return { userId: "user-1", role: "member", permissions: {}, accessLevel: 1, teamId: null, groupId: null, kind, visibleUserIds, activeVisibleUserIds: visibleUserIds } as DataAccessScope;
 }
 
 test("团队动态的最近成片明确使用视频 topic_id 关系，避免 Supabase 关系歧义", async () => {
@@ -819,16 +784,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
   const result = await loadTopicPool(
     fake.client as never,
     "user-1",
-    {
-      userId: "user-1",
-      role: "owner",
-      permissions: {},
-      accessLevel: 4,
-      teamId: null,
-      groupId: null,
-      kind: "team",
-      visibleUserIds: ["user-1"],
-    } as DataAccessScope,
+    { userId: "user-1", role: "owner", permissions: {}, accessLevel: 4, teamId: null, groupId: null, kind: "team", visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"] } as DataAccessScope,
     { view: "my_claims", timeRange: "3d", page: 1, pageSize: 50, topicIds: [] },
   );
 

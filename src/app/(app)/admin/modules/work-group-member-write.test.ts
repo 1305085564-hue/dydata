@@ -87,7 +87,6 @@ function groupRow(id: string, kind = "writer", teamId = TEAM_ID) {
 }
 
 function setup(options: {
-  backend?: "cloudbase" | "supabase";
   context?: CurrentPermissionContext | null;
   groups?: Record<string, unknown>;
   profiles?: Record<string, unknown>;
@@ -96,7 +95,6 @@ function setup(options: {
   const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
   let authenticatedClientCount = 0;
   let adminReadCount = 0;
-  let supabaseFallbackCount = 0;
   const admin = readClient({
     groups: { "new-peer": groupRow("new-peer"), "new-operator": groupRow("new-operator", "operator"), "old-peer": groupRow("old-peer"), ...options.groups },
     profiles: { [MEMBER_ID]: memberRow(), ...options.profiles },
@@ -111,7 +109,6 @@ function setup(options: {
     },
   };
   const deps: MemberWorkGroupWriteDeps = {
-    backend: options.backend ?? "cloudbase",
     resolvePermissionContext: async () => options.context === undefined ? permissionContext() : options.context,
     createAdminClient: () => {
       adminReadCount += 1;
@@ -121,14 +118,6 @@ function setup(options: {
       authenticatedClientCount += 1;
       return authenticated as never;
     },
-    assignSupabase: async () => {
-      supabaseFallbackCount += 1;
-      return { ok: true, value: { groupId: "new-peer", userId: MEMBER_ID, changed: true, replacedGroupName: null } };
-    },
-    unassignSupabase: async () => {
-      supabaseFallbackCount += 1;
-      return { ok: true, value: { groupId: "old-peer", userId: MEMBER_ID, changed: true } };
-    },
   };
 
   return {
@@ -136,7 +125,6 @@ function setup(options: {
     rpcCalls,
     get authenticatedClientCount() { return authenticatedClientCount; },
     get adminReadCount() { return adminReadCount; },
-    get supabaseFallbackCount() { return supabaseFallbackCount; },
   };
 }
 
@@ -154,7 +142,6 @@ test("CloudBase member-management assign validates trusted rows and invokes auth
   }]);
   assert.equal(fixture.authenticatedClientCount, 1);
   assert.equal(fixture.adminReadCount, 1);
-  assert.equal(fixture.supabaseFallbackCount, 0);
 });
 
 test("CloudBase operator assignment uses operator slot and allows company owner", async () => {
@@ -253,27 +240,7 @@ test("employees, inactive targets, role targets, and cross-company targets never
   }
 });
 
-test("Supabase keeps the existing assignment path and does not create the JWT RPC client", async () => {
-  const fixture = setup({ backend: "supabase" });
-  const result = await assignMemberWorkGroupForManagement({ groupId: "new-peer", userId: MEMBER_ID }, fixture.deps);
-
-  assert.equal(result.ok, true);
-  assert.equal(fixture.supabaseFallbackCount, 1);
-  assert.equal(fixture.authenticatedClientCount, 0);
-  assert.equal(fixture.rpcCalls.length, 0);
-});
-
-test("Supabase keeps the existing unassignment path", async () => {
-  const fixture = setup({ backend: "supabase" });
-  const result = await unassignMemberWorkGroupForManagement({ groupId: "old-peer", userId: MEMBER_ID }, fixture.deps);
-
-  assert.equal(result.ok, true);
-  assert.equal(fixture.supabaseFallbackCount, 1);
-  assert.equal(fixture.authenticatedClientCount, 0);
-});
-
 test("member actions use the true-cookie client for CloudBase RPC and are wired only from member management", () => {
-  assert.match(actionSource, /isCloudBaseBackend\(\) \? "cloudbase" : "supabase"/);
   assert.match(actionSource, /createAuthenticatedClient: async \(\) => \(await createClient\(\)\)/);
   assert.match(actionSource, /assignMemberWorkGroupForManagement\(input, deps\)/);
   assert.match(actionSource, /unassignMemberWorkGroupForManagement\(input, deps\)/);
@@ -287,10 +254,10 @@ test("CloudBase collaboration actions reject all assign paths while group struct
     "unassignWorkGroupMemberAction",
     "assignWorkGroupMembersAction",
   ]) {
-    assert.match(actionBlock(collaborationActionSource, name), /cloudBaseMemberManagementOnly\(\)/);
+    assert.match(actionBlock(collaborationActionSource, name), /MEMBER_MANAGEMENT_ONLY/);
   }
   for (const name of ["createWorkGroupAction", "renameWorkGroupAction", "deleteWorkGroupAction"]) {
-    assert.doesNotMatch(actionBlock(collaborationActionSource, name), /cloudBaseMemberManagementOnly\(\)/);
+    assert.doesNotMatch(actionBlock(collaborationActionSource, name), /MEMBER_MANAGEMENT_ONLY/);
   }
   assert.match(collaborationActionSource, /message: "请在成员管理中调整小队"/);
 });

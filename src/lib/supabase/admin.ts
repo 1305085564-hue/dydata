@@ -1,46 +1,28 @@
-import { createClient } from "@supabase/supabase-js";
+// 实际连接腾讯云 CloudBase，目录名是历史遗留。
 import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
-import { cloudBaseEnvironmentId, isCloudBaseBackend } from "@/lib/cloudbase/core";
+import { cloudBaseEnvironmentId } from "@/lib/cloudbase/core";
 import { createCloudBaseUserManagement } from "@/lib/cloudbase/management";
-import { guardAdminRpc } from "@/lib/admin-rpc-guard";
 
 export function createAdminClient() {
-  if (isCloudBaseBackend()) {
-    if (!process.env.CLOUDBASE_SERVICE_API_KEY) {
-      throw new Error("Missing CLOUDBASE_SERVICE_API_KEY");
-    }
-    const client = createCloudBaseDataClient({ role: "admin" });
-    const authAdmin = client.auth.admin as unknown as {
-      getUserById: (subject: string) => Promise<{ data: { user: unknown | null }; error: unknown | null }>;
-      updateUserById: (subject: string, attributes: unknown) => Promise<unknown>;
-    };
-    const management = createCloudBaseUserManagement({
-      async writeUserStatus(subject, status) {
-        return client.rpc("cloudbase_set_auth_user_status", {
-          p_subject: subject, p_status: status, p_project: cloudBaseEnvironmentId(),
-        });
-      },
-      async getUserById(subject) {
-        const { data, error } = await authAdmin.getUserById(subject);
-        return { user: data.user, error };
-      },
-    });
-    authAdmin.updateUserById = management.updateUserById;
-    return client;
+  if (!process.env.CLOUDBASE_SERVICE_API_KEY) {
+    throw new Error("Missing CLOUDBASE_SERVICE_API_KEY");
   }
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-
-  return guardAdminRpc(createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+  const client = createCloudBaseDataClient({ role: "admin" });
+  const authAdmin = client.auth.admin as unknown as {
+    getUserById: (subject: string) => Promise<{ data: { user: unknown | null }; error: unknown | null }>;
+    updateUserById: (subject: string, attributes: unknown) => Promise<unknown>;
+  };
+  const management = createCloudBaseUserManagement({
+    async writeUserStatus(subject, status) {
+      return client.rpc("cloudbase_set_auth_user_status", {
+        p_subject: subject, p_status: status, p_project: cloudBaseEnvironmentId(),
+      });
     },
-  }), "supabase");
+    async getUserById(subject) {
+      const { data, error } = await authAdmin.getUserById(subject);
+      return { user: data.user, error };
+    },
+  });
+  authAdmin.updateUserById = management.updateUserById;
+  return client;
 }

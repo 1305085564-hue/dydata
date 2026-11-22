@@ -112,8 +112,7 @@ export async function handleTopicsLibraryToggle(
   if (targetError) return mutationResponse({ error: "查询选题失败" }, 500, observation, { businessSucceeded: false });
   if (!target) return mutationResponse({ error: "选题不存在" }, 404, observation, { businessSucceeded: false });
   const creatorId = (target as { created_by: string }).created_by;
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  if (!activeVisibleUserIds.includes(creatorId)) {
+  if (!scope.activeVisibleUserIds.includes(creatorId)) {
     return mutationResponse({ error: "无权管理当前范围外的选题" }, 403, observation, { businessSucceeded: false });
   }
 

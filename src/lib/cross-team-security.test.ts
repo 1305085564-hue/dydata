@@ -257,7 +257,7 @@ test("buildSubmissionScreenshotFileResponse: 团队 A 主管试图读取团队 B
   const response = await buildSubmissionScreenshotFileResponse(request, {
     getUser: async () => ({ id: MANAGER_A_ID }),
     getVisibleUserIds: async () => [MANAGER_A_ID, MEMBER_A1_ID],
-    createSignedUrl: async () => ({ signedUrl: "https://example.com/signed", error: null }),
+    readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false }),
   });
 
   assert.equal(response.status, 403);
@@ -270,11 +270,11 @@ test("buildSubmissionScreenshotFileResponse: 团队 A 主管读取本团队组�
   const response = await buildSubmissionScreenshotFileResponse(request, {
     getUser: async () => ({ id: MANAGER_A_ID }),
     getVisibleUserIds: async () => [MANAGER_A_ID, MEMBER_A1_ID],
-    createSignedUrl: async () => ({ signedUrl: "https://example.com/signed.png", error: null }),
+    readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false }),
   });
 
-  assert.equal(response.status, 307);
-  assert.equal(response.headers.get("Location"), "https://example.com/signed.png");
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-screenshot-backend"), "cos");
 });
 
 // 5. Permission Request Notifications Isolation

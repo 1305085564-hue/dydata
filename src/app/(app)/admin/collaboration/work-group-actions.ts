@@ -4,21 +4,16 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 import {
-  assignWorkGroupMember,
-  assignWorkGroupMembers,
   createWorkGroup,
   deleteWorkGroup,
   renameWorkGroup,
-  unassignWorkGroupMember,
 } from "@/lib/work-groups";
 
 import { runWorkGroupAction, WORK_GROUPS_REVALIDATE_PATH, type WorkGroupWriteDeps } from "./work-group-write";
 
 /**
- * 协作管理的小队结构写入口。CloudBase 的成员归属改动统一由成员管理 RPC 承接；
- * Supabase 回退仍使用原有门禁、公司范围与审计实现。
+ * 协作管理的小队结构写入口。成员归属改动统一由成员管理 RPC 承接。
  */
 
 const deps: WorkGroupWriteDeps = {
@@ -27,11 +22,11 @@ const deps: WorkGroupWriteDeps = {
   revalidate: () => revalidatePath(WORK_GROUPS_REVALIDATE_PATH),
 };
 
-function cloudBaseMemberManagementOnly() {
-  return isCloudBaseBackend()
-    ? { ok: false as const, status: 403 as const, message: "请在成员管理中调整小队" }
-    : null;
-}
+const MEMBER_MANAGEMENT_ONLY = {
+  ok: false as const,
+  status: 403 as const,
+  message: "请在成员管理中调整小队",
+};
 
 export async function createWorkGroupAction(input: { name: string; kind: string }) {
   return runWorkGroupAction(
@@ -77,58 +72,17 @@ export async function deleteWorkGroupAction(input: { groupId: string }) {
   );
 }
 
-export async function assignWorkGroupMemberAction(input: { groupId: string; userId: string }) {
-  const blocked = cloudBaseMemberManagementOnly();
-  if (blocked) return blocked;
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  return runWorkGroupAction(
-    {
-      run: (context) =>
-        assignWorkGroupMember(context.supabase, {
-          actorId: context.actorId,
-          actorTeamId: context.teamId,
-          groupId: input.groupId,
-          userId: input.userId,
-        }),
-    },
-    deps,
-  );
+export async function assignWorkGroupMemberAction(_input: { groupId: string; userId: string }) {
+  void _input;
+  return MEMBER_MANAGEMENT_ONLY;
 }
 
-export async function unassignWorkGroupMemberAction(input: { groupId: string; userId: string }) {
-  const blocked = cloudBaseMemberManagementOnly();
-  if (blocked) return blocked;
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  return runWorkGroupAction(
-    {
-      run: (context) =>
-        unassignWorkGroupMember(context.supabase, {
-          actorId: context.actorId,
-          actorTeamId: context.teamId,
-          groupId: input.groupId,
-          userId: input.userId,
-        }),
-    },
-    deps,
-  );
+export async function unassignWorkGroupMemberAction(_input: { groupId: string; userId: string }) {
+  void _input;
+  return MEMBER_MANAGEMENT_ONLY;
 }
 
-export async function assignWorkGroupMembersAction(input: { groupId: string; userIds: string[] }) {
-  const blocked = cloudBaseMemberManagementOnly();
-  if (blocked) return blocked;
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  return runWorkGroupAction(
-    {
-      run: (context) => assignWorkGroupMembers(context.supabase, {
-        actorId: context.actorId,
-        actorTeamId: context.teamId,
-        groupId: input.groupId,
-        userIds: input.userIds,
-      }),
-    },
-    deps,
-  );
+export async function assignWorkGroupMembersAction(_input: { groupId: string; userIds: string[] }) {
+  void _input;
+  return MEMBER_MANAGEMENT_ONLY;
 }

@@ -255,8 +255,7 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: "已归档账号不支持生成成员建议" }, { status: 400 });
   }
 
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  if (!activeVisibleUserIds.includes(member.id)) {
+  if (!scope.activeVisibleUserIds.includes(member.id)) {
     return NextResponse.json({ error: "无权查看该成员" }, { status: 403 });
   }
 

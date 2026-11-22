@@ -415,7 +415,7 @@ test("内容分页同时读取作品和成员选项", async () => {
   };
   const pending = loadAdminContentListData({
     supabase: { rpc: () => rpc, from: () => options } as never,
-    scope: { userId: "user-1", kind: "self", visibleUserIds: ["user-1"] } as never,
+    scope: { userId: "user-1", kind: "self", visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"] } as never,
     query: { ...parseContentListQuery(new URLSearchParams()), perspective: "company", teamId: null },
   });
   await new Promise((resolve) => setImmediate(resolve));

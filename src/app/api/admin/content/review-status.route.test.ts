@@ -178,6 +178,7 @@ test("撤销复盘时清空复盘时间与复盘人", async () => {
         teamId: "team-1",
         kind: "team" as const,
         visibleUserIds: [OWNER_ID],
+        activeVisibleUserIds: [OWNER_ID],
       },
     }),
     createAdminClient: () => adminClient as never,

@@ -112,6 +112,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
         groupId: null,
         kind: "team",
         visibleUserIds: ["member-1"],
+        activeVisibleUserIds: ["member-1"],
       }),
       getUserInfo: async () => ({
         success: true,
@@ -196,6 +197,7 @@ test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", asy
         groupId: null,
         kind: "team",
         visibleUserIds: ["member-1"],
+        activeVisibleUserIds: ["member-1"],
       }),
       getUserInfo: async () => ({
         success: true,

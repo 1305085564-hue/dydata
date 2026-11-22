@@ -22,7 +22,7 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor,
   supabase: SupabaseClient;
   evaluationStandards?: EvaluationStandards;
   query: ContentListQuery;
-  scope: { visibleUserIds: string[]; activeVisibleUserIds?: string[] };
+  scope: { visibleUserIds: string[]; activeVisibleUserIds: string[] };
   cursor: ContentListCursor | null;
 }) {
   const rpcStart = performance.now();

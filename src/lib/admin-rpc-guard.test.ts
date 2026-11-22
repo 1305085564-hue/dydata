@@ -17,27 +17,21 @@ const IDENTITY_RPCS = [
   "count_remind_logs_for_user",
 ];
 
-for (const backend of ["supabase", "cloudbase"] as const) {
-  for (const rpc of IDENTITY_RPCS) {
-    test(`${backend} 管理员连接立即拦截依赖本人身份的 ${rpc} 并留日志`, (t) => {
-      const previous = { ...process.env };
-      t.after(() => { process.env = previous; });
-      process.env.DYDATA_BACKEND = backend;
-      process.env.NEXT_PUBLIC_DYDATA_BACKEND = backend;
-      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
-      process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
-      process.env.CLOUDBASE_ENV_ID = "guard-test";
-      process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
-      const logs = t.mock.method(console, "error", () => {});
-      const client = createAdminClient();
-      assert.throws(() => client.rpc(rpc, {}), /必须使用本人身份连接/);
-      assert.equal(logs.mock.calls.length, 1);
-      const entry = JSON.parse(String(logs.mock.calls[0].arguments[0]));
-      assert.equal(entry.detail.rpc, rpc);
-      assert.equal(entry.detail.backend, backend);
-      assert.ok(entry.requestId);
-    });
-  }
+for (const rpc of IDENTITY_RPCS) {
+  test(`cloudbase 管理员连接立即拦截依赖本人身份的 ${rpc} 并留日志`, (t) => {
+    const previous = { ...process.env };
+    t.after(() => { process.env = previous; });
+    process.env.CLOUDBASE_ENV_ID = "guard-test";
+    process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
+    const logs = t.mock.method(console, "error", () => {});
+    const client = createAdminClient();
+    assert.throws(() => client.rpc(rpc, {}), /必须使用本人身份连接/);
+    assert.equal(logs.mock.calls.length, 1);
+    const entry = JSON.parse(String(logs.mock.calls[0].arguments[0]));
+    assert.equal(entry.detail.rpc, rpc);
+    assert.equal(entry.detail.backend, "cloudbase");
+    assert.ok(entry.requestId);
+  });
 }
 
 for (const rpc of [
@@ -45,34 +39,27 @@ for (const rpc of [
   "public.handle_fulfillment_appeal",
   " PUBLIC.HANDLE_FULFILLMENT_APPEAL ",
 ]) {
-  for (const backend of ["supabase", "cloudbase"] as const) {
-    test(`${backend} 管理员连接规范化并拦截 ${rpc}`, (t) => {
-      const previous = { ...process.env };
-      t.after(() => { process.env = previous; });
-      process.env.DYDATA_BACKEND = backend;
-      process.env.NEXT_PUBLIC_DYDATA_BACKEND = backend;
-      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
-      process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
-      process.env.CLOUDBASE_ENV_ID = "guard-test";
-      process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
-      const logs = t.mock.method(console, "error", () => {});
-      const client = createAdminClient();
-      assert.throws(() => client.rpc(rpc, {}), /必须使用本人身份连接/);
-      assert.equal(logs.mock.calls.length, 1);
-      const entry = JSON.parse(String(logs.mock.calls[0].arguments[0]));
-      assert.equal(entry.detail.rpc, "handle_fulfillment_appeal");
-      assert.equal(entry.detail.backend, backend);
-      assert.ok(entry.requestId);
-    });
-  }
+  test(`cloudbase 管理员连接规范化并拦截 ${rpc}`, (t) => {
+    const previous = { ...process.env };
+    t.after(() => { process.env = previous; });
+    process.env.CLOUDBASE_ENV_ID = "guard-test";
+    process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
+    const logs = t.mock.method(console, "error", () => {});
+    const client = createAdminClient();
+    assert.throws(() => client.rpc(rpc, {}), /必须使用本人身份连接/);
+    assert.equal(logs.mock.calls.length, 1);
+    const entry = JSON.parse(String(logs.mock.calls[0].arguments[0]));
+    assert.equal(entry.detail.rpc, "handle_fulfillment_appeal");
+    assert.equal(entry.detail.backend, "cloudbase");
+    assert.ok(entry.requestId);
+  });
 }
 
-test("Supabase 管理员 schema 连接仍拦截本人身份函数并留日志", (t) => {
+test("CloudBase 管理员 schema 连接仍拦截本人身份函数并留日志", (t) => {
   const previous = { ...process.env };
   t.after(() => { process.env = previous; });
-  process.env.DYDATA_BACKEND = "supabase";
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
+  process.env.CLOUDBASE_ENV_ID = "guard-test";
+  process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
   const logs = t.mock.method(console, "error", () => {});
   const scoped = createAdminClient().schema("public");
   for (const rpc of [
@@ -89,28 +76,7 @@ test("Supabase 管理员 schema 连接仍拦截本人身份函数并留日志", 
     "apply_exemption_grant_atomically",
     "clear_exemption_grant_atomically",
   ]);
-  assert.ok(entries.every((entry) => entry.detail.backend === "supabase" && entry.requestId));
-});
-
-test("Supabase 管理员 schema 连接的普通 RPC 保留 schema 与请求参数", async (t) => {
-  const previous = { ...process.env };
-  t.after(() => { process.env = previous; });
-  process.env.DYDATA_BACKEND = "supabase";
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
-  let requests = 0;
-  t.mock.method(globalThis, "fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
-    const request = new Request(input, init);
-    assert.equal(request.headers.get("content-profile"), "public");
-    assert.equal(request.headers.get("authorization"), "Bearer guard-test-service-role");
-    assert.deepEqual(await request.json(), { p_marker_id: "trusted-actor" });
-    requests += 1;
-    return Response.json({ ok: true });
-  });
-  const result = await createAdminClient().schema("public").rpc("mark_fulfillment_status", { p_marker_id: "trusted-actor" });
-  assert.equal(result.error, null);
-  assert.deepEqual(result.data, { ok: true });
-  assert.equal(requests, 1);
+  assert.ok(entries.every((entry) => entry.detail.backend === "cloudbase" && entry.requestId));
 });
 
 test("CloudBase 直接创建的管理员连接也不能绕过身份拦截", () => {
@@ -132,30 +98,24 @@ test("本人身份连接仍可调用身份函数，普通管理函数保持可�
   assert.equal(requests, 2);
 });
 
-for (const backend of ["supabase", "cloudbase"] as const) {
-  test(`${backend} 仅服务端可执行的履约函数保留管理员连接与可信操作者`, async (t) => {
-    const previous = { ...process.env };
-    t.after(() => { process.env = previous; });
-    process.env.DYDATA_BACKEND = backend;
-    process.env.NEXT_PUBLIC_DYDATA_BACKEND = backend;
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
-    process.env.CLOUDBASE_ENV_ID = "guard-test";
-    process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
-    const called: string[] = [];
-    t.mock.method(globalThis, "fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
-      const request = new Request(input, init);
-      assert.equal(request.method, "POST");
-      assert.equal(request.headers.get("authorization"), `Bearer ${backend === "cloudbase" ? "guard-test-service-key" : "guard-test-service-role"}`);
-      assert.equal((await request.json()).p_marker_id, "trusted-actor");
-      called.push(new URL(request.url).pathname.split("/").at(-1)!);
-      return Response.json({ ok: true });
-    });
-    const client = createAdminClient();
-    const names = ["mark_fulfillment_status", "mark_fulfillment_status_batch", "remove_fulfillment_mark"];
-    for (const name of names) {
-      assert.equal((await client.rpc(name, { p_marker_id: "trusted-actor" })).error, null);
-    }
-    assert.deepEqual(called, names);
+test("cloudbase 仅服务端可执行的履约函数保留管理员连接与可信操作者", async (t) => {
+  const previous = { ...process.env };
+  t.after(() => { process.env = previous; });
+  process.env.CLOUDBASE_ENV_ID = "guard-test";
+  process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
+  const called: string[] = [];
+  t.mock.method(globalThis, "fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = new Request(input, init);
+    assert.equal(request.method, "POST");
+    assert.equal(request.headers.get("authorization"), "Bearer guard-test-service-key");
+    assert.equal((await request.json()).p_marker_id, "trusted-actor");
+    called.push(new URL(request.url).pathname.split("/").at(-1)!);
+    return Response.json({ ok: true });
   });
-}
+  const client = createAdminClient();
+  const names = ["mark_fulfillment_status", "mark_fulfillment_status_batch", "remove_fulfillment_mark"];
+  for (const name of names) {
+    assert.equal((await client.rpc(name, { p_marker_id: "trusted-actor" })).error, null);
+  }
+  assert.deepEqual(called, names);
+});

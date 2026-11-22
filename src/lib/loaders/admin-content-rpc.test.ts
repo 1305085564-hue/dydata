@@ -35,7 +35,7 @@ test("内容列表 RPC 同时接收公司配置的五项留存差线", async () 
   await queryAdminContentRpcPage({
     supabase: supabase as never,
     query: { ...parseContentListQuery(new URLSearchParams()), perspective: "company", teamId: null },
-    scope: { visibleUserIds: ["user-1"] },
+    scope: { visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"] },
     cursor: null,
     evaluationStandards: standards,
   });

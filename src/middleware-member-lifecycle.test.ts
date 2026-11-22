@@ -3,17 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
-import { buildAccountBlockedResponse, buildMembershipUnavailableResponse, isInvalidAuthSessionError } from "./middleware";
+import { buildAccountBlockedResponse, buildMembershipUnavailableResponse } from "./middleware";
+import { CLOUD_BASE_SESSION_COOKIE } from "./lib/cloudbase/core";
 
 const source = readFileSync(new URL("./middleware.ts", import.meta.url), "utf8");
 
-test("middleware 对已有会话的页面和 API 统一校验 membership_status", () => {
-  assert.match(source, /hasAuthCookie && \(isProtectedAppRoute \|\| isApiRoute\)/);
-  assert.match(source, /supabase\.auth\.getUser\(\)/);
-  assert.doesNotMatch(source, /supabase\.auth\.getSession\(\)/);
-  assert.match(source, /\.from\("profiles"\)[\s\S]*\.select\("membership_status"\)/);
-  assert.match(source, /membershipStatus === "archived"[\s\S]*buildAccountBlockedResponse/);
+test("middleware 对已有会话的页面和 API 统一走 CloudBase 会话校验", () => {
+  assert.match(source, /handleCloudBaseSession/);
+  assert.match(source, /validateCloudBaseSession/);
   assert.match(source, /账号已归档，请联系 owner 恢复/);
+  assert.doesNotMatch(source, /createServerClient/);
 });
 
 test("middleware 不拦截无认证 cookie 的公共 API", () => {
@@ -23,7 +22,7 @@ test("middleware 不拦截无认证 cookie 的公共 API", () => {
 
 test("生命周期核验暂时失败返回 503 并保留认证 Cookie", () => {
   const request = new NextRequest("http://localhost:3000/api/dashboard/operator-members", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildMembershipUnavailableResponse(request, { api: true });
@@ -35,7 +34,7 @@ test("生命周期核验暂时失败返回 503 并保留认证 Cookie", () => {
 
 test("页面核验暂时失败返回带重试按钮的 HTML 503 且不清 Cookie", async () => {
   const request = new NextRequest("http://localhost:3000/dashboard?tab=today", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildMembershipUnavailableResponse(request, { api: false });
@@ -52,7 +51,7 @@ test("页面核验暂时失败返回带重试按钮的 HTML 503 且不清 Cookie
 
 test("页面第二次失败不再自动刷新，仍保留手动重试", async () => {
   const request = new NextRequest("http://localhost:3000/dashboard?tab=today&__membership_retry=1", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildMembershipUnavailableResponse(request, { api: false });
@@ -64,31 +63,20 @@ test("页面第二次失败不再自动刷新，仍保留手动重试", async ()
   assert.equal(response.headers.get("set-cookie"), null);
 });
 
-test("已失效 Supabase 会话错误会清理 Cookie，避免账号状态 503 循环", () => {
-  assert.equal(
-    isInvalidAuthSessionError({ code: "refresh_token_already_used", message: "Invalid Refresh Token: Already Used" }),
-    true,
-  );
-  assert.equal(isInvalidAuthSessionError({ code: "invalid_claim", message: "Invalid JWT" }), true);
-  assert.equal(isInvalidAuthSessionError({ code: "user_not_found", message: "User from sub claim in JWT does not exist" }), true);
-  assert.equal(isInvalidAuthSessionError({ message: "signature verification failed" }), true);
-  assert.equal(isInvalidAuthSessionError({ message: "fetch failed" }), false);
-});
-
 test("明确归档返回 403 并清理认证 Cookie", () => {
   const request = new NextRequest("http://localhost:3000/api/dashboard/operator-members", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildAccountBlockedResponse(request, { api: true, archived: true });
 
   assert.equal(response.status, 403);
-  assert.match(response.headers.get("set-cookie") ?? "", /sb-gcrhhxaopomtposmahsw-auth-token/);
+  assert.match(response.headers.get("set-cookie") ?? "", new RegExp(CLOUD_BASE_SESSION_COOKIE));
 });
 
 test("页面拦截归档会话时跳转到带 archived 提示的登录页", () => {
   const request = new NextRequest("http://localhost:3000/dashboard?tab=today", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildAccountBlockedResponse(request, { api: false, archived: true });
@@ -102,7 +90,7 @@ test("页面拦截归档会话时跳转到带 archived 提示的登录页", () =
 
 test("已失效会话页面仍跳转登录页并清理 Cookie", () => {
   const request = new NextRequest("http://localhost:3000/dashboard?tab=today", {
-    headers: { cookie: "sb-gcrhhxaopomtposmahsw-auth-token=test-token" },
+    headers: { cookie: `${CLOUD_BASE_SESSION_COOKIE}=test-token` },
   });
 
   const response = buildAccountBlockedResponse(request, { api: false, archived: false });
@@ -112,5 +100,5 @@ test("已失效会话页面仍跳转登录页并清理 Cookie", () => {
     response.headers.get("location"),
     "http://localhost:3000/login?expired=1&next=%2Fdashboard%3Ftab%3Dtoday",
   );
-  assert.match(response.headers.get("set-cookie") ?? "", /sb-gcrhhxaopomtposmahsw-auth-token/);
+  assert.match(response.headers.get("set-cookie") ?? "", new RegExp(CLOUD_BASE_SESSION_COOKIE));
 });

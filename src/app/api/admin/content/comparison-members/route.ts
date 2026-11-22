@@ -44,7 +44,7 @@ export async function buildComparisonMembersResponse(deps: ComparisonMembersDepe
 
   const client = deps.createAdminClient();
   const scope = await deps.resolveVideoReviewReadOnlyScope(client, permissionContext.scope);
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? [];
+  const { activeVisibleUserIds } = scope;
   if (activeVisibleUserIds.length === 0) {
     return NextResponse.json({ profiles: [] });
   }

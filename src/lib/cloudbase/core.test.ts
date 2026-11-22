@@ -10,20 +10,21 @@ import {
   mapCloudBaseUser,
   makeCloudBaseSession,
   cloudBaseRestUrl,
-  isCloudBaseBackend,
+  hasCloudBaseAuthCookie,
 } from "./core";
 
-test("backend is opt-in and builds CloudBase endpoints without exposing credentials", () => {
-  const old = process.env.DYDATA_BACKEND;
-  process.env.DYDATA_BACKEND = "supabase";
-  assert.equal(isCloudBaseBackend(), false);
-  process.env.DYDATA_BACKEND = "cloudbase";
-  assert.equal(isCloudBaseBackend(), true);
+test("builds CloudBase endpoints without exposing credentials and detects CloudBase auth cookie", () => {
+  const oldEnvId = process.env.CLOUDBASE_ENV_ID;
   process.env.CLOUDBASE_ENV_ID = "env-test";
-  assert.equal(cloudBaseRestUrl("/rest/v1/profiles?select=id"), "https://env-test.api.tcloudbasegateway.com/v1/rdb/rest/profiles?select=id");
-  if (old === undefined) delete process.env.DYDATA_BACKEND;
-  else process.env.DYDATA_BACKEND = old;
-  delete process.env.CLOUDBASE_ENV_ID;
+  try {
+    assert.equal(cloudBaseRestUrl("/rest/v1/profiles?select=id"), "https://env-test.api.tcloudbasegateway.com/v1/rdb/rest/profiles?select=id");
+    assert.equal(hasCloudBaseAuthCookie([{ name: CLOUD_BASE_SESSION_COOKIE, value: "tok" }]), true);
+    assert.equal(hasCloudBaseAuthCookie([{ name: CLOUD_BASE_SESSION_COOKIE, value: "" }]), false);
+    assert.equal(hasCloudBaseAuthCookie([{ name: "other", value: "tok" }]), false);
+  } finally {
+    if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID;
+    else process.env.CLOUDBASE_ENV_ID = oldEnvId;
+  }
 });
 
 test("session stores opaque tokens privately and cookie lifetime follows keep logged in", () => {
@@ -99,24 +100,5 @@ test("only documented expired-user and invalid-password replies normalize to aut
       token: path.endsWith("signin") ? undefined : "blocked-token",
       fetcher: async () => Response.json({ error_code: 4013, error: "user_blocked", error_description: "User is blocked." }, { status: 400 }),
     }), (error: Error & { status?: number; code?: string }) => error.status === 401 && error.code === "user_blocked" && error.message === archivedMessage);
-  }
-});
-
-test("server backend selector preserves both, either and disabled switch semantics", () => {
-  const keys = ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND"];
-  const previous = keys.map(key => process.env[key]);
-  try {
-    for (const [server, browser, expected] of [
-      [undefined, undefined, false], ["supabase", "supabase", false],
-      ["cloudbase", undefined, true], [undefined, "cloudbase", true],
-      ["cloudbase", "cloudbase", true], ["supabase", "cloudbase", true],
-    ] as const) {
-      for (const [index, value] of [server, browser].entries()) {
-        if (value === undefined) delete process.env[keys[index]]; else process.env[keys[index]] = value;
-      }
-      assert.equal(isCloudBaseBackend(), expected, `${server}/${browser}`);
-    }
-  } finally {
-    keys.forEach((key, i) => { if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i]; });
   }
 });

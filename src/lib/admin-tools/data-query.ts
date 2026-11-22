@@ -90,6 +90,7 @@ export async function getAnomalousData(
   if (!context.activeVisibleUserIds?.length) {
     return { success: false, error: "当前管理范围没有在职成员" };
   }
+  const activeVisibleUserIds = context.activeVisibleUserIds;
 
   if (type === "no_submission") {
     const date = end || formatShanghaiDateOnly();
@@ -97,14 +98,14 @@ export async function getAnomalousData(
       loadWithMembershipFallback({
         loadWithMembership: async () => {
           const query = supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member");
-          return query.in("id", context.activeVisibleUserIds ?? []);
+          return query.in("id", activeVisibleUserIds);
         },
         loadWithoutMembership: async () => {
           const query = supabase.from("profiles").select("id, name, status").eq("role", "member");
-          return query.in("id", context.activeVisibleUserIds ?? []);
+          return query.in("id", activeVisibleUserIds);
         },
       }),
-      loadDailyReportUserIdsForDate(supabase, date, context.activeVisibleUserIds),
+      loadDailyReportUserIdsForDate(supabase, date, activeVisibleUserIds),
     ]);
 
     if (profilesResult.error) {

@@ -112,7 +112,7 @@ export async function CollaborationDataContainer({
   const writerCandidatesPromise = isOwnerOrTeamAdmin
     ? loadWriterCandidates({
         supabase,
-        activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
+        activeVisibleUserIds: context.scope.activeVisibleUserIds,
         actor: context.permissionInfo,
       }).catch(() => [] as WriterCandidateRow[])
     : Promise.resolve([] as WriterCandidateRow[]);

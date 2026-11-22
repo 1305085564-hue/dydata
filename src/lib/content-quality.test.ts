@@ -69,3 +69,23 @@ test("留存子项明细返回各指标实际值、达标率与状态", () => {
     favorites: 30,
   });
 });
+
+test("边界样本：跳出率、播放量档位与缺项口径保持一致", () => {
+  for (const bounceRate2s of [25, 30, 30.01]) {
+    const q = buildWorkContentQualityFromMetrics({ videoId: "v", snapshot: snapshot({ bounceRate2s }) }, topics(), DEFAULT_EVALUATION_STANDARDS);
+    assert.equal(q.status, "rated");
+    assert.ok(typeof q.contentAchievement === "number");
+  }
+  for (const playCount of [2000, 4999, 5000, 14999, 15000]) {
+    const withRatio = buildWorkContentQualityFromMetrics({ videoId: "v", snapshot: snapshot({ playCount }) }, topics(), DEFAULT_EVALUATION_STANDARDS);
+    const withoutRatio = buildWorkContentQualityFromMetrics({ videoId: "v", snapshot: snapshot({ playCount, avgPlayRatio: null }) }, topics(), DEFAULT_EVALUATION_STANDARDS);
+    assert.equal(withRatio.retentionCalculation, "average");
+    assert.equal(withoutRatio.retentionCalculation, "avg_play_duration_only");
+    assert.equal(withRatio.status, "rated");
+    assert.equal(withoutRatio.status, "rated");
+  }
+  for (const field of ["bounceRate2s", "completionRate5s", "completionRate"] as const) {
+    const q = buildWorkContentQualityFromMetrics({ videoId: "v", snapshot: snapshot({ [field]: null }) }, topics(), DEFAULT_EVALUATION_STANDARDS);
+    assert.equal(q.contentAchievement, null, `缺少 ${field} 时不应得出综合达标率`);
+  }
+});

@@ -16,15 +16,6 @@ interface FileRouteDependencies {
   getUser: () => Promise<{ id: string } | null>;
   getVisibleUserIds: () => Promise<string[]>;
   canReadVideoScreenshot?: (input: { userId: string; videoId: string; path: string }) => Promise<boolean>;
-  /**
-   * 可选注入缝（测试用）。不提供时由 readSubmissionScreenshot 适配器内置的 Supabase 兜底实现接管。
-   * 生产代码不得在本文件直连 Supabase Storage，
-   * 见 scripts/check-screenshot-storage-boundary.mjs。
-   */
-  createSignedUrl?: (
-    path: string,
-    expiresIn: number
-  ) => Promise<{ signedUrl: string | null; error: { message?: string } | null }>;
   readScreenshot?: (path: string) => Promise<ScreenshotReadResult>;
   reportReadFailure?: (event: ScreenshotReadFailureEvent) => void;
 }
@@ -100,9 +91,7 @@ export async function buildSubmissionScreenshotFileResponse(
 
   const storage = dependencies.readScreenshot
     ? await dependencies.readScreenshot(path)
-    : dependencies.createSignedUrl
-      ? await readSubmissionScreenshot(path, { createSignedUrl: dependencies.createSignedUrl })
-      : await readSubmissionScreenshot(path);
+    : await readSubmissionScreenshot(path);
   if (storage.kind === "failure") {
     const { requestId } = createRequestContext({ route: "/api/submission-screenshots/file", operation: "read-screenshot" });
     if (!storage.notFound) {
@@ -122,13 +111,6 @@ export async function buildSubmissionScreenshotFileResponse(
     response.headers.set("Cache-Control", "private, no-store");
     response.headers.set("x-dydata-request-id", requestId);
     if (!storage.notFound) response.headers.set("Retry-After", "2");
-    return response;
-  }
-
-  if (storage.kind === "redirect") {
-    const response = NextResponse.redirect(storage.signedUrl);
-    response.headers.set("Cache-Control", "private, no-store");
-    response.headers.set("X-Screenshot-Mode", mode);
     return response;
   }
 

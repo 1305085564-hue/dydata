@@ -38,6 +38,7 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
     teamId: "team-1",
     kind: "team" as const,
     visibleUserIds: ["user-1"],
+    activeVisibleUserIds: ["user-1"],
   };
   let receivedArgs: unknown = null;
 
@@ -116,7 +117,7 @@ test("content list 失败路径：鉴权、权限、回收站权限、游标失�
   };
   const scope = {
     userId: "owner-1", role: "owner" as const, permissions: { review_content: true },
-    teamId: "team-1", kind: "team" as const, visibleUserIds: ["user-1"],
+    teamId: "team-1", kind: "team" as const, visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"],
   };
   const baseDeps = {
     getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
@@ -184,6 +185,7 @@ test("content list route fresh=1 回到第一页并禁用所有响应缓存", as
     teamId: "team-1",
     kind: "team" as const,
     visibleUserIds: ["user-1"],
+    activeVisibleUserIds: ["user-1"],
   };
   let receivedArgs: unknown = null;
 
@@ -278,6 +280,7 @@ test("公司所有者默认只能使用本公司视角，不能加载其他公�
             teamId: "company-1",
             kind: "team" as const,
             visibleUserIds: ["company-owner-1", "member-1"],
+            activeVisibleUserIds: ["company-owner-1", "member-1"],
           },
         };
       },
@@ -325,6 +328,7 @@ test("content list route 每次委托取数且响应不缓存", async () => {
         teamId: null,
         kind: "team" as const,
         visibleUserIds: ["user-1", "user-2"],
+        activeVisibleUserIds: ["user-1", "user-2"],
       },
     }),
     createAdminClient: () => ({ kind: "cached" }) as never,

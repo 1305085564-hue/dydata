@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // No cloud/network load: exercise the actual production fallback in isolated
-// processes. Two workers model two Vercel instances, not Vercel throughput.
+// processes. Two workers model two CloudBase container instances, not CloudBase throughput.
 process.env.NODE_ENV = 'production';
 delete process.env.UPSTASH_REDIS_REST_URL;
 delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -47,7 +47,7 @@ if (process.argv.includes('--worker')) {
   const result = { capturedAt: new Date().toISOString(), runtime: process.version, kind: 'actual-source-local-process-model', employees: 84,
     apiCostBurst: cost, sharedDefault: { defaults, nextRoute }, sharedOfficePageBurst: page,
     sameUserTwoIndependentProcesses: workers, outboundRequests: outbound, elapsedMs: Date.now() - started,
-    limitations: 'No real Redis, Vercel concurrency or CloudBase capacity measurement; 15:00 burst is a scenario, not observed employee traffic.' };
+    limitations: 'No real Redis or CloudBase capacity measurement; 15:00 burst is a scenario, not observed employee traffic.' };
   const index = process.argv.indexOf('--out');
   if (index !== -1) writeFileSync(process.argv[index + 1], JSON.stringify(result, null, 2), { mode: 0o600, flag: 'wx' });
   console.log(JSON.stringify(result, null, 2));

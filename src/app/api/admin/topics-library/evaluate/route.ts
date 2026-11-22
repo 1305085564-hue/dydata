@@ -107,8 +107,7 @@ export async function handleTopicsLibraryEvaluate(
     const joinedAccount = (video as { accounts?: { profile_id?: string | null } | Array<{ profile_id?: string | null }> | null }).accounts;
     const ownerId = (Array.isArray(joinedAccount) ? joinedAccount[0]?.profile_id : joinedAccount?.profile_id)
       ?? (video as { user_id: string }).user_id;
-    const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-    if (!activeVisibleUserIds.includes(ownerId)) {
+    if (!scope.activeVisibleUserIds.includes(ownerId)) {
       return mutationResponse({ error: "无权评估当前范围外的视频" }, 403, observation, { businessSucceeded: false });
     }
     observation?.mark("scope");

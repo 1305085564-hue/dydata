@@ -74,8 +74,7 @@ function isActorAllowedForVideo(
   video: { user_id: string; accounts: unknown },
 ) {
   const ownerUserId = firstJoinedAccount(video.accounts)?.profile_id ?? video.user_id;
-  const allowedUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  return allowedUserIds.includes(ownerUserId) && actor.membershipStatus !== "archived";
+  return scope.activeVisibleUserIds.includes(ownerUserId) && actor.membershipStatus !== "archived";
 }
 
 export async function buildVideoReviewStatusResponse(

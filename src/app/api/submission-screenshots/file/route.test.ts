@@ -10,7 +10,7 @@ test("未登录不能读取日报截图", async () => {
     {
       getUser: async () => null,
       getVisibleUserIds: async () => [],
-      createSignedUrl: async () => ({ signedUrl: "https://signed.example/a.png", error: null }),
+      readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false }),
     }
   );
 
@@ -18,40 +18,39 @@ test("未登录不能读取日报截图", async () => {
 });
 
 test("不能读取其他用户的日报截图", async () => {
-  let signed = false;
+  let read = false;
   const response = await buildSubmissionScreenshotFileResponse(
     new Request("https://dydata.cc/api/submission-screenshots/file?path=user-2%2Fa.png"),
     {
       getUser: async () => ({ id: "user-1" }),
       getVisibleUserIds: async () => ["user-1"],
-      createSignedUrl: async () => {
-        signed = true;
-        return { signedUrl: "https://signed.example/a.png", error: null };
+      readScreenshot: async () => {
+        read = true;
+        return { kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false };
       },
     }
   );
 
   assert.equal(response.status, 403);
-  assert.equal(signed, false);
+  assert.equal(read, false);
 });
 
-test("本人截图使用短时签名地址跳转", async () => {
+test("本人截图经 COS 返回图片字节", async () => {
   const response = await buildSubmissionScreenshotFileResponse(
     new Request("https://dydata.cc/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fa.png"),
     {
       getUser: async () => ({ id: "user-1" }),
       getVisibleUserIds: async () => ["user-1"],
-      createSignedUrl: async (path, expiresIn) => {
+      readScreenshot: async (path) => {
         assert.equal(path, "user-1/account-1/a.png");
-        assert.equal(expiresIn, 60);
-        return { signedUrl: "https://signed.example/a.png", error: null };
+        return { kind: "bytes", backend: "cos", body: new Uint8Array([1, 2, 3]), contentType: "image/png", etag: "etag", fellBack: false };
       },
     }
   );
 
-  assert.equal(response.status, 307);
-  assert.equal(response.headers.get("location"), "https://signed.example/a.png");
-  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-screenshot-backend"), "cos");
+  assert.equal(response.headers.get("content-type"), "image/png");
 });
 
 test("管理者可读取统一业务范围内成员的日报截图", async () => {
@@ -60,11 +59,11 @@ test("管理者可读取统一业务范围内成员的日报截图", async () =>
     {
       getUser: async () => ({ id: "leader-1" }),
       getVisibleUserIds: async () => ["leader-1", "member-1"],
-      createSignedUrl: async () => ({ signedUrl: "https://signed.example/a.png", error: null }),
+      readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false }),
     }
   );
 
-  assert.equal(response.status, 307);
+  assert.equal(response.status, 200);
 });
 
 test("有效票据命中快路径并返回图片字节，不再查会话与权限", async () => {
@@ -80,7 +79,6 @@ test("有效票据命中快路径并返回图片字节，不再查会话与权�
         getUser: async () => { throw new Error("fast path must not call getUser"); },
         getVisibleUserIds: async () => { throw new Error("fast path must not call getVisibleUserIds"); },
         canReadVideoScreenshot: async () => { throw new Error("fast path must not check video context"); },
-        createSignedUrl: async () => ({ signedUrl: null, error: { message: "unused" } }),
         readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1, 2, 3]), contentType: "image/png", etag: "etag", fellBack: false }),
       },
     );
@@ -159,7 +157,6 @@ test("截图缓存：字节响应的 Cache-Control 按图龄分档", async () =>
       {
         getUser: async () => ({ id: "viewer-1" }),
         getVisibleUserIds: async () => ["user-1"],
-        createSignedUrl: async () => ({ signedUrl: null, error: { message: "unused" } }),
         readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/jpeg", etag: "etag", fellBack: false }),
       },
     );
@@ -183,7 +180,7 @@ test("有效票据遇到不在 allow 的 owner 直接 403", async () => {
       {
         getUser: async () => ({ id: "viewer-1" }),
         getVisibleUserIds: async () => ["viewer-1", "user-2"],
-        createSignedUrl: async () => ({ signedUrl: "https://signed.example/a.png", error: null }),
+        readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false }),
       },
     );
     assert.equal(response.status, 403);
@@ -211,7 +208,7 @@ async function withVideoContextGrant(run: (cookie: string) => Promise<void>) {
 
 const contextVideoId = "11111111-1111-4111-8111-111111111111";
 const contextImageUrl = `https://dydata.cc/api/submission-screenshots/file?path=other%2Fa.png&videoId=${contextVideoId}`;
-const imageBytes = async () => ({ kind: "bytes" as const, backend: "cos" as const, body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false });
+const imageBytes = async () => ({ kind: "bytes" as const, backend: "cos" as const, body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false as const });
 
 for (const hasGrant of [true, false]) {
   test(`作品关联截图在${hasGrant ? "有效但未含作者的grant" : "无grant"}时经精确授权可读`, async () => {

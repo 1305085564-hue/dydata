@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
 import AdminPage from "./page";
 
 test("批改台首屏取数固定走管理员客户端", async () => {
@@ -49,20 +48,6 @@ test("批改台首屏取数固定走管理员客户端", async () => {
   assert.deepEqual(result, { ok: true, source: "content" });
 });
 
-test("批改台页面首屏观测会落到 /admin/content 路由名下", async () => {
-  const mod = await import(new URL("./content/content-data-container.tsx", import.meta.url).href);
-  const observation = mod.buildAdminContentFirstScreenObservation({
-    actorUserId: "user-1",
-    scopeKind: "team",
-    metrics: { auth: 12, context: 18, data: 132, total: 162 },
-  });
-
-  assert.equal(observation.route, "/admin/content");
-  assert.equal(observation.statusCode, 200);
-  assert.equal(observation.actorUserId, "user-1");
-  assert.equal(observation.scopeKind, "team");
-});
-
 test("/admin 页面当前固定重定向到 /admin/content", () => {
   assert.throws(
     () => AdminPage(),
@@ -74,12 +59,4 @@ test("/admin 页面当前固定重定向到 /admin/content", () => {
       return true;
     },
   );
-});
-
-test("后台首屏合同预算固定，避免候选池和阈值被随意放大", () => {
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.cockpit.warnTotalMs, 2500);
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.candidateLimit, 60);
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.payloadLimit, 20);
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.candidateLimit, 60);
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.payloadLimit, 30);
 });

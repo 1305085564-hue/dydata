@@ -2,19 +2,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cutoverMaintenanceResponse, isApplicationMiddlewarePath } from "@/lib/cutover-maintenance";
 import { isTrustedWrite } from "@/lib/csrf";
 
-import { hasCloudBaseAuthCookie, hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
 import { checkApiRateLimit, isApiRateLimitExempt, type ApiRateLimitResult } from "@/lib/api-rate-limit";
-import { createServerClient } from "@supabase/ssr";
 import {
-  applyAuthCookieLifetime,
   isKeepLoggedInCookieValue,
   KEEP_LOGGED_IN_COOKIE_NAME,
 } from "@/lib/supabase/session-cookie";
 import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
-import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
 import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
-import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, hasCloudBaseSessionChanged, isCloudBaseBackend, parseCloudBaseSession, serializeCloudBaseSession } from "@/lib/cloudbase/core";
+import {
+  CloudBaseAuthError,
+  CLOUD_BASE_SESSION_COOKIE,
+  cloudBaseCookieOptions,
+  hasCloudBaseAuthCookie,
+  hasCloudBaseSessionChanged,
+  parseCloudBaseSession,
+  serializeCloudBaseSession,
+} from "@/lib/cloudbase/core";
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
 import cloudbaserc from "../cloudbaserc.json";
 
@@ -40,38 +44,11 @@ export function isUntrustedApiWriteRequest(request: NextRequest) {
 
 export function shouldBlockDevProductionWrite(request: NextRequest, env: Record<string, string | undefined> = process.env) {
   if (env.NODE_ENV !== "development") return false;
-  const isSupabaseProd = String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("gcrhhxaopomtposmahsw");
-  const isCloudBaseMode =
-    env.DYDATA_BACKEND === "cloudbase" || env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
   const cloudBaseEnvId = env.CLOUDBASE_ENV_ID || env.NEXT_PUBLIC_CLOUDBASE_ENV_ID;
-  const isCloudBaseProd = isCloudBaseMode && cloudBaseEnvId === cloudbaserc.envId;
-  if (!isSupabaseProd && !isCloudBaseProd) return false;
+  if (cloudBaseEnvId !== cloudbaserc.envId) return false;
   if (env.DYDATA_DEV_ALLOW_PROD_WRITE === "1") return false;
   if (!UNSAFE_METHODS.has(request.method.toUpperCase())) return false;
   return !DEV_PROD_WRITE_AUTH_PATHS.has(request.nextUrl.pathname);
-}
-
-function createClientFromRequest(request: NextRequest, response: NextResponse) {
-  const keepLoggedIn = isKeepLoggedInCookieValue(request.cookies.get(KEEP_LOGGED_IN_COOKIE_NAME)?.value);
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const cookieOptions = applyAuthCookieLifetime(options, keepLoggedIn);
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, cookieOptions);
-          });
-        },
-      },
-    },
-  );
 }
 
 function buildClearSiteDataResponse(request: NextRequest) {
@@ -97,10 +74,7 @@ function buildLoginRedirect(request: NextRequest, options: { expired?: boolean; 
   return NextResponse.redirect(loginUrl);
 }
 
-function clearAuthCookies(response: NextResponse, request: NextRequest) {
-  listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
-    response.cookies.delete(cookieName);
-  });
+function clearAuthCookies(response: NextResponse) {
   response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
   response.cookies.delete(CLOUD_BASE_SESSION_COOKIE);
 }
@@ -115,7 +89,7 @@ export function buildAccountBlockedResponse(
         { status: options.archived ? 403 : 401 },
       )
     : buildLoginRedirect(request, { expired: !options.archived, archived: options.archived });
-  clearAuthCookies(response, request);
+  clearAuthCookies(response);
   return response;
 }
 
@@ -176,7 +150,7 @@ function getSafeMembershipFailureDetails(error: unknown) {
 
 function logMembershipUnavailable(
   request: NextRequest,
-  options: { backend: "supabase" | "cloudbase"; branch: string; startedAt: number; error?: unknown },
+  options: { branch: string; startedAt: number; error?: unknown },
 ) {
   logApiRequest({
     requestId: resolveRequestId(request),
@@ -186,7 +160,7 @@ function logMembershipUnavailable(
     outcome: "membership_unavailable",
     durationMs: Math.max(0, Date.now() - options.startedAt),
     detail: {
-      backend: options.backend,
+      backend: "cloudbase",
       branch: options.branch,
       ...getSafeMembershipFailureDetails(options.error),
     },
@@ -206,37 +180,6 @@ export function buildMembershipUnavailableResponse(
   if (options.api) response.headers.set("Retry-After", String(MEMBERSHIP_RETRY_AFTER_SECONDS));
   return response;
 }
-
-const INVALID_AUTH_SESSION_CODES = new Set([
-  "bad_jwt",
-  "invalid_jwt",
-  "refresh_token_already_used",
-  "refresh_token_not_found",
-  "session_not_found",
-  "user_not_found",
-]);
-
-export function isInvalidAuthSessionError(error: unknown) {
-  if (!error || typeof error !== "object") return false;
-
-  const candidate = error as { code?: unknown; message?: unknown; status?: unknown };
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  if (INVALID_AUTH_SESSION_CODES.has(code)) return true;
-
-  const message = typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
-  return (
-    message.includes("invalid refresh token") ||
-    message.includes("refresh token already used") ||
-    message.includes("refresh token not found") ||
-    message.includes("auth session missing") ||
-    message.includes("invalid jwt") ||
-    message.includes("invalid claim") ||
-    message.includes("signature verification failed") ||
-    message.includes("token is expired")
-  );
-}
-
-
 
 function buildApiRateLimitResponse(result: ApiRateLimitResult) {
   return NextResponse.json(
@@ -294,7 +237,6 @@ async function handleCloudBaseSession(request: NextRequest, options: {
       return buildAccountBlockedResponse(request, { api: isApiRoute, archived: error.code === "account_archived" });
     }
     logMembershipUnavailable(request, {
-      backend: "cloudbase",
       branch: "cloudbase_non_401_error",
       startedAt,
       error,
@@ -347,13 +289,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const cloudBaseMode = isCloudBaseBackend();
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  const hasAuthCookie = cloudBaseMode
-    ? hasCloudBaseAuthCookie(request.cookies.getAll())
-    : hasSupabaseAuthCookie(request.cookies.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const allSupabaseAuthCookieNames = listSupabaseAuthCookieNames(request.cookies.getAll());
-  const hasLegacySupabaseAuthCookie = !hasAuthCookie && allSupabaseAuthCookieNames.length > 0;
+  const hasAuthCookie = hasCloudBaseAuthCookie(request.cookies.getAll());
 
   // API 限流：无登录态的请求先按 IP 拦截（有登录态的在身份核验通过后按用户拦截）
   if (isApiRoute && !hasAuthCookie && !isApiRateLimitExempt(pathname)) {
@@ -363,94 +299,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // AI 配置中心统一由 ai-config 承载
-
   if (pathname === "/" && hasAuthCookie) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   if (!hasAuthCookie && isProtectedAppRoute) {
-    const response = buildLoginRedirect(request, { expired: hasLegacySupabaseAuthCookie });
-    if (hasLegacySupabaseAuthCookie) clearAuthCookies(response, request);
-    else response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
+    const response = buildLoginRedirect(request);
+    response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
     return response;
   }
 
-  if (cloudBaseMode) {
-    return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute });
-  }
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-next-pathname", pathname);
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-
-  // 有 cookie 时进一步校验 session 是否有效
-  if (hasAuthCookie && (isProtectedAppRoute || isApiRoute)) {
-    const startedAt = Date.now();
-    try {
-      const supabase = createClientFromRequest(request, response);
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        if (isInvalidAuthSessionError(error)) {
-          return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
-        }
-        logMembershipUnavailable(request, {
-          backend: "supabase",
-          branch: "supabase_get_user_non_invalid_error",
-          startedAt,
-          error,
-        });
-        return buildMembershipUnavailableResponse(request, { api: isApiRoute });
-      }
-      if (!data.user) {
-        // session 无效或过期，清除 cookie 并重定向到登录页
-        return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("membership_status")
-        .eq("id", data.user.id)
-        .maybeSingle();
-      const membershipStatus = resolveMembershipStatusFromQuery({ data: profile, error: profileError });
-      if (membershipStatus === "archived") {
-        return buildAccountBlockedResponse(request, { api: isApiRoute, archived: true });
-      }
-      if (membershipStatus === "unavailable") {
-        logMembershipUnavailable(request, {
-          backend: "supabase",
-          branch: "supabase_membership_unavailable",
-          startedAt,
-          error: profileError,
-        });
-        return buildMembershipUnavailableResponse(request, { api: isApiRoute });
-      }
-
-      // API 限流：登录用户按「用户 × 端点」计数
-      if (isApiRoute && !isApiRateLimitExempt(pathname)) {
-        const result = await checkApiRateLimit({ pathname, identifier: `user:${data.user.id}` });
-        if (!result.allowed) {
-          return buildApiRateLimitResponse(result);
-        }
-      }
-    } catch (error) {
-      // 无法核验状态时拒绝本次请求，但保留现有会话，避免短暂故障造成误登出。
-      logMembershipUnavailable(request, {
-        backend: "supabase",
-        branch: "supabase_verification_exception",
-        startedAt,
-        error,
-      });
-      return buildMembershipUnavailableResponse(request, { api: isApiRoute });
-    }
-  }
-
-  return response;
+  return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute });
 }
 
 export const config = {

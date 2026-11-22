@@ -65,8 +65,7 @@ export async function buildWriterCertificationResponse(
 
   const context = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!context) return forbidden("用户权限范围加载失败");
-  const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
-  if (!activeVisibleUserIds.includes(payload.data.userId)) {
+  if (!context.scope.activeVisibleUserIds.includes(payload.data.userId)) {
     return forbidden("不能认证当前权限范围外或已归档的成员");
   }
 

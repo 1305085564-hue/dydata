@@ -117,38 +117,18 @@ test("P3.4b: 档案卡的岗位视角只有一个来源，预取与打开必须�
   assert.doesNotMatch(workbenchSource, /activeTab=\{tab\}/);
 });
 
-test("P4.1 & P4.2: 管理小队抽屉支持建/改/删与成员互斥提示", () => {
+test("P4.1 & P4.2: 管理小队抽屉只读展示成员并保留建/改/删结构管理", () => {
   assert.match(manageDrawerSource, /WorkGroupManageDrawer/);
   assert.match(manageDrawerSource, /新建小队/);
   assert.match(manageDrawerSource, /删除小队/);
   assert.match(manageDrawerSource, /确认删除/);
-  // 抽屉只走批量 Action；单人分配不应出现在抽屉里。
-  // 用 (?<!un) 排除 unassignWorkGroupMemberAction 的误命中（旧写法只命中了它，等于没断言）
-  assert.doesNotMatch(manageDrawerSource, /(?<!un)assignWorkGroupMemberAction\(/);
-  assert.match(manageDrawerSource, /assignWorkGroupMembersAction\(/);
-  assert.match(manageDrawerSource, /unassignWorkGroupMemberAction\(/);
-  // 互斥/兼任文案与候选提示走唯一来源，文案本身由行为测试锁定
-  assert.match(manageDrawerSource, /WorkGroupRuleHint/);
-  assert.match(manageDrawerSource, /describeCandidateAssignment/);
-  assert.doesNotMatch(manageDrawerSource, /不能同时属于文案组和达人组/);
-});
-
-test("CloudBase 协作抽屉只读展示小队成员，禁止多选加入和移出但保留结构管理", () => {
-  assert.match(manageDrawerSource, /process\.env\.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase"/);
   assert.match(manageDrawerSource, /成员小队调整请到成员管理/);
-
-  const batchHandler =
-    manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  const unassignHandler =
-    manageDrawerSource.match(/const handleUnassignMember = \(userId: string, memberName: string \| null\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(batchHandler, /isCloudBaseBackend/);
-  assert.match(unassignHandler, /isCloudBaseBackend/);
-  assert.match(manageDrawerSource, /!isCloudBaseBackend && <div/);
-  assert.match(manageDrawerSource, /!isCloudBaseBackend && <button/);
-
   assert.match(manageDrawerSource, /createWorkGroupAction\(/);
   assert.match(manageDrawerSource, /renameWorkGroupAction\(/);
   assert.match(manageDrawerSource, /deleteWorkGroupAction\(/);
+  assert.doesNotMatch(manageDrawerSource, /assignWorkGroupMembersAction\(/);
+  assert.doesNotMatch(manageDrawerSource, /unassignWorkGroupMemberAction\(/);
+  assert.doesNotMatch(manageDrawerSource, /NEXT_PUBLIC_DYDATA_BACKEND/);
 });
 
 test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属，且单人换组提示带出原小队名", () => {
@@ -215,27 +195,13 @@ test("P5.1: 工种只写文案/达人/运营，小队名下灰字统一写成「
   assert.match(listTabSource, /`\$\{workGroupKindLabel\(row\.kind\)\}小队 · \$\{row\.memberCount\} 人`/);
 });
 
-test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新（零 router.refresh 白屏刷新）", () => {
-  // 1. 使用规范的多选组件，不使用原生 select
-  assert.match(manageDrawerSource, /MemberMultiSelect/);
-  // 断言到「搜索框真的被渲染」这一层：只查 import 名（/Search/）在删掉输入框后照样绿
-  assert.match(manageDrawerSource, /placeholder="搜索成员姓名\.\.\."/);
-  assert.match(manageDrawerSource, /aria-label="搜索成员姓名"/);
-  // 选项行必须是受控勾选框（与 aria-selected 同源），同样不能只断言 import 了 Checkbox
-  assert.match(manageDrawerSource, /<Checkbox\s+checked=\{isChecked\}/);
-  assert.match(manageDrawerSource, /aria-selected=\{isChecked\}/);
-  assert.doesNotMatch(manageDrawerSource, /<select/);
-
-  // 2. 支持批量加入
-  assert.match(manageDrawerSource, /handleBatchAssignMembers/);
-  assert.match(manageDrawerSource, /assignWorkGroupMembersAction/);
-
-  // 3. 抽屉内部所有操作均采用就地静默更新，杜绝 router.refresh() 导致的整页白屏重载
+test("P5.2: 小队抽屉操作采用静默更新（零 router.refresh 白屏刷新）且工种选择走统一 Select 组件", () => {
+  // 1. 抽屉内部所有操作均采用就地静默更新，杜绝 router.refresh() 导致的整页白屏重载
   // 结构性断言：抽屉根本不该引入路由能力，比只查一个 refresh 调用更难绕过
   assert.doesNotMatch(manageDrawerSource, /next\/navigation/);
   assert.doesNotMatch(manageDrawerSource, /router\.refresh\(\)/);
 
-  // 4. 新建小队表单工种类型采用统一 Select 组件，去除技术英文代号
+  // 2. 新建小队表单工种类型采用统一 Select 组件，去除技术英文代号
   assert.match(manageDrawerSource, /<Select/);
   assert.match(manageDrawerSource, /文案岗位/);
   assert.match(manageDrawerSource, /达人岗位/);
@@ -245,45 +211,9 @@ test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新�
   assert.doesNotMatch(manageDrawerSource, /\(operator\)/);
 });
 
-test("批量人数上限只由服务端判定：前端不预先拦截，拒绝时整批回滚并保留已选成员", () => {
-  const batchHandler =
-    manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.ok(batchHandler, "必须能在抽屉源码里定位批量分配处理函数");
-
-  // 1. 前端不得自建人数上限。上限的唯一防线在服务端；前端一旦拦住，
-  //    服务端那道「写入前拒绝」就永远收不到超限请求，也永远无法被真实验证。
-  assert.doesNotMatch(manageDrawerSource, /一次最多分配/);
-  assert.doesNotMatch(batchHandler, /new Set\(targetUserIds\)\.size/);
-
-  // 2. 结构断言：从处理函数开头到真正发出请求之间，不得有任何提前 return
-  //    （比只查一个数字更难绕过：换任何写法的前端拦截都会在这里转红）
-  const submitAt = batchHandler.indexOf("assignWorkGroupMembersAction(");
-  assert.ok(submitAt > 0, "批量分配必须真的发出服务端请求");
-  assert.equal(
-    (batchHandler.slice(0, submitAt).match(/^\s*return;$/gm) ?? []).length,
-    0,
-    "前端不得在发出请求前自行拦截",
-  );
-
-  // 3. 拒绝路径：整批回滚 + 原样透传服务端 message（内含上限与本次人数）
-  assert.match(
-    batchHandler,
-    /if \(!res\.ok\) \{[\s\S]*?rollbackWorkGroupSlots\(rosterRef\.current, slotSnapshot\)[\s\S]*?toast\.error\(res\.message/,
-  );
-
-  // 4. 清空已选必须发生在服务端确认成功之后；提前清空会让被拒绝的用户白勾一次
-  const rejectedAt = batchHandler.indexOf("if (!res.ok)");
-  const clearedAt = batchHandler.indexOf("setSelectedUserIdsToAdd([])");
-  assert.ok(rejectedAt >= 0 && clearedAt > rejectedAt, "清空已选必须在服务端确认成功之后");
-
-  // 5. 部分成功仍只回滚失败成员（既有语义不得因本次改动退化）
-  assert.match(batchHandler, /rollbackWorkGroupSlots\([\s\S]*?new Set\(failures\.map/);
-});
-
 test("编制抽屉未保存防误关保护与小队双击就地改名", () => {
-  // 1. 脏状态判定：已选成员或新建表单输入队名时触发拦截
+  // 1. 脏状态判定：新建表单输入队名时触发拦截
   assert.match(manageDrawerSource, /isDirty\s*=/);
-  assert.match(manageDrawerSource, /selectedUserIdsToAdd\.length > 0/);
   assert.match(manageDrawerSource, /showCreateForm && newGroupName\.trim\(\)\.length > 0/);
   assert.match(manageDrawerSource, /animate-shake-horizontal/);
   assert.match(manageDrawerSource, /handleForceClose/);
