@@ -1,8 +1,36 @@
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadCloudBaseManager } from './cutover-cloudbase-driver.mjs';
-import { PRIVATE_DIR_MODE, quoteIdentifier, quoteLiteral } from './cutover-core.mjs';
+import { createRequire } from 'node:module';
+
+// 2026-11-23 从已删除的一次性割接脚本（cutover-core / cutover-cloudbase-driver）搬来，导出与恢复只依赖本文件。
+const CLOUDBASE_ENV_ID = JSON.parse(readFileSync(new URL('../../cloudbaserc.json', import.meta.url), 'utf8')).envId;
+export const PRIVATE_DIR_MODE = 0o700;
+export const PRIVATE_MODE = 0o600;
+
+export function quoteIdentifier(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.includes('\0')) throw new TypeError('Invalid SQL identifier');
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+export function quoteLiteral(value) {
+  if (typeof value !== 'string' || value.includes('\0')) throw new TypeError('Invalid SQL literal');
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+export function parseSingleJsonResult(result) {
+  if (!Array.isArray(result?.Rows) || result.Rows.length !== 1) throw Error('Expected exactly one database row');
+  const tuple = JSON.parse(result.Rows[0]);
+  if (!Array.isArray(tuple) || tuple.length !== 1) throw Error('Expected exactly one database field');
+  return typeof tuple[0] === 'string' ? JSON.parse(tuple[0]) : tuple[0];
+}
+
+export async function loadCloudBaseManager(modulePath) {
+  if (!path.isAbsolute(modulePath ?? '')) throw Error('Explicit installed CloudBase manager module path required');
+  const manager = createRequire(import.meta.url)(modulePath);
+  if (typeof manager.getCloudBaseManager !== 'function') throw Error('Unsupported manager module');
+  return manager.getCloudBaseManager({ cloudBaseOptions: { envId: CLOUDBASE_ENV_ID, region: 'ap-shanghai' } });
+}
 
 export const DEFAULT_EXPORT_ROOT = path.join(os.homedir(), '.local', 'share', 'dydata', 'db-export');
 export const DEFAULT_KEY_PATH = path.join(os.homedir(), '.local', 'share', 'dydata', 'keys', '腾讯云CloudBase.txt');
@@ -243,4 +271,3 @@ export function qualifiedName(schema, table) {
   return `${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
 }
 
-export { quoteIdentifier, quoteLiteral };

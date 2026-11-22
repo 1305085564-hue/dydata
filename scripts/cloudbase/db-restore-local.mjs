@@ -17,7 +17,7 @@ import {
   quoteIdentifier,
   quoteLiteral,
 } from './db-backup-core.mjs';
-import { parseSingleJsonResult } from './cutover-cloudbase-driver.mjs';
+import { parseSingleJsonResult } from './db-backup-core.mjs';
 import {
   buildBatchInsertSql,
   buildRepairStatements,

@@ -20,8 +20,8 @@ import {
   quoteIdentifier,
   quoteLiteral,
 } from './db-backup-core.mjs';
-import { parseSingleJsonResult } from './cutover-cloudbase-driver.mjs';
-import { PRIVATE_MODE } from './cutover-core.mjs';
+import { parseSingleJsonResult } from './db-backup-core.mjs';
+import { PRIVATE_MODE } from './db-backup-core.mjs';
 
 const DEFAULT_PAGE_SIZE = 500;
 const MIN_ADAPTIVE_PAGE_SIZE = 10;
