@@ -36,10 +36,6 @@ const CONTRACT_ROUTES = [
   "admin/videos/[videoId]/lifecycle/route.ts",
   "dashboard/sample-quality-check/route.ts",
   "fulfillment/appeal/withdraw/route.ts",
-  "douyin/accounts/[bindingId]/route.ts",
-  "douyin/accounts/[bindingId]/sync/route.ts",
-  "douyin/authorizations/route.ts",
-  "douyin/unmatched/[externalVideoId]/link/route.ts",
   "exemptions/apply/route.ts",
   "exemptions/permanent/route.ts",
   "exemptions/reopen/route.ts",
@@ -65,7 +61,6 @@ const EXEMPTIONS = {
   "cloudbase/auth/signout/route.ts": "会话退出协议入口：清除 HttpOnly Cookie，保持固定退出响应",
   "cloudbase/rdb/rest/[...segments]/route.ts": "PostgREST 协议代理：保留原始响应、状态码与分页头，由真实用户 JWT 和目标表/RPC 权限约束",
   "admin/fulfillment/appeal/handle/route.ts": "样板区路由：派令明确只读，不在本批改动",
-  "cron/douyin-sync/route.ts": "Vercel Cron 机器入口：使用独立 CRON_SECRET 鉴权和批次结果，不走页面写入观测契约",
   "feishu/event/route.ts": "外部 webhook：请求签名与重试语义不适用统一页面写入契约",
   "submission-screenshots/grant/route.ts": "页面级 HttpOnly 授权票据签发：响应契约固定为 exp，不混入业务写入观测字段",
 } as const;

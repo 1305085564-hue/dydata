@@ -133,7 +133,6 @@ const MATCHER_CLASSIFICATION: Record<string, "processed" | "global-only"> = {
   "/admin/:path*": "processed",
   "/violations/:path*": "processed",
   "/content-tools/:path*": "processed",
-  "/douyin/:path*": "processed",
   "/api/:path*": "processed",
   "/login": "processed",
   "/register": "processed",
@@ -175,7 +174,7 @@ test("every matcher entry is classified and isApplicationMiddlewarePath agrees",
 test("all protected matcher roots share CloudBase checks for root and child paths", async () => {
   const { config } = await import("./middleware");
   const roots = config.matcher.filter(path => path.endsWith("/:path*") && path !== "/api/:path*").map(path => path.replace("/:path*", ""));
-  assert.equal(roots.length, 5);
+  assert.equal(roots.length, 4);
   const keys = ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND", "CLOUDBASE_ENV_ID"];
   const previous = keys.map(key => process.env[key]);
   process.env.DYDATA_BACKEND = "cloudbase";

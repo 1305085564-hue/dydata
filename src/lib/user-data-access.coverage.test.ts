@@ -44,7 +44,7 @@ const INJECTED_CONTEXT_PATHS: Record<string, string[]> = {
 
 // Each live entry records why this user-scoped access is intentional. P2
 // conversion targets must be removed from this list after they use admin plus
-// explicit filtering; browser and Douyin code are excluded by the scanner.
+// explicit filtering; browser code is excluded by the scanner.
 const ALLOWED_USER_ACCESS: Record<string, string> = {
   "src/app/(app)/admin/actions.ts": "Exemption requests are filtered to the signed-in applicant; audit writes use the actor user ID.",
   "src/app/(app)/dashboard/actions.ts": "Dashboard reads and exemption writes use the signed-in user's profile/account IDs.",
@@ -96,7 +96,7 @@ function strip(expression: ts.Expression): ts.Expression {
 }
 
 function analyzeText(text: string, file: string): ScanResult[] {
-  if (file.includes("douyin") || /\.(test|spec)\.[jt]sx?$/.test(file)) return [];
+  if (/\.(test|spec)\.[jt]sx?$/.test(file)) return [];
   const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const imports = new Map<string, Kind>();
   const cloudBaseFactories = new Set<string>();

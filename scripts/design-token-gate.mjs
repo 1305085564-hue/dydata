@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 设计令牌门禁：把《美学宝典》§6.1 的机械检查固化为命令，基线棘轮模式。
-// 存量违规记录在 scripts/design-token-baseline.json（含抖音待换皮页、terms/privacy 字重豁免）；
+// 存量违规记录在 scripts/design-token-baseline.json（含待换皮页、terms/privacy 字重豁免）；
 // 任何文件新增违规或计数上升即红灯。改基线须走《效率美学》定律2（阿禅确认+纠错索引留档）。
 // 用法：node scripts/design-token-gate.mjs [--update-baseline]
 import { execFile } from "node:child_process";

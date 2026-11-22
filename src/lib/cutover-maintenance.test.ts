@@ -38,7 +38,7 @@ function futureExpiry(minutes = 30) {
 }
 
 test("maintenance closes all dynamic routes and keeps health available", async () => {
-  for (const pathname of ["/", "/login", "/api/video-submit", "/api/cron/douyin-sync", "/api/feishu/event", "/topics", "/people/a", "/auth/callback", "/api/health/fake"]) {
+  for (const pathname of ["/", "/login", "/api/video-submit", "/api/notifications/cleanup", "/api/feishu/event", "/topics", "/people/a", "/auth/callback", "/api/health/fake"]) {
     const response = cutoverMaintenanceResponse(pathname, true)!;
     assert.equal(response.status, 503, pathname);
     assert.equal(response.headers.get("cache-control"), "no-store");
@@ -153,7 +153,7 @@ test("freeze off keeps normal behavior even if probe configuration is absent", (
 });
 
 test("global maintenance matcher does not broaden normal session or rate-limit coverage", () => {
-  for (const pathname of ["/", "/login", "/register", "/forgot-password", "/auth/logout", "/dashboard", "/dashboard/a", "/admin/x", "/api/cron/a", "/violations", "/content-tools", "/douyin/a"]) {
+  for (const pathname of ["/", "/login", "/register", "/forgot-password", "/auth/logout", "/dashboard", "/dashboard/a", "/admin/x", "/api/cron/a", "/violations", "/content-tools"]) {
     assert.equal(isApplicationMiddlewarePath(pathname), true, pathname);
   }
   for (const pathname of ["/topics", "/people/a", "/reset-password", "/auth/callback", "/administrator", "/login/fake", "/api-other"]) {

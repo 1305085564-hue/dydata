@@ -47,7 +47,6 @@ const DELEGATES: Record<string, string> = {
 const PUBLIC_ROUTES: Record<string, string> = {
   "health/route.ts": "健康检查：只返回服务与依赖是否在线，不返回业务数据",
   "register-teams/route.ts": "注册页团队选择：登录前必须可读，只返回团队名称列表",
-  "douyin/oauth/callback/route.ts": "抖音授权回调：靠一次性 state（consumeDouyinOAuthState）还原发起人，不信任查询参数",
   "feishu/event/route.ts": "飞书事件回调：靠 FEISHU_APP_VERIFICATION_TOKEN／加密密钥校验来源",
   "cloudbase/auth/signin/route.ts": "登录入口本身：来源校验 + 账号密码",
   "cloudbase/auth/refresh/route.ts": "会话续期：只认 HttpOnly Cookie 中的刷新凭据",

@@ -4,11 +4,6 @@
       "version": "20261016090000",
       "type": "not_applied",
       "reason": "清理集团模式的迁移会被现有策略挡住，下一轮重写前必须先重建 exemption_request_date 两参读取策略。"
-    },
-    {
-      "version": "20261017170811",
-      "type": "not_applied",
-      "reason": "抖音同步功能已取消，迁移依赖的表不再执行。"
     }
   ],
   "recorded_as": [
@@ -62,11 +57,6 @@
     },
     {
       "version": "20261016090000",
-      "type": "replay_skip",
-      "reason": "not_applied 迁移，本机重放跳过。"
-    },
-    {
-      "version": "20261017170811",
       "type": "replay_skip",
       "reason": "not_applied 迁移，本机重放跳过。"
     }

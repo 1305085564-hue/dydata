@@ -12,7 +12,7 @@ type CutoverProbeRequest = Pick<Request, "url" | "headers">;
 // bypass the maintenance gate during an explicitly authorized cutover window.
 export function isApplicationMiddlewarePath(pathname: string) {
   return ["/", "/login", "/register", "/forgot-password", "/auth/logout"].includes(pathname) ||
-    ["/dashboard", "/admin", "/violations", "/content-tools", "/douyin", "/api"]
+    ["/dashboard", "/admin", "/violations", "/content-tools", "/api"]
       .some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
