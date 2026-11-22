@@ -1,6 +1,7 @@
 import type { ExemptionCategory } from "@/types";
+import { addShanghaiDateOnly, diffShanghaiDays } from "@/lib/business-time";
+import { normalizeExemptionCategory } from "@/lib/exemption-category";
 import type { ExemptionProfileLike } from "./豁免";
-import { normalizeExemptionCategory } from "./豁免";
 import { EXEMPTION_REASON_MAX_LENGTH } from "@/lib/input-boundaries";
 
 export type LegacyGrantMode = "single" | "3days" | "4days" | "5days";
@@ -41,11 +42,6 @@ interface BuildRequestDraftsForDatesInput {
   today: string;
 }
 
-interface BuildReviewPatchInput {
-  reviewerId: string;
-  decision: ReviewDecision;
-}
-
 interface ExemptionGrantDraft {
   request_id: string | null;
   user_id: string;
@@ -74,24 +70,12 @@ interface MessageLikeError {
   message: string;
 }
 
-interface ExemptionRequestReviewPatch {
-  request_status: ReviewDecision;
-  reviewed_by: string;
-  reviewed_at: string;
-}
-
 function normalizeReason(reason?: string | null) {
   const trimmed = reason?.trim();
   if (trimmed && trimmed.length > EXEMPTION_REASON_MAX_LENGTH) {
     throw new Error(`豁免理由不能超过 ${EXEMPTION_REASON_MAX_LENGTH} 个字符`);
   }
   return trimmed ? trimmed : null;
-}
-
-function addDays(date: string, days: number) {
-  const result = new Date(`${date}T00:00:00.000Z`);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result.toISOString().slice(0, 10);
 }
 
 export function normalizeGrantMode(mode: AnyGrantMode): GrantMode {
@@ -102,19 +86,19 @@ export function normalizeGrantMode(mode: AnyGrantMode): GrantMode {
 
 function resolveLegacyRange(mode: LegacyGrantMode, today: string) {
   if (mode === "single") {
-    const yesterday = addDays(today, -1);
+    const yesterday = addShanghaiDateOnly(today, -1);
     return { startDate: yesterday, endDate: yesterday };
   }
 
   if (mode === "3days") {
-    return { startDate: today, endDate: addDays(today, 2) };
+    return { startDate: today, endDate: addShanghaiDateOnly(today, 2) };
   }
 
   if (mode === "4days") {
-    return { startDate: today, endDate: addDays(today, 3) };
+    return { startDate: today, endDate: addShanghaiDateOnly(today, 3) };
   }
 
-  return { startDate: today, endDate: addDays(today, 4) };
+  return { startDate: today, endDate: addShanghaiDateOnly(today, 4) };
 }
 
 function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) {
@@ -130,7 +114,7 @@ function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) 
   }
 
   if (normalizedMode === "yesterday") {
-    const yesterday = addDays(input.today, -1);
+    const yesterday = addShanghaiDateOnly(input.today, -1);
     return { mode: normalizedMode, startDate: yesterday, endDate: yesterday };
   }
 
@@ -145,12 +129,7 @@ function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) 
     throw new Error("开始日期不能晚于结束日期");
   }
 
-  const days =
-    Math.floor(
-      (new Date(`${endDate}T00:00:00.000Z`).getTime() -
-        new Date(`${startDate}T00:00:00.000Z`).getTime()) /
-        86400000,
-    ) + 1;
+  const days = diffShanghaiDays(startDate, endDate) + 1;
   if (days < 1) {
     throw new Error("豁免至少选择1天");
   }
@@ -249,12 +228,4 @@ export function isMissingExemptionRequestCategoryError(error: MessageLikeError |
   if (!error?.message) return false;
 
   return error.message.includes("exemption_request") && error.message.includes("exemption_category");
-}
-
-export function buildReviewPatch(input: BuildReviewPatchInput): ExemptionRequestReviewPatch {
-  return {
-    request_status: input.decision,
-    reviewed_by: input.reviewerId,
-    reviewed_at: new Date().toISOString(),
-  };
 }

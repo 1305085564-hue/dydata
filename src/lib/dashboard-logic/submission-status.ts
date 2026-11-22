@@ -3,7 +3,7 @@
  * 根据日期、提交记录、豁免记录判断状态
  */
 
-import { formatShanghaiDateOnlyParts, getShanghaiDaysInMonth } from "./use-exemption-calendar";
+import { formatShanghaiDateOnlyParts, getShanghaiDaysInMonth } from "@/lib/business-time";
 
 export type SubmissionStatus =
   | "submitted" // 已提交

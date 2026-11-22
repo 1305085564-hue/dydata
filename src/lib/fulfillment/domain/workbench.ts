@@ -7,7 +7,7 @@ import {
   isFulfilledFulfillmentStatus,
   isWaivedFulfillmentStatus,
 } from "@/lib/fulfillment-status";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 export function formatTodayDateOnly() {
   return formatShanghaiDateOnly();

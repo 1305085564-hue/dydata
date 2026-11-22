@@ -3,7 +3,7 @@ import type { ContentListQuery } from "./domain/content-list-query";
 import { DEFAULT_CONTENT_LIST_FILTERS } from "@/lib/content/domain/content-list-filters";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationTone } from "@/lib/evaluation-standards";
 import { averagePlayOf } from "@/lib/metrics/caliber";
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { addShanghaiDateOnly, formatShanghaiDateOnly, shiftDateOnly } from "@/lib/business-time";
 
 export interface AuthorWorksQueryParams {
   userId: string;
@@ -53,8 +53,7 @@ export function buildAuthorQuery(params: AuthorWorksQueryParams, now = new Date(
     startDate = `${today.slice(0, 7)}-01`;
     endDate = today;
   } else if (range === "lastMonth") {
-    const first = new Date(`${today.slice(0, 7)}-01T00:00:00+08:00`);
-    endDate = shiftDateOnly(first, -1);
+    endDate = addShanghaiDateOnly(`${today.slice(0, 7)}-01`, -1);
     startDate = `${endDate.slice(0, 7)}-01`;
   }
   return {

@@ -1,4 +1,7 @@
+import { formatShanghaiOffsetDateTime } from "@/lib/business-time";
 import type { ScreenshotType } from "./ocr-contract";
+
+const PROMPT_PUBLISHED_AT_EXAMPLE = formatShanghaiOffsetDateTime("2026-03-05", "20:42:00");
 
 /** 每张图只按调用方显式给出的单类提示词识别；类型由前端槽位决定，这里不猜。 */
 export function buildPromptByType(type: ScreenshotType): string {
@@ -29,7 +32,7 @@ function buildPrompt(): string {
       shares: 15,
       favorites: 106,
       follower_gain: 42,
-      published_at: "2026-03-05T20:42:00+08:00",
+      published_at: PROMPT_PUBLISHED_AT_EXAMPLE,
       published_at_text: "2026-03-05 20:42 发布",
       published_at_confidence: "high",
       confidence: {
@@ -68,7 +71,7 @@ function buildRetentionPrompt(): string {
         completion_rate: 18.5,
       },
       confidence: 0.78,
-      published_at: "2026-03-05T20:42:00+08:00",
+      published_at: PROMPT_PUBLISHED_AT_EXAMPLE,
       published_at_text: "2026-03-05 20:42 发布",
       published_at_confidence: "high",
     }),

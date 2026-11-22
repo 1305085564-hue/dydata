@@ -3,7 +3,7 @@
 import type { PersonDetailData } from "@/lib/collaboration/types";
 import type { CollaborationRoleTab } from "@/lib/collaboration/types";
 import { BoundedTtlCache } from "@/lib/cache-policy";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 // Memory cache to enable instant opening on second click or preloaded hover.
 // The bound prevents a long-lived admin tab from growing without limit.

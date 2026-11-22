@@ -34,7 +34,7 @@ import { VideoSubmitPanelBody } from "@/app/(app)/dashboard/video-submit-panel-b
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { getPublishedDateKey } from "@/lib/business-time";
 import { clearBrowserAppealSuccessSession, hasBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 import type { FormProgress } from "@/lib/video-submit/domain/submit-gaps";
 import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";

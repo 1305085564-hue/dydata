@@ -8,17 +8,9 @@ import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { getTeamOptions } from "@/lib/teams";
 import { getUserPermissions } from "@/lib/permissions";
 import { canManageTeamStructure } from "@/lib/team-management";
-import {
-  buildRequestDraft,
-  isMissingExemptionRequestCategoryError,
-  stripExemptionCategoryFromRequestDraft,
-  type GrantMode,
-  type ReviewDecision,
-} from "@/lib/豁免流程";
+import type { ReviewDecision } from "@/lib/豁免流程";
 
-import {
-  reviewExemptionRequestAtomically,
-} from "@/lib/exemption-review";
+import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 import {
   buildOrphanRejectionAuditEntry,
   isMissingReviewNoteColumnError,
@@ -32,7 +24,6 @@ import {
   writeAuditLog,
 } from "@/lib/audit-log";
 import type { Permissions } from "@/types";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import {
   archiveMemberWithClient,
@@ -49,12 +40,10 @@ import {
 } from "./权限管理";
 import {
   formatTeamName,
-  getProfileTeamId,
   getTeamNameMap,
   hasActiveScopeAccess,
   normalizeOrphanActionValue,
   resolveTargetRuntimeRole,
-  SAFE_EXEMPTION_REQUEST_INPUT_ERRORS,
   type OrphanMutationContext,
 } from "@/lib/admin-actions-helpers";
 
@@ -180,80 +169,6 @@ async function markOrphanRequestRejected(
   if (fallback.error) return { ok: false as const, error: "拒绝归属异常申请失败" };
   if (!fallback.data) return { ok: false as const, error: "该申请已处理" };
   return { ok: true as const, storedReviewNote: false as const };
-}
-
-export async function submitExemptionRequest(input: {
-  mode: GrantMode;
-  category: "waive" | "leave";
-  reason?: string | null;
-  startDate?: string;
-  endDate?: string;
-}): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-
-  const supabase = await createClient();
-  const teamId = await getProfileTeamId(supabase, perm.userId);
-
-  let draft: ReturnType<typeof buildRequestDraft>;
-  try {
-    draft = buildRequestDraft({
-      applicantUserId: perm.userId,
-      teamId,
-      mode: input.mode,
-      category: input.category,
-      reason: input.reason,
-      today: formatShanghaiDateOnly(),
-      startDate: input.startDate,
-      endDate: input.endDate,
-    });
-  } catch (error) {
-    const message = error instanceof Error && SAFE_EXEMPTION_REQUEST_INPUT_ERRORS.has(error.message)
-      ? error.message
-      : "提交申请失败";
-    if (message === "提交申请失败") {
-      console.error("[exemptions] failed to build admin request", error);
-    }
-    return {
-      error: message,
-    };
-  }
-
-  try {
-    const { error } = await supabase.from("exemption_request").insert(draft);
-    if (error) {
-      if (!isMissingExemptionRequestCategoryError(error)) {
-        console.error("[exemptions] failed to submit admin request", error);
-        return { error: "提交豁免申请失败" };
-      }
-
-      const fallback = await supabase
-        .from("exemption_request")
-        .insert(stripExemptionCategoryFromRequestDraft(draft));
-
-      if (fallback.error) {
-        console.error("[exemptions] failed to submit legacy admin request", fallback.error);
-        return { error: "提交豁免申请失败" };
-      }
-    }
-  } catch (error) {
-    console.error("[exemptions] admin request threw", error);
-    return { error: "提交豁免申请失败" };
-  }
-
-  const audit = await recordAdminAudit({
-    supabase,
-    userId: perm.userId,
-    action: "submit_exemption_request",
-    target: perm.userId,
-    detail: `${input.category}|${input.mode}|${input.reason ?? ""}`,
-  });
-  // 申请是一次 insert，但这里没有回取 id，按「已生效但未留痕」上报，不猜 id 去删。
-  if (!audit.ok) return auditNotLogged("提交豁免申请");
-
-  revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  return {};
 }
 
 export async function reviewExemptionRequest(input: {

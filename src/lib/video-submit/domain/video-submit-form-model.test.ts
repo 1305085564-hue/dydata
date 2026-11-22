@@ -145,7 +145,7 @@ import {
   restoreOcrFieldValue,
 } from "@/components/submission/填报表单状态";
 import { createInitialSubmissionState } from "@/components/submission/提交状态机";
-import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
+import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/metric-input-cleaner";
 
 test("createEditableFields 初始没有 OCR 原值，也没有手改标记", () => {
   const fields = createEditableFields();

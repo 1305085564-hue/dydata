@@ -1,5 +1,5 @@
 import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type {
   CollaborationAccount,

@@ -1,3 +1,4 @@
+import { parseBusinessDateTimeIso } from "@/lib/business-time";
 import {
   buildDataScreenshotResponse,
   buildRetentionScreenshotResponse,
@@ -120,24 +121,12 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
   }
 }
 
-function normalizePublishedAt(value: unknown): string | null {
-  if (typeof value !== "string" || !value.trim()) return null;
-  const trimmed = value.trim().replace(" ", "T");
-  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
-  const localValue = trimmed.length === 10 ? `${trimmed}T00:00:00` : trimmed;
-  // OCR models commonly return the platform's displayed Shanghai time without
-  // an offset. Treat that form as Shanghai local time instead of the server's
-  // UTC time; explicit offsets remain authoritative.
-  const date = new Date(hasTimezone ? trimmed : `${localValue}+08:00`);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
 function normalizePublishedAtRecognition(raw: {
   published_at?: unknown;
   published_at_text?: unknown;
   published_at_confidence?: unknown;
 }): PublishedAtRecognition {
-  const publishedAt = normalizePublishedAt(raw.published_at);
+  const publishedAt = parseBusinessDateTimeIso(raw.published_at);
   return {
     published_at: publishedAt,
     published_at_text: typeof raw.published_at_text === "string" && raw.published_at_text.trim()

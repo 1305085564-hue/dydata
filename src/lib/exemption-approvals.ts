@@ -1,6 +1,6 @@
 import {
-  getExemptionCategoryLabel,
-  normalizeExemptionCategoryForDisplay,
+  getAdminExemptionCategoryLabel,
+  normalizeExemptionCategory,
   toExemptionCategory,
   type ExemptionCategoryValue,
 } from "@/lib/exemption-category";
@@ -211,7 +211,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
 
   for (const item of items) {
     const isPermanent = item.exemption_type === "permanent";
-    const nature = normalizeExemptionCategoryForDisplay(item.exemption_category);
+    const nature = normalizeExemptionCategory(item.exemption_category);
     const groupKey = `${item.applicant_user_id}_${nature}_${isPermanent ? "perm" : "temp"}`;
 
     if (!groupsMap.has(groupKey)) {
@@ -225,7 +225,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
   for (const [groupKey, groupItems] of groupsMap.entries()) {
     const first = groupItems[0];
     const isPermanent = first.exemption_type === "permanent";
-    const nature = normalizeExemptionCategoryForDisplay(first.exemption_category);
+    const nature = normalizeExemptionCategory(first.exemption_category);
     const hasLegacyCategory = groupItems.some((item) => item.exemption_category === null);
     const applicant_name = first.applicant_name || "未命名成员";
     const team_name = first.team_name || null;
@@ -297,7 +297,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
       const stored = storedDaily.find((item) => item.request_date === dateStr);
       const reqId = resolveApprovalRequestId(matchItem) || `daily-${first.applicant_user_id}-${dateStr}`;
       const exemptionCat = toExemptionCategory(matchItem.exemption_category);
-      const catLabel = getExemptionCategoryLabel(exemptionCat);
+      const catLabel = getAdminExemptionCategoryLabel(exemptionCat);
 
       return {
         id: `${reqId}-${dateStr}-${idx}`,

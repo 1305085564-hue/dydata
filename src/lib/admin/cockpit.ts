@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/lib/admin-auth";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {

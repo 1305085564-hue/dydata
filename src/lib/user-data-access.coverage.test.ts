@@ -46,7 +46,6 @@ const INJECTED_CONTEXT_PATHS: Record<string, string[]> = {
 // conversion targets must be removed from this list after they use admin plus
 // explicit filtering; browser code is excluded by the scanner.
 const ALLOWED_USER_ACCESS: Record<string, string> = {
-  "src/app/(app)/admin/actions.ts": "Exemption requests are filtered to the signed-in applicant; audit writes use the actor user ID.",
   "src/app/(app)/dashboard/actions.ts": "Dashboard reads and exemption writes use the signed-in user's profile/account IDs.",
   "src/app/(app)/_components/join-banner-loader.ts": "Join banner reads the signed-in user's profile and own pending request.",
   "src/app/(app)/topics/page.tsx": "Loads the signed-in user's own profile for page context.",

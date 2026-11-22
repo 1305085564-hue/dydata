@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { buildGrantDraft, ReviewDecision } from "@/lib/豁免流程";
+import type { ReviewDecision } from "@/lib/豁免流程";
 
-type GrantDraft = ReturnType<typeof buildGrantDraft>;
 type ExemptionRpcClient = Pick<SupabaseClient, "rpc">;
 
 export type ExemptionRpcResult<T = unknown> =
@@ -49,44 +48,6 @@ function toFailure(error: unknown): ExemptionRpcResult<never> {
   const failure: ExemptionRpcResult<never> = { ok: false, status, message };
   Object.defineProperty(failure, "cause", { value: error, enumerable: false });
   return failure;
-}
-
-export async function applyExemptionGrantAtomically(input: {
-  supabase: ExemptionRpcClient;
-  draft: GrantDraft;
-  replaceExisting: boolean;
-}): Promise<ExemptionRpcResult> {
-  try {
-    const params = {
-      p_user_id: input.draft.grant.user_id,
-      p_grant_start_date: input.draft.grant.start_date,
-      p_grant_end_date: input.draft.grant.end_date,
-      p_grant_type: input.draft.grant.grant_type,
-      p_exemption_category: input.draft.grant.exemption_category,
-      p_reason: input.draft.profile.exempt_reason,
-      p_replace_existing: input.replaceExisting,
-    };
-    const { data, error } = await input.supabase.rpc("apply_exemption_grant_atomically", params);
-
-    return error ? toFailure(error) : { ok: true, data };
-  } catch (error) {
-    return toFailure(error);
-  }
-}
-
-export async function clearExemptionGrantAtomically(input: {
-  supabase: ExemptionRpcClient;
-  userId: string;
-}): Promise<ExemptionRpcResult> {
-  try {
-    const { data, error } = await input.supabase.rpc("clear_exemption_grant_atomically", {
-      p_user_id: input.userId,
-    });
-
-    return error ? toFailure(error) : { ok: true, data };
-  } catch (error) {
-    return toFailure(error);
-  }
 }
 
 export async function setPermanentExemptionAtomically(input: {

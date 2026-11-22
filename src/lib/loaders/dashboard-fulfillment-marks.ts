@@ -1,4 +1,4 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 export type MonthFulfillmentBasis = {
   joinedDate: string | null;

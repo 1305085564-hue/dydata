@@ -1,4 +1,4 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, shanghaiDayWindowUtc } from "@/lib/business-time";
 
 export type WorkVideoReport = {
   id: string;
@@ -29,11 +29,7 @@ export function getShanghaiBusinessDate(value: string | null) {
 }
 
 export function buildShanghaiBusinessDayWindow(reportDate: string) {
-  const start = new Date(`${reportDate}T00:00:00+08:00`);
-  if (Number.isNaN(start.getTime())) return null;
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 1);
-  return { start: start.toISOString(), end: end.toISOString() };
+  return shanghaiDayWindowUtc(reportDate);
 }
 
 function normalizeMatchText(value: string | null | undefined) {

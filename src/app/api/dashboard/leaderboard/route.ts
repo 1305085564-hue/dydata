@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { shiftDateOnly } from "@/lib/loaders/shared";
+import { shiftDateOnly } from "@/lib/business-time";
 import { measureAsync } from "@/lib/perf";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";

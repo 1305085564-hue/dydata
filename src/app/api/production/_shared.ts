@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 

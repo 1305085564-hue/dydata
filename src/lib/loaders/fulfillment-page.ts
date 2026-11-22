@@ -3,7 +3,7 @@ import {
   materializePendingExemptionRequestRows,
   type PendingExemptionDateLike,
 } from "@/lib/豁免";
-import { formatShanghaiDateOnly, getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, getShanghaiYearMonth } from "@/lib/business-time";
 import {
   countsTowardFulfillmentRequirement,
   isFulfilledFulfillmentStatus,

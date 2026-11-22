@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, shanghaiDateRangeToUtc, shiftDateOnly } from "@/lib/business-time";
 import type {
   CollaborationReport,
   CollaborationRoleTab,
@@ -34,10 +34,7 @@ import {
 } from "./reports";
 
 function reportRangeToUtc(start: string, end: string) {
-  const startUtc = new Date(`${start}T00:00:00+08:00`).toISOString();
-  const endDate = new Date(`${end}T00:00:00+08:00`);
-  endDate.setUTCDate(endDate.getUTCDate() + 1);
-  return { startUtc, endUtc: endDate.toISOString() };
+  return shanghaiDateRangeToUtc(start, end);
 }
 
 async function loadVideosForReports(supabase: SupabaseClient, rows: CollaborationReport[]) {

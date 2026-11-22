@@ -1,4 +1,4 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
 
 export const EDIT_BINDING_VIDEO_SELECT =

@@ -1,5 +1,5 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
-import { getPublishedDateForStats } from "@/lib/date-semantics";
+import { getPublishedDateForStats, shanghaiDayStartOffset } from "@/lib/business-time";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { withTimeout } from "@/lib/timeout";
 
@@ -42,7 +42,7 @@ export async function loadCloudBaseLeaderboardRows(
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
           .abortSignal(signal);
         query = byPublishedDate
-          ? query.gte("video.published_at", `${sinceDate}T00:00:00+08:00`)
+          ? query.gte("video.published_at", shanghaiDayStartOffset(sinceDate))
           : query.gte("report_date", sinceDate);
         const result = await query;
         assertSupabaseQuerySucceeded(result.error, "读取排行榜日报失败");

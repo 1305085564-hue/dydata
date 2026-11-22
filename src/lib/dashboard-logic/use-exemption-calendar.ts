@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { addShanghaiDateOnly } from "@/lib/business-time";
 
 export type ExemptionType = "waive" | "leave";
 
@@ -21,56 +22,6 @@ export interface ExemptionCalendarOptions {
   leaveDates?: string[];
   pendingDates?: string[];
   initialDates?: string[];
-}
-
-export interface ShanghaiDateOnlyParts {
-  year: number;
-  month: number;
-  day: number;
-}
-
-/** Parse a YYYY-MM-DD business date without letting the host timezone alter it. */
-export function parseShanghaiDateOnly(date: string): ShanghaiDateOnlyParts {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!match) throw new Error(`无效业务日期：${date}`);
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const value = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    value.getUTCFullYear() !== year ||
-    value.getUTCMonth() !== month - 1 ||
-    value.getUTCDate() !== day
-  ) {
-    throw new Error(`无效业务日期：${date}`);
-  }
-
-  return { year, month, day };
-}
-
-export function formatShanghaiDateOnlyParts(year: number, month: number, day: number) {
-  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-
-export function getShanghaiDaysInMonth(year: number, month: number) {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate();
-}
-
-export function getShanghaiWeekday(year: number, month: number, day: number) {
-  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-}
-
-export function addShanghaiDateOnly(date: string, days: number) {
-  const parts = parseShanghaiDateOnly(date);
-  const value = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
-  value.setUTCDate(value.getUTCDate() + days);
-  return formatShanghaiDateOnlyParts(
-    value.getUTCFullYear(),
-    value.getUTCMonth() + 1,
-    value.getUTCDate(),
-  );
 }
 
 export function mergeSubmittedDates(...dateLists: Array<readonly string[] | undefined>) {

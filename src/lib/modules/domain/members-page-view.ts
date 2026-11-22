@@ -1,5 +1,5 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
-import { getExemptionCategoryLabel } from "@/lib/exemption-category";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
+import { getAdminExemptionCategoryLabel } from "@/lib/exemption-category";
 import type { ProfileSummary, TeamOption } from "@/lib/modules/types";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 
@@ -104,7 +104,7 @@ export function describeOrphanRequest(request: {
   end_date: string | null;
 }) {
   const span = EXEMPTION_SPAN_LABEL[request.exemption_type] ?? "";
-  const category = getExemptionCategoryLabel(request.exemption_category);
+  const category = getAdminExemptionCategoryLabel(request.exemption_category);
   const range = request.end_date && request.end_date !== request.start_date
     ? `${formatDateKey(request.start_date)} 至 ${formatDateKey(request.end_date)}`
     : formatDateKey(request.start_date);
