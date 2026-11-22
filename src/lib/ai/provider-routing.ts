@@ -1,4 +1,5 @@
 import { getChannelGovernance, type ProviderHealthFields } from "./channel-governance";
+import { normalizeProviderProtocol, type AiProviderProtocol } from "./provider-protocols";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
@@ -11,6 +12,8 @@ export type ProviderKeyModelConfig = {
   modelId: string;
   canonicalModelId: string;
   providerName: string;
+  providerKeyLabel: string;
+  protocol: AiProviderProtocol;
   providerKeyId: string;
   providerKeyModelId: string;
   requiresProbe?: boolean;
@@ -30,6 +33,7 @@ type ProviderKeyModelJoinRow = ProviderHealthFields & {
 
 type ProviderKeyJoinRow = ProviderHealthFields & {
   id: string;
+  label?: string | null;
   api_key: string;
   manual_sleep_until?: string | null;
   provider: ProviderJoinRow | ProviderJoinRow[] | null;
@@ -39,6 +43,7 @@ type ProviderJoinRow = {
   id: string;
   name: string;
   base_url: string;
+  protocol?: string | null;
   is_enabled: boolean;
 };
 
@@ -64,6 +69,8 @@ function toConfig(row: ProviderKeyModelJoinRow, options: { includeSleeping?: boo
     modelId: row.model_id,
     canonicalModelId: readCanonicalModelId(row.model_id, row.canonical_model_id),
     providerName: provider.name,
+    providerKeyLabel: key.label?.trim() || provider.name,
+    protocol: normalizeProviderProtocol(provider.protocol),
     providerKeyId: key.id,
     providerKeyModelId: row.id,
     requiresProbe: governance.identity === "retest" || governance.identity === "sleeping",
@@ -87,6 +94,7 @@ const PROVIDER_KEY_MODEL_SELECT = `
   sort_order,
   key:ai_provider_keys(
     id,
+    label,
     api_key,
     is_enabled,
     consecutive_failures,
@@ -100,7 +108,8 @@ const PROVIDER_KEY_MODEL_SELECT = `
       id,
       name,
       base_url,
-        is_enabled
+      protocol,
+      is_enabled
     )
   )
 `;

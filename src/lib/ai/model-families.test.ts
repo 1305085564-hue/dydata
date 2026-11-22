@@ -4,7 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { canBackfillRawModelDisplayName, getModelDisplayName, resolveModelDisplayName } from "./model-families";
 
-test("模型显示名覆盖实测四大模型及核心型号", () => {
+test("模型显示名覆盖实测四大模型、Clairic 与核心型号", () => {
+  assert.equal(getModelDisplayName("clairic"), "Cloudflare Clairic");
+  assert.equal(getModelDisplayName("@cf/cloudflare/clairic"), "Cloudflare Clairic");
   assert.equal(getModelDisplayName("claude-haiku-4-5-20251001"), "Claude Haiku 4.5 (2025-10-01)");
   assert.equal(getModelDisplayName("claude-haiku-4-5"), "Claude Haiku 4.5");
   assert.equal(getModelDisplayName("gemini-2.5-flash-lite"), "Gemini 2.5 Flash Lite");

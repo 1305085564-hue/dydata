@@ -3,6 +3,13 @@ import { getModelDisplayName } from "@/lib/ai/model-families";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { groupModelIdAliases } from "@/lib/ai/model-discovery";
 import { runAiConfigWrite } from "@/lib/ai-config/atomic-write";
+import { sanitizeProviderErrorMessage } from "@/lib/ai/provider-health";
+import {
+  CLAIRIC_UPSTREAM_MODEL_ID,
+  normalizeProviderProtocol,
+  type AiProviderProtocol,
+} from "@/lib/ai/provider-protocols";
+import { probeClairicOcr } from "@/lib/clairic-ocr";
 
 type SyncSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,6 +19,7 @@ type SyncSupabase = {
 type ProviderInfo = {
   name?: string | null;
   base_url?: string | null;
+  protocol?: string | null;
 };
 
 type ExistingModelRow = {
@@ -43,6 +51,26 @@ export async function discoverModelIds(
     throw syncError("探测模型列表失败：渠道 URL 或 API Key 缺失", 502);
   }
 
+  const protocol: AiProviderProtocol = normalizeProviderProtocol(provider.protocol);
+  if (protocol === "cloudflare_clairic") {
+    const probe = await probeClairicOcr({
+      baseUrl: provider.base_url,
+      apiKey: apiKey.trim(),
+      fetchImpl: fetcher,
+    });
+    if (probe.ok) {
+      return [CLAIRIC_UPSTREAM_MODEL_ID];
+    }
+    if (probe.status === 401 || probe.status === 403) {
+      throw syncError(
+        "Cloudflare Clairic 鉴权失败，请检查接口地址和 API Token（需 Workers AI 权限）",
+        502,
+      );
+    }
+    const safeMsg = sanitizeProviderErrorMessage(probe.message || "上游请求失败", [apiKey]);
+    throw syncError(`探测 Clairic 失败：${safeMsg}`, 502);
+  }
+
   const baseUrlClean = provider.base_url.replace(/\/+$/, "");
   const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
   let response: Response;
@@ -52,15 +80,17 @@ export async function discoverModelIds(
       signal: AbortSignal.timeout(6000),
     });
   } catch (error) {
-    throw syncError(
-      `探测模型列表失败：${error instanceof Error ? error.message : "上游请求失败"}`,
-      502,
+    const safeMsg = sanitizeProviderErrorMessage(
+      error instanceof Error ? error.message : "上游请求失败",
+      [apiKey],
     );
+    throw syncError(`探测模型列表失败：${safeMsg}`, 502);
   }
 
   if (!response.ok) {
-    const detail = (await response.text().catch(() => "")).slice(0, 200);
-    throw syncError(`探测模型列表失败 HTTP ${response.status}${detail ? `: ${detail}` : ""}`, 502);
+    const rawDetail = (await response.text().catch(() => "")).slice(0, 200);
+    const safeDetail = rawDetail ? sanitizeProviderErrorMessage(rawDetail, [apiKey]) : "";
+    throw syncError(`探测模型列表失败 HTTP ${response.status}${safeDetail ? `: ${safeDetail}` : ""}`, 502);
   }
 
   let payload: { data?: Array<{ id?: string }>; models?: Array<{ id?: string }> };
@@ -90,7 +120,7 @@ export async function syncModelsForKey(
 ) {
   const { data: keyData, error: keyErr } = await supabase
     .from("ai_provider_keys")
-    .select("id, api_key, provider_id, available_models, provider:ai_providers(id, name, base_url)")
+    .select("id, api_key, provider_id, available_models, provider:ai_providers(id, name, base_url, protocol)")
     .eq("id", input.keyId)
     .single();
 
@@ -102,7 +132,7 @@ export async function syncModelsForKey(
   if (!provider && (keyData as { provider_id?: string }).provider_id) {
     const { data: providerRow, error: providerError } = await supabase
       .from("ai_providers")
-      .select("name, base_url")
+      .select("name, base_url, protocol")
       .eq("id", (keyData as { provider_id: string }).provider_id)
       .single();
     if (providerError) throw syncError(providerError.message);

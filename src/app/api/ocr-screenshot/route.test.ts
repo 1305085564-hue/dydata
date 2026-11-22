@@ -11,8 +11,6 @@ import {
   normalizeVisionDataUrl,
   resolveKnownScreenshotType,
 } from "./route";
-import { resolveOcrScreenshotChannel } from "./channel-config";
-import { parseOcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
 
 test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映射为 OCR 类型", () => {
   assert.equal(getScreenshotTypeByAssetRole("overview"), "data");
@@ -78,7 +76,7 @@ test("overview OCR 返回待确认结果结构", () => {
         follower_gain: "medium",
       },
     }),
-    "overview"
+    "overview",
   );
 
   assert.deepEqual(result, {
@@ -216,7 +214,7 @@ test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
       curve_info: { curve_pattern: "二次起量" },
       retention_info: { bounce_peak_time: "0-3秒" },
     }),
-    "overview"
+    "overview",
   );
 
   assert.ok(result);
@@ -242,7 +240,7 @@ test("跳出回看图返回五个 retention_metrics 数字指标", () => {
         segment_summary: [{ segment: "0-5秒", performance: "跳出高" }],
       },
       confidence: 0.78,
-    })
+    }),
   );
 
   assert.deepEqual(result, {
@@ -348,7 +346,7 @@ test("retention 部分识别也返回待确认结果", () => {
       },
       confidence: 0.69,
     }),
-    "retention_curve"
+    "retention_curve",
   );
 
   assert.deepEqual(result, {
@@ -376,7 +374,7 @@ test("识别失败时返回 failed 槽位状态", () => {
       recognized: false,
       reason: "图片不清晰",
     }),
-    "retention_curve"
+    "retention_curve",
   );
 
   assert.deepEqual(result, {
@@ -390,36 +388,11 @@ test("识别失败时返回 failed 槽位状态", () => {
   });
 });
 
-test("通道开关解析：缺省、空配置、非法值都按百度兜底，只有显式 vision 才切回旧通道", () => {
-  assert.equal(parseOcrScreenshotChannel(null), "baidu");
-  assert.equal(parseOcrScreenshotChannel({ channel_settings: null }), "baidu");
-  assert.equal(parseOcrScreenshotChannel({ channel_settings: {} }), "baidu");
-  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "baidu" } }), "baidu");
-  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "chatgpt" } }), "baidu");
-  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "vision" } }), "vision");
-});
-
-test("通道解析异步读真实配置，读取失败按百度兜底保证识别链路不断", async () => {
-  const vision = await resolveOcrScreenshotChannel(async () => ({
-    channel_settings: { ocr_screenshot_channel: "vision" },
-  }));
-  assert.equal(vision, "vision");
-
-  const fallbackOnMissing = await resolveOcrScreenshotChannel(async () => null);
-  assert.equal(fallbackOnMissing, "baidu");
-
-  const fallbackOnError = await resolveOcrScreenshotChannel(async () => {
-    throw new Error("数据库连接失败");
-  });
-  assert.equal(fallbackOnError, "baidu");
-});
-
 test("渠道正文契约探针：只有可解析的 JSON 对象才算识别结果", () => {
   assert.equal(hasJsonObject('{"play_count":32100}'), true);
   assert.equal(hasJsonObject('```json\n{"play_count":32100}\n```'), true);
   assert.equal(hasJsonObject('思考过程…\n{"play_count":32100}'), true);
 
-  // 共享渠道「收下请求但不看图」时返回的说明文字，必须判为不符合契约
   assert.equal(hasJsonObject("I'm ready. Please provide the screenshot."), false);
   assert.equal(hasJsonObject("我理解了你的需求，请上传截图，我会严格返回 JSON。"), false);
   assert.equal(hasJsonObject(""), false);
@@ -428,10 +401,7 @@ test("渠道正文契约探针：只有可解析的 JSON 对象才算识别结�
   assert.equal(hasJsonObject("[1,2,3]"), false);
 });
 
-test("百度通道与看图通道都会把正文契约交给上游顺位链执行", () => {
-  // 契约由 channel 层执行：只要两处调用都传了 validateContent，坏渠道就会被顺位跳过。
-  const routeSource = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
-  const baiduSource = readFileSync(new URL("./baidu-channel.ts", import.meta.url), "utf8");
-  assert.match(routeSource, /validateContent: hasJsonObject/);
-  assert.match(baiduSource, /validateContent: hasJsonObject/);
+test("统一 OCR 调度器对 OpenAI 兼容渠道强制校验正文契约", () => {
+  const runnerSource = readFileSync(new URL("./ocr-runner.ts", import.meta.url), "utf8");
+  assert.match(runnerSource, /validateContent:\s*hasJsonObject/);
 });

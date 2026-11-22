@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
-import { AiChannelError, callAi, type AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import type { MutationObservation } from "@/lib/observed-mutation-result";
-import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
-import { runClairicAttemptWithBaiduFallback, runClairicOcrAttempt, type ClairicOrFallbackResult } from "./clairic-channel";
+import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
 import type { ClairicUsage } from "@/lib/clairic-ocr";
-import { fetchOcrChannelSettingsRow, resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 import { downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
-import { recordOcrRecognitionLog } from "./ocr-log";
-import { buildPromptByType } from "./ocr-prompts";
-import { hasJsonObject, parseOcrResponse, resolveKnownScreenshotType, type OcrErrorCode, type ParsedScreenshotResponse, type ScreenshotAssetRole, type ScreenshotType } from "./ocr-contract";
+import { recordOcrRecognitionLog, type OcrFallbackDetail } from "./ocr-log";
+import { OcrRunnerError, normalizeVisionDataUrl, runScreenshotOcr, type OcrRunnerTimings } from "./ocr-runner";
+import {
+  resolveKnownScreenshotType,
+  type OcrErrorCode,
+  type ScreenshotAssetRole,
+  type ScreenshotType,
+} from "./ocr-contract";
 
-// 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
+// 输出契约、解析函数与视觉压缩已下沉模块，这里再导出保持既有导入路径兼容
 export {
   getScreenshotTypeByAssetRole,
   hasJsonObject,
@@ -31,25 +32,21 @@ export type {
   ScreenshotType,
   ScreenshotAssetRole,
 } from "./ocr-contract";
-
-export type { OcrScreenshotChannel };
+export { normalizeVisionDataUrl };
 
 type OcrScreenshotDeps = {
   createClient: typeof createClient;
-  ocrChannelFetcher: typeof fetchOcrChannelSettingsRow;
-  callAi: typeof callAi; recordLog: typeof recordOcrRecognitionLog;
-  runClairicAttempt?: typeof runClairicOcrAttempt;
-  runBaiduAttempt?: typeof runBaiduOcrAttempt;
+  runOcr: typeof runScreenshotOcr;
+  recordLog: typeof recordOcrRecognitionLog;
 };
 
 export const defaultOcrScreenshotDeps: OcrScreenshotDeps = {
   createClient,
-  ocrChannelFetcher: fetchOcrChannelSettingsRow,
-  callAi, recordLog: recordOcrRecognitionLog,
+  runOcr: runScreenshotOcr,
+  recordLog: recordOcrRecognitionLog,
 };
 
-// Vercel 函数执行上限：识别走共享渠道，实测偶发 20 秒以上，函数上限声明 60 秒
-// （不声明则用平台默认值，可能先于下面 45 秒识别超时把请求掐断）
+// Vercel 函数执行上限：识别走算力池顺位链，总预算 60 秒
 export const maxDuration = 60;
 
 type ImagePayloadSuccess = {
@@ -62,19 +59,9 @@ type ImagePayloadSuccess = {
 type ScreenshotTypeSource = "explicit" | "asset_role";
 type ResolvedScreenshotType = { type: ScreenshotType; source: ScreenshotTypeSource };
 type ImagePayloadError = { error: string; errorCode?: OcrErrorCode; status?: number };
-
-type OcrTimings = {
-  download_ms?: number;
-  ocr_ms?: number;
-  clairic_ms?: number;
-  baidu_ms?: number;
-  structure_ms?: number;
-  parse_ms?: number;
-  total_ms: number;
-};
+type OcrTimings = OcrRunnerTimings & { total_ms: number };
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
-const MAX_VISION_IMAGE_DIMENSION = 2048;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "retention"];
 
@@ -97,95 +84,15 @@ function getOcrErrorMessage(errorCode: OcrErrorCode) {
   }
 }
 
-function getAiErrorCode(error: unknown): OcrErrorCode {
-  if (error instanceof AiChannelError) {
-    if (error.errorType === "timeout") return "AI_TIMEOUT";
-    if (error.errorType === "empty_response") return "AI_EMPTY_RESPONSE";
-    return "AI_CHANNEL_UNAVAILABLE";
-  }
-
+function getUnexpectedErrorCode(error: unknown): OcrErrorCode {
+  if (error instanceof OcrRunnerError) return error.errorCode;
   const message = error instanceof Error ? error.message : String(error);
   if (/超时|timeout/i.test(message)) return "AI_TIMEOUT";
+  if (/429|限流|rate/i.test(message)) return "RATE_LIMITED";
   if (/空正文|未返回有效内容|empty/i.test(message)) return "AI_EMPTY_RESPONSE";
+  if (/解析失败|parse_failed/i.test(message)) return "AI_PARSE_FAILED";
   return "AI_CHANNEL_UNAVAILABLE";
 }
-
-export async function runVisionOcrAttempt(
-  dataUrl: string,
-  screenshotType: ScreenshotType,
-  timings: Partial<OcrTimings>,
-  callAiImpl: typeof callAi,
-): Promise<OcrAttempt> {
-  const visionDataUrl = await normalizeVisionDataUrl(dataUrl);
-  const messages: AiMessage[] = [{
-    role: "user",
-    content: [
-      { type: "text", text: buildPromptByType(screenshotType) },
-      { type: "image_url", image_url: { url: visionDataUrl } },
-    ],
-  }];
-
-  const ocrStart = Date.now();
-  const aiResult = await callAiImpl({
-    messages,
-    maxTokens: 1000,
-    jsonMode: true,
-    // 单条 15 秒、整次 60 秒：主模型最多试 2 条（共 30 秒），至少留 30 秒给全局兜底模型。
-    // 上游快失败（404/503）本来就秒切，只有完全无响应时才会等满 15 秒。
-    timeoutMs: 15_000,
-    totalTimeoutMs: 60_000,
-    featureKey: "ocr_screenshot",
-    databaseOnly: true,
-    // 看图渠道里存在「收下请求但不看图」的坏渠道（回一段文字说明），
-    // 这类正文必须判为渠道失败并顺位下一个渠道，不能直接报「格式无法识别」
-    validateContent: hasJsonObject,
-  });
-  timings.ocr_ms = (timings.ocr_ms ?? 0) + Date.now() - ocrStart;
-
-  const parseStart = Date.now();
-  const parsed = parseOcrResponse(aiResult.content, screenshotType);
-  timings.parse_ms = (timings.parse_ms ?? 0) + Date.now() - parseStart;
-
-  return { parsed, channelName: aiResult.channelName ?? "vision", model: aiResult.model };
-}
-
-/**
- * API9 的 Gemini 视觉代理对长边超过 2048 的手机长截图会返回 200，
- * 但把图片当成无效数据交给模型。统一在视觉调用边界压缩超长图片，
- * 保留原图存储与百度通道输入，避免上传和其他 OCR 行为发生变化。
- */
-export async function normalizeVisionDataUrl(dataUrl: string): Promise<string> {
-  const commaIndex = dataUrl.indexOf(",");
-  if (commaIndex <= 0) return dataUrl;
-
-  const inputBuffer = Buffer.from(dataUrl.slice(commaIndex + 1), "base64");
-  if (inputBuffer.length === 0) return dataUrl;
-
-  const metadata = await sharp(inputBuffer).metadata();
-  const width = metadata.width ?? 0;
-  const height = metadata.height ?? 0;
-  if (Math.max(width, height) <= MAX_VISION_IMAGE_DIMENSION) {
-    return dataUrl;
-  }
-
-  const outputBuffer = await sharp(inputBuffer)
-    .resize({
-      width: MAX_VISION_IMAGE_DIMENSION,
-      height: MAX_VISION_IMAGE_DIMENSION,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-
-  return `data:image/jpeg;base64,${outputBuffer.toString("base64")}`;
-}
-
-type OcrAttempt = {
-  parsed: ParsedScreenshotResponse | null;
-  channelName: string;
-  model: string | null;
-};
 
 export async function buildOcrScreenshotResponse(
   request: NextRequest,
@@ -196,14 +103,15 @@ export async function buildOcrScreenshotResponse(
   const supabase = await deps.createClient();
   const timings: Partial<OcrTimings> = {};
   let logContext: {
+    ocrEntered?: boolean;
     assetRole?: ScreenshotAssetRole | null;
     screenshotType?: ScreenshotType | null;
     screenshotTypeSource?: ScreenshotTypeSource | null;
-    ocrChannel?: OcrScreenshotChannel | null;
+    protocol?: AiProviderProtocol | null;
     aiChannel?: string | null;
     aiModel?: string | null;
-    channelFallback?: { from: "clairic"; to: "baidu"; reason: string } | null;
     clairicUsage?: ClairicUsage | null;
+    fallbackDetail?: OcrFallbackDetail | null;
   } = {};
 
   const finish = async (
@@ -225,26 +133,35 @@ export async function buildOcrScreenshotResponse(
       screenshot_type_source: logContext.screenshotTypeSource ?? null,
       error_code: errorCode ?? null,
       timings,
-      channel: logContext.ocrChannel ?? null,
+      protocol: logContext.protocol ?? null,
       ai_channel: logContext.aiChannel ?? null,
       ai_model: logContext.aiModel ?? null,
-      ...(logContext.channelFallback ? { channel_fallback: logContext.channelFallback } : {}),
+      ...(logContext.fallbackDetail ? { fallback_detail: logContext.fallbackDetail } : {}),
       ...(logContext.clairicUsage ? { clairic_usage: logContext.clairicUsage } : {}),
     });
 
-    // 测速台账只记真正进入识别的请求（渠道已解析），401/输入错误不落账；await 插入保证 Vercel 冻结前落库，异常吞并不影响业务回执
-    if (logContext.ocrChannel) {
+    // 测速台账只记真正进入识别的请求，401/输入错误不落账；await 插入保证冻结前落库，异常吞并不影响业务回执
+    if (logContext.ocrEntered) {
       try {
         await deps.recordLog({
-          totalMs: timings.total_ms, ocrMs: timings.ocr_ms ?? (logContext.channelFallback ? timings.baidu_ms : timings.clairic_ms) ?? timings.baidu_ms ?? timings.clairic_ms ?? null,
-          downloadMs: timings.download_ms ?? null, channelName: logContext.aiChannel ?? null,
-          modelId: logContext.aiModel ?? null, screenshotType: logContext.screenshotType ?? null,
-          isSuccess: businessSucceeded, errorCode: errorCode ?? null, userId: userId ?? null,
+          totalMs: timings.total_ms,
+          ocrMs: timings.ocr_ms ?? timings.clairic_ms ?? null,
+          downloadMs: timings.download_ms ?? null,
+          channelName: logContext.aiChannel ?? null,
+          modelId: logContext.aiModel ?? null,
+          screenshotType: logContext.screenshotType ?? null,
+          isSuccess: businessSucceeded,
+          errorCode: errorCode ?? null,
+          userId: userId ?? null,
+          fallbackDetail: logContext.fallbackDetail ?? null,
         });
       } catch {}
     }
 
-    return appendObservedMutationResult(NextResponse.json({ request_id: observation.requestId, ...body, businessSucceeded }, { status }), observation);
+    return appendObservedMutationResult(
+      NextResponse.json({ request_id: observation.requestId, ...body, businessSucceeded }, { status }),
+      observation,
+    );
   };
 
   observation.mark("auth");
@@ -286,7 +203,6 @@ export async function buildOcrScreenshotResponse(
     const dataUrl = imagePayload.dataUrl;
     const resolvedScreenshotType = resolveScreenshotType(imagePayload);
     if (!resolvedScreenshotType) {
-      // 类型只由调用方的槽位决定，服务端不再按内容猜；没给类型就是调用方的错，不进识别、不落测速台账
       return await finish(
         { error: "缺少截图类型：screenshot_type 必须是 data 或 retention" },
         400,
@@ -297,57 +213,25 @@ export async function buildOcrScreenshotResponse(
     const screenshotType = resolvedScreenshotType.type;
     logContext = {
       ...logContext,
+      ocrEntered: true,
       screenshotType,
       screenshotTypeSource: resolvedScreenshotType.source,
     };
 
-    const ocrChannel = await resolveOcrScreenshotChannel(deps.ocrChannelFetcher);
-    logContext = { ...logContext, ocrChannel };
-
     try {
       observation.mark("read");
-      let parsed: ParsedScreenshotResponse | null;
-      if (ocrChannel === "clairic") {
-        const clairicResult: ClairicOrFallbackResult = await runClairicAttemptWithBaiduFallback(
-          { dataUrl, screenshotType, timings },
-          { runClairicAttempt: deps.runClairicAttempt, runBaiduAttempt: deps.runBaiduAttempt },
-        );
-        parsed = clairicResult.parsed;
-        logContext = {
-          ...logContext,
-          aiChannel: clairicResult.channelName,
-          aiModel: clairicResult.model,
-          channelFallback: clairicResult.fallback,
-          clairicUsage: clairicResult.clairicUsage,
-        };
-      } else {
-        const attempt =
-          ocrChannel === "baidu"
-            ? await (deps.runBaiduAttempt ?? runBaiduOcrAttempt)({ dataUrl, screenshotType, timings })
-            : await runVisionOcrAttempt(dataUrl, screenshotType, timings, deps.callAi);
-        parsed = attempt.parsed;
-        logContext = {
-          ...logContext,
-          aiChannel: attempt.channelName,
-          aiModel: attempt.model,
-        };
-      }
+      const result = await deps.runOcr({ dataUrl, screenshotType, timings });
+      timings.ocr_ms = result.ocrMs;
+      logContext = {
+        ...logContext,
+        protocol: result.protocol,
+        aiChannel: result.channelName,
+        aiModel: result.model,
+        clairicUsage: result.usage,
+        fallbackDetail: result.fallbackDetail,
+      };
 
-      if (!parsed) {
-        const errorCode: OcrErrorCode = "AI_PARSE_FAILED";
-        return await finish(
-          {
-            error: getOcrErrorMessage(errorCode),
-            error_code: errorCode,
-            timings,
-          },
-          500,
-          "parse_error",
-          user.id,
-          errorCode,
-        );
-      }
-
+      const parsed = result.parsed;
       const parsedScreenshotType = parsed.screenshot_type;
       const responseSource = resolvedScreenshotType.source;
       logContext = {
@@ -384,7 +268,16 @@ export async function buildOcrScreenshotResponse(
         user.id,
       );
     } catch (error) {
-      const errorCode = mapBaiduErrorToOcrCode(error) ?? getAiErrorCode(error);
+      const errorCode = getUnexpectedErrorCode(error);
+      if (error instanceof OcrRunnerError) {
+        timings.ocr_ms = error.ocrMs;
+        logContext = {
+          ...logContext,
+          aiChannel: error.lastChannelName,
+          aiModel: error.lastModel,
+          fallbackDetail: error.attempts.length > 0 ? { attempts: error.attempts } : null,
+        };
+      }
       return await finish(
         {
           error: getOcrErrorMessage(errorCode),
@@ -392,7 +285,7 @@ export async function buildOcrScreenshotResponse(
           timings,
         },
         500,
-        "ai_error",
+        errorCode === "AI_PARSE_FAILED" ? "parse_error" : "ai_error",
         user.id,
         errorCode,
       );
@@ -430,7 +323,7 @@ async function parseMultipartPayload(request: NextRequest): Promise<ImagePayload
 
 async function parseJsonPayload(
   request: NextRequest,
-  userId: string
+  userId: string,
 ): Promise<ImagePayloadSuccess | ImagePayloadError> {
   const body = await request.json();
 
@@ -456,7 +349,6 @@ async function parseJsonPayload(
 
   // 保留旧版 JSON data URL 兼容
   const image = typeof body?.image === "string" ? body.image.trim() : "";
-
   if (!image) {
     return { error: "图片为空、损坏或请求格式不正确" };
   }
@@ -508,7 +400,7 @@ async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error:
 
 async function downloadImageFromStorage(
   bucket: string,
-  path: string
+  path: string,
 ): Promise<{ dataUrl: string } | { error: string }> {
   try {
     if (bucket !== "submission-screenshots") return { error: "图片存储位置不受支持" };
@@ -533,7 +425,6 @@ async function downloadImageFromStorage(
     return { error: message };
   }
 }
-
 
 function inferMimeTypeFromPath(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();

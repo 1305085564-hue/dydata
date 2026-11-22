@@ -109,7 +109,7 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 // 整条顺位链的总耗时上界：无论后台配了多少个渠道，单次调用都不会超过这个时间
 const DEFAULT_TOTAL_TIMEOUT_MS = 30_000;
 // 剩余预算低于此值就不再开新的渠道尝试，避免最后一个渠道刚起步就被掐断
-const MIN_CHANNEL_ATTEMPT_BUDGET_MS = 2_000;
+export const MIN_CHANNEL_ATTEMPT_BUDGET_MS = 2_000;
 const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_MODEL = DEFAULT_AI_MODEL;
 function normalizeResponseContent(content: unknown): string | null {
@@ -364,10 +364,13 @@ export function assertContentContract(
   );
 }
 
-async function sendToChannel(
+export async function sendToChannel(
   channel: ChannelConfig,
   options: AiRequestOptions,
 ): Promise<AiResponse> {
+  if (channel.protocol === "cloudflare_clairic") {
+    throw new AiChannelError("Cloudflare Clairic 仅支持截图识别专项调用", "unsupported_protocol", true);
+  }
   const model = resolveModel(channel, options);
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const startedAt = Date.now();
@@ -448,7 +451,7 @@ async function sendToChannel(
   }
 }
 
-async function markChannelSuccess(channel: ChannelConfig) {
+export async function markChannelSuccess(channel: ChannelConfig) {
   try {
     if (channel.source === "provider_key_model" && channel.providerKeyId) {
       const supabase = getServiceSupabaseClient();
@@ -465,7 +468,7 @@ async function markChannelSuccess(channel: ChannelConfig) {
   }
 }
 
-async function markChannelFailure(channel: ChannelConfig, error: AiChannelError) {
+export async function markChannelFailure(channel: ChannelConfig, error: AiChannelError) {
   if (channel.source === "provider_key_model" && channel.providerKeyId) {
     const supabase = getServiceSupabaseClient();
     if (!supabase) return;

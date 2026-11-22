@@ -33,6 +33,9 @@ export function getModelDisplayName(modelId: string): string {
   const trimmed = modelId.trim();
   if (!trimmed) return "未知模型";
   const namespacedId = trimmed.split("/").pop() || trimmed;
+  if (namespacedId.toLowerCase() === "clairic") {
+    return "Cloudflare Clairic";
+  }
   const dateMatch = namespacedId.match(/[-_](\d{8}|\d{6})$/);
   const dateSuffix = dateMatch?.[1]
     ? dateMatch[1].length === 8

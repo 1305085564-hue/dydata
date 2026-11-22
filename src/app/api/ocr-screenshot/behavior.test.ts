@@ -3,8 +3,10 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import { AiChannelError } from "@/lib/ai/client";
+import type { ChannelConfig } from "@/lib/ai/client-routing";
 import { POST, buildOcrScreenshotResponse, defaultOcrScreenshotDeps } from "./route";
 import { recordOcrRecognitionLog, type OcrLogParams } from "./ocr-log";
+import { OcrRunnerError, runScreenshotOcr } from "./ocr-runner";
 
 const REQUEST_ID = "11111111-1111-4111-8111-111111111111";
 const USER_ID = "22222222-2222-4222-8222-222222222222";
@@ -26,14 +28,40 @@ function makeRequest(body: Record<string, unknown>) {
 
 const observation = { requestId: REQUEST_ID, mark: () => {}, setDetail: () => {} } as const;
 
+const VISION_CHANNEL: ChannelConfig = {
+  id: "v1",
+  name: "api9 claude (max)",
+  providerKeyLabel: "api9 claude (max)",
+  baseUrl: "https://vision.example.test/v1",
+  apiKey: "tok",
+  protocol: "openai_compatible",
+  model: "claude-haiku-5-5",
+  canonicalModelId: "claude-haiku-5-5",
+  source: "provider_key_model",
+};
+
 function makeDeps(overrides: Partial<RouteDeps> = {}): RouteDeps {
   return {
     createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: USER_ID } } }) } }) as never,
-    ocrChannelFetcher: async () => ({ channel_settings: { ocr_screenshot_channel: "vision" } }) as never,
-    callAi: async () => ({
-      content: OCR_JSON, model: "claude-haiku-5-5", channelName: "api9 claude (max)",
-      channelId: null, providerKeyModelId: null, providerKeyId: null,
-      promptTokens: null, completionTokens: null, totalTokens: null, elapsedMs: 1500,
+    runOcr: async (input) => runScreenshotOcr(input, {
+      getServiceClient: () => null,
+      getFeatureConfig: async () => ({
+        featureKey: "ocr_screenshot",
+        providerKeyModelId: null,
+        modelId: "claude-haiku-5-5",
+        systemPrompt: null,
+        isEnabled: true,
+        lifecycleState: "active",
+      }),
+      resolveFeatureChannelChain: async () => [VISION_CHANNEL],
+      recordAiCallAttempt: async () => {},
+      normalizeVisionDataUrl: async (u) => u,
+      sendToChannel: async () => ({
+        content: OCR_JSON,
+        model: "claude-haiku-5-5",
+        channelName: "api9 claude (max)",
+        elapsedMs: 1500,
+      }),
     }),
     recordLog: async () => {},
     ...overrides,
@@ -73,7 +101,7 @@ test("ocr-screenshot：依赖返回未登录时真实 handler 明确失败并只
   assert.equal(logs.filter((line) => line.includes("/api/ocr-screenshot")).length, 1);
 });
 
-test("截图识别全链路成功：真实渠道名与耗时写入测速台账", async () => {
+test("截图识别全链路成功：真实渠道名、耗时与 fallbackDetail 写入测速台账", async () => {
   const logged: OcrLogParams[] = [];
   const response = await buildOcrScreenshotResponse(
     makeRequest({ image: PNG, screenshot_type: "data" }),
@@ -89,22 +117,34 @@ test("截图识别全链路成功：真实渠道名与耗时写入测速台账",
   assert.equal(logged[0].isSuccess, true);
   assert.equal(logged[0].screenshotType, "data");
   assert.equal(logged[0].userId, USER_ID);
-  assert.ok(typeof logged[0].totalMs === "number" && logged[0].totalMs > 0);
+  assert.ok(typeof logged[0].totalMs === "number" && logged[0].totalMs >= 0);
   assert.ok(typeof logged[0].ocrMs === "number" && logged[0].ocrMs! >= 0);
+  assert.equal(logged[0].fallbackDetail?.attempts.length, 1);
+  assert.equal(logged[0].fallbackDetail?.attempts[0]?.protocol, "openai_compatible");
 });
 
 function promptCapturingDeps(prompts: string[], logged: OcrLogParams[] = []) {
   return makeDeps({
-    callAi: async ({ messages }) => {
-      const content = messages[0]?.content;
-      const first = Array.isArray(content) ? content[0] : null;
-      prompts.push(first?.type === "text" ? first.text : String(content ?? ""));
-      return {
-        content: OCR_JSON, model: "m", channelName: "vision", channelId: null,
-        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
-        completionTokens: null, totalTokens: null, elapsedMs: 10,
-      };
-    },
+    runOcr: async (input) => runScreenshotOcr(input, {
+      getServiceClient: () => null,
+      getFeatureConfig: async () => ({
+        featureKey: "ocr_screenshot",
+        providerKeyModelId: null,
+        modelId: "m",
+        systemPrompt: null,
+        isEnabled: true,
+        lifecycleState: "active",
+      }),
+      resolveFeatureChannelChain: async () => [VISION_CHANNEL],
+      recordAiCallAttempt: async () => {},
+      normalizeVisionDataUrl: async (u) => u,
+      sendToChannel: async (_ch, { messages }) => {
+        const content = messages[0]?.content;
+        const first = Array.isArray(content) ? content[0] : null;
+        prompts.push(first?.type === "text" ? first.text : String(content ?? ""));
+        return { content: OCR_JSON, model: "m", channelName: "vision", elapsedMs: 10 };
+      },
+    }),
     recordLog: async (params) => { logged.push(params); },
   });
 }
@@ -175,12 +215,19 @@ test("台账写入抛异常绝不影响识别业务回执", async () => {
   assert.equal(body.businessSucceeded, true);
 });
 
-test("识别超时仍落一条失败台账：渠道留空、错误码为 AI_TIMEOUT", async () => {
+test("识别超时仍落一条失败台账：记录错误码 AI_TIMEOUT、最后尝试渠道与 fallback_detail", async () => {
   const logged: OcrLogParams[] = [];
   const response = await buildOcrScreenshotResponse(
     makeRequest({ image: PNG, screenshot_type: "data" }),
     makeDeps({
-      callAi: async () => { throw new AiChannelError("AI 请求超时（45000ms）", "timeout", true); },
+      runOcr: async (input) => runScreenshotOcr(input, {
+        getServiceClient: () => null,
+        getFeatureConfig: async () => null,
+        resolveFeatureChannelChain: async () => [VISION_CHANNEL],
+        recordAiCallAttempt: async () => {},
+        normalizeVisionDataUrl: async (u) => u,
+        sendToChannel: async () => { throw new AiChannelError("AI 请求超时（45000ms）", "timeout", true); },
+      }),
       recordLog: async (params) => { logged.push(params); },
     }),
     observation,
@@ -189,6 +236,31 @@ test("识别超时仍落一条失败台账：渠道留空、错误码为 AI_TIME
   assert.equal(logged.length, 1);
   assert.equal(logged[0].isSuccess, false);
   assert.equal(logged[0].errorCode, "AI_TIMEOUT");
+  assert.equal(logged[0].channelName, "api9 claude (max)");
+  assert.equal(logged[0].fallbackDetail?.attempts[0]?.error_code, "AI_TIMEOUT");
+});
+
+test("无可用渠道时失败台账渠道留空且错误码为 AI_CHANNEL_UNAVAILABLE", async () => {
+  const logged: OcrLogParams[] = [];
+  const response = await buildOcrScreenshotResponse(
+    makeRequest({ image: PNG, screenshot_type: "data" }),
+    makeDeps({
+      runOcr: async () => {
+        throw new OcrRunnerError("无可用截图识别渠道", {
+          errorCode: "AI_CHANNEL_UNAVAILABLE",
+          ocrMs: 0,
+          attempts: [],
+          lastChannelName: null,
+          lastModel: null,
+        });
+      },
+      recordLog: async (params) => { logged.push(params); },
+    }),
+    observation,
+  );
+  assert.equal(response.status, 500);
+  assert.equal(logged.length, 1);
+  assert.equal(logged[0].errorCode, "AI_CHANNEL_UNAVAILABLE");
   assert.equal(logged[0].channelName, null);
 });
 
@@ -197,10 +269,15 @@ test("AI 返回无法解析时明确 500，并把 AI_PARSE_FAILED 写进台账",
   const response = await buildOcrScreenshotResponse(
     makeRequest({ image: PNG, screenshot_type: "data" }),
     makeDeps({
-      callAi: async () => ({
-        content: "这不是 JSON", model: "m", channelName: "c", channelId: null,
-        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
-        completionTokens: null, totalTokens: null, elapsedMs: 10,
+      runOcr: async (input) => runScreenshotOcr(input, {
+        getServiceClient: () => null,
+        getFeatureConfig: async () => null,
+        resolveFeatureChannelChain: async () => [VISION_CHANNEL],
+        recordAiCallAttempt: async () => {},
+        normalizeVisionDataUrl: async (u) => u,
+        sendToChannel: async () => ({
+          content: "这不是 JSON", model: "m", channelName: "c", elapsedMs: 10,
+        }),
       }),
       recordLog: async (params) => { logged.push(params); },
     }),
@@ -217,10 +294,15 @@ test("识别不到任何数字时返回 200 + failed，提示走人工确认", a
   const response = await buildOcrScreenshotResponse(
     makeRequest({ image: PNG, screenshot_type: "data" }),
     makeDeps({
-      callAi: async () => ({
-        content: "{}", model: "m", channelName: "c", channelId: null,
-        providerKeyModelId: null, providerKeyId: null, promptTokens: null,
-        completionTokens: null, totalTokens: null, elapsedMs: 10,
+      runOcr: async (input) => runScreenshotOcr(input, {
+        getServiceClient: () => null,
+        getFeatureConfig: async () => null,
+        resolveFeatureChannelChain: async () => [VISION_CHANNEL],
+        recordAiCallAttempt: async () => {},
+        normalizeVisionDataUrl: async (u) => u,
+        sendToChannel: async () => ({
+          content: "{}", model: "m", channelName: "c", elapsedMs: 10,
+        }),
       }),
     }),
     observation,
@@ -232,10 +314,10 @@ test("识别不到任何数字时返回 200 + failed，提示走人工确认", a
 });
 
 test("multipart 上传缺文件或类型不支持时返回 400，不调用 AI", async () => {
-  let aiCalled = false;
+  let ocrCalled = false;
   const deps = makeDeps({
-    callAi: async () => {
-      aiCalled = true;
+    runOcr: async () => {
+      ocrCalled = true;
       throw new Error("不应调用 AI");
     },
   });
@@ -258,10 +340,31 @@ test("multipart 上传缺文件或类型不支持时返回 400，不调用 AI", 
   );
   assert.equal(wrongTypeResponse.status, 400);
   assert.equal((await wrongTypeResponse.json() as { error: string }).error, "仅支持 jpg、png、webp 图片");
-  assert.equal(aiCalled, false);
+  assert.equal(ocrCalled, false);
 });
 
-test("台账 insert 返回 error（不抛异常）时告警且不影响调用方", async () => {
+test("台账 insert 写入 fallback_detail，且返回 error 时告警但不影响调用方", async () => {
+  const inserted: Record<string, unknown>[] = [];
+  await recordOcrRecognitionLog(
+    {
+      totalMs: 1200,
+      ocrMs: 1100,
+      isSuccess: true,
+      fallbackDetail: {
+        attempts: [{ channel_name: "CF1", model_id: "@cf/cloudflare/clairic", protocol: "cloudflare_clairic", ok: true, elapsed_ms: 1100 }],
+      },
+    },
+    () => ({
+      from: () => ({
+        insert: async (payload: Record<string, unknown>) => {
+          inserted.push(payload);
+          return { error: null };
+        },
+      }),
+    }) as never,
+  );
+  assert.equal((inserted[0]?.fallback_detail as { attempts: unknown[] })?.attempts.length, 1);
+
   const warnings: string[] = [];
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));

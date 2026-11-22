@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { NextRequest } from "next/server";
+import { MemorySupabase } from "./ai-config.behavior.fixture";
 import { boundedInteger, buildAiConfigResponse, buildProbeRequestBody } from "./route";
 
 test("视觉模型试跑发送图片消息，文本连通测试保持文本消息", () => {
@@ -130,7 +131,6 @@ test("AI 功能总控只接受系统目录中的保存、归档和恢复动作",
 });
 
 test("路由入口保持 Next 框架签名，测试注入口只挂在独立函数上", () => {
-  // 回归锁：POST 的第二参是框架传进来的 context，不能被测试注入口占用（历史改法见 6197b9f2）
   const postSignature = (source.match(/export async function POST\([^)]*\)/) ?? [""])[0];
   assert.equal(postSignature, "export async function POST(request: NextRequest)");
   assert.match(source, /export async function buildAiConfigResponse\(/);
@@ -321,124 +321,148 @@ test("模型顺位交换：中间仅隔失效渠道时跳过交换，失效端�
   assert.equal(endpoint.rpcCalls.length, 0);
 });
 
-test("保存 ocr_screenshot 通道支持 clairic，且 test_key 按通道分流至 probeClairicOcr", async () => {
-  const bindings: Record<string, unknown>[] = [];
-  const fake = {
-    from(table: string) {
-      let filterKey: string | null = null;
-      const query = {
-        select() { return query; },
-        order() { return query; },
-        eq(field: string, value: unknown) {
-          if (field === "feature_key") filterKey = String(value);
-          return query;
-        },
-        async upsert(patch: Record<string, unknown>) {
-          const idx = bindings.findIndex((b) => b.feature_key === patch.feature_key);
-          if (idx >= 0) bindings[idx] = { ...bindings[idx], ...patch };
-          else bindings.push({ id: "binding-ocr", ...patch });
-          return { error: null };
-        },
-        then(resolve: (value: unknown) => unknown) {
-          if (table === "ai_feature_bindings") {
-            const matched = filterKey ? bindings.filter((b) => b.feature_key === filterKey) : bindings;
-            return Promise.resolve({ data: matched, error: null }).then(resolve);
-          }
-          return Promise.resolve({ data: [], error: null }).then(resolve);
-        },
-      };
-      return query;
-    },
-  };
-
-  const actor = {
+test("Clairic 协议探测与入池建渠、能力隔离（仅限 ocr_screenshot）、及按绑定模型试跑", async () => {
+  const db = new MemorySupabase({
+    ai_providers: [],
+    ai_provider_keys: [],
+    ai_provider_key_models: [],
+    ai_feature_bindings: [],
+  });
+  const actorDeps = {
     requireSystemActor: async () => ({
-      supabase: fake as never,
+      supabase: db as never,
       actor: { userId: "admin-1", role: "owner" } as never,
     }),
-    createAdminClient: () => fake as never,
+    createAdminClient: () => db as never,
   };
 
-  // 1. save_feature_control 保存 clairic
-  const saveRes = await buildAiConfigResponse(
+  // 1. probe_provider_models with protocol=cloudflare_clairic
+  const prevFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    assert.equal(
+      String(input),
+      "https://api.cloudflare.com/client/v4/accounts/acc-1/ai/run/@cf/cloudflare/clairic",
+    );
+    return Response.json({ success: true, result: { answers: { probe_text: { value: null, confidence: 0.99, p_null: 0.99 } } } });
+  };
+  try {
+    const probeRes = await buildAiConfigResponse(
+      new NextRequest("http://localhost/api/admin/ai-config", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "probe_provider_models",
+          data: {
+            protocol: "cloudflare_clairic",
+            base_url: "https://api.cloudflare.com/client/v4/accounts/acc-1/ai/run/@cf/cloudflare/clairic/",
+            api_key: "cf-tok-1",
+          },
+        }),
+      }),
+      actorDeps,
+    );
+    assert.equal(probeRes.status, 200);
+    const probeBody = await probeRes.json() as { modelIds: string[]; upstreamModelIds: string[] };
+    assert.deepEqual(probeBody.modelIds, ["clairic"]);
+    assert.deepEqual(probeBody.upstreamModelIds, ["@cf/cloudflare/clairic"]);
+
+    // 2. create entity=key with protocol=cloudflare_clairic -> normalizes URL and creates provider/key/model
+    const createRes = await buildAiConfigResponse(
+      new NextRequest("http://localhost/api/admin/ai-config", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          entity: "key",
+          data: {
+            protocol: "cloudflare_clairic",
+            base_url: "https://api.cloudflare.com/client/v4/accounts/acc-1/ai/run/",
+            api_key: "cf-tok-1",
+            label: "Clairic 主账号",
+            selected_model_ids: ["@cf/cloudflare/clairic"],
+          },
+        }),
+      }),
+      actorDeps,
+    );
+    assert.equal(createRes.status, 200);
+  } finally {
+    globalThis.fetch = prevFetch;
+  }
+  const rpcCall = db.rpcCalls.find((c) => c.fn === "create_ai_config_channel");
+  assert.equal(rpcCall?.args.p_protocol, "cloudflare_clairic");
+  assert.equal(db.tables.ai_providers[0]?.protocol, "cloudflare_clairic");
+  assert.equal(db.tables.ai_provider_key_models[0]?.model_id, "@cf/cloudflare/clairic");
+  assert.equal(db.tables.ai_provider_key_models[0]?.canonical_model_id, "clairic");
+  assert.equal(db.tables.ai_provider_key_models[0]?.display_name, "Cloudflare Clairic");
+
+  // 3. 能力隔离：clairic 禁止绑定给 default 与对话功能（400）
+  const blockDefault = await buildAiConfigResponse(
+    new NextRequest("http://localhost/api/admin/ai-config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "set_global_default_model", data: { model_id: "clairic" } }),
+    }),
+    actorDeps,
+  );
+  assert.equal(blockDefault.status, 400);
+  assert.match((await blockDefault.json()).error, /全局默认/);
+
+  const blockChat = await buildAiConfigResponse(
     new NextRequest("http://localhost/api/admin/ai-config", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         action: "save_feature_control",
-        data: { feature_key: "ocr_screenshot", ocr_screenshot_channel: "clairic" },
+        data: { feature_key: "content_tools", model_id: "@cf/cloudflare/clairic" },
       }),
     }),
-    actor,
+    actorDeps,
   );
-  assert.equal(saveRes.status, 200);
-  const savedBundle = (await saveRes.json()) as {
-    featureControls: Array<{ key: string; ocrChannel: string }>;
-  };
-  assert.equal(
-    savedBundle.featureControls.find((c) => c.key === "ocr_screenshot")?.ocrChannel,
-    "clairic",
-  );
+  assert.equal(blockChat.status, 400);
+  assert.match((await blockChat.json()).error, /截图识别/);
 
-  // 2. test_key 未显式传通道时从库里读到 clairic -> 走 probeClairicOcr
+  // 4. 允许绑定到 ocr_screenshot，且 test_key 走 probeClairicOcr
+  const bindOcr = await buildAiConfigResponse(
+    new NextRequest("http://localhost/api/admin/ai-config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "save_feature_control",
+        data: { feature_key: "ocr_screenshot", model_id: "clairic" },
+      }),
+    }),
+    actorDeps,
+  );
+  assert.equal(bindOcr.status, 200);
+  const bindBody = await bindOcr.json() as { featureControls: Array<{ key: string; modelId: string | null }> };
+  assert.equal(bindBody.featureControls.find((c) => c.key === "ocr_screenshot")?.modelId, "clairic");
+
   let clairicProbeCount = 0;
-  let visionProbeCount = 0;
-  const probeFromDbRes = await buildAiConfigResponse(
+  const testClairicRes = await buildAiConfigResponse(
     new NextRequest("http://localhost/api/admin/ai-config", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "test_key", data: { feature_key: "ocr_screenshot" } }),
     }),
     {
-      ...actor,
-      probeClairicOcr: async () => {
+      ...actorDeps,
+      probeClairicOcr: async (input) => {
         clairicProbeCount += 1;
+        assert.equal(input.apiKey, "cf-tok-1");
         return {
           ok: true,
-          latencyMs: 320,
+          latencyMs: 280,
           model: "@cf/cloudflare/clairic",
-          channelName: "cloudflare-clairic",
-          channelLabel: "Cloudflare Clairic",
+          channelName: "https://api.cloudflare.com/client/v4/accounts/acc-1/ai/run",
+          channelLabel: "Clairic 主账号",
         };
       },
       probeAiFeature: async () => {
-        visionProbeCount += 1;
-        throw new Error("不应调用 vision 探针");
+        throw new Error("绑定 clairic 时不应调用视觉探针");
       },
     },
   );
-  assert.equal(probeFromDbRes.status, 200);
+  assert.equal(testClairicRes.status, 200);
   assert.equal(clairicProbeCount, 1);
-  assert.equal(visionProbeCount, 0);
-  const probeFromDbBody = (await probeFromDbRes.json()) as {
-    testResult: { ok: boolean; model: string; channelName: string; channelLabel: string };
-  };
-  assert.equal(probeFromDbBody.testResult.ok, true);
-  assert.equal(probeFromDbBody.testResult.model, "@cf/cloudflare/clairic");
-  assert.equal(probeFromDbBody.testResult.channelName, "cloudflare-clairic");
-  assert.equal(probeFromDbBody.testResult.channelLabel, "Cloudflare Clairic");
-
-  // 3. 显式传 ocr_screenshot_channel: "vision" 时切回 probeAiFeature
-  const probeVisionRes = await buildAiConfigResponse(
-    new NextRequest("http://localhost/api/admin/ai-config", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "test_key",
-        data: { feature_key: "ocr_screenshot", ocr_screenshot_channel: "vision" },
-      }),
-    }),
-    {
-      ...actor,
-      probeClairicOcr: async () => {
-        throw new Error("显式传 vision 时不应走 Clairic 探针");
-      },
-      probeAiFeature: async () => {
-        visionProbeCount += 1;
-        return { content: '{"number":"427"}', model: "gemini-2.5-flash", channelName: "vision-ch", elapsedMs: 50 };
-      },
-    },
-  );
-  assert.equal(probeVisionRes.status, 200);
-  assert.equal(visionProbeCount, 1);
 });
