@@ -60,7 +60,7 @@ test("功能总控以代码目录为准，并把内部绑定合并成业务可�
   assert.equal(structure?.ocrChannel, "baidu");
 });
 
-test("通道开关缺省或非法值都按百度兜底，不出现第三种状态", () => {
+test("通道开关支持 clairic，缺省或非法值按百度兜底", () => {
   const [missing, empty, invalid] = buildAiFeatureControls([
     {
       id: "binding-1",
@@ -132,4 +132,23 @@ test("没有专属绑定的正式功能仍显示自动策略，不要求管理�
   assert.equal(control?.bindingId, null);
   assert.equal(control?.isEnabled, true);
   assert.equal(control?.lifecycleState, "active");
+});
+
+test("通道开关配置为 clairic 时，featureControls 原样透出 clairic", () => {
+  const controls = buildAiFeatureControls([
+    {
+      id: "binding-clairic",
+      feature_key: "ocr_screenshot",
+      provider_key_model_id: null,
+      system_prompt: null,
+      output_token_limit: 3600,
+      context_message_limit: 30,
+      channel_settings: { ocr_screenshot_channel: "clairic" },
+      is_enabled: true,
+      lifecycle_state: "active",
+      archived_at: null,
+      archived_reason: null,
+    },
+  ]);
+  assert.equal(controls.find((item) => item.key === "ocr_screenshot")?.ocrChannel, "clairic");
 });

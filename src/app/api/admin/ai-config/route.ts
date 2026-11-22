@@ -36,6 +36,8 @@ import {
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { auditRollbackMessage } from "@/lib/audit-log";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
+import { parseOcrChannelValue, parseOcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
+import { probeClairicOcr } from "@/lib/clairic-ocr";
 
 type AiConfigEntity =
   | "provider"
@@ -345,10 +347,6 @@ function requireManageableBusinessFeature(data: Record<string, unknown>) {
   return feature;
 }
 
-function parseOcrChannelSetting(value: unknown): "baidu" | "vision" {
-  return value === "vision" ? "vision" : "baidu";
-}
-
 async function saveFeatureControl(supabase: SupabaseClient, data: Record<string, unknown>) {
   const feature = requireManageableBusinessFeature(data);
   const patch: Record<string, unknown> = {
@@ -377,7 +375,7 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
   }
   if (feature.key === "ocr_screenshot") {
     patch.channel_settings = {
-      ocr_screenshot_channel: parseOcrChannelSetting(data.ocr_screenshot_channel),
+      ocr_screenshot_channel: parseOcrChannelValue(data.ocr_screenshot_channel),
     };
   }
   const { error } = await supabase.from("ai_feature_bindings").upsert(patch, { onConflict: "feature_key" });
@@ -414,7 +412,7 @@ export async function GET() {
 
 export async function buildAiConfigResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; createAdminClient?: typeof createAdminClient } = { requireSystemActor }
+  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; probeClairicOcr?: typeof probeClairicOcr; createAdminClient?: typeof createAdminClient } = { requireSystemActor }
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -560,6 +558,20 @@ export async function buildAiConfigResponse(
     try {
       const data = asRecord(body.data);
       if (data.feature_key === "ocr_screenshot") {
+        const requestedChannel = data.ocr_screenshot_channel !== undefined
+          ? parseOcrChannelValue(data.ocr_screenshot_channel)
+          : await (async () => {
+              const { data: bindingRows } = await auth.supabase
+                .from("ai_feature_bindings")
+                .select("channel_settings")
+                .eq("feature_key", "ocr_screenshot");
+              const row = Array.isArray(bindingRows) ? bindingRows[0] : bindingRows;
+              return parseOcrScreenshotChannel((row ?? null) as { channel_settings?: Record<string, unknown> | null } | null);
+            })();
+        if (requestedChannel === "clairic") {
+          const testResult = await (deps.probeClairicOcr ?? probeClairicOcr)();
+          return NextResponse.json({ ...await loadAiConfig(auth.supabase), testResult });
+        }
         const started = Date.now();
         let result: Awaited<ReturnType<typeof probeAiFeature>> | null = null;
         let message = "截图识别试跑失败";

@@ -6,6 +6,7 @@ import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
+import type { OcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
 import { presentError } from "@/lib/ai-config/presentation";
 
 export const AI_MODEL_BATCH_TIMEOUT_MS = 120_000;
@@ -189,7 +190,7 @@ export type AiFeatureControl = {
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
-  ocrChannel: "baidu" | "vision";
+  ocrChannel: OcrScreenshotChannel;
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
   archivedAt: string | null;

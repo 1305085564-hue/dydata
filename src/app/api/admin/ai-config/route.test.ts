@@ -320,3 +320,125 @@ test("模型顺位交换：中间仅隔失效渠道时跳过交换，失效端�
   assert.match((await endpointRes.json()).error, /不可调度/);
   assert.equal(endpoint.rpcCalls.length, 0);
 });
+
+test("保存 ocr_screenshot 通道支持 clairic，且 test_key 按通道分流至 probeClairicOcr", async () => {
+  const bindings: Record<string, unknown>[] = [];
+  const fake = {
+    from(table: string) {
+      let filterKey: string | null = null;
+      const query = {
+        select() { return query; },
+        order() { return query; },
+        eq(field: string, value: unknown) {
+          if (field === "feature_key") filterKey = String(value);
+          return query;
+        },
+        async upsert(patch: Record<string, unknown>) {
+          const idx = bindings.findIndex((b) => b.feature_key === patch.feature_key);
+          if (idx >= 0) bindings[idx] = { ...bindings[idx], ...patch };
+          else bindings.push({ id: "binding-ocr", ...patch });
+          return { error: null };
+        },
+        then(resolve: (value: unknown) => unknown) {
+          if (table === "ai_feature_bindings") {
+            const matched = filterKey ? bindings.filter((b) => b.feature_key === filterKey) : bindings;
+            return Promise.resolve({ data: matched, error: null }).then(resolve);
+          }
+          return Promise.resolve({ data: [], error: null }).then(resolve);
+        },
+      };
+      return query;
+    },
+  };
+
+  const actor = {
+    requireSystemActor: async () => ({
+      supabase: fake as never,
+      actor: { userId: "admin-1", role: "owner" } as never,
+    }),
+    createAdminClient: () => fake as never,
+  };
+
+  // 1. save_feature_control 保存 clairic
+  const saveRes = await buildAiConfigResponse(
+    new NextRequest("http://localhost/api/admin/ai-config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "save_feature_control",
+        data: { feature_key: "ocr_screenshot", ocr_screenshot_channel: "clairic" },
+      }),
+    }),
+    actor,
+  );
+  assert.equal(saveRes.status, 200);
+  const savedBundle = (await saveRes.json()) as {
+    featureControls: Array<{ key: string; ocrChannel: string }>;
+  };
+  assert.equal(
+    savedBundle.featureControls.find((c) => c.key === "ocr_screenshot")?.ocrChannel,
+    "clairic",
+  );
+
+  // 2. test_key 未显式传通道时从库里读到 clairic -> 走 probeClairicOcr
+  let clairicProbeCount = 0;
+  let visionProbeCount = 0;
+  const probeFromDbRes = await buildAiConfigResponse(
+    new NextRequest("http://localhost/api/admin/ai-config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "test_key", data: { feature_key: "ocr_screenshot" } }),
+    }),
+    {
+      ...actor,
+      probeClairicOcr: async () => {
+        clairicProbeCount += 1;
+        return {
+          ok: true,
+          latencyMs: 320,
+          model: "@cf/cloudflare/clairic",
+          channelName: "cloudflare-clairic",
+          channelLabel: "Cloudflare Clairic",
+        };
+      },
+      probeAiFeature: async () => {
+        visionProbeCount += 1;
+        throw new Error("不应调用 vision 探针");
+      },
+    },
+  );
+  assert.equal(probeFromDbRes.status, 200);
+  assert.equal(clairicProbeCount, 1);
+  assert.equal(visionProbeCount, 0);
+  const probeFromDbBody = (await probeFromDbRes.json()) as {
+    testResult: { ok: boolean; model: string; channelName: string; channelLabel: string };
+  };
+  assert.equal(probeFromDbBody.testResult.ok, true);
+  assert.equal(probeFromDbBody.testResult.model, "@cf/cloudflare/clairic");
+  assert.equal(probeFromDbBody.testResult.channelName, "cloudflare-clairic");
+  assert.equal(probeFromDbBody.testResult.channelLabel, "Cloudflare Clairic");
+
+  // 3. 显式传 ocr_screenshot_channel: "vision" 时切回 probeAiFeature
+  const probeVisionRes = await buildAiConfigResponse(
+    new NextRequest("http://localhost/api/admin/ai-config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "test_key",
+        data: { feature_key: "ocr_screenshot", ocr_screenshot_channel: "vision" },
+      }),
+    }),
+    {
+      ...actor,
+      probeClairicOcr: async () => {
+        throw new Error("显式传 vision 时不应走 Clairic 探针");
+      },
+      probeAiFeature: async () => {
+        visionProbeCount += 1;
+        return { content: '{"number":"427"}', model: "gemini-2.5-flash", channelName: "vision-ch", elapsedMs: 50 };
+      },
+    },
+  );
+  assert.equal(probeVisionRes.status, 200);
+  assert.equal(visionProbeCount, 1);
+});

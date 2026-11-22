@@ -248,7 +248,7 @@ export function BusinessFunctionsPanel({ onRepairModel }: { onRepairModel?: (mod
     if (!bundle || !ocrControl) return;
     setTestingOcr(true);
     try {
-      const res = await runCommand("test_key", { feature_key: "ocr_screenshot" });
+      const res = await runCommand("test_key", { feature_key: "ocr_screenshot", ocr_screenshot_channel: ocrControl.ocrChannel });
       if (!res.ok) {
         feedbackToast.error(`试跑未通过: ${res.error || "服务无响应"}`, { duration: 6000 });
         return;

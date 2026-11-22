@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sparkles, Check, ChevronDown, ChevronRight } from "lucide-react";
 import { ModelFamilySelect } from "./model-family-select";
+import type { OcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
 import { type AiFeatureControl } from "../hooks/use-ai-config";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export function BindingDialog({
   const [systemPrompt, setSystemPrompt] = useState<string>("");
   const [outputTokenLimit, setOutputTokenLimit] = useState<number>(3600);
   const [contextMessageLimit, setContextMessageLimit] = useState<number>(30);
-  const [ocrChannel, setOcrChannel] = useState<"baidu" | "vision">("baidu");
+  const [ocrChannel, setOcrChannel] = useState<OcrScreenshotChannel>("baidu");
   const [showExpertSettings, setShowExpertSettings] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -82,14 +83,14 @@ export function BindingDialog({
 
         {/* 内容区 */}
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
-          {/* 1. 截图识别专属：双通道模式选择卡 */}
+          {/* 1. 截图识别专属：三通道模式选择卡 */}
           {isOcr && (
             <div className="space-y-2">
               <Label className="text-[12px] text-[#1F1E1D]">
                 识别通道模式
               </Label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* 模式 A：OCR + 模型 */}
                 <div
                   role="button"
@@ -160,6 +161,45 @@ export function BindingDialog({
                   </div>
                   <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#8A6A2F]">
                     链路极简，调度模型必须具备看图能力
+                  </div>
+                </div>
+
+                {/* 模式 C：Clairic 极速 */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setOcrChannel("clairic")}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("clairic"); }}
+                  className={cn(
+                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
+                    ocrChannel === "clairic"
+                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
+                      : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
+                  )}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px] text-[#141413]">
+                          Clairic 极速
+                        </span>
+                        <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#EBEBE9] text-[#78716C]">
+                          Preview
+                        </span>
+                      </div>
+                      <div className={cn(
+                        "size-4 rounded-full border flex items-center justify-center transition-colors",
+                        ocrChannel === "clairic" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
+                      )}>
+                        {ocrChannel === "clairic" && <Check className="size-2.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-[#78716C] leading-snug">
+                      Cloudflare 专项抽取 · ~1 秒
+                    </p>
+                  </div>
+                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
+                    失败自动回退百度，可随时切回
                   </div>
                 </div>
               </div>

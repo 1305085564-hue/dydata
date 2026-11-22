@@ -7,6 +7,8 @@ import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signa
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import type { MutationObservation } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
+import { runClairicAttemptWithBaiduFallback, runClairicOcrAttempt, type ClairicOrFallbackResult } from "./clairic-channel";
+import type { ClairicUsage } from "@/lib/clairic-ocr";
 import { fetchOcrChannelSettingsRow, resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 import { downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
 import { recordOcrRecognitionLog } from "./ocr-log";
@@ -36,6 +38,8 @@ type OcrScreenshotDeps = {
   createClient: typeof createClient;
   ocrChannelFetcher: typeof fetchOcrChannelSettingsRow;
   callAi: typeof callAi; recordLog: typeof recordOcrRecognitionLog;
+  runClairicAttempt?: typeof runClairicOcrAttempt;
+  runBaiduAttempt?: typeof runBaiduOcrAttempt;
 };
 
 export const defaultOcrScreenshotDeps: OcrScreenshotDeps = {
@@ -62,6 +66,7 @@ type ImagePayloadError = { error: string; errorCode?: OcrErrorCode; status?: num
 type OcrTimings = {
   download_ms?: number;
   ocr_ms?: number;
+  clairic_ms?: number;
   baidu_ms?: number;
   structure_ms?: number;
   parse_ms?: number;
@@ -197,6 +202,8 @@ export async function buildOcrScreenshotResponse(
     ocrChannel?: OcrScreenshotChannel | null;
     aiChannel?: string | null;
     aiModel?: string | null;
+    channelFallback?: { from: "clairic"; to: "baidu"; reason: string } | null;
+    clairicUsage?: ClairicUsage | null;
   } = {};
 
   const finish = async (
@@ -221,13 +228,15 @@ export async function buildOcrScreenshotResponse(
       channel: logContext.ocrChannel ?? null,
       ai_channel: logContext.aiChannel ?? null,
       ai_model: logContext.aiModel ?? null,
+      ...(logContext.channelFallback ? { channel_fallback: logContext.channelFallback } : {}),
+      ...(logContext.clairicUsage ? { clairic_usage: logContext.clairicUsage } : {}),
     });
 
     // 测速台账只记真正进入识别的请求（渠道已解析），401/输入错误不落账；await 插入保证 Vercel 冻结前落库，异常吞并不影响业务回执
     if (logContext.ocrChannel) {
       try {
         await deps.recordLog({
-          totalMs: timings.total_ms, ocrMs: timings.ocr_ms ?? timings.baidu_ms ?? null,
+          totalMs: timings.total_ms, ocrMs: timings.ocr_ms ?? (logContext.channelFallback ? timings.baidu_ms : timings.clairic_ms) ?? timings.baidu_ms ?? timings.clairic_ms ?? null,
           downloadMs: timings.download_ms ?? null, channelName: logContext.aiChannel ?? null,
           modelId: logContext.aiModel ?? null, screenshotType: logContext.screenshotType ?? null,
           isSuccess: businessSucceeded, errorCode: errorCode ?? null, userId: userId ?? null,
@@ -297,16 +306,32 @@ export async function buildOcrScreenshotResponse(
 
     try {
       observation.mark("read");
-      const attempt =
-        ocrChannel === "baidu"
-          ? await runBaiduOcrAttempt({ dataUrl, screenshotType, timings })
-          : await runVisionOcrAttempt(dataUrl, screenshotType, timings, deps.callAi);
-      const parsed = attempt.parsed;
-      logContext = {
-        ...logContext,
-        aiChannel: attempt.channelName,
-        aiModel: attempt.model,
-      };
+      let parsed: ParsedScreenshotResponse | null;
+      if (ocrChannel === "clairic") {
+        const clairicResult: ClairicOrFallbackResult = await runClairicAttemptWithBaiduFallback(
+          { dataUrl, screenshotType, timings },
+          { runClairicAttempt: deps.runClairicAttempt, runBaiduAttempt: deps.runBaiduAttempt },
+        );
+        parsed = clairicResult.parsed;
+        logContext = {
+          ...logContext,
+          aiChannel: clairicResult.channelName,
+          aiModel: clairicResult.model,
+          channelFallback: clairicResult.fallback,
+          clairicUsage: clairicResult.clairicUsage,
+        };
+      } else {
+        const attempt =
+          ocrChannel === "baidu"
+            ? await (deps.runBaiduAttempt ?? runBaiduOcrAttempt)({ dataUrl, screenshotType, timings })
+            : await runVisionOcrAttempt(dataUrl, screenshotType, timings, deps.callAi);
+        parsed = attempt.parsed;
+        logContext = {
+          ...logContext,
+          aiChannel: attempt.channelName,
+          aiModel: attempt.model,
+        };
+      }
 
       if (!parsed) {
         const errorCode: OcrErrorCode = "AI_PARSE_FAILED";
