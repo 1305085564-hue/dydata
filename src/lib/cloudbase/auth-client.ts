@@ -95,6 +95,7 @@ export function createCloudBaseServerAuth(cookieStore: CookieStore, keepLoggedIn
         return { data: { user: null, session: null }, error: authError(error) };
       }
     },
+    // CloudBase 员工注册统一由服务端 registerUser -> registerCloudBaseEmployee 单事务入口处理。
     async signUp() { return unsupported("注册"); },
     async exchangeCodeForSession() { return unsupported("邮件链接登录"); },
     async verifyOtp() { return unsupported("验证码登录"); },
@@ -145,6 +146,7 @@ export function createCloudBaseBrowserAuth() {
     async getSession() {
       return { data: { session: null }, error: { message: "CloudBase token 不通过浏览器会话接口暴露", code: "session_hidden" } };
     },
+    // CloudBase 员工注册统一由服务端 registerUser -> registerCloudBaseEmployee 单事务入口处理。
     async signUp() { return unsupported("注册"); },
     async exchangeCodeForSession() { return unsupported("邮件链接登录"); },
     async verifyOtp() { return unsupported("验证码登录"); },

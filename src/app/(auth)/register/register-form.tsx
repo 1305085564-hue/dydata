@@ -170,6 +170,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           <Input
             autoComplete="name"
             id="name"
+            maxLength={100}
             name="name"
             placeholder="请输入您的真实姓名"
             required
@@ -183,6 +184,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           <Input
             autoComplete="email"
             id="email"
+            maxLength={64}
             name="email"
             placeholder="name@example.com"
             required
@@ -288,6 +290,12 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             提交后将向该团队管理员发送入团待办。审批通过前，账号暂时无法查看团队业务数据。
           </p>
         </div>
+
+        {state.error ? (
+          <p className="text-[12px] font-normal text-status-danger leading-relaxed select-text" role="alert">
+            {state.error}
+          </p>
+        ) : null}
 
         <div className="pt-2">
           <SubmitButton disabled={isLoadingTeams || teams.length === 0} />

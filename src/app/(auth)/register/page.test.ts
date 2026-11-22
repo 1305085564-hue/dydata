@@ -74,6 +74,8 @@ function createDependencies(
         throw new Error(`unexpected redirect: ${path}`);
       },
       logError: (...args: unknown[]) => state.logs.push(args),
+      isCloudBaseBackend: () => false,
+      createRequestId: () => "req-page-1",
     },
   };
 }
@@ -91,7 +93,7 @@ for (const stage of ["profile", "account", "join-request"] as const) {
     const { state, dependencies } = createDependencies(stage);
     const result = await submitRegistration(dependencies);
 
-    assert.equal(result.error, "注册未能完成，本次注册已撤销，请稍后重试。");
+    assert.equal(result.error, "员工资料初始化失败，本次注册已撤销，请稍后重试（编号 req-page-1）");
     assert.deepEqual([...state.authUsers], []);
     assert.equal(state.hasSession, false);
     assert.equal(state.redirectPath, null);
@@ -103,7 +105,7 @@ test("撤销 Auth 用户失败时仅显示安全提示并记录服务端错误",
 
   const result = await submitRegistration(dependencies);
 
-  assert.equal(result.error, "注册未能完成，账号清理遇到问题。请勿重复提交，请联系管理员处理。");
+  assert.equal(result.error, "注册未能完成，账号清理遇到问题，请勿重复提交并联系管理员处理（编号 req-page-1）");
   assert.equal(state.hasSession, false);
   assert.equal(state.logs.length, 2);
   assert.doesNotMatch(result.error ?? "", /delete user failed|profiles write failed/);
@@ -114,11 +116,11 @@ test("重复邮箱的无身份记录结果不会误删既有 Auth 用户", async
 
   const result = await submitRegistration(dependencies);
 
-  assert.equal(result.error, "注册失败，请稍后重试。");
+  assert.equal(result.error, "这个邮箱已经注册过，请直接登录或联系管理员（编号 req-page-1）");
   assert.deepEqual([...state.authUsers], ["user-1"]);
   assert.equal(state.hasSession, true);
   assert.equal(state.redirectPath, null);
-  assert.equal(state.logs.length, 0);
+  assert.equal(state.logs.length, 1);
 });
 
 test("注册后直接回到登录前请求的安全页面", async () => {
