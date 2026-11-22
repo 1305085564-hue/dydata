@@ -1,7 +1,16 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, parseBusinessDateTime } from "@/lib/business-time";
 import { CALIBER } from "@/lib/metrics/caliber";
 
 export const VIDEO_SUBMIT_GRACE_HOURS = CALIBER.submitGraceHours;
+
+/** 超过补交宽限期的提示文案唯一出处（小时数由 VIDEO_SUBMIT_GRACE_HOURS 统一驱动）。 */
+export const VIDEO_SUBMIT_EXPIRED_APPEAL_REASON = `超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，需要补交数据`;
+export const VIDEO_SUBMIT_EXPIRED_API_ERROR = `该提交已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，请先申请补交`;
+export const VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL = `触发原因：超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时才交`;
+
+export function formatVideoSubmitExpiredDialogNotice(bizDate: string): string {
+  return `当前作品记录日期（${bizDate}）已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时。`;
+}
 
 export type VideoSubmitDeadlineMode = "create" | "edit";
 export type VideoSubmitDeadlineDecision =
@@ -24,18 +33,6 @@ export type VideoSubmitDeadlineResult = {
   elapsedHours: number | null;
 };
 
-function parseDate(value: string | Date | null | undefined) {
-  if (!value) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  const trimmed = value.trim();
-  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
-  const shanghaiValue = hasTimezone
-    ? trimmed
-    : `${trimmed.length === 16 ? `${trimmed}:00` : trimmed}+08:00`;
-  const date = new Date(shanghaiValue);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 /**
  * First-create deadline policy. Historical edits deliberately bypass the
  * deadline so existing records remain editable.
@@ -53,7 +50,7 @@ export function resolveVideoSubmitDeadline(input: {
   publishedAtConfirmed?: boolean;
   publishedAtSource?: "ocr" | "manual" | null;
 }): VideoSubmitDeadlineResult {
-  const publishedAt = parseDate(input.publishedAt);
+  const publishedAt = parseBusinessDateTime(input.publishedAt);
   const publishedDate = publishedAt ? formatShanghaiDateOnly(publishedAt) : null;
 
   if (input.mode === "edit") {
@@ -92,7 +89,7 @@ export function resolveVideoSubmitDeadline(input: {
     };
   }
 
-  const uploadedAt = parseDate(input.uploadedAt) ?? new Date();
+  const uploadedAt = parseBusinessDateTime(input.uploadedAt) ?? new Date();
   const elapsedHours = (uploadedAt.getTime() - publishedAt.getTime()) / 3_600_000;
 
   if (elapsedHours < 0) {

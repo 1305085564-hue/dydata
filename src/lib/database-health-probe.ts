@@ -2,15 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type SupabaseKeepaliveResult = {
+export type DatabaseProbeResult = {
   table: "profiles";
   rowCount: number;
   checkedAt: string;
 };
 
-export async function runSupabaseKeepalive(
+export async function probeDatabaseHealth(
   client: Pick<SupabaseClient, "from"> = createAdminClient(),
-): Promise<SupabaseKeepaliveResult> {
+): Promise<DatabaseProbeResult> {
   const { data, error } = await client.from("profiles").select("id").limit(1);
 
   if (error) {

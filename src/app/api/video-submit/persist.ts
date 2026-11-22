@@ -1,5 +1,5 @@
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import type { SubmissionAssetMeta } from "@/types";
 
 export const SUBMISSION_PERSISTENCE_ERROR_CODES = {

@@ -1,6 +1,11 @@
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { VideoMetricsSnapshot } from "@/types";
-import { getPublishedDateForStats } from "@/lib/date-semantics";
+import {
+  addShanghaiDateOnly,
+  formatShanghaiDateOnly,
+  getPublishedDateForStats,
+  shiftDateOnly,
+} from "@/lib/business-time";
 import {
   DEFAULT_CONTENT_LIST_FILTERS,
   type ContentListFilterValue,
@@ -52,27 +57,15 @@ export function attributionDate(video: { published_at: string | null }): string 
 }
 
 export function getShanghaiDateString(date: Date = new Date()): string {
-  const parts = new Intl.DateTimeFormat("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("year")}-${get("month")}-${get("day")}`;
+  return formatShanghaiDateOnly(date);
 }
 
 export function getShanghaiDateOffset(daysOffset: number): string {
-  const now = new Date();
-  const target = new Date(now.getTime() + daysOffset * 24 * 60 * 60 * 1000);
-  return getShanghaiDateString(target);
+  return shiftDateOnly(new Date(), daysOffset);
 }
 
-/** shiftDay(dateStr, n) = new Date(dateStr+"T12:00:00+08:00") 加减天后用 Intl Asia/Shanghai formatToParts 取 YYYY-MM-DD */
 export function shiftDay(dateStr: string, n: number): string {
-  const d = new Date(`${dateStr}T12:00:00+08:00`);
-  d.setDate(d.getDate() + n);
-  return getShanghaiDateString(d);
+  return addShanghaiDateOnly(dateStr, n);
 }
 
 export function parsePulseDate(raw: string | undefined, yesterday: string): string {

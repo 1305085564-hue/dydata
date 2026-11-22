@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { addShanghaiDateOnly, formatShanghaiDateOnly } from "@/lib/business-time";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   // 降级：直接查询 remind_logs（表可能不存在，做好容错）
   try {
-    const fromDate = shiftDateOnly(new Date(`${targetDate}T12:00:00+08:00`), -7);
+    const fromDate = addShanghaiDateOnly(targetDate, -7);
 
     const { data, error } = await supabase
       .from("remind_logs")

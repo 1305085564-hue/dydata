@@ -15,7 +15,7 @@ import {
   type GrantMode,
 } from "@/lib/豁免流程";
 import type { ExemptionCategory } from "@/types";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";

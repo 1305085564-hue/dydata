@@ -5,7 +5,7 @@ import { getActiveVisibleUserIds, type DataAccessScope } from "@/lib/data-access
 import { loadOrphanExemptionCount } from "@/lib/exemption-orphan";
 import { listOpenTodoSummaryForUser } from "@/lib/notifications/server";
 import {
-  getExemptionCategoryLabel,
+  getAdminExemptionCategoryLabel,
   toExemptionCategory,
 } from "@/lib/exemption-category";
 import {
@@ -212,7 +212,7 @@ type PendingExemptionRow = {
 };
 
 function exemptionLabel(row: PendingExemptionRow) {
-  const category = getExemptionCategoryLabel(row.exemption_category);
+  const category = getAdminExemptionCategoryLabel(row.exemption_category);
   if (row.exemption_type === "permanent") return `${category}（永久）`;
   return `${category}（${row.start_date}${row.end_date && row.end_date !== row.start_date ? ` 至 ${row.end_date}` : ""}）`;
 }
@@ -292,7 +292,7 @@ export async function loadPendingExemptionSource({
   );
   const items = rows.map((row) => {
     const exemptionCategory = toExemptionCategory(row.exemption_category);
-    const natureLabel = getExemptionCategoryLabel(exemptionCategory);
+    const natureLabel = getAdminExemptionCategoryLabel(exemptionCategory);
     const label = row.exemption_type === "permanent"
       ? exemptionLabel(row)
       : `${natureLabel}（${EXEMPTION_LABELS[row.exemption_type] ?? row.exemption_type}）`;

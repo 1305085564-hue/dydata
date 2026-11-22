@@ -131,5 +131,55 @@ export function isMetricInputValueValid(
   metricType: MetricInputType = "count",
 ): boolean {
   const cleaned = cleanMetricInputValue(rawInput, metricType);
-  return cleaned !== "" && Number.isFinite(Number(cleaned));
+  return cleaned !== "" && parseStrictMetricNumber(cleaned) !== null;
+}
+
+/**
+ * 前后端共用的纯数字指标解析内核：
+ * - 服务端边界校验直接调用本函数（保留负数以输出「不能为负数」等明确错误）；
+ * - 前端表单先走 cleanMetricInputValue 清洗「1.2w / 1:20 / 千分位」后再委托本函数。
+ */
+export function parseStrictMetricNumber(
+  value: unknown,
+  options?: { stripPercent?: boolean },
+): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const normalized = options?.stripPercent ? trimmed.replace(/%$/, "") : trimmed;
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function parseMetricOrNull(
+  value: string,
+  metricType: MetricInputType = "count",
+): number | null {
+  const cleaned = cleanMetricInputValue(value, metricType);
+  return cleaned ? parseStrictMetricNumber(cleaned) : null;
+}
+
+export function parseMetricFieldOrNull(
+  field: MetricInputField,
+  value: string,
+): number | null {
+  return parseMetricOrNull(value, METRIC_INPUT_TYPE_BY_FIELD[field]);
+}
+
+export function parseMetric(value: string, fallback?: number): number;
+export function parseMetric(
+  value: string,
+  metricType: MetricInputType,
+  fallback?: number,
+): number;
+export function parseMetric(
+  value: string,
+  metricTypeOrFallback: MetricInputType | number = "count",
+  typedFallback = 0,
+): number {
+  const metricType = typeof metricTypeOrFallback === "number" ? "count" : metricTypeOrFallback;
+  const fallback = typeof metricTypeOrFallback === "number" ? metricTypeOrFallback : typedFallback;
+  return parseMetricOrNull(value, metricType) ?? fallback;
 }

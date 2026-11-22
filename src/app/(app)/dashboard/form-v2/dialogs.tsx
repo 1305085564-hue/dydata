@@ -15,6 +15,7 @@ import type { SubmissionSlotRole } from "@/components/submission/提交状态机
 import type { SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 import { createEditableSlots } from "@/lib/video-submit/domain/video-submit-form-model";
 import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
+import { formatVideoSubmitExpiredDialogNotice } from "@/lib/video-submit-deadline";
 
 export interface FormV2DialogsProps {
   deleteTargetRole: SubmissionSlotRole | null;
@@ -114,7 +115,7 @@ export function FormV2Dialogs({
             <DialogDescription className="text-[12px] text-[#78716C] leading-relaxed pt-1">
               {meta.publishedAtSource === "manual"
                 ? "发布时间由成员手工填写或修改，需要补交审批。"
-                : `当前作品记录日期（${meta.bizDate}）已超过 72 小时。`}提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去完成填报”即可自动完成提交。
+                : formatVideoSubmitExpiredDialogNotice(meta.bizDate)}提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去完成填报”即可自动完成提交。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5 py-3">

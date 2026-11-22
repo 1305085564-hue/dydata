@@ -16,6 +16,7 @@ import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
 import { validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, cloudBaseCookieOptions, hasCloudBaseSessionChanged, isCloudBaseBackend, parseCloudBaseSession, serializeCloudBaseSession } from "@/lib/cloudbase/core";
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
+import cloudbaserc from "../cloudbaserc.json";
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const MEMBERSHIP_RETRY_QUERY = "__membership_retry";
@@ -39,7 +40,12 @@ export function isUntrustedApiWriteRequest(request: NextRequest) {
 
 export function shouldBlockDevProductionWrite(request: NextRequest, env: Record<string, string | undefined> = process.env) {
   if (env.NODE_ENV !== "development") return false;
-  if (!String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("gcrhhxaopomtposmahsw")) return false;
+  const isSupabaseProd = String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("gcrhhxaopomtposmahsw");
+  const isCloudBaseMode =
+    env.DYDATA_BACKEND === "cloudbase" || env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
+  const cloudBaseEnvId = env.CLOUDBASE_ENV_ID || env.NEXT_PUBLIC_CLOUDBASE_ENV_ID;
+  const isCloudBaseProd = isCloudBaseMode && cloudBaseEnvId === cloudbaserc.envId;
+  if (!isSupabaseProd && !isCloudBaseProd) return false;
   if (env.DYDATA_DEV_ALLOW_PROD_WRITE === "1") return false;
   if (!UNSAFE_METHODS.has(request.method.toUpperCase())) return false;
   return !DEV_PROD_WRITE_AUTH_PATHS.has(request.nextUrl.pathname);
@@ -342,6 +348,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const cloudBaseMode = isCloudBaseBackend();
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   const hasAuthCookie = cloudBaseMode
     ? hasCloudBaseAuthCookie(request.cookies.getAll())
     : hasSupabaseAuthCookie(request.cookies.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL);
@@ -373,6 +380,7 @@ export async function middleware(request: NextRequest) {
     return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute });
   }
 
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
   const response = NextResponse.next({

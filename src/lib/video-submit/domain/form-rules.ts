@@ -12,6 +12,7 @@ import type {
 } from "@/components/submission/提交状态机";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import type { Video } from "@/types";
+import { parseMetric } from "@/lib/dashboard-logic/metric-input-cleaner";
 import { normalizePublishedAtInputValue } from "@/lib/日报";
 
 export type CompleteEditPayload = {
@@ -52,14 +53,6 @@ export function toDateTimeLocalValue(value: string) {
   if (Number.isNaN(date.getTime())) return null;
   // OCR 返回带时区时间；表单与保存端都使用上海时间，不随设备时区变化。
   return normalizePublishedAtInputValue(date.toISOString());
-}
-
-// 保留所有辅助函数
-export function parseMetric(value: string, fallback = 0) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export function isVideo(value: unknown): value is Video {

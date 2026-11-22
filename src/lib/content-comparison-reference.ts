@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, shanghaiDayStartIso } from "@/lib/business-time";
 import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
 import { requireMaybeQueryRow, requireQueryRows } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
@@ -139,7 +139,7 @@ export function buildSnapshotMap(snapshots: unknown[]): Map<string, SnapshotData
 }
 
 export function getShanghaiTodayStartIso() {
-  return new Date(`${formatShanghaiDateOnly()}T00:00:00+08:00`).toISOString();
+  return shanghaiDayStartIso(formatShanghaiDateOnly());
 }
 
 /** 团队参照系窗口天数：含今天在内的最近 7 个上海自然日。 */

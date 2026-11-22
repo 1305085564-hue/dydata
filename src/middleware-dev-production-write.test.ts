@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
+import cloudbaserc from "../cloudbaserc.json";
 
 import { shouldBlockDevProductionWrite } from "./middleware";
 
 const productionEnv: Record<string, string | undefined> = {
   NODE_ENV: "development",
   NEXT_PUBLIC_SUPABASE_URL: "https://gcrhhxaopomtposmahsw.supabase.co",
+};
+
+const cloudBaseProductionEnv: Record<string, string | undefined> = {
+  NODE_ENV: "development",
+  DYDATA_BACKEND: "cloudbase",
+  NEXT_PUBLIC_DYDATA_BACKEND: "cloudbase",
+  CLOUDBASE_ENV_ID: cloudbaserc.envId,
+  NEXT_PUBLIC_CLOUDBASE_ENV_ID: cloudbaserc.envId,
 };
 
 test("开发环境连生产库时拦截 POST，GET 放行", () => {
@@ -76,5 +85,45 @@ test("线上环境和显式开发放行开关不拦截", () => {
   const request = new NextRequest("https://dydata.cc/api/videos", { method: "POST" });
   assert.equal(shouldBlockDevProductionWrite(request, { ...productionEnv, NODE_ENV: "production" }), false);
   assert.equal(shouldBlockDevProductionWrite(request, { ...productionEnv, DYDATA_DEV_ALLOW_PROD_WRITE: "1" }), false);
+});
+
+test("腾讯云正式配置在开发模式下拦截写请求，读请求、非开发模式和放行开关放行", () => {
+  const writeRequest = new NextRequest("https://dydata.cc/api/videos", { method: "POST" });
+  const readRequest = new NextRequest("https://dydata.cc/api/videos", { method: "GET" });
+
+  assert.equal(shouldBlockDevProductionWrite(writeRequest, cloudBaseProductionEnv), true);
+  assert.equal(
+    shouldBlockDevProductionWrite(writeRequest, {
+      NODE_ENV: "development",
+      DYDATA_BACKEND: "cloudbase",
+      NEXT_PUBLIC_CLOUDBASE_ENV_ID: cloudbaserc.envId,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldBlockDevProductionWrite(writeRequest, {
+      NODE_ENV: "development",
+      NEXT_PUBLIC_DYDATA_BACKEND: "cloudbase",
+      CLOUDBASE_ENV_ID: cloudbaserc.envId,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldBlockDevProductionWrite(writeRequest, { ...cloudBaseProductionEnv, DYDATA_DEV_ALLOW_PROD_WRITE: "1" }),
+    false,
+  );
+  assert.equal(
+    shouldBlockDevProductionWrite(writeRequest, { ...cloudBaseProductionEnv, NODE_ENV: "production" }),
+    false,
+  );
+  assert.equal(shouldBlockDevProductionWrite(readRequest, cloudBaseProductionEnv), false);
+  assert.equal(
+    shouldBlockDevProductionWrite(writeRequest, {
+      ...cloudBaseProductionEnv,
+      CLOUDBASE_ENV_ID: "dydata-isolated-test",
+      NEXT_PUBLIC_CLOUDBASE_ENV_ID: "dydata-isolated-test",
+    }),
+    false,
+  );
 });
 

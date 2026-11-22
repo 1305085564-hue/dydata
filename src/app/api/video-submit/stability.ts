@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { SubmissionAssetMeta } from "@/types";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 
 export interface NormalizedVideoSubmitMetrics {

@@ -25,10 +25,10 @@ import {
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import { formatShanghaiDateOnly, getSafeAccountDisplayName, shiftDateOnly } from "./shared";
+import { getSafeAccountDisplayName } from "./shared";
 import { loadRecentExemptionReviewNotices, type UserExemptionReviewNotice } from "./dashboard-exemption-review";
 import { resolveDashboardFulfillmentMarks, type FulfillmentMarkRow, type MonthFulfillmentBasis } from "./dashboard-fulfillment-marks";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { addShanghaiDateOnly, formatShanghaiDateOnly, getPublishedDateKey, shiftDateOnly } from "@/lib/business-time";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -460,7 +460,7 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
   const monthStartDate = `${today.slice(0, 8)}01`;
-  const reportLookupStart = shiftDateOnly(new Date(`${monthStartDate}T00:00:00+08:00`), -60);
+  const reportLookupStart = addShanghaiDateOnly(monthStartDate, -60);
   const sixtyDaysAgo = shiftDateOnly(new Date(), -60);
 
   const [

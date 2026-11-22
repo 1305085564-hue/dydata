@@ -1,5 +1,5 @@
 import type { SubmissionAssetMeta } from "@/types";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import { normalizeDailyReportDataSource } from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";

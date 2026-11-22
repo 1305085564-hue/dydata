@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { shiftDateOnly } from "@/lib/loaders/shared";
+import { shiftDateOnly } from "@/lib/business-time";
 import { measureAsync } from "@/lib/perf";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
@@ -57,6 +57,7 @@ export async function buildDashboardLeaderboardResponse({
         .select("id, content_direction")
         .eq("profile_id", userId)
         .order("created_at", { ascending: true }),
+      // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
       cloudBase
         ? loadCloudBaseLeaderboardRows(supabase, sinceDate, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
         : supabase.rpc("get_leaderboard_rows", {
@@ -133,6 +134,7 @@ export async function GET(request: Request) {
     const rawMonth = searchParams.get("month");
     const hasMonthParams = rawYear !== null || rawMonth !== null;
 
+    // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
     return buildDashboardLeaderboardResponse({
       supabase: isCloudBaseBackend() ? adminClient : supabase,
       userId: user.id,

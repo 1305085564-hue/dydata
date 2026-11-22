@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { shanghaiDateRangeToUtc } from "@/lib/business-time";
 import { isWorkGroupSchemaMissing } from "@/lib/work-groups";
 import type {
   CollaborationAccount,
@@ -34,10 +35,7 @@ const PROFILE_FIELDS = "id, name, team_id";
 const PROFILE_FIELDS_WITH_WORK_GROUPS = `${PROFILE_FIELDS}, work_peer_group_id, work_operator_group_id`;
 
 function shanghaiRangeToUtc(start: string, end: string) {
-  const startUtc = new Date(`${start}T00:00:00+08:00`).toISOString();
-  const endDate = new Date(`${end}T00:00:00+08:00`);
-  endDate.setUTCDate(endDate.getUTCDate() + 1);
-  return { startUtc, endUtc: endDate.toISOString() };
+  return shanghaiDateRangeToUtc(start, end);
 }
 
 type ProfileQueryError = { message?: string; code?: string } | null;

@@ -1,3 +1,5 @@
+import { parseStrictMetricNumber } from "@/lib/dashboard-logic/metric-input-cleaner";
+
 export const REPORT_COUNT_MAX = 1_000_000_000;
 export const REPORT_PERCENT_MAX = 100;
 export const REPORT_DURATION_SECONDS_MAX = 86_400;
@@ -45,18 +47,9 @@ export type ReportMetricBoundaryInput = Partial<Record<CountMetricKey | PercentM
 
 export type BoundaryResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-function numberFromInput(value: unknown) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  if (typeof value === "string" && value.trim()) {
-    const parsed = Number(value.trim().replace(/%$/, ""));
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
 function validateCountMetric(key: CountMetricKey, value: unknown) {
   if (value === undefined || value === null || value === "") return null;
-  const numeric = numberFromInput(value);
+  const numeric = parseStrictMetricNumber(value, { stripPercent: true });
   const label = COUNT_FIELD_LABELS[key];
   if (numeric === null) return `${label}必须是有效数字`;
   if (!Number.isInteger(numeric)) return `${label}必须是整数`;
@@ -67,7 +60,7 @@ function validateCountMetric(key: CountMetricKey, value: unknown) {
 
 function validatePercentMetric(key: PercentMetricKey, value: unknown) {
   if (value === undefined || value === null || value === "") return null;
-  const numeric = numberFromInput(value);
+  const numeric = parseStrictMetricNumber(value, { stripPercent: true });
   const label = PERCENT_FIELD_LABELS[key];
   if (numeric === null) return `${label}必须是有效数字`;
   if (numeric < 0 || numeric > REPORT_PERCENT_MAX) return `${label}必须在 0-${REPORT_PERCENT_MAX} 之间`;
@@ -76,7 +69,7 @@ function validatePercentMetric(key: PercentMetricKey, value: unknown) {
 
 function validateDuration(value: unknown) {
   if (value === undefined || value === null || value === "") return null;
-  const numeric = numberFromInput(value);
+  const numeric = parseStrictMetricNumber(value, { stripPercent: true });
   if (numeric === null) return "平均播放时长必须是有效数字";
   if (numeric < 0 || numeric > REPORT_DURATION_SECONDS_MAX) {
     return `平均播放时长必须在 0-${REPORT_DURATION_SECONDS_MAX} 秒之间`;

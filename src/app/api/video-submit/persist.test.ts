@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { persistSubmissionTags, runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
 import { buildDailyReportPayload, buildScreenshotReplacementHistoryRows, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 type Normalized = VideoSubmitValidationResult["normalized"];
 

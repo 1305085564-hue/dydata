@@ -7,6 +7,7 @@ import {
 } from "@/lib/action-center/types";
 import type { ExemptionRequest, GroupedApprovalItem } from "@/lib/exemption-approvals";
 import type { ApprovalQueueItem } from "@/lib/command-hub/types";
+import { VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL } from "@/lib/video-submit-deadline";
 
 // ---------- 标题：一页一问「还有几件等我拍板？」----------
 
@@ -90,7 +91,7 @@ export function getAppealTriggerText(appeal: ExemptionRequest): string | null {
       ? `触发原因：手工改了发布时间（识别原值 ${appeal.ocr_published_at_text}）`
       : "触发原因：手工填写了发布时间";
   }
-  if (appeal.appeal_trigger_reason === "expired") return "触发原因：超过 72 小时才交";
+  if (appeal.appeal_trigger_reason === "expired") return VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL;
   return null;
 }
 

@@ -385,6 +385,30 @@ test("new code slicing a UTC date from toISOString blocks; marked calendar math 
   }
 });
 
+test("new code hardcoding +08:00 or Asia/Shanghai outside business-time blocks; marked or inside business-time passes", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\nexport const ts = new Date(\"2026-01-01T00:00:00+08:00\");\n");
+    await assertBlocked(fixture, "tracked +08:00", /hardcoded-shanghai-timezone/);
+
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\n// gate:shanghai-tz-ok 显式豁免说明\nexport const ts = new Date(\"2026-01-01T00:00:00+08:00\");\n");
+    const markedPass = await runGate(fixture);
+    assert.equal(markedPass.code, 0, markedPass.stderr || markedPass.stdout);
+
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\n");
+    await writeFile(path.join(fixture, "src", "fresh.ts"), "export const tz = \"Asia/Shanghai\";\n");
+    await assertBlocked(fixture, "untracked Asia/Shanghai", /hardcoded-shanghai-timezone/);
+
+    await rm(path.join(fixture, "src", "fresh.ts"));
+    await mkdir(path.join(fixture, "src", "lib"), { recursive: true });
+    await writeFile(path.join(fixture, "src", "lib", "business-time.ts"), "export const TZ = \"Asia/Shanghai\";\nexport const OFFSET = \"+08:00\";\n");
+    const canonicalPass = await runGate(fixture);
+    assert.equal(canonicalPass.code, 0, canonicalPass.stderr || canonicalPass.stdout);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
 test("ratchet overflow already in the base blocks only when that file is touched", async () => {
   const fixture = await createFixture();
   try {

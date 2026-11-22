@@ -243,15 +243,10 @@ function MemberMultiSelect({
  * - 全流程静默更新：分配、移出、新建、改名、删除均采用乐观更新，无需刷新整页。
  */
 export function WorkGroupManageDrawer({
-  open,
-  onClose,
-  groups,
-  roster,
-  teamId = null,
-  initialSelectedGroupId = null,
-  onGroupsChange,
-  onRosterChange,
+  open, onClose, groups, roster,
+  teamId = null, initialSelectedGroupId = null, onGroupsChange, onRosterChange,
 }: WorkGroupManageDrawerProps) {
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   const isCloudBaseBackend = process.env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
   const [localGroups, setLocalGroups] = useState<WorkGroupRow[]>(groups);
   const [localRoster, setLocalRoster] = useState<WorkGroupRosterMember[]>(roster);

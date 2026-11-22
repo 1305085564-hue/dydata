@@ -1,3 +1,7 @@
+/**
+ * 我管什么：本文件负责作品提交表单编辑期的可变状态容器与动作分发（meta/fields/slots、草稿恢复、OCR 写入与手改标记），不管提交前校验或阶段标签。
+ * 另一个管什么：提交就绪判定、缺项汇总与阶段推导由 src/components/submission/提交状态机.ts 负责。
+ */
 import type {
   SubmissionWorkflowState,
   WorkflowAction,

@@ -1,3 +1,5 @@
+import { VIDEO_SUBMIT_EXPIRED_APPEAL_REASON } from "@/lib/video-submit-deadline";
+
 export interface SubmissionQualityIssue {
   severity: "critical" | "warning" | "info";
   field?: string;
@@ -43,7 +45,7 @@ export function createSubmissionUiState(initial?: Partial<SubmissionUiState>): S
     appealId: null,
     appealResultReason: null,
     isAppealDialogOpen: false,
-    appealReason: "超过 72 小时，需要补交数据",
+    appealReason: VIDEO_SUBMIT_EXPIRED_APPEAL_REASON,
     isAppealSubmitting: false,
     isSubmitted: false,
     hasAttemptedSubmit: false,

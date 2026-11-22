@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { getShanghaiYearMonth } from "@/lib/business-time";
 import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";

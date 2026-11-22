@@ -1,7 +1,9 @@
 /**
- * Cloudflare Clairic 识别通道：v2 字段清单、+08:00 发布时间解析、单项低置信度强制转人工。
+ * Cloudflare Clairic 识别通道：v2 字段清单、北京时间发布时间解析、单项低置信度强制转人工。
  * 凭据由算力池调度层（ocr-runner.ts）显式传入，通道自身不处理兜底或环境变量。
  */
+
+import { buildValidatedShanghaiDateTimeIso } from "@/lib/business-time";
 
 import {
   CLAIRIC_MODEL_ID,
@@ -135,7 +137,7 @@ function decodeDataUrl(dataUrl: string): { buffer: Buffer; contentType: string }
 
 /**
  * 解析 Clairic 原样返回的中文/横杠/斜杠发布时间字符串为 UTC ISO。
- * 精准保留小时与分钟，按 +08:00（Asia/Shanghai）拼接并校验日历合法性，同时保留原文本。
+ * 精准保留小时与分钟，按北京时间拼接并校验日历合法性，同时保留原文本。
  */
 export function parseClairicPublishedAt(rawText: unknown): {
   published_at: string | null;
@@ -154,28 +156,16 @@ export function parseClairicPublishedAt(rawText: unknown): {
   const timeMatch = afterDate.match(/(\d{1,2})\s*[:：]\s*(\d{2})(?:\s*[:：]\s*(\d{2}))?/);
   if (!timeMatch) return { published_at: null, published_at_text: trimmed };
 
-  const year = Number(dateMatch[1]);
-  const month = Number(dateMatch[2]);
-  const day = Number(dateMatch[3]);
-  const hour = Number(timeMatch[1]);
-  const minute = Number(timeMatch[2]);
-  const second = timeMatch[3] !== undefined ? Number(timeMatch[3]) : 0;
+  const publishedAt = buildValidatedShanghaiDateTimeIso({
+    year: Number(dateMatch[1]),
+    month: Number(dateMatch[2]),
+    day: Number(dateMatch[3]),
+    hour: Number(timeMatch[1]),
+    minute: Number(timeMatch[2]),
+    second: timeMatch[3] !== undefined ? Number(timeMatch[3]) : 0,
+  });
 
-  if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
-    return { published_at: null, published_at_text: trimmed };
-  }
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const isoLocal = `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}+08:00`;
-  const parsed = new Date(isoLocal);
-  if (Number.isNaN(parsed.getTime())) return { published_at: null, published_at_text: trimmed };
-
-  const shanghai = new Date(parsed.getTime() + 8 * 60 * 60 * 1000);
-  if (shanghai.getUTCFullYear() !== year || shanghai.getUTCMonth() + 1 !== month || shanghai.getUTCDate() !== day) {
-    return { published_at: null, published_at_text: trimmed };
-  }
-
-  return { published_at: parsed.toISOString(), published_at_text: trimmed };
+  return { published_at: publishedAt, published_at_text: trimmed };
 }
 
 function extractAnswerValue(answer: ClairicAnswer | undefined): unknown {

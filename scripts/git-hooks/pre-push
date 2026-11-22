@@ -1,7 +1,7 @@
 #!/bin/sh
 # 推送前自动门禁（由 `npm run hooks:install` 安装到 .git/hooks/pre-push）。
 # 只放确定性、不依赖外部服务的检查；真实库测试、角色/浏览器门禁仍按发布流程单独跑。
-# 推送即上线（push main 触发 Vercel），所以这里是最后一道不靠记性的关口。
+# 推送不会自动上线，发版要另外执行 deploy-service 命令；这里是推送前最后一道自动检查。
 # 不要用 --no-verify 跳过；门禁本身误报就修门禁。
 set -e
 cd "$(git rev-parse --show-toplevel)"
@@ -46,9 +46,13 @@ echo "[pre-push] 4/7 代码检查"
 npm run lint --silent
 echo "[pre-push] 5/7 设计令牌门禁"
 npm run gate:design --silent
-echo "[pre-push] 6/7 可维护性与文档体量门禁（对比 origin/main）"
+echo "[pre-push] 6/7 可维护性、源码测试与文档体量门禁（对比 origin/main）"
 node scripts/maintainability-gate.mjs --base=origin/main
+node scripts/source-text-test-gate.mjs
 node scripts/doc-size-check.mjs
 echo "[pre-push] 7/7 新增接口失败路径门禁（对比 origin/main）"
 node scripts/api-failure-path-gate.mjs --base=origin/main
+gate_pass_path=$(git rev-parse --git-path dydata-gate-pass)
+mkdir -p "$(dirname "$gate_pass_path")"
+git rev-parse HEAD > "$gate_pass_path"
 echo "[pre-push] 全部通过"

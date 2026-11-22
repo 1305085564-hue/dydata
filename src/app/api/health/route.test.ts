@@ -43,12 +43,12 @@ test("基础存活检查不探测依赖，恒为 200", async () => {
   assert.equal(probed, false);
 });
 
-test("Supabase 探活成功返回 200", async () => {
+test("本地 Supabase 测试库 database 探活成功返回 200", async () => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
   try {
     const response = await buildHealthResponse(
-      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      new NextRequest("https://dydata.cc/api/health?check=database"),
       makeDeps(),
     );
 
@@ -62,12 +62,12 @@ test("Supabase 探活成功返回 200", async () => {
   }
 });
 
-test("Supabase 探活失败返回 503 且不泄露数据库错误", async () => {
+test("本地 Supabase 测试库 database 探活失败返回 503 且不泄露数据库错误", async () => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
   try {
     const response = await buildHealthResponse(
-      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      new NextRequest("https://dydata.cc/api/health?check=database"),
       makeDeps({
         probeSupabase: async () => {
           throw new Error('relation "profiles" does not exist / 密码错误');
@@ -88,14 +88,14 @@ test("Supabase 探活失败返回 503 且不泄露数据库错误", async () => 
   }
 });
 
-test("依赖配置缺失时标记 unconfigured 并返回 503", async () => {
+test("本地 Supabase 测试库依赖配置缺失时标记 unconfigured 并返回 503", async () => {
   const hadUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const hadKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   try {
     const response = await buildHealthResponse(
-      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      new NextRequest("https://dydata.cc/api/health?check=database"),
       makeDeps(),
     );
 
@@ -230,7 +230,7 @@ test("CloudBase probe failure returns a redacted down status", async () => {
   });
 });
 
-test("CloudBase mode never reports its database as Supabase up", async () => {
+test("已移除 check=supabase 分支，不再探活 Supabase 也不再返回 503", async () => {
   let probed = false;
   await withCloudBaseEnvironment(async () => {
     const response = await buildHealthResponse(
@@ -244,8 +244,9 @@ test("CloudBase mode never reports its database as Supabase up", async () => {
     );
     const payload = await response.json();
 
-    assert.equal(response.status, 503);
-    assert.equal(payload.checks.supabase, "unconfigured");
+    assert.equal(response.status, 200);
+    assert.equal(payload.status, "ok");
+    assert.deepEqual(payload.checks, { server: "up" });
     assert.equal(probed, false);
   });
 });

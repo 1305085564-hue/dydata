@@ -5,7 +5,7 @@ import { DashboardActivityError } from "@/components/video-submit/dashboard-acti
 import { TodaySubmittedCard } from "@/components/video-submit/today-submitted-card";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
 import { WorkbenchNoticeBar, buildExemptionReviewNoticeItems, buildPendingExemptionNoticeItem } from "@/components/video-submit/workbench-notice-bar";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { getPublishedDateKey } from "@/lib/business-time";
 import { clearBrowserAppealSuccessSession } from "@/lib/video-submit/domain/appeal-success-session";
 
 import type { VideoSubmitPanelBodyProps } from "./video-submit-panel-body.types";

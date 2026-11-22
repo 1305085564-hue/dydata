@@ -24,9 +24,13 @@ const routeShrinkLineLimit = 800;
 const baselineLineLimit = 500;
 const migrationRoot = "supabase/migrations";
 // 业务日期必须按北京时间取：toISOString() 切出的是 UTC 日期，北京时间 0-8 点会差一天。
-// 统一用 src/lib/loaders/shared.ts 的 formatShanghaiDateOnly / shiftDateOnly；
+// 统一用 src/lib/business-time.ts 的 formatShanghaiDateOnly / shiftDateOnly / addShanghaiDateOnly；
 // 确实是对 Date.UTC(...) 做纯日历运算的，在同一行或上一行写 `// gate:utc-date-ok <理由>`。
 const utcDateSlicePattern = /toISOString\(\)\s*\.\s*(?:slice\(\s*0\s*,\s*10\s*\)|substring\(\s*0\s*,\s*10\s*\)|split\(\s*["'`]T["'`]\s*\)\s*\[\s*0\s*\])/;
+// 全站北京时间唯一出处为 src/lib/business-time.ts，新增代码禁止再手写 "+08:00" 或 "Asia/Shanghai"。
+// 确有特殊原因的，在同一行或上一行写 `// gate:shanghai-tz-ok <理由>`。
+const businessTimeModulePath = "src/lib/business-time.ts";
+const hardcodedShanghaiTzPattern = /(?:\+08:00|Asia\/Shanghai)/;
 
 async function walk(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -89,6 +93,10 @@ function hasUtcDateMarker(line) {
   return /\/\/\s*gate:utc-date-ok\s+\S/.test(line);
 }
 
+function hasShanghaiTzMarker(line) {
+  return /\/\/\s*gate:shanghai-tz-ok\s+\S/.test(line);
+}
+
 function isTestPath(relative) {
   return /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(relative);
 }
@@ -118,6 +126,40 @@ function findUtcDateSlicesInSource(relative, source) {
     if (!utcDateSlicePattern.test(text) || hasUtcDateMarker(text)) return [];
     const previous = index > 0 ? lines[index - 1] : "";
     if (/^\s*\/\//.test(previous) && hasUtcDateMarker(previous)) return [];
+    return [{ path: relative, text: text.trim() }];
+  });
+}
+
+function findAddedHardcodedShanghaiTz(diff) {
+  const hits = [];
+  let currentPath = null;
+  let previousAdded = null;
+  for (const line of diff.split(/\r?\n/)) {
+    const header = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (header) { currentPath = header[2]; previousAdded = null; continue; }
+    if (!currentPath || !/^\+[^+]/.test(line)) { if (!line.startsWith("+")) previousAdded = null; continue; }
+    const text = line.slice(1);
+    if (
+      currentPath !== businessTimeModulePath
+      && !isTestPath(currentPath)
+      && hardcodedShanghaiTzPattern.test(text)
+      && !hasShanghaiTzMarker(text)
+      && !(previousAdded !== null && /^\s*\/\//.test(previousAdded) && hasShanghaiTzMarker(previousAdded))
+    ) {
+      hits.push({ path: currentPath, text: text.trim() });
+    }
+    previousAdded = text;
+  }
+  return hits;
+}
+
+function findHardcodedShanghaiTzInSource(relative, source) {
+  if (relative === businessTimeModulePath || isTestPath(relative)) return [];
+  const lines = source.split(/\r?\n/);
+  return lines.flatMap((text, index) => {
+    if (!hardcodedShanghaiTzPattern.test(text) || hasShanghaiTzMarker(text)) return [];
+    const previous = index > 0 ? lines[index - 1] : "";
+    if (/^\s*\/\//.test(previous) && hasShanghaiTzMarker(previous)) return [];
     return [{ path: relative, text: text.trim() }];
   });
 }
@@ -238,6 +280,7 @@ let changedPaths;
 let untrackedPaths;
 let addedRawMapPaths;
 let addedUtcDateSlices;
+let addedHardcodedShanghaiTz;
 let changedMigrationPaths;
 let untrackedMigrationPaths;
 
@@ -260,6 +303,7 @@ try {
   untrackedMigrationPaths = parseNameLines(untrackedMigrationOutput);
   addedRawMapPaths = parseAddedRawMapPaths(diff);
   addedUtcDateSlices = findAddedUtcDateSlices(diff);
+  addedHardcodedShanghaiTz = findAddedHardcodedShanghaiTz(diff);
   globalThis.maintainabilityContext = {
     activity: parseActivity(activityOutput),
     currentBaseline: parseBaseline(currentBaselineRaw, baselinePath),
@@ -334,7 +378,19 @@ if (process.exitCode !== 2) {
     allViolations.push({
       type: "utc-business-date",
       path: hit.path,
-      detail: `new code slices a UTC date from toISOString(); use formatShanghaiDateOnly/shiftDateOnly or mark // gate:utc-date-ok <reason>: ${hit.text.slice(0, 160)}`,
+      detail: `new code slices a UTC date from toISOString(); use src/lib/business-time.ts (formatShanghaiDateOnly/shiftDateOnly/addShanghaiDateOnly) or mark // gate:utc-date-ok <reason>: ${hit.text.slice(0, 160)}`,
+    });
+  }
+
+  const shanghaiTzHits = [
+    ...addedHardcodedShanghaiTz,
+    ...records.filter((item) => untrackedPaths.has(item.path)).flatMap((item) => findHardcodedShanghaiTzInSource(item.path, item.source)),
+  ];
+  for (const hit of shanghaiTzHits) {
+    allViolations.push({
+      type: "hardcoded-shanghai-timezone",
+      path: hit.path,
+      detail: `new code hardcodes "+08:00" or "Asia/Shanghai" outside ${businessTimeModulePath}; use formatShanghaiDateOnly/addShanghaiDateOnly/shanghaiDayStartIso/shanghaiDateRangeToUtc/parseBusinessDateTime from src/lib/business-time.ts or mark // gate:shanghai-tz-ok <reason>: ${hit.text.slice(0, 160)}`,
     });
   }
 
@@ -375,7 +431,7 @@ if (process.exitCode !== 2) {
   allViolations.push(...baselineFileViolations);
 
   const isNewViolation = (item) => {
-    if (item.type === "baseline-file-increase" || item.type === "migration-function-timezone" || item.type === "utc-business-date") return true;
+    if (item.type === "baseline-file-increase" || item.type === "migration-function-timezone" || item.type === "utc-business-date" || item.type === "hardcoded-shanghai-timezone") return true;
     // 棘轮只拦本次改动到的文件：已经合进基座的超限不拦无关改动（否则门禁对所有人常红、被当噪音放过），
     // 但会列在 legacyViolations 里；谁再碰这个文件，谁就得先把它压回上限以下。
     return changedPaths.has(item.path) && (
@@ -414,7 +470,7 @@ if (process.exitCode !== 2) {
     violations,
     status: violations.length ? "blocked" : "pass",
     typeCheckNotice,
-    rule: "新增代码不得用 toISOString() 切业务日期；新增缓存必须声明 TTL、容量、作用域和失效；阻断线以上文件不得继续新增业务逻辑；名单外老文件只能按棘轮下降。",
+    rule: "新增代码不得用 toISOString() 切业务日期；新增代码不得在 src/lib/business-time.ts 之外手写 +08:00 或 Asia/Shanghai；新增缓存必须声明 TTL、容量、作用域和失效；阻断线以上文件不得继续新增业务逻辑；名单外老文件只能按棘轮下降。",
   };
 
   if (reportMode) {
