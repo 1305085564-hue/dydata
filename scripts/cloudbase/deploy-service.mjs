@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -27,6 +27,10 @@ export function prepareDeployment(repo, env) {
   if (git('branch', '--show-current').toString().trim() !== 'main') throw new Error('只发布 main');
   const commit = git('rev-parse', 'HEAD').toString().trim();
   if (commit !== git('rev-parse', 'origin/main').toString().trim()) throw new Error('HEAD 必须等于 origin/main');
+  const gatePassPath = path.resolve(repo, git('rev-parse', '--git-path', 'dydata-gate-pass').toString().trim());
+  if (!existsSync(gatePassPath) || readFileSync(gatePassPath, 'utf8').trim() !== commit) {
+    throw new Error('先正常 git push（不带 --no-verify）让门禁跑完');
+  }
   const directory = mkdtempSync(path.join(tmpdir(), 'dydata-release-'));
   const archive = path.join(directory, 'source.zip');
   const source = path.join(directory, 'source');

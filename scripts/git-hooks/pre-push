@@ -51,4 +51,7 @@ node scripts/maintainability-gate.mjs --base=origin/main
 node scripts/doc-size-check.mjs
 echo "[pre-push] 7/7 新增接口失败路径门禁（对比 origin/main）"
 node scripts/api-failure-path-gate.mjs --base=origin/main
+gate_pass_path=$(git rev-parse --git-path dydata-gate-pass)
+mkdir -p "$(dirname "$gate_pass_path")"
+git rev-parse HEAD > "$gate_pass_path"
 echo "[pre-push] 全部通过"

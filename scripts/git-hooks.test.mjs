@@ -16,6 +16,8 @@ async function runHook({ migration, database, docCheck = "pass" }) {
   const gitStub = `#!/bin/sh
 case "$1 $2" in
   "rev-parse --show-toplevel") echo "${root}" ;;
+  "rev-parse --git-path") echo "${root}/.git/dydata-gate-pass" ;;
+  "rev-parse HEAD") echo "deadbeef00000000000000000000000000000000" ;;
   "diff --name-only") [ "${migration}" = "yes" ] && echo supabase/migrations/20261119000000_test.sql ;;
   "diff --cached --name-only") [ "${migration}" = "yes" ] && echo supabase/migrations/20261119000000_test.sql ;;
   "ls-files --others") [ "${migration}" = "yes" ] && echo supabase/migrations/20261119000000_test.sql ;;
@@ -51,8 +53,9 @@ exit 0
   child.stderr.on("data", (chunk) => { stderr += chunk; });
   const status = await new Promise((resolve) => child.on("close", resolve));
   const commands = await readFile(log, "utf8").catch(() => "");
+  const gatePass = await readFile(path.join(root, ".git/dydata-gate-pass"), "utf8").catch(() => null);
   await rm(root, { recursive: true, force: true });
-  return { status, stdout, stderr, commands };
+  return { status, stdout, stderr, commands, gatePass };
 }
 
 // 从工作树 push 时 git 给钩子导出 GIT_DIR；钩子跑的测试会在临时目录 git init/config，
@@ -103,4 +106,11 @@ test("文档链接检查失败时阻断推送，且不再往下跑类型检查�
   assert.match(result.stderr, /文档里有链接指向不存在的文件，已阻断推送/);
   assert.match(result.stderr, /--links --fix-links/);
   assert.doesNotMatch(result.commands, /tsc|npm test/);
+  assert.equal(result.gatePass, null);
+});
+
+test("pre-push 全部通过后把当前提交号写入 dydata-gate-pass 标记文件", async () => {
+  const result = await runHook({ migration: "no", database: "down" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.gatePass?.trim(), "deadbeef00000000000000000000000000000000");
 });
