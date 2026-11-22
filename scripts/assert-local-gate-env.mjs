@@ -16,10 +16,24 @@ import { assertApplicationTreeClean } from "./gate-lock.mjs";
  */
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
+const CLOUDBASE_PRODUCTION_ENV_ID = JSON.parse(
+  readFileSync(new URL("../cloudbaserc.json", import.meta.url), "utf8"),
+).envId;
 export const CLOUDBASE_GATE_ENV_ID = "dydata-d6g0gd1v37fcddf21";
 
-export function assertCloudBaseGateEnvironment(env = process.env) {
+export function assertCloudBaseGateEnvironment(
+  env = process.env,
+  { gateEnvId = CLOUDBASE_GATE_ENV_ID, productionEnvId = CLOUDBASE_PRODUCTION_ENV_ID } = {},
+) {
   if (env.DYDATA_GATE_BACKEND !== "cloudbase") throw new Error("未启用 CloudBase 隔离门禁模式");
+  if (
+    !gateEnvId ||
+    gateEnvId === productionEnvId ||
+    env.CLOUDBASE_ENV_ID === productionEnvId ||
+    env.NEXT_PUBLIC_CLOUDBASE_ENV_ID === productionEnvId
+  ) {
+    throw new Error("这个环境 2026-11-22 起已是正式网站，不能拿来跑测试；新建独立测试环境后再改这里");
+  }
   if (["DYDATA_E2E_BASE_URL", "DYDATA_GATE_ALLOW_EXTERNAL", "DYDATA_GATE_ALLOW_PRODUCTION_READ_ONLY", "DYDATA_GATE_REUSE"].some((name) => env[name]?.trim())) {
     throw new Error("CloudBase 门禁必须自行启动本地服务，禁止外部地址、外部放行和复用服务开关");
   }
@@ -27,11 +41,11 @@ export function assertCloudBaseGateEnvironment(env = process.env) {
     if (env[name] !== "cloudbase") throw new Error(`CloudBase 门禁要求 ${name}=cloudbase；构建与运行后端必须一致`);
   }
   for (const name of ["CLOUDBASE_ENV_ID", "NEXT_PUBLIC_CLOUDBASE_ENV_ID"]) {
-    if (env[name] !== CLOUDBASE_GATE_ENV_ID) throw new Error(`CloudBase 门禁要求 ${name} 为固定隔离环境，拒绝其他环境`);
+    if (env[name] !== gateEnvId) throw new Error(`CloudBase 门禁要求 ${name} 为固定隔离环境，拒绝其他环境`);
   }
   if (!env.CLOUDBASE_SERVICE_API_KEY?.trim()) throw new Error("CloudBase 门禁缺少 CLOUDBASE_SERVICE_API_KEY");
   if (env.PORT && env.PORT !== "3100") throw new Error("CloudBase 门禁固定使用本地 3100 端口");
-  return { mode: "cloudbase", environmentId: CLOUDBASE_GATE_ENV_ID };
+  return { mode: "cloudbase", environmentId: gateEnvId };
 }
 
 function hostOf(url) {
@@ -42,9 +56,9 @@ function hostOf(url) {
   }
 }
 
-export function assertGateEnvironment(env = process.env, cwd = process.cwd()) {
+export function assertGateEnvironment(env = process.env, cwd = process.cwd(), options) {
   if (env.DYDATA_GATE_BACKEND === "cloudbase") {
-    const result = assertCloudBaseGateEnvironment(env);
+    const result = assertCloudBaseGateEnvironment(env, options);
     assertApplicationTreeClean(cwd);
     return result;
   }

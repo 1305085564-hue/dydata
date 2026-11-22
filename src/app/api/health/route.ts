@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
-import { runSupabaseKeepalive, type SupabaseKeepaliveResult } from "@/lib/supabase/keepalive";
+import { probeDatabaseHealth, type DatabaseProbeResult } from "@/lib/database-health-probe";
 import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
-type SupabaseDependencyStatus = "up" | "down" | "unconfigured";
+type DependencyStatus = "up" | "down" | "unconfigured";
 
 export type HealthDeps = {
-  probeSupabase: () => Promise<SupabaseKeepaliveResult>;
-  probeCloudBase?: () => Promise<SupabaseKeepaliveResult>;
+  probeSupabase?: () => Promise<DatabaseProbeResult>;
+  probeCloudBase?: () => Promise<DatabaseProbeResult>;
 };
 
-const defaultDeps: HealthDeps = {
-  probeSupabase: () => runSupabaseKeepalive(),
-  probeCloudBase: () => runSupabaseKeepalive(),
+const defaultDeps: Required<HealthDeps> = {
+  probeSupabase: () => probeDatabaseHealth(),
+  probeCloudBase: () => probeDatabaseHealth(),
 };
 
 function hasSupabaseConfig() {
@@ -38,20 +38,19 @@ export async function buildHealthResponse(
   const startedAt = Date.now();
 
   // 基础存活：进程能响应即 ok，不探测任何依赖，恒为 200
-  if (!requestedCheck || !["supabase", "cloudbase", "database"].includes(requestedCheck)) {
+  if (!requestedCheck || !["cloudbase", "database"].includes(requestedCheck)) {
     logApiRequest({ requestId, route: "/api/health", method: request.method, status: 200 });
     return NextResponse.json({ status: "ok", checks: { server: "up" } }, { status: 200 });
   }
 
-  const wantsCloudBase = isCloudBaseBackend() &&
-    (requestedCheck === "cloudbase" || requestedCheck === "database");
+  const wantsCloudBase = isCloudBaseBackend();
 
   if (wantsCloudBase) {
-    let statusValue: SupabaseDependencyStatus = "unconfigured";
-    let probe: SupabaseKeepaliveResult | null = null;
+    let statusValue: DependencyStatus = "unconfigured";
+    let probe: DatabaseProbeResult | null = null;
     if (hasCloudBaseConfig()) {
       try {
-        probe = await (deps.probeCloudBase ?? defaultDeps.probeCloudBase!)();
+        probe = await (deps.probeCloudBase ?? defaultDeps.probeCloudBase)();
         statusValue = "up";
       } catch {
         statusValue = "down";
@@ -108,29 +107,15 @@ export async function buildHealthResponse(
     );
   }
 
-  if (requestedCheck === "supabase" && isCloudBaseBackend()) {
-    logApiRequest({
-      requestId,
-      route: "/api/health",
-      method: request.method,
-      status: 503,
-      durationMs: Date.now() - startedAt,
-      detail: { check: requestedCheck, backend: "cloudbase", supabase: "unconfigured" },
-    });
-    return NextResponse.json(
-      { status: "degraded", checks: { server: "up", supabase: "unconfigured" } },
-      { status: 503 },
-    );
-  }
-
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   // 依赖检查：区分「未配置」和「探活失败」，失败只报 down，
   // 绝不返回数据库错误信息、行数或用户数据
-  let supabase: SupabaseDependencyStatus;
+  let supabase: DependencyStatus;
   if (!hasSupabaseConfig()) {
     supabase = "unconfigured";
   } else {
     try {
-      await deps.probeSupabase();
+      await (deps.probeSupabase ?? defaultDeps.probeSupabase)();
       supabase = "up";
     } catch {
       supabase = "down";
@@ -146,7 +131,7 @@ export async function buildHealthResponse(
     method: request.method,
     status,
     durationMs: Date.now() - startedAt,
-    detail: { check: "supabase", supabase },
+    detail: { check: requestedCheck, supabase },
   });
 
   return NextResponse.json(

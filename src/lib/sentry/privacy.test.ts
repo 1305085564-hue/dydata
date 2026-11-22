@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { dropSentryBreadcrumb, getSentryEnvironment, sanitizeSentryEvent } from "./privacy";
+import { dropSentryBreadcrumb, getSentryEnvironment, getSentryRelease, sanitizeSentryEvent } from "./privacy";
 
 test("Sentry 事件只保留排查错误所需的安全字段", () => {
   const event = {
@@ -116,6 +116,24 @@ test("Sentry 环境优先使用浏览器和服务端都能读取的公开环境�
       delete process.env.SENTRY_ENVIRONMENT;
     } else {
       process.env.SENTRY_ENVIRONMENT = previousServerEnvironment;
+    }
+  }
+});
+
+test("未配置额外环境名与版本号时默认走 production / NODE_ENV 且版本号留空", () => {
+  const keys = ["NEXT_PUBLIC_SENTRY_ENVIRONMENT", "SENTRY_ENVIRONMENT", "SENTRY_RELEASE", "NODE_ENV"] as const;
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  for (const key of keys) delete (process.env as Record<string, string | undefined>)[key];
+
+  try {
+    assert.equal(getSentryEnvironment(), "production");
+    assert.equal(getSentryRelease(), undefined);
+    (process.env as Record<string, string | undefined>).SENTRY_RELEASE = "rel-1";
+    assert.equal(getSentryRelease(), "rel-1");
+  } finally {
+    for (const key of keys) {
+      if (previous[key] === undefined) delete (process.env as Record<string, string | undefined>)[key];
+      else (process.env as Record<string, string | undefined>)[key] = previous[key];
     }
   }
 });
