@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import os from "node:os";
 import test from "node:test";
 import path from "node:path";
+import { buildHookWrapper, installGitHooks } from "./install-git-hooks.mjs";
 
 const hookPath = path.resolve("scripts/git-hooks/pre-push");
+
+function cleanGitEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.startsWith("GIT_")) delete env[key];
+  return { ...env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" };
+}
 
 async function runHook({ migration, database, docCheck = "pass" }) {
   const root = await mkdtemp(path.join(os.tmpdir(), "dydata-pre-push-"));
@@ -113,4 +121,80 @@ test("pre-push 全部通过后把当前提交号写入 dydata-gate-pass 标记�
   const result = await runHook({ migration: "no", database: "down" });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.gatePass?.trim(), "deadbeef00000000000000000000000000000000");
+});
+
+test("安装转发壳：改仓库脚本不重装即生效，原样透传参数与标准输入，隔离区执行自己的脚本", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "dydata-hook-forward-"));
+  const env = cleanGitEnv();
+  const repo = path.join(root, "repo");
+  const git = (cwd, ...args) => execFileSync("git", args, { cwd, env, encoding: "utf8" });
+
+  try {
+    execFileSync("git", ["init", "-q", "-b", "main", repo], { env });
+    await mkdir(path.join(repo, "scripts/git-hooks"), { recursive: true });
+    await writeFile(
+      path.join(repo, "scripts/git-hooks/pre-push"),
+      "#!/bin/sh\necho \"v1|$1|$2|$(cat)\"\n",
+      { mode: 0o755 },
+    );
+    await writeFile(
+      path.join(repo, "scripts/git-hooks/pre-commit"),
+      "#!/bin/sh\nexit 0\n",
+      { mode: 0o755 },
+    );
+    git(repo, "add", ".");
+    git(repo, "commit", "-q", "-m", "init");
+
+    // 已有旧脚本且无 --force 时拒绝覆盖；带 --force 时装成薄转发壳
+    await writeFile(path.join(repo, ".git/hooks/pre-push"), "#!/bin/sh\necho old\n", { mode: 0o755 });
+    assert.equal(installGitHooks({ cwd: repo, env, force: false, log: () => {}, error: () => {} }), false);
+    assert.equal(installGitHooks({ cwd: repo, env, force: true, log: () => {}, error: () => {} }), true);
+    assert.equal(await readFile(path.join(repo, ".git/hooks/pre-push"), "utf8"), buildHookWrapper("pre-push"));
+
+    // 1. 原样透传参数和标准输入
+    const installedHook = path.join(repo, ".git/hooks/pre-push");
+    const run1 = spawnSync(installedHook, ["origin", "https://example.com/repo.git"], {
+      cwd: repo,
+      env,
+      input: "refs/heads/main 1111 refs/heads/main 0000",
+      encoding: "utf8",
+    });
+    assert.equal(run1.status, 0, run1.stderr);
+    assert.equal(run1.stdout.trim(), "v1|origin|https://example.com/repo.git|refs/heads/main 1111 refs/heads/main 0000");
+
+    // 2. 改仓库脚本后，不重新安装直接跑出新版内容
+    await writeFile(
+      path.join(repo, "scripts/git-hooks/pre-push"),
+      "#!/bin/sh\necho \"v2|$1|$2|$(cat)\"\n",
+      { mode: 0o755 },
+    );
+    const run2 = spawnSync(installedHook, ["origin", "https://example.com/repo.git"], {
+      cwd: repo,
+      env,
+      input: "refs/heads/main 2222 refs/heads/main 1111",
+      encoding: "utf8",
+    });
+    assert.equal(run2.status, 0, run2.stderr);
+    assert.equal(run2.stdout.trim(), "v2|origin|https://example.com/repo.git|refs/heads/main 2222 refs/heads/main 1111");
+
+    // 3. 在隔离区里执行时，走隔离区自己的 scripts/git-hooks/pre-push
+    const worktree = path.join(root, "worktree");
+    git(repo, "worktree", "add", "-q", "-b", "feat/wt", worktree);
+    await writeFile(
+      path.join(worktree, "scripts/git-hooks/pre-push"),
+      "#!/bin/sh\necho \"worktree-hook|$1|$(cat)\"\n",
+      { mode: 0o755 },
+    );
+    const worktreeGitDir = git(worktree, "rev-parse", "--git-dir").trim();
+    const runWorktree = spawnSync(installedHook, ["origin"], {
+      cwd: worktree,
+      env: { ...env, GIT_DIR: worktreeGitDir },
+      input: "refs/heads/feat/wt 3333",
+      encoding: "utf8",
+    });
+    assert.equal(runWorktree.status, 0, runWorktree.stderr);
+    assert.equal(runWorktree.stdout.trim(), "worktree-hook|origin|refs/heads/feat/wt 3333");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
