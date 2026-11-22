@@ -6,13 +6,13 @@ type FakeSelectResult = {
   error: { message: string } | null;
 };
 
-test("runSupabaseKeepalive 只读取 1 条 profiles 记录", async () => {
+test("probeDatabaseHealth 只读取 1 条 profiles 记录", async () => {
   const calls: Array<{ table: string; columns: string; limit: number }> = [];
 
-  const mod = await import(new URL("./keepalive.ts", import.meta.url).href);
-  const { runSupabaseKeepalive } = mod;
+  const mod = await import(new URL("./database-health-probe.ts", import.meta.url).href);
+  const { probeDatabaseHealth } = mod;
 
-  const result = await runSupabaseKeepalive({
+  const result = await probeDatabaseHealth({
     from(table: string) {
       assert.equal(table, "profiles");
       return {
@@ -37,12 +37,12 @@ test("runSupabaseKeepalive 只读取 1 条 profiles 记录", async () => {
   assert.equal(result.rowCount, 1);
 });
 
-test("runSupabaseKeepalive 遇到 Supabase 错误会抛出异常", async () => {
-  const mod = await import(new URL("./keepalive.ts", import.meta.url).href);
-  const { runSupabaseKeepalive } = mod;
+test("probeDatabaseHealth 遇到数据库错误会抛出异常", async () => {
+  const mod = await import(new URL("./database-health-probe.ts", import.meta.url).href);
+  const { probeDatabaseHealth } = mod;
 
   await assert.rejects(
-    () => runSupabaseKeepalive({
+    () => probeDatabaseHealth({
       from() {
         return {
           select() {

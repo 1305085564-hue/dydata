@@ -17,6 +17,8 @@ test("长期错误记录保留具体错误类型与关联编号，隐私过滤�
   assert.match(JSON.stringify(sent), /11111111-1111-4111-8111-111111111111/);
   assert.match(JSON.stringify(records), /headers/);
   assert.doesNotMatch(JSON.stringify(sent), /image-hash/);
+  assert.equal((records[0] as Record<string, unknown>).environment, process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "production");
+  assert.equal((records[0] as Record<string, unknown>).release, process.env.SENTRY_RELEASE ?? null);
 });
 
 test("上报失败不能拖垮图片响应；不向错误平台发送原始错误正文", () => {

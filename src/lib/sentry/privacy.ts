@@ -163,11 +163,11 @@ export function getSentryEnvironment() {
   return (
     process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ??
     process.env.SENTRY_ENVIRONMENT ??
-    process.env.VERCEL_ENV ??
-    process.env.NODE_ENV
+    process.env.NODE_ENV ??
+    "production"
   );
 }
 
 export function getSentryRelease() {
-  return process.env.SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA;
+  return process.env.SENTRY_RELEASE;
 }

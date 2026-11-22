@@ -28,8 +28,8 @@ export function reportScreenshotReadFailure(
     mode: event.mode,
     auth_ms: event.authMs,
     kind, code, phase, attempts,
-    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
-    release: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "production",
+    release: process.env.SENTRY_RELEASE ?? null,
     region: process.env.COS_REGION ?? null,
   };
   try { (deps.log ?? ((value) => console.error("[screenshot-storage]", JSON.stringify(value))))(record); } catch { /* 观测不能改变业务结果。 */ }
