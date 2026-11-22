@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
+import { X, User, Shield, Check, Plus, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   updateProfile,
   updateAccountName,
@@ -48,7 +47,7 @@ export function PremiumSettingsModal({
 }: PremiumSettingsModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">(
+  const [activeTab, setActiveTab] = useState<"profile" | "accounts">(
     "profile",
   );
   const [editingName, setEditingName] = useState(profileName);
@@ -69,9 +68,6 @@ export function PremiumSettingsModal({
   const [editingField, setEditingField] = useState<"name" | "remark" | null>(null);
   const [editValue, setEditValue] = useState<string>("");
 
-  // Theme or toggle state
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [remindHour, setRemindHour] = useState("11:15");
   const [profileError, setProfileError] = useState("");
   const [addAccountError, setAddAccountError] = useState("");
 
@@ -324,20 +320,6 @@ export function PremiumSettingsModal({
               >
                 <Shield className="size-4 text-status-info" />
                 矩阵账号管理
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("system")}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[14px] font-normal transition-colors duration-100 sm:w-full",
-                  activeTab === "system"
-                    ? "bg-[#E4E4E1] text-[#141413] font-normal"
-                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
-                )}
-              >
-                <Settings2 className="size-4 text-status-success" />
-                系统参数配置
               </button>
             </div>
 
@@ -668,65 +650,6 @@ export function PremiumSettingsModal({
                       </div>
                     );
                   })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* TAB 3: SYSTEM SETTINGS */}
-            {activeTab === "system" && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-5"
-              >
-                <div>
-                  <ItemHeading as="h3">
-                    系统参数配置
-                  </ItemHeading>
-                  <p className="text-[14px] text-[#1F1E1D] mt-1">
-                    配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {/* Combined Dynamic Reminder Card (Eliminating Dashed Borders) */}
-                  <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition shadow-card-ring">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <span className="text-[14px] font-normal text-[#141413]">
-                          启用每日催交动态提醒
-                        </span>
-                        <span className="block text-[12px] text-[#78716C] mt-0.5">
-                          开启后系统将定期在选定时间点推送待办事项给所有未交日报的成员。
-                        </span>
-                      </div>
-                      <Switch
-                        checked={pushEnabled}
-                        onCheckedChange={setPushEnabled}
-                      />
-                    </div>
-
-                    {/* Integrated nested scheduling setting */}
-                    {pushEnabled && (
-                      <div className="border-t border-[#E2E2DF]/60 pt-3 flex items-center justify-between gap-4 animate-in fade-in duration-200">
-                        <div>
-                          <span className="block text-[12px] font-normal text-[#1F1E1D]">
-                            提醒定时设置 (24小时制)
-                          </span>
-                          <span className="block text-[12px] text-[#78716C] mt-0.5">
-                            将在每日 {remindHour} 准时执行推送
-                          </span>
-                        </div>
-                        <input
-                          type="time"
-                          value={remindHour}
-                          onChange={(e) => setRemindHour(e.target.value)}
-                          className="rounded-md border border-[#E2E2DF] bg-white py-1 px-2.5 text-[12px] font-normal text-[#141413] outline-none shadow-input"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
               </motion.div>
             )}
