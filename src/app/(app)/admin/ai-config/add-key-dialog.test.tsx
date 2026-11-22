@@ -26,3 +26,20 @@ test("AddKeyDialog 通过服务端探测模型，并提交所选模型列表", (
   assert.match(addKeySource, /selected_model_ids/);
   assert.doesNotMatch(addKeySource, /targetUrl.*\/models/);
 });
+
+test("AddKeyDialog 支持接入协议选择与 Cloudflare Clairic 单模型引导", () => {
+  assert.match(addKeySource, /标准对话接口 \(OpenAI 兼容\)/);
+  assert.match(addKeySource, /Cloudflare Clairic \(截图专项\)/);
+  assert.match(addKeySource, /openai_compatible/);
+  assert.match(addKeySource, /cloudflare_clairic/);
+  assert.match(addKeySource, /API Token/);
+  assert.match(addKeySource, /Workers AI/);
+  // 探测和保存均透传 protocol
+  assert.match(addKeySource, /probe_provider_models[\s\S]*protocol/);
+  assert.match(addKeySource, /"create"[\s\S]*protocol/);
+  // 第二步 Clairic 单模型专属确认项与文案
+  assert.match(addKeySource, /CLAIRIC_UPSTREAM_MODEL_ID/);
+  assert.match(addKeySource, /截图专项/);
+  assert.match(addKeySource, /此接入点专用于「截图识别」功能/);
+  assert.match(addKeySource, /保存渠道 \(Clairic 截图专项\)/);
+});

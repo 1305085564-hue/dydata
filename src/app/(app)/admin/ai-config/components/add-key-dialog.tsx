@@ -4,6 +4,11 @@ import { useEffect, useState, useMemo } from "react";
 import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import {
+  CLAIRIC_CANONICAL_MODEL_ID,
+  CLAIRIC_UPSTREAM_MODEL_ID,
+  type AiProviderProtocol,
+} from "@/lib/ai/provider-protocols";
+import {
   Dialog,
   DialogBody,
   DialogContent,
@@ -16,12 +21,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { Loader2, ArrowLeft, Sparkles, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Loader2, ArrowLeft, Sparkles, Search, Check } from "lucide-react";
 
 interface AddKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (keyId: string) => void;
+}
+
+const PROTOCOL_OPTIONS: Array<{
+  value: AiProviderProtocol;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "openai_compatible",
+    title: "标准对话接口 (OpenAI 兼容)",
+    description: "支持 DeepSeek、Claude、Gemini、OpenAI 等常见聚合代理",
+  },
+  {
+    value: "cloudflare_clairic",
+    title: "Cloudflare Clairic (截图专项)",
+    description: "专用于抖音截图数据抽取，不支持通用对话",
+  },
+];
+
+function isClairicModelId(id: string): boolean {
+  const normalized = id.trim().toLowerCase();
+  return (
+    normalized === CLAIRIC_CANONICAL_MODEL_ID ||
+    normalized === CLAIRIC_UPSTREAM_MODEL_ID
+  );
 }
 
 export function AddKeyDialog({
@@ -33,6 +64,7 @@ export function AddKeyDialog({
   const report = useAvailabilityReport(bundle);
 
   const [step, setStep] = useState<"input" | "explore">("input");
+  const [protocol, setProtocol] = useState<AiProviderProtocol>("openai_compatible");
   const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [label, setLabel] = useState("");
@@ -44,6 +76,11 @@ export function AddKeyDialog({
   const [discoveredModelIds, setDiscoveredModelIds] = useState<string[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [modelSearch, setModelSearch] = useState("");
+
+  const isClairicProtocol = protocol === "cloudflare_clairic";
+  const isClairicSingleModel =
+    isClairicProtocol ||
+    (discoveredModelIds.length === 1 && isClairicModelId(discoveredModelIds[0]));
 
   // 业务正在用的模型集合（用于自动勾选）
   const inUseModelIds = useMemo(() => {
@@ -62,6 +99,7 @@ export function AddKeyDialog({
   useEffect(() => {
     if (open) {
       setStep("input");
+      setProtocol("openai_compatible");
       setBaseUrl("");
       setApiKey("");
       setLabel("");
@@ -81,12 +119,14 @@ export function AddKeyDialog({
       return;
     }
     if (!trimmedKey) {
-      feedbackToast.error("请填写 API Key 密钥");
+      feedbackToast.error(isClairicProtocol ? "请填写 API Token" : "请填写 API Key 密钥");
+      return;
     }
 
     setProbing(true);
     try {
       const res = await runCommand("probe_provider_models", {
+        protocol,
         base_url: trimmedUrl,
         api_key: trimmedKey,
       });
@@ -94,21 +134,35 @@ export function AddKeyDialog({
       if (res.ok) {
         const body = res.body as {
           modelIds?: string[];
+          upstreamModelIds?: string[];
         };
         const ids = body.modelIds || [];
+        const upstreamIds = body.upstreamModelIds || [];
+        const probedClairic =
+          isClairicProtocol ||
+          (upstreamIds.length === 1 && isClairicModelId(upstreamIds[0])) ||
+          (ids.length === 1 && isClairicModelId(ids[0]));
 
-        setDiscoveredModelIds(ids);
+        if (probedClairic) {
+          const targetId = upstreamIds[0] || CLAIRIC_UPSTREAM_MODEL_ID;
+          setDiscoveredModelIds([targetId]);
+          setSelectedModelIds(new Set([targetId]));
+          setStep("explore");
+          feedbackToast.success("Cloudflare Clairic 连通探测成功");
+        } else {
+          setDiscoveredModelIds(ids);
 
-        // 自动勾上正在被业务或全局默认使用的模型（与 modelIds 取交集）
-        const autoSelected = new Set<string>();
-        for (const id of ids) {
-          if (inUseModelIds.has(id)) {
-            autoSelected.add(id);
+          // 自动勾上正在被业务或全局默认使用的模型（与 modelIds 取交集）
+          const autoSelected = new Set<string>();
+          for (const id of ids) {
+            if (inUseModelIds.has(id)) {
+              autoSelected.add(id);
+            }
           }
+          setSelectedModelIds(autoSelected);
+          setStep("explore");
+          feedbackToast.success(`成功探测到 ${ids.length} 个上游可用模型`);
         }
-        setSelectedModelIds(autoSelected);
-        setStep("explore");
-        feedbackToast.success(`成功探测到 ${ids.length} 个上游可用模型`);
       } else {
         feedbackToast.error(res.error || "获取上游模型失败，请检查地址和密钥");
       }
@@ -124,6 +178,7 @@ export function AddKeyDialog({
       const res = await runCommand(
         "create",
         {
+          protocol,
           base_url: baseUrl.trim(),
           api_key: apiKey.trim(),
           label: label.trim() || undefined,
@@ -169,6 +224,8 @@ export function AddKeyDialog({
     return discoveredModelIds.filter((id) => id.toLowerCase().includes(q));
   }, [discoveredModelIds, modelSearch]);
 
+  const clairicTargetId = discoveredModelIds[0] || CLAIRIC_UPSTREAM_MODEL_ID;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog w-[94vw] sm:w-[680px] sm:max-w-[680px] max-h-[calc(100dvh-2rem)]">
@@ -186,19 +243,71 @@ export function AddKeyDialog({
               </Button>
             )}
             <DialogTitle className="text-[20px] text-[#141413]">
-              {step === "input" ? "接入新渠道" : "勾选供应模型"}
+              {step === "input" ? "接入新渠道" : isClairicSingleModel ? "确认专项模型" : "勾选供应模型"}
             </DialogTitle>
           </div>
           <p className="text-[12px] text-[#78716C]">
             {step === "input"
-              ? "填入服务商 API 接口地址与密钥，系统将自动识别上游提供的模型。"
-              : `已探测到 ${discoveredModelIds.length} 个模型，请勾选本渠道需要提供给系统调度的模型。`}
+              ? "选择接口协议并填入 API 接口地址与密钥，系统将自动探测上游可用模型。"
+              : isClairicSingleModel
+                ? "已验证 Cloudflare Clairic 连通性，确认后即可加入算力池。"
+                : `已探测到 ${discoveredModelIds.length} 个模型，请勾选本渠道需要提供给系统调度的模型。`}
           </p>
         </DialogHeader>
 
         <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
           {step === "input" ? (
             <div className="space-y-4">
+              {/* 0. 接口协议选择 */}
+              <div className="space-y-2">
+                <Label className="text-[12px] text-[#1F1E1D]">接口协议</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {PROTOCOL_OPTIONS.map((option) => {
+                    const active = protocol === option.value;
+                    return (
+                      <div
+                        key={option.value}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={active}
+                        onClick={() => setProtocol(option.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setProtocol(option.value);
+                          }
+                        }}
+                        className={cn(
+                          "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
+                          active
+                            ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15"
+                            : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-[14px] text-[#141413] leading-snug">
+                            {option.title}
+                          </span>
+                          <span
+                            className={cn(
+                              "mt-0.5 size-4 shrink-0 rounded-full border flex items-center justify-center transition-colors",
+                              active
+                                ? "border-[#141413] bg-[#141413] text-white"
+                                : "border-[#E2E2DF] bg-white",
+                            )}
+                          >
+                            {active && <Check className="size-2.5 stroke-[3]" />}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] text-[#78716C] leading-snug">
+                          {option.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* 1. API 接口地址 */}
               <div className="space-y-2">
                 <Label htmlFor="channel-base-url" className="text-[12px] text-[#1F1E1D]">
@@ -208,27 +317,39 @@ export function AddKeyDialog({
                   id="channel-base-url"
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://api.openai.com/v1 或中转商地址"
+                  placeholder={
+                    isClairicProtocol
+                      ? "https://api.cloudflare.com/client/v4/accounts/<你的账号ID>/ai/run"
+                      : "https://api.openai.com/v1 或中转商地址"
+                  }
                   className="h-8 text-[12px] font-mono border-[#E2E2DF]"
                 />
                 <p className="text-[12px] text-[#78716C]">
-                  系统会自动根据地址归类接入点；若已接入过相同地址，将自动归入同一组。
+                  {isClairicProtocol
+                    ? "支持 Cloudflare 官方地址、AI Gateway 或自建代理地址。"
+                    : "系统会自动根据地址归类接入点；若已接入过相同地址，将自动归入同一组。"}
                 </p>
               </div>
 
-              {/* 2. API Key */}
+              {/* 2. API Key / Token */}
               <div className="space-y-2">
                 <Label htmlFor="channel-api-key" className="text-[12px] text-[#1F1E1D]">
-                  API Key 密钥 <span className="text-status-danger">*</span>
+                  {isClairicProtocol ? "API Token" : "API Key 密钥"}{" "}
+                  <span className="text-status-danger">*</span>
                 </Label>
                 <Input
                   id="channel-api-key"
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
+                  placeholder={isClairicProtocol ? "输入 Cloudflare API Token" : "sk-..."}
                   className="h-8 text-[12px] font-mono border-[#E2E2DF]"
                 />
+                {isClairicProtocol && (
+                  <p className="text-[12px] text-[#78716C]">
+                    需要包含 Workers AI 权限的 API Token。
+                  </p>
+                )}
               </div>
 
               {/* 3. 渠道名称（选填） */}
@@ -240,10 +361,41 @@ export function AddKeyDialog({
                   id="channel-label"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  placeholder="例如：主通道、备用-硅基流动（留空则使用地址主机名）"
+                  placeholder={
+                    isClairicProtocol
+                      ? "例如：Clairic 主账号、Clairic 备用（留空则使用地址主机名）"
+                      : "例如：主通道、备用-硅基流动（留空则使用地址主机名）"
+                  }
                   className="h-8 text-[12px] border-[#E2E2DF]"
                 />
               </div>
+            </div>
+          ) : isClairicSingleModel ? (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Checkbox
+                    id="model-clairic"
+                    checked={selectedModelIds.has(clairicTargetId)}
+                    onCheckedChange={(checked) =>
+                      handleToggleModel(clairicTargetId, Boolean(checked))
+                    }
+                    className="size-4 rounded-md shrink-0"
+                  />
+                  <Label htmlFor="model-clairic" className="flex flex-col gap-0.5 cursor-pointer min-w-0">
+                    <span className="text-[14px] text-[#141413]">Cloudflare Clairic</span>
+                    <span className="text-[12px] font-mono text-[#78716C] truncate">
+                      {clairicTargetId}
+                    </span>
+                  </Label>
+                </div>
+                <span className="inline-flex items-center rounded-md bg-[#EBEBE9] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
+                  截图专项
+                </span>
+              </div>
+              <p className="text-[12px] text-[#78716C]">
+                此接入点专用于「截图识别」功能，不支持通用对话或全局默认。
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -350,7 +502,7 @@ export function AddKeyDialog({
           ) : (
             <Button
               size="s"
-              disabled={saving}
+              disabled={saving || (isClairicSingleModel && selectedModelIds.size === 0)}
               onClick={handleSave}
               className="h-8 px-4 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
             >
@@ -359,6 +511,8 @@ export function AddKeyDialog({
                   <Loader2 className="size-3.5 animate-spin mr-1.5" />
                   正在保存…
                 </>
+              ) : isClairicSingleModel ? (
+                "保存渠道 (Clairic 截图专项)"
               ) : (
                 `保存渠道 (已选 ${selectedModelIds.size} 个模型)`
               )}

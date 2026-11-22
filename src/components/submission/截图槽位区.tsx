@@ -13,6 +13,7 @@ interface SubmissionSlotsProps {
   slots: Record<
     SubmissionSlotRole,
     SubmissionSlotState & {
+      file?: File | null;
       fileName?: string;
       error?: string | null;
       assetUrl?: string | null;
@@ -205,7 +206,11 @@ export function SubmissionSlotsSection({
                 Boolean(slot.ocrFallback) ||
                 ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed"));
             const needsAction = isError || Boolean(slot.ocrFallback) || slot.status === "pending_confirm" || slot.status === "failed";
-            const canRetry = Boolean(onRetry) && Boolean(slot.assetUrl) && Boolean((slot as { file?: File | null }).file) && !isProcessing && needsAction;
+            const canRetry =
+              Boolean(onRetry) &&
+              (Boolean(slot.assetUrl) || Boolean(slot.file)) &&
+              !isProcessing &&
+              needsAction;
             const elapsed = Math.max(1, Math.round((uploadProgress[item.role]?.elapsedMs ?? 0) / 1000));
             const isLongWaiting = Boolean(uploadProgress[item.role]?.isLongWaiting);
 
