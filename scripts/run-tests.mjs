@@ -11,23 +11,9 @@ import process from "node:process";
 
 const mode = process.argv[2] ?? "unit";
 const REAL_DB = /\.real-db(?:\.[^.]+)?\.test\.tsx?$/;
-const SCRIPT_TESTS = [
-  "scripts/maintainability-gate.test.mjs",
-  "scripts/git-hooks.test.mjs",
-  "scripts/pre-commit-hook.test.mjs",
-  "scripts/doc-size-check.test.mjs",
-  "scripts/archive-old-logs.test.mjs",
-  "scripts/screenshot-storage-boundary.test.mjs",
-  "scripts/doc-health-check.test.mjs",
-  "scripts/api-failure-path-gate.test.mjs",
-  "scripts/prod-write-guard.test.ts",
-  "scripts/sync-cos-sg-to-sh.test.mjs",
-  "scripts/source-text-test-gate.test.mjs",
-  "scripts/cloudbase/db-export.test.mjs",
-  "scripts/cloudbase/db-restore-local.test.mjs",
-];
+const scriptTests = globSync(["scripts/**/*.test.{js,mjs,ts,tsx}"]).map((file) => file.split("\\").join("/")).sort();
 
-const srcTests = globSync(["src/**/*.test.ts", "src/**/*.test.tsx"]).map((file) => file.split("\\").join("/")).sort();
+const srcTests = globSync(["src/**/*.test.{ts,tsx,js,mjs}"]).map((file) => file.split("\\").join("/")).sort();
 // node --test 把参数当通配符解析：路径里的 [id] 会被当成字符集，文件被静默漏跑（假绿）。
 // 把方括号转义成只匹配字面字符的形式。
 const literal = (file) => file.replace(/[[\]]/g, (char) => `[${char}]`);
@@ -64,7 +50,7 @@ function canConnect(host, port) {
 }
 
 if (mode === "unit") {
-  runTsx([...srcTests.filter((file) => !REAL_DB.test(file)), ...SCRIPT_TESTS]);
+  runTsx([...srcTests.filter((file) => !REAL_DB.test(file)), ...scriptTests.filter((file) => !REAL_DB.test(file))]);
 } else if (mode === "real-db") {
   const env = readLocalEnv();
   if (!env?.SUPABASE_DB_URL) {

@@ -53,14 +53,23 @@ describe("门禁环境预检", () => {
     }
   });
 
-  it("生产 Supabase 主机名不能当门禁环境", () => {
-    const result = runGuard({
-      DYDATA_E2E_BASE_URL: "",
-      NEXT_PUBLIC_SUPABASE_URL: "https://db.gcrhhxexample.supabase.co",
-      SUPABASE_DB_URL: "postgresql://postgres.gcrhhxexample:pw@host:5432/postgres",
-    });
-    assert.notEqual(result.code, 0, "非本地库必须拒绝");
-    assert.match(result.output, /只允许本地隔离库/);
+  it("生产 Supabase 主机名不能当门禁环境", async () => {
+    const fixture = await mkdtemp(path.join(os.tmpdir(), "dydata-gate-prod-"));
+    try {
+      await writeFile(
+        path.join(fixture, ".env.ai-test.local"),
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\nSUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres\n",
+      );
+      const result = runGuard({
+        DYDATA_E2E_BASE_URL: "",
+        NEXT_PUBLIC_SUPABASE_URL: "https://db.gcrhhxexample.supabase.co",
+        SUPABASE_DB_URL: "postgresql://postgres.gcrhhxexample:pw@host:5432/postgres",
+      }, fixture);
+      assert.notEqual(result.code, 0, "非本地库必须拒绝");
+      assert.match(result.output, /只允许本地隔离库/);
+    } finally {
+      await rm(fixture, { recursive: true, force: true });
+    }
   });
 
   it("本地隔离环境且 src/ 干净时应通过", async () => {

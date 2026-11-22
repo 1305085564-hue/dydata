@@ -7,16 +7,16 @@ const lines = (n) => `${Array.from({ length: n }, (_, i) => `行${i}`).join("\n"
 const today = new Date(2026, 10, 20); // 2026-11-20（本机日期）
 
 test("限额表：页面与链路文件属大档，未登记文件不管", () => {
-  assert.equal(limitFor("docs/reference/页面设计与决策/视频复盘.md"), 300);
-  assert.equal(limitFor("docs/reference/链路设计与决策/权限链路.md"), 300);
-  assert.equal(limitFor("docs/reference/全站设计与决策/纠错索引.md"), 200);
-  assert.equal(limitFor("docs/reference/设计与决策.md"), 200);
-  assert.equal(limitFor("docs/通用管理/待办清单.md"), 100);
+  assert.equal(limitFor("docs/reference/设计与决策/视频复盘.md"), 300);
+  assert.equal(limitFor("docs/reference/设计与决策/权限链路.md"), 300);
+  assert.equal(limitFor("docs/reference/纠错索引.md"), 200);
+  assert.equal(limitFor("docs/reference/设计与决策/设计与决策总纲.md"), 200);
+  assert.equal(limitFor("docs/plans/待办清单.md"), 100);
   assert.equal(limitFor("docs/plans/随便.md"), null);
 });
 
 test("行数：未超不出声；超上限只提醒；超 1.5 倍才拦", () => {
-  const file = "docs/reference/页面设计与决策/视频复盘.md";
+  const file = "docs/reference/设计与决策/视频复盘.md";
   const run = (n) => checkDocs({ files: [file], readText: () => lines(n), today });
   assert.deepEqual(run(300), { warnings: [], blocks: [] });
   const warn = run(320);

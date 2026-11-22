@@ -16,20 +16,19 @@ const SMALL = 100;
 
 const FIXED = new Map([
   ["AGENTS.md", MID],
-  ["docs/通用管理/待办清单.md", SMALL],
-  ["docs/通用管理/上下文交接.md", SMALL],
-  ["docs/reference/设计与决策.md", MID],
-  ["docs/reference/全站设计与决策/效率美学.md", 450],
-  ["docs/reference/全站设计与决策/美学宝典.md", 400],
-  ["docs/reference/全站设计与决策/工程底座.md", BIG],
-  ["docs/reference/全站设计与决策/上线与运维.md", BIG],
-  ["docs/reference/全站设计与决策/后端工程规范.md", MID],
-  ["docs/reference/全站设计与决策/纠错索引.md", MID],
+  ["docs/plans/待办清单.md", SMALL],
+  ["docs/reference/设计与决策/设计与决策总纲.md", MID],
+  ["docs/reference/效率美学.md", 450],
+  ["docs/reference/美学宝典.md", 400],
+  ["docs/reference/工程底座.md", BIG],
+  ["docs/reference/上线与运维.md", BIG],
+  ["docs/reference/后端工程规范.md", MID],
+  ["docs/reference/纠错索引.md", MID],
 ]);
 
 export function limitFor(file) {
   if (FIXED.has(file)) return FIXED.get(file);
-  if (/^docs\/reference\/(页面设计与决策|链路设计与决策)\/[^/]+\.md$/.test(file)) return BIG;
+  if (/^docs\/reference\/设计与决策\/[^/]+\.md$/.test(file)) return BIG;
   return null;
 }
 
