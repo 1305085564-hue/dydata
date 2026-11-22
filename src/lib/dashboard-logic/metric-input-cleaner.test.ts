@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import {
   cleanMetricInputValue,
   normalizeFullWidthNumbers,
+  parseMetric,
+  parseMetricFieldOrNull,
+  parseMetricOrNull,
+  parseStrictMetricNumber,
   preserveMetricInputText,
 } from "./metric-input-cleaner";
 
@@ -89,4 +93,21 @@ test("逐字输入保留非法原文，提交清洗仍判为无效", () => {
   for (const char of "abc") letters = preserveMetricInputText(letters + char);
   assert.equal(letters, "abc");
   assert.equal(cleanMetricInputValue(letters), "");
+});
+
+test("落库解析按字段类型清洗 rate 与 duration，非法单位不落错值", () => {
+  assert.equal(parseMetricFieldOrNull("bounce_rate_2s", "1.2w"), null);
+  assert.equal(parseMetricFieldOrNull("completion_rate", "1:20"), null);
+  assert.equal(parseMetricFieldOrNull("avg_play_duration", "1.2w"), null);
+  assert.equal(parseMetricFieldOrNull("avg_play_duration", "1:20"), 80);
+});
+
+test("计数字段仍支持万单位，带类型解析保留 fallback，严格解析供服务端保留负数用于边界报错", () => {
+  assert.equal(parseMetricOrNull("1.2w", "count"), 12000);
+  assert.equal(parseMetric("1:20", "rate", -1), -1);
+  assert.equal(parseMetric("1,200"), 1200);
+  assert.equal(parseMetric("", 0), 0);
+  assert.equal(parseStrictMetricNumber(-1), -1);
+  assert.equal(parseStrictMetricNumber("35.5%", { stripPercent: true }), 35.5);
+  assert.equal(parseStrictMetricNumber("abc"), null);
 });

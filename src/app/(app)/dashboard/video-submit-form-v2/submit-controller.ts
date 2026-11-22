@@ -4,7 +4,8 @@ import type { MutableRefObject } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { Video } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
-import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
+import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/metric-input-cleaner";
+import { VIDEO_SUBMIT_EXPIRED_APPEAL_REASON } from "@/lib/video-submit-deadline";
 import { resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
 import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh } from "@/lib/video-submit-workflow/selectors";
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
@@ -174,7 +175,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
           setAppealReason(
             payload.reason === "manual_published_at"
               ? "发布时间由成员手工填写，需要补交审批"
-              : "超过 72 小时，需要补交数据",
+              : VIDEO_SUBMIT_EXPIRED_APPEAL_REASON,
           );
           setIsAppealDialogOpen(true);
           return;
@@ -252,7 +253,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
 
   async function handleConfirmAppeal() {
     if (!account || isAppealSubmitting) return;
-    const reason = appealReason.trim() || "超过 72 小时，需要补交数据";
+    const reason = appealReason.trim() || VIDEO_SUBMIT_EXPIRED_APPEAL_REASON;
     setIsAppealSubmitting(true);
     try {
       const response = await fetch("/api/admin/fulfillment/appeals", {

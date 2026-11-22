@@ -35,12 +35,9 @@ import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
 import { resolveDailyReportSubmissionTarget } from "./report-target";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
-import {
-  normalizeDailyReportDataSource,
-  resolveDailyReportDataSource,
-} from "@/lib/daily-report-data-source";
+import { normalizeDailyReportDataSource, resolveDailyReportDataSource } from "@/lib/daily-report-data-source";
 import { appendObservedMutationResult, observeMutationRequest, type MutationObservation } from "@/lib/observed-mutation-result";
-import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline, VIDEO_SUBMIT_EXPIRED_API_ERROR } from "@/lib/video-submit-deadline";
 import { videoSubmitErrorResponse } from "./error-response";
 import {
   buildDailyReportPayload,
@@ -346,7 +343,7 @@ async function handleVideoSubmit(
         return NextResponse.json({
           error: deadline.reason === "manual_published_at"
             ? "发布时间由成员手工填写，请先申请补交"
-            : "该提交已超过 72 小时，请先申请补交",
+            : VIDEO_SUBMIT_EXPIRED_API_ERROR,
           code: "SUBMISSION_APPEAL_REQUIRED",
           reason: deadline.reason,
           published_date: deadline.publishedDate,

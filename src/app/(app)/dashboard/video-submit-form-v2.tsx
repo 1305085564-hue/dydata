@@ -32,7 +32,6 @@ import {
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { LastSubmittedReportPreferences } from "@/lib/video-submit-preferences";
 
-// 保留所有原有的业务逻辑导入
 import {
   areSubmissionScreenshotsRequired,
   canSubmit,
@@ -40,11 +39,8 @@ import {
   type EditableMetricKey,
   type SubmissionSlotRole,
 } from "@/components/submission/提交状态机";
-import {
-  getSlotRoleForMetric,
-  resolveCompleteEditPayload,
-} from "@/lib/video-submit/domain/form-rules";
-import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
+import { getSlotRoleForMetric, resolveCompleteEditPayload } from "@/lib/video-submit/domain/form-rules";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline, VIDEO_SUBMIT_EXPIRED_APPEAL_REASON } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
   restoreOcrFieldValue,
@@ -643,7 +639,7 @@ export function VideoSubmitFormV2({
     setAppealReason(
       deadlinePrecheck.reason === "manual_published_at"
         ? "发布时间由成员手工填写，需要补交审批"
-        : "超过 72 小时，需要补交数据",
+        : VIDEO_SUBMIT_EXPIRED_APPEAL_REASON,
     );
   }, [appealStatus, deadlinePrecheck.decision, deadlinePrecheck.reason, setAppealReason]);
 

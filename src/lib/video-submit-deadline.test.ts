@@ -2,11 +2,25 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  formatVideoSubmitExpiredDialogNotice,
   isPublishedAtConfirmed,
   parsePublishedAtText,
   resolveOcrPublishedAt,
   resolveVideoSubmitDeadline,
+  VIDEO_SUBMIT_EXPIRED_API_ERROR,
+  VIDEO_SUBMIT_EXPIRED_APPEAL_REASON,
+  VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL,
 } from "./video-submit-deadline";
+
+test("超期提示文案统一由 VIDEO_SUBMIT_GRACE_HOURS 派生并保持原话术", () => {
+  assert.equal(VIDEO_SUBMIT_EXPIRED_APPEAL_REASON, "超过 72 小时，需要补交数据");
+  assert.equal(VIDEO_SUBMIT_EXPIRED_API_ERROR, "该提交已超过 72 小时，请先申请补交");
+  assert.equal(VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL, "触发原因：超过 72 小时才交");
+  assert.equal(
+    formatVideoSubmitExpiredDialogNotice("2026-09-27"),
+    "当前作品记录日期（2026-09-27）已超过 72 小时。",
+  );
+});
 
 test("同月且 72 小时内允许首次提交", () => {
   const result = resolveVideoSubmitDeadline({

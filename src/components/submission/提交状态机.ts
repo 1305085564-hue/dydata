@@ -1,5 +1,10 @@
+/**
+ * 我管什么：本文件是只读的提交就绪判定与阶段推导（根据当前快照计算缺项、滚动锚点、可否提交与草稿/识别中/待确认/可提交/已提交阶段），不持有可变表单状态。
+ * 另一个管什么：表单编辑期状态更新（meta/fields/slots/草稿标记的增改与 OCR 回填）由 src/lib/video-submit-workflow/reducer.ts 负责。
+ */
 import { normalizeVideoAnomalyStatus } from "@/lib/video-anomaly";
 import { isMetricInputValueValid, METRIC_INPUT_TYPE_BY_FIELD } from "@/lib/dashboard-logic/metric-input-cleaner";
+import { REQUIRED_VIDEO_24H_METRIC_KEYS } from "@/lib/video-24h-metrics-contract";
 
 export type SubmissionSlotRole = "screenshot_1" | "screenshot_2";
 
@@ -30,14 +35,8 @@ export type SubmissionStage = "草稿" | "识别中" | "待确认" | "可提交"
 export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null;
 export type RequiredMetaKey = "videoTitle" | "content";
 
-export const REQUIRED_METRIC_KEYS: EditableMetricKey[] = [
-  "play_count",
-  "follower_gain",
-  "likes",
-  "comments",
-  "shares",
-  "favorites",
-];
+export const REQUIRED_METRIC_KEYS: readonly EditableMetricKey[] =
+  REQUIRED_VIDEO_24H_METRIC_KEYS as readonly EditableMetricKey[];
 
 /**
  * 发布时间未确认时唯一可行的动作是换一张能看清「发布」时间的完播截图

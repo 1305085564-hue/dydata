@@ -3,6 +3,15 @@ import { CALIBER } from "@/lib/metrics/caliber";
 
 export const VIDEO_SUBMIT_GRACE_HOURS = CALIBER.submitGraceHours;
 
+/** 超过补交宽限期的提示文案唯一出处（小时数由 VIDEO_SUBMIT_GRACE_HOURS 统一驱动）。 */
+export const VIDEO_SUBMIT_EXPIRED_APPEAL_REASON = `超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，需要补交数据`;
+export const VIDEO_SUBMIT_EXPIRED_API_ERROR = `该提交已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，请先申请补交`;
+export const VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL = `触发原因：超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时才交`;
+
+export function formatVideoSubmitExpiredDialogNotice(bizDate: string): string {
+  return `当前作品记录日期（${bizDate}）已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时。`;
+}
+
 export type VideoSubmitDeadlineMode = "create" | "edit";
 export type VideoSubmitDeadlineDecision =
   | "allow"
