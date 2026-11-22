@@ -150,35 +150,24 @@ async function setAuthBan(client: MemberLifecycleClient, userId: string, banned:
 export async function syncAuthUserTeamMetadata(
   client: MemberLifecycleClient,
   userId: string,
-  input: {
-    teamId: string | null;
-    teamName: string | null;
-    metadata?: Record<string, unknown>;
-  },
+  input: { teamId: string | null; teamName: string | null; metadata?: Record<string, unknown> },
 ) {
   if (isCloudBaseBackend()) return null;
-
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   let metadata = input.metadata;
   if (!metadata) {
     const snapshot = await loadAuthUserSnapshot(client, userId);
     if (!snapshot.ok) return snapshot.error;
     metadata = snapshot.value.metadata;
   }
-
-  return restoreAuthUserMetadata(client, userId, {
-    ...metadata,
-    team_id: input.teamId,
-    team_name: input.teamName,
-  });
+  return restoreAuthUserMetadata(client, userId, { ...metadata, team_id: input.teamId, team_name: input.teamName });
 }
 
 async function restoreAuthUserMetadata(
-  client: MemberLifecycleClient,
-  userId: string,
-  metadata: Record<string, unknown>,
+  client: MemberLifecycleClient, userId: string, metadata: Record<string, unknown>,
 ) {
   if (isCloudBaseBackend()) return null;
-
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   return (await client.auth.admin.updateUserById(userId, { user_metadata: metadata })).error;
 }
 

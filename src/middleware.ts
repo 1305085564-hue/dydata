@@ -348,6 +348,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const cloudBaseMode = isCloudBaseBackend();
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   const hasAuthCookie = cloudBaseMode
     ? hasCloudBaseAuthCookie(request.cookies.getAll())
     : hasSupabaseAuthCookie(request.cookies.getAll(), process.env.NEXT_PUBLIC_SUPABASE_URL);
@@ -379,6 +380,7 @@ export async function middleware(request: NextRequest) {
     return handleCloudBaseSession(request, { pathname, isApiRoute, hasAuthCookie, isProtectedAppRoute });
   }
 
+  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
   const response = NextResponse.next({
