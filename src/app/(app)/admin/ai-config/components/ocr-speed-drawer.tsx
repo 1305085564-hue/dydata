@@ -5,6 +5,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetBo
 import { Button } from "@/components/ui/button";
 import { RotateCw, X, Zap, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
+
+export type OcrSpeedFallbackAttempt = {
+  channel_name: string;
+  model_id: string | null;
+  protocol: AiProviderProtocol;
+  ok: boolean;
+  elapsed_ms: number;
+  error_code?: string | null;
+  reason?: string | null;
+};
+
+export type OcrSpeedFallbackDetail = {
+  attempts: OcrSpeedFallbackAttempt[];
+};
 
 export type OcrSpeedLogItem = {
   id: string;
@@ -17,6 +32,7 @@ export type OcrSpeedLogItem = {
   screenshot_type: "data" | "retention" | null;
   is_success: boolean;
   error_code: string | null;
+  fallback_detail?: OcrSpeedFallbackDetail | null;
 };
 
 export type OcrSpeedSummary = {
@@ -58,10 +74,19 @@ function formatShanghaiDateTime(isoString: string): { time: string; date: string
   }
 }
 
-function formatDuration(ms: number | null | undefined): string {
+export function formatOcrDuration(ms: number | null | undefined): string {
   if (ms == null) return "—";
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
+}
+
+export function formatFallbackAttemptStatus(attempt: OcrSpeedFallbackAttempt): string {
+  if (attempt.ok) return "成功";
+  const reason = attempt.reason?.trim();
+  if (reason) return reason;
+  const code = attempt.error_code?.trim();
+  if (code) return code;
+  return "失败";
 }
 
 function renderSpeedBadge(durationMs: number, isSuccess: boolean) {
@@ -78,7 +103,7 @@ function renderSpeedBadge(durationMs: number, isSuccess: boolean) {
     return (
       <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F0F6F2] text-[#4B6B4E]">
         <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        极速 ({formatDuration(durationMs)})
+        极速 ({formatOcrDuration(durationMs)})
       </span>
     );
   }
@@ -87,7 +112,7 @@ function renderSpeedBadge(durationMs: number, isSuccess: boolean) {
     return (
       <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#EEF2F5] text-[#43718E]">
         <span className="size-1.5 rounded-full bg-[#43718E]" />
-        正常 ({formatDuration(durationMs)})
+        正常 ({formatOcrDuration(durationMs)})
       </span>
     );
   }
@@ -95,8 +120,102 @@ function renderSpeedBadge(durationMs: number, isSuccess: boolean) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F7F3ED] text-[#8A6A2F]">
       <span className="size-1.5 rounded-full bg-[#B98A54]" />
-      缓慢 ({formatDuration(durationMs)})
+      缓慢 ({formatOcrDuration(durationMs)})
     </span>
+  );
+}
+
+export function OcrSpeedLogRow({ item }: { item: OcrSpeedLogItem }) {
+  const { time, date } = formatShanghaiDateTime(item.created_at);
+  // 按独立单词 max 命中（如 "api9 claude (max)"），避免误标 MiniMax 等含 max 子串的渠道
+  const isMax = /\bmax\b/i.test(item.channel_name ?? "");
+  const attempts = Array.isArray(item.fallback_detail?.attempts)
+    ? item.fallback_detail.attempts
+    : [];
+  const hasFallback = attempts.length > 1;
+  const isLegacyFallback =
+    item.fallback_detail == null && (item.channel_name ?? "").includes("->");
+
+  return (
+    <tr className="hover:bg-[#F7F7F6]/60 transition-colors">
+      <td className="py-2.5 pl-4 pr-2 whitespace-nowrap align-top">
+        <div className="text-[13px] text-[#141413]">{time}</div>
+        <div className="text-[12px] text-[#78716C]">{date}</div>
+      </td>
+      <td className="py-2.5 px-2 align-top">
+        <div className="flex items-center gap-1 flex-wrap whitespace-nowrap">
+          {renderSpeedBadge(item.duration_ms, item.is_success)}
+          {hasFallback && (
+            <span
+              data-slot="ocr-fallback-badge"
+              className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F7F3ED] text-[#8A6A2F]"
+            >
+              已回退
+            </span>
+          )}
+        </div>
+        {item.ocr_ms != null && (
+          <div className="text-[12px] text-[#78716C] mt-0.5 whitespace-nowrap">
+            纯识别: {formatOcrDuration(item.ocr_ms)}
+          </div>
+        )}
+        {hasFallback && (
+          <div
+            data-slot="ocr-fallback-timeline"
+            className="mt-1 space-y-0.5 text-[12px] text-[#78716C]"
+          >
+            {attempts.map((attempt, index) => {
+              const prefix = index === attempts.length - 1 ? "└" : "├";
+              return (
+                <div key={`${item.id}-attempt-${index}`} className="whitespace-nowrap">
+                  {prefix} {attempt.channel_name} {formatFallbackAttemptStatus(attempt)} ·{" "}
+                  {formatOcrDuration(attempt.elapsed_ms)}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {isLegacyFallback && (
+          <div
+            data-slot="ocr-legacy-fallback-hint"
+            className="mt-0.5 text-[12px] text-[#78716C]"
+          >
+            历史回退记录（未拆解各段耗时）
+          </div>
+        )}
+      </td>
+      <td className="py-2.5 px-2 align-top">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-[13px] text-[#141413]">
+            {item.channel_name || "—"}
+          </span>
+          {isMax && (
+            <span className="inline-flex items-center rounded-xs px-1 text-[12px] font-normal bg-[#EEF2F5] text-[#43718E]">
+              MAX
+            </span>
+          )}
+        </div>
+        <div className="text-[12px] text-[#78716C] mt-0.5">
+          {item.model_id || "未指定模型"}
+        </div>
+      </td>
+      <td className="py-2.5 px-2 whitespace-nowrap text-[12px] text-[#78716C] align-top">
+        {item.screenshot_type === "retention"
+          ? "完播留存图"
+          : item.screenshot_type === "data"
+          ? "互动数据图"
+          : "未标记"}
+      </td>
+      <td className="py-2.5 pr-4 pl-2 whitespace-nowrap text-right align-top">
+        {item.is_success ? (
+          <span className="text-[12px] text-[#4B6B4E]">成功</span>
+        ) : (
+          <span className="text-[12px] text-[#1F1E1D]" title={item.error_code ?? "识别失败"}>
+            {item.error_code || "失败"}
+          </span>
+        )}
+      </td>
+    </tr>
   );
 }
 
@@ -187,7 +306,7 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
               </div>
               <div className="mt-1 font-normal text-[20px] text-[#141413]">
                 {summary?.recent_1000_avg_ms != null
-                  ? formatDuration(summary.recent_1000_avg_ms)
+                  ? formatOcrDuration(summary.recent_1000_avg_ms)
                   : "—"}
               </div>
               <div className="mt-1 text-[12px] text-[#78716C]">
@@ -202,7 +321,7 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
               </div>
               <div className="mt-1 font-normal text-[20px] text-[#141413]">
                 {summary?.recent_1000_fastest_ms != null && summary?.recent_1000_slowest_ms != null
-                  ? `${formatDuration(summary.recent_1000_fastest_ms)} / ${formatDuration(summary.recent_1000_slowest_ms)}`
+                  ? `${formatOcrDuration(summary.recent_1000_fastest_ms)} / ${formatOcrDuration(summary.recent_1000_slowest_ms)}`
                   : "—"}
               </div>
               <div className="mt-1 text-[12px] text-[#78716C]">
@@ -259,58 +378,9 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E2E2DF]/60">
-                    {logs.map((item) => {
-                      const { time, date } = formatShanghaiDateTime(item.created_at);
-                      // 按独立单词 max 命中（如 "api9 claude (max)"），避免误标 MiniMax 等含 max 子串的渠道
-                      const isMax = /\bmax\b/i.test(item.channel_name ?? "");
-                      return (
-                        <tr key={item.id} className="hover:bg-[#F7F7F6]/60 transition-colors">
-                          <td className="py-2.5 pl-4 pr-2 whitespace-nowrap">
-                            <div className="text-[13px] text-[#141413]">{time}</div>
-                            <div className="text-[12px] text-[#78716C]">{date}</div>
-                          </td>
-                          <td className="py-2.5 px-2 whitespace-nowrap">
-                            {renderSpeedBadge(item.duration_ms, item.is_success)}
-                            {item.ocr_ms != null && (
-                              <div className="text-[12px] text-[#78716C] mt-0.5">
-                                纯识别: {formatDuration(item.ocr_ms)}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <span className="text-[13px] text-[#141413]">
-                                {item.channel_name || "—"}
-                              </span>
-                              {isMax && (
-                                <span className="inline-flex items-center rounded-xs px-1 text-[12px] font-normal bg-[#EEF2F5] text-[#43718E]">
-                                  MAX
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[12px] text-[#78716C] mt-0.5">
-                              {item.model_id || "未指定模型"}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-2 whitespace-nowrap text-[12px] text-[#78716C]">
-                            {item.screenshot_type === "retention"
-                              ? "完播留存图"
-                              : item.screenshot_type === "data"
-                              ? "互动数据图"
-                              : "未标记"}
-                          </td>
-                          <td className="py-2.5 pr-4 pl-2 whitespace-nowrap text-right">
-                            {item.is_success ? (
-                              <span className="text-[12px] text-[#4B6B4E]">成功</span>
-                            ) : (
-                              <span className="text-[12px] text-[#1F1E1D]" title={item.error_code ?? "识别失败"}>
-                                {item.error_code || "失败"}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {logs.map((item) => (
+                      <OcrSpeedLogRow key={item.id} item={item} />
+                    ))}
                   </tbody>
                 </table>
               </div>

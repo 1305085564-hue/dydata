@@ -5,6 +5,7 @@ import { useAiConfig, AI_MODEL_BATCH_TIMEOUT_MS, startDetectionRefresh } from ".
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { useFrozenOrder } from "../hooks/use-frozen-order";
 import { compareChannelModels, compareChannels } from "@/lib/ai-config/list-order";
+import { normalizeProviderProtocol } from "@/lib/ai/provider-protocols";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -73,6 +74,8 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
     if (!selectedChannel || !bundle?.providers) return null;
     return bundle.providers.find((p) => p.id === selectedChannel.provider_id) ?? null;
   }, [selectedChannel, bundle]);
+
+  const selectedProtocol = normalizeProviderProtocol(selectedProvider?.protocol);
 
   // 选中渠道的挂载模型
   const mountedModels = useMemo(() => {
@@ -575,7 +578,24 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
               )}
             </div>
 
-            {/* 2. API 地址 (S7 支持共享地址提示) */}
+            {/* 2. 接口协议（只读） */}
+            <div className="px-3 py-2 flex items-center justify-between gap-3" data-slot="ai-provider-protocol">
+              <span className="text-[#78716C] w-24 shrink-0">接口协议</span>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {selectedProtocol === "cloudflare_clairic" ? (
+                  <>
+                    <span className="text-[#141413]">Cloudflare Clairic</span>
+                    <span className="inline-flex items-center rounded-md bg-[#EBEBE9] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
+                      截图专项
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[#141413]">标准对话接口 (OpenAI 兼容)</span>
+                )}
+              </div>
+            </div>
+
+            {/* 3. API 地址 (S7 支持共享地址提示，保持原协议支持自定义代理) */}
             <div className="px-3 py-2 flex items-center justify-between gap-3">
               <span className="text-[#78716C] w-24 shrink-0">API 地址</span>
               {editingField === "base_url" ? (
@@ -603,7 +623,7 @@ export function ChannelPoolView({ onOpenSyncModal }: ChannelPoolViewProps) {
               )}
             </div>
 
-            {/* 3. API Key */}
+            {/* 4. API Key */}
             <div className="px-3 py-2 flex items-center justify-between gap-3">
               <span className="text-[#78716C] w-24 shrink-0">API Key</span>
               {editingField === "api_key" ? (

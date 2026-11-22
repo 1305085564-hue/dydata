@@ -7,21 +7,15 @@ import {
   resolveAiFeatureAccess,
 } from "./feature-catalog";
 
-test("截图识别拆成看图回退和文字结构化两个功能键，语义各自独立", () => {
-  const fallback = getAiFeatureCatalogEntry("ocr_screenshot");
-  assert.equal(fallback?.label, "截图识别·看图回退");
-  assert.equal(fallback?.description, "百度通道不可用时切回的视觉模型识别链路，只服务 vision 回退");
-  assert.equal(fallback?.routing, "binding");
-  assert.equal(fallback?.group, "business");
+test("截图识别统一为单一功能键 ocr_screenshot，旧文字结构化已下线", () => {
+  const ocr = getAiFeatureCatalogEntry("ocr_screenshot");
+  assert.equal(ocr?.label, "截图识别");
+  assert.equal(ocr?.routing, "binding");
+  assert.equal(ocr?.group, "business");
 
-  const structure = getAiFeatureCatalogEntry("ocr_screenshot_structure");
-  assert.equal(structure?.label, "截图识别·文字结构化");
-  assert.equal(structure?.description, "百度通道 OCR 提字后的文本字段映射");
-  assert.equal(structure?.routing, "binding");
-  assert.equal(structure?.group, "business");
-
+  assert.equal(getAiFeatureCatalogEntry("ocr_screenshot_structure"), null);
   assert.equal(resolveAiFeatureAccess("ocr_screenshot").allowed, true);
-  assert.equal(resolveAiFeatureAccess("ocr_screenshot_structure").allowed, true);
+  assert.equal(resolveAiFeatureAccess("ocr_screenshot_structure").allowed, false);
   assert.equal(getAiFeatureCatalogEntry("not_a_real_feature"), null);
 });
 
@@ -46,6 +40,7 @@ test("已删除和未注册功能都被总控层拦截，不能静默掉进兜�
     "admin_assistant",
     "feishu_fulfillment_reminder",
     "video_tag",
+    "ocr_screenshot_structure",
     "unknown_feature",
   ]) {
     assert.deepEqual(resolveAiFeatureAccess(featureKey), {
@@ -59,10 +54,10 @@ test("管理页只保留确认在用的业务功能，不展示半成品或旧�
   const groups = getAiFeatureCatalogGroups();
 
   assert.ok(groups.business.some((entry) => entry.key === "ocr_screenshot"));
-  assert.ok(groups.business.some((entry) => entry.key === "ocr_screenshot_structure"));
+  assert.equal(groups.business.some((entry) => entry.key === "ocr_screenshot_structure"), false);
   assert.deepEqual(
     groups.business.filter((entry) =>
-      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "video_tag", "default", "content_rewrite"].includes(entry.key),
+      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "video_tag", "default", "content_rewrite", "ocr_screenshot_structure"].includes(entry.key),
     ),
     [],
   );

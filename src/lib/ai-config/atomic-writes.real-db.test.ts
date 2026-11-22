@@ -16,10 +16,10 @@ test("第四批真实事务：接入、改名、批选、共享地址和审计�
     if(reason)await assert.rejects(()=>db.query(sql,args),{message:reason});else await assert.rejects(()=>db.query(sql,args));
     await db.query("rollback to savepoint expected_failure");
   }
-  const create=(label:string,models:unknown)=>db.query("select public.create_ai_config_channel(null,$1,$1,$2,'local-only',$3,$4,true) as result",[address,label,[model],JSON.stringify(models)]);
+  const create=(label:string,models:unknown)=>db.query("select public.create_ai_config_channel(null,$1,$1,$2,'local-only',$3,$4,true,'openai_compatible') as result",[address,label,[model],JSON.stringify(models)]);
   try{
     await db.query("begin");
-    const createSql="select public.create_ai_config_channel(null,$1,$1,'invalid','local-only','{}',$2,true)";
+    const createSql="select public.create_ai_config_channel(null,$1,$1,'invalid','local-only','{}',$2,true,'openai_compatible')";
     await rejected(createSql,[address,JSON.stringify([{model_id:null,display_name:"bad",is_enabled:true}])],/模型 ID 不能为空/);
     assert.equal((await db.query("select count(*)::int as n from public.ai_providers where base_url=$1",[address])).rows[0].n,0);
     const first=(await create("first",[{model_id:model,display_name:"原名",is_enabled:true}])).rows[0].result;
@@ -65,7 +65,7 @@ test("第四批真实事务：接入、改名、批选、共享地址和审计�
     assert.ok((await db.query("select invalidated_at from public.ai_provider_key_models where key_id=$1 and model_id=$2",[second.keyId,sibling])).rows[0].invalidated_at);
     await db.query("delete from public.ai_provider_keys where id=$1",[first.keyId]);
     assert.equal((await db.query("select count(*)::int as n from public.ai_provider_key_models where key_id=$1",[first.keyId])).rows[0].n,0);
-    const roles=(await db.query("select has_function_privilege('anon','public.create_ai_config_channel(uuid,text,text,text,text,text[],jsonb,boolean)','execute') as anon,has_function_privilege('authenticated','public.update_ai_config_key(uuid,jsonb,text)','execute') as member,has_function_privilege('service_role','public.update_ai_config_key(uuid,jsonb,text)','execute') as service")).rows[0];
+    const roles=(await db.query("select has_function_privilege('anon','public.create_ai_config_channel(uuid,text,text,text,text,text[],jsonb,boolean,text)','execute') as anon,has_function_privilege('authenticated','public.update_ai_config_key(uuid,jsonb,text)','execute') as member,has_function_privilege('service_role','public.update_ai_config_key(uuid,jsonb,text)','execute') as service")).rows[0];
     assert.deepEqual(roles,{anon:false,member:false,service:true});
   }finally{await db.query("rollback");await db.end();}
 });

@@ -19,8 +19,7 @@ const AI_FEATURE_CATALOG: readonly AiFeatureCatalogEntry[] = [
   { key: "content_segment", label: "文案拆解", description: "内容分段与文案拆解", routing: "binding", group: "business" },
   { key: "member_ai_suggestion", label: "成员建议", description: "后台成员管理建议", routing: "binding", group: "business" },
   { key: "sample_quality_check", label: "样本质检", description: "仪表盘样本质量检查", routing: "binding", group: "business" },
-  { key: "ocr_screenshot", label: "截图识别·看图回退", description: "百度通道不可用时切回的视觉模型识别链路，只服务 vision 回退", routing: "binding", group: "business" },
-  { key: "ocr_screenshot_structure", label: "截图识别·文字结构化", description: "百度通道 OCR 提字后的文本字段映射", routing: "binding", group: "business" },
+  { key: "ocr_screenshot", label: "截图识别", description: "截图数据与留存指标识别，支持 Clairic 与视觉大模型自动顺位切换", routing: "binding", group: "business" },
   { key: "default", label: "旧默认配置", description: "不是业务功能，不参与场景路由", routing: "system", group: "system" },
 ] as const;
 

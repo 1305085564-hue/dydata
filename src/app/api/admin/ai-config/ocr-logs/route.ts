@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     // 2. 统计样本：最近 1000 条（不足 1000 条按实际）
     const { data: recent1000, error } = await admin
       .from("ocr_recognition_logs")
-      .select("id, created_at, duration_ms, ocr_ms, download_ms, channel_name, model_id, screenshot_type, is_success, error_code")
+      .select("id, created_at, duration_ms, ocr_ms, download_ms, channel_name, model_id, screenshot_type, is_success, error_code, fallback_detail")
       .order("created_at", { ascending: false })
       .limit(1000);
 

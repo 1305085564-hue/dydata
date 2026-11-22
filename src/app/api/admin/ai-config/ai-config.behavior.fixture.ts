@@ -11,8 +11,10 @@ export type MemoryOptions = {
 
 class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { message: string } | null }> {
   private filters: Array<(row: Row) => boolean> = [];
-  private operation: "select" | "insert" | "update" | "delete" = "select";
+  private operation: "select" | "insert" | "upsert" | "update" | "delete" = "select";
   private payload: Row | Row[] | null = null;
+  private conflictField: string | null = null;
+  private selectColumns = "";
   private singleMode: "many" | "single" | "maybeSingle" = "many";
   private limitValue: number | null = null;
 
@@ -21,43 +23,14 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
     private readonly table: TableName,
   ) {}
 
-  select(columns?: string) {
-    this.operation = "select";
-    if (columns) this.db.selectCalls.push(`${this.table}:${columns}`);
-    return this;
-  }
-
-  insert(payload: Row | Row[]) {
-    this.operation = "insert";
-    this.payload = payload;
-    return this;
-  }
-
-  update(payload: Row) {
-    this.operation = "update";
-    this.payload = payload;
-    return this;
-  }
-
-  delete() {
-    this.operation = "delete";
-    return this;
-  }
-
-  eq(field: string, value: unknown) {
-    this.filters.push((row) => row[field] === value);
-    return this;
-  }
-
-  neq(field: string, value: unknown) {
-    this.filters.push((row) => row[field] !== value);
-    return this;
-  }
-
-  in(field: string, values: unknown[]) {
-    this.filters.push((row) => values.includes(row[field]));
-    return this;
-  }
+  select(columns?: string) { this.operation = "select"; if (columns) { this.selectColumns = columns; this.db.selectCalls.push(`${this.table}:${columns}`); } return this; }
+  insert(payload: Row | Row[]) { this.operation = "insert"; this.payload = payload; return this; }
+  upsert(payload: Row | Row[], options?: { onConflict?: string }) { this.operation = "upsert"; this.payload = payload; this.conflictField = options?.onConflict ?? "id"; return this; }
+  update(payload: Row) { this.operation = "update"; this.payload = payload; return this; }
+  delete() { this.operation = "delete"; return this; }
+  eq(field: string, value: unknown) { this.filters.push((row) => row[field] === value); return this; }
+  neq(field: string, value: unknown) { this.filters.push((row) => row[field] !== value); return this; }
+  in(field: string, values: unknown[]) { this.filters.push((row) => values.includes(row[field])); return this; }
 
   or(expression: string) {
     const alternatives = expression.split(",").map((clause) => {
@@ -69,24 +42,10 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
     return this;
   }
 
-  order() {
-    return this;
-  }
-
-  limit(value: number) {
-    this.limitValue = value;
-    return this;
-  }
-
-  single() {
-    this.singleMode = "single";
-    return this;
-  }
-
-  maybeSingle() {
-    this.singleMode = "maybeSingle";
-    return this;
-  }
+  order() { return this; }
+  limit(value: number) { this.limitValue = value; return this; }
+  single() { this.singleMode = "single"; return this; }
+  maybeSingle() { this.singleMode = "maybeSingle"; return this; }
 
   then<TResult1 = { data: Row[] | Row | null; error: { message: string } | null }, TResult2 = never>(
     onfulfilled?: ((value: { data: Row[] | Row | null; error: { message: string } | null }) => TResult1 | PromiseLike<TResult1>) | null,
@@ -105,12 +64,43 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
     const matches = () => rows.filter((row) => this.filters.every((filter) => filter(row)));
 
     if (this.operation === "select") {
-      const selected = matches().slice(0, this.limitValue ?? Number.POSITIVE_INFINITY).map((row) => ({ ...row }));
+      const selected = matches().slice(0, this.limitValue ?? Number.POSITIVE_INFINITY).map((row) => {
+        const copy: Row = { ...row };
+        if (this.table === "ai_provider_key_models" && this.selectColumns.includes("key:ai_provider_keys")) {
+          const keyRow = this.db.tables.ai_provider_keys.find((k) => k.id === copy.key_id);
+          const providerRow = keyRow
+            ? this.db.tables.ai_providers.find((p) => p.id === keyRow.provider_id)
+            : null;
+          copy.key = keyRow
+            ? { ...keyRow, provider: providerRow ? { ...providerRow } : null }
+            : null;
+        }
+        return copy;
+      });
       if (this.singleMode === "single") {
         return { data: selected[0] ?? null, error: selected.length === 1 ? null : { message: "expected one row" } };
       }
       if (this.singleMode === "maybeSingle") return { data: selected[0] ?? null, error: null };
       return { data: selected, error: null };
+    }
+
+    if (this.operation === "upsert") {
+      const input = Array.isArray(this.payload) ? this.payload : [this.payload ?? {}];
+      const conflictField = this.conflictField ?? "id";
+      const upserted = input.map((row, index) => {
+        const existing = rows.find((item) => item[conflictField] !== undefined && item[conflictField] === row[conflictField]);
+        if (existing) {
+          Object.assign(existing, row);
+          return existing;
+        }
+        const created = {
+          ...row,
+          id: row.id ?? `${this.table}-generated-${this.db.nextId++}-${index}`,
+        };
+        rows.push(created);
+        return created;
+      });
+      return { data: upserted.length === 1 ? upserted[0] : upserted, error: null };
     }
 
     if (this.operation === "insert") {
@@ -253,6 +243,7 @@ export class MemorySupabase {
           id: providerId,
           name: args.p_provider_name,
           base_url: args.p_base_url,
+          protocol: typeof args.p_protocol === "string" ? args.p_protocol : "openai_compatible",
           is_enabled: true,
         });
       } else if (!providerExists) {
@@ -449,7 +440,7 @@ export function actor(db: MemorySupabase) {
 
 export function configTables(overrides: Partial<Record<TableName, Row[]>> = {}, options: MemoryOptions = {}) {
   return new MemorySupabase({
-    ai_providers: [{ id: "provider-1", name: "Provider 1", base_url: "https://provider.test", priority: 1, is_enabled: true }],
+    ai_providers: [{ id: "provider-1", name: "Provider 1", base_url: "https://provider.test", protocol: "openai_compatible", priority: 1, is_enabled: true }],
     ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true }],
     ai_provider_key_models: [],
     ai_feature_bindings: [],

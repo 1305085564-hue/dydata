@@ -1,4 +1,5 @@
 import type { ModelAliasGroup } from "@/lib/ai/model-discovery";
+import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
 import { requestAiConfigCommand } from "@/lib/ai-config/client-command";
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { AvailabilityReport } from "@/lib/ai-config/availability";
@@ -6,7 +7,6 @@ import type { ProviderHealthFields } from "@/lib/ai/channel-governance";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
-import type { OcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
 import { presentError } from "@/lib/ai-config/presentation";
 
 export const AI_MODEL_BATCH_TIMEOUT_MS = 120_000;
@@ -74,6 +74,7 @@ export type AiProvider = {
   name: string;
   description: string | null;
   base_url: string;
+  protocol?: AiProviderProtocol;
   is_enabled: boolean;
   global_is_enabled?: boolean | null;
   priority: number;
@@ -190,7 +191,6 @@ export type AiFeatureControl = {
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
-  ocrChannel: OcrScreenshotChannel;
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
   archivedAt: string | null;

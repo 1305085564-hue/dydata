@@ -5,6 +5,7 @@ import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-fam
 import {
   isProviderKeyModelSchedulable,
 } from "@/lib/ai/provider-routing";
+import { getModelScope, type AiModelScope } from "@/lib/ai/provider-protocols";
 
 import { getChannelGovernance, getProviderKeyGovernance, type ChannelGovernance, type ChannelIdentity, type ProviderHealthFields } from "@/lib/ai/channel-governance";
 
@@ -15,6 +16,7 @@ export type KeyHealthState = "healthy" | "untested" | "fault" | "disabled";
 export type AvailabilityProvider = {
   id: string;
   name: string;
+  protocol?: string | null;
   is_enabled: boolean;
 };
 
@@ -84,6 +86,7 @@ export type AvailabilityChannel = ChannelGovernance & {
 export type AvailabilityModelFamily = {
   modelId: string;
   displayName: string;
+  modelScope?: AiModelScope;
   isShelved: boolean;
   globalIsEnabled: boolean | null;
   channelReadyButGlobalDisabled: number;
@@ -264,6 +267,7 @@ export function computeAvailability(
       family = {
         modelId: ch.modelId,
         displayName: displayNameByModelId.get(ch.modelId) ?? getModelDisplayName(ch.modelId),
+        modelScope: getModelScope(ch.modelId),
         isShelved: shelvedModelIds.has(ch.modelId),
         globalIsEnabled: globalStateByModelId.get(ch.modelId) ?? null,
         channelReadyButGlobalDisabled: 0,
@@ -343,7 +347,7 @@ export function computeAvailability(
   for (const id of referenced) {
     if (familyByModelId.has(id)) continue;
     const family: AvailabilityModelFamily = {
-      modelId: id, displayName: getModelDisplayName(id), isShelved: true, globalIsEnabled: false,
+      modelId: id, displayName: getModelDisplayName(id), modelScope: getModelScope(id), isShelved: true, globalIsEnabled: false,
       channelReadyButGlobalDisabled: 0, channels: [], identityCounts: countIdentities([]),
       redundancyCount: 0, singlePointRisk: true, healthyChannelCount: 0, untestedChannelCount: 0,
       schedulableChannelCount: 0, faultChannelCount: 0, isConfigured: false, isSelectable: false,

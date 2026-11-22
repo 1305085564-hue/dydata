@@ -2,14 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { __internal, AiChannelError } from "./client";
-
 import { createFakeService, makePkmRow, type FakeDb } from "./client-test-fixtures";
 
 test("同次调用先用所选模型的渠道，再尝试默认模型的全部渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
       {
-        feature_key: "ocr_screenshot_structure",
+        feature_key: "content_tools",
         provider_key_model_id: null,
         model_id: "gemini-2.5-flash",
         system_prompt: null,
@@ -28,7 +27,7 @@ test("同次调用先用所选模型的渠道，再尝试默认模型的全部�
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const config = await __internal.getFeatureConfigForTests("content_tools");
     const chain = await __internal.resolveFeatureChannelChainForTests(config!);
 
     assert.deepEqual(
@@ -43,7 +42,7 @@ test("同次调用先用所选模型的渠道，再尝试默认模型的全部�
 test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选模型并切到默认渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "ocr_screenshot_structure", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "content_tools", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
       { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
@@ -56,7 +55,7 @@ test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选�
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const config = await __internal.getFeatureConfigForTests("content_tools");
     const chain = await __internal.resolveFeatureChannelChainForTests(config!);
     const attempts: string[] = [];
     const result = await __internal.sendWithFailoverForTests(chain, { messages: [] }, false, async (channel) => {
@@ -75,7 +74,7 @@ test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选�
 test("所选模型渠道遇到上游408超时后，仍继续尝试完所选模型并切到默认渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "ocr_screenshot_structure", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "content_tools", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
       { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
@@ -88,7 +87,7 @@ test("所选模型渠道遇到上游408超时后，仍继续尝试完所选模�
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const config = await __internal.getFeatureConfigForTests("content_tools");
     const chain = await __internal.resolveFeatureChannelChainForTests(config!);
     const attempts: string[] = [];
     const result = await __internal.sendWithFailoverForTests(chain, { messages: [] }, false, async (channel) => {
@@ -147,7 +146,7 @@ test("旧 provider_key_model_id 不参与解析，空 modelId 仍跟随全局默
   const db: FakeDb = {
     ai_feature_bindings: [
       {
-        feature_key: "ocr_screenshot_structure",
+        feature_key: "ocr_screenshot",
         provider_key_model_id: "pkm-combo-old",
         model_id: null,
         system_prompt: null,
@@ -164,7 +163,7 @@ test("旧 provider_key_model_id 不参与解析，空 modelId 仍跟随全局默
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
     const chain = await __internal.resolveFeatureChannelChainForTests(config!);
 
     assert.equal(config?.providerKeyModelId, null);
@@ -201,6 +200,63 @@ test("主模型最多试两条渠道，之后直接交给全局默认模型", as
       chain.map((channel) => channel.providerKeyModelId),
       ["primary-1", "primary-2", "default-1", "default-2"],
     );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("主模型为 clairic 时放宽主模型健康渠道上限至 5 条，确保多账号顺位顶上再交全局默认", async () => {
+  const makeClairicRow = (id: string, sortOrder: number) => ({
+    id,
+    model_id: "@cf/cloudflare/clairic",
+    canonical_model_id: "clairic",
+    is_enabled: true,
+    sort_order: sortOrder,
+    key: [{
+      id: `key-${id}`,
+      label: `CF账号-${sortOrder}`,
+      api_key: `tok-${sortOrder}`,
+      is_enabled: true,
+      consecutive_failures: 0,
+      unhealthy_until: null,
+      provider: [{
+        id: `prov-${sortOrder}`,
+        name: "Cloudflare",
+        base_url: `https://api.cloudflare.com/client/v4/accounts/acc-${sortOrder}/ai/run`,
+        protocol: "cloudflare_clairic",
+        is_enabled: true,
+      }],
+    }],
+  });
+
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      { feature_key: "ocr_screenshot", model_id: "clairic", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      makeClairicRow("cf-1", 1),
+      makeClairicRow("cf-2", 2),
+      makeClairicRow("cf-3", 3),
+      makeClairicRow("cf-4", 4),
+      makeClairicRow("cf-5", 5),
+      makeClairicRow("cf-6", 6),
+      makePkmRow({ id: "default-1", modelId: "default-model", keyPriority: 1, keyName: "keyD", sortOrder: 1 }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.deepEqual(
+      chain.map((channel) => channel.providerKeyModelId),
+      ["cf-1", "cf-2", "cf-3", "cf-4", "cf-5", "default-1"],
+    );
+    assert.equal(chain[0]?.protocol, "cloudflare_clairic");
+    assert.equal(chain[0]?.providerKeyLabel, "CF账号-1");
+    assert.equal(chain[5]?.protocol, "openai_compatible");
   } finally {
     __internal.setServiceClientForTests(null);
   }

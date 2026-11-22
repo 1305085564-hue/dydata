@@ -1,16 +1,16 @@
 /**
- * Cloudflare Clairic 识别通道：v2 字段清单、+08:00 发布时间解析、单项低置信度强制转人工，
- * 以及通道异常自动回退百度通道（业务全空不回退）。
+ * Cloudflare Clairic 识别通道：v2 字段清单、+08:00 发布时间解析、单项低置信度强制转人工。
+ * 凭据由算力池调度层（ocr-runner.ts）显式传入，通道自身不处理兜底或环境变量。
  */
 
 import {
   CLAIRIC_MODEL_ID,
   callClairicOcr,
   type ClairicAnswer,
+  type ClairicCredentials,
   type ClairicFieldSpec,
   type ClairicUsage,
 } from "@/lib/clairic-ocr";
-import { runBaiduOcrAttempt, type BaiduOcrAttemptResult } from "./baidu-channel";
 import {
   buildNoTextFailedResponse,
   type ConfidenceLevel,
@@ -105,29 +105,22 @@ export const CLAIRIC_FIELDS_V2: Record<ScreenshotType, Record<string, ClairicFie
 
 export type ClairicTimingsLike = {
   clairic_ms?: number;
-  baidu_ms?: number;
-  structure_ms?: number;
 };
 
 export type ClairicOcrAttemptInput = {
   dataUrl: string;
   screenshotType: ScreenshotType;
-  timings: Partial<ClairicTimingsLike> & Record<string, unknown>;
+  credentials: ClairicCredentials;
+  timeoutMs?: number;
+  channelName?: string;
+  timings?: Partial<ClairicTimingsLike> & Record<string, unknown>;
 };
 
 export type ClairicOcrAttemptResult = {
   parsed: ParsedScreenshotResponse;
-  channelName: "clairic";
-  model: typeof CLAIRIC_MODEL_ID;
-  usage: ClairicUsage | null;
-};
-
-export type ClairicOrFallbackResult = {
-  parsed: ParsedScreenshotResponse | null;
   channelName: string;
-  model: string | null;
-  clairicUsage: ClairicUsage | null;
-  fallback: { from: "clairic"; to: "baidu"; reason: string } | null;
+  model: string;
+  usage: ClairicUsage | null;
 };
 
 function decodeDataUrl(dataUrl: string): { buffer: Buffer; contentType: string } {
@@ -381,61 +374,21 @@ export async function runClairicOcrAttempt(
   const { buffer, contentType } = decodeDataUrl(input.dataUrl);
   const startedAt = Date.now();
   try {
-    const result = await callClairic({ buffer, contentType, fields: CLAIRIC_FIELDS_V2[input.screenshotType] });
+    const result = await callClairic(
+      { buffer, contentType, fields: CLAIRIC_FIELDS_V2[input.screenshotType] },
+      input.credentials,
+      { timeoutMs: input.timeoutMs },
+    );
     const parsed = convertClairicAnswersToResponse(result.answers, input.screenshotType);
-    return { parsed, channelName: "clairic", model: CLAIRIC_MODEL_ID, usage: result.usage };
+    return {
+      parsed,
+      channelName: input.channelName?.trim() || "clairic",
+      model: input.credentials.modelId?.trim() || CLAIRIC_MODEL_ID,
+      usage: result.usage,
+    };
   } finally {
-    input.timings.clairic_ms = (input.timings.clairic_ms ?? 0) + Date.now() - startedAt;
-  }
-}
-
-function formatFallbackChannelName(baiduChannelName: string): string {
-  const inner = baiduChannelName.match(/^baidu \((.+)\)$/);
-  if (inner) return `clairic->baidu (${inner[1]})`;
-  if (baiduChannelName === "baidu") return "clairic->baidu";
-  return `clairic->baidu (${baiduChannelName})`;
-}
-
-/**
- * 执行 Clairic 识别；仅当 Clairic 抛出通道异常（缺配置、超时、鉴权、429/5xx、非法响应等）时
- * 自动无缝回退百度通道。业务识别无结果（slot_status: "failed"）直接返回，不回退。
- */
-export async function runClairicAttemptWithBaiduFallback(
-  input: ClairicOcrAttemptInput,
-  deps: {
-    runClairicAttempt?: typeof runClairicOcrAttempt;
-    runBaiduAttempt?: (arg: {
-      dataUrl: string;
-      screenshotType: ScreenshotType;
-      timings: Partial<ClairicTimingsLike> & Record<string, unknown>;
-    }) => Promise<BaiduOcrAttemptResult>;
-  } = {},
-): Promise<ClairicOrFallbackResult> {
-  const runClairic = deps.runClairicAttempt ?? runClairicOcrAttempt;
-  const runBaidu = deps.runBaiduAttempt ?? runBaiduOcrAttempt;
-
-  try {
-    const attempt = await runClairic(input);
-    return {
-      parsed: attempt.parsed,
-      channelName: attempt.channelName,
-      model: attempt.model,
-      clairicUsage: attempt.usage,
-      fallback: null,
-    };
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    const baiduAttempt = await runBaidu({
-      dataUrl: input.dataUrl,
-      screenshotType: input.screenshotType,
-      timings: input.timings,
-    });
-    return {
-      parsed: baiduAttempt.parsed,
-      channelName: formatFallbackChannelName(baiduAttempt.channelName),
-      model: baiduAttempt.model,
-      clairicUsage: null,
-      fallback: { from: "clairic", to: "baidu", reason },
-    };
+    if (input.timings) {
+      input.timings.clairic_ms = (input.timings.clairic_ms ?? 0) + Date.now() - startedAt;
+    }
   }
 }

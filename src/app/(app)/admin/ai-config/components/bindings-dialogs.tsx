@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { ModelFamilySelect } from "./model-family-select";
-import type { OcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
+import { getModelScope } from "@/lib/ai/provider-protocols";
 import { type AiFeatureControl } from "../hooks/use-ai-config";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
 export function BindingDialog({
   control,
@@ -25,7 +24,6 @@ export function BindingDialog({
   const [systemPrompt, setSystemPrompt] = useState<string>("");
   const [outputTokenLimit, setOutputTokenLimit] = useState<number>(3600);
   const [contextMessageLimit, setContextMessageLimit] = useState<number>(30);
-  const [ocrChannel, setOcrChannel] = useState<OcrScreenshotChannel>("baidu");
   const [showExpertSettings, setShowExpertSettings] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +32,6 @@ export function BindingDialog({
     setSystemPrompt(control?.systemPrompt ?? "");
     setOutputTokenLimit(control?.outputTokenLimit ?? 3600);
     setContextMessageLimit(control?.contextMessageLimit ?? 30);
-    setOcrChannel(control?.ocrChannel ?? "baidu");
     setShowExpertSettings(false);
   }, [control, open]);
 
@@ -49,7 +46,6 @@ export function BindingDialog({
         output_token_limit: outputTokenLimit,
         context_message_limit: contextMessageLimit,
         is_enabled: control.isEnabled,
-        ...(control.key === "ocr_screenshot" ? { ocr_screenshot_channel: ocrChannel } : {}),
       });
       if (saved) onOpenChange(false);
     } finally {
@@ -58,6 +54,7 @@ export function BindingDialog({
   };
 
   const isOcr = control?.key === "ocr_screenshot";
+  const isClairicSelected = isOcr && getModelScope(modelId) === "ocr_only";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,130 +80,7 @@ export function BindingDialog({
 
         {/* 内容区 */}
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
-          {/* 1. 截图识别专属：三通道模式选择卡 */}
-          {isOcr && (
-            <div className="space-y-2">
-              <Label className="text-[12px] text-[#1F1E1D]">
-                识别通道模式
-              </Label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* 模式 A：OCR + 模型 */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOcrChannel("baidu")}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("baidu"); }}
-                  className={cn(
-                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
-                    ocrChannel === "baidu"
-                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
-                      : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
-                  )}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[14px] text-[#141413]">
-                          OCR+模型
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
-                          <Sparkles className="size-3" /> 推荐
-                        </span>
-                      </div>
-                      <div className={cn(
-                        "size-4 rounded-full border flex items-center justify-center transition-colors",
-                        ocrChannel === "baidu" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
-                      )}>
-                        {ocrChannel === "baidu" && <Check className="size-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#78716C] leading-snug">
-                      百度 OCR 提字 + 大模型结构化归位
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
-                    成本低、字段极准，支持常规文本模型
-                  </div>
-                </div>
-
-                {/* 模式 B：视觉直识 */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOcrChannel("vision")}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("vision"); }}
-                  className={cn(
-                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
-                    ocrChannel === "vision"
-                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
-                      : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
-                  )}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[14px] text-[#141413]">
-                        视觉直识
-                      </span>
-                      <div className={cn(
-                        "size-4 rounded-full border flex items-center justify-center transition-colors",
-                        ocrChannel === "vision" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
-                      )}>
-                        {ocrChannel === "vision" && <Check className="size-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#78716C] leading-snug">
-                      单视觉大模型端到端直接看图识别
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#8A6A2F]">
-                    链路极简，调度模型必须具备看图能力
-                  </div>
-                </div>
-
-                {/* 模式 C：Clairic 极速 */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOcrChannel("clairic")}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOcrChannel("clairic"); }}
-                  className={cn(
-                    "relative flex flex-col justify-between rounded-xl border p-3 text-left transition cursor-pointer select-none",
-                    ocrChannel === "clairic"
-                      ? "border-[#78716C]/50 bg-[#F1F1F0] ring-1 ring-[#141413]/15 shadow-none"
-                      : "border-[#E2E2DF] bg-[#FCFCFB] hover:border-[#78716C]/40 hover:bg-white"
-                  )}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[14px] text-[#141413]">
-                          Clairic 极速
-                        </span>
-                        <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#EBEBE9] text-[#78716C]">
-                          Preview
-                        </span>
-                      </div>
-                      <div className={cn(
-                        "size-4 rounded-full border flex items-center justify-center transition-colors",
-                        ocrChannel === "clairic" ? "border-[#141413] bg-[#141413] text-white" : "border-[#E2E2DF] bg-white"
-                      )}>
-                        {ocrChannel === "clairic" && <Check className="size-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <p className="text-[12px] text-[#78716C] leading-snug">
-                      Cloudflare 专项抽取 · ~1 秒
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-1 border-t border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
-                    失败自动回退百度，可随时切回
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 2. 调度模型与系统提示词 */}
+          {/* 调度模型与系统提示词 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 pt-1">
             {/* 左列：系统提示词 */}
             <div className="flex flex-col space-y-2 h-full">
@@ -231,8 +105,14 @@ export function BindingDialog({
                 <ModelFamilySelect
                   value={modelId}
                   onChange={setModelId}
+                  featureKey={control?.key}
                   allowEmptyLabel="跟随全局默认"
                 />
+                {isClairicSelected && (
+                  <p className="rounded-md border border-[#E2E2DF] bg-[#F7F7F6] p-2 text-[12px] text-[#78716C]">
+                    Clairic 是 Cloudflare 专项字段抽取模型，使用内置字段清单，系统提示词对其不生效
+                  </p>
+                )}
               </div>
 
               {/* 专家设置：默认折叠 */}

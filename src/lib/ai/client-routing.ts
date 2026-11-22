@@ -2,13 +2,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BoundedTtlCache } from "@/lib/cache-policy";
 import { resolveFeatureModelRouting } from "./feature-routing";
 import { getProviderKeyModelConfig, listRankedProviderKeyModels, type ProviderKeyModelConfig } from "./provider-routing";
+import { CLAIRIC_CANONICAL_MODEL_ID, type AiProviderProtocol } from "./provider-protocols";
 import { readCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
 export type ChannelConfig = {
   id?: string;
   name: string;
+  providerKeyLabel?: string;
   baseUrl: string;
   apiKey: string;
+  protocol?: AiProviderProtocol;
   model?: string | null;
   canonicalModelId?: string | null;
   providerKeyModelId?: string | null;
@@ -18,7 +21,7 @@ export type ChannelConfig = {
   cooldownUntil?: string | null;
 };
 
-type FeatureConfig = {
+export type FeatureConfig = {
   featureKey: string;
   providerKeyModelId: string | null;
   modelId: string | null;
@@ -59,6 +62,7 @@ function getChannelFromEnv(): ChannelConfig | null {
     name: "env-default",
     baseUrl,
     apiKey,
+    protocol: "openai_compatible",
     model: process.env.AI_MODEL?.trim() || null,
     source: "env",
   };
@@ -104,8 +108,10 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
   return {
     id: config.providerKeyModelId,
     name: config.providerName,
+    providerKeyLabel: config.providerKeyLabel,
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
+    protocol: config.protocol,
     model: config.modelId,
     canonicalModelId: config.canonicalModelId,
     providerKeyModelId: config.providerKeyModelId,
@@ -119,8 +125,10 @@ function toChannelConfig(config: ProviderKeyModelConfig): ChannelConfig {
 /**
  * 主模型最多试几条就交给全局默认。两条 × 单次上限之和低于整链预算，
  * 保证兜底模型仍有时间被尝试；主模型与默认是同一个模型时只有一条链，不截断。
+ * Clairic 单次 5s 超时、429 <1s 快失败，允许最多 5 条主模型健康渠道顺位顶上。
  */
 export const PRIMARY_MODEL_CHANNEL_LIMIT = 2;
+export const CLAIRIC_PRIMARY_CHANNEL_LIMIT = 5;
 
 /** 能用供应按所选→默认；冷却中的供应统一排最后，截止早的先试。 */
 async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise<ChannelConfig[]> {
@@ -134,10 +142,13 @@ async function resolveFeatureChannelChain(featureConfig: FeatureConfig): Promise
   const lists = await Promise.all(ids.map(id => listRankedProviderKeyModels(supabase, id, { includeSleeping: true })));
   const all = lists.flat().map(({ config }) => toChannelConfig(config));
   const primaryModelId = ids[0];
+  const primaryLimit = primaryModelId === CLAIRIC_CANONICAL_MODEL_ID
+    ? CLAIRIC_PRIMARY_CHANNEL_LIMIT
+    : PRIMARY_MODEL_CHANNEL_LIMIT;
   const available = ids.length > 1
     ? [
         ...all.filter(channel => !channel.cooldownUntil && channel.canonicalModelId === primaryModelId)
-          .slice(0, PRIMARY_MODEL_CHANNEL_LIMIT),
+          .slice(0, primaryLimit),
         ...all.filter(channel => !channel.cooldownUntil && channel.canonicalModelId !== primaryModelId),
       ]
     : all.filter(channel => !channel.cooldownUntil);

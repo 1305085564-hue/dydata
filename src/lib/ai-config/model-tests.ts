@@ -1,90 +1,44 @@
 import { extractJsonString, type AiMessage } from "@/lib/ai/client";
-import { buildHaikuVisionBody,parseHaikuVisionResponse,usesHaikuNativeVision } from "@/lib/ai/haiku-vision-transport";
-import { markProviderKeySuccess,markProviderKeyModelSuccess } from "@/lib/ai/provider-routing";
-import { classifyProviderFailure,isPermanentProviderFailure,sanitizeProviderErrorMessage,type ProviderFailureScope } from "@/lib/ai/provider-health";
-import { describeChannelFailure,type ChannelFailureDiagnostic } from "./failure-diagnostic";
+import { buildHaikuVisionBody, parseHaikuVisionResponse, usesHaikuNativeVision } from "@/lib/ai/haiku-vision-transport";
+import { markProviderKeySuccess, markProviderKeyModelSuccess } from "@/lib/ai/provider-routing";
+import { classifyProviderFailure, isPermanentProviderFailure, sanitizeProviderErrorMessage, type ProviderFailureScope } from "@/lib/ai/provider-health";
+import { normalizeProviderProtocol, type AiProviderProtocol } from "@/lib/ai/provider-protocols";
+import { probeClairicOcr } from "@/lib/clairic-ocr";
+import { describeChannelFailure, type ChannelFailureDiagnostic } from "./failure-diagnostic";
 import { toTrimmedString } from "@/lib/type-guards";
-import { loadAiConfig,type AiConfigClient } from "./config-loader";
+import { loadAiConfig, type AiConfigClient } from "./config-loader";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 
-function firstOrNull<T>(value:T|T[]|null|undefined) {return Array.isArray(value) ? value[0] ?? null : value ?? null;}
+function firstOrNull<T>(value: T | T[] | null | undefined) { return Array.isArray(value) ? value[0] ?? null : value ?? null; }
 
 export async function recordManualProbeFailure(
   client: AiConfigClient,
-  input: {
-    keyModelId: string;
-    errorScope?: ProviderFailureScope | null;
-    status?: number;
-    message: string;
-  },
+  input: { keyModelId: string; errorScope?: ProviderFailureScope | null; status?: number; message: string },
 ) {
   // 手动与真实调用共用同一永久失效规则：只有 Key 级明确鉴权失败才永久；模型级失败只休息。
-  const permanentFailure = isPermanentProviderFailure({
-    status: input.status,
-    message: input.message,
-  });
+  const permanentFailure = isPermanentProviderFailure({ status: input.status, message: input.message });
   const { error } = await client.rpc("record_ai_manual_supply_failure", {
-    supply_id: input.keyModelId,
-    failure_scope: input.errorScope ?? "unknown",
-    permanent_failure: permanentFailure,
-    error_message: input.message,
+    supply_id: input.keyModelId, failure_scope: input.errorScope ?? "unknown", permanent_failure: permanentFailure, error_message: input.message,
   });
   if (error) throw new Error(error.message);
 }
 
-export async function handleTestKey(
-  supabase: AiConfigClient,
-  data: Record<string, unknown>,
-  options: { healthClient?: AiConfigClient } = {},
-) {
+export async function handleTestKey(supabase: AiConfigClient, data: Record<string, unknown>, options: { healthClient?: AiConfigClient } = {}) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
   if (!keyId) throw new Error("缺少 key_id");
 
-  const { data: keyData, error: keyErr } = await supabase
-    .from("ai_provider_keys")
-    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url)")
-    .eq("id", keyId)
-    .single();
+  const { key, provider } = await loadKeyProvider(supabase, keyId);
+  const protocol = provider.protocol;
 
-  if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
-
-  const keyRow = keyData as unknown as {
-    id: string;
-    api_key: string;
-    provider_id?: string;
-    provider: { id: string; name: string; base_url: string } | Array<{ id: string; name: string; base_url: string }> | null;
-  };
-
-  let provider = firstOrNull(keyRow.provider);
-  if (!provider && keyRow.provider_id) {
-    const { data: providerRow, error: providerError } = await supabase
-      .from("ai_providers")
-      .select("id, name, base_url")
-      .eq("id", keyRow.provider_id)
-      .single();
-    if (providerError || !providerRow) throw new Error(providerError?.message || "供应商不存在");
-    provider = providerRow as { id: string; name: string; base_url: string };
-  }
-  if (!provider?.base_url) throw new Error("渠道 URL 不存在");
-
-  let modelQuery = supabase
-    .from("ai_provider_key_models")
-    .select("id, model_id, canonical_model_id")
-    .eq("key_id", keyId);
-  if (modelId) modelQuery = modelQuery.eq("canonical_model_id", toCanonicalModelId(modelId));
-  else modelQuery = modelQuery.limit(1);
+  let modelQuery = supabase.from("ai_provider_key_models").select("id, model_id, canonical_model_id").eq("key_id", keyId);
+  modelQuery = modelId ? modelQuery.eq("canonical_model_id", toCanonicalModelId(modelId)) : modelQuery.limit(1);
   const { data: modelData, error: modelError } = await modelQuery.maybeSingle();
   if (modelError) throw new Error(modelError.message);
   const mounted = modelData as { id?: string; model_id?: string; canonical_model_id?: string | null } | null;
-  const testModel = mounted?.model_id || modelId || "gpt-3.5-turbo";
+  const testModel = mounted?.model_id || modelId || (protocol === "cloudflare_clairic" ? "@cf/cloudflare/clairic" : "gpt-3.5-turbo");
 
-  const result = await probeProviderModel(
-    keyRow.api_key,
-    provider.base_url,
-    testModel,
-    toTrimmedString(data.test_mode) === "vision" ? "vision" : "text",
-  );
+  const result = await probeProviderModel(key.api_key, provider.base_url, testModel, toTrimmedString(data.test_mode) === "vision" ? "vision" : "text", protocol);
   if (result.ok) {
     await markProviderKeySuccess(supabase, keyId);
     await clearLegacyManualSleep(supabase, keyId);
@@ -95,12 +49,7 @@ export async function handleTestKey(
   let stateWriteError: string | null = null;
   if (mounted?.id) {
     try {
-      await recordManualProbeFailure(options.healthClient ?? supabase, {
-        keyModelId: mounted.id,
-        errorScope: result.errorScope,
-        status: result.status,
-        message: result.message,
-      });
+      await recordManualProbeFailure(options.healthClient ?? supabase, { keyModelId: mounted.id, errorScope: result.errorScope, status: result.status, message: result.message });
     } catch (error) {
       stateWriteError = error instanceof Error ? error.message : "测试失败状态写入失败";
     }
@@ -108,28 +57,21 @@ export async function handleTestKey(
   return { ...result, stateWriteError };
 }
 
-export async function handleTestKeyModel(
-  supabase: AiConfigClient,
-  data: Record<string, unknown>,
-  options: { recordFailure?: boolean; healthClient?: AiConfigClient } = {},
-) {
+export async function handleTestKeyModel(supabase: AiConfigClient, data: Record<string, unknown>, options: { recordFailure?: boolean; healthClient?: AiConfigClient } = {}) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
   if (!keyId) throw new Error("缺少 key_id");
   if (!modelId) throw new Error("缺少 model_id");
 
   const { data: modelData, error: modelError } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, key_id, model_id, canonical_model_id")
-    .eq("key_id", keyId)
-    .eq("canonical_model_id", toCanonicalModelId(modelId))
-    .maybeSingle();
+    .from("ai_provider_key_models").select("id, key_id, model_id, canonical_model_id")
+    .eq("key_id", keyId).eq("canonical_model_id", toCanonicalModelId(modelId)).maybeSingle();
   if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
   const mounted = modelData as { id: string; model_id: string; canonical_model_id?: string | null };
   const supplyId = mounted.id;
 
   const result = await loadKeyProvider(supabase, keyId);
-  const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, mounted.model_id);
+  const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, mounted.model_id, "text", result.provider.protocol);
   // 成功必须洗白，否则测通了界面还挂在故障上。
   if (probe.ok) {
     await markProviderKeyModelSuccess(supabase, supplyId);
@@ -141,12 +83,7 @@ export async function handleTestKeyModel(
   let stateWriteError: string | null = null;
   if (options.recordFailure) {
     try {
-      await recordManualProbeFailure(options.healthClient ?? supabase, {
-        keyModelId: supplyId,
-        errorScope: probe.errorScope,
-        status: probe.status,
-        message: probe.message,
-      });
+      await recordManualProbeFailure(options.healthClient ?? supabase, { keyModelId: supplyId, errorScope: probe.errorScope, status: probe.status, message: probe.message });
     } catch (error) {
       stateWriteError = error instanceof Error ? error.message : "测试失败状态写入失败";
     }
@@ -155,21 +92,12 @@ export async function handleTestKeyModel(
 }
 
 type MountedModelTestResult = {
-  keyId: string;
-  modelId: string;
-  keyModelId: string | null;
-  ok: boolean;
-  latencyMs: number | null;
-  error: string | null;
-  errorScope?: ProviderFailureScope | null;
-  status?: number;
-  failureDiagnostic?: ChannelFailureDiagnostic | null;
-  stateWriteError?: string | null;
+  keyId: string; modelId: string; keyModelId: string | null; ok: boolean; latencyMs: number | null;
+  error: string | null; errorScope?: ProviderFailureScope | null; status?: number;
+  failureDiagnostic?: ChannelFailureDiagnostic | null; stateWriteError?: string | null;
 };
 
-export type KeyFailureClaim = {
-  claim: (keyId: string) => boolean;
-};
+export type KeyFailureClaim = { claim: (keyId: string) => boolean };
 
 /** 同一次批量检测内的 Key 级失败只认领一次；认领在异步写库前同步完成。 */
 export function createKeyFailureClaim(): KeyFailureClaim {
@@ -186,25 +114,12 @@ export function createKeyFailureClaim(): KeyFailureClaim {
 
 async function recordOneTestFailure(
   client: AiConfigClient,
-  failure: {
-    keyId: string;
-    keyModelId: string;
-    errorScope?: ProviderFailureScope | null;
-    status?: number;
-    message: string;
-  },
+  failure: { keyId: string; keyModelId: string; errorScope?: ProviderFailureScope | null; status?: number; message: string },
   keyFailureClaim: KeyFailureClaim,
 ): Promise<string | null> {
-  if (failure.errorScope === "key" && !keyFailureClaim.claim(failure.keyId)) {
-    return null;
-  }
+  if (failure.errorScope === "key" && !keyFailureClaim.claim(failure.keyId)) return null;
   try {
-    await recordManualProbeFailure(client, {
-      keyModelId: failure.keyModelId,
-      errorScope: failure.errorScope,
-      status: failure.status,
-      message: failure.message,
-    });
+    await recordManualProbeFailure(client, { keyModelId: failure.keyModelId, errorScope: failure.errorScope, status: failure.status, message: failure.message });
     return null;
   } catch (error) {
     return error instanceof Error ? error.message : "测试失败状态写入失败";
@@ -224,11 +139,7 @@ export async function clearLegacyManualSleep(supabase: AiConfigClient, keyId: st
 export const MODEL_PROBE_TIMEOUT_MS = 15_000;
 const MODEL_PROBE_TIMEOUT_SECONDS = MODEL_PROBE_TIMEOUT_MS / 1000;
 
-export async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T) => Promise<R>,
-) {
+export async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>) {
   const results = new Array<R>(items.length);
   let nextIndex = 0;
   const runWorker = async () => {
@@ -239,9 +150,7 @@ export async function mapWithConcurrency<T, R>(
       results[index] = await worker(items[index]);
     }
   };
-  await Promise.all(
-    Array.from({ length: Math.min(limit, Math.max(items.length, 1)) }, () => runWorker()),
-  );
+  await Promise.all(Array.from({ length: Math.min(limit, Math.max(items.length, 1)) }, () => runWorker()));
   return results;
 }
 
@@ -251,55 +160,32 @@ export async function testMountedModel(
   options: { healthClient?: AiConfigClient; keyFailureClaim?: KeyFailureClaim } = {},
 ): Promise<MountedModelTestResult> {
   try {
-    const result = await handleTestKeyModel(supabase, {
-      key_id: target.key_id,
-      model_id: target.model_id,
-    });
+    const result = await handleTestKeyModel(supabase, { key_id: target.key_id, model_id: target.model_id });
     const keyModelId = "keyModelId" in result ? String(result.keyModelId) : null;
     let stateWriteError: string | null = null;
     if (!result.ok && keyModelId) {
       // 单条失败在本次工作结束前写库；Key 级失败同批只认领一次，不能等整批结束。
       stateWriteError = await recordOneTestFailure(
         options.healthClient ?? supabase,
-        {
-          keyId: target.key_id,
-          keyModelId,
-          errorScope: result.errorScope,
-          status: result.status,
-          message: result.message,
-        },
+        { keyId: target.key_id, keyModelId, errorScope: result.errorScope, status: result.status, message: result.message },
         options.keyFailureClaim ?? createKeyFailureClaim(),
       );
     }
     return {
-      keyId: target.key_id,
-      modelId: target.model_id,
-      keyModelId,
-      ok: result.ok,
-      latencyMs: result.ok ? result.latencyMs : null,
-      error: result.ok ? null : result.message,
-      errorScope: result.ok ? null : result.errorScope,
-      status: result.ok ? undefined : result.status,
-      failureDiagnostic: result.ok ? null : result.failureDiagnostic,
-      stateWriteError,
+      keyId: target.key_id, modelId: target.model_id, keyModelId, ok: result.ok,
+      latencyMs: result.ok ? result.latencyMs : null, error: result.ok ? null : result.message,
+      errorScope: result.ok ? null : result.errorScope, status: result.ok ? undefined : result.status,
+      failureDiagnostic: result.ok ? null : result.failureDiagnostic, stateWriteError,
     };
   } catch (error) {
     return {
-      keyId: target.key_id,
-      modelId: target.model_id,
-      keyModelId: null,
-      ok: false,
-      latencyMs: null,
-      error: error instanceof Error ? error.message : "模型连通测试失败",
-      errorScope: null,
+      keyId: target.key_id, modelId: target.model_id, keyModelId: null, ok: false, latencyMs: null,
+      error: error instanceof Error ? error.message : "模型连通测试失败", errorScope: null,
     };
   }
 }
 
-export async function handleCheckAllInUse(
-  supabase: AiConfigClient,
-  options: { healthClient?: AiConfigClient } = {},
-) {
+export async function handleCheckAllInUse(supabase: AiConfigClient, options: { healthClient?: AiConfigClient } = {}) {
   const before = await loadAiConfig(supabase) as unknown as {
     featureControls: Array<{ group: string; isEnabled: boolean; lifecycleState: string; modelId: string | null }>;
     featureBindings: Array<{ feature_key: string; model_id?: string | null }>;
@@ -308,12 +194,10 @@ export async function handleCheckAllInUse(
     models: Array<{ key_id: string; model_id: string; canonical_model_id?: string | null; is_enabled: boolean }>;
   };
   const modelIds = new Set(
-    before.featureControls
-      .filter((control) => control.group === "business" && control.isEnabled && control.lifecycleState === "active")
-      .map((control) => control.modelId)
-      .filter((modelId): modelId is string => Boolean(modelId)),
+    before.featureControls.filter((c) => c.group === "business" && c.isEnabled && c.lifecycleState === "active")
+      .map((c) => c.modelId).filter((modelId): modelId is string => Boolean(modelId)),
   );
-  const defaultModelId = before.featureBindings.find((binding) => binding.feature_key === "default")?.model_id;
+  const defaultModelId = before.featureBindings.find((b) => b.feature_key === "default")?.model_id;
   if (defaultModelId) modelIds.add(defaultModelId);
 
   // gate:transient-map this key index is built for one check request and discarded with its response.
@@ -333,18 +217,12 @@ export async function handleCheckAllInUse(
 
   const healthClient = options.healthClient ?? supabase;
   const keyFailureClaim = createKeyFailureClaim();
-  const results = await mapWithConcurrency(
-    Array.from(targets.values()),
-    MODEL_TEST_CONCURRENCY,
-    (target) => testMountedModel(supabase, target, { healthClient, keyFailureClaim }),
-  );
-  const stateWriteErrors = results
-    .map((result) => result.stateWriteError)
-    .filter((value): value is string => Boolean(value));
+  const results = await mapWithConcurrency(Array.from(targets.values()), MODEL_TEST_CONCURRENCY, (t) => testMountedModel(supabase, t, { healthClient, keyFailureClaim }));
+  const stateWriteErrors = results.map((r) => r.stateWriteError).filter((v): v is string => Boolean(v));
   const checkResult = {
     total: results.length,
-    successCount: results.filter((result) => result.ok).length,
-    failureCount: results.filter((result) => !result.ok).length,
+    successCount: results.filter((r) => r.ok).length,
+    failureCount: results.filter((r) => !r.ok).length,
     stateWriteError: stateWriteErrors.length > 0 ? stateWriteErrors.join("；") : null,
     results: results.map(({ keyId, modelId, ok, latencyMs, error, failureDiagnostic, stateWriteError }) => ({
       keyId, modelId, ok, latencyMs, message: error, failureDiagnostic: failureDiagnostic ?? null, stateWriteError: stateWriteError ?? null,
@@ -353,12 +231,13 @@ export async function handleCheckAllInUse(
   const latestBundle = await loadAiConfig(supabase);
   // 一次性、待删、勿参考：旧界面的结果字段适配；新界面只读 checkResult。
   // gate:transient-map this label index is built for one response and discarded when it returns.
-  const names = new Map(latestBundle.keys.map(key=>[key.id,key.label]));
-  const failures = checkResult.results.filter(result=>!result.ok).map(result=>({keyId:result.keyId,keyLabel:names.get(result.keyId) ?? "",modelId:result.modelId,error:result.message ?? "检测失败"}));
-  return { ...latestBundle, checkResult,
-    total:checkResult.total,results:checkResult.results.map(result=>({...result,keyName:names.get(result.keyId) ?? "",error:result.message})),
-    totalKeys:new Set(checkResult.results.map(result=>result.keyId)).size,totalModels:checkResult.total,
-    successCount:checkResult.successCount,failureCount:checkResult.failureCount,failures,
+  const names = new Map(latestBundle.keys.map((key) => [key.id, key.label]));
+  const failures = checkResult.results.filter((r) => !r.ok).map((r) => ({ keyId: r.keyId, keyLabel: names.get(r.keyId) ?? "", modelId: r.modelId, error: r.message ?? "检测失败" }));
+  return {
+    ...latestBundle, checkResult, total: checkResult.total,
+    results: checkResult.results.map((r) => ({ ...r, keyName: names.get(r.keyId) ?? "", error: r.message })),
+    totalKeys: new Set(checkResult.results.map((r) => r.keyId)).size, totalModels: checkResult.total,
+    successCount: checkResult.successCount, failureCount: checkResult.failureCount, failures,
   };
 }
 
@@ -369,29 +248,22 @@ type ProbeResult = { failureDiagnostic?: ChannelFailureDiagnostic | null } & (
 export async function loadKeyProvider(supabase: AiConfigClient, keyId: string) {
   const { data: keyData, error: keyErr } = await supabase
     .from("ai_provider_keys")
-    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url)")
-    .eq("id", keyId)
-    .single();
+    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url, protocol)")
+    .eq("id", keyId).single();
   if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
 
   const key = keyData as unknown as {
-    id: string;
-    api_key: string;
-    provider_id?: string;
-    provider: { id: string; name: string; base_url: string } | Array<{ id: string; name: string; base_url: string }> | null;
+    id: string; api_key: string; provider_id?: string;
+    provider: { id: string; name: string; base_url: string; protocol?: string | null } | Array<{ id: string; name: string; base_url: string; protocol?: string | null }> | null;
   };
   let provider = firstOrNull(key.provider);
   if (!provider && key.provider_id) {
-    const { data: providerRow, error: providerError } = await supabase
-      .from("ai_providers")
-      .select("id, name, base_url")
-      .eq("id", key.provider_id)
-      .single();
+    const { data: providerRow, error: providerError } = await supabase.from("ai_providers").select("id, name, base_url, protocol").eq("id", key.provider_id).single();
     if (providerError || !providerRow) throw new Error(providerError?.message || "供应商不存在");
-    provider = providerRow as { id: string; name: string; base_url: string };
+    provider = providerRow as { id: string; name: string; base_url: string; protocol?: string | null };
   }
   if (!provider?.base_url) throw new Error("渠道 URL 不存在");
-  return { key, provider };
+  return { key, provider: { ...provider, protocol: normalizeProviderProtocol(provider.protocol) } };
 }
 
 // 识图冒烟测试图：白底黑字 427。号码只放在图片里、不写进提示词，避免不读图的模型照抄提示词通过。
@@ -418,27 +290,21 @@ export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" =
 } {
   return {
     model: modelId,
-    messages: [{
-      role: "user",
-      content: mode === "vision"
-        ? [
-            { type: "text", text: "请识别图片中的三位数字，只返回 JSON 对象，字段 number 填图片里的数字；不要解释，不要 Markdown。" },
-            { type: "image_url", image_url: { url: VISION_PROBE_IMAGE } },
-          ]
-        : "hi",
-    }],
-    max_tokens: 32,
-    stream: false,
-    ...(mode === "vision" ? { response_format: { type: "json_object" } } : {}),
+    messages: [{ role: "user", content: mode === "vision" ? [{ type: "text", text: "请识别图片中的三位数字，只返回 JSON 对象，字段 number 填图片里的数字；不要解释，不要 Markdown。" }, { type: "image_url", image_url: { url: VISION_PROBE_IMAGE } }] : "hi" }],
+    max_tokens: 32, stream: false, ...(mode === "vision" ? { response_format: { type: "json_object" } } : {}),
   };
 }
 
 export async function probeProviderModel(
-  apiKey: string,
-  baseUrl: string,
-  modelId: string,
-  mode: "text" | "vision" = "text",
+  apiKey: string, baseUrl: string, modelId: string, mode: "text" | "vision" = "text", protocol: AiProviderProtocol = "openai_compatible",
 ): Promise<ProbeResult> {
+  if (protocol === "cloudflare_clairic") {
+    const clairicResult = await probeClairicOcr({ baseUrl, apiKey, modelId, timeoutMs: MODEL_PROBE_TIMEOUT_MS });
+    return clairicResult.ok
+      ? { ok: true, latencyMs: clairicResult.latencyMs, status: clairicResult.status ?? 200, message: "Cloudflare Clairic 连通测试成功", errorScope: null, failureDiagnostic: null }
+      : { ok: false, latencyMs: clairicResult.latencyMs, status: clairicResult.status ?? 0, message: clairicResult.message || "Cloudflare Clairic 连通测试失败", errorScope: clairicResult.errorScope ?? "unknown", failureDiagnostic: clairicResult.failureDiagnostic ?? null };
+  }
+
   const startedAt = Date.now();
   const probeBody = buildProbeRequestBody(modelId, mode);
   const probeOptions = { messages: probeBody.messages, jsonMode: mode === "vision", maxTokens: probeBody.max_tokens };
@@ -447,10 +313,7 @@ export async function probeProviderModel(
   try {
     const response = await fetch(targetUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(nativeVision ? { "x-api-key": apiKey, "anthropic-version": "2023-06-01" } : { Authorization: `Bearer ${apiKey}` }),
-      },
+      headers: { "Content-Type": "application/json", ...(nativeVision ? { "x-api-key": apiKey, "anthropic-version": "2023-06-01" } : { Authorization: `Bearer ${apiKey}` }) },
       body: JSON.stringify(nativeVision ? buildHaikuVisionBody(modelId, probeOptions) : probeBody),
       signal: AbortSignal.timeout(MODEL_PROBE_TIMEOUT_MS),
     });
@@ -460,39 +323,24 @@ export async function probeProviderModel(
       if (!isValidVisionProbeContent(parsed.content)) {
         const message = "图片识别验证失败：没有正确识别出测试图片中的数字";
         return {
-          ok: false,
-          latencyMs: Date.now() - startedAt,
-          status: response.status,
-          message,
-          errorScope: "model",
+          ok: false, latencyMs: Date.now() - startedAt, status: response.status, message, errorScope: "model",
           failureDiagnostic: describeChannelFailure({ message, status: response.status, requestId: response.headers.get("x-request-id") ?? response.headers.get("request-id"), secrets: [apiKey] }),
         };
       }
     }
-    const message = response.ok
-      ? "连通测试成功"
-      : sanitizeProviderErrorMessage(`HTTP ${response.status}${raw ? `: ${raw}` : ""}`, [apiKey]);
+    const message = response.ok ? "连通测试成功" : sanitizeProviderErrorMessage(`HTTP ${response.status}${raw ? `: ${raw}` : ""}`, [apiKey]);
     return {
-      ok: response.ok,
-      latencyMs: Date.now() - startedAt,
-      status: response.status,
-      message,
+      ok: response.ok, latencyMs: Date.now() - startedAt, status: response.status, message,
       errorScope: response.ok ? null : classifyProviderFailure({ status: response.status, message }),
       failureDiagnostic: response.ok ? null : describeChannelFailure({ message, status: response.status, requestId: response.headers.get("x-request-id") ?? response.headers.get("request-id"), secrets: [apiKey] }),
     } as ProbeResult;
   } catch (error) {
     const isTimeout = error instanceof Error && error.name === "TimeoutError";
-    const message = isTimeout
-      ? `上游 ${MODEL_PROBE_TIMEOUT_SECONDS} 秒内没有返回任何响应（超时）`
-      : sanitizeProviderErrorMessage(error instanceof Error ? error.message : "连接超时或失败", [apiKey]);
+    const message = isTimeout ? `上游 ${MODEL_PROBE_TIMEOUT_SECONDS} 秒内没有返回任何响应（超时）` : sanitizeProviderErrorMessage(error instanceof Error ? error.message : "连接超时或失败", [apiKey]);
     return {
-      ok: false,
-      latencyMs: Date.now() - startedAt,
-      status: 0,
-      message,
+      ok: false, latencyMs: Date.now() - startedAt, status: 0, message,
       errorScope: classifyProviderFailure({ errorType: isTimeout ? "timeout" : "network", message }),
       failureDiagnostic: describeChannelFailure({ message, secrets: [apiKey] }),
     };
   }
 }
-

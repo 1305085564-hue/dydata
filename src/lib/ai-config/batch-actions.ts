@@ -1,4 +1,3 @@
-import { normalizeChannelAddress } from "./channel-address";
 import { runAiConfigWrite } from "./atomic-write";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { discoverModelIds, syncModelsForKey } from "@/lib/ai-config/sync-models";
@@ -6,6 +5,12 @@ import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
 import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-config/key-dependencies";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
+import {
+  normalizeProtocolBaseUrl,
+  normalizeProviderProtocol,
+  parseProviderProtocol,
+  type AiProviderProtocol,
+} from "@/lib/ai/provider-protocols";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,40 +72,85 @@ export async function handleSetKeyModelSelection(
   });
 }
 
-export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<string, unknown>): Promise<AiConfigMutationResult> {
-  let providerId=toTrimmedString(data.provider_id) || null;
-  let baseUrl=toTrimmedString(data.base_url) ? normalizeChannelAddress(data.base_url) : null;
-  if (baseUrl) {
-    const {data: groups,error} = await supabase.from("ai_providers").select("id,base_url");
+function mergeDiscoveredAndSelectedModels(discovered: string[], selectedCanonicalIds: string[]): string[] {
+  // gate:transient-map 请求级按规范模型 ID 去重，优先保留上游完整写法（如 @cf/cloudflare/clairic）。
+  const byCanonical = new Map<string, string>();
+  for (const modelId of discovered) {
+    const trimmed = toTrimmedString(modelId);
+    if (!trimmed) continue;
+    const canonical = toCanonicalModelId(trimmed);
+    if (!byCanonical.has(canonical)) {
+      byCanonical.set(canonical, trimmed);
+    }
+  }
+  for (const canonical of selectedCanonicalIds) {
+    if (!byCanonical.has(canonical)) {
+      byCanonical.set(canonical, canonical);
+    }
+  }
+  return Array.from(byCanonical.values());
+}
+
+export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<string, unknown>, fetcher?: typeof fetch): Promise<AiConfigMutationResult> {
+  let providerId = toTrimmedString(data.provider_id) || null;
+  let protocol: AiProviderProtocol = "openai_compatible";
+  const hasExplicitProtocol = data.protocol !== undefined && data.protocol !== null && toTrimmedString(data.protocol) !== "";
+  if (hasExplicitProtocol) {
+    const parsed = parseProviderProtocol(data.protocol);
+    if (!parsed) throw new Error("不支持的接入协议");
+    protocol = parsed;
+  }
+
+  let baseUrl: string | null = null;
+  let existingProviderNames = new Set<string>();
+  const rawBaseUrl = toTrimmedString(data.base_url);
+  if (rawBaseUrl) {
+    baseUrl = normalizeProtocolBaseUrl(protocol, rawBaseUrl);
+    const { data: groups, error } = await supabase.from("ai_providers").select("id,base_url,protocol,name");
     if (error) throw new Error(error.message);
-    providerId=(groups ?? []).find((group: {base_url:string})=>normalizeChannelAddress(group.base_url)===baseUrl)?.id ?? null;
+    const groupRows = (groups ?? []) as Array<{ id: string; base_url: string; protocol?: string | null; name?: string | null }>;
+    existingProviderNames = new Set(groupRows.map((group) => toTrimmedString(group.name)).filter(Boolean));
+    providerId = groupRows.find((group) => {
+      const groupProtocol = normalizeProviderProtocol(group.protocol);
+      return groupProtocol === protocol && normalizeProtocolBaseUrl(groupProtocol, group.base_url) === baseUrl;
+    })?.id ?? null;
   } else {
     if (!providerId) throw new Error("缺少渠道地址");
-    const {data: provider,error} = await supabase.from("ai_providers").select("base_url").eq("id",providerId).single();
-    if(error || !provider) throw new Error(error?.message || "地址分组不存在");
-    baseUrl=provider.base_url;
+    const { data: provider, error } = await supabase.from("ai_providers").select("base_url,protocol").eq("id", providerId).single();
+    if (error || !provider) throw new Error(error?.message || "地址分组不存在");
+    protocol = normalizeProviderProtocol((provider as { protocol?: unknown }).protocol);
+    baseUrl = normalizeProtocolBaseUrl(protocol, provider.base_url);
   }
-  const label=toTrimmedString(data.label) || new URL(baseUrl!).host;
-  const patch=buildAiKeyPatch({...data,provider_id:providerId ?? "new-address-group",label},"create");
+  const label = toTrimmedString(data.label) || new URL(baseUrl!).host;
+  const patch = buildAiKeyPatch({ ...data, provider_id: providerId ?? "new-address-group", label }, "create");
   if (providerId) {
-    const {data:duplicates,error}=await supabase.from("ai_provider_keys").select("id").eq("provider_id",providerId).eq("label",label).limit(1);
-    if(error) throw new Error(error.message);
-    if(duplicates?.length) throw new Error("同一接入点下已有同名渠道，请换一个渠道显示名");
+    const { data: duplicates, error } = await supabase.from("ai_provider_keys").select("id").eq("provider_id", providerId).eq("label", label).limit(1);
+    if (error) throw new Error(error.message);
+    if (duplicates?.length) throw new Error("同一接入点下已有同名渠道，请换一个渠道显示名");
   }
-  const selectedModelIds=parseModelIds(data.selectedModelIds ?? data.selected_model_ids);
+  const selectedModelIds = parseModelIds(data.selectedModelIds ?? data.selected_model_ids);
   const selectedModelIdSet = new Set(selectedModelIds);
-  const hasSelectionPayload=Array.isArray(data.selectedModelIds) || Array.isArray(data.selected_model_ids);
+  const hasSelectionPayload = Array.isArray(data.selectedModelIds) || Array.isArray(data.selected_model_ids);
   // Discovery is read-only and happens before any write, so upstream failure leaves no orphan group/key.
-  const discovered=hasSelectionPayload ? await discoverModelIds({base_url:baseUrl},String(patch.api_key)) : [];
-  const allModels=[...new Set([...discovered,...selectedModelIds])];
-  return runAiConfigWrite(supabase,"create_ai_config_channel",{
-    p_provider_id:providerId,p_base_url:baseUrl,p_provider_name:toTrimmedString(data.provider_name) || baseUrl,
-    p_label:label,p_api_key:patch.api_key,p_available_models:discovered,p_enabled:patch.is_enabled ?? true,
-    p_models:allModels.map(model_id=>({
+  const discovered = hasSelectionPayload ? await discoverModelIds({ base_url: baseUrl, protocol }, String(patch.api_key), fetcher) : [];
+  const allModels = mergeDiscoveredAndSelectedModels(discovered, selectedModelIds);
+  const explicitProviderName = toTrimmedString(data.provider_name);
+  const providerName = explicitProviderName
+    || (existingProviderNames.has(baseUrl!) ? `${baseUrl} (${protocol})` : baseUrl!);
+  return runAiConfigWrite(supabase, "create_ai_config_channel", {
+    p_provider_id: providerId,
+    p_base_url: baseUrl,
+    p_provider_name: providerName,
+    p_label: label,
+    p_api_key: patch.api_key,
+    p_available_models: discovered,
+    p_enabled: patch.is_enabled ?? true,
+    p_models: allModels.map((model_id) => ({
       model_id,
-      display_name:getModelDisplayName(model_id),
-      is_enabled:selectedModelIdSet.has(toCanonicalModelId(model_id)),
+      display_name: getModelDisplayName(model_id),
+      is_enabled: selectedModelIdSet.has(toCanonicalModelId(model_id)),
     })),
+    p_protocol: protocol,
   });
 }
 

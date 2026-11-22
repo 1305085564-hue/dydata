@@ -1,5 +1,20 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
 import type { OcrErrorCode } from "./ocr-contract";
+
+export type OcrFallbackAttempt = {
+  channel_name: string;
+  model_id: string | null;
+  protocol: AiProviderProtocol;
+  ok: boolean;
+  elapsed_ms: number;
+  error_code?: OcrErrorCode | null;
+  reason?: string | null;
+};
+
+export type OcrFallbackDetail = {
+  attempts: OcrFallbackAttempt[];
+};
 
 export interface OcrLogParams {
   totalMs: number;
@@ -11,6 +26,7 @@ export interface OcrLogParams {
   isSuccess: boolean;
   errorCode?: OcrErrorCode | null;
   userId?: string | null;
+  fallbackDetail?: OcrFallbackDetail | null;
 }
 
 /**
@@ -33,6 +49,7 @@ export async function recordOcrRecognitionLog(
       is_success: params.isSuccess,
       error_code: params.errorCode ?? null,
       user_id: params.userId ?? null,
+      fallback_detail: params.fallbackDetail ?? null,
     });
     if (error) console.warn("[ocr_recognition_logs] insert rejected", error);
   } catch (insertError) {

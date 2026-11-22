@@ -1,4 +1,5 @@
 import { requireSystemActor } from "@/lib/admin/ai-channels";
+import { normalizeProviderProtocol } from "@/lib/ai/provider-protocols";
 import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "./feature-controls";
 import { computeAvailability } from "./availability";
 import { describeChannelFailure } from "./failure-diagnostic";
@@ -10,7 +11,7 @@ const maskApiKeyLast4 = (value:unknown) => typeof value === "string" && value.tr
 
 export async function loadAiConfig(supabase: AiConfigClient) {
   const [providersResult, keysResult, featureBindingsResult] = await Promise.all([
-    supabase.from("ai_providers").select("id, name, base_url, description, is_enabled, created_at, updated_at"),
+    supabase.from("ai_providers").select("id, name, base_url, protocol, description, is_enabled, created_at, updated_at"),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, first_failure_at, invalidated_at, manual_sleep_until, available_models, created_at, updated_at"),
     supabase.from("ai_feature_bindings").select("id, feature_key, label, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at"),
   ]);
@@ -27,6 +28,12 @@ export async function loadAiConfig(supabase: AiConfigClient) {
 
   if (firstError) throw new Error(firstError.message);
 
+  const normalizedProviders = (providersResult.data ?? []).map((provider) => ({
+    ...provider,
+    protocol: normalizeProviderProtocol((provider as { protocol?: unknown }).protocol),
+    priority: 0,
+  }));
+
   const rawModels = (modelsResult.data ?? []) as Array<Record<string, unknown>>;
   const modelsWithoutLegacyState = rawModels.map((row) => {
     const model: Record<string, unknown> = {
@@ -42,7 +49,7 @@ export async function loadAiConfig(supabase: AiConfigClient) {
   const enabledModelIds = new Set(modelsWithoutLegacyState.filter((row) => row.is_enabled === true).map((row) => row.canonical_model_id));
   const secrets = (keysResult.data ?? []).map((key) => String(key.api_key ?? ""));
   const bundle = {
-    providers: (providersResult.data ?? []).map((provider) => ({ ...provider, priority: 0 })),
+    providers: normalizedProviders,
     keys: (keysResult.data ?? []).map((row) => ({
       ...row,
       priority: 0,
@@ -64,11 +71,10 @@ export async function loadAiConfig(supabase: AiConfigClient) {
     featureControls: buildAiFeatureControls((featureBindingsResult.data ?? []) as AiFeatureBindingControlRow[]),
   };
   return { ...bundle, availability: computeAvailability({
-    providers: providersResult.data ?? [],
+    providers: normalizedProviders,
     keys: keysResult.data ?? [],
     models: modelsWithoutLegacyState as never,
     featureControls: bundle.featureControls,
     defaultBinding: bundle.featureBindings.find((binding) => binding.feature_key === "default") ?? null,
   }) };
 }
-

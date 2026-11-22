@@ -1,12 +1,18 @@
 /**
  * Cloudflare Workers AI Clairic 客户端（@cf/cloudflare/clairic）。
- * 负责：环境变量读取、4 MiB 解码字节压图兜底（长边 2048 / JPEG 90）、超时控制、错误分类与轻量探针。
- * 密钥仅从服务端环境变量 CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN 读取，不硬编码、不打印。
+ * 负责：显式凭据校验、SSRF 防护请求、4 MiB 解码字节压图兜底（长边 2048 / JPEG 90）、超时控制、错误分类与轻量探针。
+ * 凭据严格由算力池调度层显式传入，不暗中读取 CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN 环境变量。
  */
 
 import sharp from "sharp";
 import { describeChannelFailure, type ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
-import { sanitizeProviderErrorMessage } from "@/lib/ai/provider-health";
+import {
+  classifyProviderFailure,
+  sanitizeProviderErrorMessage,
+  type ProviderFailureScope,
+} from "@/lib/ai/provider-health";
+import { resolveClairicEndpoint } from "@/lib/ai/provider-protocols";
+import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
 export const CLAIRIC_MODEL_ID = "@cf/cloudflare/clairic";
 export const CLAIRIC_CHANNEL_NAME = "cloudflare-clairic";
@@ -38,6 +44,12 @@ export class ClairicOcrError extends Error {
   }
 }
 
+export type ClairicCredentials = {
+  baseUrl: string;
+  apiKey: string;
+  modelId?: string | null;
+};
+
 export type ClairicFieldSpec =
   | { type: "number"; integer?: boolean; decimals?: number; instructions: string }
   | { type: "text"; instructions: string };
@@ -61,14 +73,26 @@ export type ClairicCallResult = {
   latencyMs: number;
 };
 
+export type ClairicProbeInput = {
+  baseUrl: string;
+  apiKey: string;
+  modelId?: string | null;
+  timeoutMs?: number;
+  fetchImpl?: typeof fetch;
+  channelName?: string;
+  channelLabel?: string;
+};
+
 export type ClairicProbeResult = {
   ok: boolean;
   latencyMs: number;
   model: typeof CLAIRIC_MODEL_ID;
-  channelName: typeof CLAIRIC_CHANNEL_NAME;
-  channelLabel: typeof CLAIRIC_CHANNEL_LABEL;
+  channelName: string;
+  channelLabel: string;
+  status?: number;
+  errorScope?: ProviderFailureScope | null;
   message?: string;
-  failureDiagnostic?: ChannelFailureDiagnostic;
+  failureDiagnostic?: ChannelFailureDiagnostic | null;
 };
 
 const PROBE_PNG_BUFFER = Buffer.from(
@@ -76,28 +100,12 @@ const PROBE_PNG_BUFFER = Buffer.from(
   "base64",
 );
 
-function getEnvValue(name: string): string {
-  const raw = process.env[name];
-  return typeof raw === "string" ? raw.trim() : "";
-}
-
-function requireClairicConfig(): { accountId: string; apiToken: string } {
-  const accountId = getEnvValue("CLOUDFLARE_ACCOUNT_ID");
-  const apiToken = getEnvValue("CLOUDFLARE_API_TOKEN");
-  if (!accountId || !apiToken) {
-    throw new ClairicOcrError(
-      "Cloudflare Clairic 未配置：缺少 CLOUDFLARE_ACCOUNT_ID 或 CLOUDFLARE_API_TOKEN 环境变量",
-      "CONFIG",
-    );
-  }
-  return { accountId, apiToken };
-}
-
 function resolveTimeoutMs(override?: number): number {
   if (typeof override === "number" && Number.isFinite(override) && override > 0) {
     return Math.max(10, Math.min(Math.round(override), 30_000));
   }
-  const envRaw = Number(getEnvValue("CLAIRIC_OCR_TIMEOUT_MS"));
+  const raw = process.env.CLAIRIC_OCR_TIMEOUT_MS;
+  const envRaw = typeof raw === "string" && raw.trim() ? Number(raw.trim()) : NaN;
   if (Number.isFinite(envRaw) && envRaw > 0) {
     return Math.max(1_000, Math.min(Math.round(envRaw), 30_000));
   }
@@ -115,6 +123,15 @@ function normalizeImageContentType(contentType: string): string {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function extractSecrets(baseUrl: string, apiKey: string): string[] {
+  const secrets = [apiKey];
+  const accountMatch = baseUrl.match(/\/accounts\/([^/]+)/i);
+  if (accountMatch?.[1]) {
+    secrets.push(accountMatch[1]);
+  }
+  return secrets;
 }
 
 /**
@@ -163,47 +180,89 @@ export async function callClairicOcr(
     contentType: string;
     fields: Record<string, ClairicFieldSpec>;
   },
+  credentials: ClairicCredentials,
   options: {
     timeoutMs?: number;
     fetchImpl?: typeof fetch;
   } = {},
 ): Promise<ClairicCallResult> {
-  const { accountId, apiToken } = requireClairicConfig();
+  const rawBaseUrl = typeof credentials?.baseUrl === "string" ? credentials.baseUrl.trim() : "";
+  const apiKey = typeof credentials?.apiKey === "string" ? credentials.apiKey.trim() : "";
+  if (!rawBaseUrl || !apiKey) {
+    throw new ClairicOcrError("Cloudflare Clairic 渠道缺少接口地址或 API Token", "CONFIG");
+  }
+  const secrets = extractSecrets(rawBaseUrl, apiKey);
+
+  let endpoint: string;
+  try {
+    endpoint = resolveClairicEndpoint(rawBaseUrl, credentials.modelId);
+  } catch (error) {
+    const rawMsg = error instanceof Error ? error.message : String(error);
+    throw new ClairicOcrError(
+      `Cloudflare Clairic 接口地址不合法：${sanitizeProviderErrorMessage(rawMsg, secrets)}`,
+      "CONFIG",
+    );
+  }
+
   if (!input.buffer || input.buffer.length === 0) {
     throw new ClairicOcrError("图片内容为空", "INVALID_RESPONSE");
   }
 
   const prepared = await prepareClairicImage(input.buffer, input.contentType);
   const timeoutMs = resolveTimeoutMs(options.timeoutMs);
-  const fetchImpl = options.fetchImpl ?? fetch;
-  const endpoint = buildClairicEndpoint(accountId);
-  const secrets = [apiToken, accountId];
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
-
-  let response: Response;
-  try {
-    response = await fetchImpl(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
+  const requestBody = JSON.stringify({
+    model: "clairic",
+    state: "",
+    images: [
+      {
+        content_type: prepared.contentType,
+        base64: prepared.buffer.toString("base64"),
       },
-      body: JSON.stringify({
-        model: "clairic",
-        state: "",
-        images: [
-          {
-            content_type: prepared.contentType,
-            base64: prepared.buffer.toString("base64"),
-          },
-        ],
-        fields: input.fields,
-      }),
-      signal: controller.signal,
-    });
+    ],
+    fields: input.fields,
+  });
+  const requestHeaders = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+
+  let status = 0;
+  let ok = false;
+  let rawText = "";
+  try {
+    if (options.fetchImpl) {
+      const response = await options.fetchImpl(endpoint, {
+        method: "POST",
+        headers: requestHeaders,
+        body: requestBody,
+        signal: controller.signal,
+      });
+      status = response.status;
+      ok = response.ok;
+      rawText = await response.text().catch(() => "");
+    } else {
+      const fetched = await withPinnedExternalResponse(
+        endpoint,
+        {
+          method: "POST",
+          headers: requestHeaders,
+          body: requestBody,
+          signal: controller.signal,
+        },
+        async (pinnedResponse) => ({
+          status: pinnedResponse.status,
+          ok: pinnedResponse.ok,
+          rawText: await pinnedResponse.text().catch(() => ""),
+        }),
+      );
+      status = fetched.status;
+      ok = fetched.ok;
+      rawText = fetched.rawText;
+    }
   } catch (error) {
     if (controller.signal.aborted) {
       throw new ClairicOcrError(`Cloudflare Clairic 请求超时（${timeoutMs}ms）`, "TIMEOUT");
@@ -216,20 +275,19 @@ export async function callClairicOcr(
   }
 
   const latencyMs = Date.now() - startedAt;
-  const rawText = await response.text().catch(() => "");
 
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(rawText);
   } catch {
-    if (response.status === 401 || response.status === 403) {
+    if (status === 401 || status === 403) {
       throw new ClairicOcrError(
-        `Cloudflare Clairic 鉴权失败（HTTP ${response.status}）`,
+        `Cloudflare Clairic 鉴权失败（HTTP ${status}）`,
         "AUTH",
-        response.status,
+        status,
       );
     }
-    if (response.status === 429) {
+    if (status === 429) {
       throw new ClairicOcrError(
         "Cloudflare Clairic 请求过于频繁（HTTP 429）",
         "RATE_LIMITED",
@@ -237,39 +295,43 @@ export async function callClairicOcr(
       );
     }
     throw new ClairicOcrError(
-      `Cloudflare Clairic 返回非 JSON 响应（HTTP ${response.status}）`,
+      `Cloudflare Clairic 返回非 JSON 响应（HTTP ${status}）`,
       "INVALID_RESPONSE",
-      response.status,
+      status,
     );
   }
 
-  if (response.status === 401 || response.status === 403) {
+  if (status === 401 || status === 403) {
     throw new ClairicOcrError(
-      `Cloudflare Clairic 鉴权失败（HTTP ${response.status}）`,
+      `Cloudflare Clairic 鉴权失败（HTTP ${status}）`,
       "AUTH",
-      response.status,
+      status,
     );
   }
-  if (response.status === 429) {
+  if (status === 429) {
     throw new ClairicOcrError("Cloudflare Clairic 请求过于频繁（HTTP 429）", "RATE_LIMITED", 429);
   }
-  if (!response.ok) {
+  if (!ok) {
     throw new ClairicOcrError(
-      `Cloudflare Clairic 上游异常（HTTP ${response.status}）`,
+      `Cloudflare Clairic 上游异常（HTTP ${status}）`,
       "UPSTREAM_ERROR",
-      response.status,
+      status,
     );
   }
 
   if (!isPlainObject(parsedJson)) {
-    throw new ClairicOcrError("Cloudflare Clairic 响应根对象格式异常", "INVALID_RESPONSE", response.status);
+    throw new ClairicOcrError("Cloudflare Clairic 响应根对象格式异常", "INVALID_RESPONSE", status);
   }
 
   if (parsedJson.success === false) {
+    const errors = Array.isArray(parsedJson.errors) ? parsedJson.errors : [];
+    const firstMsg = isPlainObject(errors[0]) && typeof errors[0].message === "string"
+      ? sanitizeProviderErrorMessage(errors[0].message, secrets)
+      : "";
     throw new ClairicOcrError(
-      `Cloudflare Clairic 返回失败（HTTP ${response.status}）`,
+      `Cloudflare Clairic 返回失败（HTTP ${status}${firstMsg ? `: ${firstMsg}` : ""}）`,
       "UPSTREAM_ERROR",
-      response.status,
+      status,
     );
   }
 
@@ -278,7 +340,7 @@ export async function callClairicOcr(
     throw new ClairicOcrError(
       "Cloudflare Clairic 响应缺少 answers 字段",
       "INVALID_RESPONSE",
-      response.status,
+      status,
     );
   }
 
@@ -293,34 +355,73 @@ export async function callClairicOcr(
   return { answers, usage, latencyMs };
 }
 
-function formatProbeErrorMessage(error: unknown): { message: string; status?: number } {
+function formatProbeError(error: unknown, secrets: string[]): {
+  message: string;
+  status?: number;
+  errorScope: ProviderFailureScope;
+} {
   if (error instanceof ClairicOcrError) {
+    const safeMessage = sanitizeProviderErrorMessage(error.message, secrets);
     switch (error.errorType) {
       case "CONFIG":
-        return { message: "未配置 CLOUDFLARE_ACCOUNT_ID 或 CLOUDFLARE_API_TOKEN 环境变量" };
-      case "AUTH":
-        return { message: "Cloudflare Clairic 鉴权失败，请检查账号 ID 与 API Token", status: error.status };
+        return { message: safeMessage, errorScope: "unknown" };
+      case "AUTH": {
+        const status = error.status ?? 401;
+        return {
+          message: "Cloudflare Clairic 鉴权失败，请检查接口地址与 API Token",
+          status,
+          errorScope: classifyProviderFailure({ status, message: safeMessage }),
+        };
+      }
       case "TIMEOUT":
-        return { message: "Cloudflare Clairic 探针请求超时（超过 5 秒）" };
+        return {
+          message: "Cloudflare Clairic 探针请求超时（超过 5 秒）",
+          errorScope: "model",
+        };
       case "RATE_LIMITED":
-        return { message: "Cloudflare Clairic 请求过于频繁，请稍后重试", status: error.status };
+        return {
+          message: "Cloudflare Clairic 请求过于频繁，请稍后重试",
+          status: error.status ?? 429,
+          errorScope: "model",
+        };
       case "INVALID_RESPONSE":
-        return { message: "Cloudflare Clairic 返回格式异常", status: error.status };
+        return {
+          message: "Cloudflare Clairic 返回格式异常",
+          status: error.status,
+          errorScope: "unknown",
+        };
       case "UPSTREAM_ERROR":
-        return { message: error.message, status: error.status };
+        return {
+          message: safeMessage,
+          status: error.status,
+          errorScope: classifyProviderFailure({
+            status: error.status,
+            errorType: error.status ? `http_${error.status}` : "network",
+            message: safeMessage,
+          }),
+        };
     }
   }
-  const msg = error instanceof Error ? error.message : String(error);
-  return { message: msg || "Cloudflare Clairic 试跑失败" };
+  const msg = sanitizeProviderErrorMessage(
+    error instanceof Error ? error.message : String(error),
+    secrets,
+  );
+  return {
+    message: msg || "Cloudflare Clairic 试跑失败",
+    errorScope: classifyProviderFailure({ errorType: "network", message: msg }),
+  };
 }
 
 /**
- * 轻量连通性探针：5 秒超时 + 内置最小 32x32 PNG 单字段探测，用于后台管理页「试跑」。
+ * 轻量连通性探针：5 秒超时 + 内置最小 32x32 PNG 单字段探测，用于渠道接入探测、模型测试与后台试跑。
  */
 export async function probeClairicOcr(
-  options: { timeoutMs?: number; fetchImpl?: typeof fetch } = {},
+  input: ClairicProbeInput,
 ): Promise<ClairicProbeResult> {
   const startedAt = Date.now();
+  const channelName = input.channelName?.trim() || CLAIRIC_CHANNEL_NAME;
+  const channelLabel = input.channelLabel?.trim() || CLAIRIC_CHANNEL_LABEL;
+  const secrets = extractSecrets(input.baseUrl ?? "", input.apiKey ?? "");
   try {
     const result = await callClairicOcr(
       {
@@ -334,27 +435,36 @@ export async function probeClairicOcr(
         },
       },
       {
-        timeoutMs: options.timeoutMs ?? DEFAULT_CLAIRIC_TIMEOUT_MS,
-        fetchImpl: options.fetchImpl,
+        baseUrl: input.baseUrl,
+        apiKey: input.apiKey,
+        modelId: input.modelId ?? CLAIRIC_MODEL_ID,
+      },
+      {
+        timeoutMs: input.timeoutMs ?? DEFAULT_CLAIRIC_TIMEOUT_MS,
+        fetchImpl: input.fetchImpl,
       },
     );
     return {
       ok: true,
       latencyMs: result.latencyMs,
       model: CLAIRIC_MODEL_ID,
-      channelName: CLAIRIC_CHANNEL_NAME,
-      channelLabel: CLAIRIC_CHANNEL_LABEL,
+      channelName,
+      channelLabel,
+      status: 200,
+      errorScope: null,
     };
   } catch (error) {
-    const { message, status } = formatProbeErrorMessage(error);
+    const { message, status, errorScope } = formatProbeError(error, secrets);
     return {
       ok: false,
       latencyMs: Date.now() - startedAt,
       model: CLAIRIC_MODEL_ID,
-      channelName: CLAIRIC_CHANNEL_NAME,
-      channelLabel: CLAIRIC_CHANNEL_LABEL,
+      channelName,
+      channelLabel,
+      status,
+      errorScope,
       message,
-      failureDiagnostic: describeChannelFailure({ message, status }),
+      failureDiagnostic: describeChannelFailure({ message, status, secrets }),
     };
   }
 }

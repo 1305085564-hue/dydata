@@ -14,45 +14,46 @@ import {
   probeClairicOcr,
 } from "./clairic-ocr";
 
-function installEnv(
-  t: import("node:test").TestContext,
-  vars: { accountId?: string; apiToken?: string },
-) {
+const TEST_CREDS = {
+  baseUrl: "https://api.cloudflare.com/client/v4/accounts/acc-test/ai/run",
+  apiKey: "secret-token-xyz",
+};
+
+test("显式凭据缺 baseUrl 或 apiKey 时抛出 CONFIG 错误，且绝不暗中读取环境变量", async (t) => {
   const prevAccount = process.env.CLOUDFLARE_ACCOUNT_ID;
   const prevToken = process.env.CLOUDFLARE_API_TOKEN;
-  if (vars.accountId === undefined) delete process.env.CLOUDFLARE_ACCOUNT_ID;
-  else process.env.CLOUDFLARE_ACCOUNT_ID = vars.accountId;
-  if (vars.apiToken === undefined) delete process.env.CLOUDFLARE_API_TOKEN;
-  else process.env.CLOUDFLARE_API_TOKEN = vars.apiToken;
-
+  process.env.CLOUDFLARE_ACCOUNT_ID = "env-acc-must-be-ignored";
+  process.env.CLOUDFLARE_API_TOKEN = "env-tok-must-be-ignored";
   t.after(() => {
     if (prevAccount === undefined) delete process.env.CLOUDFLARE_ACCOUNT_ID;
     else process.env.CLOUDFLARE_ACCOUNT_ID = prevAccount;
     if (prevToken === undefined) delete process.env.CLOUDFLARE_API_TOKEN;
     else process.env.CLOUDFLARE_API_TOKEN = prevToken;
   });
-}
 
-test("缺 CLOUDFLARE_ACCOUNT_ID 或 CLOUDFLARE_API_TOKEN 抛出 CONFIG 错误", async (t) => {
-  installEnv(t, { accountId: undefined, apiToken: "tok" });
   await assert.rejects(
     () =>
-      callClairicOcr({
-        buffer: Buffer.from([1, 2, 3]),
-        contentType: "image/png",
-        fields: { play_count: { type: "number", integer: true, instructions: "播放量" } },
-      }),
+      callClairicOcr(
+        {
+          buffer: Buffer.from([1, 2, 3]),
+          contentType: "image/png",
+          fields: { play_count: { type: "number", integer: true, instructions: "播放量" } },
+        },
+        { baseUrl: "", apiKey: "tok" },
+      ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "CONFIG",
   );
 
-  installEnv(t, { accountId: "acc-1", apiToken: "" });
   await assert.rejects(
     () =>
-      callClairicOcr({
-        buffer: Buffer.from([1, 2, 3]),
-        contentType: "image/png",
-        fields: { play_count: { type: "number", integer: true, instructions: "播放量" } },
-      }),
+      callClairicOcr(
+        {
+          buffer: Buffer.from([1, 2, 3]),
+          contentType: "image/png",
+          fields: { play_count: { type: "number", integer: true, instructions: "播放量" } },
+        },
+        { baseUrl: TEST_CREDS.baseUrl, apiKey: "" },
+      ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "CONFIG",
   );
 });
@@ -72,7 +73,6 @@ test("小于等于阈值保持原图字节与 MIME 直传，不做多余重编�
 });
 
 test("超过阈值（4 MiB / 3.8 MiB）触发 sharp 压缩到长边 2048px + JPEG 90，绝不低于 2048", async () => {
-  // 生成高于阈值的噪声 PNG（2600x1600 不可压缩随机像素）
   const width = 2600;
   const height = 1600;
   const raw = Buffer.alloc(width * height * 3);
@@ -96,8 +96,7 @@ test("超过阈值（4 MiB / 3.8 MiB）触发 sharp 压缩到长边 2048px + JPE
   assert.equal(Math.max(meta.width ?? 0, meta.height ?? 0), CLAIRIC_MAX_IMAGE_EDGE_PX);
 });
 
-test("正常响应解析 answers 与 usage，并校验请求头与端点格式", async (t) => {
-  installEnv(t, { accountId: "acc-test", apiToken: "secret-token-xyz" });
+test("正常响应解析 answers 与 usage，并校验请求头、官方地址与代理地址归一化", async () => {
   const smallPng = await sharp({
     create: { width: 32, height: 32, channels: 3, background: { r: 255, g: 255, b: 255 } },
   })
@@ -113,6 +112,11 @@ test("正常响应解析 answers 与 usage，并校验请求头与端点格式",
       buffer: smallPng,
       contentType: "image/png",
       fields: { play_count: { type: "number", integer: true, instructions: "播放量" } },
+    },
+    {
+      baseUrl: `${TEST_CREDS.baseUrl}/@cf/cloudflare/clairic/`,
+      apiKey: TEST_CREDS.apiKey,
+      modelId: "clairic",
     },
     {
       fetchImpl: async (url, init) => {
@@ -144,16 +148,20 @@ test("正常响应解析 answers 与 usage，并校验请求头与端点格式",
   assert.equal(res.usage?.input_tokens, 12345);
 });
 
-test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不泄露密钥", async (t) => {
-  installEnv(t, { accountId: "acc-secret", apiToken: "tok-secret-999" });
+test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不泄露密钥与 Account ID", async () => {
   const buf = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
   const fields = { play_count: { type: "number" as const, integer: true, instructions: "播放量" } };
+  const creds = {
+    baseUrl: "https://api.cloudflare.com/client/v4/accounts/acc-secret-id/ai/run",
+    apiKey: "tok-secret-999",
+  };
 
   // 401 -> AUTH
   await assert.rejects(
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         { fetchImpl: async () => new Response('{"success":false}', { status: 401 }) },
       ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "AUTH" && err.status === 401,
@@ -164,6 +172,7 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         { fetchImpl: async () => new Response('{"success":false}', { status: 429 }) },
       ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "RATE_LIMITED",
@@ -174,6 +183,7 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         { fetchImpl: async () => new Response('{"success":false}', { status: 502 }) },
       ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "UPSTREAM_ERROR" && err.status === 502,
@@ -184,6 +194,7 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         { fetchImpl: async () => new Response("bad gateway html", { status: 200 }) },
       ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "INVALID_RESPONSE",
@@ -194,26 +205,29 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         { fetchImpl: async () => new Response(JSON.stringify({ success: true, result: {} }), { status: 200 }) },
       ),
     (err: unknown) => err instanceof ClairicOcrError && err.errorType === "INVALID_RESPONSE",
   );
 
-  // 网络报错不泄露 token
+  // 网络报错不泄露 token 或 accountId
   await assert.rejects(
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         {
           fetchImpl: async () => {
-            throw new Error("connect failed with tok-secret-999");
+            throw new Error("connect failed acc-secret-id with tok-secret-999");
           },
         },
       ),
     (err: unknown) =>
       err instanceof ClairicOcrError &&
       err.errorType === "UPSTREAM_ERROR" &&
-      !err.message.includes("tok-secret-999"),
+      !err.message.includes("tok-secret-999") &&
+      !err.message.includes("acc-secret-id"),
   );
 
   // 超时 -> TIMEOUT
@@ -221,6 +235,7 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
     () =>
       callClairicOcr(
         { buffer: buf, contentType: "image/png", fields },
+        creds,
         {
           timeoutMs: 25,
           fetchImpl: (_url, init) =>
@@ -235,29 +250,45 @@ test("HTTP 错误、超时、非 JSON 响应与网络异常均准确分类且不
   );
 });
 
-test("probeClairicOcr 返回标准探针结果与中文错误诊断", async (t) => {
-  installEnv(t, { accountId: undefined, apiToken: undefined });
-  const missing = await probeClairicOcr();
+test("probeClairicOcr 返回标准探针结果、errorScope 与脱敏中文错误诊断", async () => {
+  const missing = await probeClairicOcr({ baseUrl: "", apiKey: "" });
   assert.equal(missing.ok, false);
   assert.equal(missing.model, CLAIRIC_MODEL_ID);
   assert.equal(missing.channelName, CLAIRIC_CHANNEL_NAME);
   assert.equal(missing.channelLabel, CLAIRIC_CHANNEL_LABEL);
-  assert.match(missing.message ?? "", /CLOUDFLARE_ACCOUNT_ID|CLOUDFLARE_API_TOKEN/);
+  assert.equal(missing.errorScope, "unknown");
+  assert.match(missing.message ?? "", /接口地址|API Token/);
 
-  installEnv(t, { accountId: "acc-ok", apiToken: "tok-ok" });
+  const authFail = await probeClairicOcr({
+    baseUrl: TEST_CREDS.baseUrl,
+    apiKey: "tok-bad-secret",
+    fetchImpl: async () => new Response('{"success":false}', { status: 401 }),
+  });
+  assert.equal(authFail.ok, false);
+  assert.equal(authFail.status, 401);
+  assert.equal(authFail.errorScope, "key");
+  assert.equal(authFail.message?.includes("tok-bad-secret"), false);
+
   const ok = await probeClairicOcr({
-    fetchImpl: async () =>
-      new Response(
+    baseUrl: "https://gateway.proxy.test/cf-ai",
+    apiKey: "tok-ok",
+    channelName: "CF-Gateway",
+    channelLabel: "Clairic 主账号",
+    fetchImpl: async (url) => {
+      assert.equal(String(url), `https://gateway.proxy.test/cf-ai/${CLAIRIC_MODEL_ID}`);
+      return new Response(
         JSON.stringify({
           success: true,
           result: { answers: { probe_text: { value: null, confidence: 0.99, p_null: 0.99 } } },
         }),
         { status: 200 },
-      ),
+      );
+    },
   });
   assert.equal(ok.ok, true);
   assert.equal(ok.model, CLAIRIC_MODEL_ID);
-  assert.equal(ok.channelName, CLAIRIC_CHANNEL_NAME);
-  assert.equal(ok.channelLabel, CLAIRIC_CHANNEL_LABEL);
+  assert.equal(ok.channelName, "CF-Gateway");
+  assert.equal(ok.channelLabel, "Clairic 主账号");
+  assert.equal(ok.errorScope, null);
   assert.ok(typeof ok.latencyMs === "number");
 });

@@ -5,6 +5,8 @@ import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import { compareSelectableModels } from "@/lib/ai-config/list-order";
+import type { AvailabilityModelFamily } from "@/lib/ai-config/availability";
+import { getModelScope } from "@/lib/ai/provider-protocols";
 import {
   Select,
   SelectContent,
@@ -17,15 +19,62 @@ import { cn } from "@/lib/utils";
 interface ModelFamilySelectProps {
   value: string | null;
   onChange: (value: string | null) => void;
+  featureKey?: string;
   allowEmptyLabel?: string | null;
   disabled?: boolean;
   className?: string;
   triggerTitle?: string;
 }
 
+export type ModelFamilySelectOption = {
+  id: string;
+  displayName: string;
+  isOcrOnly: boolean;
+  isSelectable: boolean;
+  scopeBlocked: boolean;
+  disabledReason: string | null;
+  schedulableCount: number;
+  isShelved: boolean;
+};
+
+/**
+ * 仅依据结构化的 modelScope === "ocr_only" 做专项隔离，不对普通 OpenAI 兼容模型做名称正则猜测。
+ */
+export function buildModelFamilySelectOptions(
+  modelFamilies: readonly AvailabilityModelFamily[],
+  featureKey?: string,
+): ModelFamilySelectOption[] {
+  return modelFamilies
+    .map((f) => {
+      const isOcrOnly = (f.modelScope ?? getModelScope(f.modelId)) === "ocr_only";
+      const scopeBlocked = Boolean(featureKey && featureKey !== "ocr_screenshot" && isOcrOnly);
+      const scopeReason = scopeBlocked
+        ? featureKey === "default"
+          ? "截图专项，不能用作全局默认"
+          : "截图专项，不支持对话"
+        : null;
+      const unavailableReason = f.unavailableReasonKey
+        ? AI_CONFIG_MESSAGES[f.unavailableReasonKey]
+        : null;
+
+      return {
+        id: f.modelId,
+        displayName: f.displayName,
+        isOcrOnly,
+        isSelectable: f.isSelectable && !scopeBlocked,
+        scopeBlocked,
+        disabledReason: scopeReason ?? (!f.isSelectable ? unavailableReason : null),
+        schedulableCount: f.schedulableChannelCount,
+        isShelved: f.isShelved,
+      };
+    })
+    .sort(compareSelectableModels);
+}
+
 export function ModelFamilySelect({
   value,
   onChange,
+  featureKey,
   allowEmptyLabel = "跟随全局默认",
   disabled = false,
   className,
@@ -36,17 +85,8 @@ export function ModelFamilySelect({
 
   const families = useMemo(() => {
     if (!report?.modelFamilies) return [];
-    return report.modelFamilies.map((f) => ({
-      id: f.modelId,
-      displayName: f.displayName,
-      isSelectable: f.isSelectable,
-      unavailableReason: f.unavailableReasonKey
-        ? AI_CONFIG_MESSAGES[f.unavailableReasonKey]
-        : null,
-      schedulableCount: f.schedulableChannelCount,
-      isShelved: f.isShelved,
-    })).sort(compareSelectableModels);
-  }, [report]);
+    return buildModelFamilySelectOptions(report.modelFamilies, featureKey);
+  }, [report, featureKey]);
 
   const currentFamily = value ? families.find((f) => f.id === value) : undefined;
 
@@ -78,7 +118,7 @@ export function ModelFamilySelect({
       >
         <SelectValue>{selectedDisplay}</SelectValue>
       </SelectTrigger>
-      <SelectContent className="max-h-64 min-w-[280px] max-w-[360px] w-auto rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float">
+      <SelectContent className="max-h-64 min-w-[280px] max-w-[400px] w-auto rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float">
         {allowEmptyLabel && (
           <SelectItem value="__empty__" className="text-[12px] text-[#78716C] py-1">
             {allowEmptyLabel}
@@ -112,10 +152,13 @@ export function ModelFamilySelect({
                   )}
                 >
                   {f.displayName}
+                  {f.isOcrOnly && (
+                    <span className="ml-1 text-[12px] text-[#78716C]">· 截图专项</span>
+                  )}
                 </span>
-                {!f.isSelectable && f.unavailableReason && (
+                {f.disabledReason && (
                   <span className="text-[12px] text-[#78716C] shrink-0 whitespace-nowrap pl-2">
-                    {f.unavailableReason}
+                    {f.disabledReason}
                   </span>
                 )}
               </div>
