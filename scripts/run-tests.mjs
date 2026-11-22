@@ -22,6 +22,7 @@ const SCRIPT_TESTS = [
   "scripts/api-failure-path-gate.test.mjs",
   "scripts/prod-write-guard.test.ts",
   "scripts/sync-cos-sg-to-sh.test.mjs",
+  "scripts/source-text-test-gate.test.mjs",
 ];
 
 const srcTests = globSync(["src/**/*.test.ts", "src/**/*.test.tsx"]).map((file) => file.split("\\").join("/")).sort();

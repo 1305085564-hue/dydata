@@ -32,10 +32,21 @@ test('发布包保留中文文件名，提交号来自已推送的 main，忽略
     git('add', 'public/中文.txt', 'public/large.txt', 'Dockerfile', '.gitignore'); git('commit', '-m', 'fixture');
     git('update-ref', 'refs/remotes/origin/main', 'HEAD');
     writeFileSync(path.join(repo, '.env.local'), 'PRIVATE=not-for-upload');
-    prepared = prepareDeployment(repo, { DYDATA_BACKEND: 'cloudbase', NEXT_PUBLIC_DYDATA_BACKEND: 'cloudbase' });
+
+    const env = { DYDATA_BACKEND: 'cloudbase', NEXT_PUBLIC_DYDATA_BACKEND: 'cloudbase' };
+    const gatePassPath = path.resolve(repo, git('rev-parse', '--git-path', 'dydata-gate-pass').toString().trim());
+
+    assert.throws(() => prepareDeployment(repo, env), /先正常 git push（不带 --no-verify）让门禁跑完/);
+
+    writeFileSync(gatePassPath, '0000000000000000000000000000000000000000\n');
+    assert.throws(() => prepareDeployment(repo, env), /先正常 git push（不带 --no-verify）让门禁跑完/);
+
+    const headCommit = git('rev-parse', 'HEAD').toString().trim();
+    writeFileSync(gatePassPath, `${headCommit}\n`);
+    prepared = prepareDeployment(repo, env);
     assert.equal(execFileSync('unzip', ['-p', prepared.archive, 'public/中文.txt']).toString(), '中文');
     assert.equal(execFileSync('unzip', ['-p', prepared.archive, 'public/large.txt'], { maxBuffer: 3 * 1024 * 1024 }).length, 2 * 1024 * 1024);
-    assert.equal(JSON.parse(execFileSync('unzip', ['-p', prepared.archive, 'public/deployment.json'])).commit, git('rev-parse', 'HEAD').toString().trim());
+    assert.equal(JSON.parse(execFileSync('unzip', ['-p', prepared.archive, 'public/deployment.json'])).commit, headCommit);
     assert.doesNotMatch(execFileSync('unzip', ['-Z1', prepared.archive]).toString(), /\.env\.local/);
     assert.match(readFileSync(path.join(prepared.directory, 'source/Dockerfile'), 'utf8'), /"cloudbase"/);
   } finally {
