@@ -6,7 +6,7 @@ import { useAvailabilityReport } from "../hooks/use-availability";
 import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 import { compareSelectableModels } from "@/lib/ai-config/list-order";
 import type { AvailabilityModelFamily } from "@/lib/ai-config/availability";
-import { getModelScope } from "@/lib/ai/provider-protocols";
+import { getModelScope, isModelAllowedForFeature } from "@/lib/ai/provider-protocols";
 import {
   Select,
   SelectContent,
@@ -38,7 +38,7 @@ export type ModelFamilySelectOption = {
 };
 
 /**
- * 仅依据结构化的 modelScope === "ocr_only" 做专项隔离，不对普通 OpenAI 兼容模型做名称正则猜测。
+ * 能力限制与拒绝原因复用服务端同一规则，展示分类不决定能否绑定。
  */
 export function buildModelFamilySelectOptions(
   modelFamilies: readonly AvailabilityModelFamily[],
@@ -47,12 +47,9 @@ export function buildModelFamilySelectOptions(
   return modelFamilies
     .map((f) => {
       const isOcrOnly = (f.modelScope ?? getModelScope(f.modelId)) === "ocr_only";
-      const scopeBlocked = Boolean(featureKey && featureKey !== "ocr_screenshot" && isOcrOnly);
-      const scopeReason = scopeBlocked
-        ? featureKey === "default"
-          ? "截图专项，不能用作全局默认"
-          : "截图专项，不支持对话"
-        : null;
+      const capability = featureKey ? isModelAllowedForFeature(featureKey, f.modelId) : { allowed: true as const };
+      const scopeBlocked = !capability.allowed;
+      const scopeReason = capability.allowed ? null : capability.reason;
       const unavailableReason = f.unavailableReasonKey
         ? AI_CONFIG_MESSAGES[f.unavailableReasonKey]
         : null;

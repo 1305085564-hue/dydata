@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh, serializeVideoSubmitDraft } from "./selectors";
+import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh, sanitizeDraftSlot, serializeVideoSubmitDraft } from "./selectors";
 import { createEditableFields, createEditableSlots, createInitialMeta } from "@/lib/video-submit/domain/video-submit-form-model";
 
 test("buildSubmissionState keeps the canonical slot and metric references", () => {
@@ -62,6 +62,40 @@ test("serializeVideoSubmitDraft strips transient file and preview state", () => 
   assert.equal(draft.keywordInput, "关键词");
   assert.equal("scriptText" in draft, false);
 });
+
+for (const status of ["uploading", "recognizing"] as const) {
+  for (const hasAsset of [false, true]) {
+    test(`草稿保存清理 ${status} ${hasAsset ? "有图" : "无图"}，不改变进行中的表单`, () => {
+      const slots = createEditableSlots();
+      slots.screenshot_1 = { ...slots.screenshot_1, status, itemId: "inflight",
+        assetUrl: hasAsset ? "/api/submission-screenshots/file?path=user-1/a.png" : null,
+        bucket: "submission-screenshots", path: "user-1/a.png",
+        file: {} as File, previewUrl: "blob:temporary", startedAt: 123, error: "过期错误" };
+      const draft = serializeVideoSubmitDraft({ meta: createInitialMeta("2026-11-22", "user-1"),
+        fields: createEditableFields(), slots, keywordInput: "", hasManualEdit: false,
+        hasManualScriptAuthorSelection: false, hasManualOperatorSelection: false });
+      const saved = draft.slots.screenshot_1;
+      assert.equal(saved.status, hasAsset ? "pending_confirm" : "empty");
+      assert.equal(saved.file, null);
+      assert.equal(saved.previewUrl, null);
+      assert.equal(slots.screenshot_1.status, status);
+      assert.deepEqual(sanitizeDraftSlot(saved), saved, "反复保存/恢复不再改变状态");
+      if (hasAsset) {
+        assert.equal(saved.ocrFallback, true);
+        assert.equal(saved.confirmed, false);
+        assert.equal(saved.requiresManualConfirmation, true);
+        assert.equal(saved.bucket, "submission-screenshots");
+        assert.equal(saved.path, "user-1/a.png");
+        assert.equal(saved.error, "上次识别未完成，可点击重新识别或手动填写");
+      } else {
+        assert.equal(saved.itemId, undefined);
+        assert.equal(saved.assetUrl, undefined);
+        assert.equal(saved.path, undefined);
+        assert.equal(saved.error, undefined);
+      }
+    });
+  }
+}
 
 test("buildVideoSubmitPayload exposes one canonical request shape", () => {
   const payload = buildVideoSubmitPayload({

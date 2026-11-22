@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { buildVideoSubmitDraftKey, resolveVideoSubmitCreateDraftStorageKey, type VideoSubmitDraftMode } from "@/lib/video-submit-draft-key";
-import { serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
+import { sanitizeDraftSlot, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
+import { createScreenshotItemsFromSlots, deriveSlotsFromItems, type ScreenshotItem, type SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
+import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import type {
   SubmissionWorkflowState,
   VideoSubmitDraftData,
@@ -29,7 +31,48 @@ export type DraftControllerOptions = {
   submittedViewActive: boolean;
   hasInitialSummary: boolean;
   dispatchWorkflow: (action: WorkflowAction) => void;
+  screenshotItemsRef: MutableRefObject<ScreenshotItem[]>;
+  slotsRef: MutableRefObject<Record<SubmissionSlotRole, SlotViewState>>;
+  setScreenshotItems: (items: ScreenshotItem[]) => void;
 };
+
+export function applyRestoredVideoSubmitDraft(
+  draft: VideoSubmitDraftData,
+  options: Pick<DraftControllerOptions,
+    | "userId" | "lastReportPreferences" | "visibleMemberIds"
+    | "dispatchWorkflow" | "screenshotItemsRef" | "slotsRef" | "setScreenshotItems"
+  >,
+) {
+  const items = createScreenshotItemsFromSlots({
+    screenshot_1: sanitizeDraftSlot(draft.slots.screenshot_1),
+    screenshot_2: sanitizeDraftSlot(draft.slots.screenshot_2),
+  });
+  const slots = deriveSlotsFromItems(items);
+  options.screenshotItemsRef.current = items;
+  options.slotsRef.current = slots;
+  options.setScreenshotItems(items);
+  options.dispatchWorkflow({
+    type: "draft/restore",
+    meta: {
+      ...draft.meta,
+      ...resolveCreateSubmissionPreferences({
+        userId: options.userId,
+        lastReport: options.lastReportPreferences,
+        draft: draft.meta,
+        visibleMemberIds: options.visibleMemberIds,
+      }),
+      roleOverrides: draft.meta.roleOverrides ?? [],
+    },
+    fields: draft.fields,
+    slots,
+    draft: {
+      keywordInput: draft.keywordInput ?? "",
+      hasManualScriptAuthorSelection: draft.hasManualScriptAuthorSelection ?? false,
+      hasManualOperatorSelection: draft.hasManualOperatorSelection ?? false,
+      hasManualEdit: draft.hasManualEdit ?? false,
+    },
+  });
+}
 
 export function resolveDraftPromptState(input: {
   hasDraft: boolean;
@@ -58,14 +101,11 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     accountId,
     today,
     mode,
-    lastReportPreferences,
-    visibleMemberIds,
     videoId,
     workflow,
     isSubmitted,
     submittedViewActive,
     hasInitialSummary,
-    dispatchWorkflow,
   } = options;
   const draftMode: VideoSubmitDraftMode =
     mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
@@ -120,41 +160,9 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     const draft = restoreDraft();
     if (!draft) return;
 
-    dispatchWorkflow({
-      type: "draft/restore",
-      meta: {
-        ...draft.meta,
-        ...resolveCreateSubmissionPreferences({
-          userId,
-          lastReport: lastReportPreferences,
-          draft: draft.meta,
-          visibleMemberIds,
-        }),
-        roleOverrides: draft.meta.roleOverrides ?? [],
-      },
-      fields: draft.fields,
-      slots: {
-        screenshot_1: {
-          ...draft.slots.screenshot_1,
-          file: null,
-          previewUrl: null,
-        },
-        screenshot_2: {
-          ...draft.slots.screenshot_2,
-          file: null,
-          previewUrl: null,
-        },
-      },
-      draft: {
-        keywordInput: draft.keywordInput ?? "",
-        hasManualScriptAuthorSelection:
-          draft.hasManualScriptAuthorSelection ?? false,
-        hasManualOperatorSelection: draft.hasManualOperatorSelection ?? false,
-        hasManualEdit: draft.hasManualEdit ?? false,
-      },
-    });
+    applyRestoredVideoSubmitDraft(draft, options);
     setDismissedDraftKey(draftKey);
-  }, [dispatchWorkflow, draftKey, lastReportPreferences, restoreDraft, userId, visibleMemberIds]);
+  }, [draftKey, options, restoreDraft]);
 
   const lastDiscardedDraftRef = useRef<VideoSubmitDraftData | null>(null);
 
@@ -171,50 +179,18 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     const draft = lastDiscardedDraftRef.current;
     if (!draft) return;
 
-    dispatchWorkflow({
-      type: "draft/restore",
-      meta: {
-        ...draft.meta,
-        ...resolveCreateSubmissionPreferences({
-          userId,
-          lastReport: lastReportPreferences,
-          draft: draft.meta,
-          visibleMemberIds,
-        }),
-        roleOverrides: draft.meta.roleOverrides ?? [],
-      },
-      fields: draft.fields,
-      slots: {
-        screenshot_1: {
-          ...draft.slots.screenshot_1,
-          file: null,
-          previewUrl: null,
-        },
-        screenshot_2: {
-          ...draft.slots.screenshot_2,
-          file: null,
-          previewUrl: null,
-        },
-      },
-      draft: {
-        keywordInput: draft.keywordInput ?? "",
-        hasManualScriptAuthorSelection:
-          draft.hasManualScriptAuthorSelection ?? false,
-        hasManualOperatorSelection: draft.hasManualOperatorSelection ?? false,
-        hasManualEdit: draft.hasManualEdit ?? false,
-      },
-    });
+    applyRestoredVideoSubmitDraft(draft, options);
 
     try {
       localStorage.setItem(
         draftKey,
-        JSON.stringify({ data: draft, savedAt: new Date().toISOString() }),
+        JSON.stringify({ data: { ...draft, slots: options.slotsRef.current }, savedAt: new Date().toISOString() }),
       );
     } catch {
       // ignore
     }
     setDismissedDraftKey(null);
-  }, [dispatchWorkflow, draftKey, lastReportPreferences, userId, visibleMemberIds]);
+  }, [draftKey, options]);
 
   return {
     hasDraft,

@@ -8,6 +8,8 @@ const IDENTITY_RPCS = [
   "reopen_exemption_request_atomically",
   "set_permanent_exemption_owner_atomically",
   "clear_permanent_exemption_owner_atomically",
+  "apply_exemption_grant_atomically",
+  "clear_exemption_grant_atomically",
   "handle_fulfillment_appeal",
   "reopen_fulfillment_appeal_atomically",
   "review_team_join_request",
@@ -37,6 +39,79 @@ for (const backend of ["supabase", "cloudbase"] as const) {
     });
   }
 }
+
+for (const rpc of [
+  " HANDLE_FULFILLMENT_APPEAL ",
+  "public.handle_fulfillment_appeal",
+  " PUBLIC.HANDLE_FULFILLMENT_APPEAL ",
+]) {
+  for (const backend of ["supabase", "cloudbase"] as const) {
+    test(`${backend} 管理员连接规范化并拦截 ${rpc}`, (t) => {
+      const previous = { ...process.env };
+      t.after(() => { process.env = previous; });
+      process.env.DYDATA_BACKEND = backend;
+      process.env.NEXT_PUBLIC_DYDATA_BACKEND = backend;
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
+      process.env.CLOUDBASE_ENV_ID = "guard-test";
+      process.env.CLOUDBASE_SERVICE_API_KEY = "guard-test-service-key";
+      const logs = t.mock.method(console, "error", () => {});
+      const client = createAdminClient();
+      assert.throws(() => client.rpc(rpc, {}), /必须使用本人身份连接/);
+      assert.equal(logs.mock.calls.length, 1);
+      const entry = JSON.parse(String(logs.mock.calls[0].arguments[0]));
+      assert.equal(entry.detail.rpc, "handle_fulfillment_appeal");
+      assert.equal(entry.detail.backend, backend);
+      assert.ok(entry.requestId);
+    });
+  }
+}
+
+test("Supabase 管理员 schema 连接仍拦截本人身份函数并留日志", (t) => {
+  const previous = { ...process.env };
+  t.after(() => { process.env = previous; });
+  process.env.DYDATA_BACKEND = "supabase";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
+  const logs = t.mock.method(console, "error", () => {});
+  const scoped = createAdminClient().schema("public");
+  for (const rpc of [
+    "handle_fulfillment_appeal",
+    " PUBLIC.APPLY_EXEMPTION_GRANT_ATOMICALLY ",
+    "clear_exemption_grant_atomically",
+  ]) {
+    assert.throws(() => scoped.rpc(rpc, {}), /必须使用本人身份连接/);
+  }
+  assert.equal(logs.mock.calls.length, 3);
+  const entries = logs.mock.calls.map((call) => JSON.parse(String(call.arguments[0])));
+  assert.deepEqual(entries.map((entry) => entry.detail.rpc), [
+    "handle_fulfillment_appeal",
+    "apply_exemption_grant_atomically",
+    "clear_exemption_grant_atomically",
+  ]);
+  assert.ok(entries.every((entry) => entry.detail.backend === "supabase" && entry.requestId));
+});
+
+test("Supabase 管理员 schema 连接的普通 RPC 保留 schema 与请求参数", async (t) => {
+  const previous = { ...process.env };
+  t.after(() => { process.env = previous; });
+  process.env.DYDATA_BACKEND = "supabase";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://guard-test.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "guard-test-service-role";
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = new Request(input, init);
+    assert.equal(request.headers.get("content-profile"), "public");
+    assert.equal(request.headers.get("authorization"), "Bearer guard-test-service-role");
+    assert.deepEqual(await request.json(), { p_marker_id: "trusted-actor" });
+    requests += 1;
+    return Response.json({ ok: true });
+  });
+  const result = await createAdminClient().schema("public").rpc("mark_fulfillment_status", { p_marker_id: "trusted-actor" });
+  assert.equal(result.error, null);
+  assert.deepEqual(result.data, { ok: true });
+  assert.equal(requests, 1);
+});
 
 test("CloudBase 直接创建的管理员连接也不能绕过身份拦截", () => {
   const client = createCloudBaseDataClient({ role: "admin" });

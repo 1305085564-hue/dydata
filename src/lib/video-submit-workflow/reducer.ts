@@ -52,14 +52,18 @@ export function workflowReducer(
       return { ...state, slots: action.updater(state.slots) };
     case "draft/update":
       return { ...state, ...action.updater(readDraftState(state)) };
-    case "ocr/commit":
+    case "ocr/commit": {
+      const fields = action.fields ? action.fields(state.fields) : state.fields;
       return {
         ...state,
         meta: action.meta ? action.meta(state.meta) : state.meta,
-        fields: action.fields ? action.fields(state.fields) : state.fields,
+        fields,
         slots: action.slots ? action.slots(state.slots) : state.slots,
-        hasManualEdit: action.hasManualEdit ?? state.hasManualEdit,
+        hasManualEdit: action.hasManualEdit ?? (action.fields
+          ? Object.values(fields).some((field) => field.manuallyEdited === true)
+          : state.hasManualEdit),
       };
+    }
     case "draft/restore":
       return {
         ...state,

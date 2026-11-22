@@ -98,6 +98,29 @@ test("workflow reducer commits OCR publishedAt and publishedAtText faithfully", 
   assert.equal(next.meta.publishedAtText, "昨天 19:00");
 });
 
+test("OCR 字段提交按剩余手填字段保留手改标记，纯元数据提交不清理标记", () => {
+  const state = { ...makeState(), hasManualEdit: true };
+  state.fields.play_count = { ...state.fields.play_count, value: "9999", manuallyEdited: true };
+  const withManual = workflowReducer(state, { type: "ocr/commit", fields: (current) => current });
+  assert.equal(withManual.hasManualEdit, true);
+  const metadataOnly = workflowReducer({ ...state, fields: createEditableFields() }, {
+    type: "ocr/commit",
+    meta: (current) => ({ ...current, videoTitle: "识别标题" }),
+  });
+  assert.equal(metadataOnly.hasManualEdit, true);
+  const withoutManual = workflowReducer(state, { type: "ocr/commit", fields: () => createEditableFields() });
+  assert.equal(withoutManual.hasManualEdit, false);
+});
+
+test("OCR 字段提交保留显式指定手改标记的兼容行为", () => {
+  const next = workflowReducer(makeState(), {
+    type: "ocr/commit",
+    fields: (current) => current,
+    hasManualEdit: true,
+  });
+  assert.equal(next.hasManualEdit, true);
+});
+
 test("workflow reducer keeps keyword fields and manual provenance in the canonical state", () => {
   const state = createWorkflowState({
     meta: createInitialMeta("2026-10-01", "user-1"),

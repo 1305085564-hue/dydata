@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import type { AvailabilityModelFamily } from "@/lib/ai-config/availability";
+import { isModelAllowedForFeature } from "@/lib/ai/provider-protocols";
 import { buildModelFamilySelectOptions } from "./components/model-family-select";
 import { OcrSpeedLogRow, type OcrSpeedLogItem } from "./components/ocr-speed-drawer";
 
@@ -86,22 +87,40 @@ test("ModelFamilySelect 能力隔离：Clairic 仅在截图识别可选，其他
     assert.equal(opt.disabledReason, null);
   }
 
-  // 2) 全局默认：Clairic 不可选且沉到可用模型后，原因为「截图专项，不能用作全局默认」
+  // 2) 全局默认：Clairic 不可选且沉到可用模型后，展示统一能力限制原因。
   const defaultOptions = buildModelFamilySelectOptions(families, "default");
   const defaultClairic = defaultOptions.find((o) => o.id === "clairic");
   assert.ok(defaultClairic);
   assert.equal(defaultClairic.isSelectable, false);
   assert.equal(defaultClairic.scopeBlocked, true);
-  assert.equal(defaultClairic.disabledReason, "截图专项，不能用作全局默认");
+  assert.equal(defaultClairic.disabledReason, "Cloudflare Clairic 是截图专项模型，不能用作全局默认");
   assert.equal(defaultOptions[defaultOptions.length - 1]?.id, "clairic");
 
-  // 3) 其他业务功能：Clairic 不可选，原因为「截图专项，不支持对话」
+  // 3) 其他业务功能：Clairic 不可选，展示统一能力限制原因。
   const chatOptions = buildModelFamilySelectOptions(families, "content_tools");
   const chatClairic = chatOptions.find((o) => o.id === "clairic");
   assert.ok(chatClairic);
   assert.equal(chatClairic.isSelectable, false);
   assert.equal(chatClairic.scopeBlocked, true);
-  assert.equal(chatClairic.disabledReason, "截图专项，不支持对话");
+  assert.equal(chatClairic.disabledReason, "Cloudflare Clairic 是截图专项模型，仅支持「截图识别」功能，不支持对话或其他业务场景");
+});
+
+test("ModelFamilySelect 与服务端共用模型能力和拒绝原因，不受过期展示分类影响", () => {
+  const families = [
+    makeFamily("clairic", "Clairic", { modelScope: "general" }),
+    makeFamily("@cf/cloudflare/clairic", "Clairic 上游名称", { modelScope: "general" }),
+    makeFamily("deepseek-chat", "DeepSeek", { modelScope: "ocr_only" }),
+  ];
+  for (const featureKey of ["default", "content_tools", "ocr_screenshot", "future_feature"]) {
+    const options = buildModelFamilySelectOptions(families, featureKey);
+    for (const option of options) {
+      const capability = isModelAllowedForFeature(featureKey, option.id);
+      assert.equal(option.isSelectable, capability.allowed);
+      assert.equal(option.scopeBlocked, !capability.allowed);
+      assert.equal(option.disabledReason, capability.allowed ? null : capability.reason);
+    }
+  }
+  assert.ok(buildModelFamilySelectOptions(families).every((option) => option.isSelectable));
 });
 
 test("OcrSpeedLogRow 多段回退记录展示「已回退」温和徽章与各段耗时拆解", () => {

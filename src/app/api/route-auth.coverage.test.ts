@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
 // 接口鉴权清点守卫：每个 route.ts 要么在自身（或登记的委托文件）里调用统一鉴权入口，
 // 要么登记为"有意公开"并写明靠什么保护。新增接口忘了鉴权会在这里直接报红，
@@ -33,6 +34,7 @@ const GUARDS = [
 
 /** 路由本身很薄、鉴权写在委托文件里：登记委托文件，守卫去那里找。 */
 const DELEGATES: Record<string, string> = {
+  "admin/ai-config/ocr-logs/route.ts": "admin/ai-config/ocr-logs/route-core.ts",
   "admin/collaboration/attribution/route.ts": "admin/collaboration/handlers.ts",
   "admin/collaboration/person/route.ts": "admin/collaboration/handlers.ts",
   "admin/collaboration/unattributed/route.ts": "admin/collaboration/handlers.ts",
@@ -99,4 +101,64 @@ test("接口鉴权清点：不带权限要求的管理端入口后面必须再�
     return NO_ARG_ADMIN_GUARD.test(source) && !NARROWING_CHECK.test(source);
   });
   assert.deepEqual(unnarrowed, [], "这些接口只校验了'有任意权限'，组员也能通过：传 requiredPermission，或在调用后检查页面权限／数据范围");
+});
+
+function ignoredAuthResults(source: string) {
+  const file = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true);
+  const ignored: Array<{ guard: string; line: number }> = [];
+  const guardName = /^require(?:\w*(?:Actor|Context|Access)|SignedInUser|VerifiedCloudBaseSession)$/;
+  function visit(node: ts.Node) {
+    if (ts.isAwaitExpression(node) && ts.isCallExpression(node.expression)) {
+      const callee = node.expression.expression;
+      const name = ts.isIdentifier(callee) ? callee.text
+        : ts.isPropertyAccessExpression(callee) ? callee.name.text : "";
+      if (guardName.test(name)) {
+        let parent = node.parent;
+        let received = false;
+        while (parent && !ts.isSourceFile(parent)) {
+          if (ts.isVariableDeclaration(parent) || ts.isReturnStatement(parent)
+            || (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.EqualsToken)
+            || (ts.isArrowFunction(parent) && !ts.isBlock(parent.body))) {
+            received = true;
+            break;
+          }
+          if (ts.isStatement(parent) || ts.isFunctionLike(parent)) break;
+          parent = parent.parent;
+        }
+        if (!received) ignored.push({ guard: name, line: file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1 });
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return ignored;
+}
+
+test("鉴权返回值守卫：能识别裸调用，接受赋值和返回，忽略注释与字符串", () => {
+  const source = [
+    'await requireSystemActor();',
+    'await deps.requireAdminContext({ requiredPermission: "manage_system" });',
+    'await requireAdminModulesAccess();',
+    'await requireSignedInUser();',
+    'await deps.requireVerifiedCloudBaseSession();',
+    'const auth = await requireSystemActor();',
+    'auth = await deps.requireAdminContext();',
+    'async function authenticate() { return await requireSignedInUser(); }',
+    'const authenticate = async () => await requireSystemActor();',
+    '// await requireSystemActor();',
+    'const text = "await requireAdminActor();";',
+  ].join("\n");
+  assert.deepEqual(ignoredAuthResults(source), [
+    { guard: "requireSystemActor", line: 1 },
+    { guard: "requireAdminContext", line: 2 },
+    { guard: "requireAdminModulesAccess", line: 3 },
+    { guard: "requireSignedInUser", line: 4 },
+    { guard: "requireVerifiedCloudBaseSession", line: 5 },
+  ]);
+});
+
+test("全站鉴权返回值守卫：接口及登记的委托文件不得丢弃统一鉴权结果", () => {
+  const files = [...new Set([...routeFiles(API_ROOT), ...Object.values(DELEGATES)])].sort();
+  const violations = files.flatMap((file) => ignoredAuthResults(read(file)).map((match) => ({ file, ...match })));
+  assert.deepEqual(violations, [], "必须接收鉴权结果并拦截 error；不能把返回错误的鉴权函数当成抛异常的断言");
 });

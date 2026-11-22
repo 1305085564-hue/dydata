@@ -1,10 +1,34 @@
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import type { SubmissionSlotRole, SubmissionState } from "@/components/submission/提交状态机";
-import type { SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
+import { createEditableSlots, type SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 import type {
   SubmissionWorkflowState,
   VideoSubmitDraftData,
 } from "./types";
+
+/** 异步任务不能跨刷新续跑；保存与读取旧草稿必须采用同一恢复规则。 */
+export function sanitizeDraftSlot(slot: SlotViewState): SlotViewState {
+  if (slot.status === "uploading" || slot.status === "recognizing") {
+    if (!slot.assetUrl) {
+      return { ...createEditableSlots()[slot.role], file: null, previewUrl: null };
+    }
+    return {
+      ...slot,
+      status: "pending_confirm",
+      requiresManualConfirmation: true,
+      confirmed: false,
+      ocrFallback: true,
+      error: "上次识别未完成，可点击重新识别或手动填写",
+      file: null,
+      previewUrl: null,
+      startedAt: undefined,
+      phaseStartedAt: undefined,
+      finishedAt: undefined,
+      batchStartedAt: undefined,
+    };
+  }
+  return { ...slot, file: null, previewUrl: null };
+}
 
 export function serializeVideoSubmitDraft(
   input: SubmissionWorkflowState,
@@ -12,8 +36,8 @@ export function serializeVideoSubmitDraft(
   return {
     ...input,
     slots: {
-      screenshot_1: { ...input.slots.screenshot_1, file: null, previewUrl: null },
-      screenshot_2: { ...input.slots.screenshot_2, file: null, previewUrl: null },
+      screenshot_1: sanitizeDraftSlot(input.slots.screenshot_1),
+      screenshot_2: sanitizeDraftSlot(input.slots.screenshot_2),
     },
   };
 }
@@ -75,7 +99,7 @@ export function buildVideoSubmitPayload(input: {
   videoEditorUserId: string | null;
   operatorUserId: string | null;
   manualEdit: boolean;
-  /** 本次是否重新上传过截图；换图会重跑识别，是打破历史手工标记的唯一动作。 */
+  /** 本次是否更换了截图，供提交端判断截图证据是否刷新。 */
   screenshotsRefreshed: boolean;
   contentKeywords: string[];
   assets: ReturnType<typeof buildSubmissionAssets>;
