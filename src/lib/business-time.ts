@@ -118,6 +118,48 @@ export function addShanghaiDateOnly(date: string, days: number): string {
   );
 }
 
+/** 计算两个 YYYY-MM-DD 业务日期相差的天数（endDate - startDate）。 */
+export function diffShanghaiDays(startDate: string, endDate: string): number {
+  const start = parseShanghaiDateOnly(startDate);
+  const end = parseShanghaiDateOnly(endDate);
+  const startMs = Date.UTC(start.year, start.month - 1, start.day);
+  const endMs = Date.UTC(end.year, end.month - 1, end.day);
+  return Math.round((endMs - startMs) / 86_400_000);
+}
+
+/**
+ * 展开闭区间 [startDate, endDate] 内的所有业务日期 YYYY-MM-DD。
+ * endDate 为空时仅返回 [startDate]；startDate > endDate 返回空数组。
+ * 可选 maxDays 用于兜底限制存量整单展开长度。
+ */
+export function expandShanghaiDateRange(
+  startDate: string,
+  endDate: string | null = startDate,
+  options?: { maxDays?: number },
+): string[] {
+  const resolvedEnd = endDate ?? startDate;
+  if (resolvedEnd < startDate) return [];
+
+  const start = parseShanghaiDateOnly(startDate);
+  const end = parseShanghaiDateOnly(resolvedEnd);
+  const cursor = new Date(Date.UTC(start.year, start.month - 1, start.day));
+  const boundaryMs = Date.UTC(end.year, end.month - 1, end.day);
+  const maxDays = options?.maxDays;
+
+  const dates: string[] = [];
+  while (cursor.getTime() <= boundaryMs && (maxDays === undefined || dates.length < maxDays)) {
+    dates.push(
+      formatShanghaiDateOnlyParts(
+        cursor.getUTCFullYear(),
+        cursor.getUTCMonth() + 1,
+        cursor.getUTCDate(),
+      ),
+    );
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
 /** 拼出带北京时间偏移的时刻串，例如 2026-03-05T20:42:00+08:00。 */
 export function formatShanghaiOffsetDateTime(dateStr: string, timeStr: string = "00:00:00"): string {
   return `${dateStr}T${timeStr}${SHANGHAI_UTC_OFFSET}`;

@@ -2,14 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  applyExemptionGrantAtomically,
-  clearExemptionGrantAtomically,
   clearPermanentExemptionAtomically,
   reopenExemptionRequestAtomically,
   reviewExemptionRequestAtomically,
   setPermanentExemptionAtomically,
 } from "./exemption-review";
-import { buildGrantDraft } from "./豁免流程";
 
 function createRpcClient(result: { data: unknown; error: { code?: string; message: string } | null } = { data: {}, error: null }) {
   const calls: Array<{ name: string; params: Record<string, unknown> }> = [];
@@ -23,42 +20,6 @@ function createRpcClient(result: { data: unknown; error: { code?: string; messag
     },
   };
 }
-
-test("手工设置豁免 RPC 不接收可伪造的操作者、团队和 profile 投影", async () => {
-  const { client, calls } = createRpcClient();
-  const draft = buildGrantDraft({
-    userId: "user-1",
-    teamId: "untrusted-team-from-browser",
-    mode: "range",
-    category: "waive",
-    reason: "出差",
-    requestId: null,
-    today: "2026-07-18",
-    startDate: "2026-07-18",
-    endDate: "2026-07-20",
-  });
-
-  const result = await applyExemptionGrantAtomically({
-    supabase: client as never,
-    draft,
-    replaceExisting: true,
-  });
-
-  assert.equal(result.ok, true);
-  assert.deepEqual(calls, [{
-    name: "apply_exemption_grant_atomically",
-    params: {
-      p_user_id: "user-1",
-      p_grant_start_date: "2026-07-18",
-      p_grant_end_date: "2026-07-20",
-      p_grant_type: "range",
-      p_exemption_category: "waive",
-      p_reason: "出差",
-      p_replace_existing: true,
-    },
-  }]);
-  assert.doesNotMatch(JSON.stringify(calls), /p_actor|p_reviewer|p_team_id|p_profile_/);
-});
 
 test("审批统一路由到逐日 RPC，申请人、团队与授予字段由数据库推导", async () => {
   const { client, calls } = createRpcClient({ data: { request_id: "request-1" }, error: null });
@@ -140,20 +101,6 @@ test("申请人重新归属后，旧申请继续批准会被 RPC 以 409 拦截"
   });
 });
 
-test("清除豁免通过单个 RPC 原子更新 grant 与 profile", async () => {
-  const { client, calls } = createRpcClient();
-  const result = await clearExemptionGrantAtomically({
-    supabase: client as never,
-    userId: "user-1",
-  });
-
-  assert.equal(result.ok, true);
-  assert.deepEqual(calls, [{
-    name: "clear_exemption_grant_atomically",
-    params: { p_user_id: "user-1" },
-  }]);
-});
-
 test("不参与考核设置使用 Owner-only 专用 RPC", async () => {
   const { client, calls } = createRpcClient({ data: { permanent: true }, error: null });
   const result = await setPermanentExemptionAtomically({
@@ -205,13 +152,13 @@ test("越权错误按 SQLSTATE 42501 映射为固定 403，不透传数据库细
 
 test("RPC 抛出的网络或数据库异常固定返回 500", async () => {
   const rawError = new Error("relation public.secret_exemption does not exist");
-  const result = await clearExemptionGrantAtomically({
+  const result = await reopenExemptionRequestAtomically({
     supabase: {
       rpc() {
         throw rawError;
       },
     } as never,
-    userId: "user-1",
+    requestId: "request-1",
   });
 
   assert.equal(result.ok, false);

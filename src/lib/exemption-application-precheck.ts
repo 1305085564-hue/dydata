@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { addShanghaiDateOnly } from "@/lib/business-time";
+import { expandShanghaiDateRange } from "@/lib/business-time";
 import {
   getPendingExemptionDatesFromRequests,
   type PendingExemptionDateLike,
@@ -48,12 +48,7 @@ export async function checkPendingExemptionOverlap(
   ));
   const overlapping = new Set<string>();
   for (const range of input.ranges) {
-    const end = range.end_date ?? range.start_date;
-    for (
-      let date = range.start_date;
-      date <= end;
-      date = addShanghaiDateOnly(date, 1)
-    ) {
+    for (const date of expandShanghaiDateRange(range.start_date, range.end_date)) {
       if (pendingDates.has(date)) overlapping.add(date);
     }
   }

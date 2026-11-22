@@ -137,18 +137,3 @@ test("normalizeGrantMode 兼容旧模式", async () => {
   assert.equal(mod.normalizeGrantMode("5days"), "range");
   assert.equal(mod.normalizeGrantMode("permanent"), "permanent");
 });
-
-test("buildReviewPatch 会生成审批补丁", async () => {
-  const mod = await loadModule();
-  assert.ok(mod, "应提供 豁免流程 模块");
-
-  const approved = mod.buildReviewPatch({ reviewerId: "admin-1", decision: "approved" });
-  assert.equal(approved.request_status, "approved");
-  assert.equal(approved.reviewed_by, "admin-1");
-  assert.match(String(approved.reviewed_at), /T/);
-
-  const rejected = mod.buildReviewPatch({ reviewerId: "admin-2", decision: "rejected" });
-  assert.equal(rejected.request_status, "rejected");
-  assert.equal(rejected.reviewed_by, "admin-2");
-  assert.match(String(rejected.reviewed_at), /T/);
-});

@@ -4,6 +4,7 @@ import {
   isActiveTeamMembership,
   teamMembershipRequiredResponse,
 } from "@/app/api/topics/_shared";
+import { addShanghaiDateOnly, expandShanghaiDateRange } from "@/lib/business-time";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
@@ -35,20 +36,6 @@ type RequestSegment = {
   dates: string[];
 };
 
-function expandDates(startDate: string, endDate: string | null) {
-  const dates: string[] = [];
-  const start = new Date(`${startDate}T00:00:00.000Z`);
-  const end = new Date(`${endDate ?? startDate}T00:00:00.000Z`);
-  for (let cursor = start.getTime(); cursor <= end.getTime(); cursor += 86_400_000) {
-    dates.push(new Date(cursor).toISOString().slice(0, 10));
-  }
-  return dates;
-}
-
-function nextIsoDay(date: string) {
-  return new Date(Date.parse(`${date}T00:00:00.000Z`) + 86_400_000).toISOString().slice(0, 10);
-}
-
 /**
  * 非连续日期不能存成一个大区间：否则 [1日,5日] 会按连续区间挡住后续 3 日的申请
  * （应用层预检与数据库 daterange exclusion 约束都按 start~end 判断）。
@@ -58,7 +45,7 @@ function splitContiguousSegments(dates: string[]): RequestSegment[] {
   const segments: RequestSegment[] = [];
   for (const date of dates) {
     const last = segments[segments.length - 1];
-    if (last && nextIsoDay(last.endDate ?? last.startDate) === date) {
+    if (last && addShanghaiDateOnly(last.endDate ?? last.startDate, 1) === date) {
       last.endDate = date;
       last.dates.push(date);
     } else {
@@ -106,7 +93,7 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
   const rawDates = Array.isArray(input.dates) ? input.dates : [];
   const dates = rawDates.length > 0
     ? Array.from(new Set(rawDates.filter((date): date is string => typeof date === "string" && isValidDate(date)))).sort()
-    : expandDates(startDate, endDate);
+    : expandShanghaiDateRange(startDate, endDate);
   if (rawDates.length > 0 && dates.length !== rawDates.length) {
     return { response: NextResponse.json({ error: "dates 必须是有效日期数组" }, { status: 400 }) };
   }

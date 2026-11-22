@@ -5,6 +5,8 @@ import {
   addShanghaiDateOnly,
   buildPublishedDateRangeFilter,
   buildValidatedShanghaiDateTimeIso,
+  diffShanghaiDays,
+  expandShanghaiDateRange,
   formatShanghaiDateOnly,
   formatShanghaiDateOnlyParts,
   formatShanghaiDateTimeLocal,
@@ -56,6 +58,20 @@ test("日历拆分、加减与边界校验不依赖宿主机时区", () => {
   assert.equal(getShanghaiDaysInMonth(2026, 2), 28);
   assert.equal(getShanghaiWeekday(2026, 11, 22), 0);
   assert.equal(addShanghaiDateOnly("2026-09-01", -1), "2026-08-31");
+  assert.equal(diffShanghaiDays("2026-08-30", "2026-09-02"), 3);
+  assert.deepEqual(expandShanghaiDateRange("2026-08-30", "2026-09-02"), [
+    "2026-08-30",
+    "2026-08-31",
+    "2026-09-01",
+    "2026-09-02",
+  ]);
+  assert.deepEqual(expandShanghaiDateRange("2026-09-01", null), ["2026-09-01"]);
+  assert.deepEqual(expandShanghaiDateRange("2026-09-05", "2026-09-01"), []);
+  assert.deepEqual(expandShanghaiDateRange("2026-09-01", "2026-09-10", { maxDays: 3 }), [
+    "2026-09-01",
+    "2026-09-02",
+    "2026-09-03",
+  ]);
   assert.equal(shanghaiDayStartOffset("2026-10-03"), "2026-10-03T00:00:00+08:00");
   assert.equal(shanghaiDayStartIso("2026-10-03"), "2026-10-02T16:00:00.000Z");
   assert.equal(formatShanghaiOffsetDateTime("2026-03-05", "20:42:00"), "2026-03-05T20:42:00+08:00");
