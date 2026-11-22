@@ -14,9 +14,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { cn } from "@/lib/utils";
+import { parseShanghaiDateOnly } from "@/lib/business-time";
 import {
   mergeSubmittedDates,
-  parseShanghaiDateOnly,
   useExemptionCalendar,
 } from "@/lib/dashboard-logic/use-exemption-calendar";
 import { getDateStatus } from "@/lib/dashboard-logic/submission-status";

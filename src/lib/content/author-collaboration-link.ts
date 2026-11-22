@@ -1,5 +1,5 @@
 import type { PersonProfileRole } from "@/lib/collaboration/domain/person-profile-rules";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 const ROLE_TABS: Record<PersonProfileRole, string> = {
   talent: "talents", operator: "operators", writer: "writers", editor: "editors",

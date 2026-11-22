@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { shiftDateOnly } from "@/lib/loaders/shared";
+import { addShanghaiDateOnly } from "@/lib/business-time";
 import { cn } from "@/lib/utils";
 import type {
   AccountLeaderboardItem,
@@ -787,5 +787,5 @@ function normalizeTag(value: string | null | undefined) {
 }
 
 function shiftDate(dateString: string, days: number) {
-  return shiftDateOnly(new Date(`${dateString}T00:00:00+08:00`), days);
+  return addShanghaiDateOnly(dateString, days);
 }

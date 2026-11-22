@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ListRow } from "@/components/ui/list-row";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import type { AccountLeaderboardRow } from "@/types";
 
 interface LeaderboardApiResponse {

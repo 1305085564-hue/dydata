@@ -1,19 +1,9 @@
-import { shiftDateOnly } from "@/lib/loaders/shared";
-
-function formatShanghaiDateTimeLocal(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
-}
+import {
+  formatShanghaiDateTimeLocal,
+  formatShanghaiDateTimeZh,
+  parseBusinessDateTimeIso,
+  shiftDateOnly,
+} from "@/lib/business-time";
 
 export function getDefaultPublishedAtValue(now: Date = new Date()) {
   return `${shiftDateOnly(now, -1)}T19:00`;
@@ -47,21 +37,9 @@ export function normalizePublishedAtInputValue(value: string | null | undefined)
 
 export function normalizePublishedAtForStorage(value: FormDataEntryValue | null) {
   if (typeof value !== "string" || !value) return null;
-  const trimmed = value.trim().replace(" ", "T");
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z$/i.test(trimmed)) {
-    const date = new Date(trimmed);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
-  }
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(trimmed);
-  if (!match) {
-    const date = new Date(trimmed);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
-  }
-  const utcMs = Date.parse(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+08:00`);
-  return Number.isNaN(utcMs) ? null : new Date(utcMs).toISOString();
+  return parseBusinessDateTimeIso(value);
 }
 
 export function formatShanghaiDateTime(value: string | null | undefined) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
+  return formatShanghaiDateTimeZh(value);
 }

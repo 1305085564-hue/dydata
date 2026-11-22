@@ -1,5 +1,5 @@
 import type { ExemptionState } from "@/lib/豁免";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { getPublishedDateKey } from "@/lib/business-time";
 
 export interface TodaySubmissionReportLike {
   id?: string | null;

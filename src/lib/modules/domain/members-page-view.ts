@@ -1,4 +1,4 @@
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import { getExemptionCategoryLabel } from "@/lib/exemption-category";
 import type { ProfileSummary, TeamOption } from "@/lib/modules/types";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";

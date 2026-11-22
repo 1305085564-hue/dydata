@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ColophonMark } from "@/components/editorial/editorial-illustrations";
 import { cn } from "@/lib/utils";
 import { ROW_SELECTED } from "@/components/ui/selection";
-import { getPublishedDateKey } from "@/lib/date-semantics";
+import { getPublishedDateKey } from "@/lib/business-time";
 import type { MonthReport } from "@/lib/video-submit/domain/types";
 
 function formatCount(value: number | null | undefined) {

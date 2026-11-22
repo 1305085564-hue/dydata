@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 import type { EmitInput, NotificationActionRow } from "./types";
 

@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { getShanghaiYearMonth } from "@/lib/business-time";
 import { LeaderboardTab } from "./leaderboard-tab";
 
 interface LeaderboardDialogProps {

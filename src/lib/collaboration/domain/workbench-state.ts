@@ -5,7 +5,7 @@ import type {
   WorkGroupSummaryRow,
   WorkGroupViews,
 } from "@/lib/collaboration/types";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { getShanghaiYearMonth } from "@/lib/business-time";
 
 export type TabKey = "talents" | "operators" | "writers" | "editors";
 

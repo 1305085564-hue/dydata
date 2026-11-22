@@ -36,7 +36,7 @@ import {
 } from "@/lib/work-groups";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
-import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/business-time";
 
 type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 
