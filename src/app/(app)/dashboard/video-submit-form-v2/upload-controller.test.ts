@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createEditableFields, createEditableSlots, deriveSlotsFromItems, type ScreenshotItem } from "../video-submit-form-model";
+import { createEditableFields, createEditableSlots, deriveSlotsFromItems, type ScreenshotItem } from "@/lib/video-submit/domain/video-submit-form-model";
 import { canSubmit, createInitialSubmissionState, type SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { createOcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 import { buildOcrMultipartFormData, buildOcrStorageRequestBody, createUploadHandler } from "./upload-controller";

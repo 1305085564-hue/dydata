@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Settings, TrendingUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
-import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews } from "./types";
+import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews } from "@/lib/collaboration/types";
 import type { WriterCandidateRow } from "./writer-tab";
 import { partitionWriterCandidates, type TabKey } from "@/lib/collaboration/domain/workbench-state";
 import { OneTip } from "./one-tip";

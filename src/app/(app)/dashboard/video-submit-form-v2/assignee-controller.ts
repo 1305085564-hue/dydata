@@ -12,8 +12,8 @@ import {
   removeRoleOverride as removeSubmissionRoleOverride,
   setOperatorUser as resolveSelectedOperatorUserId,
   type SubmissionAssigneeRole,
-} from "../video-submit-form-state";
-import type { FormMetaState } from "../video-submit-form-model";
+} from "@/lib/video-submit/domain/video-submit-form-state";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 
 type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type AssigneeControllerOptions = {

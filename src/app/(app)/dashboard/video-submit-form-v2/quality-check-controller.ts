@@ -1,6 +1,6 @@
 "use client";
 
-import { createEditableSlots, type SlotViewState } from "../video-submit-form-model";
+import { createEditableSlots, type SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import type {
   SubmissionQualityIssue,

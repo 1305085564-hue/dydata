@@ -10,7 +10,7 @@ import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
 import { normalizePublishedAtInputValue } from "@/lib/日报";
 import { resolvePublishedAtSource } from "@/lib/published-at-source";
 import { cn } from "@/lib/utils";
-import type { EditableMetricField, FormMetaState } from "../video-submit-form-model";
+import type { EditableMetricField, FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 
 export interface FormV2ResultsSectionProps {
   editing?: boolean;

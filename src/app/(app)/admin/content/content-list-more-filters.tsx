@@ -11,7 +11,7 @@ import {
   PLAY_BUCKETS,
   buildAccountDisplayLabels,
   getSecondaryFilterSummary,
-} from "./content-list-filters";
+} from "@/lib/content/domain/content-list-filters";
 import { DataHighlightPanel, FilterChipOption } from "./content-list-highlight-panel";
 
 type MoreFiltersProps = Pick<

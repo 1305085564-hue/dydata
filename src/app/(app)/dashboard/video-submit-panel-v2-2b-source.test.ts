@@ -7,7 +7,7 @@ import {
   buildVideoSubmissionEditRefill,
   getVideoSubmissionEditDetailError,
   type VideoSubmissionEditDetail,
-} from "./video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-state";
 
 const editDetailWithNullRetentionMetrics = {
   videoId: "123e4567-e89b-12d3-a456-426614174000",
@@ -50,7 +50,7 @@ const editDetailWithNullRetentionMetrics = {
 } satisfies VideoSubmissionEditDetail;
 
 test("补交或历史日期取消后回到今天概览", () => {
-  const source = readFileSync(resolve(process.cwd(), "src/components/video-submit/video-submit-panel-body.tsx"), "utf8");
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-body.tsx"), "utf8");
 
   const returnOverviewBlock = /const backToToday = \(\) => \{[\s\S]{0,80}setRequestedMode\(null\);[\s\S]{0,40}if \(activeBizDate !== today\) onActiveBizDateChange\?\.\(today\);/;
   assert.match(source, /label: "回到今天", onClick: backToToday/);

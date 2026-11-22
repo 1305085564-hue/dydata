@@ -3,7 +3,7 @@ import type {
   AiSuggestionItem,
   MemberAiSuggestionState,
   ToolConfirmationState,
-} from "@/app/(app)/admin/modules/member-ai-dialogs";
+} from "@/components/modules/member-ai-dialogs";
 import type { CompanyRole } from "@/types";
 import type { ProfileSummary, TeamOption } from "@/lib/modules/types";
 

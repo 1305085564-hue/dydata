@@ -19,7 +19,7 @@ import {
   handleSyncKeyModels,
   handleSyncAllKeys,
 } from "@/lib/ai-config/batch-actions";
-import { discoverModelIds } from "./sync-models/route";
+import { discoverModelIds } from "@/lib/ai-config/sync-models";
 import { findModelChannelCandidates, groupModelIdAliases, type ModelChannelDiscoveryInput } from "@/lib/ai/model-discovery";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { normalizeChannelAddress, requireSharedAddressConfirmation, type SharedAddressImpact } from "@/lib/ai-config/channel-address";

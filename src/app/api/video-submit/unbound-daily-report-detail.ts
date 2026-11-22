@@ -1,61 +1,7 @@
-import {
-  normalizeDailyReportDataSource,
-  type DailyReportDataSource,
-} from "@/lib/daily-report-data-source";
-import type { HistoryDataCapability } from "@/lib/history-data-capability";
+import { normalizeDailyReportDataSource } from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";
-import {
-  normalizeAssigneeProfiles,
-  type EditDetailAssigneeProfile,
-} from "./edit-detail/assignee-profiles";
-
-export interface UnboundDailyReportDetail {
-  /** 无绑定视频仍是可编辑的日报记录，但只允许写日报字段。 */
-  historyCapability?: HistoryDataCapability;
-  reportId: string;
-  videoId: null;
-  accountId: string;
-  bizDate: string;
-  dataSource: DailyReportDataSource;
-  meta: {
-    videoUrl: null;
-    videoTitle: string;
-    content: string;
-    publishedAt: string | null;
-    publishedAtText: null;
-    anomalyStatus: "normal";
-    punishType: null;
-    platformNotice: null;
-    appeal: null;
-    topicTag: null;
-    videoForm: null;
-    contentKeywords: string[];
-    scriptAuthorUserId: string | null;
-    videoEditorUserId: string | null;
-    operatorUserId: string | null;
-  };
-  metrics: {
-    playCount: number | null;
-    likes: number | null;
-    comments: number | null;
-    shares: number | null;
-    favorites: number | null;
-    followerGain: number | null;
-    followerLoss: null;
-    followerConvert: number | null;
-    avgPlayDuration: number | null;
-    avgPlayRatio: null;
-    bounceRate2s: number | null;
-    completionRate5s: number | null;
-    completionRate: number | null;
-  };
-  assets: [];
-  uploadedAt: string | null;
-  scriptAuthorUserId: string | null;
-  videoEditorUserId: string | null;
-  operatorUserId: string | null;
-  assigneeProfiles: EditDetailAssigneeProfile[];
-}
+import { normalizeAssigneeProfiles } from "@/lib/video-submit/domain/assignee-profiles";
+import type { UnboundDailyReportDetail } from "@/lib/video-submit/domain/edit-detail-types";
 
 export type UnboundDailyReportDetailResult =
   | { ok: true; detail: UnboundDailyReportDetail }

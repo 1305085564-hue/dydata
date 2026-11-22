@@ -1,6 +1,6 @@
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { ContentListQuery } from "./domain/content-list-query";
-import { DEFAULT_CONTENT_LIST_FILTERS } from "@/app/(app)/admin/content/content-list-filters";
+import { DEFAULT_CONTENT_LIST_FILTERS } from "@/lib/content/domain/content-list-filters";
 import { DEFAULT_EVALUATION_STANDARDS, evaluationTone } from "@/lib/evaluation-standards";
 import { averagePlayOf } from "@/lib/metrics/caliber";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";

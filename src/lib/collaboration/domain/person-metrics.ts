@@ -4,7 +4,7 @@ import type {
   PersonDetailData,
   PersonGrowthSummary,
   PersonGrowthWorkItem,
-} from "@/app/(app)/admin/collaboration/types";
+} from "@/lib/collaboration/types";
 
 export interface ChartWorkPoint {
   index: number;

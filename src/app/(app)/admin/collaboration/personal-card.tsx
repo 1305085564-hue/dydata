@@ -23,7 +23,7 @@ import {
   pickHoveredChartWork,
   type ChartWorkPoint,
 } from "@/lib/collaboration/domain/person-metrics";
-import { type CollaborationRoleTab, type OperatorAccount, type PersonDetailData } from "./types";
+import { type CollaborationRoleTab, type OperatorAccount, type PersonDetailData } from "@/lib/collaboration/types";
 import {
   clearPersonDataCache,
   loadPersonData,

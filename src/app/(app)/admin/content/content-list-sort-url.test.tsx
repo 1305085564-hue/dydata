@@ -12,7 +12,7 @@ import {
   filterAccountsByName,
   parseContentListSort,
   writeContentListSort,
-} from "./content-list-filters";
+} from "@/lib/content/domain/content-list-filters";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 

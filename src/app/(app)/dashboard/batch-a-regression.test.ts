@@ -8,7 +8,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 
 test("成功态提供再交一条入口并切回新建模式", () => {
   const submittedView = read("src/app/(app)/dashboard/form-v2/submitted-view.tsx");
-  const panelBody = read("src/components/video-submit/video-submit-panel-body.tsx");
+  const panelBody = read("src/app/(app)/dashboard/video-submit-panel-body.tsx");
   const panel = read("src/app/(app)/dashboard/video-submit-panel-v2.tsx");
 
   assert.match(submittedView, /再交一条/);

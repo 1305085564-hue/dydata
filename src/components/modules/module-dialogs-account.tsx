@@ -4,7 +4,7 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { canManagePermanentExemption } from "@/app/(app)/admin/modules/permanent-exemption-logic";
+import { canManagePermanentExemption } from "@/lib/modules/domain/permanent-exemption-logic";
 
 import type { ModuleDialogsProps } from "./module-dialogs.types";
 

@@ -6,7 +6,7 @@ import { rateColumns, volumeColumns } from "./collaboration-quality-hints";
 import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
 import { formatAccountLine } from "./talent-tab";
-import { formatBigNumber, type OperatorRow } from "./types";
+import { formatBigNumber, type OperatorRow } from "@/lib/collaboration/types";
 
 interface OperatorTabProps {
   operators: OperatorRow[];

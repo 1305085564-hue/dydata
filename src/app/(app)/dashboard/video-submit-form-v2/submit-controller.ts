@@ -9,8 +9,8 @@ import { resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/li
 import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh } from "@/lib/video-submit-workflow/selectors";
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
-import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
-import { isDailyReportOnlyEditDetail } from "../video-submit-form-state";
+import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "@/lib/video-submit/domain/video-submit-form-state";
+import { isDailyReportOnlyEditDetail } from "@/lib/video-submit/domain/video-submit-form-state";
 import { saveDailyReportOnlyEdit } from "../actions";
 
 type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; error?: string; code?: string; reason?: string; appealId?: string };

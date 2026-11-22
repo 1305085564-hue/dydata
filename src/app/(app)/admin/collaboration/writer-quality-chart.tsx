@@ -14,7 +14,7 @@ import {
 } from "@/lib/collaboration/content-quality-contract";
 import { CollaborationDiagnosisContext } from "@/components/admin/collaboration-work-review-link";
 import { pickHoveredChartWork } from "@/lib/collaboration/domain/person-metrics";
-import { formatBigNumber, type PersonGrowthWorkItem } from "./types";
+import { formatBigNumber, type PersonGrowthWorkItem } from "@/lib/collaboration/types";
 import { cn } from "@/lib/utils";
 
 /**

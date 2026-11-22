@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Search, Settings, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ALL_TEAMS_ID, UNASSIGNED_TEAM_ID, countProfilesInTeamForView, getProfileTeamIdForView } from "@/app/(app)/admin/modules/team-view-logic";
+import { ALL_TEAMS_ID, UNASSIGNED_TEAM_ID, countProfilesInTeamForView, getProfileTeamIdForView } from "@/lib/modules/domain/team-view-logic";
 import { truncateTeamName } from "@/lib/modules/domain/view-rules";
 import type { ProfileSummary, TeamOption } from "@/lib/modules/types";
 

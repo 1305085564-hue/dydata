@@ -5,7 +5,7 @@ import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { cn } from "@/lib/utils";
 import { SUBMIT_STEPS, resolveSubmitStep } from "@/lib/video-submit/domain/submit-gaps";
-import type { SlotViewState } from "../video-submit-form-model";
+import type { SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 import { FormV2ResultsSection, type FormV2ResultsSectionProps } from "./results-section";
 import { FormV2ContentSection, type FormV2ContentSectionProps } from "./content-section";
 import { FormV2MoreSection, type FormV2MoreSectionProps } from "./more-section";

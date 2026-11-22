@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { VideoMetricsSnapshot } from "@/types";
-import { filterContentVideos } from "../content/content-list-filters";
+import { filterContentVideos } from "@/lib/content/domain/content-list-filters";
 import {
   attributionDate,
   buildCapsuleFilters,

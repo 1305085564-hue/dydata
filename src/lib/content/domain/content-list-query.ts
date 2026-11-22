@@ -1,12 +1,12 @@
 import type { SortField } from "./content-list";
 import { DEFAULT_SORT_DIR } from "./content-list";
-import type { ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
+import type { ContentListFilterValue } from "@/lib/content/domain/content-list-filters";
 import {
   isSingleDayMode,
   parseContentListFilters,
   parseContentListSort,
   resolveEffectiveDates,
-} from "@/app/(app)/admin/content/content-list-filters";
+} from "@/lib/content/domain/content-list-filters";
 
 export const CONTENT_PAGE_SIZE_OPTIONS = [50, 100, 500] as const;
 export const DEFAULT_CONTENT_PAGE_SIZE = 100;

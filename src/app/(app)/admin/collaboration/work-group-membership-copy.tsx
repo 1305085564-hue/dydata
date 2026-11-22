@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkGroupKind } from "./types";
+import type { WorkGroupKind } from "@/lib/collaboration/types";
 
 /**
  * 小队编制的「互斥 / 兼任」文案唯一来源。

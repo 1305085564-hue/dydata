@@ -2,7 +2,7 @@ import type {
   EditableMetricField,
   FormMetaState,
   SlotViewState,
-} from "@/app/(app)/dashboard/video-submit-form-model";
+} from "@/lib/video-submit/domain/video-submit-form-model";
 import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submission/提交状态机";
 
 export type SubmissionWorkflowState = {

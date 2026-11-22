@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ColophonMark } from "@/components/editorial/editorial-illustrations";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import type { FormMetaState } from "../video-submit-form-model";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 import type {
   SubmissionQualityIssue,
   SubmissionUiState,

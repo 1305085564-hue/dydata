@@ -11,7 +11,7 @@ import {
   applyOcrMetricValues,
   type EditableMetricKey,
 } from "./填报表单状态";
-import { createEditableFields } from "@/app/(app)/dashboard/video-submit-form-model";
+import { createEditableFields } from "@/lib/video-submit/domain/video-submit-form-model";
 
 test("biz_date 默认可选最近 7 天", () => {
   const range = getRecentBizDateRange("2026-03-22");

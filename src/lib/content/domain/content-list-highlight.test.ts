@@ -18,7 +18,7 @@ import {
   getSecondaryFilterSummary,
   parseContentListFilters,
   writeContentListFilters,
-} from "@/app/(app)/admin/content/content-list-filters";
+} from "@/lib/content/domain/content-list-filters";
 
 function makeRow(overrides: Partial<HighlightValueRow> = {}): HighlightValueRow {
   const base: HighlightValueRow = {

@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorkflowState, workflowReducer } from "./reducer";
-import type { FormMetaState } from "@/app/(app)/dashboard/video-submit-form-model";
-import { createEditableFields, createEditableSlots, createInitialMeta } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
+import { createEditableFields, createEditableSlots, createInitialMeta } from "@/lib/video-submit/domain/video-submit-form-model";
 
 function makeState() {
   return createWorkflowState({

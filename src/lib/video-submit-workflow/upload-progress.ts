@@ -1,5 +1,5 @@
 import type { SubmissionSlotRole, SubmissionSlotStatus } from "@/components/submission/提交状态机";
-import type { SlotViewState } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { SlotViewState } from "@/lib/video-submit/domain/video-submit-form-model";
 
 export const UPLOAD_LONG_WAIT_MS = 10_000;
 

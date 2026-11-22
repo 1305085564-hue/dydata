@@ -1,6 +1,6 @@
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { ProfileSummary } from "@/lib/modules/types";
-import { isMemberTargetReadOnly } from "./team-view-logic";
+import { isMemberTargetReadOnly } from "@/lib/modules/domain/team-view-logic";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 export type AdminModulesAccessInput = {

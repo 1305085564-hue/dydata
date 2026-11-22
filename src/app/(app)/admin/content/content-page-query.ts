@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { TeamOption } from "@/lib/teams";
-import { parseContentListFilters } from "./content-list-filters";
+import { parseContentListFilters } from "@/lib/content/domain/content-list-filters";
 import {
   buildContentPageUrl,
   resolveContentPageStateFromSearch,

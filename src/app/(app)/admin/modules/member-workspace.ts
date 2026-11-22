@@ -21,7 +21,7 @@ import {
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
   type TeamViewTeamOption,
-} from "./team-view-logic";
+} from "@/lib/modules/domain/team-view-logic";
 
 export type MemberWorkspaceInput = {
   currentUserId: string;

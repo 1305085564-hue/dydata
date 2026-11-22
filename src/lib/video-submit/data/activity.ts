@@ -2,7 +2,7 @@ import {
   getVideoSubmissionEditDetailError,
   type UnboundDailyReportDetail,
   type VideoSubmissionEditDetail,
-} from "@/app/(app)/dashboard/video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-state";
 import type {
   ActivityRequest,
   AsyncActivityData,

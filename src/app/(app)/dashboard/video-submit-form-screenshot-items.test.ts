@@ -5,9 +5,9 @@ import {
   allocateScreenshotSlots,
   createScreenshotItemsFromEditDetail,
   deriveSlotsFromItems,
-} from "./video-submit-form-model";
-import type { ScreenshotItem } from "./video-submit-form-model";
-import type { VideoSubmissionEditDetail } from "./video-submit-form-state";
+} from "@/lib/video-submit/domain/video-submit-form-model";
+import type { ScreenshotItem } from "@/lib/video-submit/domain/video-submit-form-model";
+import type { VideoSubmissionEditDetail } from "@/lib/video-submit/domain/video-submit-form-state";
 
 const detail: VideoSubmissionEditDetail = {
   videoId: "video-1",

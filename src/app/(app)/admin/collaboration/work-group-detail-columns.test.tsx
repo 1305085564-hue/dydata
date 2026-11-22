@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { ContentQualitySummary } from "@/lib/collaboration/content-quality-contract";
 import { teamMetricColumns } from "./collaboration-quality-hints";
-import type { WorkGroupMemberRow } from "./types";
+import type { WorkGroupMemberRow } from "@/lib/collaboration/types";
 
 /**
  * 小队列表与小队详情的列：和文案表同一套列名、口径；「展开明细」拆出互动四项与留存五项。

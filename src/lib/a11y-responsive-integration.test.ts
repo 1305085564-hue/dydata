@@ -31,7 +31,7 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
     "src/app/(app)/admin/content/content-list-toolbar.tsx",
     "src/app/(app)/admin/content/content-list-more-filters.tsx",
     "src/app/(app)/admin/content/content-list-table-header.tsx",
-    "src/app/(app)/dashboard/history-list.tsx",
+    "src/components/video-submit/history-list.tsx",
   ];
 
   for (const path of paths) {
@@ -163,7 +163,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
   assert.match(modules, /<SheetDescription/);
 
   const motionPaths = [
-    "src/components/video-submit/video-submit-panel-body.tsx",
+    "src/app/(app)/dashboard/video-submit-panel-body.tsx",
     "src/app/(app)/admin/fulfillment/fulfillment-workbench-view.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",

@@ -30,7 +30,7 @@ import type {
   VideoSubmitPanelV2Props,
 } from "@/lib/video-submit/domain/types";
 import { useVideoSubmitPanelNavigation } from "./video-submit-panel-navigation";
-import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-panel-body";
+import { VideoSubmitPanelBody } from "@/app/(app)/dashboard/video-submit-panel-body";
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";

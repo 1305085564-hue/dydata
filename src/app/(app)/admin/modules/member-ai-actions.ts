@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import type { AiSuggestionItem, MemberAiSuggestionState, ToolConfirmationState } from "./member-ai-dialogs";
+import type { AiSuggestionItem, MemberAiSuggestionState, ToolConfirmationState } from "@/components/modules/member-ai-dialogs";
 
 export function useMemberAiActions(activeMemberId: string | null) {
   const router = useRouter();

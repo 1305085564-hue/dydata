@@ -4,8 +4,10 @@ import {
   isNullableVideo24hApiKey,
   VIDEO_24H_METRIC_DEFINITIONS,
 } from "@/lib/video-24h-metrics-contract";
-import type { VideoSubmissionEditDetail as BoundVideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
-import type { UnboundDailyReportDetail } from "@/app/api/video-submit/unbound-daily-report-detail";
+import type {
+  UnboundDailyReportDetail,
+  VideoSubmissionEditDetail as BoundVideoSubmissionEditDetail,
+} from "./edit-detail-types";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 
 export type { ConfidenceLevel, EditableMetricField } from "./video-submit-form-model";

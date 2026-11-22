@@ -5,7 +5,7 @@ import { ChevronDown, X } from "lucide-react";
 import type { AnomalyStatus } from "@/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AssigneeDisplay } from "../video-submit-form-state";
+import type { AssigneeDisplay } from "@/lib/video-submit/domain/video-submit-form-state";
 
 // 视频状态分段控件
 const VIDEO_STATUS_OPTIONS: Array<{

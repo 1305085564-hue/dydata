@@ -17,7 +17,7 @@ import { RoleTable, type RoleColumn } from "./role-table";
 import { formatAccountLine, goodExcellentText } from "./talent-tab";
 import { DetailToggle } from "./work-group-detail-columns";
 import { WriterCertificationButton } from "./writer-certification-button";
-import { formatBigNumber, type StaffRow } from "./types";
+import { formatBigNumber, type StaffRow } from "@/lib/collaboration/types";
 
 export type StaffRole = "writer" | "editor";
 

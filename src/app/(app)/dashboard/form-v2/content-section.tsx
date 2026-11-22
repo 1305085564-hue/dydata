@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 import { Check, ClipboardPaste } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { FormMetaState } from "../video-submit-form-model";
+import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 
 export interface FormV2ContentSectionProps {
   meta: FormMetaState;

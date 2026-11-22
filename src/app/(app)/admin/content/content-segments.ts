@@ -1,4 +1,4 @@
-import type { ContentListFilterValue } from "./content-list-filters";
+import type { ContentListFilterValue } from "@/lib/content/domain/content-list-filters";
 
 /**
  * 数据复盘工具栏第一排：全部 · 优 · 良 · 普 · 未评级 · 异常。

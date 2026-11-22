@@ -11,7 +11,7 @@ import {
 } from "@/lib/team-management";
 import {
   getVisibleTeamOptions,
-} from "./team-view-logic";
+} from "@/lib/modules/domain/team-view-logic";
 import {
   canChangeMemberRole,
   canRemoveMemberTarget,
@@ -346,7 +346,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
 test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必须走确认", () => {
   const modulesSource = readModulesSource();
   const permissionEditorSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/components/member-permission-editor.tsx"),
+    resolve(process.cwd(), "src/components/modules/member-permission-editor.tsx"),
     "utf8",
   );
 
@@ -360,7 +360,7 @@ test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必�
 test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => {
   const modulesSource = readModulesSource();
   const dialogsSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/modules/member-ai-dialogs.tsx"),
+    resolve(process.cwd(), "src/components/modules/member-ai-dialogs.tsx"),
     "utf8",
   );
 
@@ -379,7 +379,7 @@ test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染"
   const modulesSource = readModulesSource();
   // 门禁收口在 permanent-exemption-logic 的 canManagePermanentExemption，且该 helper 只认 company_owner
   assert.match(modulesSource, /\{canManagePermanentExemption\(currentCompanyRole\) && \([\s\S]*?不参与考核/);
-  const logicSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/permanent-exemption-logic.ts"), "utf8");
+  const logicSource = readFileSync(resolve(process.cwd(), "src/lib/modules/domain/permanent-exemption-logic.ts"), "utf8");
   assert.match(logicSource, /function canManagePermanentExemption[\s\S]*companyRole === "company_owner"/);
   // 抽屉内必须有撤销操作和设置弹窗
   assert.match(modulesSource, /handleConfirmSetPermanent/);

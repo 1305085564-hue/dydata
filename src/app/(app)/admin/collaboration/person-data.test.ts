@@ -19,7 +19,7 @@ import type {
   ContentQualityTopicContext,
   VideoSnapshotMetrics,
 } from "@/lib/collaboration/domain/types";
-import type { PersonDetailData } from "./types";
+import type { PersonDetailData } from "@/lib/collaboration/types";
 
 const personData = {
   userId: "user-1",
