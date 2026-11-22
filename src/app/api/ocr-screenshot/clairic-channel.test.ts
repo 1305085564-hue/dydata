@@ -16,12 +16,16 @@ import type { OcrLogParams } from "./ocr-log";
 const PNG_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-test("CLAIRIC_FIELDS_V2 不含单列 pub_hour / pub_minute，只留 published_at_text", () => {
+test("CLAIRIC_FIELDS_V2 不含单列 pub_hour / pub_minute，且 follower_gain 明确禁止借用收藏量/弹幕量", () => {
   for (const type of ["data", "retention"] as const) {
     assert.equal("pub_hour" in CLAIRIC_FIELDS_V2[type], false);
     assert.equal("pub_minute" in CLAIRIC_FIELDS_V2[type], false);
     assert.ok("published_at_text" in CLAIRIC_FIELDS_V2[type]);
   }
+  const fgInstr = CLAIRIC_FIELDS_V2.data.follower_gain.instructions;
+  assert.match(fgInstr, /返回 null/);
+  assert.match(fgInstr, /收藏量/);
+  assert.match(fgInstr, /弹幕量/);
 });
 
 test("parseClairicPublishedAt 准确解析常见中文/横杠/斜杠时间并按 +08:00 转 UTC", () => {
@@ -135,8 +139,8 @@ test("单项低置信度红线：即使 5 项高分使平均分 ≥ 0.7，1 项 
   assert.equal(badPub.requires_manual_confirmation, true);
 });
 
-test("空值字段单独处理：p_null >= 0.80 不误拦；p_null < 0.80 模棱两可的空值强制转人工", () => {
-  // 高确定度为空（图面确实没入画涨粉量），其余全高置信度 -> confirmed
+test("空值字段单独处理：单缺且高 p_null 不误拦；模棱两可空值或错槽稀疏（命中 < 3 项）强制转人工", () => {
+  // 高确定度为空（图面确实没入画涨粉量），其余 5 项全高置信度 -> confirmed
   const certainNull = convertClairicAnswersToResponse(
     {
       play_count: { value: 32100, confidence: 0.97, p_null: 0.01 },
@@ -166,6 +170,21 @@ test("空值字段单独处理：p_null >= 0.80 不误拦；p_null < 0.80 模棱
   );
   assert.equal(ambiguousNull.slot_status, "pending_confirm");
   assert.equal(ambiguousNull.requires_manual_confirmation, true);
+
+  // 错槽稀疏（如留存图传到数据槽，仅命中 play_count 1 项 < 3）即使高 p_null 也必须 pending_confirm
+  const wrongSlotSparse = convertClairicAnswersToResponse(
+    {
+      play_count: { value: 15000, confidence: 0.99, p_null: 0.01 },
+      likes: { value: null, confidence: 0.99, p_null: 1.0 },
+      comments: { value: null, confidence: 0.99, p_null: 1.0 },
+      shares: { value: null, confidence: 0.99, p_null: 1.0 },
+      favorites: { value: null, confidence: 0.99, p_null: 1.0 },
+      follower_gain: { value: null, confidence: 0.99, p_null: 1.0 },
+    },
+    "data",
+  );
+  assert.equal(wrongSlotSparse.slot_status, "pending_confirm");
+  assert.equal(wrongSlotSparse.requires_manual_confirmation, true);
 });
 
 test("retention 页转换与单项低置信度强制转人工", () => {

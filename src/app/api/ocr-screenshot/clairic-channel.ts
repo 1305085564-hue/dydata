@@ -29,6 +29,8 @@ export const CLAIRIC_CONFIDENCE_HIGH = 0.90;
 export const CLAIRIC_CONFIDENCE_MEDIUM = 0.80;
 export const CLAIRIC_MAX_P_NULL_FOR_PRESENT = 0.20;
 export const CLAIRIC_MIN_P_NULL_FOR_ABSENT = 0.80;
+/** 至少命中 3 项核心数值才允许自动 confirmed；避免错槽上传（如留存图传到数据槽仅命中播放量）被静默放行 */
+export const CLAIRIC_MIN_CORE_FIELDS_FOR_AUTO_CONFIRM = 3;
 
 const PUBLISHED_AT_INSTRUCTIONS =
   "作品发布时间：页面顶部作品卡片里的日期时间（例如 2026年11月19日 18:41 或 2026-11-19 18:57 发布，两种写法都算），或页面明确写有『发布』二字的那行，原样返回。趋势图横轴、观看趋势、粉丝趋势、悬浮提示框里的时间刻度都不是发布时间，绝对不要取。页面没有发布时间就返回 null";
@@ -36,22 +38,67 @@ const VIDEO_TITLE_INSTRUCTIONS = "作品主标题，去掉 #话题；本页没�
 
 export const CLAIRIC_FIELDS_V2: Record<ScreenshotType, Record<string, ClairicFieldSpec>> = {
   data: {
-    play_count: { type: "number", integer: true, instructions: "播放量；若印的是 9.28万 这类带『万』的数，换算成 92800 这样的整数" },
-    likes: { type: "number", integer: true, instructions: "总览页第二格『点赞量』的数值。不要取评论量、收藏量、分享量、弹幕量，也不要取趋势图纵轴刻度" },
-    comments: { type: "number", integer: true, instructions: "评论量，不是弹幕量" },
-    shares: { type: "number", integer: true, instructions: "分享量" },
-    favorites: { type: "number", integer: true, instructions: "总览页第二行中间『收藏量』的数值。不要取点赞量、评论量、分享量、涨粉量" },
-    follower_gain: { type: "number", integer: true, instructions: "页面下方『粉丝』区块第一格『涨粉量』。不要取脱粉量、粉丝播放占比、评论量" },
+    play_count: {
+      type: "number",
+      integer: true,
+      instructions: "播放量；若印的是 9.28万 这类带『万』的数，换算成 92800 这样的整数；本页没有就返回 null",
+    },
+    likes: {
+      type: "number",
+      integer: true,
+      instructions: "总览页第二格『点赞量』的数值。不要取评论量、收藏量、分享量、弹幕量，也不要取趋势图纵轴刻度；本页没有就返回 null",
+    },
+    comments: {
+      type: "number",
+      integer: true,
+      instructions: "评论量，不是弹幕量；本页没有就返回 null",
+    },
+    shares: {
+      type: "number",
+      integer: true,
+      instructions: "分享量；本页没有就返回 null",
+    },
+    favorites: {
+      type: "number",
+      integer: true,
+      instructions: "总览页第二行中间『收藏量』的数值。不要取点赞量、评论量、分享量、涨粉量；本页没有就返回 null",
+    },
+    follower_gain: {
+      type: "number",
+      integer: true,
+      instructions:
+        "明确标有『涨粉量』或『净增粉丝』卡片里的数值（通常在页面下方『粉丝』区块第一格）。若截图中没有出现『涨粉量』这一项，必须返回 null，绝不要用收藏量、弹幕量、评论量、点赞量、分享量、脱粉量或粉丝播放占比代替",
+    },
     video_title: { type: "text", instructions: VIDEO_TITLE_INSTRUCTIONS },
     published_at_text: { type: "text", instructions: PUBLISHED_AT_INSTRUCTIONS },
   },
   retention: {
     video_title: { type: "text", instructions: VIDEO_TITLE_INSTRUCTIONS },
-    avg_play_duration: { type: "number", decimals: 1, instructions: "平均播放时长，只要秒数纯数字，不带『秒』" },
-    avg_play_ratio: { type: "number", decimals: 2, instructions: "平均播放占比，去掉 % 的数字；不是封面点击率、不是粉丝播放占比" },
-    bounce_rate_2s: { type: "number", decimals: 2, instructions: "留存页『2s跳出率』这一格。不要取完播率、5s完播率" },
-    completion_rate_5s: { type: "number", decimals: 2, instructions: "留存页『5s完播率』这一格。不要取完播率、2s跳出率" },
-    completion_rate: { type: "number", decimals: 2, instructions: "留存页『完播率』这一格，不带 5s/2s 前缀。不要取 5s完播率、2s跳出率、封面点击率、平均播放占比" },
+    avg_play_duration: {
+      type: "number",
+      decimals: 1,
+      instructions: "平均播放时长，只要秒数纯数字，不带『秒』；本页没有就返回 null",
+    },
+    avg_play_ratio: {
+      type: "number",
+      decimals: 2,
+      instructions: "平均播放占比，去掉 % 的数字；不是封面点击率、不是粉丝播放占比；本页没有就返回 null",
+    },
+    bounce_rate_2s: {
+      type: "number",
+      decimals: 2,
+      instructions: "留存页『2s跳出率』这一格。不要取完播率、5s完播率；本页没有就返回 null",
+    },
+    completion_rate_5s: {
+      type: "number",
+      decimals: 2,
+      instructions: "留存页『5s完播率』这一格。不要取完播率、2s跳出率；本页没有就返回 null",
+    },
+    completion_rate: {
+      type: "number",
+      decimals: 2,
+      instructions: "留存页『完播率』这一格，不带 5s/2s 前缀。不要取 5s完播率、2s跳出率、封面点击率、平均播放占比；本页没有就返回 null",
+    },
     published_at_text: { type: "text", instructions: PUBLISHED_AT_INSTRUCTIONS },
   },
 };
@@ -255,7 +302,8 @@ export function convertClairicAnswersToResponse(
     const completionRate = evaluateNumericField(answers.completion_rate, { min: 0, max: 100 });
 
     const evaluated = [avgPlayDuration, avgPlayRatio, bounceRate2s, completionRate5s, completionRate];
-    if (evaluated.every((item) => item.value === null)) return buildNoTextFailedResponse("retention");
+    const presentCount = evaluated.filter((item) => item.value !== null).length;
+    if (presentCount === 0) return buildNoTextFailedResponse("retention");
 
     const retentionMetrics: RetentionMetrics = {
       avg_play_duration: avgPlayDuration.value,
@@ -275,7 +323,11 @@ export function convertClairicAnswersToResponse(
       },
       "retention",
     );
-    return evaluated.some((item) => item.alert) || pubAlert
+    const needsConfirm =
+      evaluated.some((item) => item.alert) ||
+      pubAlert ||
+      presentCount < CLAIRIC_MIN_CORE_FIELDS_FOR_AUTO_CONFIRM;
+    return needsConfirm
       ? { ...response, slot_status: "pending_confirm", requires_manual_confirmation: true }
       : response;
   }
@@ -288,7 +340,8 @@ export function convertClairicAnswersToResponse(
   const followerGain = evaluateNumericField(answers.follower_gain, { integer: true });
 
   const evaluated = [playCount, likes, comments, shares, favorites, followerGain];
-  if (evaluated.every((item) => item.value === null) && !videoTitle) return buildNoTextFailedResponse("data");
+  const presentCount = evaluated.filter((item) => item.value !== null).length;
+  if (presentCount === 0 && !videoTitle) return buildNoTextFailedResponse("data");
 
   const parsedData: ParsedOcrResult = {
     play_count: playCount.value,
@@ -311,7 +364,11 @@ export function convertClairicAnswersToResponse(
 
   const confidenceScore = computeConfidenceScore(Object.values(parsedData.confidence));
   const response = buildDataScreenshotResponse(parsedData, "data", confidenceScore);
-  return evaluated.some((item) => item.alert) || pubAlert
+  const needsConfirm =
+    evaluated.some((item) => item.alert) ||
+    pubAlert ||
+    presentCount < CLAIRIC_MIN_CORE_FIELDS_FOR_AUTO_CONFIRM;
+  return needsConfirm
     ? { ...response, slot_status: "pending_confirm", requires_manual_confirmation: true }
     : response;
 }
