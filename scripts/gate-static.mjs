@@ -52,26 +52,35 @@ if (hasMigrationChanges()) {
   console.log("[gate:static] 推送范围没有迁移改动，跳过本机重放");
 }
 
+// 一步可以跑多条命令（例如第 7 步：源码文字测试 + 统一禁用清单），步数不变、不另开第 10 步。
 const steps = [
-  ["2/9 类型检查", npxCommand, ["tsc", "--noEmit", "--pretty", "false"]],
-  ["3/9 单元测试（src 与 scripts 全部测试）", npmCommand, ["test", "--silent"]],
-  ["4/9 代码规范与警告上限检查", npmCommand, ["run", "lint", "--silent"]],
-  ["5/9 设计令牌门禁", npmCommand, ["run", "gate:design", "--silent"]],
-  ["6/9 可维护性门禁（对比 origin/main）", "node", ["scripts/maintainability-gate.mjs", "--base=origin/main"]],
-  ["7/9 源码文字测试门禁", "node", ["scripts/source-text-test-gate.mjs"]],
-  ["8/9 文档体量与日志归档门禁", "node", ["scripts/doc-size-check.mjs"]],
-  ["9/9 新增接口失败路径门禁（对比 origin/main）", "node", ["scripts/api-failure-path-gate.mjs", "--base=origin/main"]],
+  ["2/9 类型检查", [[npxCommand, ["tsc", "--noEmit", "--pretty", "false"]]]],
+  ["3/9 单元测试（src 与 scripts 全部测试）", [[npmCommand, ["test", "--silent"]]]],
+  ["4/9 代码规范与警告上限检查", [[npmCommand, ["run", "lint", "--silent"]]]],
+  ["5/9 设计令牌门禁", [[npmCommand, ["run", "gate:design", "--silent"]]]],
+  ["6/9 可维护性门禁（对比 origin/main，含北京时间唯一出处）", [["node", ["scripts/maintainability-gate.mjs", "--base=origin/main"]]]],
+  [
+    "7/9 源码文字测试与统一禁用清单门禁（对比 origin/main）",
+    [
+      ["node", ["scripts/source-text-test-gate.mjs"]],
+      ["node", ["scripts/forbidden-list-gate.mjs", "--base=origin/main"]],
+    ],
+  ],
+  ["8/9 文档体量与日志归档门禁", [["node", ["scripts/doc-size-check.mjs"]]]],
+  ["9/9 新增接口失败路径门禁（对比 origin/main）", [["node", ["scripts/api-failure-path-gate.mjs", "--base=origin/main"]]]],
 ];
 
-for (const [label, command, args] of steps) {
+for (const [label, commands] of steps) {
   console.log(`[gate:static] ${label}`);
-  const result = spawnSync(command, args, { stdio: "inherit" });
-  if (result.error) throw result.error;
-  if ((result.status ?? 1) !== 0) {
-    if (args[0] === "run" && args[1] === "lint") {
-      console.error("[gate:static] 代码规范检查未通过或警告数超过上限：请按上面文件路径和规则修掉新增报错/警告，不要调高 --max-warnings。");
+  for (const [command, args] of commands) {
+    const result = spawnSync(command, args, { stdio: "inherit" });
+    if (result.error) throw result.error;
+    if ((result.status ?? 1) !== 0) {
+      if (args[0] === "run" && args[1] === "lint") {
+        console.error("[gate:static] 代码规范检查未通过或警告数超过上限：请按上面文件路径和规则修掉新增报错/警告，不要调高 --max-warnings。");
+      }
+      process.exit(result.status ?? 1);
     }
-    process.exit(result.status ?? 1);
   }
 }
 

@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import {
   SCREENSHOT_MAX_AUTO_RETRY,
   SCREENSHOT_RETRY_DELAY_MS,
+  classifyScreenshotStatus,
   initialScreenshotImageState,
   onScreenshotError,
   onScreenshotLoaded,
   onScreenshotManualRetry,
+  probeScreenshotFailureReason,
 } from "./screenshot-image-state";
 
 test("初始态是 loading，未消耗重试次数", () => {
@@ -55,4 +57,34 @@ test("用户手动重试后可以重新走一轮自动重试", () => {
 test("自动重试次数与延迟是契约值：改成多次或长时间等待都会让占位图闪现/卡顿", () => {
   assert.equal(SCREENSHOT_MAX_AUTO_RETRY, 1);
   assert.equal(SCREENSHOT_RETRY_DELAY_MS, 400);
+});
+
+test("只有明确的 404 才算原图已丢失，其他状态码都算暂时读不到", () => {
+  assert.equal(classifyScreenshotStatus(404), "missing");
+  for (const status of [200, 401, 403, 502, 503, 500]) {
+    assert.equal(classifyScreenshotStatus(status), "unavailable", String(status));
+  }
+});
+
+test("探测网络异常或请求本身失败时，不冒充文件缺失", async () => {
+  const thrown = await probeScreenshotFailureReason("/api/submission-screenshots/file?path=a", async () => {
+    throw new Error("network down");
+  });
+  assert.equal(thrown, "unavailable");
+});
+
+test("探测到 404 时返回原图已丢失，并放掉响应体不占连接", async () => {
+  let canceled = false;
+  const fakeResponse = {
+    status: 404,
+    body: { cancel: async () => { canceled = true; } },
+  } as unknown as Response;
+  const reason = await probeScreenshotFailureReason("/api/submission-screenshots/file?path=a", async () => fakeResponse);
+  assert.equal(reason, "missing");
+  assert.equal(canceled, true);
+});
+
+test("探测到服务异常时返回暂时读不到（保留重试入口）", async () => {
+  const reason = await probeScreenshotFailureReason("/api/submission-screenshots/file?path=a", async () => new Response(null, { status: 502 }));
+  assert.equal(reason, "unavailable");
 });

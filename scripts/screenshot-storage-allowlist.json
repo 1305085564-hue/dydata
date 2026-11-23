@@ -1,0 +1,29 @@
+{
+  "_note": "截图存储白名单：允许直接碰 Supabase Storage（截图桶）的唯一入口与审计脚本。只准减不准增；确需新增必须在条目里写 reason，否则 scripts/forbidden-list-gate.mjs 拦下。",
+  "production": [
+    {
+      "path": "src/lib/screenshot-storage.ts",
+      "reason": "唯一截图存储适配器：上传与读取都从这里走，其他代码只准调它"
+    }
+  ],
+  "scripts": [
+    {
+      "path": "scripts/audit/verify-screenshot-coverage.mjs",
+      "reason": "只读审计：核对线上截图与登记记录是否对得上"
+    },
+    {
+      "path": "scripts/audit/screenshot-storage-s0.mjs",
+      "reason": "只读摸底：迁移前统计旧桶文件与大小"
+    },
+    {
+      "path": "scripts/migrate-screenshots-to-cos.mjs",
+      "reason": "一次性搬运：把旧桶图片复制到上海 COS（只复制不删除）"
+    }
+  ],
+  "migrations": [
+    {
+      "path": "supabase/migrations/20260718103000_private_submission_screenshots.sql",
+      "reason": "历史迁移账本：已经执行过，里面的 storage.objects 语句是归档事实，不再改"
+    }
+  ]
+}

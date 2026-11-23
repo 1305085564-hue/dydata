@@ -104,7 +104,8 @@ export async function buildSubmissionScreenshotFileResponse(
       } catch { /* 观测失败不能改变读图响应。 */ }
     }
     const response = NextResponse.json({
-      error: storage.notFound ? "截图不存在或暂时无法读取" : "截图存储暂时不可用",
+      // 404 是真丢了（2026-05 的 384 张原图本体不存在），不能写成「暂时无法读取」让人以为还能重试。
+      error: storage.notFound ? "原图已丢失" : "截图存储暂时不可用",
       error_code: storage.notFound ? "SCREENSHOT_NOT_FOUND" : "SCREENSHOT_STORAGE_UNAVAILABLE",
       requestId,
     }, { status: storage.notFound ? 404 : 502 });

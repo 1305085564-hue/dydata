@@ -333,4 +333,9 @@ test("明确缺失仍返回404且不进入系统故障上报，不以自动恢�
   assert.equal(response.headers.get("cache-control"), "private, no-store");
   assert.equal(response.headers.get("retry-after"), null);
   assert.equal(reports, 0);
+  // 原图本体已不存在（2026-05 的 384 张），提示要写实话，不能暗示还能重试。
+  const body = await response.json();
+  assert.equal(body.error, "原图已丢失");
+  assert.equal(body.error_code, "SCREENSHOT_NOT_FOUND");
+  assert.doesNotMatch(JSON.stringify(body), /暂时|重试/);
 });
