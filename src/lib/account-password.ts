@@ -1,3 +1,5 @@
+import { getApiFailureMessage } from "@/lib/api-failure-message";
+
 export type AccountPasswordFormInput = {
   currentPassword: string;
   newPassword: string;
@@ -12,10 +14,7 @@ export function validateAccountPasswordForm(input: AccountPasswordFormInput) {
   return null;
 }
 
-export type AccountPasswordPost = (input: Pick<AccountPasswordFormInput, "currentPassword" | "newPassword">) => Promise<{
-  ok: boolean;
-  json: () => Promise<unknown>;
-}>;
+export type AccountPasswordPost = (input: Pick<AccountPasswordFormInput, "currentPassword" | "newPassword">) => Promise<Response>;
 
 export async function submitAccountPasswordForm(input: AccountPasswordFormInput, post: AccountPasswordPost) {
   const validationError = validateAccountPasswordForm(input);
@@ -23,22 +22,12 @@ export async function submitAccountPasswordForm(input: AccountPasswordFormInput,
 
   try {
     const response = await post({ currentPassword: input.currentPassword, newPassword: input.newPassword });
-    let body: unknown = null;
-    try {
-      body = await response.json();
-    } catch {
-      body = null;
-    }
     if (!response.ok) {
-      const code = body && typeof body === "object" && !Array.isArray(body)
-        ? (body as Record<string, unknown>).code
-        : null;
-      const error = code === "invalid_old_password"
-        ? "当前密码不正确"
-        : code === "account_disabled" || code === "user_not_found"
-          ? "当前账号无法修改密码，请联系管理员"
-          : "修改密码失败，请检查填写内容后重试";
-      return { ok: false as const, error, input };
+      return {
+        ok: false as const,
+        error: await getApiFailureMessage(response, "修改密码失败"),
+        input,
+      };
     }
     return {
       ok: true as const,
@@ -46,6 +35,10 @@ export async function submitAccountPasswordForm(input: AccountPasswordFormInput,
       input: { currentPassword: "", newPassword: "", confirmPassword: "" },
     };
   } catch {
-    return { ok: false as const, error: "修改密码失败，请稍后重试", input };
+    return {
+      ok: false as const,
+      error: await getApiFailureMessage(undefined, "修改密码失败"),
+      input,
+    };
   }
 }
