@@ -1,5 +1,6 @@
 type UserReadback = { user: unknown | null; error?: unknown | null };
 type StatusWriteback = { data: unknown; error: unknown | null };
+type PasswordWriteback = { data: unknown; error: unknown | null };
 
 export function mapSupabaseBanDuration(value: unknown): 1 | 3 | null {
   if (value === "none") return 1;
@@ -15,6 +16,7 @@ function managementError(message: string, code: string, status = 400) {
 // remains in member-lifecycle-service; this writer grants no new browser power.
 export function createCloudBaseUserManagement(dependencies: {
   writeUserStatus: (subject: string, status: 1 | 3) => Promise<StatusWriteback>;
+  writeUserPassword?: (subject: string, password: string) => Promise<PasswordWriteback>;
   getUserById: (subject: string) => Promise<UserReadback>;
   readBackAttempts?: number;
   readBackIntervalMs?: number;
@@ -29,8 +31,53 @@ export function createCloudBaseUserManagement(dependencies: {
       return { data: { user: null }, error: managementError("CloudBase 仅支持用户冻结或解冻", "unsupported_operation") };
     }
     const keys = Object.keys(attributes);
-    if (keys.length !== 1 || keys[0] !== "ban_duration") {
-      return { data: { user: null }, error: managementError("CloudBase 暂不支持修改密码、邮箱或员工 Auth 资料", "unsupported_operation") };
+    if (keys.length !== 1) {
+      return { data: { user: null }, error: managementError("CloudBase 一次只支持修改一个用户属性", "unsupported_operation") };
+    }
+
+    if (keys[0] === "password") {
+      const password = (attributes as { password?: unknown }).password;
+      if (typeof password !== "string") {
+        return { data: { user: null }, error: managementError("密码格式不正确", "invalid_password") };
+      }
+      const normalizedPassword = password.trim();
+      if (normalizedPassword.length < 6 || normalizedPassword.length > 128 || new TextEncoder().encode(normalizedPassword).length > 72) {
+        return { data: { user: null }, error: managementError("密码长度应为 6-128 位", "invalid_password") };
+      }
+
+      let written: PasswordWriteback;
+      try {
+        if (!dependencies.writeUserPassword) {
+          return { data: { user: null }, error: managementError("CloudBase 密码修改失败", "management_failed", 502) };
+        }
+        written = await dependencies.writeUserPassword(userId, normalizedPassword);
+      } catch {
+        return { data: { user: null }, error: managementError("CloudBase 密码修改失败", "management_failed", 502) };
+      }
+      const state = written.data;
+      const stateRecord = state && typeof state === "object" && !Array.isArray(state)
+        ? state as Record<string, unknown>
+        : null;
+      if (written.error || !stateRecord) {
+        return { data: { user: null }, error: managementError("CloudBase 密码修改失败", "management_failed", 502) };
+      }
+      if (stateRecord.ok === true && stateRecord.subject === userId) {
+        return { data: { user: { id: userId } }, error: null };
+      }
+      const code = typeof stateRecord.code === "string" ? stateRecord.code : "management_rejected";
+      const messages: Record<string, string> = {
+        invalid_password: "密码长度应为 6-128 位",
+        account_disabled: "账号已禁用，无法修改密码",
+        user_not_found: "用户不存在",
+      };
+      return {
+        data: { user: null },
+        error: managementError(messages[code] ?? "CloudBase 密码修改未确认成功", code),
+      };
+    }
+
+    if (keys[0] !== "ban_duration") {
+      return { data: { user: null }, error: managementError("CloudBase 暂不支持修改邮箱或员工 Auth 资料", "unsupported_operation") };
     }
     const userStatus = mapSupabaseBanDuration((attributes as { ban_duration?: unknown }).ban_duration);
     if (userStatus === null) {

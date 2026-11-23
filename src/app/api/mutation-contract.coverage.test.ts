@@ -9,6 +9,7 @@ const API_ROOT = path.resolve(process.cwd(), "src/app/api");
 // only discovers route files and their exported HTTP method shape; the contract
 // behavior tests call the exported handlers directly.
 const CONTRACT_ROUTES = [
+  "account/password/route.ts",
   "admin/ai-config/check-dependencies/route.ts",
   "admin/ai-config/route.ts",
   "admin/ai-config/sync-models/route.ts",

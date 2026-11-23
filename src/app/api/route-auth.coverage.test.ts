@@ -34,6 +34,7 @@ const GUARDS = [
 
 /** 路由本身很薄、鉴权写在委托文件里：登记委托文件，守卫去那里找。 */
 const DELEGATES: Record<string, string> = {
+  "account/password/route.ts": "account/password/route-core.ts",
   "admin/ai-config/ocr-logs/route.ts": "admin/ai-config/ocr-logs/route-core.ts",
   "admin/collaboration/attribution/route.ts": "admin/collaboration/handlers.ts",
   "admin/collaboration/person/route.ts": "admin/collaboration/handlers.ts",

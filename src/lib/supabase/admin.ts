@@ -18,6 +18,11 @@ export function createAdminClient() {
         p_subject: subject, p_status: status, p_project: cloudBaseEnvironmentId(),
       });
     },
+    async writeUserPassword(subject, password) {
+      return client.rpc("cloudbase_set_auth_user_password", {
+        p_subject: subject, p_password: password, p_project: cloudBaseEnvironmentId(),
+      });
+    },
     async getUserById(subject) {
       const { data, error } = await authAdmin.getUserById(subject);
       return { user: data.user, error };

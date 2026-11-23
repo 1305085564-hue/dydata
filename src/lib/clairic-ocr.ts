@@ -23,7 +23,7 @@ export const CLAIRIC_DECODED_BYTE_LIMIT = 4 * 1024 * 1024;
 export const CLAIRIC_COMPRESS_THRESHOLD_BYTES = Math.floor(3.8 * 1024 * 1024);
 export const CLAIRIC_MAX_IMAGE_EDGE_PX = 2048;
 export const CLAIRIC_JPEG_QUALITY = 90;
-export const DEFAULT_CLAIRIC_TIMEOUT_MS = 5_000;
+export const DEFAULT_CLAIRIC_TIMEOUT_MS = 9_000;
 
 export type ClairicOcrErrorType =
   | "CONFIG"

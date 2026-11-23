@@ -7,7 +7,7 @@ import { mapAiErrorKind, recordAiCallAttempt } from "@/lib/ai/call-attempt-recor
 import { resolveAiFeatureAccess } from "@/lib/ai/feature-catalog";
 import { sanitizeProviderErrorMessage } from "@/lib/ai/provider-health";
 import { normalizeProviderProtocol, type AiProviderProtocol } from "@/lib/ai/provider-protocols";
-import { CLAIRIC_MODEL_ID, ClairicOcrError, type ClairicUsage } from "@/lib/clairic-ocr";
+import { CLAIRIC_MODEL_ID, ClairicOcrError, DEFAULT_CLAIRIC_TIMEOUT_MS, type ClairicUsage } from "@/lib/clairic-ocr";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { runClairicOcrAttempt } from "./clairic-channel";
 import { hasJsonObject, parseOcrResponse, type OcrErrorCode, type ParsedScreenshotResponse, type ScreenshotType } from "./ocr-contract";
@@ -15,7 +15,7 @@ import type { OcrFallbackAttempt, OcrFallbackDetail } from "./ocr-log";
 import { buildPromptByType } from "./ocr-prompts";
 
 export const OCR_TOTAL_TIMEOUT_MS = 60_000;
-export const CLAIRIC_ATTEMPT_TIMEOUT_MS = 5_000;
+export const CLAIRIC_ATTEMPT_TIMEOUT_MS = DEFAULT_CLAIRIC_TIMEOUT_MS;
 export const VISION_ATTEMPT_TIMEOUT_MS = 15_000;
 const MAX_VISION_IMAGE_DIMENSION = 2048;
 

@@ -8,6 +8,7 @@ import {
   CLAIRIC_COMPRESS_THRESHOLD_BYTES,
   CLAIRIC_MAX_IMAGE_EDGE_PX,
   CLAIRIC_MODEL_ID,
+  DEFAULT_CLAIRIC_TIMEOUT_MS,
   ClairicOcrError,
   callClairicOcr,
   prepareClairicImage,
@@ -18,6 +19,10 @@ const TEST_CREDS = {
   baseUrl: "https://api.cloudflare.com/client/v4/accounts/acc-test/ai/run",
   apiKey: "secret-token-xyz",
 };
+
+test("Clairic 默认单次超时为 9 秒", () => {
+  assert.equal(DEFAULT_CLAIRIC_TIMEOUT_MS, 9_000);
+});
 
 test("显式凭据缺 baseUrl 或 apiKey 时抛出 CONFIG 错误，且绝不暗中读取环境变量", async (t) => {
   const prevAccount = process.env.CLOUDFLARE_ACCOUNT_ID;

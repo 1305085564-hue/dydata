@@ -53,13 +53,50 @@ test("readback of another subject is a hard failure", async () => {
   assert.equal((await management.updateUserById("subject", { ban_duration: "876000h" })).error?.code, "readback_subject_mismatch");
 });
 
+test("password update accepts exactly one password field and requires a confirmed RPC result", async () => {
+  const writes: Array<{ subject: string; password: string }> = [];
+  let reads = 0;
+  const management = createCloudBaseUserManagement({
+    async writeUserStatus() { throw new Error("unexpected status write"); },
+    async writeUserPassword(subject, password) {
+      writes.push({ subject, password });
+      return { data: { ok: true, subject }, error: null };
+    },
+    async getUserById() { reads += 1; return { user: null }; },
+  });
+  const result = await management.updateUserById("subject", { password: "  new-pass  " });
+  assert.equal(result.error, null);
+  assert.deepEqual(result.data.user, { id: "subject" });
+  assert.deepEqual(writes, [{ subject: "subject", password: "new-pass" }]);
+  assert.equal(reads, 0);
+});
+
+test("password RPC failures and rejected states stay redacted", async () => {
+  for (const write of [
+    async () => ({ data: null, error: new Error("secret-password-and-hash") }),
+    async () => ({ data: { ok: false, code: "account_disabled" }, error: null }),
+    async () => ({ data: { ok: true, subject: "other" }, error: null }),
+    async () => { throw new Error("secret-password-and-hash"); },
+  ]) {
+    const management = createCloudBaseUserManagement({
+      writeUserStatus: ok,
+      writeUserPassword: write,
+      async getUserById() { return { user: null }; },
+    });
+    const result = await management.updateUserById("subject", { password: "new-pass" });
+    assert.equal(result.data.user, null);
+    assert.ok(result.error);
+    assert.doesNotMatch(result.error.message, /secret-password-and-hash/);
+  }
+});
+
 test("invalid fields and durations never invoke the writer or readback", async () => {
   let calls = 0;
   const management = createCloudBaseUserManagement({
     async writeUserStatus() { calls++; throw Error("must not run"); },
     async getUserById() { calls++; throw Error("must not run"); },
   });
-  for (const attributes of [{ password: "unused" }, { user_metadata: {} }, { ban_duration: "none", email: "other" }, null, []]) {
+  for (const attributes of [{ email: "other" }, { password: "new-pass", email: "other" }, { password: "unused", custom_field: true }, { user_metadata: {} }, { ban_duration: "none", email: "other" }, null, []]) {
     assert.equal((await management.updateUserById("subject", attributes)).error?.code, "unsupported_operation");
   }
   assert.equal((await management.updateUserById("subject", { ban_duration: "forever" })).error?.code, "invalid_ban_duration");

@@ -17,6 +17,7 @@ import {
 } from "@/lib/account-actions";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { getRoleLabel } from "@/lib/role-label";
+import { submitAccountPasswordForm } from "@/lib/account-password";
 
 interface Account {
   id: string;
@@ -70,6 +71,12 @@ export function PremiumSettingsModal({
 
   const [profileError, setProfileError] = useState("");
   const [addAccountError, setAddAccountError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordPending, setPasswordPending] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -150,6 +157,27 @@ export function PremiumSettingsModal({
         }, 1200);
       }
     });
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+    setPasswordPending(true);
+    const result = await submitAccountPasswordForm(
+      { currentPassword, newPassword, confirmPassword },
+      (payload) => fetch("/api/account/password", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      }),
+    );
+    setPasswordPending(false);
+    setCurrentPassword(result.input.currentPassword);
+    setNewPassword(result.input.newPassword);
+    setConfirmPassword(result.input.confirmPassword);
+    setPasswordError(result.error);
+    if (result.ok) setPasswordSuccess("密码已修改");
   };
 
   const handleAddAccount = () => {
@@ -424,6 +452,61 @@ export function PremiumSettingsModal({
                         </p>
                       </div>
                     </div>
+                  </div>
+                </form>
+
+                <form onSubmit={handlePasswordSubmit} className="space-y-3 border-t border-[#E2E2DF]/60 pt-4">
+                  <div>
+                    <ItemHeading as="h3">修改密码</ItemHeading>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1 text-[12px] text-[#78716C] sm:col-span-2">
+                      当前密码
+                      <input
+                        type="password"
+                        autoComplete="current-password"
+                        value={currentPassword}
+                        onChange={(event) => { setCurrentPassword(event.target.value); setPasswordError(""); setPasswordSuccess(""); }}
+                        maxLength={128}
+                        className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#141413] outline-none focus:border-[#78716C]"
+                        required
+                        disabled={passwordPending}
+                      />
+                    </label>
+                    <label className="space-y-1 text-[12px] text-[#78716C]">
+                      新密码
+                      <input
+                        type="password"
+                        autoComplete="new-password"
+                        value={newPassword}
+                        onChange={(event) => { setNewPassword(event.target.value); setPasswordError(""); setPasswordSuccess(""); }}
+                        maxLength={128}
+                        className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#141413] outline-none focus:border-[#78716C]"
+                        required
+                        disabled={passwordPending}
+                      />
+                    </label>
+                    <label className="space-y-1 text-[12px] text-[#78716C]">
+                      确认新密码
+                      <input
+                        type="password"
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(event) => { setConfirmPassword(event.target.value); setPasswordError(""); setPasswordSuccess(""); }}
+                        maxLength={128}
+                        className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#141413] outline-none focus:border-[#78716C]"
+                        required
+                        disabled={passwordPending}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p aria-live="polite" className={cn("text-[12px]", passwordError ? "text-status-danger" : "text-status-success")}>
+                      {passwordError || passwordSuccess}
+                    </p>
+                    <Button type="submit" size="sm" disabled={passwordPending}>
+                      {passwordPending ? "提交中..." : "修改密码"}
+                    </Button>
                   </div>
                 </form>
               </motion.div>

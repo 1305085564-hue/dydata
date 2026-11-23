@@ -3,8 +3,8 @@ import test from "node:test";
 
 import { AiChannelError } from "@/lib/ai/client";
 import type { ChannelConfig, FeatureConfig } from "@/lib/ai/client-routing";
-import { CLAIRIC_MODEL_ID, ClairicOcrError } from "@/lib/clairic-ocr";
-import { OcrRunnerError, runScreenshotOcr } from "./ocr-runner";
+import { CLAIRIC_MODEL_ID, ClairicOcrError, DEFAULT_CLAIRIC_TIMEOUT_MS } from "@/lib/clairic-ocr";
+import { CLAIRIC_ATTEMPT_TIMEOUT_MS, OcrRunnerError, runScreenshotOcr } from "./ocr-runner";
 
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
@@ -50,6 +50,11 @@ const DEFAULT_FEATURE: FeatureConfig = {
   isEnabled: true,
   lifecycleState: "active",
 };
+
+test("OCR runner 引用统一的 Clairic 9 秒预算", () => {
+  assert.equal(CLAIRIC_ATTEMPT_TIMEOUT_MS, DEFAULT_CLAIRIC_TIMEOUT_MS);
+  assert.equal(CLAIRIC_ATTEMPT_TIMEOUT_MS, 9_000);
+});
 
 test("CF账号1 429 自动记录冷却并无缝切 CF账号2 成功，台账累计耗时且拆解不含密钥", async () => {
   const cf1 = makeClairicChannel("cf1", "CF账号1");
@@ -162,7 +167,7 @@ test("全部 Clairic 不可用时无缝回退到全局默认视觉模型完成�
       normalizeVisionDataUrl: async (url) => url,
       runClairicAttempt: async () => {
         clock += 500;
-        throw new ClairicOcrError("Cloudflare Clairic 请求超时（5000ms）", "TIMEOUT");
+        throw new ClairicOcrError("Cloudflare Clairic 请求超时（9000ms）", "TIMEOUT");
       },
       sendToChannel: async (_channel, options) => {
         clock += 1200;
