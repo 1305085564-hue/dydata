@@ -78,15 +78,17 @@ test("admin auth reads CloudBase auth projections only and rejects unsupported w
     fetcher: async (input) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
       const request = input instanceof Request ? await input.clone().json() : {};
-      if (url.pathname.endsWith("/rpc/cloudbase_auth_user_by_subject")) return Response.json({ id: request.p_subject, email: "team@example.com" });
-      if (url.pathname.endsWith("/rpc/cloudbase_auth_users_page")) return Response.json({ users: [{ id: "u1" }], total: 1, page: 1, per_page: 50 });
+      if (url.pathname.endsWith("/rpc/cloudbase_auth_user_by_subject")) return Response.json({ id: request.p_subject, email: "team@example.com", last_sign_in_at: "2026-11-23T12:34:56Z" });
+      if (url.pathname.endsWith("/rpc/cloudbase_auth_users_page")) return Response.json({ users: [{ id: "u1", last_sign_in_at: null }], total: 1, page: 1, per_page: 50 });
       throw new Error(`Unexpected RPC ${url.pathname}`);
     },
   });
   const byId = await client.auth.admin.getUserById("stable-sub");
   assert.equal(byId.data.user?.id, "stable-sub");
+  assert.equal(byId.data.user?.last_sign_in_at, "2026-11-23T12:34:56Z");
   const page = await client.auth.admin.listUsers({ page: 1, perPage: 50 });
   assert.equal(page.data.users[0].id, "u1");
+  assert.equal(page.data.users[0].last_sign_in_at, null);
   const write = await client.auth.admin.deleteUser("stable-sub");
   assert.equal(write.error?.code, "unsupported_operation");
   delete process.env.CLOUDBASE_SERVICE_API_KEY;

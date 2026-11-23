@@ -40,7 +40,8 @@ COPY --from=builder --chown=node:node /app/.next ./.next
 COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=node:node /app/scripts/server-entrypoint.mjs ./scripts/server-entrypoint.mjs
 
 USER node
 EXPOSE 3000
-CMD ["node", "node_modules/next/dist/bin/next", "start"]
+CMD ["node", "scripts/server-entrypoint.mjs", "--drain-ms=8000"]
