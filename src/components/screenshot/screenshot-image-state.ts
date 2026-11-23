@@ -5,7 +5,7 @@
  * 偶发 502 都会触发。若第一次失败就直接判定「截图无法显示」，会把一张好图
  * 说成坏图——这比裂图更糟。所以先无感重试一次，第二次仍失败才降级。
  */
-export type ScreenshotImageStatus = "loading" | "retrying" | "failed";
+export type ScreenshotImageStatus = "loading" | "retrying" | "probing" | "failed";
 
 export interface ScreenshotImageState {
   /** 已经用掉的自动重试次数 */
@@ -23,13 +23,14 @@ export const initialScreenshotImageState: ScreenshotImageState = {
 
 export type ScreenshotErrorDecision = {
   state: ScreenshotImageState;
-  /** true 表示还要排一次延时重试，false 表示已经放到占位图 */
+  /** true 表示还要排一次延时重试，false 表示先探测最终失败原因 */
   retry: boolean;
 };
 
 export function onScreenshotError(state: ScreenshotImageState): ScreenshotErrorDecision {
   if (state.attempts >= SCREENSHOT_MAX_AUTO_RETRY) {
-    return { state: { attempts: state.attempts, status: "failed" }, retry: false };
+    // 终次失败后先探测响应状态码。探测完成前不能渲染默认的「点击重试」占位。
+    return { state: { attempts: state.attempts, status: "probing" }, retry: false };
   }
   return { state: { attempts: state.attempts + 1, status: "retrying" }, retry: true };
 }
@@ -41,6 +42,16 @@ export function onScreenshotLoaded(): ScreenshotImageState {
 /** 占位态下用户主动点「点击重试」，重置为可再次尝试的初始态 */
 export function onScreenshotManualRetry(): ScreenshotImageState {
   return initialScreenshotImageState;
+}
+
+export function shouldRenderScreenshotPlaceholder(status: ScreenshotImageStatus) {
+  return status === "failed";
+}
+
+export function onScreenshotFailureProbed(
+  reason: ScreenshotFailureReason,
+): { status: "failed"; reason: ScreenshotFailureReason } {
+  return { status: "failed", reason };
 }
 
 /**

@@ -15,8 +15,10 @@ import { cn } from "@/lib/utils";
 import { createScreenshotRecovery } from "./screenshot-recovery";
 import {
   SCREENSHOT_RETRY_DELAY_MS,
+  onScreenshotFailureProbed,
   onScreenshotError,
   probeScreenshotFailureReason,
+  shouldRenderScreenshotPlaceholder,
   type ScreenshotFailureReason,
   type ScreenshotImageStatus,
 } from "./screenshot-image-state";
@@ -161,12 +163,14 @@ export function ScreenshotImage({
 
     if (!decision.retry) {
       setStatus(decision.state.status);
-      recovery.current?.failed();
-      // 只有明确的 404 才说「原图已丢失」；其余按暂时读不到处理，保留重试入口。
+      // 只有明确的 404 才说「原图已丢失」；在探测完成前保持隐藏图片，避免先闪出默认重试占位。
       const probing = src;
       void probeScreenshotFailureReason(probing).then((next) => {
         if (srcRef.current !== probing) return;
-        setReason(next);
+        const resolved = onScreenshotFailureProbed(next);
+        setReason(resolved.reason);
+        setStatus(resolved.status);
+        if (next === "unavailable") recovery.current?.failed();
       });
       return;
     }
@@ -241,7 +245,7 @@ export function ScreenshotImage({
     [handleManualRetry]
   );
 
-  if (status === "failed") {
+  if (shouldRenderScreenshotPlaceholder(status)) {
     return (
       <ScreenshotPlaceholder
         alt={alt}
@@ -260,7 +264,7 @@ export function ScreenshotImage({
       key={renderKey}
       src={src}
       alt={alt}
-      className={cn(className, status === "retrying" && "opacity-0")}
+      className={cn(className, (status === "retrying" || status === "probing") && "opacity-0")}
       onLoad={handleLoad}
       onError={(event) => {
         handleError();

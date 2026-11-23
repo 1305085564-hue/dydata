@@ -7,9 +7,11 @@ import {
   classifyScreenshotStatus,
   initialScreenshotImageState,
   onScreenshotError,
+  onScreenshotFailureProbed,
   onScreenshotLoaded,
   onScreenshotManualRetry,
   probeScreenshotFailureReason,
+  shouldRenderScreenshotPlaceholder,
 } from "./screenshot-image-state";
 
 test("初始态是 loading，未消耗重试次数", () => {
@@ -24,19 +26,22 @@ test("第一次失败只进入 retrying，不降级为占位图", () => {
   assert.equal(decision.state.attempts, 1);
 });
 
-test("第二次失败才降级为 failed（避免网络抖动被误报成截图缺失）", () => {
+test("第二次失败先进入探测态，不闪出默认重试占位", () => {
   const first = onScreenshotError(initialScreenshotImageState);
   const second = onScreenshotError(first.state);
   assert.equal(second.retry, false);
-  assert.equal(second.state.status, "failed");
+  assert.equal(second.state.status, "probing");
   assert.equal(second.state.attempts, 1);
+  assert.equal(shouldRenderScreenshotPlaceholder(second.state.status), false);
+  assert.deepEqual(onScreenshotFailureProbed("missing"), { status: "failed", reason: "missing" });
+  assert.equal(shouldRenderScreenshotPlaceholder("failed"), true);
 });
 
 test("失败态继续收到 error 不会再触发重试", () => {
   const failed = onScreenshotError(onScreenshotError(initialScreenshotImageState).state);
   const again = onScreenshotError(failed.state);
   assert.equal(again.retry, false);
-  assert.equal(again.state.status, "failed");
+  assert.equal(again.state.status, "probing");
 });
 
 test("加载成功后回到初始态，计数清零", () => {
@@ -87,4 +92,9 @@ test("探测到 404 时返回原图已丢失，并放掉响应体不占连接", 
 test("探测到服务异常时返回暂时读不到（保留重试入口）", async () => {
   const reason = await probeScreenshotFailureReason("/api/submission-screenshots/file?path=a", async () => new Response(null, { status: 502 }));
   assert.equal(reason, "unavailable");
+});
+
+test("探测到 5xx 时最终进入可重试占位态", async () => {
+  const reason = await probeScreenshotFailureReason("/api/submission-screenshots/file?path=a", async () => new Response(null, { status: 500 }));
+  assert.deepEqual(onScreenshotFailureProbed(reason), { status: "failed", reason: "unavailable" });
 });
