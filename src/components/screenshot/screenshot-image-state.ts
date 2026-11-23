@@ -42,3 +42,31 @@ export function onScreenshotLoaded(): ScreenshotImageState {
 export function onScreenshotManualRetry(): ScreenshotImageState {
   return initialScreenshotImageState;
 }
+
+/**
+ * 占位时到底该说什么：图真的没了，还是这次没读到。
+ *
+ * `<img onError>` 分不清这两种——404 和断网、502 都只是一个 error 事件。
+ * 所以失败后再向同一地址问一次状态码：只有明确的 404 才说「原图已丢失」，
+ * 其余（超时、5xx、请求本身失败）都按「暂时读不到」处理，保留重试入口。
+ * 2026-05 的 384 张原图本体确实已不存在，写成「暂时无法读取」会让人一直重试。
+ */
+export type ScreenshotFailureReason = "missing" | "unavailable";
+
+export function classifyScreenshotStatus(status: number | null): ScreenshotFailureReason {
+  return status === 404 ? "missing" : "unavailable";
+}
+
+/** 失败判定用的状态码探测：网络异常一律算「暂时读不到」，不冒充文件缺失。 */
+export async function probeScreenshotFailureReason(
+  src: string,
+  request: (input: string, init?: RequestInit) => Promise<Response> = fetch,
+): Promise<ScreenshotFailureReason> {
+  try {
+    const response = await request(src, { cache: "no-store" });
+    await response.body?.cancel().catch(() => undefined);
+    return classifyScreenshotStatus(response.status);
+  } catch {
+    return "unavailable";
+  }
+}

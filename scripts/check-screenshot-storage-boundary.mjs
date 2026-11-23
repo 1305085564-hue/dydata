@@ -6,17 +6,12 @@ import ts from "typescript";
 
 const rootArgument = process.argv.indexOf("--scan-root");
 const root = rootArgument >= 0 ? path.resolve(process.argv[rootArgument + 1] ?? process.cwd()) : process.cwd();
-const productionAllowlist = new Set([
-  "src/lib/screenshot-storage.ts",
-]);
-const scriptAllowlist = new Set([
-  "scripts/audit/verify-screenshot-coverage.mjs",
-  "scripts/audit/screenshot-storage-s0.mjs",
-  "scripts/migrate-screenshots-to-cos.mjs",
-]);
-const migrationAllowlist = new Set([
-  "supabase/migrations/20260718103000_private_submission_screenshots.sql",
-]);
+// 白名单单独放在 JSON 里（条目带理由），统一禁用清单会核对它只减不增；不要在这个文件里手写名单。
+const allowlistFile = path.join(process.cwd(), "scripts/screenshot-storage-allowlist.json");
+const allowlist = JSON.parse(fs.readFileSync(allowlistFile, "utf8"));
+const productionAllowlist = new Set((allowlist.production ?? []).map((entry) => entry.path));
+const scriptAllowlist = new Set((allowlist.scripts ?? []).map((entry) => entry.path));
+const migrationAllowlist = new Set((allowlist.migrations ?? []).map((entry) => entry.path));
 const storageMethods = new Set(["upload", "download", "list", "remove", "createSignedUrl", "createSignedUrls", "getPublicUrl", "copy", "move"]);
 
 function walk(directory) {

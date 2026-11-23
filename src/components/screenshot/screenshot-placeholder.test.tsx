@@ -28,3 +28,23 @@ test("缩略图占位只放图标，文案退到 title/aria-label（32px 塞不�
   assert.doesNotMatch(html, />截图无法显示</);
   assert.doesNotMatch(html, /role="button"/);
 });
+
+test("明确 404（原图已丢失）时说实话，不再给「点击重试」的假承诺", () => {
+  const html = renderToStaticMarkup(<ScreenshotPlaceholder alt="5 月投稿截图" variant="stage" reason="missing" />);
+
+  assert.match(html, /data-screenshot-reason="missing"/);
+  assert.match(html, /原图已丢失/);
+  assert.match(html, /文件早已不存在/);
+  assert.doesNotMatch(html, /点击重试/);
+  assert.doesNotMatch(html, /role="button"/);
+});
+
+test("网络或服务异常时仍给重试入口，且不谎称原图已丢失", () => {
+  const html = renderToStaticMarkup(<ScreenshotPlaceholder alt="今日截图" variant="stage" reason="unavailable" />);
+
+  assert.match(html, /data-screenshot-reason="unavailable"/);
+  assert.match(html, /截图无法显示/);
+  assert.match(html, /点击重试/);
+  assert.doesNotMatch(html, /原图已丢失/);
+  assert.match(html, /role="button"/);
+});
