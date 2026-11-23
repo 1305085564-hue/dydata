@@ -9,6 +9,7 @@ import path from "node:path";
 import { buildHookWrapper, installGitHooks } from "./install-git-hooks.mjs";
 
 const hookPath = path.resolve("scripts/git-hooks/pre-push");
+const gateStaticPath = path.resolve("scripts/gate-static.mjs");
 
 function cleanGitEnv() {
   const env = { ...process.env };
@@ -16,10 +17,10 @@ function cleanGitEnv() {
   return { ...env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" };
 }
 
-async function runHook({ migration, database, docCheck = "pass" }) {
+async function runScriptWithStubs(targetScript, { migration, database, docCheck = "pass", gateFail = false }) {
   const root = await mkdtemp(path.join(os.tmpdir(), "dydata-pre-push-"));
   const bin = path.join(root, "bin");
-  await (await import("node:fs/promises")).mkdir(bin);
+  await mkdir(bin);
   const log = path.join(root, "commands.log");
   const gitStub = `#!/bin/sh
 case "$1 $2" in
@@ -39,6 +40,7 @@ exit 0
 printf '%s\\n' "$0 $*" >> "${log}"
 case "$*" in
   *doc-health-check*) [ "${docCheck}" = "fail" ] && { echo "stub: 链接失效"; exit 1; } ;;
+  *gate-static.mjs*) [ "${gateFail}" = "true" ] && { echo "stub: gate failed"; exit 1; } ;;
 esac
 exit 0
 `;
@@ -51,7 +53,8 @@ exit 0
   await writeFile(path.join(bin, "node"), nodeStub);
   await writeFile(path.join(bin, "pg_isready"), pgreadyStub);
   await Promise.all(["git", "npx", "npm", "node", "pg_isready"].map((name) => chmod(path.join(bin, name), 0o755)));
-  const child = spawn("/bin/sh", [hookPath], {
+  const isNodeScript = targetScript.endsWith(".mjs");
+  const child = spawn(isNodeScript ? process.execPath : "/bin/sh", [targetScript], {
     cwd: root,
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GIT_DIR: "fixture", GIT_WORK_TREE: root },
   });
@@ -68,7 +71,7 @@ exit 0
 
 // 从工作树 push 时 git 给钩子导出 GIT_DIR；钩子跑的测试会在临时目录 git init/config，
 // 不清掉就会写进真实仓库配置（2026-11-18 实际发生：core.bare=true + 测试身份）。
-test("pre-push 在跑任何检查前清掉 git 仓库定位变量", () => {
+test("pre-push 在跑任何检查前清掉 git 仓库定位变量，并只调用统一静态门禁", async () => {
   const hook = readFileSync(hookPath, "utf8");
   const unsetLine = hook.split("\n").findIndex((line) => /^unset\b/.test(line));
   assert.ok(unsetLine >= 0, "钩子缺少 unset 行");
@@ -77,51 +80,60 @@ test("pre-push 在跑任何检查前清掉 git 仓库定位变量", () => {
   }
   const firstCheck = hook.split("\n").findIndex((line) => /^(npx|npm|node) /.test(line));
   assert.ok(unsetLine < firstCheck, "unset 必须在第一项检查之前");
+
+  const pkg = JSON.parse(readFileSync(path.resolve("package.json"), "utf8"));
+  assert.equal(pkg.scripts["gate:static"], "node scripts/gate-static.mjs");
+
+  const pass = await runScriptWithStubs(hookPath, { migration: "no", database: "down" });
+  assert.equal(pass.status, 0, pass.stderr);
+  assert.deepEqual(pass.commands.trim().split("\n").map((line) => path.basename(line.split(" ")[0]) + " " + line.split(" ").slice(1).join(" ")), [
+    "node scripts/gate-static.mjs",
+  ]);
+  assert.equal(pass.gatePass?.trim(), "deadbeef00000000000000000000000000000000");
+
+  const fail = await runScriptWithStubs(hookPath, { migration: "no", database: "down", gateFail: true });
+  assert.equal(fail.status, 1);
+  assert.equal(fail.gatePass, null);
 });
 
-test("没有迁移改动时不运行本机重放", async () => {
-  const result = await runHook({ migration: "no", database: "down" });
+test("gate:static 没有迁移改动时不运行本机重放", async () => {
+  const result = await runScriptWithStubs(gateStaticPath, { migration: "no", database: "down" });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /没有迁移改动，跳过本机重放/);
   assert.doesNotMatch(result.commands, /db:replay/);
 });
 
-test("有迁移改动且本机库可用时先运行重放", async () => {
-  const result = await runHook({ migration: "yes", database: "up" });
+test("gate:static 有迁移改动且本机库可用时先运行重放", async () => {
+  const result = await runScriptWithStubs(gateStaticPath, { migration: "yes", database: "up" });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /迁移改动，先在本机重放/);
   assert.match(result.commands, /npm run db:replay/);
 });
 
-test("有迁移改动但本机库未启动时用大白话阻断推送", async () => {
-  const result = await runHook({ migration: "yes", database: "down" });
+test("gate:static 有迁移改动但本机库未启动时用大白话阻断", async () => {
+  const result = await runScriptWithStubs(gateStaticPath, { migration: "yes", database: "down" });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /先 colima start && supabase start/);
   assert.doesNotMatch(result.commands, /db:replay/);
 });
 
-test("文档链接检查是第一项检查，排在类型检查和单测之前", async () => {
-  const result = await runHook({ migration: "no", database: "down" });
+test("gate:static 文档链接检查是第一项检查，排在类型检查和单测之前", async () => {
+  const result = await runScriptWithStubs(gateStaticPath, { migration: "no", database: "down" });
   assert.equal(result.status, 0, result.stderr);
   const lines = result.commands.split("\n").filter(Boolean);
   assert.match(lines[0], /node scripts\/doc-health-check\.mjs --links/);
-  assert.match(result.stdout, /1\/7 文档链接检查/);
+  assert.match(result.stdout, /1\/9 文档链接检查/);
+  assert.match(result.commands, /node scripts\/source-text-test-gate\.mjs/);
+  assert.match(result.commands, /node scripts\/doc-size-check\.mjs/);
+  assert.match(result.commands, /node scripts\/api-failure-path-gate\.mjs --base=origin\/main/);
 });
 
-test("文档链接检查失败时阻断推送，且不再往下跑类型检查和单测", async () => {
-  const result = await runHook({ migration: "no", database: "down", docCheck: "fail" });
+test("gate:static 文档链接检查失败时阻断，且不再往下跑类型检查和单测", async () => {
+  const result = await runScriptWithStubs(gateStaticPath, { migration: "no", database: "down", docCheck: "fail" });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /文档里有链接指向不存在的文件，已阻断推送/);
+  assert.match(result.stderr, /文档里有链接指向不存在的文件，已阻断/);
   assert.match(result.stderr, /--links --fix-links/);
   assert.doesNotMatch(result.commands, /tsc|npm test/);
-  assert.equal(result.gatePass, null);
-});
-
-test("pre-push 全部通过后把当前提交号写入 dydata-gate-pass 标记文件，并接入源码测试门禁", async () => {
-  const result = await runHook({ migration: "no", database: "down" });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.commands, /node scripts\/source-text-test-gate\.mjs/);
-  assert.equal(result.gatePass?.trim(), "deadbeef00000000000000000000000000000000");
 });
 
 test("安装转发壳：改仓库脚本不重装即生效，原样透传参数与标准输入，隔离区执行自己的脚本", async () => {

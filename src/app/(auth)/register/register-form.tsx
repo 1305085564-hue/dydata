@@ -99,6 +99,10 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
   const [teamLoadError, setTeamLoadError] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const selectedTeamName = useMemo(
+    () => teams.find((team) => team.id === selectedTeamId)?.name ?? "",
+    [teams, selectedTeamId],
+  );
   const passwordStrengthLevel = useMemo(() => getPasswordStrengthLevel(password), [password]);
   const passwordStrengthIndex = getPasswordStrengthIndex(passwordStrengthLevel);
   const activeConfig = passwordStrengthLevel
@@ -214,7 +218,9 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             disabled={isLoadingTeams || teams.length === 0}
           >
             <SelectTrigger className="flex h-9 w-full rounded-md border border-[#E2E2DF] px-3 text-[14px] text-[#1F1E1D] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-smooth focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-placeholder:text-[#78716C]">
-              <SelectValue placeholder={isLoadingTeams ? "正在获取可选团队列表..." : "请选择您所属的目标团队"} />
+              <SelectValue placeholder={isLoadingTeams ? "正在获取可选团队列表..." : "请选择您所属的目标团队"}>
+                {selectedTeamName || null}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float max-h-60">
               {teams.map((team) => (
