@@ -70,7 +70,7 @@ export default function TermsPage() {
             <section className="space-y-3">
               <h2 className="text-[14px] font-normal text-[#141413]">五、第三方服务</h2>
               <p>
-                平台生产环境使用 Supabase（数据库与认证）、腾讯云 COS（截图私有存储）、Vercel（网站托管）、Sentry（错误监控）、百度 OCR（截图文字识别）、团队自行配置的 AI 模型服务和飞书（提醒通知）。相关服务依其功能接收必要的数据处理请求。
+                平台生产环境使用 腾讯云 CloudBase（网站托管、数据库与认证）、腾讯云 COS（截图私有存储）、Sentry（错误监控）、团队自行配置的 AI 模型服务（含截图文字识别）和飞书（提醒通知）。相关服务依其功能接收必要的数据处理请求。
               </p>
             </section>
 
