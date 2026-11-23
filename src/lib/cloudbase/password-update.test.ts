@@ -5,6 +5,7 @@ import test from "node:test";
 import { PGlite } from "@electric-sql/pglite";
 
 const MIGRATION_SQL = readFileSync(join(process.cwd(), "supabase/migrations/20261123160000_cloudbase_password_update.sql"), "utf8");
+const HARDENING_MIGRATION_SQL = readFileSync(join(process.cwd(), "supabase/migrations/20261123170000_cloudbase_password_hardening.sql"), "utf8");
 const PROJECT = "dydata-test";
 const SUBJECT = "11111111-1111-4111-8111-111111111111";
 
@@ -41,6 +42,7 @@ async function createDb() {
     VALUES ('${PROJECT}', '${SUBJECT}', replace(encode(convert_to(public.crypt('old-pass', public.gen_salt('bf', 10)), 'UTF8'), 'base64'), chr(10), ''), 1, '2000-01-01T00:00:00Z');
   `);
   await db.exec(MIGRATION_SQL);
+  await db.exec(HARDENING_MIGRATION_SQL);
   return db;
 }
 
@@ -53,7 +55,7 @@ test("管理员改密成功且新密码哈希可校验", async () => {
   const db = await createDb();
   try {
     const result = await db.query<{ payload: { ok: boolean; subject: string } }>(
-      "SELECT public.cloudbase_set_auth_user_password($1, $2, $3) AS payload", [SUBJECT, "new-pass", PROJECT],
+      "SELECT public.cloudbase_set_auth_user_password($1, $2, $3) AS payload", [SUBJECT, "  new-pass  ", PROJECT],
     );
     assert.deepEqual(result.rows[0]?.payload, { ok: true, subject: SUBJECT });
     const stored = await password(db);
@@ -66,7 +68,7 @@ test("管理员改密成功且新密码哈希可校验", async () => {
 test("本人旧密码正确改密成功并写入审计，旧密码错误不改原值", async () => {
   const db = await createDb();
   try {
-    const ok = await db.query<{ payload: { ok: boolean } }>("SELECT public.cloudbase_change_own_password($1, $2, $3, $4) AS payload", [SUBJECT, "old-pass", "next-pass", PROJECT]);
+    const ok = await db.query<{ payload: { ok: boolean } }>("SELECT public.cloudbase_change_own_password($1, $2, $3, $4) AS payload", [SUBJECT, "old-pass", "  next-pass  ", PROJECT]);
     assert.equal(ok.rows[0]?.payload.ok, true);
     assert.equal((await db.query<{ ok: boolean }>("SELECT public.crypt('next-pass', convert_from(decode(password, 'base64'), 'UTF8')) = convert_from(decode(password, 'base64'), 'UTF8') AS ok FROM auth.users WHERE sub = $1", [SUBJECT])).rows[0]?.ok, true);
     const before = await password(db);
@@ -74,6 +76,42 @@ test("本人旧密码正确改密成功并写入审计，旧密码错误不改�
     assert.deepEqual(bad.rows[0]?.payload, { ok: false, code: "invalid_old_password" });
     assert.equal(await password(db), before);
     assert.equal((await db.query<{ count: number }>("SELECT count(*)::int AS count FROM public.audit_logs WHERE action = 'change_own_password'")).rows[0]?.count, 1);
+  } finally { await db.close(); }
+});
+
+test("无密码账号返回 password_not_set，不修改账号", async () => {
+  const db = await createDb();
+  try {
+    await db.query("UPDATE auth.users SET password = NULL WHERE sub = $1", [SUBJECT]);
+    const missing = await db.query<{ payload: { ok: boolean; code: string } }>(
+      "SELECT public.cloudbase_change_own_password($1, $2, $3, $4) AS payload", [SUBJECT, "old-pass", "next-pass", PROJECT],
+    );
+    assert.deepEqual(missing.rows[0]?.payload, { ok: false, code: "password_not_set" });
+    assert.equal(await password(db), null);
+
+    await db.query("UPDATE auth.users SET password = '' WHERE sub = $1", [SUBJECT]);
+    const empty = await db.query<{ payload: { ok: boolean; code: string } }>(
+      "SELECT public.cloudbase_change_own_password($1, $2, $3, $4) AS payload", [SUBJECT, "old-pass", "next-pass", PROJECT],
+    );
+    assert.deepEqual(empty.rows[0]?.payload, { ok: false, code: "password_not_set" });
+    assert.equal(await password(db), "");
+  } finally { await db.close(); }
+});
+
+test("业务档案缺失导致审计外键失败时仍完成改密并保留 warning", async () => {
+  const db = await createDb();
+  try {
+    await db.query("DELETE FROM public.profiles WHERE id = $1", [SUBJECT]);
+    const result = await db.query<{ payload: { ok: boolean; subject: string } }>(
+      "SELECT public.cloudbase_change_own_password($1, $2, $3, $4) AS payload", [SUBJECT, "old-pass", "  next-pass  ", PROJECT],
+    );
+    assert.deepEqual(result.rows[0]?.payload, { ok: true, subject: SUBJECT });
+    const stored = await password(db);
+    assert.equal((await db.query<{ ok: boolean }>(
+      "SELECT public.crypt($1, convert_from(decode($2, 'base64'), 'UTF8')) = convert_from(decode($2, 'base64'), 'UTF8') AS ok",
+      ["next-pass", stored],
+    )).rows[0]?.ok, true);
+    assert.equal((await db.query<{ count: number }>("SELECT count(*)::int AS count FROM public.audit_logs WHERE action = 'change_own_password'")).rows[0]?.count, 0);
   } finally { await db.close(); }
 });
 

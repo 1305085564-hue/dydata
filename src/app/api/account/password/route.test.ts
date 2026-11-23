@@ -92,6 +92,20 @@ test("旧密码错误返回稳定 400 文案，不回传底层信息", async () 
   });
 });
 
+test("无密码账号返回明确业务错误", async () => {
+  const response = await buildAccountPasswordResponse(
+    request({ currentPassword: "old-pass", newPassword: "new-pass" }),
+    deps({ rpc: async () => ({ data: { ok: false, code: "password_not_set" }, error: null }) }),
+    REQUEST_ID,
+  );
+  assert.equal(response.status, 400);
+  assert.deepEqual(await json(response), {
+    error: "当前账号尚未设置密码，请联系管理员重置",
+    code: "password_not_set",
+    requestId: REQUEST_ID,
+  });
+});
+
 test("RPC 异常返回 500、requestId 和脱敏文案", async () => {
   const response = await buildAccountPasswordResponse(
     request({ currentPassword: "old-pass", newPassword: "new-pass" }),
@@ -105,11 +119,11 @@ test("RPC 异常返回 500、requestId 和脱敏文案", async () => {
   assert.doesNotMatch(JSON.stringify(body), /secret-password|private/);
 });
 
-test("成功使用登录态 user.id 调用 RPC，不接受前端 userId", async () => {
+test("成功使用登录态 user.id 调用 RPC，规范化新密码且不接受前端 userId", async () => {
   const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
   let unexpectedCalls = 0;
   const response = await buildAccountPasswordResponse(
-    request({ currentPassword: "old-pass", newPassword: "new-pass" }),
+    request({ currentPassword: "old-pass", newPassword: "  new-pass  " }),
     deps({ rpc: async (name, args) => { calls.push({ name, args }); return { data: { ok: true, subject: USER_ID }, error: null }; } }),
     REQUEST_ID,
   );

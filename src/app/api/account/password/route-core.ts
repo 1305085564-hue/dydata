@@ -9,7 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const passwordInputSchema = z.object({
   currentPassword: z.string().min(6).max(128),
-  newPassword: z.string().min(6).max(128),
+  newPassword: z.string().trim().min(6).max(128),
 }).strict().superRefine((input, context) => {
   if (input.currentPassword === input.newPassword) {
     context.addIssue({ code: "custom", path: ["newPassword"], message: "same_password" });
@@ -54,6 +54,7 @@ function errorMessageForCode(code: string) {
     case "invalid_old_password": return "当前密码不正确";
     case "same_password": return "新密码不能与当前密码相同";
     case "invalid_password": return "密码长度应为 6-128 位";
+    case "password_not_set": return "当前账号尚未设置密码，请联系管理员重置";
     case "account_disabled":
     case "user_not_found": return "当前账号无法修改密码，请联系管理员";
     default: return null;
