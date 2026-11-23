@@ -20,14 +20,24 @@ const log = {
   fallback_detail: { reason: "ocr_missing_fields", missing_fields: ["likes"] },
 };
 
-function createDatabase() {
+function createDatabase(options: {
+  totalCount?: number;
+  totalError?: { message: string } | null;
+  recentError?: { message: string } | null;
+} = {}) {
   const calls: Array<{ operation: string; args: unknown[] }> = [];
   const query = {
     from(...args: unknown[]) { calls.push({ operation: "from", args }); return query; },
     select(...args: unknown[]) { calls.push({ operation: "select", args }); return query; },
-    gte(...args: unknown[]) { calls.push({ operation: "gte", args }); return Promise.resolve({ count: 18 }); },
+    gte(...args: unknown[]) {
+      calls.push({ operation: "gte", args });
+      return Promise.resolve({ count: options.totalCount ?? 18, error: options.totalError ?? null });
+    },
     order(...args: unknown[]) { calls.push({ operation: "order", args }); return query; },
-    limit(...args: unknown[]) { calls.push({ operation: "limit", args }); return Promise.resolve({ data: [log], error: null }); },
+    limit(...args: unknown[]) {
+      calls.push({ operation: "limit", args });
+      return Promise.resolve({ data: options.recentError ? null : [log], error: options.recentError ?? null });
+    },
   };
   return { client: query as unknown as ReturnType<OcrLogsDependencies["createAdminClient"]>, calls };
 }
@@ -93,4 +103,33 @@ test("ocr-logs 内部异常返回带请求编号的中文 500，不泄露底层�
   assert.equal(body.requestId, "ocr-logs-test");
   assert.equal(response.headers.get("x-dydata-request-id"), "ocr-logs-test");
   assert.doesNotMatch(JSON.stringify(body), /database|private-host|5432/);
+});
+
+test("ocr-logs 90 天计数查询失败时返回脱敏 500，不把失败伪装成 0", async () => {
+  const database = createDatabase({ totalError: { message: "permission denied for relation ocr_recognition_logs" } });
+  const response = await buildOcrLogsResponse(request(), {
+    requireSystemActor: authorized,
+    createAdminClient: () => database.client,
+  });
+
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.error, "后台服务暂时不可用，稍后重试（编号：ocr-logs-test）");
+  assert.equal(body.requestId, "ocr-logs-test");
+  assert.doesNotMatch(JSON.stringify(body), /permission denied|ocr_recognition_logs/);
+  assert.equal(database.calls.filter((call) => call.operation === "from").length, 1);
+});
+
+test("ocr-logs 最近明细查询失败时返回脱敏 500", async () => {
+  const database = createDatabase({ recentError: { message: "column fallback_detail does not exist" } });
+  const response = await buildOcrLogsResponse(request(), {
+    requireSystemActor: authorized,
+    createAdminClient: () => database.client,
+  });
+
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.error, "后台服务暂时不可用，稍后重试（编号：ocr-logs-test）");
+  assert.equal(body.requestId, "ocr-logs-test");
+  assert.doesNotMatch(JSON.stringify(body), /fallback_detail|column/);
 });

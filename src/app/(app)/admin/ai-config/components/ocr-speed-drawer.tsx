@@ -7,6 +7,52 @@ import { RotateCw, X, Zap, Clock, CheckCircle2, AlertCircle } from "lucide-react
 import { cn } from "@/lib/utils";
 import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
 
+export async function getOcrSpeedLoadError(response?: Response): Promise<string> {
+  if (!response) return "网络连接异常，无法加载测速数据，请检查网络后重试。";
+
+  const payload = await response.json().catch(() => null) as { error?: unknown } | null;
+  if (typeof payload?.error === "string" && payload.error.trim()) {
+    return payload.error;
+  }
+
+  return response.status >= 500
+    ? `后台服务暂时不可用（HTTP ${response.status}），请稍后重试。`
+    : `测速台账请求失败（HTTP ${response.status}）。`;
+}
+
+export async function requestOcrSpeedLogs(fetcher: typeof fetch = fetch): Promise<
+  | { ok: true; data: { summary?: OcrSpeedSummary | null; logs?: OcrSpeedLogItem[] } }
+  | { ok: false; error: string }
+> {
+  let response: Response;
+  try {
+    response = await fetcher("/api/admin/ai-config/ocr-logs", {
+      headers: { "cache-control": "no-store" },
+    });
+  } catch {
+    return { ok: false, error: await getOcrSpeedLoadError() };
+  }
+
+  if (!response.ok) {
+    return { ok: false, error: await getOcrSpeedLoadError(response) };
+  }
+
+  try {
+    return { ok: true, data: await response.json() };
+  } catch {
+    return { ok: false, error: "测速台账返回的数据无法读取，请稍后重试。" };
+  }
+}
+
+export function OcrSpeedLoadError({ message }: { message: string }) {
+  return (
+    <div role="alert" className="p-8 text-center text-[13px] text-[#1F1E1D]">
+      <AlertCircle className="size-4 mx-auto mb-2 text-[#C0685C]" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
 export type OcrSpeedFallbackAttempt = {
   channel_name: string;
   model_id: string | null;
@@ -229,17 +275,13 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/ai-config/ocr-logs", {
-        headers: { "cache-control": "no-store" },
-      });
-      if (!res.ok) {
-        throw new Error("加载测速数据失败");
+      const result = await requestOcrSpeedLogs();
+      if (!result.ok) {
+        setError(result.error);
+      } else {
+        setSummary(result.data.summary ?? null);
+        setLogs(result.data.logs ?? []);
       }
-      const data = await res.json();
-      setSummary(data.summary ?? null);
-      setLogs(data.logs ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "获取数据失败");
     } finally {
       setLoading(false);
     }
@@ -357,10 +399,7 @@ export function OcrSpeedDrawer({ open, onOpenChange }: OcrSpeedDrawerProps) {
             </div>
 
             {error ? (
-              <div className="p-8 text-center text-[13px] text-[#1F1E1D]">
-                <AlertCircle className="size-4 mx-auto mb-2 text-[#C0685C]" />
-                <span>{error}</span>
-              </div>
+              <OcrSpeedLoadError message={error} />
             ) : logs.length === 0 ? (
               <div className="p-8 text-center text-[12px] text-[#A8A29E]">
                 {loading ? "正在加载测速台账..." : "暂无识别记录"}

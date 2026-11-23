@@ -22,10 +22,20 @@ export async function buildOcrLogsResponse(
 
     // 1. 存量参考：90 天总数（显式按 90 天窗口过滤，与清理口径一致）
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const { count: totalCount } = await admin
+    const { count: totalCount, error: totalCountError } = await admin
       .from("ocr_recognition_logs")
       .select("*", { count: "exact", head: true })
       .gte("created_at", ninetyDaysAgo);
+
+    if (totalCountError) {
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/ai-config/ocr-logs",
+        operation: "count-ocr-logs",
+        request,
+        error: totalCountError,
+      });
+    }
 
     // 2. 统计样本：最近 1000 条（不足 1000 条按实际）
     const { data: recent1000, error } = await admin
@@ -40,7 +50,7 @@ export async function buildOcrLogsResponse(
         route: "/api/admin/ai-config/ocr-logs",
         operation: "load-ocr-logs",
         request,
-        error: error.message,
+        error,
       });
     }
 
