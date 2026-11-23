@@ -21,7 +21,7 @@ export interface DataAccessScope {
   teamId: string | null;
   kind: DataAccessScopeKind;
   visibleUserIds: string[];
-  activeVisibleUserIds?: string[];
+  activeVisibleUserIds: string[];
 }
 
 export interface BuildDataAccessScopeOptions {
@@ -320,8 +320,8 @@ export async function resolveVideoReviewReadOnlyScope(
   };
 }
 
-export function getActiveVisibleUserIds(scope: Pick<DataAccessScope, "activeVisibleUserIds" | "visibleUserIds">) {
-  return scope.activeVisibleUserIds ?? scope.visibleUserIds;
+export function getActiveVisibleUserIds(scope: Pick<DataAccessScope, "activeVisibleUserIds">) {
+  return scope.activeVisibleUserIds;
 }
 
 export function filterRowsByDataScope<T>(

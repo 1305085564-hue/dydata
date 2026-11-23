@@ -4,14 +4,12 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { assertOnlineEnvReady, formatReconcileReport, loadCloudBaseManagerFactory } from './check-env-vars.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
 export function injectPublicBuildArgs(dockerfile, env) {
-  if (env.DYDATA_BACKEND !== 'cloudbase' || env.NEXT_PUBLIC_DYDATA_BACKEND !== 'cloudbase') {
-    throw new Error('云托管两个后端变量必须都是 cloudbase');
-  }
   return dockerfile.replace(/^ARG (NEXT_PUBLIC_[A-Z_]+)$/gm, (_, key) => {
     const value = env[key];
     if (value === undefined || value === 'undefined' || /[\r\n]/.test(value)) {
@@ -30,6 +28,10 @@ export function prepareDeployment(repo, env) {
   const gatePassPath = path.resolve(repo, git('rev-parse', '--git-path', 'dydata-gate-pass').toString().trim());
   if (!existsSync(gatePassPath) || readFileSync(gatePassPath, 'utf8').trim() !== commit) {
     throw new Error('先正常 git push（不带 --no-verify）让门禁跑完');
+  }
+  if (existsSync(path.join(repo, '.env.example'))) {
+    const envCheck = assertOnlineEnvReady(repo, Object.keys(env));
+    console.error(formatReconcileReport(envCheck));
   }
   const directory = mkdtempSync(path.join(tmpdir(), 'dydata-release-'));
   const archive = path.join(directory, 'source.zip');
@@ -53,8 +55,8 @@ async function main() {
   if (statSync(keyPath).mode & 0o077) throw new Error('凭据文件权限必须为 600');
   process.env.CLOUDBASE_API_KEY = readFileSync(keyPath, 'utf8').trim();
   process.env.CLOUDBASE_ENV_ID = envId;
-  const sdk = await import(pathToFileURL(modulePath).href);
-  const manager = await sdk.getCloudBaseManager({ cloudBaseOptions: { envId, region: 'ap-shanghai' } });
+  const factory = await loadCloudBaseManagerFactory(modulePath);
+  const manager = await factory({ cloudBaseOptions: { envId, region: 'ap-shanghai' } });
   const service = manager.environmentManager.currentEnv.cloudRunService;
   const detail = await service.detail({ serverName: 'dydata' });
   const env = JSON.parse(detail.ServerConfig.EnvParams);

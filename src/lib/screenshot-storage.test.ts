@@ -12,43 +12,17 @@ test("COS 读取超时支持环境配置并限制范围", () => {
   assert.equal(resolveCosReadTimeout({ COS_READ_TIMEOUT_MS: "invalid" }), DEFAULT_COS_READ_TIMEOUT_MS);
 });
 
-test("COS 配置完整时按环境变量选择 COS，缺配置自动降级 Supabase", () => {
-  const complete = resolveScreenshotStorage({
-    SCREENSHOT_STORAGE: "cos",
+test("截图存储固定走 COS，缺少配置明确失败", () => {
+  assert.throws(() => resolveScreenshotStorage({}), /COS/);
+  assert.throws(() => resolveScreenshotStorage({ COS_BUCKET: "bucket", COS_REGION: "ap-shanghai" }), /COS/);
+  const resolved = resolveScreenshotStorage({
     COS_SECRET_ID: "id",
     COS_SECRET_KEY: "key",
     COS_BUCKET: "bucket",
-    COS_REGION: "ap-guangzhou",
-  });
-  assert.equal(complete.primary, "cos");
-  assert.equal(complete.degraded, false);
-
-  const missing = resolveScreenshotStorage({ SCREENSHOT_STORAGE: "cos", COS_BUCKET: "bucket", COS_REGION: "ap-guangzhou" });
-  assert.deepEqual({ primary: missing.primary, degraded: missing.degraded, reason: missing.reason }, {
-    primary: "supabase",
-    degraded: true,
-    reason: "missing_cos_config",
-  });
-});
-
-test("CloudBase 模式只使用 COS，缺少配置明确失败而不访问旧存储", () => {
-  assert.throws(() => resolveScreenshotStorage({ DYDATA_BACKEND: "cloudbase" }), /COS/);
-  const resolved = resolveScreenshotStorage({
-    DYDATA_BACKEND: "cloudbase", SCREENSHOT_STORAGE: "supabase",
-    COS_SECRET_ID: "id", COS_SECRET_KEY: "key", COS_BUCKET: "bucket", COS_REGION: "ap-singapore",
+    COS_REGION: "ap-shanghai",
   });
   assert.equal(resolved.primary, "cos");
-});
-
-test("CloudBase 模式 COS 明确缺图时不回落 Supabase", async () => {
-  let oldStorageCalls = 0;
-  const result = await findReadableSubmissionScreenshots(["user/missing.jpg"], {
-    env: { DYDATA_BACKEND: "cloudbase", COS_SECRET_ID: "id", COS_SECRET_KEY: "key", COS_BUCKET: "bucket", COS_REGION: "ap-singapore" },
-    headObject: (async () => ({ ok: false, status: 404 })) as never,
-    checkSupabase: async () => { oldStorageCalls += 1; return true; },
-  });
-  assert.equal(oldStorageCalls, 0);
-  assert.deepEqual(result, { readable: [], missing: ["user/missing.jpg"] });
+  assert.equal(resolved.degraded, false);
 });
 
 test("COS 签名包含规范化的 header 列表且不暴露密钥", () => {
@@ -61,18 +35,12 @@ test("COS 签名包含规范化的 header 列表且不暴露密钥", () => {
   assert.doesNotMatch(authorization, /secret-key/);
 });
 
-test("存在性校验：COS 超时/5xx 不判缺失，仅明确 404 才回落 Supabase", async () => {
+test("存在性校验：COS 超时/5xx 不判缺失，仅明确 404 判为缺失", async () => {
   const env = {
-    SCREENSHOT_STORAGE: "cos",
     COS_SECRET_ID: "id",
     COS_SECRET_KEY: "key",
     COS_BUCKET: "bucket",
-    COS_REGION: "ap-singapore",
-  };
-  let supabaseChecks = 0;
-  const checkSupabase = async () => {
-    supabaseChecks += 1;
-    return false;
+    COS_REGION: "ap-shanghai",
   };
   const headWith = (status: number, error?: string) => (async () => ({
     ok: false as const,
@@ -88,31 +56,18 @@ test("存在性校验：COS 超时/5xx 不判缺失，仅明确 404 才回落 Su
   const timedOut = await findReadableSubmissionScreenshots(["user-1/a.jpg"], {
     env,
     headObject: headWith(0, "cos_timeout") as never,
-    checkSupabase,
   });
   assert.deepEqual(timedOut, { readable: ["user-1/a.jpg"], missing: [] });
-  assert.equal(supabaseChecks, 0);
 
   const serverError = await findReadableSubmissionScreenshots(["user-1/b.jpg"], {
     env,
     headObject: headWith(503, "cos_status_503") as never,
-    checkSupabase,
   });
   assert.deepEqual(serverError, { readable: ["user-1/b.jpg"], missing: [] });
-  assert.equal(supabaseChecks, 0);
 
   const notFound = await findReadableSubmissionScreenshots(["user-1/c.jpg"], {
     env,
     headObject: headWith(404, "cos_status_404") as never,
-    checkSupabase,
   });
   assert.deepEqual(notFound, { readable: [], missing: ["user-1/c.jpg"] });
-  assert.equal(supabaseChecks, 1);
-
-  const legacyHit = await findReadableSubmissionScreenshots(["user-1/d.jpg"], {
-    env,
-    headObject: headWith(404, "cos_status_404") as never,
-    checkSupabase: async () => true,
-  });
-  assert.deepEqual(legacyHit, { readable: ["user-1/d.jpg"], missing: [] });
 });

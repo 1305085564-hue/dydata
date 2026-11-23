@@ -24,9 +24,8 @@ export function hasCloudBaseSessionChanged(previous: CloudBaseSession, next: Clo
     previous.subject !== next.subject || previous.deviceId !== next.deviceId;
 }
 
-export function isCloudBaseBackend() {
-  if (typeof window !== "undefined") return process.env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
-  return process.env.DYDATA_BACKEND === "cloudbase" || process.env.NEXT_PUBLIC_DYDATA_BACKEND === "cloudbase";
+export function hasCloudBaseAuthCookie(cookies: Array<{ name: string; value?: string }>) {
+  return cookies.some((cookie) => cookie.name === CLOUD_BASE_SESSION_COOKIE && Boolean(cookie.value));
 }
 
 export function cloudBaseEnvironmentId() {

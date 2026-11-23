@@ -24,17 +24,10 @@ function normalizeView(value: string | undefined): ContentView {
   return value === "trash" ? value : "all";
 }
 
-function nowMs() {
-  return performance.now();
-}
-
 export default async function AdminContentPage({ searchParams }: Props) {
-  const totalStart = nowMs();
   const params = await searchParams;
   const requestedPerspective = params.scope === "team" ? "team" : "company";
-  const authStart = nowMs();
   const permissionContext = await getCurrentPermissionContext(requestedPerspective, params.teamId ?? null);
-  const authMs = nowMs() - authStart;
 
   if (!permissionContext) redirect("/login");
   const { permissionInfo: perm } = permissionContext;
@@ -64,8 +57,6 @@ export default async function AdminContentPage({ searchParams }: Props) {
           teams={teams}
           permissionInfo={perm}
           directVideoId={directVideoId}
-          initialAuthMs={authMs}
-          totalStartMs={totalStart}
           query={parsedQuery}
         />
       </Suspense>

@@ -36,3 +36,27 @@ test("履约状态 helper 与月度统计语义一致", () => {
   assert.equal(isManualFulfillmentMarkStatus("published"), false);
   assert.equal(isManualFulfillmentMarkStatus("exempted"), false);
 });
+
+import { summarizeMonthFulfillment } from "./dashboard-panel-header";
+import { resolveDashboardFulfillmentMarks } from "./loaders/dashboard-fulfillment-marks";
+
+test("工作台月度履约漏交统计：已交、请假、免交、确认已发和今日不计漏交，缺勤与未确认计入漏交", () => {
+  const { monthFulfillmentBasis } = resolveDashboardFulfillmentMarks(
+    [
+      { record_date: "2026-11-05", status: "confirmed_published", reason: null },
+      { record_date: "2026-11-06", status: "absent", reason: "管理员认定缺勤" },
+      { record_date: "2026-11-01", status: "confirmed_published", reason: null },
+    ],
+    "2026-11-01T00:00:00+08:00",
+  );
+  const summary = summarizeMonthFulfillment({
+    today: "2026-11-10",
+    joinedDate: monthFulfillmentBasis.joinedDate,
+    submittedDates: ["2026-11-02"],
+    exemptDates: ["2026-11-03", "2026-11-04"],
+    manualMarkedDates: monthFulfillmentBasis.manualMarkedDates,
+  });
+  // 11-01 确认已发, 11-02 已交, 11-03/04 豁免, 11-05 确认已发, 11-06 缺勤(漏), 11-07/08/09 未确认(漏), 11-10 今日(不算漏)
+  assert.equal(summary.submittedCount, 1);
+  assert.equal(summary.missedCount, 4);
+});

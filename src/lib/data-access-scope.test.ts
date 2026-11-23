@@ -258,6 +258,7 @@ test("canAccessOwner: team scope only allows visible ids", () => {
     teamId: null,
     kind: "team",
     visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
   };
   assert.equal(canAccessOwner(scope, "u1"), true);
   assert.equal(canAccessOwner(scope, "anyone"), false);
@@ -272,6 +273,7 @@ test("canAccessOwner: self scope only allows own id", () => {
     teamId: null,
     kind: "self",
     visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
   };
   assert.equal(canAccessOwner(scope, "u1"), true);
   assert.equal(canAccessOwner(scope, "u2"), false);
@@ -290,6 +292,7 @@ test("filterRowsByDataScope: team scope returns visible rows", () => {
     teamId: null,
     kind: "team",
     visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
   };
   const rows = [
     { id: "r1", owner: "u1" },
@@ -307,6 +310,7 @@ test("filterRowsByDataScope: self scope filters to own rows only", () => {
     teamId: null,
     kind: "self",
     visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
   };
   const rows = [
     { id: "r1", owner: "u1" },
@@ -329,6 +333,7 @@ test("filterRowsByDataScope: team scope filters to visible users", () => {
     teamId: "team-A",
     kind: "team",
     visibleUserIds: ["u1", "u2"],
+    activeVisibleUserIds: ["u1", "u2"],
   };
   const rows = [
     { id: "r1", owner: "u1" },
@@ -347,7 +352,7 @@ test("filterRowsByDataScope: team scope filters to visible users", () => {
 // getActiveVisibleUserIds
 // ---------------------------------------------------------------------------
 
-test("getActiveVisibleUserIds: returns activeVisibleUserIds when present", () => {
+test("getActiveVisibleUserIds: returns activeVisibleUserIds", () => {
   const scope: DataAccessScope = {
     userId: "u1",
     role: "member",
@@ -358,18 +363,6 @@ test("getActiveVisibleUserIds: returns activeVisibleUserIds when present", () =>
     activeVisibleUserIds: ["u1", "u3"],
   };
   assert.deepEqual(getActiveVisibleUserIds(scope), ["u1", "u3"]);
-});
-
-test("getActiveVisibleUserIds: falls back to visibleUserIds when activeVisibleUserIds is absent", () => {
-  const scope: DataAccessScope = {
-    userId: "u1",
-    role: "member",
-    permissions: {},
-    teamId: null,
-    kind: "team",
-    visibleUserIds: ["u1", "u2"],
-  };
-  assert.deepEqual(getActiveVisibleUserIds(scope), ["u1", "u2"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -384,6 +377,7 @@ function makeMemberScope(overrides: Partial<DataAccessScope> = {}): DataAccessSc
     teamId: "company-1",
     kind: "self",
     visibleUserIds: ["member-1"],
+    activeVisibleUserIds: ["member-1"],
     ...overrides,
   };
 }
@@ -465,7 +459,7 @@ test("resolveCollaborationScope: team 范围原样透传，不做二次放宽", 
     teamId: null,
     kind: "team",
     visibleUserIds: ["owner-1", "member-1"],
-    activeVisibleUserIds: undefined,
+    activeVisibleUserIds: ["owner-1", "member-1"],
   });
   const ownerResolution = await resolveCollaborationScope(supabase as never, ownerScope);
   assert.equal(ownerResolution.restrictToSelf, false);
@@ -494,7 +488,7 @@ test("resolveReadOnlyCompanyScope: 组员常规管理读取保持本团队范围
   );
   assert.equal(result.kind, "team");
   assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2"]);
-  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2"]);
+  assert.deepEqual(result.activeVisibleUserIds.sort(), ["u1", "u2"]);
 });
 
 test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", async () => {

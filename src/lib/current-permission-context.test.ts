@@ -65,10 +65,10 @@ test("统一身份核心按角色生成固定权限，并拒绝非在职账号",
 });
 
 test("权限身份组合到数据范围时保留 runtime role 与 companyRole 的分离", async (t) => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+  const oldEnvId = process.env.CLOUDBASE_ENV_ID;
+  const oldServiceKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  process.env.CLOUDBASE_ENV_ID = "perm-test-env";
+  process.env.CLOUDBASE_SERVICE_API_KEY = "test-service-key";
   t.mock.method(globalThis, "fetch", async () => Response.json([]));
 
   const cases = [
@@ -103,22 +103,22 @@ test("权限身份组合到数据范围时保留 runtime role 与 companyRole �
       assert.equal(context.scope.kind, "team");
     }
   } finally {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = oldServiceRoleKey;
+    if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID;
+    else process.env.CLOUDBASE_ENV_ID = oldEnvId;
+    if (oldServiceKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldServiceKey;
   }
 });
 
 test("缺少服务端配置时权限上下文构建明确失败", async () => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const oldKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  delete process.env.CLOUDBASE_SERVICE_API_KEY;
   const info = { userId: "u1", name: null, role: "member", permissions: {}, accessLevel: null, teamId: null, groupId: null, ledGroupIds: [] };
   try {
     await assert.rejects(() => buildPermissionContextFromPermissionInfo(info as never), /Missing/);
     await assert.rejects(() => buildPermissionContextForActor({ ...info, id: undefined } as never), /Missing/);
   } finally {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldKey;
   }
 });

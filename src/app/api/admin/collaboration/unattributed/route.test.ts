@@ -110,6 +110,7 @@ test("待补归属弹窗范围与首屏同源：组员放宽为本公司可见�
         permissions: { view_analytics: true },
         name: "组员甲",
         dataScope: "self" as const,
+        activeVisibleUserIds: [actorId],
       },
     }),
     buildPermissionContextForActor: async () => ({

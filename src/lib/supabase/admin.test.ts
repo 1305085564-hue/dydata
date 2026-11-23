@@ -1,30 +1,27 @@
+// 实际连接腾讯云 CloudBase，目录名是历史遗留。
 import test from "node:test";
 import assert from "node:assert/strict";
 
 import { createAdminClient } from "./admin";
 
-test("服务端密钥齐全时创建不持久化会话的客户端", () => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role";
+test("CloudBase 服务端密钥齐全时创建管理员客户端", () => {
+  const oldKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  process.env.CLOUDBASE_SERVICE_API_KEY = "cloudbase-service-key";
   try {
     assert.ok(createAdminClient().auth);
   } finally {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldKey;
   }
 });
 
-test("缺少 URL 或服务端密钥时抛出明确错误", () => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+test("缺少 CloudBase 服务端密钥时抛出明确错误", () => {
+  const oldKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  delete process.env.CLOUDBASE_SERVICE_API_KEY;
   try {
-    assert.throws(() => createAdminClient(), /Missing NEXT_PUBLIC_SUPABASE_URL/);
+    assert.throws(() => createAdminClient(), /Missing CLOUDBASE_SERVICE_API_KEY/);
   } finally {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldKey;
   }
 });

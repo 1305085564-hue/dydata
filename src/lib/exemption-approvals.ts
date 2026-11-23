@@ -1,4 +1,8 @@
 import {
+  diffShanghaiDays,
+  expandShanghaiDateRange,
+} from "@/lib/business-time";
+import {
   getAdminExemptionCategoryLabel,
   normalizeExemptionCategory,
   toExemptionCategory,
@@ -173,10 +177,6 @@ export function formatShortDate(dateStr?: string | null): string {
   return dateStr;
 }
 
-function parseUtcDate(value: string): Date {
-  return new Date(`${value}T00:00:00.000Z`);
-}
-
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 function getWeekdayText(dateStr: string): string {
@@ -188,22 +188,12 @@ function getWeekdayText(dateStr: string): string {
   }
 }
 
-function parseDateDaysDifference(startStr: string, endStr: string): number {
-  const d1 = parseUtcDate(startStr).getTime();
-  const d2 = parseUtcDate(endStr).getTime();
-  return Math.abs(d2 - d1) / 86_400_000 + 1;
-}
-
-function expandDateRange(startDate: string, endDate: string | null): string[] {
-  const start = parseUtcDate(startDate);
-  const end = endDate ? parseUtcDate(endDate) : start;
-  const dates: string[] = [];
-  let cursor = start.getTime();
-  while (cursor <= end.getTime()) {
-    dates.push(new Date(cursor).toISOString().slice(0, 10));
-    cursor += 86_400_000;
+function safeExpandDateRange(startDate: string, endDate: string | null): string[] {
+  try {
+    return expandShanghaiDateRange(startDate, endDate);
+  } catch {
+    return [];
   }
-  return dates;
 }
 
 export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprovalItem[] {
@@ -233,7 +223,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
     // 展开逐日列表
     const allDatesMap = new Map<string, ExemptionRequest>();
     for (const gi of groupItems) {
-      const dates = expandDateRange(gi.start_date, gi.end_date);
+      const dates = safeExpandDateRange(gi.start_date, gi.end_date);
       for (const d of dates) {
         if (!allDatesMap.has(d)) {
           allDatesMap.set(d, gi);
@@ -255,7 +245,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
       dayCount = sortedDates.length;
       const minDate = sortedDates[0];
       const maxDate = sortedDates[sortedDates.length - 1];
-      const spanDays = parseDateDaysDifference(minDate, maxDate);
+      const spanDays = Math.abs(diffShanghaiDays(minDate, maxDate)) + 1;
       if (spanDays === sortedDates.length) {
         dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)}`;
       } else {

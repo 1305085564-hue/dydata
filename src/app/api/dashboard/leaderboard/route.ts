@@ -10,7 +10,6 @@ import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
-import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 import { loadCloudBaseLeaderboardRows } from "@/lib/loaders/cloudbase-leaderboard";
 import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 
@@ -28,7 +27,6 @@ export async function buildDashboardLeaderboardResponse({
   year,
   month,
   now = new Date(),
-  cloudBase = isCloudBaseBackend(),
 }: {
   supabase: Awaited<ReturnType<typeof createClient>>;
   userId: string;
@@ -37,7 +35,6 @@ export async function buildDashboardLeaderboardResponse({
   year?: number;
   month?: number;
   now?: Date;
-  cloudBase?: boolean;
 }) {
   if (!permissionContext) {
     return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
@@ -57,13 +54,7 @@ export async function buildDashboardLeaderboardResponse({
         .select("id, content_direction")
         .eq("profile_id", userId)
         .order("created_at", { ascending: true }),
-      // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-      cloudBase
-        ? loadCloudBaseLeaderboardRows(supabase, sinceDate, effectiveVisibleUserIds).then((data) => ({ data, error: null }))
-        : supabase.rpc("get_leaderboard_rows", {
-            since_date: sinceDate,
-            ...(monthRange ? { until_date: monthRange.end } : {}),
-          }),
+      loadCloudBaseLeaderboardRows(supabase, sinceDate, effectiveVisibleUserIds).then((data) => ({ data, error: null })),
     ]));
 
     assertSupabaseQuerySucceeded(accountsResult.error, "读取排行榜账号失败");
@@ -120,13 +111,11 @@ export async function GET(request: Request) {
     const adminClient = createAdminClient();
     let visibleUserIds: string[] | undefined;
 
-    if (permissionContext) {
-      try {
-        const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
-        visibleUserIds = resolution.visibleUserIds;
-      } catch {
-        visibleUserIds = permissionContext.scope.visibleUserIds;
-      }
+    try {
+      const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
+      visibleUserIds = resolution.visibleUserIds;
+    } catch {
+      visibleUserIds = permissionContext.scope.visibleUserIds;
     }
 
     const searchParams = new URL(request.url).searchParams;
@@ -134,9 +123,8 @@ export async function GET(request: Request) {
     const rawMonth = searchParams.get("month");
     const hasMonthParams = rawYear !== null || rawMonth !== null;
 
-    // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
     return buildDashboardLeaderboardResponse({
-      supabase: isCloudBaseBackend() ? adminClient : supabase,
+      supabase: adminClient,
       userId: user.id,
       permissionContext,
       visibleUserIds,

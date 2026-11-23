@@ -43,6 +43,7 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
     teamId: null,
     kind: "team" as const,
     visibleUserIds: ["user-1", "user-2"],
+    activeVisibleUserIds: ["user-1", "user-2"],
   };
   let receivedArgs: unknown = null;
 
@@ -58,6 +59,7 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
           permissions: { manage_videos: true },
           name: "阿禅",
           dataScope: "team" as const,
+          activeVisibleUserIds: ["u1"],
         },
       }),
       getTeamOptions: async () => [],

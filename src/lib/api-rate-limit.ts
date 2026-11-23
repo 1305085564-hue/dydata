@@ -33,7 +33,6 @@ const DEFAULT_API_RULE: EndpointRule = { limit: 120, windowMs: 60_000 };
 // cron / 外部回调等机器调用路径豁免（它们各自有密钥鉴权）
 const EXEMPT_PATHS = new Set([
   "/api/notifications/cleanup",
-  "/api/admin/first-screen-monitor",
   "/api/feishu/event",
   // 健康检查：故障时探活频率可能升高，不能被限流挡住
   "/api/health",

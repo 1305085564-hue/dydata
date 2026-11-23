@@ -48,8 +48,7 @@ export function canOperateVideoWithinScope(
   ownerUserId: string,
 ) {
   void actor;
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  return activeVisibleUserIds.includes(ownerUserId);
+  return scope.activeVisibleUserIds.includes(ownerUserId);
 }
 
 export function isPurgeEligible(trashedAt: string | null, now = new Date()) {

@@ -6,7 +6,8 @@ export type ToolContext = {
   actorCompanyRole?: CompanyRole | null;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
-  activeVisibleUserIds?: string[];
+  /** 当前管理范围内的在职成员，必填：缺失即拒绝，不允许回退到更宽范围。 */
+  activeVisibleUserIds: string[];
 };
 
 export type ToolExecutionInput = {

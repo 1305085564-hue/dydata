@@ -6,7 +6,7 @@ export function getContentOwner(video: {user_id: string; accounts?: {profile_id?
 
 type ProfileOptionScope = {
   visibleUserIds: string[];
-  activeVisibleUserIds?: string[];
+  activeVisibleUserIds: string[];
 };
 
 export function buildScopedProfileOptions(
@@ -16,7 +16,7 @@ export function buildScopedProfileOptions(
 ) {
   const allowedProfileIds = new Set(
     scope
-      ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
+      ? scope.activeVisibleUserIds
       : fallbackProfileIds,
   );
   if (allowedProfileIds.size === 0) return [];

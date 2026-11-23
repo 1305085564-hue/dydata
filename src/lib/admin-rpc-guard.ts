@@ -17,7 +17,7 @@ const USER_IDENTITY_RPCS = new Set([
   "count_remind_logs_for_user",
 ]);
 
-export function guardAdminRpc<T extends { rpc: (...args: never[]) => unknown }>(client: T, backend: "supabase" | "cloudbase"): T {
+export function guardAdminRpc<T extends { rpc: (...args: never[]) => unknown }>(client: T, backend: "cloudbase" = "cloudbase"): T {
   return new Proxy(client, {
     get(target, property, receiver) {
       const value = Reflect.get(target, property, receiver);

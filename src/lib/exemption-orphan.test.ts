@@ -80,6 +80,7 @@ test("当前公司范围按申请快照团队截断，普通队列可见集合�
   const ordinaryIds = getOrdinaryQueueVisibleApplicantIds(rows, {
     kind: "team",
     teamId: "team-a",
+    activeVisibleUserIds: [],
   });
 
   assert.deepEqual([...ordinaryIds], []);

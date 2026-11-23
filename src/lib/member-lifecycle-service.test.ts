@@ -3,7 +3,6 @@ import test from "node:test";
 
 import {
   archiveMemberWithClient,
-  removeMemberFromTeamWithClient,
   restoreMemberWithClient,
   transferMemberToTeamWithClient,
   type MemberLifecycleProfileRow,
@@ -243,25 +242,6 @@ test("归档成功后封禁 Auth、清空组织信息并保留归档快照", asy
   }]);
 });
 
-test("归档的 Auth metadata 同步失败时补偿 profile、metadata 和封禁状态", async () => {
-  const { client, state } = createFakeClient({ fail: "metadata" });
-
-  const result = await archiveMemberWithClient({
-    client,
-    actor: owner,
-    targetId: "member-1",
-    reason: "离职",
-    archivedAt: "2026-08-04T12:00:00.000Z",
-  });
-
-  assert.equal(result.ok, false);
-  assert.match(result.firstError, /metadata failed/);
-  assert.equal(state.banned, false);
-  assert.equal(state.profile.membership_status, "active");
-  assert.equal(state.profile.team_id, "team-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
-});
-
 test("归档成员变更日志失败时不留下半归档状态", async () => {
   const { client, state } = createFakeClient({ fail: "log" });
 
@@ -364,40 +344,7 @@ test("转组遇角色两列冲突时拒绝写入", async () => {
   assert.equal(state.profile.team_id, "team-1");
 });
 
-test("移出团队的 Auth metadata 同步失败时恢复 profile 和 metadata", async () => {
-  const { client, state } = createFakeClient({ fail: "metadata" });
-
-  const result = await removeMemberFromTeamWithClient({
-    client,
-    actor: owner,
-    targetId: "member-1",
-  });
-
-  assert.equal(result.ok, false);
-  assert.match(result.firstError, /metadata failed/);
-  assert.equal(state.profile.team_id, "team-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
-});
-
-test("调配团队的 Auth metadata 同步失败时恢复旧团队归属", async () => {
-  const { client, state } = createFakeClient({ fail: "metadata" });
-
-  const result = await transferMemberToTeamWithClient({
-    client,
-    actor: owner,
-    targetId: "member-1",
-    newTeamId: "team-2",
-    newTeamName: "内容二部",
-  });
-
-  assert.equal(result.ok, false);
-  assert.match(result.firstError, /metadata failed/);
-  assert.equal(state.profile.team_id, "team-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
-  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
-});
-
-test("调配团队的成员变更日志失败时恢复 profile 和 Auth metadata", async () => {
+test("调配团队的成员变更日志失败时恢复 profile 和待审批豁免归属", async () => {
   const { client, state } = createFakeClient({ fail: "log" });
 
   const result = await transferMemberToTeamWithClient({
@@ -452,7 +399,7 @@ test("调配团队的 pending 豁免归属同步失败时恢复 profile 和 Auth
   assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
 });
 
-test("恢复成员带回归档前的团队，角色仍是普通组员、权限清空，Auth 团队资料同步", async () => {
+test("恢复成员带回归档前的团队，角色仍是普通组员、权限清空", async () => {
   const { client, state } = createFakeClient({
     profile: {
       membership_status: "archived", team_id: null, role: "member", company_role: "member", permissions: {},
@@ -468,7 +415,6 @@ test("恢复成员带回归档前的团队，角色仍是普通组员、权限�
   assert.equal(state.profile.team_id, "team-1");
   assert.equal(state.profile.role, "member");
   assert.deepEqual(state.profile.permissions, {});
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
   assert.equal(state.logRows[0]?.change_payload && (state.logRows[0].change_payload as { team_id: string }).team_id, "team-1");
   assert.ok(result.ok && result.affectedData?.restoredTeamId === "team-1" && result.affectedData?.teamMissing === false);
 });

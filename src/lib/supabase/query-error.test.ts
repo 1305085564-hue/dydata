@@ -1,3 +1,4 @@
+// 实际连接腾讯云 CloudBase，目录名是历史遗留。
 import assert from "node:assert/strict";
 import test from "node:test";
 

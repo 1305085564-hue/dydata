@@ -46,7 +46,7 @@ export async function requireAdminContext(
       teamId: core.teamId,
       companyRole: core.companyRole,
       membershipStatus: core.membershipStatus,
-      activeVisibleUserIds: core.scope.activeVisibleUserIds ?? [],
+      activeVisibleUserIds: core.scope.activeVisibleUserIds,
     },
     context: {
       permissionInfo: permissionInfoFromCore(core),

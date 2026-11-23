@@ -15,7 +15,8 @@ export type AdminActor = {
   teamId?: string | null;
   companyRole?: CompanyRole;
   membershipStatus?: "active" | "archived";
-  activeVisibleUserIds?: string[];
+  /** 当前管理范围内的在职成员，必填：缺失即拒绝，不允许回退到更宽范围。 */
+  activeVisibleUserIds: string[];
 };
 
 export type RequireAdminActorOptions = {

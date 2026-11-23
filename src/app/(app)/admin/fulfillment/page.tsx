@@ -41,7 +41,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
         <FulfillmentDataContainer
           year={year}
           month={month}
-          visibleUserIds={readOnlyScope.activeVisibleUserIds ?? readOnlyScope.visibleUserIds}
+          visibleUserIds={readOnlyScope.activeVisibleUserIds}
           currentUserId={permissionInfo.userId}
           canManageSystem={permissionInfo.permissions.manage_system === true}
           canManage={permissionInfo.permissions.manage_fulfillment === true}

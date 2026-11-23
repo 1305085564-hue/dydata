@@ -9,29 +9,6 @@ function form(values: Record<string, string>) {
   return data;
 }
 
-function supabaseDependencies(overrides: Partial<RegisterDependencies> = {}): RegisterDependencies {
-  const admin = {
-    auth: { admin: { deleteUser: async () => ({ error: null }) } },
-    from: () => ({ insert: async () => ({ error: null }) }),
-  };
-  return {
-    getTeamOptions: async () => [{ id: "t1", name: "一队" }],
-    createClient: async () => ({
-      auth: {
-        signUp: async () => ({ data: { user: { id: "u1", identities: [{}] }, session: {} }, error: null }),
-        signOut: async () => ({ error: null }),
-      },
-    }),
-    createAdminClient: () => admin as never,
-    ensureDefaultDashboardAccount: async () => ({ created: true }),
-    redirect: ((path: string) => { throw new Error(`redirect:${path}`); }) as never,
-    logError: () => {},
-    isCloudBaseBackend: () => false,
-    createRequestId: () => "req-sb-1",
-    ...overrides,
-  };
-}
-
 function cloudBaseDependencies(overrides: Partial<RegisterDependencies> = {}) {
   const calls = {
     registerInput: null as Record<string, unknown> | null,
@@ -42,8 +19,6 @@ function cloudBaseDependencies(overrides: Partial<RegisterDependencies> = {}) {
   };
 
   const admin = {
-    auth: { admin: { deleteUser: async () => ({ error: null }) } },
-    from: () => ({ insert: async () => ({ error: null }) }),
     rpc: async () => ({ data: null, error: null }),
   };
 
@@ -51,7 +26,6 @@ function cloudBaseDependencies(overrides: Partial<RegisterDependencies> = {}) {
     getTeamOptions: async () => [{ id: "t1", name: "一队" }],
     createClient: async () => ({
       auth: {
-        signUp: async () => { throw new Error("CloudBase 不应调用客户端 signUp"); },
         signInWithPassword: async (credentials) => {
           calls.signInInput = credentials;
           return { data: { user: { id: "11111111-1111-4111-8111-111111111111" }, session: null }, error: null };
@@ -63,10 +37,8 @@ function cloudBaseDependencies(overrides: Partial<RegisterDependencies> = {}) {
       },
     }),
     createAdminClient: () => admin as never,
-    ensureDefaultDashboardAccount: async () => ({ created: true }),
     redirect: ((path: string) => { throw new Error(`redirect:${path}`); }) as never,
     logError: (...args: unknown[]) => calls.logs.push(args),
-    isCloudBaseBackend: () => true,
     getCloudBaseProject: () => "dydata-d6g0gd1v37fcddf21",
     createRequestId: () => "req-cb-1",
     registerCloudBaseEmployee: async (_admin, input) => {
@@ -83,19 +55,13 @@ function cloudBaseDependencies(overrides: Partial<RegisterDependencies> = {}) {
   return { calls, deps };
 }
 
-test("Supabase 兼容路径：注册成功保留安全 next 并跳转", async () => {
-  await assert.rejects(
-    () => registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "t1" }), supabaseDependencies(), "/topics"),
-    /redirect:\/topics/,
-  );
-});
-
 test("空字段、无效邮箱、短密码、超长密码和无效团队返回明确提示", async () => {
-  assert.deepEqual(await registerUser({ error: null }, form({}), supabaseDependencies()), { error: "请完整填写姓名、邮箱和密码。" });
-  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "not-an-email", password: "123456", teamId: "t1" }), supabaseDependencies()), { error: "请输入有效的邮箱地址。" });
-  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123", teamId: "t1" }), supabaseDependencies()), { error: "密码至少需要 6 位。" });
-  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "a".repeat(73), teamId: "t1" }), supabaseDependencies()), { error: "密码长度不能超过 72 位。" });
-  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "missing" }), supabaseDependencies()), { error: "还没选要申请加入的团队。" });
+  const { deps } = cloudBaseDependencies();
+  assert.deepEqual(await registerUser({ error: null }, form({}), deps), { error: "请完整填写姓名、邮箱和密码。" });
+  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "not-an-email", password: "123456", teamId: "t1" }), deps), { error: "请输入有效的邮箱地址。" });
+  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123", teamId: "t1" }), deps), { error: "密码至少需要 6 位。" });
+  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "a".repeat(73), teamId: "t1" }), deps), { error: "密码长度不能超过 72 位。" });
+  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "missing" }), deps), { error: "还没选要申请加入的团队。" });
 });
 
 test("CloudBase 正常注册：服务端单事务建号并通过正式登录自检后跳转", async () => {
@@ -170,7 +136,6 @@ test("CloudBase 建号成功但登录自检失败：删掉刚建账号与资料�
     createRequestId: () => "req-selfcheck-01",
     createClient: async () => ({
       auth: {
-        signUp: async () => { throw new Error("should not call signUp"); },
         signInWithPassword: async (credentials) => {
           calls.signInInput = credentials;
           return { data: { user: null, session: null }, error: { code: "invalid_credentials", message: "邮箱或密码不正确", status: 401 } };
@@ -207,7 +172,6 @@ test("CloudBase 自检失败且回滚也失败：两条失败都记入服务端�
     createRequestId: () => "req-rollback-fail",
     createClient: async () => ({
       auth: {
-        signUp: async () => { throw new Error("should not call signUp"); },
         signInWithPassword: async () => ({
           data: { user: { id: "wrong-user-id" }, session: null },
           error: null,
@@ -235,25 +199,6 @@ test("CloudBase 自检失败且回滚也失败：两条失败都记入服务端�
   assert.equal(calls.logs.length, 2);
   assert.match(JSON.stringify(calls.logs[0]), /subject_mismatch/);
   assert.match(JSON.stringify(calls.logs[1]), /rollback_rpc_timeout/);
-});
-
-test("Supabase 兼容路径：重复邮箱返回带编号的具体中文提示", async () => {
-  const logs: unknown[][] = [];
-  const deps = supabaseDependencies({
-    createRequestId: () => "req-sb-dup",
-    logError: (...args: unknown[]) => logs.push(args),
-    createClient: async () => ({
-      auth: {
-        signUp: async () => ({ data: { user: null, session: null }, error: { message: "duplicate" } }),
-        signOut: async () => ({ error: null }),
-      },
-    }),
-  });
-  assert.deepEqual(
-    await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "t1" }), deps),
-    { error: "这个邮箱已经注册过，请直接登录或联系管理员（编号 req-sb-dup）" },
-  );
-  assert.equal(logs.length, 1);
 });
 
 test("R1 长度限制：64 字符邮箱通过并建号，65 字符邮箱与 101 字符姓名直接拦截且不调用建号函数", async () => {

@@ -9,8 +9,7 @@ const originalFetch = globalThis.fetch;
 
 for (const status of ['archived', 'blocked', 'pending', 'missing', 'outage']) {
   test(`CloudBase middleware classifies ${status} without an RLS-filtered profile lookup`, async () => {
-    const oldEnv = { backend: process.env.DYDATA_BACKEND, envId: process.env.CLOUDBASE_ENV_ID };
-    process.env.DYDATA_BACKEND = 'cloudbase';
+    const oldEnvId = process.env.CLOUDBASE_ENV_ID;
     process.env.CLOUDBASE_ENV_ID = 'env-test';
     const calls: string[] = [];
     globalThis.fetch = (async (input) => {
@@ -29,8 +28,7 @@ for (const status of ['archived', 'blocked', 'pending', 'missing', 'outage']) {
       assert.deepEqual(calls, ['/auth/v1/user/me', '/v1/rdb/rest/rpc/cloudbase_session_status']);
     } finally {
       globalThis.fetch = originalFetch;
-      if (oldEnv.backend === undefined) delete process.env.DYDATA_BACKEND; else process.env.DYDATA_BACKEND = oldEnv.backend;
-      if (oldEnv.envId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnv.envId;
+      if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnvId;
     }
   });
 }
@@ -41,8 +39,7 @@ function session(accessToken: string, refreshToken = "refresh-old"): CloudBaseSe
 
 for (const state of ['archived', 'blocked', 'active', 'outage']) {
   test(`Auth blocked plus trusted ${state} is only used to classify rejection`, async () => {
-    const oldEnv = { backend: process.env.DYDATA_BACKEND, envId: process.env.CLOUDBASE_ENV_ID };
-    process.env.DYDATA_BACKEND = 'cloudbase';
+    const oldEnvId = process.env.CLOUDBASE_ENV_ID;
     process.env.CLOUDBASE_ENV_ID = 'env-test';
     const paths: string[] = [];
     globalThis.fetch = (async input => {
@@ -60,17 +57,14 @@ for (const state of ['archived', 'blocked', 'active', 'outage']) {
       assert.deepEqual(paths, ['/auth/v1/user/me', '/v1/rdb/rest/rpc/cloudbase_session_status']);
     } finally {
       globalThis.fetch = originalFetch;
-      if (oldEnv.backend === undefined) delete process.env.DYDATA_BACKEND; else process.env.DYDATA_BACKEND = oldEnv.backend;
-      if (oldEnv.envId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnv.envId;
+      if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnvId;
     }
   });
 }
 
 test("CloudBase middleware validates user/me, checks membership and persists rotated HttpOnly cookie", async () => {
-  const oldBackend = process.env.DYDATA_BACKEND;
   const oldEnvId = process.env.CLOUDBASE_ENV_ID;
   const oldPublicEnvId = process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID;
-  process.env.DYDATA_BACKEND = "cloudbase";
   process.env.CLOUDBASE_ENV_ID = "env-test";
   process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID = "env-test";
   let userCalls = 0;
@@ -104,7 +98,6 @@ test("CloudBase middleware validates user/me, checks membership and persists rot
     assert.doesNotMatch(setCookie, /access-old|refresh-old/);
   } finally {
     globalThis.fetch = originalFetch;
-    if (oldBackend === undefined) delete process.env.DYDATA_BACKEND; else process.env.DYDATA_BACKEND = oldBackend;
     if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnvId;
     if (oldPublicEnvId === undefined) delete process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID; else process.env.NEXT_PUBLIC_CLOUDBASE_ENV_ID = oldPublicEnvId;
   }
@@ -175,10 +168,7 @@ test("all protected matcher roots share CloudBase checks for root and child path
   const { config } = await import("./middleware");
   const roots = config.matcher.filter(path => path.endsWith("/:path*") && path !== "/api/:path*").map(path => path.replace("/:path*", ""));
   assert.equal(roots.length, 4);
-  const keys = ["DYDATA_BACKEND", "NEXT_PUBLIC_DYDATA_BACKEND", "CLOUDBASE_ENV_ID"];
-  const previous = keys.map(key => process.env[key]);
-  process.env.DYDATA_BACKEND = "cloudbase";
-  process.env.NEXT_PUBLIC_DYDATA_BACKEND = "cloudbase";
+  const oldEnvId = process.env.CLOUDBASE_ENV_ID;
   process.env.CLOUDBASE_ENV_ID = "env-test";
   try {
     let requestIndex = 0;
@@ -214,6 +204,6 @@ test("all protected matcher roots share CloudBase checks for root and child path
     }
   } finally {
     globalThis.fetch = originalFetch;
-    keys.forEach((key, i) => { if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i]; });
+    if (oldEnvId === undefined) delete process.env.CLOUDBASE_ENV_ID; else process.env.CLOUDBASE_ENV_ID = oldEnvId;
   }
 });

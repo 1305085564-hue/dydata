@@ -16,8 +16,7 @@ export const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
 
 export function hasActiveScopeAccess(scope: DataAccessScope | null, userId: string) {
   if (!scope) return false;
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  return activeVisibleUserIds.includes(userId);
+  return scope.activeVisibleUserIds.includes(userId);
 }
 
 export function resolveTargetRuntimeRole(profile: { role?: unknown; company_role?: unknown }): UserRole | null {

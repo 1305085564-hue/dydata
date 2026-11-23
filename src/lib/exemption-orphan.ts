@@ -48,8 +48,7 @@ export type OrphanExemptionRequest = {
   created_at: string;
 };
 
-export type OrphanScope = Pick<DataAccessScope, "kind" | "teamId"> & {
-  activeVisibleUserIds?: string[];
+export type OrphanScope = Pick<DataAccessScope, "kind" | "teamId" | "activeVisibleUserIds"> & {
   visibleUserIds?: string[];
 };
 
@@ -88,7 +87,8 @@ export function getOrdinaryQueueVisibleApplicantIds(
   rows: Pick<OrphanExemptionRequestRecord, "applicant_user_id">[],
   scope: OrphanScope,
 ) {
-  return new Set(scope.activeVisibleUserIds ?? scope.visibleUserIds ?? []);
+  void rows;
+  return new Set(scope.activeVisibleUserIds);
 }
 
 export function filterOrphanExemptionRequests({

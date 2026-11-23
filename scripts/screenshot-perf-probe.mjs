@@ -10,14 +10,14 @@
  *   回退率  统计 /api/submission-screenshots/file 响应里 X-Screenshot-Fallback: 1 的占比
  *
  * 用法：
- *   node scripts/screenshot-perf-probe.mjs --base=https://xxx.vercel.app \
+ *   node scripts/screenshot-perf-probe.mjs --base=https://dydata.cc \
  *     --email=<账号> --password=<密码> [--count=10] [--only=a1,a2,a4,a5] \
  *     [--paths-file=output/screenshot-migration/manifest.jsonl] [--json-out=/tmp/probe.json]
  *
  * 说明：
  *   - 账号密码也可以走环境变量 DYDATA_TEST_LEADER_EMAIL / DYDATA_TEST_LEADER_PASSWORD（推荐，避免进 shell 历史）。
  *   - 路径清单默认读迁移 manifest 里 status=ok 的前若干条；四条指标各用互不重叠的路径，避免浏览器缓存串味。
- *   - 只跑 Preview，不写数据、不改配置；脚本自身只发 GET 与一次授权 POST。
+ *   - 只读探测，不写业务数据、不改配置；脚本自身只发 GET 与一次授权 POST。
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -45,7 +45,7 @@ if (args.help || !args.base) {
   node scripts/screenshot-perf-probe.mjs --base=<URL> [选项]
 
 必填：
-  --base=<URL>        目标站点，例如 https://dydata-xxx.vercel.app（Preview）
+  --base=<URL>        目标站点，例如 https://dydata.cc
 
 账号（二选一）：
   --email=<邮箱> --password=<密码>
@@ -57,9 +57,6 @@ if (args.help || !args.base) {
   --paths-file=<路径>     截图路径清单，默认 output/screenshot-migration/manifest.jsonl
   --json-out=<路径>       结果另存 JSON
   --headed                显示浏览器窗口
-
-Preview 默认开启 Vercel Authentication：需要设置环境变量 VERCEL_AUTOMATION_BYPASS_SECRET
-（项目里的 automation-bypass 值），脚本会带上 x-vercel-protection-bypass 头并写回绕过 Cookie。
 
 输出：A1 p50/p95、A2 总耗时、A4/A5 单图 p95、回退率、Cache-Control 分布、状态码分布。`);
   process.exit(args.help ? 0 : 2);
@@ -185,17 +182,12 @@ const slices = {
   a5: allPaths.slice(30 + 4 * count, 30 + 9 * count),
 };
 
-const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? null;
-const contextOptions = bypass
-  ? { extraHTTPHeaders: { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" } }
-  : {};
-
 const responses = [];
 const browser = await chromium.launch({ headless: !args.headed });
 const result = { base, startedAt: new Date().toISOString(), count, metrics: {} };
 
 try {
-  const main = await browser.newContext(contextOptions);
+  const main = await browser.newContext();
   const { page, grant } = await login(main);
   attachResponseLog(page, responses);
   result.grant = grant;
@@ -227,7 +219,7 @@ try {
     const allDurations = [];
     const sessions = [];
     for (let index = 0; index < contexts; index += 1) {
-      const context = await browser.newContext(contextOptions);
+      const context = await browser.newContext();
       const logged = await login(context);
       attachResponseLog(logged.page, responses);
       sessions.push(logged.page);

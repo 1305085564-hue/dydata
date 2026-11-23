@@ -32,15 +32,13 @@ test("团队元数据清理空白并提供默认团队名", () => {
 });
 
 test("缺少服务端配置时团队数据库操作明确抛错", async () => {
-  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const oldKey = process.env.CLOUDBASE_SERVICE_API_KEY;
+  delete process.env.CLOUDBASE_SERVICE_API_KEY;
   try {
     await assert.rejects(() => ensureDefaultTeam(), /Missing/);
     await assert.rejects(() => getTeamOptions(), /Missing/);
   } finally {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.CLOUDBASE_SERVICE_API_KEY;
+    else process.env.CLOUDBASE_SERVICE_API_KEY = oldKey;
   }
 });

@@ -47,18 +47,9 @@ export type AuthenticatedWorkGroupRpcClient = {
 };
 
 export type MemberWorkGroupWriteDeps = {
-  backend: "cloudbase" | "supabase";
   resolvePermissionContext: () => Promise<CurrentPermissionContext | null>;
   createAdminClient: () => SupabaseClient;
   createAuthenticatedClient: () => Promise<AuthenticatedWorkGroupRpcClient>;
-  assignSupabase: (
-    client: SupabaseClient,
-    input: { actorId: string; actorTeamId: string; groupId: string; userId: string },
-  ) => Promise<WorkGroupResult<MemberWorkGroupAssignment>>;
-  unassignSupabase: (
-    client: SupabaseClient,
-    input: { actorId: string; actorTeamId: string; groupId: string; userId: string },
-  ) => Promise<WorkGroupResult<MemberWorkGroupUnassignment>>;
 };
 
 type MemberRow = {
@@ -207,15 +198,6 @@ export async function assignMemberWorkGroupForManagement(
   const actor = await resolveActor(deps);
   if (!actor.ok) return actor;
 
-  if (deps.backend === "supabase") {
-    return deps.assignSupabase(deps.createAdminClient(), {
-      actorId: actor.actorId,
-      actorTeamId: actor.teamId,
-      groupId: input.groupId,
-      userId: input.userId,
-    });
-  }
-
   const admin = deps.createAdminClient();
   const loaded = await loadTrustedRows(admin, input, actor.teamId, actor.companyRole);
   if (!loaded.ok) return loaded;
@@ -261,15 +243,6 @@ export async function unassignMemberWorkGroupForManagement(
 ): Promise<WorkGroupResult<MemberWorkGroupUnassignment>> {
   const actor = await resolveActor(deps);
   if (!actor.ok) return actor;
-
-  if (deps.backend === "supabase") {
-    return deps.unassignSupabase(deps.createAdminClient(), {
-      actorId: actor.actorId,
-      actorTeamId: actor.teamId,
-      groupId: input.groupId,
-      userId: input.userId,
-    });
-  }
 
   const admin = deps.createAdminClient();
   const loaded = await loadTrustedRows(admin, input, actor.teamId, actor.companyRole);

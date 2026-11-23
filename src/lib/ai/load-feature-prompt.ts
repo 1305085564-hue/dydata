@@ -1,31 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isCloudBaseBackend } from "@/lib/cloudbase/core";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const cache = new Map<string, { expiresAt: number; prompt: string | null }>();
 
 function getServiceClient() {
-  if (isCloudBaseBackend()) {
-    try {
-      return createAdminClient();
-    } catch {
-      return null;
-    }
+  try {
+    return createAdminClient();
+  } catch {
+    return null;
   }
-
-  // 双路径：非 CloudBase 分支只给本机 Supabase 测试库用，线上不走。不要照抄，新代码只写 CloudBase 分支。待阿禅定本机测试环境后删除（见 docs/plans/待办清单.md）。
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!supabaseUrl || !serviceRoleKey) return null;
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
 }
 
 export async function loadFeaturePrompt(featureKey: string, fallback: string) {

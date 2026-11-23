@@ -13,13 +13,11 @@ function jsonResponse(body: string, status: number) {
 
 test("COS 写失败时上传接口必须报错，不得伪成功", async () => {
   const originalEnv = {
-    SCREENSHOT_STORAGE: process.env.SCREENSHOT_STORAGE,
     COS_SECRET_ID: process.env.COS_SECRET_ID,
     COS_SECRET_KEY: process.env.COS_SECRET_KEY,
     COS_BUCKET: process.env.COS_BUCKET,
     COS_REGION: process.env.COS_REGION,
   };
-  process.env.SCREENSHOT_STORAGE = "cos";
   process.env.COS_SECRET_ID = "test-secret-id";
   process.env.COS_SECRET_KEY = "test-secret-key";
   process.env.COS_BUCKET = "test-bucket-1250000000";

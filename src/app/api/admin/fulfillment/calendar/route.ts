@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       createAdminClient(),
       auth.context.scope,
     );
-    const data = await loadFulfillmentCalendar(year, month, scope.activeVisibleUserIds ?? scope.visibleUserIds);
+    const data = await loadFulfillmentCalendar(year, month, scope.activeVisibleUserIds);
     return NextResponse.json({ data });
   } catch (error) {
     console.error("[fulfillment/calendar] failed to load calendar", error);

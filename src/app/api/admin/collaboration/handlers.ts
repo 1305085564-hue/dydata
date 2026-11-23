@@ -121,7 +121,7 @@ export async function buildAttributionResponse(
     if (report.user_id === auth.actor.userId) {
       return NextResponse.json({ ok: false, error: "不能修改自己提交的日报" }, { status: 403 });
     }
-    const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
+    const { activeVisibleUserIds } = context.scope;
     if (!activeVisibleUserIds.includes(report.user_id)) {
       return NextResponse.json({ ok: false, error: "不能修改已归档或当前权限范围外的日报" }, { status: 403 });
     }

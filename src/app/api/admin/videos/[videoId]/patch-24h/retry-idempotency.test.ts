@@ -29,6 +29,7 @@ function buildAuthorizedActor() {
       dataScope: "team" as const,
       teamId: "team-1",
       membershipStatus: "active" as const,
+      activeVisibleUserIds: [ACTOR_ID, OWNER_ID],
     },
   };
 }
