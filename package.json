@@ -11,8 +11,6 @@
     "start": "next start",
     "lint": "eslint --max-warnings=21",
     "test": "node scripts/run-tests.mjs unit",
-    "doc:scan": "node scripts/doc-health-check.mjs",
-    "doc:scan-deep": "node scripts/doc-health-check.mjs --deep",
     "doc:links": "node scripts/doc-health-check.mjs --links",
     "doc:size": "node scripts/doc-size-check.mjs",
     "logs:archive": "node scripts/archive-old-logs.mjs",
