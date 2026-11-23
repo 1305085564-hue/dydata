@@ -33,6 +33,7 @@ import {
 } from "@/lib/member-lifecycle-service";
 import type { RestoreMemberActionResult, RestoredTeamInfo } from "@/lib/member-lifecycle";
 import {
+  canActorManageMemberTeam,
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
@@ -233,6 +234,10 @@ export async function updateMemberTeam(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
+  // 先过权限再看数据：没权限的人不该因为一次调用就读到成员资料。
+  if (!canActorManageMemberTeam({ actorRole: perm.role, actorPermissions: perm.permissions })) {
+    return { error: "无权限" };
+  }
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();

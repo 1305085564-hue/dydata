@@ -50,9 +50,3 @@ test("指标输入卡把 Label 和 Input 按字段 key 绑定", () => {
   assert.match(source, /<Label[\s\S]*htmlFor=\{`metric-\$\{field\.key\}`\}/);
   assert.match(source, /<Input[\s\S]*id=\{`metric-\$\{field\.key\}`\}/);
 });
-
-test("补 24 小时数据弹窗的识别请求固定按互动截图带类型（识别接口不再接受不带类型的请求）", () => {
-  const source = readSource("src/components/screenshot-import.tsx");
-  assert.match(source, /formData\.append\("screenshot_type", "data"\)/);
-  assert.match(source, /fetch\("\/api\/ocr-screenshot"/);
-});

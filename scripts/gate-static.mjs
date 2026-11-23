@@ -54,7 +54,7 @@ if (hasMigrationChanges()) {
 
 const steps = [
   ["2/9 类型检查", npxCommand, ["tsc", "--noEmit", "--pretty", "false"]],
-  ["3/9 单元测试（含脚本测试，不含真实库组）", npmCommand, ["test", "--silent"]],
+  ["3/9 单元测试（src 与 scripts 全部测试）", npmCommand, ["test", "--silent"]],
   ["4/9 代码规范与警告上限检查", npmCommand, ["run", "lint", "--silent"]],
   ["5/9 设计令牌门禁", npmCommand, ["run", "gate:design", "--silent"]],
   ["6/9 可维护性门禁（对比 origin/main）", "node", ["scripts/maintainability-gate.mjs", "--base=origin/main"]],

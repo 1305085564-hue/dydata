@@ -17,6 +17,8 @@ export type OcrFallbackDetail = {
 };
 
 export interface OcrLogParams {
+  /** 接口入口生成的请求编号：与 ai_call_attempts.request_id 同一个值，按它能把一次识别串起来。 */
+  requestId?: string | null;
   totalMs: number;
   ocrMs?: number | null;
   downloadMs?: number | null;
@@ -40,6 +42,7 @@ export async function recordOcrRecognitionLog(
 ): Promise<void> {
   try {
     const { error } = await createClientImpl().from("ocr_recognition_logs").insert({
+      request_id: params.requestId ?? null,
       duration_ms: params.totalMs,
       ocr_ms: params.ocrMs ?? null,
       download_ms: params.downloadMs ?? null,

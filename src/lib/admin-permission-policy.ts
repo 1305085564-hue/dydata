@@ -106,7 +106,7 @@ export function canChangeMemberRole({
 }: ChangeMemberRoleInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
-  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  const actorIsTeamAdmin = canActorManageMemberTeam({ actorRole, actorPermissions });
   if (!actorIsTeamAdmin) return false;
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   if (targetRole !== "member" && targetRole !== "admin") return false;
@@ -128,7 +128,7 @@ export function canRemoveMemberTarget({
 }: RemoveMemberTargetInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
-  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  const actorIsTeamAdmin = canActorManageMemberTeam({ actorRole, actorPermissions });
   if (!actorIsTeamAdmin) return false;
   if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
     return targetRole === "member"
@@ -137,6 +137,17 @@ export function canRemoveMemberTarget({
   }
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   return targetRole === "member";
+}
+
+/**
+ * 调配成员团队的前置条件（只看操作者本人，不读目标资料）。
+ * 放这里作唯一出处：动作入口用它在读库前先拦一道，判定函数也复用它。
+ */
+export function canActorManageMemberTeam(input: {
+  actorRole: UserRole;
+  actorPermissions: Permissions;
+}): boolean {
+  return input.actorRole === "admin" && input.actorPermissions.manage_members === true;
 }
 
 export function resolveMemberTeamTransfer({
@@ -156,7 +167,7 @@ export function resolveMemberTeamTransfer({
   if (targetRole === "owner") return { shouldApply: false, error: "不能调配创始人的团队" };
   if (newTeamId === oldTeamId) return { shouldApply: false };
 
-  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  const actorIsTeamAdmin = canActorManageMemberTeam({ actorRole, actorPermissions });
   if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };
   if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
     if (targetRole === "admin") return { shouldApply: false, error: "负责人不能调配组长" };

@@ -4,7 +4,7 @@ import test from "node:test";
 import { observeMutation, type MutationCaptureContext } from "./observed-mutation";
 import type { ApiLogEntry } from "./api-logger";
 
-const route = "/api/exemptions/apply" as const;
+const route = "/api/exemptions/review" as const;
 
 function deps(logs: ApiLogEntry[] = [], captures: MutationCaptureContext[] = []) {
   let now = 1_000;

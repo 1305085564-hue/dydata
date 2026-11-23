@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { AiChannelError, MIN_CHANNEL_ATTEMPT_BUDGET_MS, resolveAttemptBudgetMs, sendToChannel, type AiMessage } from "@/lib/ai/client";
 import { getFeatureConfig, getServiceSupabaseClient, resolveFeatureChannelChain, type ChannelConfig, type FeatureConfig } from "@/lib/ai/client-routing";
@@ -32,6 +31,8 @@ export type OcrRunnerInput = {
   dataUrl: string;
   screenshotType: ScreenshotType;
   timings: OcrRunnerTimings;
+  /** 接口入口（/api/ocr-screenshot）生成的请求编号；识别记录与 AI 调用记录都用它，不再自己另生成。 */
+  requestId: string;
 };
 
 export type OcrRunnerSuccess = {
@@ -243,7 +244,7 @@ export async function runScreenshotOcr(
     });
   }
 
-  const requestId = randomUUID();
+  const requestId = input.requestId;
   const secrets = collectChannelSecrets(channels);
   const deadline = deps.now() + OCR_TOTAL_TIMEOUT_MS;
   const failedProviderKeyIds = new Set<string>();

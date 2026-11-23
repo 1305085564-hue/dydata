@@ -35,9 +35,7 @@ const INJECTED_USER_PARAMETERS: Record<string, string[]> = {
   // returns createClient(), while admin reads use the separate adminClient name.
   "src/lib/team-join/service.ts": ["supabase"],
 };
-const INJECTED_CONTEXT_LOCALS: Record<string, string[]> = {
-  "src/app/api/exemptions/apply/route.ts": ["auth"],
-};
+const INJECTED_CONTEXT_LOCALS: Record<string, string[]> = {};
 const INJECTED_CONTEXT_PATHS: Record<string, string[]> = {
   "src/app/api/admin/execute-tool/route.ts": ["input.auth"],
 };
@@ -53,7 +51,6 @@ const ALLOWED_USER_ACCESS: Record<string, string> = {
   "src/app/(app)/people/[userId]/page.tsx": "Loads the signed-in user's own profile by user ID for page context.",
   "src/app/(auth)/login/page.tsx": "Authentication page reads and updates the current user's own profile.",
   "src/components/nav-bar.tsx": "Navigation reads the signed-in user's own profile and accounts for the account selector.",
-  "src/app/api/exemptions/apply/route.ts": "Reads the authenticated applicant's own profile.",
   "src/app/api/dashboard/leaderboard/route.ts": "Personal account lookup is filtered by the authenticated profile ID; public rows use CloudBase's scoped loader.",
   "src/app/api/remind/count/route.ts": "Reminder count is filtered by the authenticated user ID.",
   "src/app/api/admin/execute-tool/route.ts": "Admin action log rows are bound to and rechecked against the current admin ID.",

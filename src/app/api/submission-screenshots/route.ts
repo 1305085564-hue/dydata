@@ -81,6 +81,11 @@ export async function buildSubmissionScreenshotResponse(
 
     if (!user) return respond(NextResponse.json({ error: "未登录" }, { status: 401 }));
 
+    // 上传失败要能查清是谁传的、哪张图、卡在哪一步：沿用接口观测的 detail 字段，
+    // 失败时日志里就带上用户编号与槽位；具体卡住的位置由 mark 的 stage 表达
+    // （auth=拿上传资格、scope=账号归属校验、write-request=写入腾讯云桶、finalize=返回）。
+    observation.setDetail?.({ userId: user.id });
+
     const permissionContext = await deps.getCurrentPermissionContext();
     if (
       !permissionContext
@@ -109,6 +114,8 @@ export async function buildSubmissionScreenshotResponse(
     if (file.size <= 0) return respond(NextResponse.json({ error: "图片为空或已损坏，请重新上传" }, { status: 400 }));
     if (file.size > MAX_FILE_SIZE) return respond(NextResponse.json({ error: "图片不能超过 8MB" }, { status: 400 }));
 
+    observation.setDetail?.({ userId: user.id, account_id: accountId, asset_role: assetRole });
+
     observation.mark("scope");
     const { data: account, error: accountError } = await deps.createAdminClient()
       .from("accounts")
@@ -122,6 +129,9 @@ export async function buildSubmissionScreenshotResponse(
     }
 
     const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
+    // 落库路径在建的时候就记下来：即使写入桶失败，日志里也有"哪张图"。
+    observation.setDetail?.({ userId: user.id, account_id: accountId, asset_role: assetRole, storage_path: storagePath });
+
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!hasMatchingImageSignature(buffer, file.type)) {
       return respond(NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 }));
