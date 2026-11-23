@@ -30,7 +30,7 @@ export async function getUserInfo(
   if (!userId && !email && !name) {
     return { success: false, error: "查询用户必须提供 userId/email/name 之一" };
   }
-  if (!context.activeVisibleUserIds?.length || (userId && !isActiveTargetInScope(context, userId))) {
+  if (!context.activeVisibleUserIds.length || (userId && !isActiveTargetInScope(context, userId))) {
     return { success: false, error: "不能查看当前管理范围外的成员" };
   }
 
@@ -87,7 +87,7 @@ export async function getAnomalousData(
   const type = toTrimmedString(params.type);
   const start = toDateString((params.dateRange as Record<string, unknown> | undefined)?.start);
   const end = toDateString((params.dateRange as Record<string, unknown> | undefined)?.end);
-  if (!context.activeVisibleUserIds?.length) {
+  if (!context.activeVisibleUserIds.length) {
     return { success: false, error: "当前管理范围没有在职成员" };
   }
   const activeVisibleUserIds = context.activeVisibleUserIds;
@@ -208,7 +208,7 @@ export async function getTaskStatus(
 
   if (taskType === "daily_review") {
     const userId = toOptionalString(params.userId);
-    if (!context?.activeVisibleUserIds?.length || (userId && !isActiveTargetInScope(context, userId))) {
+    if (!context || !context.activeVisibleUserIds.length || (userId && !isActiveTargetInScope(context, userId))) {
       return { success: false, error: "不能查看当前管理范围外的任务" };
     }
     const range = params.dateRange as Record<string, unknown> | undefined;

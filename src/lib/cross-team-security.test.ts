@@ -98,10 +98,10 @@ test("buildDataAccessScope: 团队 A 主管的可见范围严密限定在团队 
   assert.equal(scopeA.teamId, TEAM_A);
 
   // Active scope only contains active team A members
-  assert.deepEqual(scopeA.activeVisibleUserIds?.sort(), [MANAGER_A_ID, MEMBER_A1_ID].sort());
-  assert.ok(!scopeA.activeVisibleUserIds?.includes(MEMBER_A2_ARCHIVED_ID));
-  assert.ok(!scopeA.activeVisibleUserIds?.includes(MEMBER_B1_ID));
-  assert.ok(!scopeA.activeVisibleUserIds?.includes(MANAGER_B_ID));
+  assert.deepEqual(scopeA.activeVisibleUserIds.sort(), [MANAGER_A_ID, MEMBER_A1_ID].sort());
+  assert.ok(!scopeA.activeVisibleUserIds.includes(MEMBER_A2_ARCHIVED_ID));
+  assert.ok(!scopeA.activeVisibleUserIds.includes(MEMBER_B1_ID));
+  assert.ok(!scopeA.activeVisibleUserIds.includes(MANAGER_B_ID));
 
   // Historical scope contains active + archived team A members, but NO team B members
   assert.deepEqual(scopeA.visibleUserIds.sort(), [MANAGER_A_ID, MEMBER_A1_ID, MEMBER_A2_ARCHIVED_ID].sort());
@@ -156,6 +156,7 @@ test("requireVisibleProductionUser: 跨团队操作目标成员直接返回 403"
       dataScope: "team" as const,
       teamId: TEAM_A,
       companyRole: "admin" as const,
+      activeVisibleUserIds: [MANAGER_A_ID, MEMBER_A1_ID],
     },
     scope: {
       userId: MANAGER_A_ID,

@@ -23,7 +23,7 @@ function request() {
   });
 }
 
-function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?: string[], actorOverrides: Record<string, unknown> = {}) {
+function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds: string[] = [actorId, targetId, reportOwnerId], actorOverrides: Record<string, unknown> = {}) {
   let updateCalled = false;
   return {
     value: {
@@ -35,6 +35,7 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
           permissions: {},
           name: "老板",
           dataScope: "team" as const,
+          activeVisibleUserIds,
           ...actorOverrides,
         },
       }),
@@ -42,7 +43,7 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
         permissionInfo: {} as never,
         scope: {
           visibleUserIds: [actorId, targetId, reportOwnerId],
-          activeVisibleUserIds: activeVisibleUserIds ?? [actorId, targetId, reportOwnerId],
+          activeVisibleUserIds,
         } as never,
       }),
       createAdminClient: () => ({}) as never,

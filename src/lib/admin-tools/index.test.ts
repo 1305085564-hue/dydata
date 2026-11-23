@@ -35,6 +35,7 @@ test("兼容窗口中的 legacy owner 通过统一角色解析执行 AI 工具",
     actorId: "o1",
     actorRole: "owner" as const,
     actorPermissions: { use_ai_assist: true, manage_system: true },
+    activeVisibleUserIds: ["o1"],
   };
   const result = await executeAdminTool({ toolName: "diagnoseIssue", params: { symptom: "任务卡住" }, context });
   assert.equal(result.success, true);

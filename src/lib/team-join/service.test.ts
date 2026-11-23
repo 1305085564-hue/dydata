@@ -21,7 +21,6 @@ function createPermissionContext(options: {
   teamId?: string | null;
   role?: "admin" | "member";
   membershipStatus?: "active" | "archived";
-  activeVisibleUserIds?: string[];
 } = {}): PermissionContext {
   const userId = options.userId ?? "admin-1";
   const teamId = options.teamId === undefined ? "team-1" : options.teamId;
@@ -45,7 +44,7 @@ function createPermissionContext(options: {
       teamId,
       kind: teamId ? "team" : "self",
       visibleUserIds: [userId],
-      activeVisibleUserIds: options.activeVisibleUserIds ?? [userId],
+      activeVisibleUserIds: [userId],
     },
   } as unknown as PermissionContext;
 }
@@ -445,7 +444,6 @@ test("归档或失效身份在查询前拒绝", async () => {
   const activeButArchivedContext = createPermissionContext({
     userId: "archived-1",
     membershipStatus: "archived",
-    activeVisibleUserIds: ["archived-1"],
   });
   for (const permissionContext of [null, activeButArchivedContext]) {
     setTeamJoinServiceClientsForTest(createAdminListFactories({

@@ -27,6 +27,7 @@ function buildAuthorizedActor() {
       name: "复盘管理员",
       dataScope: "team" as const,
       teamId: "team-1",
+      activeVisibleUserIds: [ACTOR_ID],
     },
   };
 }

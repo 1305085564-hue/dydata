@@ -104,44 +104,91 @@ export function assertOnlineEnvReady(repoRoot, onlineKeys) {
 }
 
 function resolveCloudBaseMcpModule() {
-  if (process.env.CLOUDBASE_MCP_MODULE && existsSync(process.env.CLOUDBASE_MCP_MODULE)) {
-    return process.env.CLOUDBASE_MCP_MODULE;
+  const configured = process.env.CLOUDBASE_MCP_MODULE;
+  if (configured) {
+    if (!existsSync(configured)) {
+      throw new Error(`CLOUDBASE_MCP_MODULE 指向的文件不存在：${configured}`);
+    }
+    return configured;
   }
   const npxRoot = path.join(homedir(), ".npm/_npx");
   if (!existsSync(npxRoot)) {
-    throw new Error("未找到 @cloudbase/cloudbase-mcp，请设置 CLOUDBASE_MCP_MODULE");
+    throw new Error(`未找到 @cloudbase/cloudbase-mcp：${npxRoot} 不存在，请设置 CLOUDBASE_MCP_MODULE`);
   }
-  const found = execFileSync("find", [npxRoot, "-path", "*/@cloudbase/cloudbase-mcp/dist/index.cjs", "-print", "-quit"], {
-    encoding: "utf8",
-  }).trim();
+  let found = "";
+  try {
+    found = execFileSync("find", [npxRoot, "-path", "*/@cloudbase/cloudbase-mcp/dist/index.cjs", "-print", "-quit"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch (error) {
+    throw new Error(`搜索 @cloudbase/cloudbase-mcp 失败：${error instanceof Error ? error.message : String(error)}`);
+  }
   if (!found) {
-    throw new Error("未找到 @cloudbase/cloudbase-mcp，请设置 CLOUDBASE_MCP_MODULE");
+    throw new Error("未找到 @cloudbase/cloudbase-mcp，请设置 CLOUDBASE_MCP_MODULE 指向 dist/index.cjs");
   }
   return found;
 }
 
-export async function fetchOnlineCloudRunEnvKeys(repoRoot = root, serverName = "dydata") {
+/**
+ * 加载 SDK 并取出 getCloudBaseManager。
+ * 该包不同版本的导出位置不同：旧版是具名导出，2.x 挂在 default 上，两种都接受。
+ * 任何一步失败都抛出带具体原因的错误，调用方负责打印并以非 0 退出。
+ */
+export async function loadCloudBaseManagerFactory(modulePath = resolveCloudBaseMcpModule()) {
+  let sdk;
+  try {
+    sdk = await import(pathToFileURL(modulePath).href);
+  } catch (error) {
+    throw new Error(`加载 @cloudbase/cloudbase-mcp 失败（${modulePath}）：${error instanceof Error ? error.message : String(error)}`);
+  }
+  const factory = sdk.getCloudBaseManager ?? sdk.default?.getCloudBaseManager;
+  if (typeof factory !== "function") {
+    throw new Error(
+      `@cloudbase/cloudbase-mcp 未导出 getCloudBaseManager（具名导出与 default 导出都没有）：${modulePath}`,
+    );
+  }
+  return factory;
+}
+
+export async function createCloudRunService({ repoRoot = root, serverName = "dydata", modulePath } = {}) {
   const { envId } = JSON.parse(readFileSync(path.join(repoRoot, "cloudbaserc.json"), "utf8"));
   const keyPath = path.join(homedir(), ".local/share/dydata/keys/腾讯云CloudBase.txt");
-  if (statSync(keyPath).mode & 0o077) throw new Error("凭据文件权限必须为 600");
+  if (!existsSync(keyPath)) throw new Error(`凭据文件不存在：${keyPath}`);
+  if (statSync(keyPath).mode & 0o077) throw new Error(`凭据文件权限必须为 600：${keyPath}`);
   process.env.CLOUDBASE_API_KEY = readFileSync(keyPath, "utf8").trim();
   process.env.CLOUDBASE_ENV_ID = envId;
 
-  const modulePath = resolveCloudBaseMcpModule();
-  const sdk = await import(pathToFileURL(modulePath).href);
-  const manager = await sdk.getCloudBaseManager({ cloudBaseOptions: { envId, region: "ap-shanghai" } });
-  const service = manager.environmentManager.currentEnv.cloudRunService;
-  const detail = await service.detail({ serverName });
+  const factory = await loadCloudBaseManagerFactory(modulePath);
+  const manager = await factory({ cloudBaseOptions: { envId, region: "ap-shanghai" } });
+  const service = manager?.environmentManager?.currentEnv?.cloudRunService;
+  if (!service) throw new Error("SDK 已加载但拿不到云托管服务句柄（cloudRunService）");
+  return { service, envId, serverName };
+}
+
+export async function fetchOnlineCloudRunEnvKeys(repoRoot = root, serverName = "dydata") {
+  const { service } = await createCloudRunService({ repoRoot, serverName });
+  let detail;
+  try {
+    detail = await service.detail({ serverName });
+  } catch (error) {
+    throw new Error(`读取云托管服务详情失败（serverName=${serverName}）：${error instanceof Error ? error.message : String(error)}`);
+  }
   // 只取变量名，立即丢弃值对象，避免任何凭据残留或误打印。
   return Object.keys(JSON.parse(detail.ServerConfig.EnvParams || "{}")).sort();
 }
 
 async function main() {
-  const onlineKeys = await fetchOnlineCloudRunEnvKeys(root, "dydata");
-  const spec = parseEnvExample(readFileSync(path.join(root, ".env.example"), "utf8"));
-  const result = reconcileEnvKeys({ ...spec, onlineKeys });
-  console.log(formatReconcileReport(result));
-  if (!result.ok) {
+  try {
+    const onlineKeys = await fetchOnlineCloudRunEnvKeys(root, "dydata");
+    const spec = parseEnvExample(readFileSync(path.join(root, ".env.example"), "utf8"));
+    const result = reconcileEnvKeys({ ...spec, onlineKeys });
+    console.log(formatReconcileReport(result));
+    if (!result.ok) {
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    console.error(`[env-reconcile] 失败：${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;
   }
 }

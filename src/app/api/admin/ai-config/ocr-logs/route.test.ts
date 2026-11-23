@@ -38,6 +38,7 @@ function authorized(): ReturnType<OcrLogsDependencies["requireSystemActor"]> {
     actor: {
       userId: "admin-1", role: "admin", name: "管理员",
       permissions: { manage_system: true }, dataScope: "team", teamId: "team-1",
+      activeVisibleUserIds: ["admin-1"],
     },
     context: {} as never,
   });

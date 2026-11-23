@@ -11,6 +11,7 @@ function mockAdminActor(overrides: Partial<AdminActor> = {}): AdminActor {
     permissions: {},
     name: "审核员",
     dataScope: "team" as const,
+    activeVisibleUserIds: ["reviewer-1"],
     ...overrides,
   };
 }

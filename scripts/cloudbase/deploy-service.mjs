@@ -4,8 +4,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { assertOnlineEnvReady, formatReconcileReport } from './check-env-vars.mjs';
+import { fileURLToPath } from 'node:url';
+import { assertOnlineEnvReady, formatReconcileReport, loadCloudBaseManagerFactory } from './check-env-vars.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -55,8 +55,8 @@ async function main() {
   if (statSync(keyPath).mode & 0o077) throw new Error('凭据文件权限必须为 600');
   process.env.CLOUDBASE_API_KEY = readFileSync(keyPath, 'utf8').trim();
   process.env.CLOUDBASE_ENV_ID = envId;
-  const sdk = await import(pathToFileURL(modulePath).href);
-  const manager = await sdk.getCloudBaseManager({ cloudBaseOptions: { envId, region: 'ap-shanghai' } });
+  const factory = await loadCloudBaseManagerFactory(modulePath);
+  const manager = await factory({ cloudBaseOptions: { envId, region: 'ap-shanghai' } });
   const service = manager.environmentManager.currentEnv.cloudRunService;
   const detail = await service.detail({ serverName: 'dydata' });
   const env = JSON.parse(detail.ServerConfig.EnvParams);

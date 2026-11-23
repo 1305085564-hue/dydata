@@ -30,7 +30,7 @@ test("视频复盘只读范围保留本人和有归档快照的历史成员，�
 
   assert.equal(result.kind, "team");
   assert.deepEqual(result.visibleUserIds.sort(), ["archived-by-company", "u1", "u2", "u3", "u4"]);
-  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2", "u3"]);
+  assert.deepEqual(result.activeVisibleUserIds.sort(), ["u1", "u2", "u3"]);
 });
 
 test("没有公司归属时视频复盘只读范围保持本人，不加载全项目档案", async () => {

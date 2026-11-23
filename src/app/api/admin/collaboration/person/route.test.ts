@@ -73,6 +73,7 @@ test("access_level=1 的成员不能查看他人的个人卡", async () => {
           permissions: { view_analytics: true },
           name: "成员甲",
           dataScope: "team" as const,
+          activeVisibleUserIds: ["123e4567-e89b-42d3-a456-426614174001"],
         },
       }),
       buildPermissionContextForActor: async () => ({

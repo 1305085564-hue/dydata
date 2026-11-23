@@ -55,6 +55,7 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
           name: "阿禅",
           dataScope: "team" as const,
           teamId: null,
+          activeVisibleUserIds: ["user-1"],
         },
       }),
       getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
@@ -128,6 +129,7 @@ test("content list 失败路径：鉴权、权限、回收站权限、游标失�
   const actor = {
     userId: "owner-1", role: "admin" as const, companyRole: "company_owner" as const,
     permissions: { review_content: true }, name: "阿禅", dataScope: "team" as const, teamId: null,
+    activeVisibleUserIds: ["user-1"],
   };
   const url = "https://dydata.cc/api/admin/content/list?view=all&scope=team&teamId=team-1";
 
@@ -202,6 +204,7 @@ test("content list route fresh=1 回到第一页并禁用所有响应缓存", as
           name: "阿禅",
           dataScope: "team" as const,
           teamId: null,
+          activeVisibleUserIds: ["user-1"],
         },
       }),
       getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
@@ -254,6 +257,7 @@ test("公司所有者默认只能使用本公司视角，不能加载其他公�
           name: "公司所有者",
           dataScope: "team" as const,
           teamId: "company-1",
+          activeVisibleUserIds: ["user-1"],
         },
       }),
       getTeamOptions: async () => {
@@ -308,6 +312,7 @@ test("content list route 每次委托取数且响应不缓存", async () => {
         name: "阿禅",
         dataScope: "team" as const,
         teamId: null,
+        activeVisibleUserIds: ["user-1", "user-2"],
       },
     }),
     getTeamOptions: async () => [],

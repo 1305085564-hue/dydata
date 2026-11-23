@@ -14,6 +14,7 @@ function actor(overrides: Partial<AdminActor> = {}): AdminActor {
     permissions: {},
     name: "老板",
     dataScope: "team",
+    activeVisibleUserIds: ["owner-1"],
     ...overrides,
   };
 }

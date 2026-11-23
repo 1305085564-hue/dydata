@@ -59,6 +59,7 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
           permissions: { manage_videos: true },
           name: "阿禅",
           dataScope: "team" as const,
+          activeVisibleUserIds: ["u1"],
         },
       }),
       getTeamOptions: async () => [],

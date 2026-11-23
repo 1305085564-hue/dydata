@@ -488,7 +488,7 @@ test("resolveReadOnlyCompanyScope: 组员常规管理读取保持本团队范围
   );
   assert.equal(result.kind, "team");
   assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2"]);
-  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2"]);
+  assert.deepEqual(result.activeVisibleUserIds.sort(), ["u1", "u2"]);
 });
 
 test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", async () => {
