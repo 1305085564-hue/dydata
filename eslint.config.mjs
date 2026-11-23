@@ -77,6 +77,8 @@ const eslintConfig = defineConfig([
     ".claude/**",
     ".agents/**",
     ".worktrees/**",
+    // 本机验收脚本和截图的临时目录（已被 git 忽略）：不是产品代码，不能让它们的警告撑破 --max-warnings 上限，否则推送前检查在个人电脑和干净检出里结果不一致
+    ".acceptance/**",
     "output/**",
     "next-env.d.ts",
   ]),
