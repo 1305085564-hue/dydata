@@ -10,7 +10,7 @@ import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflo
 import type { WorkflowAction } from "@/lib/video-submit-workflow/types";
 import { buildOcrMultipartFormData, buildOcrStorageRequestBody, createUploadHandler } from "./upload-controller";
 
-function createUploadHarness() {
+function createUploadHarness(options: { ocrTimeoutMs?: number } = {}) {
   let workflow = createWorkflowState({
     meta: createInitialMeta("2026-11-22", "user-1"),
     fields: createEditableFields(),
@@ -39,6 +39,7 @@ function createUploadHarness() {
     blobUrlsRef,
     updateItemsState,
     dispatchWorkflow,
+    ocrTimeoutMs: options.ocrTimeoutMs,
   });
   return { handle, slotsRef, itemsRef, blobUrlsRef, dispatchWorkflow, get workflow() { return workflow; } };
 }
@@ -442,4 +443,37 @@ test("存档失败 + 识别失败：判 failed、assetUrl=null、ocrFallback=fal
     assert.ok(recoveredItem.assetUrl);
     assert.equal(harness.slotsRef.current.screenshot_1.status, "confirmed");
   });
+});
+
+test("识别等到上限：到点中止识别、保留已上传截图，并提示手动填写或重试", async () => {
+  const harness = createUploadHarness({ ocrTimeoutMs: 20 });
+  const file = new File(["image"], "slow-ocr.png", { type: "image/png" });
+  let ocrAborted = false;
+
+  await withUploadMocks(async (url, init) => {
+    if (url === "/api/submission-screenshots") return screenshotUploadResponse("screenshot_1", "slow-ocr.png");
+    if (url === "/api/ocr-screenshot") {
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          ocrAborted = true;
+          reject(new DOMException("This operation was aborted", "AbortError"));
+        }, { once: true });
+      });
+    }
+    throw new Error(`unexpected request: ${url}`);
+  }, async () => {
+    const startedAt = Date.now();
+    await harness.handle("screenshot_1", file);
+    assert.ok(Date.now() - startedAt < 5_000, "到点必须中止，不能一直等");
+  });
+
+  assert.equal(ocrAborted, true, "到点必须真的中止识别请求");
+  const item = harness.itemsRef.current[0];
+  assert.equal(item.status, "failed");
+  assert.equal(item.error, "识别超时，请手动填写或重试");
+  assert.ok(item.assetUrl, "已上传的截图必须保留，不能因为识别超时丢掉");
+  assert.equal(item.path, "user-1/account-1/screenshot_1/slow-ocr.png");
+  assert.equal(item.ocrFallback, true);
+  // 图还在、只是没识别出来：槽位停在"待手动确认"，不是整张作废
+  assert.equal(harness.slotsRef.current.screenshot_1.status, "pending_confirm");
 });

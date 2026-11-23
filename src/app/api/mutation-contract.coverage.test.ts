@@ -37,7 +37,6 @@ const CONTRACT_ROUTES = [
   "admin/videos/[videoId]/patch-24h/route.ts",
   "dashboard/sample-quality-check/route.ts",
   "fulfillment/appeal/withdraw/route.ts",
-  "exemptions/apply/route.ts",
   "exemptions/permanent/route.ts",
   "exemptions/reopen/route.ts",
   "exemptions/withdraw/route.ts",

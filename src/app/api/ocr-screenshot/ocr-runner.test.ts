@@ -61,7 +61,7 @@ test("CF账号1 429 自动记录冷却并无缝切 CF账号2 成功，台账累�
   const now = () => clock;
 
   const result = await runScreenshotOcr(
-    { dataUrl: PNG, screenshotType: "data", timings: {} },
+    { dataUrl: PNG, screenshotType: "data", timings: {}, requestId: "33333333-3333-4333-8333-333333333333" },
     {
       now,
       getServiceClient: () => ({}) as never,
@@ -147,7 +147,7 @@ test("全部 Clairic 不可用时无缝回退到全局默认视觉模型完成�
   let capturedValidate: ((content: string) => boolean) | undefined;
 
   const result = await runScreenshotOcr(
-    { dataUrl: PNG, screenshotType: "data", timings: {} },
+    { dataUrl: PNG, screenshotType: "data", timings: {}, requestId: "33333333-3333-4333-8333-333333333333" },
     {
       now: () => clock,
       getServiceClient: () => ({}) as never,
@@ -205,7 +205,7 @@ test("Clairic 返回业务全空（slot_status=failed）直接返回，不回退
   let visionCalled = false;
 
   const result = await runScreenshotOcr(
-    { dataUrl: PNG, screenshotType: "data", timings: {} },
+    { dataUrl: PNG, screenshotType: "data", timings: {}, requestId: "33333333-3333-4333-8333-333333333333" },
     {
       getServiceClient: () => ({}) as never,
       getFeatureConfig: async () => DEFAULT_FEATURE,
@@ -247,7 +247,7 @@ test("全部渠道失败时抛出 OcrRunnerError，保留 attempts 明细、累�
   await assert.rejects(
     () =>
       runScreenshotOcr(
-        { dataUrl: PNG, screenshotType: "data", timings: {} },
+        { dataUrl: PNG, screenshotType: "data", timings: {}, requestId: "33333333-3333-4333-8333-333333333333" },
         {
           now: () => clock,
           getServiceClient: () => ({}) as never,
@@ -292,7 +292,7 @@ test("总预算 60s 耗尽或恢复租约未抢到时停止继续派发", async 
   await assert.rejects(
     () =>
       runScreenshotOcr(
-        { dataUrl: PNG, screenshotType: "data", timings: {} },
+        { dataUrl: PNG, screenshotType: "data", timings: {}, requestId: "33333333-3333-4333-8333-333333333333" },
         {
           now: () => clock,
           getServiceClient: () => ({}) as never,

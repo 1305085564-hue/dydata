@@ -10,31 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
-
-type ConfidenceLevel = "high" | "medium" | "low";
-
-type OcrFieldKey =
-  | "play_count"
-  | "likes"
-  | "comments"
-  | "shares"
-  | "favorites"
-  | "follower_gain";
+import {
+  OCR_FIELD_KEYS,
+  runManualImportOcr,
+  type ConfidenceLevel,
+  type OcrFieldKey,
+} from "@/components/submission/识别请求";
 
 export type ScreenshotImportEditableValues = Record<OcrFieldKey, string>;
-
-type OcrApiResponse = {
-  data?: {
-    slot_status: "pending_confirm" | "confirmed" | "failed";
-    screenshot_type: "data" | "curve" | "retention";
-    confidence_score: number;
-    requires_manual_confirmation: boolean;
-    recognized_fields: Partial<Record<OcrFieldKey, number | null>> | null;
-    confidence?: Record<OcrFieldKey, ConfidenceLevel>;
-    error?: string;
-  };
-  error?: string;
-};
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ACCEPTED_EXTENSIONS = ".jpg,.jpeg,.png,.webp";
@@ -53,26 +36,8 @@ const FIELD_META: Array<{
   { key: "follower_gain", label: "涨粉", step: "1", placeholder: "42" },
 ];
 
-function toEditableValues(values: Partial<Record<OcrFieldKey, number | string | null>>): ScreenshotImportEditableValues {
-  return {
-    play_count: values.play_count == null ? "" : String(values.play_count),
-    likes: values.likes == null ? "" : String(values.likes),
-    comments: values.comments == null ? "" : String(values.comments),
-    shares: values.shares == null ? "" : String(values.shares),
-    favorites: values.favorites == null ? "" : String(values.favorites),
-    follower_gain: values.follower_gain == null ? "" : String(values.follower_gain),
-  };
-}
-
 function getEmptyConfidence(): Record<OcrFieldKey, ConfidenceLevel> {
-  return {
-    play_count: "low",
-    likes: "low",
-    comments: "low",
-    shares: "low",
-    favorites: "low",
-    follower_gain: "low",
-  };
+  return Object.fromEntries(OCR_FIELD_KEYS.map((key) => [key, "low"])) as Record<OcrFieldKey, ConfidenceLevel>;
 }
 
 function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "destructive" {
@@ -177,51 +142,24 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
     setIsLoading(true);
     setFileName(file.name);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    // 补 24 小时只回填互动截图上的六个数字，固定按互动识别；识别接口不再接受不带类型的请求
-    formData.append("screenshot_type", "data");
+    // 识别请求自带等待上限：到点中止并提示"识别超时，请手动填写或重试"，
+    // 已经填好的数字与已选的文件都保留，不会因为等太久被清空。
+    const result = await runManualImportOcr(file);
 
-    try {
-      const response = await fetch("/api/ocr-screenshot", {
-        method: "POST",
-        body: formData,
-      });
-
-      const payload = (await response.json()) as OcrApiResponse;
-
-      if (!response.ok || !payload.data) {
-        throw new Error(payload.error || "识别失败，请换清晰截图重试");
-      }
-
-      const nextValues = toEditableValues(payload.data.recognized_fields ?? {});
-      // 合并模式：只覆盖新识别到的非空字段，保留已有值
-      setEditableValues((current) => {
-        const merged = { ...current };
-        for (const key of Object.keys(nextValues) as OcrFieldKey[]) {
-          if (nextValues[key] !== "") {
-            merged[key] = nextValues[key];
-          }
-        }
-        return merged;
-      });
-      // 置信度也合并：新识别的覆盖，未识别的保留
-      setConfidence((current) => {
-        const newConf = payload.data!.confidence ?? getEmptyConfidence();
-        const merged = { ...current };
-        for (const key of Object.keys(newConf) as OcrFieldKey[]) {
-          if (nextValues[key] !== "") {
-            merged[key] = newConf[key];
-          }
-        }
-        return merged;
-      });
-      // 识别结果直接在下方网格就地渲染呈现，省略多余成功 Toast
-    } catch (error) {
-      feedbackToast.error((error as Error).message || "识别失败，请稍后重试");
-    } finally {
+    if (!result.ok) {
       setIsLoading(false);
+      // 清掉 input 的值，用户重选同一张图时也能再次触发识别
+      if (inputRef.current) inputRef.current.value = "";
+      feedbackToast.error(result.message);
+      return;
     }
+
+    // 合并模式：只覆盖新识别到的非空字段，保留已有值
+    setEditableValues((current) => ({ ...current, ...result.values }));
+    // 置信度同样只覆盖新识别到的字段，未识别的保留原值
+    setConfidence((current) => ({ ...current, ...result.confidence }));
+    // 识别结果直接在下方网格就地渲染呈现，省略多余成功 Toast
+    setIsLoading(false);
   }
 
   function handleValueChange(field: OcrFieldKey, value: string) {

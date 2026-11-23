@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { OCR_FAIL_MESSAGE, resolveOcrErrorMessage, toOcrErrorMessage, toScreenshotUploadErrorMessage } from "@/components/submission/截图上传错误";
+import { OCR_TIMEOUT_MESSAGE, isOcrTimeoutError, requestOcr } from "@/lib/ocr-request";
 import { applyOcrMetricValues } from "@/components/submission/填报表单状态";
 import {
   buildOcrSummary,
@@ -75,6 +76,8 @@ export type UploadControllerOptions = {
   blobUrlsRef: MutableRefObject<Set<string>>;
   updateItemsState: UpdateItemsState;
   dispatchWorkflow: (action: WorkflowAction) => void;
+  /** 识别等待上限，默认 65 秒（比服务端 60 秒略长）；测试用它把等待缩短。 */
+  ocrTimeoutMs?: number;
 };
 
 export type UploadHandler = ((
@@ -115,6 +118,7 @@ export function createUploadHandler({
   blobUrlsRef,
   updateItemsState,
   dispatchWorkflow,
+  ocrTimeoutMs,
 }: UploadControllerOptions): UploadHandler {
   void _slotsRef;
   const updateItem = (id: string, updater: (item: ScreenshotItem) => ScreenshotItem) => {
@@ -147,22 +151,30 @@ export function createUploadHandler({
       | { mode: "storage"; bucket: string; path: string; role: SubmissionSlotRole; signal: AbortSignal },
   ) => {
     const requestStart = performance.now();
+    // 统一走带等待上限的识别请求：到点只中止识别，不影响同时进行的截图上传。
     const response = input.mode === "multipart"
-      ? await fetch("/api/ocr-screenshot", {
-          method: "POST",
+      ? await requestOcr({
           body: buildOcrMultipartFormData({ file: input.file, role: input.role }),
           signal: input.signal,
+          timeoutMs: ocrTimeoutMs,
         })
-      : await fetch("/api/ocr-screenshot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      : await requestOcr({
           body: JSON.stringify(buildOcrStorageRequestBody({ bucket: input.bucket, path: input.path, role: input.role })),
+          headers: { "Content-Type": "application/json" },
           signal: input.signal,
+          timeoutMs: ocrTimeoutMs,
         });
     const requestMs = Math.round(performance.now() - requestStart);
     const payload = (await response.json().catch(() => ({}))) as OcrApiPayload;
     return { ok: response.ok, payload, requestMs };
   };
+
+  /**
+   * 识别失败的提示：超时统一说"识别超时，请手动填写或重试"，
+   * 其余仍按原口径说明截图已保留、可手动补。
+   */
+  const resolveOcrFailureNote = (error: unknown) =>
+    isOcrTimeoutError(error) ? OCR_TIMEOUT_MESSAGE : `${toOcrErrorMessage(error)}，截图已保留，可直接手动填写指标`;
 
   const markItemFailed = (
     item: ScreenshotItem,
@@ -311,7 +323,7 @@ export function createUploadHandler({
           ? ocrResult.reason
           : new Error(toOcrErrorMessage(ocrResult.value.payload.error_code ?? ocrResult.value.payload.error));
         markItemFailed(item, {
-          error: `${toOcrErrorMessage(errorReason)}，截图已保留，可直接手动填写指标`,
+          error: resolveOcrFailureNote(errorReason),
           assetUrl: uploaded.url,
           bucket: uploaded.bucket,
           path: uploaded.path,
@@ -368,7 +380,7 @@ export function createUploadHandler({
     } catch (error) {
       if (!ocrTask.isCurrent(assetUrl)) return;
       markItemFailed(item, {
-        error: `${toOcrErrorMessage(error)}，截图已保留，可直接手动填写指标`,
+        error: resolveOcrFailureNote(error),
         assetUrl,
         bucket: persisted.bucket,
         path: persisted.path,

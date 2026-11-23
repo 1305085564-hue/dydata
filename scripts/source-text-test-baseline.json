@@ -59,7 +59,7 @@
     "src/components/navigation/app-frame.test.ts": 16,
     "src/components/rating-rules/rating-rules-dialog.test.tsx": 43,
     "src/components/submission/截图粘贴.test.ts": 7,
-    "src/components/submission/数据上传-2b-source.test.ts": 25,
+    "src/components/submission/数据上传-2b-source.test.ts": 23,
     "src/components/topics-v2/topic-hub-headline.test.ts": 2,
     "src/components/topics-v2/topics-v3-frontend-contracts.test.ts": 83,
     "src/components/ui/component-contract.test.ts": 16,

@@ -79,9 +79,6 @@ wrangler.jsonc.*.bak
 output/
 video-intro/out/
 .claude/*
-!.claude/skills/
-.claude/skills/*
-# 项目专属 skill 真源（进 git）；通用 skill 走 ~/.agents 全局软链，不放这里（当前项目专属为 0）
 .workbuddy/
 .claude-cache/
 .trae/

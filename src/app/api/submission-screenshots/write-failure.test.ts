@@ -85,6 +85,24 @@ test("COS 写失败时上传接口必须报错，不得伪成功", async () => {
       storageLogs.some((line) => line.includes("write_failed") && line.includes('"backend":"cos"')),
       `日志缺少 write_failed + backend=cos：${storageLogs.join(" | ")}`,
     );
+
+    // R8：上传失败要能查清是谁、哪张图、卡在哪一步。
+    const apiLogs = logs.filter((line) => line.includes('"kind":"api"') && line.includes('"/api/submission-screenshots"'));
+    assert.equal(apiLogs.length, 1, `应有且只有一条接口观测日志：${logs.join(" | ")}`);
+    const entry = JSON.parse(apiLogs[0]!) as {
+      status: number;
+      outcome: string;
+      detail: { userId?: string; asset_role?: string; storage_path?: string; stage?: string };
+    };
+    assert.equal(entry.status, 500);
+    assert.equal(entry.outcome, "failed");
+    assert.equal(entry.detail.userId, "user-1", "失败日志必须记下是谁传的");
+    assert.equal(entry.detail.asset_role, "screenshot_1", "失败日志必须记下哪个槽位");
+    assert.ok(
+      entry.detail.storage_path?.startsWith("user-1/account-1/screenshot_1/"),
+      `失败日志必须记下哪张图（落库路径）：${entry.detail.storage_path}`,
+    );
+    assert.equal(entry.detail.stage, "write-request", "失败日志必须记下卡在哪一步");
   } finally {
     defaultSubmissionScreenshotDeps.getCurrentUserContext = originalUserContext;
     defaultSubmissionScreenshotDeps.getCurrentPermissionContext = originalPermissionContext;

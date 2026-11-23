@@ -144,6 +144,8 @@ export async function buildOcrScreenshotResponse(
     if (logContext.ocrEntered) {
       try {
         await deps.recordLog({
+          // 用接口返回给前端的同一个编号：识别记录与 AI 调用记录据此对上。
+          requestId: observation.requestId,
           totalMs: timings.total_ms,
           ocrMs: timings.ocr_ms ?? timings.clairic_ms ?? null,
           downloadMs: timings.download_ms ?? null,
@@ -220,7 +222,7 @@ export async function buildOcrScreenshotResponse(
 
     try {
       observation.mark("read");
-      const result = await deps.runOcr({ dataUrl, screenshotType, timings });
+      const result = await deps.runOcr({ dataUrl, screenshotType, timings, requestId: observation.requestId });
       timings.ocr_ms = result.ocrMs;
       logContext = {
         ...logContext,
