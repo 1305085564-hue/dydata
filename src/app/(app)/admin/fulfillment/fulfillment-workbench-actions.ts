@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type { FulfillmentDayRecord } from "@/types/fulfillment";
 import {
   countsTowardFulfillmentRequirement,
@@ -39,19 +40,20 @@ export function useFulfillmentWorkbenchActions({
     setIsUpdatingSettings(true);
     // 乐观更新
     setFeishuEnabled(checked);
+    let res: Response | undefined;
     try {
-      const res = await fetch("/api/admin/system/settings", {
+      res = await fetch("/api/admin/system/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feishuFulfillmentReminderEnabled: checked }),
       });
-      if (!res.ok) {
-        throw new Error("更新失败");
-      }
     } catch {
-      toast.error("催交配置没能更新，已恢复原样");
-      setFeishuEnabled(!checked);
+      // 网络异常与接口拒绝统一在下方提示并回滚。
     } finally {
+      if (!res?.ok) {
+        setFeishuEnabled(!checked);
+        toast.error(`${await getApiFailureMessage(res, "催交配置没能更新")}（已恢复原样）`);
+      }
       setIsUpdatingSettings(false);
     }
   };

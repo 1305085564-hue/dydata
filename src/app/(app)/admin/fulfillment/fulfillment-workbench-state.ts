@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type {
   FulfillmentAppeal,
   FulfillmentCalendarData,
@@ -130,11 +131,15 @@ export function useFulfillmentWorkbenchState({
   const loadCalendar = useCallback(
     async (targetYear: number, targetMonth: number) => {
       setIsLoadingCalendar(true);
+      let res: Response | undefined;
       try {
-        const res = await fetch(
+        res = await fetch(
           `/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}`,
         );
-        if (!res.ok) throw new Error("加载数据失败");
+        if (!res.ok) {
+          toast.error(await getApiFailureMessage(res, "发布日历没能加载出来"));
+          return;
+        }
         const result = await res.json();
         setCalendarData(result.data);
 
@@ -146,7 +151,7 @@ export function useFulfillmentWorkbenchState({
         url.searchParams.delete("view");
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
-        toast.error("发布日历没能加载出来，重试一下");
+        toast.error(await getApiFailureMessage(res, "发布日历没能加载出来"));
       } finally {
         setIsLoadingCalendar(false);
       }
@@ -156,16 +161,20 @@ export function useFulfillmentWorkbenchState({
 
   const refreshVisibleCalendar = useCallback(async () => {
     setIsLoadingCalendar(true);
+    let response: Response | undefined;
     try {
-      const response = await fetch(
+      response = await fetch(
         `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
         { cache: "no-store" },
       );
-      if (!response.ok) throw new Error("日历未能刷新");
+      if (!response.ok) {
+        toast.error(await getApiFailureMessage(response, "日历未能刷新"));
+        return;
+      }
       const payload = await response.json();
       setCalendarData(payload.data);
     } catch {
-      toast.error("审批已保存，日历同步稍有延迟，刷新即可查看最新状态");
+      toast.error(await getApiFailureMessage(response, "日历未能刷新"));
     } finally {
       setIsLoadingCalendar(false);
     }

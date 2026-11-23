@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { TeamOption } from "@/lib/teams";
@@ -183,16 +184,17 @@ export function useContentPageQuery({
     const currentSeq = requestSeq.current + 1;
     requestSeq.current = currentSeq;
     if (!options.background) setIsLoading(true);
+    let res: Response | undefined;
     try {
       let resetPage = options.resetPage === true || options.fresh === true;
-      let res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, {
+      res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, {
         fresh: options.fresh,
         resetPage,
         page: options.page,
         cursor: options.cursor,
       }), { cache: "no-store" });
       if (res.status === 409) {
-        const body = await res.json().catch(() => null) as { staleCursor?: boolean } | null;
+        const body = await res.clone().json().catch(() => null) as { staleCursor?: boolean } | null;
         if (body?.staleCursor) {
           toast.info("列表数据已更新，已回到第一页");
           resetPage = true;
@@ -200,10 +202,14 @@ export function useContentPageQuery({
           params.delete("page");
           params.delete("cursor");
           window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+          res = undefined;
           res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { resetPage: true }), { cache: "no-store" });
         }
       }
-      if (!res.ok) throw new Error("加载失败");
+      if (!res.ok) {
+        toast.error(`${await getApiFailureMessage(res, "列表没能刷新")}（当前显示的仍是上次的数据）`);
+        return false;
+      }
       const nextData = (await res.json()) as AdminContentPageData;
       if (currentSeq !== requestSeq.current) return false;
       startTransition(() => {
@@ -226,7 +232,7 @@ export function useContentPageQuery({
       return true;
     } catch {
       // 保持旧数据，但必须明确告知：静默失败会让人拿着上一次的数当最新证据下判断
-      toast.error("列表没能刷新，当前显示的仍是上次的数据");
+      toast.error(`${await getApiFailureMessage(res, "列表没能刷新")}（当前显示的仍是上次的数据）`);
       return false;
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);

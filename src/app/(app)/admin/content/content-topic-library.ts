@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
 import { buildTopicLibraryStatusRequests } from "./topic-library-status-request";
@@ -86,36 +87,39 @@ export function useContentTopicLibrary({
     // 否则第 401 名之后的视频永久缺失入库状态与话题分类
     const requests = buildTopicLibraryStatusRequests(ids);
     let failedBatches = 0;
+    let firstFailure: string | null = null;
     try {
       const responses = await Promise.all(
         requests.map(async (request) => {
+          let res: Response | undefined;
           try {
-            const res = await fetch(request.url, { ...request.init, signal: controller.signal });
-            if (!res.ok) throw new Error("选题库状态加载失败");
-            return (await res.json()) as TopicLibraryStatusPayload;
+            res = await fetch(request.url, { ...request.init, signal: controller.signal });
+            if (res.ok) return (await res.json()) as TopicLibraryStatusPayload;
           } catch (error) {
             if (controller.signal.aborted) throw error;
-            failedBatches += 1;
-            return null;
           }
+          const message = await getApiFailureMessage(res, "选题库状态加载失败");
+          failedBatches += 1;
+          if (!firstFailure) firstFailure = message;
+          return null;
         }),
       );
       if (controller.signal.aborted) return;
       const merged = mergeTopicLibraryStatusPayloads(responses);
       if (Object.keys(merged).length === 0) {
-        toast.error("选题库状态没能加载出来，稍后重试");
+        toast.error(firstFailure ?? "选题库状态没能加载出来，稍后重试。");
         return;
       }
       // 部分批次失败时不记录签名，下次列表变化会重试；未覆盖的视频按「话题未识别」处理（不出评级）
       if (failedBatches === 0) {
         topicStatusKeyRef.current = signature;
       } else {
-        toast.error(`选题库状态有 ${failedBatches} 批未加载成功，未覆盖的视频暂不显示入库状态与评级`);
+        toast.error(`${firstFailure}（选题库状态有 ${failedBatches} 批未加载成功，未覆盖的视频暂不显示入库状态与评级）`);
       }
       setTopicLibraryStatuses(merged);
     } catch {
       if (controller.signal.aborted) return;
-      toast.error("选题库状态没能加载出来，稍后重试");
+      toast.error(firstFailure ?? "选题库状态没能加载出来，稍后重试。");
     } finally {
       // 只有「自己仍是最新一次请求」时才清在途标记：
       // 被后来者 abort 的旧请求若在这里清掉，会把新请求的标记误删，重复请求防护就失效了

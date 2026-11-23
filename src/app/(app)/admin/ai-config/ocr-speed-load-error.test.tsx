@@ -17,7 +17,7 @@ test("网络中断显示网络异常和重试指引", async () => {
   });
 
   assert.match(markup, /role="alert"/);
-  assert.match(markup, /网络连接异常，无法加载测速数据，请检查网络后重试。/);
+  assert.match(markup, /网络连接异常，请检查网络后重试。/);
 });
 
 test("接口 403 显示权限错误，不压成通用加载失败", async () => {
@@ -48,4 +48,25 @@ test("接口 404 显示请求未找到，不误报为网络中断", async () => 
 
   assert.match(markup, /测速台账请求失败（HTTP 404）。/);
   assert.doesNotMatch(markup, /网络连接异常/);
+});
+
+test("登录过期明确引导刷新或重新登录", async () => {
+  const markup = await renderedRequestError(async () => Response.json({ error: "expired token" }, { status: 401 }));
+  assert.match(markup, /登录状态已失效，请刷新页面或重新登录。/);
+  assert.doesNotMatch(markup, /expired token/);
+});
+
+test("测速台账限流保留服务端重试指引", async () => {
+  const markup = await renderedRequestError(async () => Response.json({ error: "请 30 秒后再试" }, { status: 429 }));
+  assert.match(markup, /请 30 秒后再试/);
+});
+
+test("测速台账成功响应无法解析时明确提示数据无法读取", async () => {
+  const markup = await renderedRequestError(async () => new Response("broken json"));
+  assert.match(markup, /返回数据无法读取，请稍后重试。/);
+});
+
+test("测速台账正常返回时保留原有汇总与记录", async () => {
+  const data = { summary: { total_count_90d: 2 }, logs: [{ id: "ocr-log-1" }] };
+  assert.deepEqual(await requestOcrSpeedLogs(async () => Response.json(data)), { ok: true, data });
 });

@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import { DEFAULT_EVALUATION_STANDARDS } from "@/lib/evaluation-standards";
 import { buildAuthorCollaborationUrl } from "@/lib/content/author-collaboration-link";
 import { useAuthorWorks } from "./use-author-works";
@@ -125,20 +126,25 @@ export function AuthorWorksView({
     if (!selectedVideoId || loadedDetails[selectedVideoId]) return;
 
     let cancelled = false;
-    fetch(`/api/admin/content/${selectedVideoId}?view=all`, { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("加载作品复盘详情失败");
-        return res.json() as Promise<AdminContentVideoDetail>;
-      })
-      .then((detail) => {
+    void (async () => {
+      let response: Response | undefined;
+      try {
+        response = await fetch(`/api/admin/content/${selectedVideoId}?view=all`, { cache: "no-store" });
+        if (!response.ok) {
+          const message = await getApiFailureMessage(response, "加载作品复盘详情失败");
+          if (!cancelled) setDetailError(message);
+          return;
+        }
+        const detail = await response.json() as AdminContentVideoDetail;
         if (cancelled) return;
         setLoadedDetails((prev) => ({ ...prev, [detail.video.id]: detail }));
         setLastDisplayedDetail(detail);
-      })
-      .catch((error) => {
+      } catch {
+        const message = await getApiFailureMessage(response, "加载作品复盘详情失败");
         if (cancelled) return;
-        setDetailError(error instanceof Error ? error.message : "详情加载失败");
-      });
+        setDetailError(message);
+      }
+    })();
 
     return () => {
       cancelled = true;

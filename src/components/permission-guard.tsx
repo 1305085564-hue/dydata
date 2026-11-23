@@ -7,6 +7,7 @@ import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 
 interface PermissionGuardProps {
   moduleTitle: string;
@@ -27,13 +28,17 @@ export function PermissionGuard({
   const handlePermissionApply = async () => {
     if (isApplying) return;
     setIsApplying(true);
+    let res: Response | undefined;
     try {
-      const res = await fetch("/api/permission-requests/apply", {
+      res = await fetch("/api/permission-requests/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moduleTitle, currentPath: pathname }),
       });
-      if (!res.ok) throw new Error("申请失败");
+      if (!res.ok) {
+        feedbackToast.error(await getApiFailureMessage(res, "申请发送失败，请直接联系公司负责人"));
+        return;
+      }
       const payload = await res.json();
       if (payload.warning) {
         feedbackToast.error(payload.warning);
@@ -41,7 +46,7 @@ export function PermissionGuard({
         feedbackToast.success("已通知公司负责人，等待处理中。");
       }
     } catch {
-      feedbackToast.error("申请发送失败，请直接联系公司负责人。");
+      feedbackToast.error(await getApiFailureMessage(res, "申请发送失败，请直接联系公司负责人"));
     } finally {
       setIsApplying(false);
     }

@@ -5,20 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetBo
 import { Button } from "@/components/ui/button";
 import { RotateCw, X, Zap, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type { AiProviderProtocol } from "@/lib/ai/provider-protocols";
-
-export async function getOcrSpeedLoadError(response?: Response): Promise<string> {
-  if (!response) return "网络连接异常，无法加载测速数据，请检查网络后重试。";
-
-  const payload = await response.json().catch(() => null) as { error?: unknown } | null;
-  if (typeof payload?.error === "string" && payload.error.trim()) {
-    return payload.error;
-  }
-
-  return response.status >= 500
-    ? `后台服务暂时不可用（HTTP ${response.status}），请稍后重试。`
-    : `测速台账请求失败（HTTP ${response.status}）。`;
-}
 
 export async function requestOcrSpeedLogs(fetcher: typeof fetch = fetch): Promise<
   | { ok: true; data: { summary?: OcrSpeedSummary | null; logs?: OcrSpeedLogItem[] } }
@@ -30,17 +18,17 @@ export async function requestOcrSpeedLogs(fetcher: typeof fetch = fetch): Promis
       headers: { "cache-control": "no-store" },
     });
   } catch {
-    return { ok: false, error: await getOcrSpeedLoadError() };
+    return { ok: false, error: await getApiFailureMessage(undefined, "测速台账请求失败") };
   }
 
   if (!response.ok) {
-    return { ok: false, error: await getOcrSpeedLoadError(response) };
+    return { ok: false, error: await getApiFailureMessage(response, "测速台账请求失败") };
   }
 
   try {
     return { ok: true, data: await response.json() };
   } catch {
-    return { ok: false, error: "测速台账返回的数据无法读取，请稍后重试。" };
+    return { ok: false, error: await getApiFailureMessage(response, "测速台账请求失败") };
   }
 }
 
