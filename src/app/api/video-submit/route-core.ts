@@ -31,6 +31,7 @@ import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/membe
 import * as submitResponseFields from "./response-fields";
 import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
 import { consumeApprovedAppealPayload, findApprovedAppealForSubmission } from "./appeal-consumption";
+import { scheduleFirstDailyReportNotice } from "./feishu-report-notice";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
 import { resolveDailyReportSubmissionTarget } from "./report-target";
@@ -815,10 +816,8 @@ async function handleVideoSubmit(
       }, { status: 500 });
     }
   }
-
-  // 24h 数据与话题标签已落库后，收尾两件 V3 事项（都不影响本次提交本身）：
-  // 1) 结束该用户对此选题的正在写状态（提交失败不会走到这里，不会提前结束）；
-  // 2) 干货自动沉淀入库（幂等）。
+  scheduleFirstDailyReportNotice(existingReport, { submitter, accountName: account.name, videoTitle: persistedVideo.video_title ?? normalized.video_title, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
+  // 收尾：结束选题写作状态，并幂等沉淀干货选题。
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
   try {
     observation?.mark("finalize");
