@@ -100,12 +100,11 @@ test("探测期间渲染浅砂色圆角骨架占位，不再留空白", () => {
 test("最终占位与骨架保持一致的 rounded-xl 圆角，切态时不跳圆角", () => {
   const stageHtml = renderToStaticMarkup(<ScreenshotPlaceholder alt="大图" variant="stage" reason="missing" />);
   const panelHtml = renderToStaticMarkup(<ScreenshotPlaceholder alt="中图" variant="panel" reason="missing" />);
-  const smallerRadius = new RegExp("rounded-(?:l" + "g|m" + "d)");
 
   assert.match(stageHtml, /rounded-xl/);
-  assert.doesNotMatch(stageHtml, smallerRadius);
+  assert.doesNotMatch(stageHtml, /rounded-(?:lg|md)/);
   assert.match(panelHtml, /rounded-xl/);
-  assert.doesNotMatch(panelHtml, smallerRadius);
+  assert.doesNotMatch(panelHtml, /rounded-(?:lg|md)/);
 });
 
 test("从骨架切到最终占位时，骨架淡出与丢失态淡入同步播放", () => {

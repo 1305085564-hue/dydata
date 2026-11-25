@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // 设计令牌门禁：把《美学宝典》§6.1 的机械检查固化为命令，基线棘轮模式。
+// 门禁对象是会被打包进前端的代码，测试文件不参与构建，故排除；新增规则默认带这条排除。
 // 存量违规记录在 scripts/design-token-baseline.json（含待换皮页、terms/privacy 字重豁免）；
 // 任何文件新增违规或计数上升即红灯。改基线须走《效率美学》定律2（阿禅确认+纠错索引留档）。
 // 用法：node scripts/design-token-gate.mjs [--update-baseline]
@@ -12,6 +13,7 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
 const baselinePath = "scripts/design-token-baseline.json";
+const TEST_EXCLUDE = ["-g", "!**/*.test.*"];
 
 const VALID_FONT_PX = new Set(["12", "13", "14", "20", "28"]);
 
@@ -29,7 +31,7 @@ const rules = [
   {
     id: "font-size",
     label: "字号封闭系统（只允许 12/13/14/20/28px；13px 专供高密度内容[数据表格/长文案]；落地页 Hero 豁免）",
-    args: ["-n", "-o", "text-\\[[0-9.]+px\\]", "src/", "-g", "!**/app/page.tsx"],
+    args: ["-n", "-o", "text-\\[[0-9.]+px\\]", "src/", ...TEST_EXCLUDE, "-g", "!**/app/page.tsx"],
     violation: (match) => {
       const px = match.match(/\[([0-9.]+)px\]/)?.[1];
       return px !== undefined && !VALID_FONT_PX.has(px);
@@ -38,13 +40,13 @@ const rules = [
   {
     id: "ink",
     label: "墨度封闭系统（禁 Tailwind 原生灰阶 text-stone/zinc/gray/slate）",
-    args: ["-n", "text-(slate|zinc|gray|stone)-\\d+", "src/"],
+    args: ["-n", "text-(slate|zinc|gray|stone)-\\d+", "src/", ...TEST_EXCLUDE],
     violation: () => true,
   },
   {
     id: "gap-half",
     label: "元素间距禁半档（gap/space-y 的 1.5/2.5/3.5/4.5）",
-    args: ["-n", "(gap|space-y|space-x)-(1\\.5|2\\.5|3\\.5|4\\.5)", "src/"],
+    args: ["-n", "(gap|space-y|space-x)-(1\\.5|2\\.5|3\\.5|4\\.5)", "src/", ...TEST_EXCLUDE],
     violation: () => true,
   },
   {
@@ -54,6 +56,7 @@ const rules = [
       "-n",
       "font-(medium|semibold|bold|extrabold|black)|font-\\[[0-9]+\\]|fontWeight|font-weight",
       "src/",
+      ...TEST_EXCLUDE,
       "-g", "!**/opengraph-image.tsx",
     ],
     violation: (line) => !/[:=]\s*['"]?(400|normal)\b/.test(line),
@@ -61,7 +64,7 @@ const rules = [
   {
     id: "serif-floor",
     label: "衬线下限（font-serif 不得与小于 20px 的字号同现）",
-    args: ["-n", "font-serif", "src/"],
+    args: ["-n", "font-serif", "src/", ...TEST_EXCLUDE],
     violation: (line) => /text-\[(12|13|14|18)px\]/.test(line),
   },
   {
@@ -73,6 +76,7 @@ const rules = [
       "-e", "rounded-\\[[0-9]",
       "-e", "[\"' ]rounded[\"' ]",
       "src/",
+      ...TEST_EXCLUDE,
     ],
     violation: () => true,
   },
@@ -84,6 +88,7 @@ const rules = [
       "-e", "shadow-(2xs|xs|sm|md|2xl)\\b",
       "-e", "[\"' ]shadow[\"' ]",
       "src/",
+      ...TEST_EXCLUDE,
     ],
     violation: () => true,
   },
@@ -117,7 +122,7 @@ async function checkPalette() {
   try {
     ({ stdout } = await execFileAsync(
       "rg",
-      ["-n", "-o", "#[0-9a-fA-F]{6}", "src/", "-g", "!**/*.test.*"],
+      ["-n", "-o", "#[0-9a-fA-F]{6}", "src/", ...TEST_EXCLUDE],
       { cwd: root, maxBuffer: 32 * 1024 * 1024 },
     ));
   } catch (error) {
