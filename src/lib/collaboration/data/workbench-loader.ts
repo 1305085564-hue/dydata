@@ -102,9 +102,9 @@ export async function buildCollaborationWorkbenchData(input: {
 }) {
   const dataset = input.dataset;
   const rows = fromStatsStart(dataset.currentRows);
-  const snapshots = dataset.videoSnapshots ?? new Map();
-  const topicContext = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() };
-  const accountsById = new Map(dataset.accounts.map((account) => [account.id, account]));
+  const snapshots = dataset.videoSnapshots ?? new Map(); // gate:transient-map 单次请求内的只读空表兜底，不跨请求保留
+  const topicContext = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() }; // gate:transient-map 单次请求内的只读空表兜底，不跨请求保留
+  const accountsById = new Map(dataset.accounts.map((account) => [account.id, account])); // gate:transient-map 单次请求内的账号索引，随请求结束释放
   const targetUser = (userId: string) => !input.restrictToSelf || userId === input.userId;
 
   const withinScope = (id: string | null | undefined): id is string => Boolean(id && targetUser(id));
@@ -168,7 +168,7 @@ export async function buildCollaborationWorkbenchData(input: {
         actor: input.actor,
       }).catch(() => []);
     }
-    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row]));
+    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row])); // gate:transient-map 单次请求内的文案行索引，随请求结束释放
     result.writerStaff = writerList;
     result.writerCandidates = candidates.map((candidate) => {
       const existing = rowsByUserId.get(candidate.userId);

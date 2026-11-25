@@ -8,7 +8,6 @@ import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog
 import { CollaborationWorkbenchToolbar, type CollaborationSegment } from "./collaboration-workbench-toolbar";
 import { HealthBar } from "./health-bar";
 import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
-import { BoundedTtlCache } from "@/lib/cache-policy";
 import {
   buildCollaborationHeadline,
   generateMonthOptions,
@@ -18,7 +17,7 @@ import {
   type TabKey,
 } from "@/lib/collaboration/domain/workbench-state";
 import type { WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
-import type { CollaborationWorkbenchData, CollaborationPersonContext } from "@/lib/collaboration/data/workbench-loader";
+import type { CollaborationWorkbenchData } from "@/lib/collaboration/data/workbench-loader";
 import {
   buildCollaborationSearchParams,
   buildCollaborationUrl,
@@ -28,6 +27,7 @@ import {
   type CollaborationSortDir,
 } from "@/lib/collaboration/work-group-navigation";
 import { useCollaborationSort } from "./use-collaboration-sort";
+import { useCollaborationTabData } from "./use-collaboration-tab-data";
 import {
   CollaborationDiagnosisContext,
   type CollaborationDiagnosisDetail,
@@ -91,22 +91,9 @@ export function CollaborationWorkbench({
   const groupEntryPushedRef = useRef(false);
   const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
-  const [activeData, setActiveData] = useState<CollaborationWorkbenchData | null>(initialData);
-  const [pageMeta, setPageMeta] = useState(initialData);
-  const [tabCounts, setTabCounts] = useState(initialData.counts);
-  const [loadFailedState, setLoadFailedState] = useState(loadFailed);
-  const [isLoadingTab, setIsLoadingTab] = useState(false);
-  const [loadedTeamsData, setLoadedTeamsData] = useState<CollaborationWorkbenchData | null>(initialData.tab === "teams" ? initialData : null);
-  const [personContext, setPersonContext] = useState<CollaborationPersonContext>(initialData.personContext ?? { ownAccountIds: [], operatorAccounts: [] });
-  const tabDataCacheRef = useRef<BoundedTtlCache<CollaborationWorkbenchData> | null>(null);
-  if (!tabDataCacheRef.current) {
-    tabDataCacheRef.current = new BoundedTtlCache({ scope: "user", ttlMs: 60_000, maxEntries: 8, name: "collaboration-client-tabs" });
-    tabDataCacheRef.current.set(`${scopeKey}|${year}-${month}|${initialData.tab}`, initialData);
-  }
-  const tabRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
-  const personRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
-  const personContextCacheRef = useRef(new Map<string, CollaborationPersonContext>());
-
+  const {
+    activeData, pageMeta, tabCounts, loadFailedState, isLoadingTab, loadedTeamsData, personContext, loadTabData,
+  } = useCollaborationTabData({ year, month, scopeKey, initialData, loadFailed, selectedPersonId });
   const evaluationStandards = pageMeta.evaluationStandards;
   const summary = pageMeta.summary;
   const overviewStats = pageMeta.overviewStats;
@@ -151,8 +138,6 @@ export function CollaborationWorkbench({
     setSelectedGroupId(defaultGroupId);
   }, [defaultGroupId]);
 
-
-
   const resolvedWorkGroupViews = useMemo(
     () => mergeLocalWorkGroupViews(workGroupViews, currentRawGroups, currentRoster),
     [workGroupViews, currentRawGroups, currentRoster],
@@ -176,102 +161,7 @@ export function CollaborationWorkbench({
       ? WORK_GROUP_ROLE_TAB[activeGroupDetail.summary.kind]
       : tab;
 
-  const loadTabData = useCallback(async (targetTab: TabKey, targetView: "roles" | "teams", fresh = false) => {
-    const dataTab = targetView === "teams" ? "teams" : targetTab;
-    tabRequestRef.current.controller?.abort();
-    const controller = new AbortController();
-    const sequence = ++tabRequestRef.current.sequence;
-    tabRequestRef.current.controller = controller;
-    const isCurrent = () => sequence === tabRequestRef.current.sequence && !controller.signal.aborted;
-    const cacheKey = `${scopeKey}|${year}-${month}|${dataTab}`;
-    if (fresh) {
-      tabDataCacheRef.current?.clear();
-      personContextCacheRef.current.clear();
-      setLoadedTeamsData(null);
-    } else {
-      const cached = tabDataCacheRef.current?.get(cacheKey);
-      if (cached) {
-        setActiveData(cached);
-        setPageMeta(cached);
-        setTabCounts(cached.counts);
-        setLoadFailedState(false);
-        if (cached.tab === "teams") setLoadedTeamsData(cached);
-        setIsLoadingTab(false);
-        return;
-      }
-    }
-    setActiveData(null);
-    setLoadFailedState(false);
-    setIsLoadingTab(true);
-    try {
-      const response = await fetch(
-        `/api/admin/collaboration/tab-data?year=${year}&month=${month}&tab=${dataTab}${fresh ? "&fresh=1" : ""}`,
-        { signal: controller.signal, cache: "no-store" },
-      );
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error || "这个月的数据没加载出来");
-      if (!isCurrent()) return;
-      const data = body as CollaborationWorkbenchData;
-      tabDataCacheRef.current?.set(cacheKey, data);
-      setActiveData(data);
-      setPageMeta(data);
-      setTabCounts(data.counts);
-      setLoadFailedState(false);
-      if (data.tab === "teams") setLoadedTeamsData(data);
-    } catch (error) {
-      if (!isCurrent()) return;
-      setLoadFailedState(true);
-      toast.error(error instanceof Error ? error.message : "这个月的数据没加载出来");
-    } finally {
-      if (isCurrent()) setIsLoadingTab(false);
-    }
-  }, [month, scopeKey, year]);
-
   const refreshCurrentData = useCallback(() => loadTabData(tab, view, true), [loadTabData, tab, view]);
-
-  const loadPersonContext = useCallback(async (personId: string) => {
-    const cacheKey = `${scopeKey}|${year}-${month}|${personId}`;
-    const cached = personContextCacheRef.current.get(cacheKey);
-    if (cached) {
-      setPersonContext(cached);
-      return;
-    }
-    personRequestRef.current.controller?.abort();
-    const controller = new AbortController();
-    const sequence = ++personRequestRef.current.sequence;
-    personRequestRef.current.controller = controller;
-    try {
-      const response = await fetch(`/api/admin/collaboration/tab-data?year=${year}&month=${month}&tab=person-context&personId=${encodeURIComponent(personId)}`, {
-        signal: controller.signal,
-        cache: "no-store",
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error || "个人档案关联账号没加载出来");
-      if (sequence !== personRequestRef.current.sequence || controller.signal.aborted) return;
-      const context = (body as CollaborationWorkbenchData).personContext ?? { ownAccountIds: [], operatorAccounts: [] };
-      personContextCacheRef.current.set(cacheKey, context);
-      setPersonContext(context);
-    } catch (error) {
-      if (sequence !== personRequestRef.current.sequence || controller.signal.aborted) return;
-      toast.error(error instanceof Error ? error.message : "个人档案关联账号没加载出来");
-    }
-  }, [month, scopeKey, year]);
-
-  useEffect(() => {
-    if (selectedPersonId) void loadPersonContext(selectedPersonId);
-    else {
-      personRequestRef.current.sequence += 1;
-      personRequestRef.current.controller?.abort();
-      setPersonContext({ ownAccountIds: [], operatorAccounts: [] });
-    }
-  }, [loadPersonContext, selectedPersonId]);
-
-  useEffect(() => () => {
-    tabRequestRef.current.sequence += 1;
-    tabRequestRef.current.controller?.abort();
-    personRequestRef.current.sequence += 1;
-    personRequestRef.current.controller?.abort();
-  }, []);
 
   // 深链带了 groupId，却解析不到对应小队（已被删除 / 链接失效）。
   // 此前是静默回落到列表，从旧链接或收藏进来的人会以为自己点错了位置。
