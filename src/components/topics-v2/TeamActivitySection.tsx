@@ -16,6 +16,7 @@ import type {
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListRow } from "@/components/ui/list-row";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 interface TeamActivitySectionProps {
   data: ActiveTopicsResponse | null;
@@ -107,14 +108,18 @@ export function TeamActivitySection({
                   {latestClaim.displayName || "团队成员"}
                 </span>
                 <span className="shrink-0">最新在写：</span>
-                <button
-                  type="button"
-                  onClick={() => onSelectTopic(latestClaim.subTopicId)}
-                  className="inline-flex items-center text-[#1F1E1D] hover:text-[#D97757] transition-colors truncate min-h-11 sm:min-h-0"
+                <a
+                  href={`/topics?topic_id=${encodeURIComponent(latestClaim.subTopicId)}`}
+                  onClick={(e) => {
+                    if (!shouldHandleInPlaceLinkClick(e)) return;
+                    e.preventDefault();
+                    onSelectTopic(latestClaim.subTopicId);
+                  }}
+                  className="inline-flex items-center text-[#1F1E1D] hover:text-[#D97757] hover:underline underline-offset-2 transition-colors truncate min-h-11 sm:min-h-0"
                   title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
                 >
                   《{latestClaim.subTopic?.title || "未命名选题"}》
-                </button>
+                </a>
                 <span className="text-[12px] tabular-nums shrink-0 text-[#78716C]">
                   ({formatDateCompact(latestClaim.claimedAt)})
                 </span>
@@ -128,17 +133,24 @@ export function TeamActivitySection({
             {latestWork && (
               <div className="flex items-center gap-1 truncate max-w-full lg:max-w-[48%]">
                 <span className="shrink-0">最新成品：</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    latestWork.subTopic?.id &&
-                    onSelectTopic(latestWork.subTopic.id)
-                  }
-                  className="inline-flex items-center text-[#1F1E1D] hover:text-[#D97757] transition-colors truncate min-h-11 sm:min-h-0"
-                  title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
-                >
-                  《{latestWork.videoTitle}》
-                </button>
+                {latestWork.subTopic?.id ? (
+                  <a
+                    href={`/topics?topic_id=${encodeURIComponent(latestWork.subTopic.id)}`}
+                    onClick={(e) => {
+                      if (!shouldHandleInPlaceLinkClick(e)) return;
+                      e.preventDefault();
+                      onSelectTopic(latestWork.subTopic!.id);
+                    }}
+                    className="inline-flex items-center text-[#1F1E1D] hover:text-[#D97757] hover:underline underline-offset-2 transition-colors truncate min-h-11 sm:min-h-0"
+                    title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
+                  >
+                    《{latestWork.videoTitle}》
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center text-[#1F1E1D] truncate min-h-11 sm:min-h-0">
+                    《{latestWork.videoTitle}》
+                  </span>
+                )}
                 {latestWork.subTopic?.title && (
                   <span className="text-[12px] text-[#78716C] truncate hidden md:inline">
                     ({latestWork.subTopic.title})
@@ -190,17 +202,24 @@ export function TeamActivitySection({
               pastClaims.map((claim: TopicClaimItem) => (
                 <ListRow
                   key={claim.id}
-                  onClick={() => onSelectTopic(claim.subTopicId)}
-                  className="w-full text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group cursor-pointer border-b-0"
+                  className="relative w-full text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group cursor-pointer border-b-0"
                 >
-                  <div className="min-w-0 flex-1 truncate font-normal">
+                  <a
+                    href={`/topics?topic_id=${encodeURIComponent(claim.subTopicId)}`}
+                    onClick={(e) => {
+                      if (!shouldHandleInPlaceLinkClick(e)) return;
+                      e.preventDefault();
+                      onSelectTopic(claim.subTopicId);
+                    }}
+                    className="min-w-0 flex-1 truncate font-normal after:absolute after:inset-0"
+                  >
                     <span className="font-normal text-[#1F1E1D] group-hover:text-[#D97757] transition-colors">
                       {claim.displayName || "团队成员"}
                     </span>
                     <span className="text-[#78716C] ml-1.5">
                       正在写<span>《{claim.subTopic?.title || "未命名选题"}》</span>
                     </span>
-                  </div>
+                  </a>
                   <span className="text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums">
                     {formatDateCompact(claim.claimedAt)}
                   </span>
@@ -228,23 +247,33 @@ export function TeamActivitySection({
                   key={work.id}
                   className="w-full text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group border-b-0"
                 >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      work.subTopic?.id && onSelectTopic(work.subTopic.id)
-                    }
-                    className="min-w-0 flex-1 truncate font-normal text-left cursor-pointer"
-                    title={`查看选题《${work.subTopic?.title || "未命名选题"}》的剖析详情`}
-                  >
-                    <span className="font-normal text-[#1F1E1D] group-hover:text-[#D97757] transition-colors">
-                      成片《{work.videoTitle}》
-                    </span>
-                    {work.subTopic?.title && (
-                      <span className="text-[#78716C] ml-1.5 truncate text-[12px]">
-                        · {work.subTopic.title}
+                  {work.subTopic?.id ? (
+                    <a
+                      href={`/topics?topic_id=${encodeURIComponent(work.subTopic.id)}`}
+                      onClick={(e) => {
+                        if (!shouldHandleInPlaceLinkClick(e)) return;
+                        e.preventDefault();
+                        onSelectTopic(work.subTopic!.id);
+                      }}
+                      className="min-w-0 flex-1 truncate font-normal text-left cursor-pointer"
+                      title={`查看选题《${work.subTopic?.title || "未命名选题"}》的剖析详情`}
+                    >
+                      <span className="font-normal text-[#1F1E1D] group-hover:text-[#D97757] transition-colors">
+                        成片《{work.videoTitle}》
                       </span>
-                    )}
-                  </button>
+                      {work.subTopic?.title && (
+                        <span className="text-[#78716C] ml-1.5 truncate text-[12px]">
+                          · {work.subTopic.title}
+                        </span>
+                      )}
+                    </a>
+                  ) : (
+                    <span className="min-w-0 flex-1 truncate font-normal text-left">
+                      <span className="font-normal text-[#1F1E1D]">
+                        成片《{work.videoTitle}》
+                      </span>
+                    </span>
+                  )}
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-[12px] text-[#78716C] font-normal tabular-nums">
                       {work.publishedAt ? "发布日" : "上传日"} {formatDateCompact(work.publishedAt ?? work.uploadedAt)}

@@ -14,6 +14,23 @@ export type CollaborationAdminView = "roles" | "teams";
 
 export type CollaborationTabKey = "talents" | "operators" | "writers" | "editors";
 
+export type CollaborationSortDir = "asc" | "desc";
+
+export const DEFAULT_COLLABORATION_SORT_KEY = "totalPlay";
+export const DEFAULT_COLLABORATION_SORT_DIR: CollaborationSortDir = "desc";
+
+export function resolveCollaborationSort(
+  sortParam: string | null | undefined,
+  dirParam: string | null | undefined,
+): { sortKey: string | null; sortDir: CollaborationSortDir } {
+  const trimmed = typeof sortParam === "string" ? sortParam.trim() : "";
+  const sortDir: CollaborationSortDir = dirParam === "asc" ? "asc" : "desc";
+  if (!trimmed) {
+    return { sortKey: null, sortDir: DEFAULT_COLLABORATION_SORT_DIR };
+  }
+  return { sortKey: trimmed, sortDir };
+}
+
 /** 页面参数 → 视图：只有显式 `view=teams` 才进按团队，其他一律按岗位。 */
 /** 只带 groupId 不带 view 的链接也直接进小队：小队编号本身就说明要看小队。 */
 export function resolveCollaborationView(
@@ -37,6 +54,8 @@ export function buildCollaborationSearchParams(input: {
   tab?: CollaborationTabKey | null;
   groupId?: string | null;
   personId?: string | null;
+  sort?: string | null;
+  dir?: CollaborationSortDir | null;
 }): string {
   const params = new URLSearchParams();
   params.set("year", String(input.year));
@@ -55,6 +74,13 @@ export function buildCollaborationSearchParams(input: {
     params.set("personId", personId);
   }
 
+  const sort = typeof input.sort === "string" ? input.sort.trim() : "";
+  const dir: CollaborationSortDir = input.dir === "asc" ? "asc" : "desc";
+  if (sort && (sort !== DEFAULT_COLLABORATION_SORT_KEY || dir !== DEFAULT_COLLABORATION_SORT_DIR)) {
+    params.set("sort", sort);
+    params.set("dir", dir);
+  }
+
   return params.toString();
 }
 
@@ -65,6 +91,8 @@ export function buildCollaborationUrl(input: {
   tab?: CollaborationTabKey | null;
   groupId?: string | null;
   personId?: string | null;
+  sort?: string | null;
+  dir?: CollaborationSortDir | null;
 }): string {
   return `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams(input)}`;
 }

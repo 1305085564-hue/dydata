@@ -21,6 +21,9 @@ interface TalentTabProps {
   isMemberViewer?: boolean;
   /** 良优率列头旁的「评级规则」入口 */
   rulesEntry?: ReactNode;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson: (userId: string) => void;
 }
@@ -42,6 +45,9 @@ export function TalentTab({
   currentUserId = null,
   isMemberViewer = false,
   rulesEntry,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onSelectPerson,
   onPrefetchPerson,
 }: TalentTabProps) {
@@ -86,6 +92,9 @@ export function TalentTab({
         rows={talents}
         columns={columns}
         defaultSortKey="totalPlay"
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
         getId={(row) => row.userId}
         getName={(row) => row.name}
         getSub={(row) => formatAccountLine(row.accounts.map((a) => a.accountName), row.accountCount)}

@@ -16,7 +16,7 @@ import {
 import type { AvailabilityChannel } from "@/lib/ai-config/availability";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { formatSleepCountdown, AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
-import { feedbackToast } from "@/components/ui/feedback-toast";
+import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/utils";
 
 const REVEAL_ON_HOVER = "pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 transition-opacity duration-150";
@@ -49,7 +49,6 @@ export function ModelChannelRow({
   isTesting = false,
 }: ModelChannelRowProps) {
   const [showTechnical, setShowTechnical] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
 
   const isEnabled = channel.identity !== "disabled";
   const isInvalid = channel.identity === "invalid";
@@ -64,17 +63,6 @@ export function ModelChannelRow({
     : null;
   const moveUpTitle = canMoveUp ? "上移顺位" : moveLockReason ?? "没有可交换的可用渠道";
   const moveDownTitle = canMoveDown ? "下移顺位" : moveLockReason ?? "没有可交换的可用渠道";
-
-  const handleCopyRequestId = async (requestId: string) => {
-    try {
-      await navigator.clipboard.writeText(requestId);
-      setCopiedId(true);
-      setTimeout(() => setCopiedId(false), 2000);
-      feedbackToast.success("已复制 Request ID");
-    } catch {
-      feedbackToast.error("复制失败");
-    }
-  };
 
   return (
     <div
@@ -234,13 +222,14 @@ export function ModelChannelRow({
                   {failureDiagnostic.technical?.requestId && (
                     <div className="flex flex-wrap items-center justify-between gap-1">
                       <span className="break-all">Request ID: {failureDiagnostic.technical.requestId}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyRequestId(failureDiagnostic.technical.requestId!)}
-                        className="text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
-                      >
-                        {copiedId ? "已复制" : "复制"}
-                      </button>
+                      <CopyButton
+                        text={failureDiagnostic.technical.requestId}
+                        label="复制"
+                        copiedLabel="已复制"
+                        errorMessage="复制失败"
+                        className="shrink-0"
+                        iconClassName="size-3"
+                      />
                     </div>
                   )}
                 </div>

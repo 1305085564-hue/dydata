@@ -7,6 +7,7 @@ import type { VideoMetricsSnapshot, ContentReviewReadiness } from "@/types";
 import type { VideoRow } from "@/lib/review-queue";
 import type { VideoTopicKind } from "@/lib/topics/library";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +42,8 @@ export interface WorkReviewPreviewInfo {
 
 interface CollaborationWorkReviewLinkProps {
   reportId: string;
+  /** 已知关联作品 ID 时补全原生链接，支持 Ctrl/Cmd+左键或中键后台新开复盘详情。 */
+  videoId?: string | null;
   children: ReactNode;
   className?: string;
   preview?: WorkReviewPreviewInfo;
@@ -50,6 +53,7 @@ interface CollaborationWorkReviewLinkProps {
 
 export function CollaborationWorkReviewLink({
   reportId,
+  videoId = null,
   children,
   className,
   preview,
@@ -64,12 +68,18 @@ export function CollaborationWorkReviewLink({
     : localOpening;
 
   const showTitleOnly = previewMode === "title-only";
+  const reviewHref = !diagnosisContext && videoId ? `/admin/content?videoId=${encodeURIComponent(videoId)}` : null;
 
   async function openReview() {
     if (isOpening) return;
 
     if (diagnosisContext) {
       await diagnosisContext.openDiagnosisByReportId(reportId);
+      return;
+    }
+
+    if (reviewHref) {
+      router.push(reviewHref, { scroll: false });
       return;
     }
 
@@ -105,7 +115,59 @@ export function CollaborationWorkReviewLink({
         align="start"
         tip={previewTitle}
       >
-        <button
+        {reviewHref ? (
+          <a
+            href={reviewHref}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!shouldHandleInPlaceLinkClick(event)) return;
+              event.preventDefault();
+              void openReview();
+            }}
+            onAuxClick={(event) => event.stopPropagation()}
+            className={className}
+          >
+            {children}
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void openReview();
+            }}
+            disabled={isOpening}
+            className={className}
+          >
+            {children}
+          </button>
+        )}
+      </TruncatedTooltip>
+    );
+  }
+
+  return (
+    <Tooltip>
+      {reviewHref ? (
+        <TooltipTrigger
+          render={
+            <a
+              href={reviewHref}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!shouldHandleInPlaceLinkClick(event)) return;
+                event.preventDefault();
+                void openReview();
+              }}
+              onAuxClick={(event) => event.stopPropagation()}
+              className={className}
+            />
+          }
+        >
+          {children}
+        </TooltipTrigger>
+      ) : (
+        <TooltipTrigger
           type="button"
           onClick={(event) => {
             event.stopPropagation();
@@ -115,24 +177,8 @@ export function CollaborationWorkReviewLink({
           className={className}
         >
           {children}
-        </button>
-      </TruncatedTooltip>
-    );
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          void openReview();
-        }}
-        disabled={isOpening}
-        className={className}
-      >
-        {children}
-      </TooltipTrigger>
+        </TooltipTrigger>
+      )}
       <TooltipContent
         side="top"
         align="start"

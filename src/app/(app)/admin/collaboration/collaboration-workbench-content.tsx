@@ -17,6 +17,7 @@ import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import type { OperatorRow, StaffRow, TalentRow, WriterCandidateRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 import type { CollaborationPersonContext } from "@/lib/collaboration/data/workbench-loader";
+import type { CollaborationSortDir } from "@/lib/collaboration/work-group-navigation";
 import { prefetchPerson } from "@/app/(app)/admin/collaboration/workbench-prefetch";
 
 // 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
@@ -47,7 +48,7 @@ const ContentDetailDialog = dynamic(
 );
 
 interface CollaborationWorkbenchContentProps {
-  year: number; month: number; view: "roles" | "teams"; tab: TabKey;
+  year: number; month: number; view: "roles" | "teams"; tab: TabKey; sortKey?: string | null; sortDir?: CollaborationSortDir; onSortChange?: (next: { sortKey: string; sortOrder: CollaborationSortDir }) => void;
   activeGroupDetail: WorkGroupViews["details"][number] | null | undefined; groupIdNotFound: boolean; resolvedWorkGroupViews?: WorkGroupViews;
   canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null; evaluationStandards: EvaluationStandards;
   manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number; isLoadingTab: boolean; personContext: CollaborationPersonContext; onRefreshData: () => void;
@@ -59,7 +60,7 @@ interface CollaborationWorkbenchContentProps {
 }
 
 export function CollaborationWorkbenchContent({
-  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, rulesEntry, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, isLoadingTab, personContext, onRefreshData, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
+  year, month, view, tab, sortKey = null, sortDir = "desc", onSortChange, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, rulesEntry, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, isLoadingTab, personContext, onRefreshData, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
 }: CollaborationWorkbenchContentProps) {
   const evaluationStandardsKey = JSON.stringify(evaluationStandards);
   const isMemberViewer = Boolean(currentUserId && (!isOwnerOrTeamAdmin || restrictToSelf));
@@ -82,6 +83,9 @@ export function CollaborationWorkbenchContent({
           activeGroupDetail ? (
             <WorkGroupDetailView
               detail={activeGroupDetail}
+              sortKey={sortKey}
+              sortOrder={sortDir}
+              onSortChange={onSortChange}
               canManage={canManageWorkGroups}
               currentUserId={currentUserId}
               onBack={onBackToGroupList}
@@ -101,6 +105,9 @@ export function CollaborationWorkbenchContent({
               )}
               <WorkGroupListTab
                 groups={resolvedWorkGroupViews?.groups ?? []}
+                sortKey={sortKey}
+                sortOrder={sortDir}
+                onSortChange={onSortChange}
                 ready={resolvedWorkGroupViews?.ready ?? true}
                 canManage={canManageWorkGroups}
                 onOpenManageDrawer={() => {
@@ -113,6 +120,9 @@ export function CollaborationWorkbenchContent({
         ) : tab === "talents" ? (
           <TalentTab
             talents={talents}
+            sortKey={sortKey}
+            sortOrder={sortDir}
+            onSortChange={onSortChange}
             rulesEntry={rulesEntry}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
@@ -122,6 +132,9 @@ export function CollaborationWorkbenchContent({
         ) : tab === "operators" ? (
           <OperatorTab
             operators={operators}
+            sortKey={sortKey}
+            sortOrder={sortDir}
+            onSortChange={onSortChange}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -130,6 +143,9 @@ export function CollaborationWorkbenchContent({
         ) : tab === "writers" ? (
           <WriterTab
             rows={writerStaff}
+            sortKey={sortKey}
+            sortOrder={sortDir}
+            onSortChange={onSortChange}
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
             rulesEntry={rulesEntry}
@@ -142,6 +158,9 @@ export function CollaborationWorkbenchContent({
         ) : (
           <StaffTab
             rows={editorStaff}
+            sortKey={sortKey}
+            sortOrder={sortDir}
+            onSortChange={onSortChange}
             role="editor"
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}

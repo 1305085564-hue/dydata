@@ -3,6 +3,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import type { TopicPoolExplorerProps } from "@/lib/topics/domain/pool-view";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 export type PoolTableProps = Pick<
   TopicPoolExplorerProps,
@@ -44,16 +45,29 @@ export function PoolTable({
                 return (
                   <tr
                     key={item.id}
-                    onClick={() => onSelectTopic(item.id)}
+                    onClick={(e) => {
+                      if (!shouldHandleInPlaceLinkClick(e)) return;
+                      onSelectTopic(item.id);
+                    }}
                     className="group hover:bg-[#F7F7F6] transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-3 text-[#78716C] font-normal whitespace-nowrap">
                       {item.topics?.name || "常规母题"}
                     </td>
                     <td className="py-3 px-3 max-w-sm">
-                      <div className="text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#D97757] truncate">
+                      <a
+                        href={`/topics?topic_id=${encodeURIComponent(item.id)}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!shouldHandleInPlaceLinkClick(e)) return;
+                          e.preventDefault();
+                          onSelectTopic(item.id);
+                        }}
+                        onAuxClick={(e) => e.stopPropagation()}
+                        className="block text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#D97757] group-hover:underline underline-offset-2 truncate focus-visible:outline-none focus-visible:underline"
+                      >
                         {item.title}
-                      </div>
+                      </a>
                       {item.hook && (
                         <div className="text-[12px] text-[#78716C] truncate mt-0.5 font-sans">
                           “{item.hook}”

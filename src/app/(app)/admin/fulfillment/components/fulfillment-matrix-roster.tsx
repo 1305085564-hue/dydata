@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
@@ -148,6 +148,21 @@ const MENU_BUTTON =
 const NAME_COL = "w-[144px] min-w-[144px] max-w-[144px]";
 const MONTH_COL = "w-[148px] min-w-[148px] max-w-[148px]";
 
+function RosterColGroup({ dayCount }: { dayCount: number }) {
+  return (
+    <colgroup>
+      <col style={{ width: 144 }} />
+      <col style={{ width: 148 }} />
+      {Array.from({ length: dayCount }, (_, index) => (
+        <col
+          key={index}
+          style={index === 0 || index === dayCount - 1 ? { width: 34 } : undefined}
+        />
+      ))}
+    </colgroup>
+  );
+}
+
 /**
  * 全员月历大表：一行一人，左两列固定（成员 · 本月），右边是这个月每一天。
  * 标题、翻月、分段都在页头和工具栏，这里不再自带标题、排序胶囊和月份切换。
@@ -170,6 +185,26 @@ export function FulfillmentMatrixRoster({
   const [hoveredCell, setHoveredCell] = useState<ActiveCellData | null>(null);
   const [openMenuCell, setOpenMenuCell] = useState<ActiveCellData | null>(null);
   const [reviewingRequestId, setReviewingRequestId] = useState<string | null>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const scrollingSourceRef = useRef<"header" | "body" | null>(null);
+
+  const syncHorizontalScroll = useCallback((source: "header" | "body") => {
+    if (scrollingSourceRef.current && scrollingSourceRef.current !== source) {
+      return;
+    }
+    const sourceEl = source === "header" ? headerScrollRef.current : bodyScrollRef.current;
+    const targetEl = source === "header" ? bodyScrollRef.current : headerScrollRef.current;
+    if (!sourceEl || !targetEl) return;
+    if (Math.abs(targetEl.scrollLeft - sourceEl.scrollLeft) < 1) return;
+    scrollingSourceRef.current = source;
+    targetEl.scrollLeft = sourceEl.scrollLeft;
+    requestAnimationFrame(() => {
+      if (scrollingSourceRef.current === source) {
+        scrollingSourceRef.current = null;
+      }
+    });
+  }, []);
 
   const dayNumbers = useMemo(
     () => Array.from({ length: getDaysInMonth(year, month) }, (_, i) => i + 1),
@@ -231,19 +266,27 @@ export function FulfillmentMatrixRoster({
 
   const sortable = Boolean(onSortDirChange);
   const ariaSort = sortable ? (sortDir === "asc" ? "ascending" : "descending") : undefined;
+  const tableMinWidth = 292 + 68 + Math.max(0, dayNumbers.length - 2) * 26;
 
   return (
     <div className="space-y-2">
       <div
         className={cn(
-          "overflow-x-auto rounded-xl border border-[#E2E2DF] bg-white transition-opacity duration-150",
+          "rounded-xl border border-[#E2E2DF] bg-white transition-opacity duration-150",
           isLoading && "opacity-50",
         )}
         aria-busy={isLoading || undefined}
       >
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[#E2E2DF] text-[12px] text-[#78716C]">
+        <div
+          ref={headerScrollRef}
+          data-slot="fulfillment-sticky-header"
+          onScroll={() => syncHorizontalScroll("header")}
+          className="sticky top-[var(--app-top-offset,64px)] z-20 overflow-x-auto rounded-t-xl border-b border-[#E2E2DF] bg-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <table className="w-full table-fixed border-collapse" style={{ minWidth: tableMinWidth }}>
+            <RosterColGroup dayCount={dayNumbers.length} />
+            <thead>
+              <tr className="text-[12px] text-[#78716C]">
               <th className={cn("sticky left-0 z-20 bg-white px-3 py-2.5 text-left font-normal", NAME_COL)}>成员</th>
               <th
                 aria-sort={ariaSort}
@@ -284,10 +327,20 @@ export function FulfillmentMatrixRoster({
                   </th>
                 );
               })}
-            </tr>
-          </thead>
+              </tr>
+            </thead>
+          </table>
+        </div>
 
-          <tbody>
+        <div
+          ref={bodyScrollRef}
+          data-slot="fulfillment-roster-body"
+          onScroll={() => syncHorizontalScroll("body")}
+          className="overflow-x-auto rounded-b-xl bg-white"
+        >
+          <table className="w-full table-fixed border-collapse" style={{ minWidth: tableMinWidth }}>
+            <RosterColGroup dayCount={dayNumbers.length} />
+            <tbody>
             {members.length === 0 ? (
               <tr>
                 <td colSpan={dayNumbers.length + 2} className="px-3 py-10 text-center text-[14px] text-[#78716C]">
@@ -394,8 +447,9 @@ export function FulfillmentMatrixRoster({
                 );
               })
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[12px] text-[#78716C]">

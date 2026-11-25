@@ -9,6 +9,7 @@ import { loadCollaborationWorkbenchData } from "@/lib/collaboration/data/workben
 import type { CollaborationDataTab, CollaborationWorkbenchData } from "@/lib/collaboration/data/workbench-loader";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
+import type { CollaborationSortDir } from "@/lib/collaboration/work-group-navigation";
 
 interface CollaborationDataContainerProps {
   year: number;
@@ -17,6 +18,8 @@ interface CollaborationDataContainerProps {
   view?: "roles" | "teams";
   groupId?: string;
   personId?: string;
+  sort?: string;
+  dir?: CollaborationSortDir;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
 }
@@ -45,6 +48,8 @@ export async function CollaborationDataContainer({
   view = "roles",
   groupId,
   personId,
+  sort,
+  dir = "desc",
   isOwnerOrTeamAdmin,
   canManageVideos,
 }: CollaborationDataContainerProps) {
@@ -114,6 +119,8 @@ export async function CollaborationDataContainer({
       defaultGroupId={groupId}
       defaultPersonId={personId}
       initialData={initialData}
+      defaultSortKey={sort ?? null}
+      defaultSortDir={dir}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       canManageVideos={canManageVideos}
       currentUserId={context.scope.userId}

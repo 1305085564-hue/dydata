@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ItemHeading } from "@/components/ui/item-heading";
 import type { TopicPoolExplorerProps } from "@/lib/topics/domain/pool-view";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 export type PoolGridProps = Pick<
   TopicPoolExplorerProps,
@@ -36,16 +37,8 @@ export function PoolGrid({
               <Card
                 key={item.id}
                 role="article"
-                tabIndex={0}
                 aria-label={`选题：${item.title}`}
-                onClick={() => onSelectTopic(item.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectTopic(item.id);
-                  }
-                }}
-                className="relative p-4 hover:shadow-claude-float focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:outline-none transition duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
+                className="group relative p-4 hover:shadow-claude-float has-[a:focus-visible]:ring-1 has-[a:focus-visible]:ring-[#141413]/10 transition duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
@@ -71,7 +64,23 @@ export function PoolGrid({
 
                   {/* 标题：饱满清晰 */}
                   <ItemHeading as="h3" className="transition-colors line-clamp-2 mb-1.5">
-                    <span className="group-hover:text-[#D97757]">{item.title}</span>
+                    <a
+                      href={`/topics?topic_id=${encodeURIComponent(item.id)}`}
+                      onClick={(e) => {
+                        if (!shouldHandleInPlaceLinkClick(e)) return;
+                        e.preventDefault();
+                        onSelectTopic(item.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === " " && !e.repeat && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                          e.preventDefault();
+                          onSelectTopic(item.id);
+                        }
+                      }}
+                      className="group-hover:text-[#D97757] after:absolute after:inset-0 after:z-0 focus-visible:outline-none"
+                    >
+                      {item.title}
+                    </a>
                   </ItemHeading>
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}

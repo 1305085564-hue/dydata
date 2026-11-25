@@ -31,11 +31,17 @@ export function WriterTab({
   currentUserId,
   isMemberViewer = false,
   rulesEntry,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onSelectPerson,
   onPrefetchPerson,
   onRefreshData,
 }: {
   rulesEntry?: ReactNode;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   rows: StaffRow[];
   candidates: WriterCandidateRow[];
   canCertify: boolean;
@@ -83,6 +89,9 @@ export function WriterTab({
         currentUserId={currentUserId}
         isMemberViewer={isMemberViewer}
         rulesEntry={rulesEntry}
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
         onSelectPerson={onSelectPerson}
         onPrefetchPerson={onPrefetchPerson}
         onRefreshData={onRefreshData}

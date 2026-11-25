@@ -4,6 +4,7 @@ import type { RefObject } from "react";
 import { Check, ClipboardPaste } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { applyCleanedTextareaPaste } from "@/lib/text/clean-pasted-text";
 import type { FormMetaState } from "@/lib/video-submit/domain/video-submit-form-model";
 
 export interface FormV2ContentSectionProps {
@@ -64,6 +65,7 @@ export function FormV2ContentSection({
         id="content"
         value={meta.content}
         onChange={(event) => updateMeta("content", event.target.value)}
+        onPaste={(event) => applyCleanedTextareaPaste(event, meta.content, (value) => updateMeta("content", value))}
         placeholder="把视频文案粘贴到这里"
         className={cn(
           "min-h-[120px] w-full resize-none rounded-md border bg-white p-3 text-[14px] leading-relaxed text-[#1F1E1D] shadow-input outline-none transition-colors placeholder:text-[#A8A29E]",

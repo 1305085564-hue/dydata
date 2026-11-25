@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import { useContentListState } from "@/lib/content/domain/content-list-state";
@@ -8,7 +9,8 @@ import { useContentListData } from "@/lib/content/data/content-list";
 import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
-import { resolveEffectiveDates } from "@/lib/content/domain/content-list-filters";
+import { resolveEffectiveDates, writeContentListSort } from "@/lib/content/domain/content-list-filters";
+import { buildContentPageUrl } from "./content-video-navigation";
 import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
 import { activeSegmentOf, segmentBaseKey, type ContentSegmentCounts } from "./content-segments";
 import { DatePagination } from "./date-pagination";
@@ -24,6 +26,8 @@ const NO_DATES: string[] = [];
 const NO_COUNTS: Array<{ d: string; c: number }> = [];
 
 export function ContentList(props: ContentListProps) {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.toString();
   const state = useContentListState(props);
   const availableDates = props.availableDates ?? NO_DATES;
   const availableCounts = props.availableCounts ?? NO_COUNTS;
@@ -167,6 +171,42 @@ export function ContentList(props: ContentListProps) {
     });
   }, [applyFilterPatch]);
 
+  const buildVideoHref = useCallback((videoId: string) => {
+    const raw = buildContentPageUrl({
+      view: props.view ?? "all",
+      perspective: props.perspective ?? "company",
+      teamId: props.teamId ?? null,
+      videoId,
+      filters: state.filters,
+      search: searchQuery,
+    });
+    const url = new URL(raw, "http://dummy");
+    url.searchParams.delete("authorId");
+    const sorted = writeContentListSort(url.searchParams, {
+      sortField: state.sortField,
+      sortDir: state.sortDir,
+    });
+    return `${url.pathname}?${sorted.toString()}`;
+  }, [props.perspective, props.teamId, props.view, searchQuery, state.filters, state.sortDir, state.sortField]);
+
+  const buildAuthorHref = useCallback((authorId: string) => {
+    const raw = buildContentPageUrl({
+      view: props.view ?? "all",
+      perspective: props.perspective ?? "company",
+      teamId: props.teamId ?? null,
+      videoId: null,
+      filters: state.filters,
+      search: searchQuery,
+    });
+    const url = new URL(raw, "http://dummy");
+    url.searchParams.set("authorId", authorId);
+    const sorted = writeContentListSort(url.searchParams, {
+      sortField: state.sortField,
+      sortDir: state.sortDir,
+    });
+    return `${url.pathname}?${sorted.toString()}`;
+  }, [props.perspective, props.teamId, props.view, searchQuery, state.filters, state.sortDir, state.sortField]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 页头即答案（效率美学 §2.1）：日期本身就是日期选择器，后接篇数；手机同样显示 */}
@@ -212,6 +252,8 @@ export function ContentList(props: ContentListProps) {
         selectedVideoId={props.selectedVideoId}
         onSelectVideoId={props.onSelectVideoId}
         onSelectAuthor={props.onSelectAuthor}
+        buildVideoHref={buildVideoHref}
+        buildAuthorHref={buildAuthorHref}
         ownerNames={props.ownerNames}
         highlightRules={state.filters.highlightRules}
         evaluationStandards={props.evaluationStandards}

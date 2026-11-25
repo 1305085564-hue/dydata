@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Copy, CheckCircle2, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { CopyButton } from "@/components/ui/copy-button";
 import type { AiModelTestResult } from "../hooks/use-ai-config";
 import type { ChannelFailureDiagnostic } from "@/lib/ai-config/failure-diagnostic";
 import { formatLatency } from "@/lib/ai-config/presentation";
-import { feedbackToast } from "@/components/ui/feedback-toast";
 
 export function modelTestKey(keyId: string, modelId: string) {
   return `${keyId}:${modelId}`;
@@ -57,7 +57,6 @@ export function ModelTestFeedback({
   result,
 }: ModelTestFeedbackProps) {
   const [showTechnical, setShowTechnical] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
 
   if (!result) return null;
 
@@ -76,18 +75,6 @@ export function ModelTestFeedback({
   const requestId = diagnostic?.technical?.requestId;
   const statusCode = diagnostic?.technical?.status;
   const techMessage = diagnostic?.technical?.message || rawMessage;
-
-  const handleCopyRequestId = async () => {
-    if (!requestId) return;
-    try {
-      await navigator.clipboard.writeText(requestId);
-      setCopiedId(true);
-      setTimeout(() => setCopiedId(false), 2000);
-      feedbackToast.success("已复制请求编号 (Request ID)");
-    } catch {
-      feedbackToast.error("复制失败，请手动选取");
-    }
-  };
 
   return (
     <div
@@ -139,14 +126,14 @@ export function ModelTestFeedback({
                   <span className="text-[#78716C]">Request ID: </span>
                   <span>{requestId}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCopyRequestId}
-                  className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] shrink-0"
-                >
-                  <Copy className="size-3" />
-                  <span>{copiedId ? "已复制" : "复制"}</span>
-                </button>
+                <CopyButton
+                  text={requestId}
+                  label="复制"
+                  copiedLabel="已复制"
+                  errorMessage="复制失败，请手动选取"
+                  className="shrink-0"
+                  iconClassName="size-3"
+                />
               </div>
             )}
             <div className="break-all whitespace-pre-wrap text-[12px] text-[#78716C]">

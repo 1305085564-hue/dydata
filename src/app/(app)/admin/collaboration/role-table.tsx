@@ -35,6 +35,9 @@ export interface RoleTableProps<R> {
   rows: R[];
   columns: RoleColumn<R>[];
   defaultSortKey: string;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   getId: (row: R) => string;
   getName: (row: R) => string;
   /** 姓名下方的灰字（账号名单），没有就不出第二行。 */
@@ -63,6 +66,9 @@ export function RoleTable<R>({
   rows,
   columns,
   defaultSortKey,
+  sortKey: controlledSortKey,
+  sortOrder: controlledSortOrder,
+  onSortChange,
   getId,
   getName,
   getSub,
@@ -76,8 +82,15 @@ export function RoleTable<R>({
   rowAriaLabel,
   summary,
 }: RoleTableProps<R>) {
-  const [sortKey, setSortKey] = useState(defaultSortKey);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [internalSortKey, setInternalSortKey] = useState(defaultSortKey);
+  const [internalSortOrder, setInternalSortOrder] = useState<"asc" | "desc">("desc");
+
+  const requestedSortKey = controlledSortKey || (onSortChange ? defaultSortKey : internalSortKey);
+  const hasRequestedCol = columns.some((c) => c.key === requestedSortKey && c.sortValue);
+  const sortKey = hasRequestedCol ? requestedSortKey : defaultSortKey;
+  const sortOrder = hasRequestedCol
+    ? (onSortChange ? (controlledSortOrder ?? "desc") : internalSortOrder)
+    : "desc";
 
   const sorted = useMemo(() => {
     const column = columns.find((c) => c.key === sortKey && c.sortValue);
@@ -101,11 +114,12 @@ export function RoleTable<R>({
   }, [rows, columns, sortKey, sortOrder, currentUserId, getId]);
 
   const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    const nextOrder: "asc" | "desc" = sortKey === key ? (sortOrder === "desc" ? "asc" : "desc") : "desc";
+    if (onSortChange) {
+      onSortChange({ sortKey: key, sortOrder: nextOrder });
     } else {
-      setSortKey(key);
-      setSortOrder("desc");
+      setInternalSortKey(key);
+      setInternalSortOrder(nextOrder);
     }
   };
 

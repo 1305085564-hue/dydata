@@ -19,6 +19,7 @@ import { useContentTopicLibrary } from "./content-topic-library";
 import { interactionRate } from "@/lib/video-metrics";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import { GradeMark } from "./content-list-row-parts";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 import type { AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 
 import { formatCompactNumber, formatPercent, formatDate, type AuthorWorksDrawerProps, type AuthorWorksViewProps } from "./author-works-shared";
@@ -299,13 +300,20 @@ export function AuthorWorksView({
                     >
                       <td className="py-2.5 pr-2 text-[12px] text-[#1F1E1D] whitespace-nowrap">{formatDate(video.published_at)}</td>
                       <td className="min-w-0 py-2.5 px-2">
-                        <button
-                          type="button"
-                          onClick={(event) => { event.stopPropagation(); setDetailError(null); selectVideoWithRetention(video.id); }}
+                        <a
+                          href={`/admin/content?videoId=${encodeURIComponent(video.id)}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (!shouldHandleInPlaceLinkClick(event)) return;
+                            event.preventDefault();
+                            setDetailError(null);
+                            selectVideoWithRetention(video.id);
+                          }}
+                          onAuxClick={(event) => event.stopPropagation()}
                           className="block w-full truncate text-left text-[14px] text-[#1F1E1D] group-hover:text-[#141413] cursor-pointer outline-none focus-visible:underline focus-visible:underline-offset-2"
                         >
                           {video.video_title || video.content?.slice(0, 40) || "未命名视频"}
-                        </button>
+                        </a>
                         {video.accounts?.name && (
                           <div className="truncate text-[12px] text-[#78716C]">@{video.accounts.name}</div>
                         )}

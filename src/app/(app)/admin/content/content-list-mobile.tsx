@@ -5,6 +5,7 @@ import { isCellHighlighted, HIGHLIGHT_CELL_CLASS, type HighlightRuleMap } from "
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import { formatCount, formatPercent } from "./content-list-cell-content";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 type ContentListMobileProps = {
   visibleRows: ProcessedContentRow[];
@@ -15,6 +16,8 @@ type ContentListMobileProps = {
   onSelectVideoId: (id: string | null) => void;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  buildVideoHref?: (videoId: string) => string;
+  buildAuthorHref?: (authorId: string) => string;
   highlightRules: HighlightRuleMap;
 };
 
@@ -32,6 +35,8 @@ export function ContentListMobile({
   onSelectVideoId,
   ownerNames,
   onSelectAuthor,
+  buildVideoHref,
+  buildAuthorHref,
   highlightRules,
 }: ContentListMobileProps) {
   if (visibleRows.length === 0) {
@@ -52,7 +57,10 @@ export function ContentListMobile({
           <li
             key={video.id}
             data-video-id={video.id}
-            onClick={() => onSelectVideoId(video.id)}
+            onClick={(event) => {
+              if (!shouldHandleInPlaceLinkClick(event)) return;
+              onSelectVideoId(video.id);
+            }}
             className={cn(
               "group flex cursor-pointer items-start gap-3 px-1 py-3 transition-colors",
               isSelected ? ROW_SELECTED : "active:bg-[#EBEBE9]",
@@ -64,9 +72,9 @@ export function ContentListMobile({
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="flex min-w-0 items-center gap-2">
                 <StatusMark video={video} />
-                <TitleButton video={video} onOpen={() => onSelectVideoId(video.id)} className="truncate leading-[1.50]" />
+                <TitleButton video={video} href={buildVideoHref?.(video.id)} onOpen={() => onSelectVideoId(video.id)} className="truncate leading-[1.50]" />
               </span>
-              <WorkMetaLine video={video} isSingleDay={isSingleDay} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} />
+              <WorkMetaLine video={video} isSingleDay={isSingleDay} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} buildAuthorHref={buildAuthorHref} />
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1 tabular-nums">
               <span className={cn("text-[14px] leading-[1.50] text-[#141413]", playHit && HIGHLIGHT_CELL_CLASS)}>
