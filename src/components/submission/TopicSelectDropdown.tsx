@@ -270,7 +270,7 @@ export function TopicSelectDropdown({
           {/* 列表区域 */}
           <div
             ref={listRef}
-            className="max-h-64 overflow-y-auto space-y-1 scrollbar-thin"
+            className="max-h-64 overflow-y-auto overscroll-contain space-y-1 scrollbar-thin"
             style={listMaxHeight === null ? undefined : { maxHeight: listMaxHeight }}
           >
             {/* 搜索态 */}

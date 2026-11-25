@@ -66,7 +66,7 @@ export function MemberSelect({ value, onChange, profiles, label }: MemberSelectP
           </div>
         </div>
         {/* 成员列表：max-h-80 约显示 16 行，比原来的 max-h-56（约 7 行）多一倍以上 */}
-        <div className="max-h-80 overflow-y-auto p-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E2E2DF]">
+        <div className="max-h-80 overflow-y-auto overscroll-contain p-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E2E2DF]">
           {/* 全部成员 */}
           <button
             type="button"

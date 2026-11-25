@@ -255,7 +255,7 @@ export function AuthorWorksView({
         </div>
 
         {/* 作品列表：列序与数据复盘主表一致——作品 → 评级 → 播放 → 互动率 → 留存达成 → 涨粉 */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-2">
           {loading && videos.length === 0 ? (
             <div className="space-y-2 py-2">
               {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full rounded-md" />)}

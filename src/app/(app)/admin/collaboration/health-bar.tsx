@@ -262,7 +262,7 @@ export function HealthBar({
           </SheetHeader>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-4">
             {isLoading ? (
               <div className="py-16 flex flex-col items-center justify-center text-[#78716C] gap-2">
                 <Loader2 className="size-5 animate-spin text-[#D97757]" />

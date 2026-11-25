@@ -50,7 +50,7 @@ export function BreakdownDetailContent({
   canReviewContent: boolean;
 }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-5">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 space-y-5">
       {isLoading && !subTopicInfo ? (
         <div className="py-20 text-center">
           <Loader2 className="size-6 text-[#D97757] animate-spin mx-auto mb-2" />

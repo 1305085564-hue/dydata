@@ -91,7 +91,7 @@ export function ContentListMoreFilters({
               className="h-8 pl-7 text-[14px]"
             />
           </div>
-          <div className="max-h-40 space-y-1 overflow-y-auto">
+          <div className="max-h-40 space-y-1 overflow-y-auto overscroll-contain">
             <AccountRow label="全部账号" selected={!filters.accountId} onClick={() => updateFilter("accountId", "")} />
             {filteredAccounts.map((account) => (
               <AccountRow

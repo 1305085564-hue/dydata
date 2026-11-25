@@ -22,7 +22,7 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
   return (
     <DialogPrimitive.Root open onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop forceRender className="fixed inset-0 z-[100] bg-[#141413]/85 backdrop-blur-md" />
+        <DialogPrimitive.Backdrop data-slot="content-detail-overlay" forceRender className="fixed inset-0 z-[100] bg-[#141413]/85 backdrop-blur-md" />
       <DialogPrimitive.Popup
         className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 outline-none animate-in fade-in-0 duration-150 select-none"
         onClick={() => setPreviewIndex(null)}

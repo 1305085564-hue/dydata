@@ -69,7 +69,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-[70] flex flex-col gap-4 bg-white text-[14px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-280 ease-smooth",
+          "fixed z-[70] flex flex-col gap-4 overscroll-contain bg-white text-[14px] text-[#1F1E1D] shadow-claude-dialog outline-none duration-280 ease-smooth",
           sideClasses[side],
           className,
         )}
@@ -124,7 +124,7 @@ function SheetBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-body"
-      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-4", className)}
+      className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4", className)}
       {...props}
     />
   )

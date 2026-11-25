@@ -134,7 +134,7 @@ export function TopicMoreFiltersDrawer({
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav
             aria-label="筛选分类"
-            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#E2E2DF] bg-[#F1F1F0]/50 p-1.5 sm:w-40 sm:p-2"
+            className="w-28 shrink-0 space-y-1 overflow-y-auto overscroll-contain border-r border-[#E2E2DF] bg-[#F1F1F0]/50 p-1.5 sm:w-40 sm:p-2"
           >
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
@@ -173,7 +173,7 @@ export function TopicMoreFiltersDrawer({
             })}
           </nav>
 
-          <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto bg-white p-3.5 sm:p-5">
+          <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto overscroll-contain bg-white p-3.5 sm:p-5">
             <div>
               <ItemHeading as="h4" className="mb-1">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}

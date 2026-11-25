@@ -38,7 +38,7 @@ export function BreakdownEditForm({
             onSubmit={handleEditSubmit}
             className="flex min-h-0 flex-1 flex-col overflow-hidden space-y-4"
           >
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
               <div>
                 <label className="text-[12px] font-normal text-[#78716C] block mb-1">
                   选题标题 *

@@ -288,7 +288,7 @@ export function PersonalCard({
           </SheetHeader>
 
         {/* 正文：本月作品 → 近 30 天曲线；骨架与真实结构一致，内容出来时不跳 */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-2 pb-6 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-2 pb-6 space-y-5">
           {loading ? (
             <>
               <div className="space-y-2">
