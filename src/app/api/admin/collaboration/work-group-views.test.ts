@@ -46,9 +46,9 @@ test("组员绩效与抽屉同源：先加总再相除（加权），条均不�
   assertClose(lead.interactionRate, 2700 / 60000, "互动率");
   assertClose(lead.likeRate, 1500 / 60000, "点赞率");
   assertClose(lead.favoriteRate, 750 / 60000, "收藏率");
-  // 展开明细：评论率、转发率同口径，四项相加等于互动率
+  // 展开明细：评论率、分享率同口径，四项相加等于互动率
   assertClose(lead.commentRate, 300 / 60000, "评论率");
-  assertClose(lead.shareRate, 150 / 60000, "转发率");
+  assertClose(lead.shareRate, 150 / 60000, "分享率");
   assertClose(
     (lead.likeRate ?? 0) + (lead.commentRate ?? 0) + (lead.shareRate ?? 0) + (lead.favoriteRate ?? 0),
     lead.interactionRate as number,

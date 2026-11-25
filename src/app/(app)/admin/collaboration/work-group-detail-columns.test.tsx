@@ -45,14 +45,14 @@ test("默认列：本月作品、总播放、条均播放、转粉率、互动�
 
 test("运营小队（全队没有质量数据）不出评级列", () => {
   const labels = teamMetricColumns<WorkGroupMemberRow>({ showDetail: true, withQuality: false }).map((c) => c.label);
-  assert.deepEqual(labels, ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "转发率", "收藏率"]);
+  assert.deepEqual(labels, ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "分享率", "收藏率"]);
 });
 
 test("展开明细：互动四项紧跟互动率，留存五项跟在评级列后；缺值显示 —", () => {
   const columns = teamMetricColumns<WorkGroupMemberRow>({ showDetail: true, withQuality: true });
   assert.deepEqual(
     columns.map((c) => c.label),
-    ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "转发率", "收藏率", "互动达成", "留存达成", "良优率", "2秒跳出率", "5秒完播率", "均播时长", "播放占比", "整体完播率"],
+    ["本月作品", "总播放", "条均播放", "转粉率", "互动率", "点赞率", "评论率", "分享率", "收藏率", "互动达成", "留存达成", "良优率", "2秒跳出率", "5秒完播率", "均播时长", "播放占比", "整体完播率"],
   );
   const row = member({ contentQuality: quality });
   const pick = (keys: string[]) => keys.map((key) => columns.find((c) => c.key === key)!.render(row));

@@ -119,7 +119,7 @@ export function DurationCell(props: Omit<ComponentProps<typeof RatioCell>, "metr
   return <RatioCell {...props} metricType="avg_play_duration" />;
 }
 
-/** 互动率合成列：整格悬停展示点赞/评论/转发/收藏拆解与标准对比，点击直透行点击。 */
+/** 互动率合成列：整格悬停展示点赞/评论/分享/收藏拆解与标准对比，点击直透行点击。 */
 export function InteractionRateTooltipCell({
   value,
   quality,

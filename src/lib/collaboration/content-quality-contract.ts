@@ -233,7 +233,7 @@ export interface WorkContentQuality {
   snapshotPlayCount: number | null;
   /** 互动达成率（百分数数值：如 88.5 表示 88.5%，不封顶） */
   interactionAchievement: number | null;
-  /** 原始互动值 = (赞 + 评论 + 收藏 + 转发) / 播放，0–1 小数。 */
+  /** 原始互动值 = (赞 + 评论 + 收藏 + 分享) / 播放，0–1 小数。 */
   interactionValue?: number | null;
   /** 互动四项原始计数（赞、评、转、藏）。 */
   interactionMetrics?: InteractionMetrics | null;

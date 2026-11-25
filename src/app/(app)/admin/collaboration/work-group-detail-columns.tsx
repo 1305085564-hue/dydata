@@ -19,7 +19,7 @@ export const INTERACTION_DETAIL_COLUMNS: ReadonlyArray<{
 }> = [
   { key: "likeRate", label: "点赞率", sortField: "likeRate" },
   { key: "commentRate", label: "评论率" },
-  { key: "shareRate", label: "转发率" },
+  { key: "shareRate", label: "分享率" },
   { key: "favoriteRate", label: "收藏率", sortField: "favoriteRate" },
 ];
 

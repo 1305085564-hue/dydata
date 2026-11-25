@@ -43,7 +43,7 @@ export function InteractionBreakdownContent({
     ? [
         { label: "点赞", value: m.likes },
         { label: "评论", value: m.comments },
-        { label: "转发", value: m.shares },
+        { label: "分享", value: m.shares },
         { label: "收藏", value: m.favorites },
       ]
     : [];
