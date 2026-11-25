@@ -10,7 +10,7 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from "react";
-import { ImageOff, RefreshCw } from "lucide-react";
+import { ImageOff, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createScreenshotRecovery } from "./screenshot-recovery";
 import {
@@ -59,6 +59,41 @@ const PLACEHOLDER_BASE: Record<ScreenshotImageVariant, string> = {
     "flex h-[220px] w-[300px] max-w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#F1F1F0] text-[#78716C]",
 };
 
+const PROBING_PLACEHOLDER_BASE: Record<ScreenshotImageVariant, string> = {
+  thumb:
+    "flex h-full w-full items-center justify-center overflow-hidden bg-[#F1F1F0] text-[#A8A29E] animate-pulse-claude",
+  panel:
+    "flex h-full min-h-[96px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#F1F1F0] text-[#A8A29E] animate-pulse-claude",
+  stage:
+    "flex h-[220px] w-[300px] max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#F1F1F0] text-[#A8A29E] animate-pulse-claude",
+};
+
+export function ScreenshotProbingPlaceholder({
+  alt,
+  variant = "thumb",
+  className,
+}: {
+  alt: string;
+  variant?: ScreenshotImageVariant;
+  className?: string;
+}) {
+  const compact = variant === "thumb";
+  return (
+    <span
+      data-screenshot-probing="1"
+      role="status"
+      aria-label={`${alt}：加载中`}
+      className={cn(PROBING_PLACEHOLDER_BASE[variant], className)}
+    >
+      <Loader2
+        className={cn(compact ? "size-3.5" : "size-4", "animate-spin opacity-70")}
+        aria-hidden
+      />
+      {compact ? null : <span className="text-[12px] leading-tight">加载中…</span>}
+    </span>
+  );
+}
+
 export function ScreenshotPlaceholder({
   alt,
   variant = "thumb",
@@ -87,7 +122,12 @@ export function ScreenshotPlaceholder({
       title={`${alt}：${label}`}
       aria-label={`${alt}：${label}`}
       {...(interactive ? { role: "button", tabIndex: 0, onClick, onKeyDown } : {})}
-      className={cn(PLACEHOLDER_BASE[variant], className, interactive ? "cursor-pointer" : "")}
+      className={cn(
+        PLACEHOLDER_BASE[variant],
+        "animate-in fade-in-0 duration-150",
+        className,
+        interactive ? "cursor-pointer" : "",
+      )}
     >
       <ImageOff className={compact ? "size-3.5 stroke-[1.5]" : "size-5 stroke-[1.5]"} aria-hidden />
       {compact ? null : (
@@ -245,6 +285,16 @@ export function ScreenshotImage({
     [handleManualRetry]
   );
 
+  if (status === "probing") {
+    return (
+      <ScreenshotProbingPlaceholder
+        alt={alt}
+        variant={variant}
+        className={placeholderClassName}
+      />
+    );
+  }
+
   if (shouldRenderScreenshotPlaceholder(status)) {
     return (
       <ScreenshotPlaceholder
@@ -264,7 +314,7 @@ export function ScreenshotImage({
       key={renderKey}
       src={src}
       alt={alt}
-      className={cn(className, (status === "retrying" || status === "probing") && "opacity-0")}
+      className={cn(className, status === "retrying" && "opacity-0")}
       onLoad={handleLoad}
       onError={(event) => {
         handleError();

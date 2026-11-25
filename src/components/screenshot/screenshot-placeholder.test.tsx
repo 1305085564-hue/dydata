@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { ScreenshotPlaceholder } from "./screenshot-image";
+import { ScreenshotPlaceholder, ScreenshotProbingPlaceholder } from "./screenshot-image";
 import { onScreenshotFailureProbed, probeScreenshotFailureReason } from "./screenshot-image-state";
 
 test("大图占位显示『截图无法显示』并提供重试入口", () => {
@@ -74,4 +74,26 @@ test("5xx 探测完成后的最终显示保留重试入口", async () => {
 
   assert.match(html, /截图无法显示/);
   assert.match(html, /点击重试/);
+});
+
+test("探测期间渲染浅砂色圆角骨架占位，不再留空白", () => {
+  const stageHtml = renderToStaticMarkup(
+    <ScreenshotProbingPlaceholder alt="流量曲线截图" variant="stage" className="min-h-[320px] w-full" />,
+  );
+  assert.match(stageHtml, /data-screenshot-probing="1"/);
+  assert.match(stageHtml, /bg-\[#F1F1F0\]/);
+  assert.match(stageHtml, /rounded-xl/);
+  assert.match(stageHtml, /animate-pulse-claude/);
+  assert.match(stageHtml, /min-h-\[320px\]/);
+  assert.match(stageHtml, /加载中…/);
+
+  const thumbHtml = renderToStaticMarkup(<ScreenshotProbingPlaceholder alt="基础数据截图" variant="thumb" />);
+  assert.match(thumbHtml, /data-screenshot-probing="1"/);
+  assert.match(thumbHtml, /bg-\[#F1F1F0\]/);
+  assert.doesNotMatch(thumbHtml, />加载中…</);
+});
+
+test("探测完成切到最终占位时带淡入过渡", () => {
+  const html = renderToStaticMarkup(<ScreenshotPlaceholder alt="流量曲线截图" variant="stage" reason="missing" />);
+  assert.match(html, /animate-in fade-in-0 duration-150/);
 });

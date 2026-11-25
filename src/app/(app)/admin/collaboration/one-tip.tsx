@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useSyncExternalStore, type ReactElement, type ReactNode } from "react";
+import { useId, useRef, useSyncExternalStore, type ReactElement, type ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
@@ -34,6 +34,7 @@ export function OneTip({
   align = "end",
   side = "top",
   wide = false,
+  onlyWhenTruncated = false,
   children,
 }: {
   tip: ReactNode;
@@ -41,9 +42,12 @@ export function OneTip({
   side?: "top" | "bottom";
   /** 明细型提示（逐项列表）用固定宽度，短句提示自适应。 */
   wide?: boolean;
+  /** 仅在文本实际发生横向截断时显示气泡，完整文本不重复弹出。 */
+  onlyWhenTruncated?: boolean;
   children: ReactElement;
 }) {
   const id = useId();
+  const triggerRef = useRef<HTMLElement | null>(null);
   const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const open = current === id;
 
@@ -52,11 +56,32 @@ export function OneTip({
       open={open}
       disableHoverablePopup
       onOpenChange={(next) => {
-        if (next) setOpenId(id);
-        else if (openId === id) setOpenId(null);
+        if (next) {
+          if (onlyWhenTruncated) {
+            const el = triggerRef.current;
+            if (!el || el.scrollWidth <= el.clientWidth + 1) {
+              if (openId === id) setOpenId(null);
+              return;
+            }
+          }
+          setOpenId(id);
+        } else if (openId === id) {
+          setOpenId(null);
+        }
       }}
     >
-      <TooltipTrigger delay={100} closeDelay={0} render={children} />
+      <TooltipTrigger
+        ref={
+          onlyWhenTruncated
+            ? (node: HTMLElement | null) => {
+                triggerRef.current = node;
+              }
+            : undefined
+        }
+        delay={100}
+        closeDelay={0}
+        render={children}
+      />
       <TooltipContent
         side={side}
         align={align}

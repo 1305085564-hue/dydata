@@ -90,13 +90,17 @@ function TitleCell({ work, subtitle }: { work: WorkRow; subtitle: string | null 
   const title = work.title || "未命名作品";
   return (
     <td className="py-2.5 px-3 min-w-0">
-      <span title={title} className="block truncate text-[13px] leading-[1.40] text-[#1F1E1D] group-hover:text-[#141413]">
-        {title}
-      </span>
-      {subtitle ? (
-        <span title={subtitle} className="mt-1 block truncate text-[12px] leading-[1.50] text-[#78716C]">
-          {subtitle}
+      <OneTip tip={title} align="start" onlyWhenTruncated>
+        <span className="block truncate text-[13px] leading-[1.40] text-[#1F1E1D] group-hover:text-[#141413]">
+          {title}
         </span>
+      </OneTip>
+      {subtitle ? (
+        <OneTip tip={subtitle} align="start" onlyWhenTruncated>
+          <span className="mt-1 block truncate text-[12px] leading-[1.50] text-[#78716C]">
+            {subtitle}
+          </span>
+        </OneTip>
       ) : null}
     </td>
   );
@@ -223,8 +227,10 @@ function QualityWorksTable({
               .join(" · ");
             return (
               <tr key={work.reportId} {...rowProps(work.reportId, diagnosisContext)}>
-                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]" title={work.reportDate}>
-                  {formatShortDate(work.reportDate)}
+                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]">
+                  <OneTip tip={work.reportDate} align="start">
+                    <span className="cursor-default">{formatShortDate(work.reportDate)}</span>
+                  </OneTip>
                 </td>
                 <TitleCell work={work} subtitle={subtitle || null} />
                 <PlayCell work={work} />
@@ -275,8 +281,10 @@ function InvolvedWorksTable({
             const abnormal = rec.anomaly != null && rec.anomaly !== "正常" && rec.anomaly !== "normal";
             return (
               <tr key={rec.reportId} {...rowProps(rec.reportId, diagnosisContext)}>
-                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]" title={rec.reportDate}>
-                  {formatShortDate(rec.reportDate)}
+                <td className="py-2.5 px-3 align-top text-[12px] text-[#1F1E1D]">
+                  <OneTip tip={rec.reportDate} align="start">
+                    <span className="cursor-default">{formatShortDate(rec.reportDate)}</span>
+                  </OneTip>
                 </td>
                 <TitleCell work={rec} subtitle={showAccountName ? rec.accountName.trim() || null : null} />
                 <PlayCell work={rec} />
@@ -327,7 +335,11 @@ function OperatorAccountsTable({ accounts }: { accounts: OperatorAccount[] }) {
           {accounts.map((acc) => (
             <tr key={acc.accountId}>
               <td className="py-2.5 px-3 truncate text-[#1F1E1D]">{acc.ownerName}</td>
-              <td className="py-2.5 px-3 truncate text-[#1F1E1D]" title={acc.accountName}>{acc.accountName}</td>
+              <td className="py-2.5 px-3 min-w-0 text-[#1F1E1D]">
+                <OneTip tip={acc.accountName} align="start" onlyWhenTruncated>
+                  <span className="block truncate">{acc.accountName}</span>
+                </OneTip>
+              </td>
               <td className="py-2.5 px-3 text-right text-[#141413]">{acc.reportCount}</td>
               <td className="py-2.5 px-3 text-right text-[#1F1E1D]">{formatBigNumber(acc.totalPlay)}</td>
               <td className="py-2.5 px-3 text-right text-[#1F1E1D]">{acc.totalFollowerConvert.toLocaleString("zh-CN")}</td>
