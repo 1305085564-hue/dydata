@@ -6,7 +6,7 @@
  * 改动前先读对应注释，别为了界面方便简化掉。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ActionCenterSummary, ActionItem } from "@/lib/action-center/types";
 import {
@@ -38,41 +38,11 @@ import {
   getTodoItems,
   splitApprovalItems,
 } from "@/lib/command-hub/domain/workbench-rules";
-import type { ActiveUndoItem, ApprovalQueueItem, ReviewAction } from "@/lib/command-hub/types";
-
-const UNDO_SECONDS = 5;
-
-interface UndoEntry {
-  id: string;
-  title: string;
-  requestIds: string[];
-  action: ReviewAction;
-  originalItems: ExemptionRequest[];
-  feedback?: string;
-  dates?: string[];
-  timerId: ReturnType<typeof setTimeout>;
-  source: "exemption" | "fulfillment_appeal";
-  suppressedTodoIds?: string[];
-}
+import type { ApprovalQueueItem, ReviewAction } from "@/lib/command-hub/types";
+import { useApprovalUndoQueue, type UndoEntry } from "./use-approval-undo-queue";
 
 function natureName(nature: "leave" | "waive") {
   return nature === "leave" ? "请假" : "免交";
-}
-
-function newUndoId() {
-  return `undo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function sendKeepalive(url: string, payload: unknown) {
-  const body = JSON.stringify(payload);
-  const sent =
-    typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function"
-      ? navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))
-      : false;
-  if (!sent) {
-    void fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true })
-      .catch((error) => console.error("Failed to flush pending review", error));
-  }
 }
 
 function withoutRequestIds(ids: string[]) {
@@ -104,11 +74,8 @@ export function useApprovalReview({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [reopeningId, setReopeningId] = useState<string | null>(null);
-  const [undoList, setUndoList] = useState<ActiveUndoItem[]>([]);
   const [completedTodoIds, setCompletedTodoIds] = useState<string[]>([]);
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
-  // gate:transient-map 撤回队列只在当前面板会话内保存待提交审批
-  const undoQueueRef = useRef(new Map<string, UndoEntry>());
 
   // ---------- 拉数据 ----------
 
@@ -243,39 +210,21 @@ export function useApprovalReview({
 
   // ---------- 撤回缓冲 ----------
 
-  const schedule = useCallback((entry: Omit<UndoEntry, "id" | "timerId">) => {
-    if (entry.requestIds.length === 0) return;
-    const id = newUndoId();
-    const timerId = setTimeout(() => {
-      const queued = undoQueueRef.current.get(id);
-      undoQueueRef.current.delete(id);
-      setUndoList((current) => current.filter((item) => item.id !== id));
-      if (!queued) return;
-      void (queued.source === "fulfillment_appeal" ? commitAppeal(queued) : commitExemption(queued));
-    }, UNDO_SECONDS * 1000);
-    undoQueueRef.current.set(id, { ...entry, id, timerId });
-    setUndoList((current) => [
-      ...current,
-      { id, title: entry.feedback ? `${entry.title}（附原因）` : entry.title, action: entry.action, remainingSeconds: UNDO_SECONDS },
-    ]);
+  const handleUndoExpire = useCallback((queued: UndoEntry) => {
+    void (queued.source === "fulfillment_appeal" ? commitAppeal(queued) : commitExemption(queued));
   }, [commitAppeal, commitExemption]);
 
-  useEffect(() => {
-    if (undoList.length === 0) return;
-    const interval = setInterval(() => {
-      setUndoList((prev) =>
-        prev.map((item) => ({ ...item, remainingSeconds: item.remainingSeconds - 1 })).filter((item) => item.remainingSeconds > 0),
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [undoList.length]);
+  const {
+    undoList,
+    pauseUndo,
+    resumeUndo,
+    schedule,
+    takeUndoEntry,
+  } = useApprovalUndoQueue({ open, onExpire: handleUndoExpire });
 
   const undo = useCallback((undoId: string) => {
-    const entry = undoQueueRef.current.get(undoId);
+    const entry = takeUndoEntry(undoId);
     if (!entry) return;
-    clearTimeout(entry.timerId);
-    undoQueueRef.current.delete(undoId);
-    setUndoList((current) => current.filter((item) => item.id !== undoId));
     setPending((current) =>
       entry.source === "fulfillment_appeal"
         ? [...entry.originalItems, ...current]
@@ -283,50 +232,7 @@ export function useApprovalReview({
     );
     releaseSuppressedTodos(entry.suppressedTodoIds);
     toast.success(`已撤回：${entry.title}`);
-  }, [releaseSuppressedTodos]);
-
-  // 关面板、关页面时，撤回窗口里还没提交的审批立刻补发，不能丢
-  const flushUndoQueue = useCallback(() => {
-    if (undoQueueRef.current.size === 0) return;
-    const entries = Array.from(undoQueueRef.current.values());
-    undoQueueRef.current.clear();
-    setUndoList([]);
-    for (const entry of entries) {
-      clearTimeout(entry.timerId);
-      if (entry.source === "fulfillment_appeal") {
-        sendKeepalive("/api/admin/fulfillment/appeal/handle", {
-          appealId: entry.requestIds[0],
-          decision: entry.action === "approved" ? "approve" : "reject",
-          reason: entry.feedback || undefined,
-        });
-      } else {
-        for (const requestId of entry.requestIds) {
-          sendKeepalive("/api/exemptions/review", {
-            request_id: requestId,
-            action: entry.action,
-            feedback: entry.feedback ?? null,
-            dates: entry.dates,
-          });
-        }
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("beforeunload", flushUndoQueue);
-    window.addEventListener("pagehide", flushUndoQueue);
-    return () => {
-      window.removeEventListener("beforeunload", flushUndoQueue);
-      window.removeEventListener("pagehide", flushUndoQueue);
-      flushUndoQueue();
-    };
-  }, [flushUndoQueue]);
-
-  const wasOpenRef = useRef(open);
-  useEffect(() => {
-    if (wasOpenRef.current && !open) flushUndoQueue();
-    wasOpenRef.current = open;
-  }, [flushUndoQueue, open]);
+  }, [releaseSuppressedTodos, takeUndoEntry]);
 
   // ---------- 审批动作 ----------
 
@@ -475,6 +381,8 @@ export function useApprovalReview({
     loadHistory,
     reopeningId,
     undoList,
+    pauseUndo,
+    resumeUndo,
     undo,
     reviewGroup,
     reviewDay,

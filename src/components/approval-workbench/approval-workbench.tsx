@@ -238,6 +238,7 @@ export function ApprovalWorkbench({
         {open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-3 sm:p-4 md:p-6">
             <motion.div
+              data-slot="approval-workbench-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -286,7 +287,7 @@ export function ApprovalWorkbench({
                 </div>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-4">
                 {view === "history" ? (
                   <HistoryList
                     items={review.history}
@@ -390,7 +391,11 @@ export function ApprovalWorkbench({
 
               {/* 底栏固定高度：有撤回时显示撤回，没有时显示快捷键；切换不改变列表位置 */}
               {isAdmin && (
-                <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-t border-[#E2E2DF] px-6 text-[12px]">
+                <div
+                  onMouseEnter={latestUndo ? review.pauseUndo : undefined}
+                  onMouseLeave={review.resumeUndo}
+                  className="flex h-11 shrink-0 items-center justify-between gap-3 border-t border-[#E2E2DF] px-6 text-[12px]"
+                >
                   {latestUndo ? (
                     <>
                       <span className="min-w-0 truncate text-[#1F1E1D]">
