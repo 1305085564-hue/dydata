@@ -1,27 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  AlertTriangle,
-  Lightbulb,
-  RefreshCw,
-  Sparkles,
-  Check,
-  UploadCloud,
-  FileSpreadsheet,
-  CheckCircle2,
-  XCircle,
-  RotateCcw,
-  ArrowRight,
-  Info,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, Lightbulb, RefreshCw, Sparkles, Check, UploadCloud, FileSpreadsheet, CheckCircle2, XCircle, RotateCcw, ArrowRight, Info, Loader2 } from "lucide-react";
 import type {
   TopicOption,
   BatchImportParsedRow,
   BatchImportSummary,
 } from "./types";
 import { Card } from "@/components/ui/card";
+import { applyCleanedTextareaPaste, cleanLongTextPaste } from "@/lib/text/clean-pasted-text";
 import { Metric } from "@/components/ui/metric";
 import {
   fetchTopicJson,
@@ -214,7 +201,7 @@ export function TopicCreateModal({
 
   const handleApplySmartPaste = () => {
     if (!smartPasteText.trim()) return;
-    const raw = smartPasteText.trim();
+    const raw = cleanLongTextPaste(smartPasteText);
     const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
 
     let extractedTitle = "";
@@ -449,6 +436,7 @@ export function TopicCreateModal({
                       rows={3}
                       value={smartPasteText}
                       onChange={(e) => setSmartPasteText(e.target.value)}
+                      onPaste={(event) => applyCleanedTextareaPaste(event, smartPasteText, setSmartPasteText)}
                       placeholder="例如：
 【选题】游资大佬集体发文投降，量化时代散户的生路在哪？
 【钩子】“游资大佬集体发文投降，量化时代散户的生路在哪？”"
@@ -522,6 +510,7 @@ export function TopicCreateModal({
                   placeholder="例如：90% 的短线客还在死守龙头战法，却不知道资金早已变盘..."
                   value={hook}
                   onChange={(event) => setHook(event.target.value)}
+                  onPaste={(event) => applyCleanedTextareaPaste(event, hook, setHook)}
                   className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[14px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                   aria-label="一句话 Hook"
                 />

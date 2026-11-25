@@ -19,6 +19,9 @@ interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;
   canManage?: boolean;
   currentUserId?: string | null;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   onBack: () => void;
   onOpenManageDrawer?: (groupId: string) => void;
   onSelectPerson: (userId: string) => void;
@@ -33,6 +36,9 @@ export function WorkGroupDetailView({
   detail,
   canManage = false,
   currentUserId = null,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onBack,
   onOpenManageDrawer,
   onSelectPerson,
@@ -103,6 +109,9 @@ export function WorkGroupDetailView({
             rows={members}
             columns={columns}
             defaultSortKey="totalPlay"
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
             summary={{ name: "全队合计", sub: "比率按全队作品合计重算", row: summaryRow }}
             getId={(row) => row.userId}
             getName={(row) => row.name}

@@ -40,6 +40,8 @@ type ContentListTableProps = {
   onSelectVideoId: (id: string | null) => void;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string, sourceVideoId?: string | null) => void;
+  buildVideoHref?: (videoId: string) => string;
+  buildAuthorHref?: (authorId: string) => string;
   highlightRules: HighlightRuleMap;
   evaluationStandards?: EvaluationStandards;
 };
@@ -53,6 +55,8 @@ type CellContext = {
   hit: (key: HighlightFieldKey) => boolean;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string, sourceVideoId?: string | null) => void;
+  buildVideoHref?: (videoId: string) => string;
+  buildAuthorHref?: (authorId: string) => string;
   onOpen: () => void;
 };
 
@@ -74,20 +78,21 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
           ctx.isSelected
             ? "bg-[#E4E4E1] group-hover:bg-[#E4E4E1]"
             : ctx.isTitleSorted
-              ? `${SORTED_STICKY_COL_BG} group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]`
-              : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[button:focus-visible]:bg-[#F7F7F6]",
+              ? `${SORTED_STICKY_COL_BG} group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[a:focus-visible]:bg-[#F7F7F6] group-has-[a:focus-visible]:bg-[#F7F7F6] has-[button:focus-visible]:bg-[#F7F7F6]`
+              : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[a:focus-visible]:bg-[#F7F7F6] group-has-[button:focus-visible]:bg-[#F7F7F6]",
         ),
         content: (
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex min-w-0 items-center gap-2">
               <StatusMark video={item.video} />
-              <TitleButton video={item.video} onOpen={ctx.onOpen} className="truncate" />
+              <TitleButton video={item.video} href={ctx.buildVideoHref?.(item.video.id)} onOpen={ctx.onOpen} className="truncate" />
             </div>
             <WorkMetaLine
               video={item.video}
               isSingleDay={ctx.isSingleDay}
               ownerNames={ctx.ownerNames}
               onSelectAuthor={ctx.onSelectAuthor}
+              buildAuthorHref={ctx.buildAuthorHref}
             />
           </div>
         ),
@@ -174,6 +179,8 @@ export function ContentListTable({
   selectedVideoId,
   onSelectVideoId,
   onSelectAuthor,
+  buildVideoHref,
+  buildAuthorHref,
   ownerNames,
   highlightRules,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
@@ -206,6 +213,8 @@ export function ContentListTable({
         selectedVideoId={selectedVideoId}
         onSelectVideoId={onSelectVideoId}
         onSelectAuthor={onSelectAuthor}
+        buildVideoHref={buildVideoHref}
+        buildAuthorHref={buildAuthorHref}
         ownerNames={ownerNames}
         highlightRules={highlightRules}
       />
@@ -242,6 +251,8 @@ export function ContentListTable({
                   hit: (key) => isCellHighlighted(item, key, highlightRules),
                   ownerNames,
                   onSelectAuthor,
+                  buildVideoHref,
+                  buildAuthorHref,
                   onOpen: () => onSelectVideoId(item.video.id),
                 };
                 return (

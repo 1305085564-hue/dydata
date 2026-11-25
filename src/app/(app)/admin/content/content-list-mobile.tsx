@@ -15,6 +15,8 @@ type ContentListMobileProps = {
   onSelectVideoId: (id: string | null) => void;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  buildVideoHref?: (videoId: string) => string;
+  buildAuthorHref?: (authorId: string) => string;
   highlightRules: HighlightRuleMap;
 };
 
@@ -32,6 +34,8 @@ export function ContentListMobile({
   onSelectVideoId,
   ownerNames,
   onSelectAuthor,
+  buildVideoHref,
+  buildAuthorHref,
   highlightRules,
 }: ContentListMobileProps) {
   if (visibleRows.length === 0) {
@@ -64,9 +68,9 @@ export function ContentListMobile({
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="flex min-w-0 items-center gap-2">
                 <StatusMark video={video} />
-                <TitleButton video={video} onOpen={() => onSelectVideoId(video.id)} className="truncate leading-[1.50]" />
+                <TitleButton video={video} href={buildVideoHref?.(video.id)} onOpen={() => onSelectVideoId(video.id)} className="truncate leading-[1.50]" />
               </span>
-              <WorkMetaLine video={video} isSingleDay={isSingleDay} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} />
+              <WorkMetaLine video={video} isSingleDay={isSingleDay} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} buildAuthorHref={buildAuthorHref} />
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1 tabular-nums">
               <span className={cn("text-[14px] leading-[1.50] text-[#141413]", playHit && HIGHLIGHT_CELL_CLASS)}>

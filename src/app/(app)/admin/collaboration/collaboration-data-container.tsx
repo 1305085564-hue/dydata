@@ -14,6 +14,7 @@ import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration
 import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
 import { measureAsync } from "@/lib/perf";
 import { CollaborationWorkbench } from "./collaboration-workbench";
+import type { CollaborationSortDir } from "@/lib/collaboration/work-group-navigation";
 import type {
   CollaborationOverviewStats,
   OperatorRow,
@@ -32,6 +33,8 @@ interface CollaborationDataContainerProps {
   view?: "roles" | "teams";
   groupId?: string;
   personId?: string;
+  sort?: string;
+  dir?: CollaborationSortDir;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
 }
@@ -43,6 +46,8 @@ export async function CollaborationDataContainer({
   view = "roles",
   groupId,
   personId,
+  sort,
+  dir = "desc",
   isOwnerOrTeamAdmin,
   canManageVideos,
 }: CollaborationDataContainerProps) {
@@ -195,6 +200,8 @@ export async function CollaborationDataContainer({
       defaultView={view}
       defaultGroupId={groupId}
       defaultPersonId={personId}
+      defaultSortKey={sort ?? null}
+      defaultSortDir={dir}
       workGroupViews={workGroupViews}
       workGroupRawGroups={workGroupRawGroups}
       workGroupRoster={workGroupRoster}

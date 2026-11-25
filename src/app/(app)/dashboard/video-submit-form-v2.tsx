@@ -42,6 +42,7 @@ import {
 import { getSlotRoleForMetric, resolveCompleteEditPayload } from "@/lib/video-submit/domain/form-rules";
 import { isPublishedAtConfirmed, resolveVideoSubmitDeadline, VIDEO_SUBMIT_EXPIRED_APPEAL_REASON } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
+import { cleanLongTextPaste } from "@/lib/text/clean-pasted-text";
 import {
   restoreOcrFieldValue,
   summarizeSubmissionIssues,
@@ -1057,7 +1058,8 @@ export function VideoSubmitFormV2({
 
   async function handlePasteContent() {
     try {
-      const text = await navigator.clipboard.readText();
+      const rawText = await navigator.clipboard.readText();
+      const text = cleanLongTextPaste(rawText);
       if (text) {
         updateMeta("content", text);
         setIsPastedFeedback(true);

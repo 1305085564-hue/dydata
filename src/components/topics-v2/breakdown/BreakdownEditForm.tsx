@@ -1,5 +1,6 @@
 import type React from "react";
 import { Button } from "@/components/ui/button";
+import { applyCleanedTextareaPaste } from "@/lib/text/clean-pasted-text";
 
 export function BreakdownEditForm({
   editTitle,
@@ -61,6 +62,7 @@ export function BreakdownEditForm({
                 <textarea
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
+                  onPaste={(event) => applyCleanedTextareaPaste(event, editHook, setEditHook)}
                   rows={3}
                   className="w-full text-[14px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                 />

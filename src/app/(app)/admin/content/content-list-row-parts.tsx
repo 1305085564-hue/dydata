@@ -5,6 +5,7 @@ import { getContentOwner } from "@/lib/content/content-owner";
 import { getStatusDot } from "@/lib/content/domain/content-list";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import { cn } from "@/lib/utils";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 import { formatCompactDate, formatFullDateTime, formatTimeOfDay } from "./content-list-cell-content";
 
 /** 数据复盘桌面行与手机卡片共用的小部件：标题、负责人、状态、评级。 */
@@ -34,17 +35,41 @@ export function OwnerLink({
   video,
   ownerNames,
   onSelectAuthor,
+  authorHref,
   className,
 }: {
   video: ProcessedContentRow["video"];
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  authorHref?: string;
   className?: string;
 }) {
   const owner = getContentOwner(video, ownerNames);
   if (!owner.name) return null;
   if (!owner.id || !onSelectAuthor) {
     return <span className={cn("text-[#78716C]", className)}>{owner.name}</span>;
+  }
+  const linkClass = cn(
+    "text-[#78716C] underline decoration-transparent underline-offset-2 hover:text-[#141413] hover:decoration-[#78716C]/60 transition-colors cursor-pointer",
+    className,
+  );
+  if (authorHref) {
+    return (
+      <a
+        href={authorHref}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!shouldHandleInPlaceLinkClick(event)) return;
+          event.preventDefault();
+          onSelectAuthor(owner.id, owner.name);
+        }}
+        onAuxClick={(event) => event.stopPropagation()}
+        aria-label={`查看 ${owner.name} 的全部作品`}
+        className={linkClass}
+      >
+        {owner.name}
+      </a>
+    );
   }
   return (
     <button
@@ -54,10 +79,7 @@ export function OwnerLink({
         onSelectAuthor(owner.id, owner.name);
       }}
       aria-label={`查看 ${owner.name} 的全部作品`}
-      className={cn(
-        "text-[#78716C] underline decoration-transparent underline-offset-2 hover:text-[#141413] hover:decoration-[#78716C]/60 transition-colors cursor-pointer",
-        className,
-      )}
+      className={linkClass}
     >
       {owner.name}
     </button>
@@ -67,30 +89,49 @@ export function OwnerLink({
 /** 标题按钮：悬停只出一个浮层（完整标题 + 账号）。标题是键盘进入作品的入口。 */
 export function TitleButton({
   video,
+  href,
   onOpen,
   className,
 }: {
   video: ProcessedContentRow["video"];
+  href?: string;
   onOpen: () => void;
   className?: string;
 }) {
+  const triggerClass = cn(
+    "min-w-0 text-left text-[14px] text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-md outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer",
+    className,
+  );
   return (
     <Tooltip>
       <TooltipTrigger
         render={
-          <button
-            type="button"
-            onClick={(event) => {
-              // 行本身也有 onClick：阻止冒泡，避免同一次点击触发两遍
-              event.stopPropagation();
-              onOpen();
-            }}
-            aria-label={videoAriaLabel(video)}
-            className={cn(
-              "min-w-0 text-left text-[14px] text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-md outline-none focus-visible:underline focus-visible:decoration-[#141413] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer",
-              className,
-            )}
-          />
+          href ? (
+            <a
+              href={href}
+              onClick={(event) => {
+                // 行本身也有 onClick：阻止冒泡，Ctrl/Cmd/中键放行原生新标签页打开
+                event.stopPropagation();
+                if (!shouldHandleInPlaceLinkClick(event)) return;
+                event.preventDefault();
+                onOpen();
+              }}
+              onAuxClick={(event) => event.stopPropagation()}
+              aria-label={videoAriaLabel(video)}
+              className={triggerClass}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={(event) => {
+                // 行本身也有 onClick：阻止冒泡，避免同一次点击触发两遍
+                event.stopPropagation();
+                onOpen();
+              }}
+              aria-label={videoAriaLabel(video)}
+              className={triggerClass}
+            />
+          )
         }
       >
         {videoTitleOf(video)}
@@ -112,20 +153,24 @@ export function WorkMetaLine({
   isSingleDay,
   ownerNames,
   onSelectAuthor,
+  buildAuthorHref,
   className,
 }: {
   video: ProcessedContentRow["video"];
   isSingleDay: boolean;
   ownerNames?: Record<string, string>;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  buildAuthorHref?: (authorId: string) => string;
   className?: string;
 }) {
   const time = isSingleDay
     ? formatTimeOfDay(video.published_at)
     : `${formatCompactDate(video.published_at)} ${formatTimeOfDay(video.published_at)}`;
+  const owner = getContentOwner(video, ownerNames);
+  const authorHref = owner.id && buildAuthorHref ? buildAuthorHref(owner.id) : undefined;
   return (
     <span className={cn("flex min-w-0 items-center gap-1 text-[12px] leading-[1.50] text-[#78716C]", className)}>
-      <OwnerLink video={video} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} className="shrink-0" />
+      <OwnerLink video={video} ownerNames={ownerNames} onSelectAuthor={onSelectAuthor} authorHref={authorHref} className="shrink-0" />
       <span className="shrink-0 tabular-nums" title={formatFullDateTime(video.published_at)}>· {time}</span>
     </span>
   );

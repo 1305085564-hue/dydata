@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { OverflowFreezeTableCard } from "@/components/ui/overflow-freeze-table-card";
+import { TruncatedTooltip } from "@/components/ui/tooltip";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { formatBigNumber } from "@/lib/collaboration/types";
 import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "@/lib/breakout-rating";
@@ -311,12 +313,12 @@ export default async function PersonProfilePage({
         {topWorks.length === 0 ? (
           <EmptyRow text="暂无代表作记录" />
         ) : (
-          <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
+          <OverflowFreezeTableCard freezeFirstCol>
             <table className="w-full min-w-[520px] table-fixed text-[12px]">
               <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
                 <tr>
-                  <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
-                  <th className="px-3 py-2.5 font-normal">账号 / 作品标题</th>
+                  <th className="w-[210px] px-3 py-2.5 font-normal sm:w-auto">账号 / 作品标题</th>
+                  <th className="w-[88px] shrink-0 px-3 py-2.5 font-normal">日期</th>
                   <th className="w-[80px] shrink-0 px-2.5 py-2.5 text-right font-normal">播放量</th>
                   <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-normal">综合评级</th>
                 </tr>
@@ -324,15 +326,15 @@ export default async function PersonProfilePage({
               <tbody className="divide-y divide-[#E2E2DF]/60">
                 {topWorks.map((work: PersonProfileWork) => (
                   <tr key={work.reportId} className="group">
-                    <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">
-                      {work.workDate}
-                    </td>
                     <td className="min-w-0 px-3 py-2">
-                      <div className="truncate font-normal text-[#78716C]" title={work.accountName}>
-                        {work.accountName}
-                      </div>
+                      <TruncatedTooltip side="top" align="start" tip={work.accountName}>
+                        <div className="truncate font-normal text-[#78716C]">
+                          {work.accountName}
+                        </div>
+                      </TruncatedTooltip>
                       <CollaborationWorkReviewLink
                         reportId={work.reportId}
+                        videoId={work.videoId}
                         previewMode="title-only"
                         preview={{
                           title: work.title,
@@ -345,6 +347,9 @@ export default async function PersonProfilePage({
                         {work.title}
                       </CollaborationWorkReviewLink>
                     </td>
+                    <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">
+                      {work.workDate}
+                    </td>
                     <td className="whitespace-nowrap px-2.5 py-2 text-right tabular-nums text-[#1F1E1D]">
                       {formatPlay(work.playCount)}
                     </td>
@@ -353,7 +358,7 @@ export default async function PersonProfilePage({
                 ))}
               </tbody>
             </table>
-          </Card>
+          </OverflowFreezeTableCard>
         )}
       </Section>
 
@@ -367,24 +372,22 @@ export default async function PersonProfilePage({
           {anomalies.length === 0 ? (
             <EmptyRow text="近期作品表现平稳，无异常波动" />
           ) : (
-            <Card className="scroll-shadow-horizontal gap-0 overflow-x-auto p-0">
+            <OverflowFreezeTableCard freezeFirstCol>
               <table className="w-full min-w-[420px] table-fixed text-[12px]">
                 <thead className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[14px] font-normal text-[#78716C]">
                   <tr>
-                    <th className="w-[84px] shrink-0 px-3 py-2.5 font-normal">日期</th>
-                    <th className="px-3 py-2.5 font-normal">作品标题</th>
+                    <th className="w-[220px] px-3 py-2.5 font-normal sm:w-auto">作品标题</th>
+                    <th className="w-[88px] shrink-0 px-3 py-2.5 font-normal">日期</th>
                     <th className="w-[90px] shrink-0 px-3 py-2.5 text-right font-normal">状态</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E2DF]/60">
                   {anomalies.map((work: PersonProfileWork) => (
                     <tr key={work.reportId} className="group">
-                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">
-                        {work.workDate}
-                      </td>
                       <td className="min-w-0 px-3 py-2">
                         <CollaborationWorkReviewLink
                           reportId={work.reportId}
+                          videoId={work.videoId}
                           preview={{
                             title: work.title,
                             accountName: work.accountName,
@@ -395,6 +398,9 @@ export default async function PersonProfilePage({
                         >
                           {work.title}
                         </CollaborationWorkReviewLink>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">
+                        {work.workDate}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-right">
                         <Badge
@@ -408,7 +414,7 @@ export default async function PersonProfilePage({
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </OverflowFreezeTableCard>
           )}
         </div>
       </Section>

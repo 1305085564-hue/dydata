@@ -14,6 +14,9 @@ interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];
   ready?: boolean;
   canManage?: boolean;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   onOpenManageDrawer?: () => void;
   onSelectGroup: (groupId: string) => void;
 }
@@ -48,6 +51,9 @@ export function WorkGroupListTab({
   groups,
   ready = true,
   canManage = false,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onOpenManageDrawer,
   onSelectGroup,
 }: WorkGroupListTabProps) {
@@ -103,6 +109,9 @@ export function WorkGroupListTab({
         rows={rows}
         columns={columns}
         defaultSortKey="totalPlay"
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
         nameLabel="小队"
         showAvatar={false}
         getId={(row) => row.id}

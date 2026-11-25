@@ -12,6 +12,9 @@ interface OperatorTabProps {
   operators: OperatorRow[];
   currentUserId?: string | null;
   isMemberViewer?: boolean;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
 }
@@ -26,6 +29,9 @@ export function OperatorTab({
   operators,
   currentUserId = null,
   isMemberViewer = false,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onSelectPerson,
   onPrefetchPerson,
 }: OperatorTabProps) {
@@ -54,6 +60,9 @@ export function OperatorTab({
         rows={operators}
         columns={OPERATOR_COLUMNS}
         defaultSortKey="totalPlay"
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
         getId={(row) => row.userId}
         getName={(row) => row.name}
         getSub={(row) => {

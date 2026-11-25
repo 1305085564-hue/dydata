@@ -3,7 +3,8 @@
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Copy, Check, RotateCcw, Trash2, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { RotateCcw, Trash2, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { CopyButton } from "@/components/ui/copy-button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { breakoutRating, breakoutTargetsFor } from "@/lib/breakout-rating";
 
@@ -106,7 +107,6 @@ export function ContentDetailDialog({
     getPurgeTooltip,
   } = useContentDetailLifecycle({ video, onLifecycleChanged });
   const sheetContentRef = useRef<HTMLDivElement>(null);
-  const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -127,18 +127,6 @@ export function ContentDetailDialog({
   const [displayCurrent, displayTotal] = [hasIndex ? currentIndex + 1 : "—", typeof totalCount === "number" && totalCount > 0 ? totalCount : "—"];
 
   const canOperate = canOperateLifecycle;
-
-  const handleCopyContent = useCallback(async () => {
-    if (!video?.content) return;
-    try {
-      await navigator.clipboard.writeText(video.content);
-      setCopiedContent(true);
-      feedbackToast.success("文案已复制到剪贴板");
-      setTimeout(() => setCopiedContent(false), 2000);
-    } catch {
-      feedbackToast.error("复制失败，请重试");
-    }
-  }, [video]);
 
   const screenshots = resolveReviewScreenshots(snapshot, video?.id);
   const curveScreenshot = screenshots.find((item) => item.slot === "curve");
@@ -411,10 +399,14 @@ export function ContentDetailDialog({
                   <span className="ml-2 text-[12px] text-[#78716C] tabular-nums">{video.content?.length ?? 0} 字</span>
                 </h3>
                 {video.content && (
-                  <button type="button" onClick={handleCopyContent} className={textButton}>
-                    {copiedContent ? <Check className="size-3" aria-hidden /> : <Copy className="size-3" aria-hidden />}
-                    {copiedContent ? "已复制" : "复制文案"}
-                  </button>
+                  <CopyButton
+                    text={video.content}
+                    label="复制文案"
+                    copiedLabel="已复制"
+                    errorMessage="复制失败，请重试"
+                    className={textButton}
+                    iconClassName="size-3"
+                  />
                 )}
               </div>
               <div className="max-h-[460px] overflow-y-auto rounded-xl bg-[#FCFCFB] px-4 py-3 text-[13px] leading-[1.6] text-[#1F1E1D] whitespace-pre-wrap break-words">

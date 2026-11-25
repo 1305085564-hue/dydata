@@ -29,6 +29,9 @@ interface StaffTabProps {
   isMemberViewer?: boolean;
   /** 良优率列头旁的「评级规则」入口（只有文案表有评级列） */
   rulesEntry?: ReactNode;
+  sortKey?: string | null;
+  sortOrder?: "asc" | "desc";
+  onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
 }
@@ -66,6 +69,9 @@ export function StaffTab({
   currentUserId = null,
   isMemberViewer = false,
   rulesEntry,
+  sortKey = null,
+  sortOrder = "desc",
+  onSortChange,
   onSelectPerson,
   onPrefetchPerson,
   certifiableUserIds = [],
@@ -129,6 +135,9 @@ export function StaffTab({
         rows={rows}
         columns={columns}
         defaultSortKey="totalPlay"
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onSortChange={onSortChange}
         getId={(row) => row.userId}
         getName={(row) => row.name}
         getSub={(row) =>

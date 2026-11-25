@@ -5,7 +5,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { getShanghaiYearMonth } from "@/lib/business-time";
-import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
+import { resolveCollaborationSort, resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
 
@@ -22,6 +22,8 @@ interface CollaborationPageProps {
     view?: string;
     groupId?: string;
     personId?: string;
+    sort?: string;
+    dir?: string;
   }>;
 }
 
@@ -52,6 +54,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   const groupId = typeof params.groupId === "string" && params.groupId.trim() ? params.groupId.trim() : undefined;
   const view = resolveCollaborationView(params.view, groupId);
   const personId = typeof params.personId === "string" && params.personId.trim() ? params.personId.trim() : undefined;
+  const { sortKey, sortDir } = resolveCollaborationSort(params.sort, params.dir);
 
   return (
     // 页头由工作台自己画：标题是本月事实结论，要等数据回来才写得出（加载骨架里有等高占位）。
@@ -70,6 +73,8 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
           view={view}
           groupId={groupId}
           personId={personId}
+          sort={sortKey ?? undefined}
+          dir={sortDir}
           isOwnerOrTeamAdmin={permissionInfo.companyRole === "company_owner" || permissionInfo.companyRole === "admin"}
           canManageVideos={permissionInfo.permissions.manage_videos === true}
         />

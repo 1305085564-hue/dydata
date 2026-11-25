@@ -19,23 +19,9 @@ import {
 } from "@/lib/collaboration/domain/workbench-state";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
-import {
-  type CollaborationOverviewStats,
-  type OperatorRow,
-  type StaffRow,
-  type SummaryData,
-  type TalentRow,
-  type WorkGroupViews,
-  type WorkGroupRow,
-  type WorkGroupRosterMember,
-} from "@/lib/collaboration/types";
-import {
-  buildCollaborationSearchParams,
-  buildCollaborationUrl,
-  COLLABORATION_BASE_PATH,
-  pickActiveGroupDetail,
-  resolveCollaborationView,
-} from "@/lib/collaboration/work-group-navigation";
+import type { CollaborationOverviewStats, OperatorRow, StaffRow, SummaryData, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
+import { buildCollaborationSearchParams, buildCollaborationUrl, COLLABORATION_BASE_PATH, pickActiveGroupDetail, resolveCollaborationView, type CollaborationSortDir } from "@/lib/collaboration/work-group-navigation";
+import { useCollaborationSort } from "./use-collaboration-sort";
 import {
   CollaborationDiagnosisContext,
   type CollaborationDiagnosisDetail,
@@ -48,6 +34,8 @@ interface CollaborationWorkbenchProps {
   defaultView?: "roles" | "teams";
   defaultGroupId?: string | null;
   defaultPersonId?: string | null;
+  defaultSortKey?: string | null;
+  defaultSortDir?: CollaborationSortDir;
   workGroupViews?: WorkGroupViews;
   workGroupRawGroups?: WorkGroupRow[];
   workGroupRoster?: WorkGroupRosterMember[];
@@ -76,6 +64,8 @@ export function CollaborationWorkbench({
   defaultView = "roles",
   defaultGroupId = null,
   defaultPersonId = null,
+  defaultSortKey = null,
+  defaultSortDir = "desc",
   workGroupViews,
   workGroupRawGroups = [],
   workGroupRoster = [],
@@ -103,6 +93,9 @@ export function CollaborationWorkbench({
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(defaultPersonId);
+  const { sortKey, sortDir, syncSortFromParams, resetSort, handleSortChange } = useCollaborationSort({
+    defaultSortKey, defaultSortDir, year, month, view, tab, selectedGroupId, selectedPersonId,
+  });
   // 档案抽屉与小队详情是否由本页压入历史节点：关闭/返回时据此决定「回退消费」还是「改写地址」。
   const personEntryPushedRef = useRef(false);
   const groupEntryPushedRef = useRef(false);
@@ -139,6 +132,8 @@ export function CollaborationWorkbench({
   useEffect(() => {
     setSelectedGroupId(defaultGroupId);
   }, [defaultGroupId]);
+
+
 
   const resolvedWorkGroupViews = useMemo(
     () => mergeLocalWorkGroupViews(workGroupViews, currentRawGroups, currentRoster),
@@ -218,7 +213,7 @@ export function CollaborationWorkbench({
       view,
       tab: view === "roles" ? tab : undefined,
       groupId: view === "teams" ? selectedGroupId : undefined,
-      personId: id,
+      personId: id, sort: sortKey, dir: sortDir,
     });
     if (id) {
       // 打开档案压入一个历史节点：浏览器「后退」＝关抽屉，符合「就地展开」的心智，
@@ -235,7 +230,7 @@ export function CollaborationWorkbench({
       return;
     }
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${search}`);
-  }, [year, month, view, tab, selectedGroupId]);
+  }, [year, month, view, tab, selectedGroupId, sortKey, sortDir]);
 
   // 地址栏是小队详情与档案抽屉的唯一真相：浏览器前进/后退时从 URL 恢复状态，保留月份与视图上下文。
   useEffect(() => {
@@ -248,6 +243,7 @@ export function CollaborationWorkbench({
       setView(nextView);
       setSelectedGroupId(nextView === "teams" ? nextGroupId : null);
       setSelectedPersonId(nextPersonId);
+      syncSortFromParams(params);
       if (rawTab && ["talents", "operators", "writers", "editors"].includes(rawTab)) {
         setTab(rawTab as TabKey);
       }
@@ -256,7 +252,7 @@ export function CollaborationWorkbench({
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [syncSortFromParams]);
 
   const handleDiagnosisLifecycleChanged = useCallback(() => {
     // 诊断抽屉内发生生命周期变动（如删稿/恢复）：通知档案卡静默重新拉取最新数据，避免脏读
@@ -268,6 +264,7 @@ export function CollaborationWorkbench({
     setTab(nextTab);
     setView("roles");
     setSelectedGroupId(null);
+    resetSort();
     groupEntryPushedRef.current = false;
     // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
     // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
@@ -277,6 +274,7 @@ export function CollaborationWorkbench({
 
   const handleViewChange = (nextView: "roles" | "teams") => {
     setView(nextView);
+    resetSort();
     if (nextView === "roles") {
       setSelectedGroupId(null);
       groupEntryPushedRef.current = false;
@@ -311,12 +309,14 @@ export function CollaborationWorkbench({
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
+    resetSort();
     window.history.pushState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId, personId: selectedPersonId })}`);
     groupEntryPushedRef.current = true;
   };
 
   const handleBackToGroupList = () => {
     setSelectedGroupId(null);
+    resetSort();
     if (groupEntryPushedRef.current && !personEntryPushedRef.current) {
       groupEntryPushedRef.current = false;
       window.history.back();
@@ -328,9 +328,9 @@ export function CollaborationWorkbench({
 
   const buildMonthUrl = (targetYear: number, targetMonth: number) => {
     if (view === "teams") {
-      return buildCollaborationUrl({ year: targetYear, month: targetMonth, view: "teams", groupId: selectedGroupId });
+      return buildCollaborationUrl({ year: targetYear, month: targetMonth, view: "teams", groupId: selectedGroupId, sort: sortKey, dir: sortDir });
     }
-    return buildCollaborationUrl({ year: targetYear, month: targetMonth, view: "roles", tab });
+    return buildCollaborationUrl({ year: targetYear, month: targetMonth, view: "roles", tab, sort: sortKey, dir: sortDir });
   };
 
   const handleMonthChange = (val: string | null) => {
@@ -396,10 +396,8 @@ export function CollaborationWorkbench({
         }}
       />
       <CollaborationWorkbenchContent
-        year={year}
-        month={month}
-        view={view}
-        tab={tab}
+        year={year} month={month} view={view} tab={tab}
+        sortKey={sortKey} sortDir={sortDir} onSortChange={handleSortChange}
         activeGroupDetail={activeGroupDetail}
         groupIdNotFound={groupIdNotFound}
         resolvedWorkGroupViews={resolvedWorkGroupViews}
