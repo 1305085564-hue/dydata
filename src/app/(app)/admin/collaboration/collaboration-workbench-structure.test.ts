@@ -51,7 +51,7 @@ test("数据管理使用月份选择器，不再显示两侧翻月按钮", () =>
   assert.doesNotMatch(toolbarSource, /aria-label="上一月"|aria-label="下一月"/);
 });
 
-test("Toolbar 文案徽标数只计已认证与本月有产出成员，未认证零产出候选折叠在 WriterTab 表底", () => {
+test("Toolbar 使用服务端文案人数，未认证零产出候选折叠在 WriterTab 表底", () => {
   const toolbarSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
     "utf8",
@@ -61,9 +61,8 @@ test("Toolbar 文案徽标数只计已认证与本月有产出成员，未认证
     "utf8",
   );
 
-  // 1. 源码契约：Toolbar 与 WriterTab 共用 partitionWriterCandidates 唯一来源
-  assert.match(toolbarSource, /label: "文案",\s*count: activeWriterCount/);
-  assert.match(toolbarSource, /partitionWriterCandidates\(writerStaff, writerCandidates\)/);
+  // 计数随当前页签响应返回，候选列表仍在文案表格中单独折叠。
+  assert.match(toolbarSource, /label: "文案",\s*count: counts\.writers/);
   assert.match(writerTabSource, /partitionWriterCandidates\(\s*rows,\s*candidates,\s*\)/);
   assert.match(writerTabSource, /还有 \$\{uncertifiedRows\.length\} 位未认证候选人/);
 

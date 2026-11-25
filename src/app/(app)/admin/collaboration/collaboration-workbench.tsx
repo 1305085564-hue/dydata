@@ -8,7 +8,7 @@ import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog
 import { CollaborationWorkbenchToolbar, type CollaborationSegment } from "./collaboration-workbench-toolbar";
 import { HealthBar } from "./health-bar";
 import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
-import type { WriterCandidateRow } from "./writer-tab";
+import { BoundedTtlCache } from "@/lib/cache-policy";
 import {
   buildCollaborationHeadline,
   generateMonthOptions,
@@ -17,18 +17,8 @@ import {
   WORK_GROUP_ROLE_TAB,
   type TabKey,
 } from "@/lib/collaboration/domain/workbench-state";
-import type { EvaluationStandards } from "@/lib/evaluation-standards";
-
-import {
-  type CollaborationOverviewStats,
-  type OperatorRow,
-  type StaffRow,
-  type SummaryData,
-  type TalentRow,
-  type WorkGroupViews,
-  type WorkGroupRow,
-  type WorkGroupRosterMember,
-} from "@/lib/collaboration/types";
+import type { WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
+import type { CollaborationWorkbenchData, CollaborationPersonContext } from "@/lib/collaboration/data/workbench-loader";
 import {
   buildCollaborationSearchParams,
   buildCollaborationUrl,
@@ -48,26 +38,20 @@ interface CollaborationWorkbenchProps {
   defaultView?: "roles" | "teams";
   defaultGroupId?: string | null;
   defaultPersonId?: string | null;
-  workGroupViews?: WorkGroupViews;
-  workGroupRawGroups?: WorkGroupRow[];
-  workGroupRoster?: WorkGroupRosterMember[];
+  initialData: CollaborationWorkbenchData;
   canManageWorkGroups?: boolean;
   actorTeamId?: string | null;
-  evaluationStandards: EvaluationStandards;
-  summary: SummaryData | null;
-  overviewStats?: CollaborationOverviewStats | null;
-  operators: OperatorRow[];
-  talents: TalentRow[];
-  writerStaff: StaffRow[];
-  editorStaff: StaffRow[];
+  scopeKey: string;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
   currentUserId?: string | null;
   restrictToSelf?: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
-  writerCandidates?: WriterCandidateRow[];
 }
+
+const EMPTY_WORK_GROUPS: WorkGroupRow[] = [];
+const EMPTY_WORK_GROUP_ROSTER: WorkGroupRosterMember[] = [];
 
 export function CollaborationWorkbench({
   year,
@@ -76,27 +60,17 @@ export function CollaborationWorkbench({
   defaultView = "roles",
   defaultGroupId = null,
   defaultPersonId = null,
-  workGroupViews,
-  workGroupRawGroups = [],
-  workGroupRoster = [],
+  initialData,
   canManageWorkGroups = false,
   actorTeamId = null,
-  evaluationStandards,
-  summary,
-  overviewStats = null,
-  operators,
-  talents,
-  writerStaff,
-  editorStaff,
+  scopeKey,
   isOwnerOrTeamAdmin,
   canManageVideos,
   currentUserId = null,
   restrictToSelf = false,
   loadFailed = false,
-  writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
-  const headline = buildCollaborationHeadline({ month, loadFailed, overview: overviewStats });
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [view, setView] = useState<"roles" | "teams">(defaultView);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);
@@ -108,6 +82,34 @@ export function CollaborationWorkbench({
   const groupEntryPushedRef = useRef(false);
   const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
+  const [activeData, setActiveData] = useState<CollaborationWorkbenchData | null>(initialData);
+  const [pageMeta, setPageMeta] = useState(initialData);
+  const [tabCounts, setTabCounts] = useState(initialData.counts);
+  const [loadFailedState, setLoadFailedState] = useState(loadFailed);
+  const [isLoadingTab, setIsLoadingTab] = useState(false);
+  const [loadedTeamsData, setLoadedTeamsData] = useState<CollaborationWorkbenchData | null>(initialData.tab === "teams" ? initialData : null);
+  const [personContext, setPersonContext] = useState<CollaborationPersonContext>(initialData.personContext ?? { ownAccountIds: [], operatorAccounts: [] });
+  const tabDataCacheRef = useRef<BoundedTtlCache<CollaborationWorkbenchData> | null>(null);
+  if (!tabDataCacheRef.current) {
+    tabDataCacheRef.current = new BoundedTtlCache({ scope: "user", ttlMs: 60_000, maxEntries: 8, name: "collaboration-client-tabs" });
+    tabDataCacheRef.current.set(`${scopeKey}|${year}-${month}|${initialData.tab}`, initialData);
+  }
+  const tabRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
+  const personRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
+  const personContextCacheRef = useRef(new Map<string, CollaborationPersonContext>());
+
+  const evaluationStandards = pageMeta.evaluationStandards;
+  const summary = pageMeta.summary;
+  const overviewStats = pageMeta.overviewStats;
+  const talents = activeData?.talents ?? [];
+  const operators = activeData?.operators ?? [];
+  const writerStaff = activeData?.writerStaff ?? [];
+  const editorStaff = activeData?.editorStaff ?? [];
+  const writerCandidates = activeData?.writerCandidates ?? [];
+  const workGroupViews: WorkGroupViews | undefined = loadedTeamsData?.workGroupViews;
+  const workGroupRawGroups = loadedTeamsData?.workGroupRawGroups ?? EMPTY_WORK_GROUPS;
+  const workGroupRoster = loadedTeamsData?.workGroupRoster ?? EMPTY_WORK_GROUP_ROSTER;
+  const headline = buildCollaborationHeadline({ month, loadFailed: loadFailedState, overview: overviewStats });
 
   // 视频诊断大抽屉状态：支持就地直出，不发生路由跳转与页面卸载
   const [diagnosisDetail, setDiagnosisDetail] = useState<CollaborationDiagnosisDetail | null>(null);
@@ -162,6 +164,103 @@ export function CollaborationWorkbench({
     activeGroupDetail && view === "teams"
       ? WORK_GROUP_ROLE_TAB[activeGroupDetail.summary.kind]
       : tab;
+
+  const loadTabData = useCallback(async (targetTab: TabKey, targetView: "roles" | "teams", fresh = false) => {
+    const dataTab = targetView === "teams" ? "teams" : targetTab;
+    tabRequestRef.current.controller?.abort();
+    const controller = new AbortController();
+    const sequence = ++tabRequestRef.current.sequence;
+    tabRequestRef.current.controller = controller;
+    const isCurrent = () => sequence === tabRequestRef.current.sequence && !controller.signal.aborted;
+    const cacheKey = `${scopeKey}|${year}-${month}|${dataTab}`;
+    if (fresh) {
+      tabDataCacheRef.current?.clear();
+      personContextCacheRef.current.clear();
+      setLoadedTeamsData(null);
+    } else {
+      const cached = tabDataCacheRef.current?.get(cacheKey);
+      if (cached) {
+        setActiveData(cached);
+        setPageMeta(cached);
+        setTabCounts(cached.counts);
+        setLoadFailedState(false);
+        if (cached.tab === "teams") setLoadedTeamsData(cached);
+        setIsLoadingTab(false);
+        return;
+      }
+    }
+    setActiveData(null);
+    setLoadFailedState(false);
+    setIsLoadingTab(true);
+    try {
+      const response = await fetch(
+        `/api/admin/collaboration/tab-data?year=${year}&month=${month}&tab=${dataTab}${fresh ? "&fresh=1" : ""}`,
+        { signal: controller.signal, cache: "no-store" },
+      );
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "这个月的数据没加载出来");
+      if (!isCurrent()) return;
+      const data = body as CollaborationWorkbenchData;
+      tabDataCacheRef.current?.set(cacheKey, data);
+      setActiveData(data);
+      setPageMeta(data);
+      setTabCounts(data.counts);
+      setLoadFailedState(false);
+      if (data.tab === "teams") setLoadedTeamsData(data);
+    } catch (error) {
+      if (!isCurrent()) return;
+      setLoadFailedState(true);
+      toast.error(error instanceof Error ? error.message : "这个月的数据没加载出来");
+    } finally {
+      if (isCurrent()) setIsLoadingTab(false);
+    }
+  }, [month, scopeKey, year]);
+
+  const refreshCurrentData = useCallback(() => loadTabData(tab, view, true), [loadTabData, tab, view]);
+
+  const loadPersonContext = useCallback(async (personId: string) => {
+    const cacheKey = `${scopeKey}|${year}-${month}|${personId}`;
+    const cached = personContextCacheRef.current.get(cacheKey);
+    if (cached) {
+      setPersonContext(cached);
+      return;
+    }
+    personRequestRef.current.controller?.abort();
+    const controller = new AbortController();
+    const sequence = ++personRequestRef.current.sequence;
+    personRequestRef.current.controller = controller;
+    try {
+      const response = await fetch(`/api/admin/collaboration/tab-data?year=${year}&month=${month}&tab=person-context&personId=${encodeURIComponent(personId)}`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "个人档案关联账号没加载出来");
+      if (sequence !== personRequestRef.current.sequence || controller.signal.aborted) return;
+      const context = (body as CollaborationWorkbenchData).personContext ?? { ownAccountIds: [], operatorAccounts: [] };
+      personContextCacheRef.current.set(cacheKey, context);
+      setPersonContext(context);
+    } catch (error) {
+      if (sequence !== personRequestRef.current.sequence || controller.signal.aborted) return;
+      toast.error(error instanceof Error ? error.message : "个人档案关联账号没加载出来");
+    }
+  }, [month, scopeKey, year]);
+
+  useEffect(() => {
+    if (selectedPersonId) void loadPersonContext(selectedPersonId);
+    else {
+      personRequestRef.current.sequence += 1;
+      personRequestRef.current.controller?.abort();
+      setPersonContext({ ownAccountIds: [], operatorAccounts: [] });
+    }
+  }, [loadPersonContext, selectedPersonId]);
+
+  useEffect(() => () => {
+    tabRequestRef.current.sequence += 1;
+    tabRequestRef.current.controller?.abort();
+    personRequestRef.current.sequence += 1;
+    personRequestRef.current.controller?.abort();
+  }, []);
 
   // 深链带了 groupId，却解析不到对应小队（已被删除 / 链接失效）。
   // 此前是静默回落到列表，从旧链接或收藏进来的人会以为自己点错了位置。
@@ -245,18 +344,20 @@ export function CollaborationWorkbench({
       const nextView = resolveCollaborationView(params.get("view"), nextGroupId);
       const nextPersonId = params.get("personId")?.trim() || null;
       const rawTab = params.get("tab");
+      const nextTab = rawTab && ["talents", "operators", "writers", "editors"].includes(rawTab)
+        ? rawTab as TabKey
+        : "talents";
       setView(nextView);
+      setTab(nextTab);
       setSelectedGroupId(nextView === "teams" ? nextGroupId : null);
       setSelectedPersonId(nextPersonId);
-      if (rawTab && ["talents", "operators", "writers", "editors"].includes(rawTab)) {
-        setTab(rawTab as TabKey);
-      }
+      void loadTabData(nextTab, nextView);
       if (!nextPersonId) personEntryPushedRef.current = false;
       if (!nextGroupId || nextView !== "teams") groupEntryPushedRef.current = false;
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [loadTabData]);
 
   const handleDiagnosisLifecycleChanged = useCallback(() => {
     // 诊断抽屉内发生生命周期变动（如删稿/恢复）：通知档案卡静默重新拉取最新数据，避免脏读
@@ -269,9 +370,7 @@ export function CollaborationWorkbench({
     setView("roles");
     setSelectedGroupId(null);
     groupEntryPushedRef.current = false;
-    // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
-    // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
-    // 带上 personId：地址栏任何时候都与界面一致，不留「链接丢参数、抽屉还开着」的错位。
+    void loadTabData(nextTab, "roles");
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "roles", tab: nextTab, personId: selectedPersonId })}`);
   };
 
@@ -281,6 +380,7 @@ export function CollaborationWorkbench({
       setSelectedGroupId(null);
       groupEntryPushedRef.current = false;
     }
+    void loadTabData(tab, nextView);
     window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab, personId: selectedPersonId })}`);
   };
 
@@ -371,22 +471,18 @@ export function CollaborationWorkbench({
         <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413]">
           {headline}
         </h1>
-        <HealthBar summary={summary} year={year} month={month} canEdit={isOwnerOrTeamAdmin} />
+        <HealthBar summary={summary} year={year} month={month} canEdit={isOwnerOrTeamAdmin} onRefreshData={refreshCurrentData} />
       </header>
       <div className="space-y-3">
       <CollaborationWorkbenchToolbar
         monthOptions={monthOptions}
         currentMonthValue={currentMonthValue}
         segment={view === "teams" ? "teams" : tab}
-        loadFailed={loadFailed}
+        loadFailed={loadFailedState}
         canManageWorkGroups={canManageWorkGroups}
         hasActiveGroupDetail={Boolean(activeGroupDetail)}
         resolvedWorkGroupViews={resolvedWorkGroupViews}
-        talents={talents}
-        operators={operators}
-        writerStaff={writerStaff}
-        writerCandidates={writerCandidates}
-        editorStaff={editorStaff}
+        counts={tabCounts}
         onMonthChange={handleMonthChange}
         onSegmentChange={handleSegmentChange}
         onLeaderboardOpen={setLeaderboardDialogOpen}
@@ -409,6 +505,7 @@ export function CollaborationWorkbench({
         currentRoster={currentRoster}
         actorTeamId={actorTeamId}
         evaluationStandards={evaluationStandards}
+        isLoadingTab={isLoadingTab}
         manageDrawerOpen={manageDrawerOpen}
         manageDrawerFocusGroupId={manageDrawerFocusGroupId}
         selectedPersonId={selectedPersonId}
@@ -426,7 +523,9 @@ export function CollaborationWorkbench({
         isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
         currentUserId={currentUserId}
         restrictToSelf={restrictToSelf}
-        loadFailed={loadFailed}
+        loadFailed={loadFailedState}
+        personContext={personContext}
+        onRefreshData={refreshCurrentData}
         onBackToGroupList={handleBackToGroupList}
         onOpenManageDrawer={(groupId) => {
           setManageDrawerFocusGroupId(groupId);

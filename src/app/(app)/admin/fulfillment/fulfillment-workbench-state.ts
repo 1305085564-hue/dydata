@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BoundedTtlCache } from "@/lib/cache-policy";
 import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type {
   FulfillmentAppeal,
@@ -127,58 +128,96 @@ export function useFulfillmentWorkbenchState({
     void fetchAppeals();
   }, [fetchAppeals, loadSettings]);
 
-  // 8. 客户端无感日历加载器
+  const [monthCache] = useState(() => {
+    const cache = new BoundedTtlCache<FulfillmentCalendarData>({
+      scope: "user", ttlMs: 60_000, maxEntries: 12, name: "fulfillment-client-months",
+    });
+    cache.set(`${initialData.year}-${initialData.month}`, initialData);
+    return cache;
+  });
+  const committedMonth = useRef({ year: initialData.year, month: initialData.month });
+  const calendarRequest = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
+  const calendarTargetRef = useRef({ year: initialData.year, month: initialData.month });
+  const [calendarTarget, setCalendarTarget] = useState(calendarTargetRef.current);
+  useEffect(() => () => {
+    calendarRequest.current.sequence += 1;
+    calendarRequest.current.controller?.abort();
+  }, []);
+
+  // 8. 翻月与刷新共用同一请求序号，旧响应不能回写日历或地址栏。
   const loadCalendar = useCallback(
-    async (targetYear: number, targetMonth: number) => {
+    async (targetYear: number, targetMonth: number, fresh = false, updateUrl = true) => {
+      calendarRequest.current.controller?.abort();
+      const controller = new AbortController();
+      const sequence = ++calendarRequest.current.sequence;
+      calendarRequest.current.controller = controller;
+      const isCurrent = () => sequence === calendarRequest.current.sequence && !controller.signal.aborted;
+      calendarTargetRef.current = { year: targetYear, month: targetMonth };
+      setCalendarTarget(calendarTargetRef.current);
       setIsLoadingCalendar(true);
       let res: Response | undefined;
+      let committed = false;
       try {
+        if (fresh) monthCache.clear();
+        const cacheKey = `${targetYear}-${targetMonth}`;
+        const cached = monthCache.get(cacheKey);
+        let result: { data: FulfillmentCalendarData };
+        if (cached) {
+          result = { data: cached };
+        } else {
         res = await fetch(
-          `/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}`,
+          `/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}${fresh ? "&fresh=1" : ""}`,
+          { signal: controller.signal, cache: "no-store" },
         );
+        if (!isCurrent()) return;
         if (!res.ok) {
-          toast.error(await getApiFailureMessage(res, "发布日历没能加载出来"));
+          const message = await getApiFailureMessage(res, "发布日历没能加载出来");
+          if (isCurrent()) toast.error(message);
           return;
         }
-        const result = await res.json();
+        result = await res.json();
+        if (!isCurrent()) return;
+        monthCache.set(cacheKey, result.data);
+        }
+        if (!isCurrent()) return;
+        const changedMonth = committedMonth.current.year !== targetYear || committedMonth.current.month !== targetMonth;
+        committedMonth.current = { year: targetYear, month: targetMonth };
+        committed = true;
         setCalendarData(result.data);
-
-        // 同步 URL 参数
-        const url = new URL(window.location.href);
-        url.searchParams.set("year", String(targetYear));
-        url.searchParams.set("month", String(targetMonth));
-        url.searchParams.delete("range");
-        url.searchParams.delete("view");
-        window.history.pushState(null, "", url.pathname + url.search);
+        if (updateUrl || changedMonth) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("year", String(targetYear));
+          url.searchParams.set("month", String(targetMonth));
+          url.searchParams.delete("range");
+          url.searchParams.delete("view");
+          window.history.pushState(null, "", url.pathname + url.search);
+        }
       } catch {
-        toast.error(await getApiFailureMessage(res, "发布日历没能加载出来"));
+        const message = await getApiFailureMessage(res, "发布日历没能加载出来");
+        if (isCurrent()) toast.error(message);
       } finally {
-        setIsLoadingCalendar(false);
+        if (isCurrent()) {
+          if (!committed) {
+            calendarTargetRef.current = committedMonth.current;
+            setCalendarTarget(committedMonth.current);
+          }
+          setIsLoadingCalendar(false);
+        }
       }
     },
-    [],
+    [monthCache],
   );
 
-  const refreshVisibleCalendar = useCallback(async () => {
-    setIsLoadingCalendar(true);
-    let response: Response | undefined;
-    try {
-      response = await fetch(
-        `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
-        { cache: "no-store" },
-      );
-      if (!response.ok) {
-        toast.error(await getApiFailureMessage(response, "日历未能刷新"));
-        return;
-      }
-      const payload = await response.json();
-      setCalendarData(payload.data);
-    } catch {
-      toast.error(await getApiFailureMessage(response, "日历未能刷新"));
-    } finally {
-      setIsLoadingCalendar(false);
-    }
-  }, [calendarData.month, calendarData.year]);
+  const stepCalendarMonth = useCallback((delta: -1 | 1) => {
+    const { year, month } = calendarTargetRef.current;
+    const target = new Date(year, month - 1 + delta, 1);
+    return loadCalendar(target.getFullYear(), target.getMonth() + 1);
+  }, [loadCalendar]);
+
+  const refreshVisibleCalendar = useCallback(() => {
+    const { year, month } = calendarTargetRef.current;
+    return loadCalendar(year, month, true, false);
+  }, [loadCalendar]);
 
   useEffect(() => {
     const handleFulfillmentDataChanged = (event: Event) => {
@@ -276,6 +315,8 @@ export function useFulfillmentWorkbenchState({
     fetchAppeals,
     loadSettings,
     loadCalendar,
+    stepCalendarMonth,
+    calendarTarget,
     refreshVisibleCalendar,
     filteredMembers,
     rosterMembers,

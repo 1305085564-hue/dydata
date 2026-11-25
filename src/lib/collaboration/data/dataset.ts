@@ -127,16 +127,20 @@ export async function loadCollaborationMonthDataset(input: {
   supabase: SupabaseClient;
   visibleUserIds: string[];
   range: MonthRange;
+  /** 按需加载工作台只读取所选月份；旧调用方仍保留统计起点至当月的范围。 */
+  monthOnly?: boolean;
   includeWriterCertifications?: boolean;
-  /** 传了团队 id 才顺带加载工种小队目录；按岗位模式不传，零额外查询。 */
+  /** 传了团队 id 才加载小队目录；不看 roster 时只读取组记录，供页签人数使用。 */
   workGroupTeamIds?: Array<string | null | undefined>;
+  includeWorkGroupRoster?: boolean;
 }): Promise<CollaborationMonthDataset> {
+  const queryStart = input.monthOnly ? input.range.start : STATS_START_DATE;
   const rows = await measureAsync("collaboration.reports", () => queryScopedReports({
     supabase: input.supabase,
     visibleUserIds: input.visibleUserIds,
-    start: STATS_START_DATE,
+    start: queryStart,
     end: input.range.end,
-    publishedDateRange: { start: STATS_START_DATE, end: input.range.end },
+    publishedDateRange: { start: queryStart, end: input.range.end },
   }));
   const currentRows = rows.filter((row) => {
     const date = getCollaborationWorkDate(row);
@@ -150,7 +154,10 @@ export async function loadCollaborationMonthDataset(input: {
     : Promise.resolve([]);
   const workGroupTeamIds = input.workGroupTeamIds;
   const workGroupsPromise = workGroupTeamIds
-    ? measureAsync("collaboration.workGroups", () => loadWorkGroupDirectory(input.supabase, { teamIds: workGroupTeamIds }))
+    ? measureAsync("collaboration.workGroups", () => loadWorkGroupDirectory(input.supabase, {
+        teamIds: workGroupTeamIds,
+        includeRoster: input.includeWorkGroupRoster,
+      }))
     : Promise.resolve(undefined);
   const [{ profiles, accounts }, writerCertifications, workGroups] = await Promise.all([
     lookupsPromise,

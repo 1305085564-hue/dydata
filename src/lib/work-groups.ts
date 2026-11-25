@@ -46,13 +46,37 @@ function normalizeTeamIds(teamIds: Array<string | null | undefined>) {
   );
 }
 
+export async function loadWorkGroupRoster(
+  supabase: SupabaseClient,
+  input: { teamIds: Array<string | null | undefined> },
+): Promise<{ ready: boolean; roster: WorkGroupDirectory["roster"] }> {
+  const teamIds = normalizeTeamIds(input.teamIds);
+  if (teamIds.length === 0) return { ready: true, roster: [] };
+
+  const result = await supabase
+    .from("profiles")
+    .select("id, name, team_id, work_peer_group_id, work_operator_group_id")
+    .in("team_id", teamIds);
+  if (isWorkGroupSchemaMissing(result.error)) return { ready: false, roster: [] };
+  assertSupabaseQuerySucceeded(result.error, "加载工种小队成员名单失败");
+
+  const roster = ((result.data ?? []) as MemberDbRow[]).map((row) => ({
+    id: row.id,
+    name: row.name ?? null,
+    teamId: row.team_id ?? null,
+    peerGroupId: row.work_peer_group_id ?? null,
+    operatorGroupId: row.work_operator_group_id ?? null,
+  }));
+  return { ready: true, roster };
+}
+
 /**
  * 一次调用取回「可见小队 + 本公司编制名单」，恒定两次查询，不随小队数量增长（P2.1 消除 N+1）。
  * 名单含零产出成员（按 team_id 取本公司全体，而不是按日报反推）。
  */
 export async function loadWorkGroupDirectory(
   supabase: SupabaseClient,
-  input: { teamIds: Array<string | null | undefined> },
+  input: { teamIds: Array<string | null | undefined>; includeRoster?: boolean },
 ): Promise<WorkGroupDirectory> {
   const teamIds = normalizeTeamIds(input.teamIds);
   if (teamIds.length === 0) return { ready: true, groups: [], roster: [] };
@@ -63,31 +87,21 @@ export async function loadWorkGroupDirectory(
       .select("id, team_id, name, kind, created_at, created_by")
       .in("team_id", teamIds)
       .order("name", { ascending: true }),
-    supabase
-      .from("profiles")
-      .select("id, name, team_id, work_peer_group_id, work_operator_group_id")
-      .in("team_id", teamIds),
+    input.includeRoster === false
+      ? Promise.resolve({ ready: true, roster: [] as WorkGroupDirectory["roster"] })
+      : loadWorkGroupRoster(supabase, { teamIds }),
   ]);
 
-  if (isWorkGroupSchemaMissing(groupsResult.error) || isWorkGroupSchemaMissing(rosterResult.error)) {
+  if (isWorkGroupSchemaMissing(groupsResult.error) || !rosterResult.ready) {
     return { ready: false, groups: [], roster: [] };
   }
   assertSupabaseQuerySucceeded(groupsResult.error, "加载工种小队失败");
-  assertSupabaseQuerySucceeded(rosterResult.error, "加载工种小队成员名单失败");
 
   const groups = ((groupsResult.data ?? []) as WorkGroupDbRow[])
     .map(mapWorkGroupRow)
     .filter((row): row is WorkGroupRow => row !== null);
 
-  const roster = ((rosterResult.data ?? []) as MemberDbRow[]).map((row) => ({
-    id: row.id,
-    name: row.name ?? null,
-    teamId: row.team_id ?? null,
-    peerGroupId: row.work_peer_group_id ?? null,
-    operatorGroupId: row.work_operator_group_id ?? null,
-  }));
-
-  return { ready: true, groups, roster };
+  return { ready: true, groups, roster: rosterResult.roster };
 }
 
 async function loadWorkGroup(

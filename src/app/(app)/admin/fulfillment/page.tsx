@@ -39,6 +39,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
     <AdminWorkspaceLayout width="wide">
       <Suspense fallback={<FulfillmentPageSkeleton />}>
         <FulfillmentDataContainer
+          companyId={scope.teamId}
           year={year}
           month={month}
           visibleUserIds={readOnlyScope.activeVisibleUserIds}
@@ -52,6 +53,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 }
 
 async function FulfillmentDataContainer({
+  companyId,
   year,
   month,
   visibleUserIds,
@@ -59,6 +61,7 @@ async function FulfillmentDataContainer({
   canManageSystem,
   canManage,
 }: {
+  companyId: string | null;
   year: number;
   month: number;
   visibleUserIds: string[];
@@ -66,7 +69,7 @@ async function FulfillmentDataContainer({
   canManageSystem: boolean;
   canManage: boolean;
 }) {
-  const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
+  const data = await loadFulfillmentCalendar({ year, month, visibleUserIds, companyId });
   return (
     <FulfillmentWorkbench
       initialData={data}

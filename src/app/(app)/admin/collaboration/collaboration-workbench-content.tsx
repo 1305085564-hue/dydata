@@ -1,12 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { LeaderboardDialog } from "./leaderboard-dialog";
 import { OperatorTab } from "./operator-tab";
-import { WriterTab, type WriterCandidateRow } from "./writer-tab";
+import { WriterTab } from "./writer-tab";
 import { StaffTab } from "./staff-tab";
 import { TalentTab } from "./talent-tab";
 import { WorkGroupListTab } from "./work-group-list-tab";
@@ -14,8 +14,9 @@ import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import type { CollaborationDiagnosisDetail } from "@/components/admin/collaboration-work-review-link";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
-import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
+import type { OperatorRow, StaffRow, TalentRow, WriterCandidateRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "@/lib/collaboration/types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
+import type { CollaborationPersonContext } from "@/lib/collaboration/data/workbench-loader";
 import { prefetchPerson } from "@/app/(app)/admin/collaboration/workbench-prefetch";
 
 // 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
@@ -49,7 +50,7 @@ interface CollaborationWorkbenchContentProps {
   year: number; month: number; view: "roles" | "teams"; tab: TabKey;
   activeGroupDetail: WorkGroupViews["details"][number] | null | undefined; groupIdNotFound: boolean; resolvedWorkGroupViews?: WorkGroupViews;
   canManageWorkGroups: boolean; canManageVideos: boolean; currentRawGroups: WorkGroupRow[]; currentRoster: WorkGroupRosterMember[]; actorTeamId: string | null; evaluationStandards: EvaluationStandards;
-  manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number;
+  manageDrawerOpen: boolean; manageDrawerFocusGroupId: string | null; selectedPersonId: string | null; personRole: TabKey; personCardRefreshKey: number; isLoadingTab: boolean; personContext: CollaborationPersonContext; onRefreshData: () => void;
   diagnosisDetail: CollaborationDiagnosisDetail | null; openingReportId: string | null; leaderboardDialogOpen: boolean; rulesEntry?: ReactNode;
   talents: TalentRow[]; operators: OperatorRow[]; writerStaff: StaffRow[]; editorStaff: StaffRow[]; writerCandidates: WriterCandidateRow[]; isOwnerOrTeamAdmin: boolean; currentUserId?: string | null; restrictToSelf?: boolean; loadFailed: boolean;
   onBackToGroupList: () => void; onOpenManageDrawer: (groupId: string | null) => void; onSelectGroup: (id: string) => void; onSelectPerson: (id: string | null) => void;
@@ -58,25 +59,26 @@ interface CollaborationWorkbenchContentProps {
 }
 
 export function CollaborationWorkbenchContent({
-  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, rulesEntry, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
+  year, month, view, tab, activeGroupDetail, groupIdNotFound, resolvedWorkGroupViews, canManageWorkGroups, canManageVideos, currentRawGroups, currentRoster, actorTeamId, evaluationStandards, manageDrawerOpen, manageDrawerFocusGroupId, selectedPersonId, personRole, personCardRefreshKey, diagnosisDetail, leaderboardDialogOpen, rulesEntry, talents, operators, writerStaff, editorStaff, writerCandidates, isOwnerOrTeamAdmin, currentUserId = null, restrictToSelf = false, loadFailed, isLoadingTab, personContext, onRefreshData, onBackToGroupList, onOpenManageDrawer, onSelectGroup, onSelectPerson, onLeaderboardChange, onCloseDiagnosis, onLifecycleChanged, onCloseManageDrawer, onGroupsChange, onRosterChange,
 }: CollaborationWorkbenchContentProps) {
   const evaluationStandardsKey = JSON.stringify(evaluationStandards);
   const isMemberViewer = Boolean(currentUserId && (!isOwnerOrTeamAdmin || restrictToSelf));
-  // 档案需要的两份旁证都来自首屏已有数据，不另取：
-  // 本人名下账号（判断「常配账号」是不是在给别人干活），运营负责的账号明细（原运营表展开行）。
-  const personContext = useMemo(() => {
-    if (!selectedPersonId) return { ownAccountIds: [] as string[], operatorAccounts: [] as OperatorRow["accounts"] };
-    return {
-      ownAccountIds: talents.find((t) => t.userId === selectedPersonId)?.accounts.map((a) => a.accountId) ?? [],
-      operatorAccounts: operators.find((o) => o.userId === selectedPersonId)?.accounts ?? [],
-    };
-  }, [selectedPersonId, talents, operators]);
   return (
     <>
         {/* Tab / View Content 区域 */}
         {/* 切岗位/小组/页签时新内容淡入（规范 §5.2）；key 变化才重放 */}
         <div key={view === "teams" ? `teams-${activeGroupDetail ? "detail" : "list"}` : tab} className="view-fade-in space-y-5">
-        {view === "teams" ? (
+        {isLoadingTab ? (
+          <div className="flex min-h-40 items-center justify-center gap-2 text-[14px] text-[#78716C]" role="status">
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            正在加载当前页签数据
+          </div>
+        ) : loadFailed ? (
+          <Alert variant="error">
+            <span className="font-normal text-[#1F1E1D]">当前页签的数据没加载出来</span>
+            <span className="text-[#78716C]">· 切换页签或刷新后重试</span>
+          </Alert>
+        ) : view === "teams" ? (
           activeGroupDetail ? (
             <WorkGroupDetailView
               detail={activeGroupDetail}
@@ -135,6 +137,7 @@ export function CollaborationWorkbenchContent({
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole, evaluationStandardsKey)}
+            onRefreshData={onRefreshData}
           />
         ) : (
           <StaffTab

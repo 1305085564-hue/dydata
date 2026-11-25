@@ -72,13 +72,15 @@ export function FulfillmentWorkbenchView({ state, actions, canManage }: Fulfillm
     handleQueueMemberClick,
     handleMatrixCellClick,
     loadCalendar,
+    stepCalendarMonth,
+    calendarTarget,
     setSheetOpen,
   } = state;
   const [todayOpen, setTodayOpen] = useState(false);
 
   const { year, month } = calendarData;
-  const isCurrentMonth = today.slice(0, 7) === `${year}-${String(month).padStart(2, "0")}`;
-  const isFutureMonth = `${year}-${String(month).padStart(2, "0")}` >= today.slice(0, 7);
+  const isCurrentMonth = today.slice(0, 7) === `${calendarTarget.year}-${String(calendarTarget.month).padStart(2, "0")}`;
+  const isFutureMonth = `${calendarTarget.year}-${String(calendarTarget.month).padStart(2, "0")}` >= today.slice(0, 7);
   const headline = buildFulfillmentHeadline({ month, stats });
   const pendingAppeals = canManage ? pendingAppealsOf(appeals) : [];
   const todayLine = buildTodayLine({
@@ -91,8 +93,7 @@ export function FulfillmentWorkbenchView({ state, actions, canManage }: Fulfillm
   const panelOpen = canOpenToday && todayOpen;
 
   const stepMonth = (delta: -1 | 1) => {
-    const target = new Date(year, month - 1 + delta, 1);
-    void loadCalendar(target.getFullYear(), target.getMonth() + 1);
+    void stepCalendarMonth(delta);
   };
   const backToCurrentMonth = () => {
     void loadCalendar(Number(today.slice(0, 4)), Number(today.slice(5, 7)));
@@ -106,17 +107,17 @@ export function FulfillmentWorkbenchView({ state, actions, canManage }: Fulfillm
             aria-live="polite"
             className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
           >
-            {headline}
+            {isLoadingCalendar ? `${calendarTarget.month}月 · 正在加载…` : headline}
           </h1>
           <div className="flex items-center gap-0.5">
-            <button type="button" aria-label="上个月" className={ICON_BUTTON} disabled={isLoadingCalendar} onClick={() => stepMonth(-1)}>
+            <button type="button" aria-label="上个月" className={ICON_BUTTON} onClick={() => stepMonth(-1)}>
               <ChevronLeft className="size-4" />
             </button>
             <button
               type="button"
               aria-label="下个月"
               className={ICON_BUTTON}
-              disabled={isLoadingCalendar || isFutureMonth}
+              disabled={isFutureMonth}
               onClick={() => stepMonth(1)}
             >
               <ChevronRight className="size-4" />
@@ -125,7 +126,6 @@ export function FulfillmentWorkbenchView({ state, actions, canManage }: Fulfillm
               <button
                 type="button"
                 onClick={backToCurrentMonth}
-                disabled={isLoadingCalendar}
                 className="ml-1 h-8 rounded-md px-2 text-[14px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
               >
                 回到本月

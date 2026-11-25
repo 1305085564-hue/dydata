@@ -1,39 +1,41 @@
 import { Alert } from "@/components/ui/alert";
-import { loadWriterCandidates } from "@/lib/writer-certifications";
-import type { WriterCandidateRow } from "./writer-tab";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildCollaborationPageData } from "@/lib/collaboration/domain/aggregates";
-import { buildContentQualitySummary } from "@/lib/collaboration/domain/quality-rules";
-import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
-import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
-import { asCount, fromStatsStart, getMonthRange } from "@/lib/collaboration/domain/report-rules";
-import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
+import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { readEvaluationStandards } from "@/lib/evaluation-standards-store";
-import { measureAsync } from "@/lib/perf";
+import { loadCollaborationWorkbenchData } from "@/lib/collaboration/data/workbench-loader";
+import type { CollaborationDataTab, CollaborationWorkbenchData } from "@/lib/collaboration/data/workbench-loader";
 import { CollaborationWorkbench } from "./collaboration-workbench";
-import type {
-  CollaborationOverviewStats,
-  OperatorRow,
-  StaffRow,
-  SummaryData,
-  TalentRow,
-  WorkGroupViews,
-  WorkGroupRow,
-  WorkGroupRosterMember,
-} from "@/lib/collaboration/types";
+import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 
 interface CollaborationDataContainerProps {
   year: number;
   month: number;
-  tab: "talents" | "operators" | "writers" | "editors";
+  tab: TabKey;
   view?: "roles" | "teams";
   groupId?: string;
   personId?: string;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
+}
+
+function emptyData(input: {
+  tab: CollaborationDataTab;
+  month: number;
+  standards: Awaited<ReturnType<typeof readEvaluationStandards>>;
+}): CollaborationWorkbenchData {
+  return {
+    tab: input.tab,
+    counts: { talents: 0, operators: 0, writers: 0, editors: 0, teams: 0 },
+    summary: { total: 0, attributed: 0, unattributed: 0 },
+    overviewStats: { month: input.month, total: 0, totalPlay: 0, goodExcellentRate: null },
+    evaluationStandards: input.standards,
+    talents: [], operators: [], writerStaff: [], editorStaff: [], writerCandidates: [],
+    workGroupViews: input.tab === "teams" ? { ready: false, groups: [], details: [] } : undefined,
+    workGroupRawGroups: [], workGroupRoster: [],
+  };
 }
 
 export async function CollaborationDataContainer({
@@ -46,8 +48,6 @@ export async function CollaborationDataContainer({
   isOwnerOrTeamAdmin,
   canManageVideos,
 }: CollaborationDataContainerProps) {
-  // 页面容器已完成同 key 的身份+范围确认（30s TTL 缓存命中）；
-  // 这里复用同一上下文做防御性权限判定，不再重复 requireAdminActor 的串行身份查询。
   const context = await getCurrentPermissionContext("company", null);
   if (!context || !canAccessAdminPath("/admin/collaboration", context.permissionInfo.role, context.permissionInfo.permissions)) {
     return (
@@ -69,121 +69,39 @@ export async function CollaborationDataContainer({
   }
 
   const supabase = createAdminClient();
-  // 数据管理模块的可见范围统一由 resolveCollaborationScope 唯一判定：
-  // 组员放宽为本公司（无公司归属时降级只看自己），组长/所有者与全局范围一致。
   const resolution = await resolveCollaborationScope(supabase, context.scope);
   const restrictToSelf = resolution.restrictToSelf;
-
-  const workGroupTeamIds = context.scope.teamId ? [context.scope.teamId] : [];
-
-  const canManageWorkGroups =
-    context.permissionInfo.permissions.manage_members === true &&
-    Boolean(context.scope.teamId);
-
-  // 共享月度数据集：统计起点~当月末日报一次查询 + 一次 lookups，各岗位在内存分发；
-  // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
-  //
-  // 首屏一次备齐全部页签数据（summary/运营/达人 + 文案、剪辑两份名单 + 小队视图），
-  // 使 view/tab/groupId 不再左右"服务器取什么数"——切换时数据客户端已全有。
-  // 配合 page.tsx 把 Suspense key 收窄到只随年月、工作台 handler 用 history.replaceState 镜像地址栏，
-  // 切「岗位↔小组/四页签/进组」既不再重挂露骨架、也不再触发多余的服务端重渲染；翻月才走服务端重取。
-  let summary: SummaryData | null = null;
-  let overviewStats: CollaborationOverviewStats | null = null;
-  let operators: OperatorRow[] = [];
-  let talents: TalentRow[] = [];
-  let writerStaff: StaffRow[] = [];
-  let editorStaff: StaffRow[] = [];
+  const dataTab: CollaborationDataTab = view === "teams" ? "teams" : tab;
+  const evaluationStandards = await readEvaluationStandards(context.scope.teamId);
+  const scopeKey = JSON.stringify([
+    context.scope.userId,
+    context.scope.role,
+    context.scope.companyRole,
+    context.scope.kind,
+    context.scope.teamId,
+    resolution.visibleUserIds.slice().sort(),
+    context.permissionInfo.permissions,
+  ]);
+  let initialData: CollaborationWorkbenchData;
   let loadFailed = false;
-  let writerCandidates: WriterCandidateRow[] = [];
-  let workGroupViews: WorkGroupViews = { ready: false, groups: [], details: [] };
-  let workGroupRawGroups: WorkGroupRow[] = [];
-  let workGroupRoster: WorkGroupRosterMember[] = [];
-
-  const datasetPromise = measureAsync("collaboration.dataset", () => loadCachedCollaborationMonthDataset({
-      supabase,
-      visibleUserIds: resolution.visibleUserIds,
-      range,
-      includeWriterCertifications: true,
-      workGroupTeamIds,
-    }));
-  // 评价标准不放进 60 秒原始数据缓存；当前请求按可信公司范围读取后再计算。
-  const evaluationStandardsPromise = readEvaluationStandards(context.scope.teamId);
-  const evaluationStandards = await evaluationStandardsPromise;
-  const writerCandidatesPromise = isOwnerOrTeamAdmin
-    ? loadWriterCandidates({
-        supabase,
-        activeVisibleUserIds: context.scope.activeVisibleUserIds,
-        actor: context.permissionInfo,
-      }).catch(() => [] as WriterCandidateRow[])
-    : Promise.resolve([] as WriterCandidateRow[]);
-
   try {
-    const [dataset, candidates] = await Promise.all([datasetPromise, writerCandidatesPromise]);
-    const restrictUserId = restrictToSelf ? context.scope.userId : undefined;
-    const pageData = buildCollaborationPageData(dataset, null, restrictUserId);
-    summary = pageData.summary as SummaryData;
-    operators = pageData.operators as OperatorRow[];
-    talents = pageData.talents as TalentRow[];
-
-    // 文案/剪辑两份名单一次备齐；组员放宽或只看自己时，与运营/达人同口径按 restrictUserId 收窄，防止越权外泄。
-    const writerList = buildStaff(
-      dataset.currentRows,
-      "writer",
-      dataset.profiles,
-      dataset.accounts,
-      dataset.writerCertifications,
-      dataset.videoSnapshots,
-      dataset.videoTopicTags,
-      evaluationStandards,
-    ) as StaffRow[];
-    const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts, [], dataset.videoSnapshots) as StaffRow[];
-    writerStaff = restrictUserId ? writerList.filter((r) => r.userId === restrictUserId) : writerList;
-    editorStaff = restrictUserId ? editorList.filter((r) => r.userId === restrictUserId) : editorList;
-
-    // 认证候选只服务文案页签，但为让切到文案时即时呈现，组长/所有者首屏一并加载（组员不加载）。
-    // 单独容错：这份数据只影响文案「可认证零产出候选」，失败时降级为不显示候选，
-    // 不能连带把达人/运营/小组视图一起拖成空白。
-    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row])); // gate:transient-map 函数内临时索引，随调用栈释放
-    const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() }; // gate:transient-map 空标签回退，随调用栈释放
-    const snapshots = dataset.videoSnapshots ?? new Map(); // gate:transient-map 空快照回退，随调用栈释放
-    writerCandidates = candidates.map((candidate) => {
-      const existing = rowsByUserId.get(candidate.userId);
-      if (existing?.writerQuality) return { ...candidate, writerQuality: existing.writerQuality };
-      return {
-        ...candidate,
-        writerQuality: {
-          state: qualityTopics.state,
-          summary: qualityTopics.state === "ready"
-            ? buildContentQualitySummary([], snapshots, qualityTopics, evaluationStandards)
-            : null,
-        },
-      };
-    });
-
-    workGroupViews = buildWorkGroupViews(dataset, evaluationStandards);
-    workGroupRawGroups = dataset.workGroups?.groups ?? [];
-    workGroupRoster = dataset.workGroups?.roster ?? [];
-
-    const scopedRows = fromStatsStart(dataset.currentRows);
-    const totalPlay = scopedRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
-    const overallQuality =
-      qualityTopics.state === "ready"
-        ? buildContentQualitySummary(
-            scopedRows,
-            snapshots,
-            qualityTopics,
-            evaluationStandards,
-          )
-        : null;
-    overviewStats = {
-      month,
-      total: summary.total,
-      totalPlay,
-      goodExcellentRate:
-        overallQuality && overallQuality.ratedCount > 0 ? overallQuality.goodExcellentRate : null,
+    initialData = await loadCollaborationWorkbenchData({
+      supabase,
+      range,
+      tab: dataTab,
+      visibleUserIds: resolution.visibleUserIds,
+      activeVisibleUserIds: context.scope.activeVisibleUserIds,
       restrictToSelf,
-    };
+      userId: context.scope.userId,
+      teamId: context.scope.teamId,
+      scopeKey,
+      standards: evaluationStandards,
+      canLoadWriterCandidates: isOwnerOrTeamAdmin,
+      actor: { userId: context.scope.userId, companyRole: context.permissionInfo.companyRole },
+      personId,
+    });
   } catch {
+    initialData = emptyData({ tab: dataTab, month, standards: evaluationStandards });
     loadFailed = true;
   }
 
@@ -195,24 +113,15 @@ export async function CollaborationDataContainer({
       defaultView={view}
       defaultGroupId={groupId}
       defaultPersonId={personId}
-      workGroupViews={workGroupViews}
-      workGroupRawGroups={workGroupRawGroups}
-      workGroupRoster={workGroupRoster}
-      canManageWorkGroups={canManageWorkGroups}
-      actorTeamId={context.scope.teamId}
-      evaluationStandards={evaluationStandards}
-      summary={summary}
-      overviewStats={overviewStats}
-      operators={operators}
-      talents={talents}
-      writerStaff={writerStaff}
-      editorStaff={editorStaff}
+      initialData={initialData}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       canManageVideos={canManageVideos}
       currentUserId={context.scope.userId}
       restrictToSelf={restrictToSelf}
+      canManageWorkGroups={context.permissionInfo.permissions.manage_members === true && Boolean(context.scope.teamId)}
+      actorTeamId={context.scope.teamId}
+      scopeKey={scopeKey}
       loadFailed={loadFailed}
-      writerCandidates={writerCandidates}
     />
   );
 }

@@ -52,6 +52,7 @@ interface HealthBarProps {
   month?: number;
   canEdit?: boolean;
   onAttributionUpdated?: () => void;
+  onRefreshData?: () => void;
 }
 
 export function isAttributionComplete(report: Pick<UnattributedReport, "scriptAuthorUserId" | "videoEditorUserId" | "operatorUserId">) {
@@ -89,6 +90,7 @@ export function HealthBar({
   month,
   canEdit = false,
   onAttributionUpdated,
+  onRefreshData,
 }: HealthBarProps) {
   const router = useRouter();
   const [, startRefresh] = useTransition();
@@ -145,7 +147,10 @@ export function HealthBar({
     setIsOpen(open);
     if (!open && hasSaved) {
       // 就地后台重算顶部健康度/岗位统计：包进 transition，保留当前画面，不闪加载骨架、不跳滚动位置。
-      startRefresh(() => router.refresh());
+      startRefresh(() => {
+        if (onRefreshData) void onRefreshData();
+        else router.refresh();
+      });
       setHasSaved(false);
     }
   };

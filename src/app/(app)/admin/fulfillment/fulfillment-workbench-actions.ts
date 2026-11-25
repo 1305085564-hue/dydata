@@ -107,14 +107,7 @@ export function useFulfillmentWorkbenchActions({
 
     // 重新拉取最新的日历和申诉
     fetchAppeals();
-    fetch(
-      `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
-    ).then(async (res) => {
-      if (res.ok) {
-        const r = await res.json();
-        setCalendarData(r.data);
-      }
-    });
+    void refreshVisibleCalendar();
 
     if (source === "queue") {
       const queue = queueRef.current;
@@ -131,7 +124,7 @@ export function useFulfillmentWorkbenchActions({
     } else {
       setSheetOpen(false);
     }
-  }, [source, today, calendarData.year, calendarData.month, fetchAppeals, queueIndexRef, queueRef, setCalendarData, setSelectedDate, setSelectedIds, setSelectedMember, setSheetOpen]);
+  }, [source, today, refreshVisibleCalendar, fetchAppeals, queueIndexRef, queueRef, setSelectedDate, setSelectedIds, setSelectedMember, setSheetOpen]);
 
   const handleUndoMark = useCallback(
     async (

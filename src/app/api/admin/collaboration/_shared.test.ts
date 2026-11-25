@@ -640,7 +640,7 @@ test("日报聚合查询超过 Supabase 单页上限时会继续分页，避免�
   });
 
   assert.equal(rows.length, 1001);
-  assert.deepEqual(requestedRanges, [[0, 999], [1000, 1999]]);
+  assert.deepEqual(requestedRanges, [[0, 999], [1000, 1999], [2000, 2999], [3000, 3999], [4000, 4999]]);
   assert.equal(rows.at(-1)?.id, "page-2-1");
 });
 
@@ -800,14 +800,16 @@ test("共享岗位数据集的 currentRows 只包含所选月份", async () => {
     report({ id: "old", report_date: "2026-07-27" }),
     report({ id: "previous", report_date: "2026-08-15" }),
     report({ id: "current", report_date: "2026-09-02" }),
+    report({ id: "published-in-month", report_date: "2026-08-31", published_at: "2026-09-05T12:00:00+08:00" }),
   ];
+  const dateFilters: string[] = [];
   const builder = {
     select() { return this; },
     in() { return this; },
     gte() { return this; },
     lte() { return this; },
     eq() { return this; },
-    or() { return this; },
+    or(filter: string) { dateFilters.push(filter); return this; },
     order() { return this; },
     range() { return Promise.resolve({ data: rows, error: null }); },
   };
@@ -824,8 +826,14 @@ test("共享岗位数据集的 currentRows 只包含所选月份", async () => {
     supabase: supabase as never,
     visibleUserIds: ["owner-1"],
     range: { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" },
+    monthOnly: true,
   });
-  assert.deepEqual(dataset.currentRows.map((row) => row.id), ["current"]);
+  assert.deepEqual(dataset.currentRows.map((row) => row.id), ["current", "published-in-month"]);
+  assert.match(dateFilters[0], /report_date\.gte\.2026-09-01/);
+  assert.match(dateFilters[0], /report_date\.lte\.2026-09-30/);
+  assert.match(dateFilters[0], /published_at\.gte\./);
+  assert.match(dateFilters[0], /published_at\.lt\./);
+  assert.doesNotMatch(dateFilters[0], /report_date\.gte\.2026-07-27/);
 });
 
 

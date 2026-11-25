@@ -1,3 +1,5 @@
+import { invalidateFulfillmentTableWrite } from "@/lib/fulfillment/calendar-cache";
+import { invalidateCollaborationTableWrite } from "@/lib/loaders/collaboration-month-cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 import { cloudBaseRestUrl } from "./core";
@@ -81,7 +83,10 @@ export function createCloudBaseFetch(options: {
       duplex: "half",
       signal: AbortSignal.timeout(20_000),
     } as RequestInit);
-    return normalizeDatabaseErrorResponse(await (options.fetcher ?? fetch)(request));
+    const response = await (options.fetcher ?? fetch)(request);
+    invalidateFulfillmentTableWrite(request.url, request.method, response.ok);
+    invalidateCollaborationTableWrite(request.url, request.method, response.ok);
+    return normalizeDatabaseErrorResponse(response);
   };
 }
 

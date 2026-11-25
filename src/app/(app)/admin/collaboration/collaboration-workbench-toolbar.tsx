@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
 import { Settings, TrendingUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
-import type { OperatorRow, StaffRow, TalentRow, WorkGroupViews } from "@/lib/collaboration/types";
-import type { WriterCandidateRow } from "./writer-tab";
-import { partitionWriterCandidates, type TabKey } from "@/lib/collaboration/domain/workbench-state";
+import type { WorkGroupViews } from "@/lib/collaboration/types";
+import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
+import type { CollaborationTabCounts } from "@/lib/collaboration/data/workbench-loader";
 import { OneTip } from "./one-tip";
 
 /** 一排切换：四个岗位与小队并列，少点一层。 */
@@ -20,11 +19,7 @@ interface CollaborationWorkbenchToolbarProps {
   canManageWorkGroups: boolean;
   hasActiveGroupDetail: boolean;
   resolvedWorkGroupViews?: WorkGroupViews;
-  talents: TalentRow[];
-  operators: OperatorRow[];
-  writerStaff: StaffRow[];
-  writerCandidates?: WriterCandidateRow[];
-  editorStaff: StaffRow[];
+  counts: CollaborationTabCounts;
   onMonthChange: (val: string | null) => void;
   onSegmentChange: (segment: CollaborationSegment) => void;
   onOpenManageDrawer: (groupId?: string | null) => void;
@@ -39,32 +34,23 @@ export function CollaborationWorkbenchToolbar({
   canManageWorkGroups,
   hasActiveGroupDetail,
   resolvedWorkGroupViews,
-  talents,
-  operators,
-  writerStaff,
-  writerCandidates = [],
-  editorStaff,
+  counts,
   onMonthChange,
   onSegmentChange,
   onOpenManageDrawer,
   onLeaderboardOpen,
 }: CollaborationWorkbenchToolbarProps) {
-  const { activeWriterCount } = useMemo(
-    () => partitionWriterCandidates(writerStaff, writerCandidates),
-    [writerStaff, writerCandidates],
-  );
-
   const segments: Array<{ key: CollaborationSegment; label: string; count: number; tip?: string }> = [
-    { key: "talents", label: "达人", count: talents.length },
+    { key: "talents", label: "达人", count: counts.talents },
     {
       key: "writers",
       label: "文案",
-      count: activeWriterCount,
+      count: counts.writers,
       tip: "含已认证但本月还没有产出的文案；其余页签只计本月有产出的人。",
     },
-    { key: "operators", label: "运营", count: operators.length, tip: "只统计给别人账号做运营的人。" },
-    { key: "editors", label: "剪辑", count: editorStaff.length, tip: "只统计给别人账号剪辑的人。" },
-    { key: "teams", label: "小队", count: resolvedWorkGroupViews?.groups.length ?? 0 },
+    { key: "operators", label: "运营", count: counts.operators, tip: "只统计给别人账号做运营的人。" },
+    { key: "editors", label: "剪辑", count: counts.editors, tip: "只统计给别人账号剪辑的人。" },
+    { key: "teams", label: "小队", count: resolvedWorkGroupViews?.groups.length ?? counts.teams },
   ];
 
   return (

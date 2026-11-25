@@ -98,6 +98,16 @@ export interface StaffRow {
   } | null;
 }
 
+export type WriterCandidateRow = {
+  userId: string;
+  name: string;
+  certified: boolean;
+  writerQuality?: {
+    state: "ready" | "error";
+    summary: ContentQualitySummary | null;
+  } | null;
+};
+
 export interface PersonCurrentMonth {
   writerCount: number;
   editorCount: number;

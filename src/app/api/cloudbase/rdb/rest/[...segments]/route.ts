@@ -1,3 +1,5 @@
+import { invalidateFulfillmentTableWrite } from "@/lib/fulfillment/calendar-cache";
+import { invalidateCollaborationTableWrite } from "@/lib/loaders/collaboration-month-cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { cloudBaseGatewayUrl, hasCloudBaseSessionChanged } from "@/lib/cloudbase/core";
@@ -43,6 +45,8 @@ async function forward(request: NextRequest, context: RouteContext) {
   } catch {
     return NextResponse.json({ message: "Data service unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
+  invalidateFulfillmentTableWrite(upstreamUrl, method, upstream.ok);
+  invalidateCollaborationTableWrite(upstreamUrl, method, upstream.ok);
   const responseHeaders = new Headers();
   for (const name of ["content-type", "content-range", "accept-ranges", "preference-applied", "etag", "location"]) {
     const value = upstream.headers.get(name);

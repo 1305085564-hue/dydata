@@ -31,10 +31,11 @@ interface StaffTabProps {
   rulesEntry?: ReactNode;
   onSelectPerson: (userId: string) => void;
   onPrefetchPerson?: (userId: string) => void;
+  onRefreshData?: () => void;
 }
 
 /** 认证：有权限的给按钮，其余只读。按钮在可点的行里，点击不能冒泡成「打开档案」。 */
-function WriterCertificationCell({ row, canCertify }: { row: StaffRow; canCertify: boolean }) {
+function WriterCertificationCell({ row, canCertify, onRefreshData }: { row: StaffRow; canCertify: boolean; onRefreshData?: () => void }) {
   const hasWork = row.reportCount > 0;
   if (!canCertify) {
     return (
@@ -55,6 +56,7 @@ function WriterCertificationCell({ row, canCertify }: { row: StaffRow; canCertif
         certifiedByName={row.certifiedByName}
         canCertify
         hasWork={hasWork}
+        onRefreshData={onRefreshData}
       />
     </span>
   );
@@ -68,6 +70,7 @@ export function StaffTab({
   rulesEntry,
   onSelectPerson,
   onPrefetchPerson,
+  onRefreshData,
   certifiableUserIds = [],
 }: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
@@ -90,10 +93,10 @@ export function StaffTab({
         label: "认证",
         tip: "认证后才计入文案结算。",
         width: 104,
-        render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} />,
+        render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} onRefreshData={onRefreshData} />,
       },
     ];
-  }, [role, showDetail, rulesEntry, certifiableUserIds]);
+  }, [role, showDetail, rulesEntry, certifiableUserIds, onRefreshData]);
 
   const showSelfZeroHint = Boolean(
     isMemberViewer && currentUserId && !rows.some((r) => r.userId === currentUserId && r.reportCount > 0),

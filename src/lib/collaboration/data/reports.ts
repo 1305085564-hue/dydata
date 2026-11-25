@@ -30,6 +30,8 @@ const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS.replace(", da
 
 // Supabase/PostgREST 默认单次最多返回 1000 行；岗位历史样本不能因为超过上限而静默丢失。
 const REPORT_PAGE_SIZE = 1000;
+const REPORT_PAGE_CONCURRENCY = 4;
+const REPORT_MAX_ROWS = 100_000;
 const PROFILE_FIELDS = "id, name, team_id";
 /** 带小队归属的读列；库还没跑 work_groups migration 时由 queryProfiles 退回 PROFILE_FIELDS。 */
 const PROFILE_FIELDS_WITH_WORK_GROUPS = `${PROFILE_FIELDS}, work_peer_group_id, work_operator_group_id`;
@@ -80,7 +82,7 @@ export async function queryScopedReports(input: {
   if (input.accountIds && input.accountIds.length === 0) return [];
   const rows: CollaborationReport[] = [];
 
-  for (let offset = 0; ; offset += REPORT_PAGE_SIZE) {
+  const loadPage = async (offset: number) => {
     let query = input.supabase
       .from("daily_reports")
       .select(DAILY_REPORT_FIELDS)
@@ -165,12 +167,31 @@ export async function queryScopedReports(input: {
         .range(offset, offset + REPORT_PAGE_SIZE - 1);
     }
     assertSupabaseQuerySucceeded(result.error, "加载协作日报失败");
+    return (result.data ?? []) as unknown as CollaborationReport[];
+  };
 
-    const page = (result.data ?? []) as unknown as CollaborationReport[];
-    rows.push(...page);
-    if (page.length < REPORT_PAGE_SIZE) break;
+  const firstPage = await loadPage(0);
+  rows.push(...firstPage);
+  if (firstPage.length < REPORT_PAGE_SIZE) return rows;
+
+  for (let baseOffset = REPORT_PAGE_SIZE; baseOffset < REPORT_MAX_ROWS; baseOffset += REPORT_PAGE_SIZE * REPORT_PAGE_CONCURRENCY) {
+    const pageCount = Math.min(
+      REPORT_PAGE_CONCURRENCY,
+      Math.ceil((REPORT_MAX_ROWS - baseOffset) / REPORT_PAGE_SIZE),
+    );
+    const pages = await Promise.all(
+      Array.from({ length: pageCount }, (_, index) =>
+        loadPage(baseOffset + index * REPORT_PAGE_SIZE),
+      ),
+    );
+    for (const page of pages) {
+      rows.push(...page);
+      if (page.length < REPORT_PAGE_SIZE) return rows;
+    }
   }
 
+  const overflowPage = await loadPage(REPORT_MAX_ROWS);
+  if (overflowPage.length > 0) throw new Error("协作日报查询超过单次最大行数");
   return rows;
 }
 

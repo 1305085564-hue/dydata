@@ -20,6 +20,7 @@ interface WriterCertificationButtonProps {
   certifiedByName?: string | null;
   canCertify?: boolean;
   hasWork?: boolean;
+  onRefreshData?: () => void;
 }
 
 export function WriterCertificationButton({
@@ -28,6 +29,7 @@ export function WriterCertificationButton({
   certifiedByName,
   canCertify = true,
   hasWork = false,
+  onRefreshData,
 }: WriterCertificationButtonProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -56,7 +58,10 @@ export function WriterCertificationButton({
       if (!response.ok) throw new Error(body.error || "认证状态保存失败");
       clearPersonDataCache(userId);
       setDialogOpen(false);
-      startTransition(() => router.refresh());
+      startTransition(() => {
+        if (onRefreshData) void onRefreshData();
+        else router.refresh();
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "认证状态保存失败");
     } finally {

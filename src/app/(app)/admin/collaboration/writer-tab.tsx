@@ -2,15 +2,8 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { StaffTab } from "./staff-tab";
-import type { StaffRow, ContentQualitySummary } from "@/lib/collaboration/types";
+import type { StaffRow, WriterCandidateRow } from "@/lib/collaboration/types";
 import { partitionWriterCandidates } from "@/lib/collaboration/domain/workbench-state";
-
-export type WriterCandidateRow = {
-  userId: string;
-  name: string;
-  certified: boolean;
-  writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null } | null;
-};
 
 function candidateToStaffRow(candidate: WriterCandidateRow): StaffRow {
   return {
@@ -40,6 +33,7 @@ export function WriterTab({
   rulesEntry,
   onSelectPerson,
   onPrefetchPerson,
+  onRefreshData,
 }: {
   rulesEntry?: ReactNode;
   rows: StaffRow[];
@@ -49,6 +43,7 @@ export function WriterTab({
   isMemberViewer?: boolean;
   onSelectPerson: (id: string) => void;
   onPrefetchPerson: (id: string) => void;
+  onRefreshData?: () => void;
 }) {
   const [showCandidates, setShowCandidates] = useState(false);
 
@@ -90,6 +85,7 @@ export function WriterTab({
         rulesEntry={rulesEntry}
         onSelectPerson={onSelectPerson}
         onPrefetchPerson={onPrefetchPerson}
+        onRefreshData={onRefreshData}
         certifiableUserIds={certifiableUserIds}
       />
       {uncertifiedRows.length > 0 && (

@@ -1,3 +1,4 @@
+import { cachedFulfillmentCalendar } from "@/lib/fulfillment/calendar-cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   materializePendingExemptionRequestRows,
@@ -51,6 +52,15 @@ export type LoadFulfillmentCalendarOptions = {
   range?: Partial<FulfillmentDateRange>;
   visibleUserIds?: string[];
   teamId?: string | null;
+  companyId?: string | null;
+  fresh?: boolean;
+  onTiming?: (timing: FulfillmentCalendarLoadTiming) => void;
+};
+
+export type FulfillmentCalendarLoadTiming = {
+  cache: "hit" | "miss" | "bypass";
+  rpcMs: number | null;
+  loadMs: number;
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -457,14 +467,40 @@ export async function loadFulfillmentCalendar(
   const scope = teamId
     ? { teamId, label: "指定团队" }
     : { teamId: null, label: "全部可见范围" };
+  if (options.visibleUserIds.length === 0) {
+    const data = buildFulfillmentCalendarData({
+      year: options.year ?? Number(range.startDate.slice(0, 4)),
+      month: options.month ?? Number(range.startDate.slice(5, 7)),
+      range, scope, rows: [],
+    });
+    options.onTiming?.({ cache: "bypass", rpcMs: null, loadMs: 0 });
+    return data;
+  }
+  const loadStartedAt = performance.now();
+  let rpcMs: number | null = null;
+  const data = await cachedFulfillmentCalendar({
+    companyId: options.companyId ?? null,
+    visibleUserIds: options.visibleUserIds, teamId,
+    year: options.year ?? Number(range.startDate.slice(0, 4)),
+    month: options.month ?? Number(range.startDate.slice(5, 7)),
+    startDate: range.startDate, endDate: range.endDate,
+    today: resolveFulfillmentTodayKey(),
+  }, async () => {
   const [filterOptions, calendarResult, pendingExemptions] = await Promise.all([
     loadFulfillmentFilterOptions(supabase, options.visibleUserIds),
-    supabase.rpc("get_fulfillment_range", {
-      p_start_date: range.startDate,
-      p_end_date: range.endDate,
-      p_visible_user_ids: options.visibleUserIds.length > 0 ? options.visibleUserIds : null,
-      p_team_id: teamId,
-    }),
+    (async () => {
+      const rpcStartedAt = performance.now();
+      try {
+        return await supabase.rpc("get_fulfillment_range", {
+          p_start_date: range.startDate,
+          p_end_date: range.endDate,
+          p_visible_user_ids: options.visibleUserIds,
+          p_team_id: teamId,
+        });
+      } finally {
+        rpcMs = performance.now() - rpcStartedAt;
+      }
+    })(),
     loadPendingExemptions(supabase, {
       startDate: pendingRange.startDate,
       endDate: pendingRange.endDate,
@@ -487,4 +523,11 @@ export async function loadFulfillmentCalendar(
     rows: (data ?? []) as FulfillmentCalendarRpcRow[],
     pendingExemptions,
   });
+  }, options.fresh);
+  options.onTiming?.({
+    cache: rpcMs === null ? "hit" : "miss",
+    rpcMs,
+    loadMs: performance.now() - loadStartedAt,
+  });
+  return data;
 }
