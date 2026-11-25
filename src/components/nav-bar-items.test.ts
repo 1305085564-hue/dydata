@@ -33,12 +33,11 @@ test("member 显示数据复盘、协作管理和只读发布管理", () => {
   ]);
 });
 
-test("admin 显示已授权业务页面和成员管理，不显示系统设置与 AI 配置", () => {
+test("admin 显示已授权业务页面和成员管理，不显示系统设置、AI 配置与已下线的每日大盘", () => {
   assert.deepEqual(hrefs("admin"), [
     "/dashboard",
     "/admin/collaboration",
     "/admin/content",
-    "/admin/pulse",
     "/topics",
     "/admin/fulfillment",
     "/admin/modules",
@@ -48,6 +47,7 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
   const items = hrefs("admin");
   assert.equal(items.includes("/admin/settings"), false);
   assert.equal(items.includes("/admin/ai-config"), false);
+  assert.equal(items.includes("/admin/pulse"), false);
 });
 
 test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
@@ -55,7 +55,6 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     "/dashboard",
     "/admin/collaboration",
     "/admin/content",
-    "/admin/pulse",
     "/topics",
     "/admin/fulfillment",
     "/admin/modules",

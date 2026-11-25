@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Activity,
   Sparkles,
   FileEdit,
   CalendarDays,
@@ -57,7 +56,8 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   );
 
   // 顺序即移动端底栏直接入口优先级（前 4 项为底栏快捷位）：
-  // 工作台、协作管理、数据复盘、每日大盘；选题库收进「更多」面板。
+  // 工作台、协作管理、数据复盘、选题库。
+  // 每日大盘（/admin/pulse）已从前端入口下线，页面与接口暂时保留（待整合进数据复盘）。
   const groups: NavGroup[] = [
     {
       key: "dashboard",
@@ -87,16 +87,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       href: "/admin/content",
       match: (pathname) =>
         pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
-    });
-  }
-
-  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
-    groups.push({
-      key: "pulse",
-      label: "每日大盘",
-      icon: Activity,
-      href: "/admin/pulse",
-      match: (pathname) => pathname === "/admin/pulse" || pathname.startsWith("/admin/pulse/"),
     });
   }
 
