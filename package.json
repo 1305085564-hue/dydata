@@ -31,7 +31,8 @@
     "db:replay": "node scripts/db-replay.mjs",
     "db:drift": "node scripts/audit/db-drift-report.mjs --check --exceptions supabase/migration-ledger-exceptions.json --local-url postgresql://postgres:postgres@127.0.0.1:54322/dydata_replay",
     "analyze": "ANALYZE=true next build",
-    "hooks:install": "node scripts/install-git-hooks.mjs"
+    "hooks:install": "node scripts/install-git-hooks.mjs",
+    "release": "node scripts/cloudbase/release.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
