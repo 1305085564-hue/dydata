@@ -25,6 +25,7 @@ import { ROW_HOVER, ROW_SELECTED } from "@/components/ui/selection";
 import { SORTED_COL_BG, SORTED_STICKY_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
 import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 type ContentListTableProps = {
   metricViewMode: "full" | "spacious";
@@ -260,7 +261,10 @@ export function ContentListTable({
                     key={item.video.id}
                     data-video-id={item.video.id}
                     aria-selected={isSelected || undefined}
-                    onClick={() => onSelectVideoId(item.video.id)}
+                    onClick={(event) => {
+                      if (!shouldHandleInPlaceLinkClick(event)) return;
+                      onSelectVideoId(item.video.id);
+                    }}
                     className={cn(
                       "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
                       isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,

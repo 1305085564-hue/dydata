@@ -5,6 +5,7 @@ import { isCellHighlighted, HIGHLIGHT_CELL_CLASS, type HighlightRuleMap } from "
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import { formatCount, formatPercent } from "./content-list-cell-content";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
+import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
 type ContentListMobileProps = {
   visibleRows: ProcessedContentRow[];
@@ -56,7 +57,10 @@ export function ContentListMobile({
           <li
             key={video.id}
             data-video-id={video.id}
-            onClick={() => onSelectVideoId(video.id)}
+            onClick={(event) => {
+              if (!shouldHandleInPlaceLinkClick(event)) return;
+              onSelectVideoId(video.id);
+            }}
             className={cn(
               "group flex cursor-pointer items-start gap-3 px-1 py-3 transition-colors",
               isSelected ? ROW_SELECTED : "active:bg-[#EBEBE9]",

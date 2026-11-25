@@ -71,6 +71,12 @@ export function PoolGrid({
                         e.preventDefault();
                         onSelectTopic(item.id);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === " " && !e.repeat && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                          e.preventDefault();
+                          onSelectTopic(item.id);
+                        }
+                      }}
                       className="group-hover:text-[#D97757] after:absolute after:inset-0 after:z-0 focus-visible:outline-none"
                     >
                       {item.title}
