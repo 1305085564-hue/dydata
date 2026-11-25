@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   SCREENSHOT_MAX_AUTO_RETRY,
+  SCREENSHOT_PROBE_TIMEOUT_MS,
   SCREENSHOT_RETRY_DELAY_MS,
   classifyScreenshotStatus,
   initialScreenshotImageState,
@@ -11,6 +12,7 @@ import {
   onScreenshotLoaded,
   onScreenshotManualRetry,
   probeScreenshotFailureReason,
+  resolveScreenshotRenderPhase,
   shouldRenderScreenshotPlaceholder,
 } from "./screenshot-image-state";
 
@@ -37,6 +39,14 @@ test("第二次失败先进入探测态，不闪出默认重试占位", () => {
   assert.equal(shouldRenderScreenshotPlaceholder("failed"), true);
 });
 
+test("首次加载渲染原图；进入重试等待、二次请求、探测态全程走骨架，最终才进占位", () => {
+  assert.equal(resolveScreenshotRenderPhase("loading", 0), "image");
+  assert.equal(resolveScreenshotRenderPhase("retrying", 1), "skeleton");
+  assert.equal(resolveScreenshotRenderPhase("loading", 1), "skeleton");
+  assert.equal(resolveScreenshotRenderPhase("probing", 1), "skeleton");
+  assert.equal(resolveScreenshotRenderPhase("failed", 1), "placeholder");
+});
+
 test("失败态继续收到 error 不会再触发重试", () => {
   const failed = onScreenshotError(onScreenshotError(initialScreenshotImageState).state);
   const again = onScreenshotError(failed.state);
@@ -59,9 +69,10 @@ test("用户手动重试后可以重新走一轮自动重试", () => {
   assert.equal(next.state.status, "retrying");
 });
 
-test("自动重试次数与延迟是契约值：改成多次或长时间等待都会让占位图闪现/卡顿", () => {
+test("自动重试次数、延迟与探测超时上限是契约值", () => {
   assert.equal(SCREENSHOT_MAX_AUTO_RETRY, 1);
   assert.equal(SCREENSHOT_RETRY_DELAY_MS, 400);
+  assert.equal(SCREENSHOT_PROBE_TIMEOUT_MS, 3_000);
 });
 
 test("只有明确的 404 才算原图已丢失，其他状态码都算暂时读不到", () => {
@@ -76,6 +87,23 @@ test("探测网络异常或请求本身失败时，不冒充文件缺失", async
     throw new Error("network down");
   });
   assert.equal(thrown, "unavailable");
+});
+
+test("探测请求挂住超过上限时主动中止并返回暂时读不到，避免骨架永久转圈", async () => {
+  let aborted = false;
+  const reason = await probeScreenshotFailureReason(
+    "/api/submission-screenshots/file?path=hanging",
+    (_input, init) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          aborted = true;
+          reject(new Error("aborted"));
+        });
+      }),
+    25,
+  );
+  assert.equal(aborted, true);
+  assert.equal(reason, "unavailable");
 });
 
 test("探测到 404 时返回原图已丢失，并放掉响应体不占连接", async () => {

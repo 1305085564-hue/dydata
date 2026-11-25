@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { ScreenshotPlaceholder, ScreenshotProbingPlaceholder } from "./screenshot-image";
+import {
+  ScreenshotImageView,
+  ScreenshotPlaceholder,
+  ScreenshotProbingPlaceholder,
+} from "./screenshot-image";
 import { onScreenshotFailureProbed, probeScreenshotFailureReason } from "./screenshot-image-state";
 
 test("大图占位显示『截图无法显示』并提供重试入口", () => {
@@ -93,7 +97,100 @@ test("探测期间渲染浅砂色圆角骨架占位，不再留空白", () => {
   assert.doesNotMatch(thumbHtml, />加载中…</);
 });
 
-test("探测完成切到最终占位时带淡入过渡", () => {
-  const html = renderToStaticMarkup(<ScreenshotPlaceholder alt="流量曲线截图" variant="stage" reason="missing" />);
+test("最终占位与骨架保持一致的 rounded-xl 圆角，切态时不跳圆角", () => {
+  const stageHtml = renderToStaticMarkup(<ScreenshotPlaceholder alt="大图" variant="stage" reason="missing" />);
+  const panelHtml = renderToStaticMarkup(<ScreenshotPlaceholder alt="中图" variant="panel" reason="missing" />);
+  const smallerRadius = new RegExp("rounded-(?:l" + "g|m" + "d)");
+
+  assert.match(stageHtml, /rounded-xl/);
+  assert.doesNotMatch(stageHtml, smallerRadius);
+  assert.match(panelHtml, /rounded-xl/);
+  assert.doesNotMatch(panelHtml, smallerRadius);
+});
+
+test("从骨架切到最终占位时，骨架淡出与丢失态淡入同步播放", () => {
+  const html = renderToStaticMarkup(
+    <ScreenshotPlaceholder alt="流量曲线截图" variant="stage" reason="missing" exitingSkeleton />,
+  );
+  assert.match(html, /data-screenshot-probing-exit="1"/);
+  assert.match(html, /animate-out fade-out-0 duration-150/);
   assert.match(html, /animate-in fade-in-0 duration-150/);
+});
+
+test("状态机驱动 DOM 接线：首图加载、自动重试、探测态、最终占位各落到对应视图", () => {
+  const initialHtml = renderToStaticMarkup(
+    <ScreenshotImageView
+      src="/api/submission-screenshots/file?path=demo"
+      alt="流量曲线截图"
+      variant="stage"
+      status="loading"
+      attempts={0}
+      reason="unavailable"
+      renderKey={0}
+    />,
+  );
+  assert.match(initialHtml, /<img[^>]*src="\/api\/submission-screenshots\/file\?path=demo"/);
+  assert.doesNotMatch(initialHtml, /data-screenshot-probing="1"/);
+  assert.doesNotMatch(initialHtml, /data-screenshot-placeholder="1"/);
+
+  const retryingHtml = renderToStaticMarkup(
+    <ScreenshotImageView
+      src="/api/submission-screenshots/file?path=demo"
+      alt="流量曲线截图"
+      variant="stage"
+      status="retrying"
+      attempts={1}
+      reason="unavailable"
+      renderKey={0}
+    />,
+  );
+  assert.match(retryingHtml, /data-screenshot-probing="1"/);
+  assert.doesNotMatch(retryingHtml, /<img/);
+  assert.doesNotMatch(retryingHtml, /data-screenshot-placeholder="1"/);
+
+  const retryFetchingHtml = renderToStaticMarkup(
+    <ScreenshotImageView
+      src="/api/submission-screenshots/file?path=demo"
+      alt="流量曲线截图"
+      variant="stage"
+      status="loading"
+      attempts={1}
+      reason="unavailable"
+      renderKey={1}
+    />,
+  );
+  assert.match(retryFetchingHtml, /data-screenshot-probing="1"/);
+  assert.match(retryFetchingHtml, /<img[^>]*class="sr-only pointer-events-none"/);
+  assert.doesNotMatch(retryFetchingHtml, /data-screenshot-placeholder="1"/);
+
+  const probingHtml = renderToStaticMarkup(
+    <ScreenshotImageView
+      src="/api/submission-screenshots/file?path=demo"
+      alt="流量曲线截图"
+      variant="stage"
+      status="probing"
+      attempts={1}
+      reason="unavailable"
+      renderKey={1}
+    />,
+  );
+  assert.match(probingHtml, /data-screenshot-probing="1"/);
+  assert.doesNotMatch(probingHtml, /<img/);
+
+  const missingHtml = renderToStaticMarkup(
+    <ScreenshotImageView
+      src="/api/submission-screenshots/file?path=demo"
+      alt="流量曲线截图"
+      variant="stage"
+      status="failed"
+      attempts={1}
+      reason="missing"
+      renderKey={1}
+      exitingSkeleton
+    />,
+  );
+  assert.match(missingHtml, /data-screenshot-placeholder="1"/);
+  assert.match(missingHtml, /data-screenshot-reason="missing"/);
+  assert.match(missingHtml, /data-screenshot-probing-exit="1"/);
+  assert.doesNotMatch(missingHtml, /点击重试/);
 });

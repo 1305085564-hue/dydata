@@ -15,6 +15,7 @@ export interface ScreenshotImageState {
 
 export const SCREENSHOT_MAX_AUTO_RETRY = 1;
 export const SCREENSHOT_RETRY_DELAY_MS = 400;
+export const SCREENSHOT_PROBE_TIMEOUT_MS = 3_000;
 
 export const initialScreenshotImageState: ScreenshotImageState = {
   attempts: 0,
@@ -48,6 +49,23 @@ export function shouldRenderScreenshotPlaceholder(status: ScreenshotImageStatus)
   return status === "failed";
 }
 
+export type ScreenshotRenderPhase = "image" | "skeleton" | "placeholder";
+
+/**
+ * 渲染分支选择：首次加载直接渲染原图；首次失败进入自动重试（含 400ms 等待与二次请求）
+ * 及探测期期间全程展示骨架，避免重试与探测期出现空白闪断。
+ */
+export function resolveScreenshotRenderPhase(
+  status: ScreenshotImageStatus,
+  attempts: number,
+): ScreenshotRenderPhase {
+  if (shouldRenderScreenshotPlaceholder(status)) return "placeholder";
+  if (status === "retrying" || status === "probing" || (status === "loading" && attempts > 0)) {
+    return "skeleton";
+  }
+  return "image";
+}
+
 export function onScreenshotFailureProbed(
   reason: ScreenshotFailureReason,
 ): { status: "failed"; reason: ScreenshotFailureReason } {
@@ -68,16 +86,30 @@ export function classifyScreenshotStatus(status: number | null): ScreenshotFailu
   return status === 404 ? "missing" : "unavailable";
 }
 
-/** 失败判定用的状态码探测：网络异常一律算「暂时读不到」，不冒充文件缺失。 */
+/** 失败判定用的状态码探测：带超时上限，网络异常或超时一律算「暂时读不到」，不冒充文件缺失。 */
 export async function probeScreenshotFailureReason(
   src: string,
   request: (input: string, init?: RequestInit) => Promise<Response> = fetch,
+  timeoutMs: number = SCREENSHOT_PROBE_TIMEOUT_MS,
 ): Promise<ScreenshotFailureReason> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
   try {
-    const response = await request(src, { cache: "no-store" });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new Error("screenshot probe timeout"));
+      }, timeoutMs);
+    });
+    const response = await Promise.race([
+      request(src, { cache: "no-store", signal: controller.signal }),
+      timeoutPromise,
+    ]);
     await response.body?.cancel().catch(() => undefined);
     return classifyScreenshotStatus(response.status);
   } catch {
     return "unavailable";
+  } finally {
+    if (timer !== null) clearTimeout(timer);
   }
 }
