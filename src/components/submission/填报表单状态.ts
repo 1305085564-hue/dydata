@@ -221,7 +221,15 @@ export function isInteractionExceedingPlayCount(fields: {
   return { exceeded, interactions, playCount };
 }
 
-export const INTERACTION_ANOMALY_REVIEW_REASON = "点赞、评论、转发、收藏加起来比播放量还多";
+export const INTERACTION_ANOMALY_REVIEW_REASON = "点赞、评论、分享、收藏加起来比播放量还多";
+export const METRIC_ABOVE_PLAY_COUNT_REASON = "高于播放量，请确认";
+export const METRIC_ABOVE_PLAY_COUNT_KEYS: readonly EditableMetricKey[] = [
+  "likes",
+  "comments",
+  "shares",
+  "favorites",
+  "follower_gain",
+];
 
 export function getInteractionAnomalyReviewReason(fields: {
   play_count: string | number | null;
@@ -233,6 +241,26 @@ export function getInteractionAnomalyReviewReason(fields: {
   return isInteractionExceedingPlayCount(fields).exceeded
     ? INTERACTION_ANOMALY_REVIEW_REASON
     : null;
+}
+
+export function getMetricAbovePlayCountReason(
+  key: EditableMetricKey,
+  fields: Record<string, { value?: string } | undefined>,
+): string | null {
+  if (!METRIC_ABOVE_PLAY_COUNT_KEYS.includes(key)) {
+    return null;
+  }
+  const playRaw = fields.play_count?.value?.trim() ?? "";
+  const metricRaw = fields[key]?.value?.trim() ?? "";
+  if (!playRaw || !metricRaw) {
+    return null;
+  }
+  const playCount = Number(playRaw);
+  const metricValue = Number(metricRaw);
+  if (!Number.isFinite(playCount) || !Number.isFinite(metricValue) || playCount < 0) {
+    return null;
+  }
+  return metricValue > playCount ? METRIC_ABOVE_PLAY_COUNT_REASON : null;
 }
 
 function formatDateKey(date: Date) {

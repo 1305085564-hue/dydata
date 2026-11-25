@@ -78,7 +78,7 @@ function getOcrErrorMessage(errorCode: OcrErrorCode) {
     case "AI_PARSE_FAILED":
       return "AI 返回格式无法识别，请手动填写或稍后重试";
     case "LOW_CONFIDENCE":
-      return "图片不清晰或识别置信度低，请手动核对";
+      return "图片不够清晰，部分数字可能没认准，请手动核对";
     case "STORAGE_READ_FAILED":
       return "已上传截图读取失败，请重新上传";
   }

@@ -1,18 +1,21 @@
 "use client";
 
-import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Eye } from "lucide-react";
 
 import { itemVariants } from "@/lib/animations";
 import { REQUIRED_METRIC_KEYS, type EditableMetricKey, type SubmissionSlotRole } from "@/components/submission/提交状态机";
-import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
 import { 指标输入卡, resolveMetricCellMode } from "@/components/submission/指标输入卡";
 import {
-  getInteractionAnomalyReviewReason,
   type ConfidenceLevel,
   type EditableFieldState,
 } from "@/components/submission/填报表单状态";
+import {
+  resolveMetricGroupViewModel,
+  type FocusedFieldSnapshot,
+  type MetricGroupItem,
+} from "@/components/submission/metric-group-state";
 
 import {
   getNextMetricFocusTarget,
@@ -52,17 +55,9 @@ interface MetricGroupProps {
 
 import {
   METRIC_INPUT_TYPE_BY_FIELD,
-  type MetricInputType,
 } from "@/lib/dashboard-logic/metric-input-cleaner";
 
-type MetricItem = {
-  key: EditableMetricKey;
-  label: string;
-  step?: string;
-  suffix?: string;
-  optional?: boolean;
-  metricType?: MetricInputType;
-};
+type MetricItem = MetricGroupItem;
 
 const CORE_ITEMS: MetricItem[] = [
   { key: "play_count", label: "播放量", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.play_count },
@@ -105,6 +100,10 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
     ref,
   ) {
     const retentionOptional = anomalyStatus === "abnormal";
+    const [frozenFocus, setFrozenFocus] = useState<FocusedFieldSnapshot | null>(null);
+    const [acknowledgedRuleSignatures, setAcknowledgedRuleSignatures] = useState<
+      Partial<Record<EditableMetricKey, string>>
+    >({});
 
     const inputRefs = useRef<Record<EditableMetricKey, HTMLInputElement | null>>({
       play_count: null,
@@ -137,7 +136,8 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
         focusMetric: (key: EditableMetricKey) => {
           const el = inputRefs.current[key];
           if (!el) return;
-          el.focus();
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus({ preventScroll: true });
           const highlightClasses = ["ring-2", "ring-status-warning", "ring-offset-1"];
           el.classList.add(...highlightClasses);
           const removeHighlight = () => {
@@ -182,58 +182,31 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       [onCompleteMetrics],
     );
 
-    const interactionReviewReason = getInteractionAnomalyReviewReason({
-      play_count: fields.play_count?.value ?? null,
-      likes: fields.likes?.value ?? null,
-      comments: fields.comments?.value ?? null,
-      shares: fields.shares?.value ?? null,
-      favorites: fields.favorites?.value ?? null,
-    });
-    const showInteractionWarning = interactionReviewReason !== null;
-
     const items = [
       ...CORE_ITEMS.map((item) => (item.key === "avg_play_ratio" ? { ...item, optional: retentionOptional } : item)),
       ...INTERACTION_ITEMS,
       ...RETENTION_ITEMS.map((item) => ({ ...item, optional: retentionOptional })),
     ];
-    const cells = items.map((item) => {
-      const field = fields[item.key];
-      const confidenceLevel = field?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null;
-      const role = getSlotRoleForMetric(item.key);
-      const interactionNeedsReview = item.key === "play_count" && showInteractionWarning;
-      const mode = resolveMetricCellMode({
-        field,
-        confidenceLevel,
-        // 只有状态机认定的必填项才画成「请填」框，和提交按钮的「还差」同一来源
-        optional: !REQUIRED_METRIC_KEYS.includes(item.key),
-        slotProcessing: slotProcessing[role],
-        inputsOpen: editing || inputsOpen[role],
-        forceReview: interactionNeedsReview,
-      });
-      return { item, field, mode, interactionNeedsReview };
+    const { cells, recognizedCount, hasSummaryWarning, summaryText } = resolveMetricGroupViewModel({
+      items,
+      fields,
+      confidenceLevels,
+      slotProcessing,
+      inputsOpen,
+      editing,
+      frozenFocus,
+      acknowledgedRuleSignatures,
     });
-    const recognizedCount = cells.filter(({ field }) => Boolean(field?.ocrValue)).length;
-    const toCheckCount = resolveMetricToCheckCount(
-      cells.map(({ item, field, mode }) => ({ key: item.key, mode, value: field?.value ?? "" })),
-    );
-    const pendingCount = cells.filter(({ mode }) => mode === "pending").length;
-    // 互动异常已经让播放量进了「请核对」，汇总行沿用同一套计数，不另起一句
-    const summaryText = pendingCount > 0
-      ? "正在识别截图里的数字…"
-      : toCheckCount > 0
-        ? recognizedCount > 0
-          ? `${items.length} 项认出 ${recognizedCount} 项，${toCheckCount} 项请核对`
-          : `${toCheckCount} 项请核对`
-        : recognizedCount > 0
-          ? `${items.length} 项已全部核对`
-          : "数字填在下面，点一下就能改";
 
     return (
       <motion.div variants={itemVariants} className="space-y-2">
         <div className="flex h-5 items-center justify-between px-2 text-[12px]">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-[#1F1E1D]">识别结果</span>
-            <span className={showInteractionWarning || toCheckCount > 0 ? "text-status-warning-text" : "text-[#78716C]"}>
+            <span
+              data-ocr-recognized={recognizedCount > 0 ? "true" : undefined}
+              className={hasSummaryWarning ? "text-status-warning-text" : "text-[#78716C]"}
+            >
               {summaryText}
             </span>
           </div>
@@ -251,7 +224,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
           ) : null}
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-4">
-          {cells.map(({ item, field, mode, interactionNeedsReview }) => (
+          {cells.map(({ item, field, mode, ruleReason, ruleSignature, ruleAcknowledged }) => (
             <指标输入卡
               key={item.key}
               label={item.label}
@@ -263,15 +236,28 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
               disabled={disabledKeys.includes(item.key)}
               onChange={(value) => onFieldChange(item.key, value)}
               onRestoreOcr={onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined}
-              onFocus={() => onFocusField?.(item.key)}
-              onBlur={() => onBlurField?.(item.key)}
+              onConfirmDoubt={() => {
+                if (ruleSignature) {
+                  setAcknowledgedRuleSignatures((current) => ({ ...current, [item.key]: ruleSignature }));
+                }
+                if (field.source === "ocr" || (field.confidenceLevel && field.confidenceLevel !== "high")) {
+                  onFieldChange(item.key, field.value);
+                }
+              }}
+              checked={ruleAcknowledged}
+              onFocus={() => {
+                setFrozenFocus({ key: item.key, value: field?.value ?? "" });
+                onFocusField?.(item.key);
+              }}
+              onBlur={() => {
+                setFrozenFocus((current) => (current?.key === item.key ? null : current));
+                onBlurField?.(item.key);
+              }}
               inputRef={setRef(item.key)}
               onKeyDown={handleKeyDown(item.key)}
               hint={disabledKeys.includes(item.key)
                 ? "没绑定作品，这项改不了"
-                : interactionNeedsReview
-                ? interactionReviewReason ?? undefined
-                : editing && item.key === "avg_play_ratio" ? "留空＝保持原值，不能清空" : undefined}
+                : ruleReason ?? (editing && item.key === "avg_play_ratio" ? "留空＝保持原值，不能清空" : undefined)}
             />
           ))}
         </div>

@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import { resolveMetricCellMode } from "./指标输入卡";
 import {
   getInteractionAnomalyReviewReason,
+  getMetricAbovePlayCountReason,
+  METRIC_ABOVE_PLAY_COUNT_REASON,
   type EditableFieldState,
 } from "./填报表单状态";
 import { canSubmit, createInitialSubmissionState } from "./提交状态机";
@@ -28,7 +30,7 @@ test("互动总数超过播放量时播放量进入请核对状态，修正后�
     favorites: "10",
   };
   const reason = getInteractionAnomalyReviewReason(anomalous);
-  assert.equal(reason, "点赞、评论、转发、收藏加起来比播放量还多");
+  assert.equal(reason, "点赞、评论、分享、收藏加起来比播放量还多");
   assert.equal(resolveMetricCellMode({
     field: playCountField(anomalous.play_count),
     confidenceLevel: null,
@@ -61,7 +63,7 @@ test("播放量为零但互动数为正时也提示核对，空播放量不触�
     comments: "",
     shares: "",
     favorites: "",
-  }), "点赞、评论、转发、收藏加起来比播放量还多");
+  }), "点赞、评论、分享、收藏加起来比播放量还多");
   assert.equal(getInteractionAnomalyReviewReason({
     play_count: "",
     likes: "1",
@@ -99,4 +101,35 @@ test("互动异常只提示核对，不阻断已满足必填项的提交", () =>
     content: "文案",
     publishedAtConfirmed: true,
   }).ok, true);
+});
+
+test("单项指标（点赞/评论/分享/收藏/涨粉）高于播放量时提示白话提醒并标为请核对，修正后自动清除", () => {
+  const fields: Record<string, { value: string }> = {
+    play_count: { value: "100" },
+    likes: { value: "120" },
+    comments: { value: "20" },
+    shares: { value: "10" },
+    favorites: { value: "5" },
+    follower_gain: { value: "105" },
+    avg_play_duration: { value: "120" },
+  };
+
+  assert.equal(getMetricAbovePlayCountReason("likes", fields), METRIC_ABOVE_PLAY_COUNT_REASON);
+  assert.equal(getMetricAbovePlayCountReason("follower_gain", fields), METRIC_ABOVE_PLAY_COUNT_REASON);
+  assert.equal(getMetricAbovePlayCountReason("comments", fields), null);
+  assert.equal(getMetricAbovePlayCountReason("avg_play_duration", fields), null);
+
+  assert.equal(resolveMetricCellMode({
+    field: { value: "105", source: "manual" },
+    confidenceLevel: null,
+    optional: false,
+    slotProcessing: false,
+    inputsOpen: false,
+    forceReview: getMetricAbovePlayCountReason("follower_gain", fields) !== null,
+  }), "doubt");
+
+  const fixedFields = { ...fields, likes: { value: "80" }, follower_gain: { value: "10" } };
+  assert.equal(getMetricAbovePlayCountReason("likes", fixedFields), null);
+  assert.equal(getMetricAbovePlayCountReason("follower_gain", fixedFields), null);
+  assert.equal(getMetricAbovePlayCountReason("likes", { play_count: { value: "" }, likes: { value: "10" } }), null);
 });

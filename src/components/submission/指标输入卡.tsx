@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { createClickSelectAllController } from "@/components/submission/click-select-all";
 import {
   cleanMetricInputValue,
   isMetricInputValueValid,
@@ -55,6 +56,8 @@ interface MetricInputCardProps {
   onFocus?: () => void;
   onBlur?: () => void;
   onRestoreOcr?: () => void;
+  onConfirmDoubt?: () => void;
+  checked?: boolean;
   optional?: boolean;
   disabled?: boolean;
   hint?: string;
@@ -72,6 +75,8 @@ export function MetricInputCard({
   onFocus,
   onBlur,
   onRestoreOcr,
+  onConfirmDoubt,
+  checked = false,
   optional = false,
   disabled = false,
   hint,
@@ -79,12 +84,19 @@ export function MetricInputCard({
   onKeyDown,
 }: MetricInputCardProps) {
   const localRef = useRef<HTMLInputElement>(null);
-  const inputEl = inputRef ?? localRef;
+  const [clickSelectController] = useState(createClickSelectAllController);
+  useImperativeHandle(
+    inputRef,
+    () => (mode === "pending" ? null : localRef.current) as HTMLInputElement,
+    [mode],
+  );
   const displayValue = field.value;
   const canRestoreOcr = Boolean(onRestoreOcr) && canRestoreOcrValue(field);
   const isBoxed = mode === "doubt" || mode === "missing";
   const hasInvalidInput = Boolean(displayValue) && !isMetricInputValueValid(displayValue, metricType);
-  const checkedByHand = Boolean(field.manuallyEdited) && Boolean(field.ocrValue) && field.value === field.ocrValue;
+  const checkedByHand =
+    checked ||
+    (Boolean(field.manuallyEdited) && Boolean(field.ocrValue) && field.value === field.ocrValue);
 
   return (
     <div className="flex min-w-0 flex-col gap-1" title={hint}>
@@ -104,7 +116,14 @@ export function MetricInputCard({
               <span className="text-status-warning-text">请核对</span>
               <button
                 type="button"
-                onClick={() => onChange(field.value)}
+                onClick={() => {
+                  if (onConfirmDoubt) {
+                    onConfirmDoubt();
+                  } else {
+                    onChange(field.value);
+                  }
+                  localRef.current?.focus({ preventScroll: true });
+                }}
                 className="text-[#78716C] underline-offset-2 hover:text-[#141413] hover:underline cursor-pointer"
               >
                 没问题
@@ -137,7 +156,7 @@ export function MetricInputCard({
       ) : (
         <Input
           id={`metric-${field.key}`}
-          ref={inputEl as React.RefObject<HTMLInputElement>}
+          ref={localRef}
           type="text"
           inputMode="decimal"
           autoComplete="off"
@@ -155,11 +174,18 @@ export function MetricInputCard({
             }
           }}
           onChange={(event) => onChange(preserveMetricInputText(event.target.value))}
+          onMouseDown={(e) => {
+            clickSelectController.handleMouseDown(document.activeElement === e.currentTarget);
+          }}
           onFocus={(e) => {
-            e.currentTarget.select();
+            clickSelectController.handleFocus(e.currentTarget);
             onFocus?.();
           }}
+          onMouseUp={(e) => {
+            clickSelectController.handleMouseUp(e.currentTarget);
+          }}
           onBlur={() => {
+            clickSelectController.handleBlur();
             if (displayValue) {
               const cleaned = cleanMetricInputValue(displayValue, metricType);
               if (cleaned !== displayValue) onChange(cleaned);

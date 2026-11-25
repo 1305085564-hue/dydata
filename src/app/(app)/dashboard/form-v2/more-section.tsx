@@ -49,6 +49,7 @@ function Chips<T extends string>({ options, value, onPick }: { options: readonly
         <button
           key={option}
           type="button"
+          data-topic-tag-chip="true"
           onClick={() => onPick(option)}
           className={cn(
             CHIP_CLASS,

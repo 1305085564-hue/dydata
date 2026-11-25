@@ -99,6 +99,7 @@ import { createSubmitController } from "./video-submit-form-v2/submit-controller
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
+import { focusSubmissionIssueTarget } from "./video-submit-form-v2/focus-issue-target";
 import { useAppealActions } from "./form-v2/use-appeal-actions";
 import { useReviewNoticeDismissal } from "./use-review-notice-dismissal";
 import { listSubmitGaps, resolveFormProgress, type FormProgress } from "@/lib/video-submit/domain/submit-gaps";
@@ -529,7 +530,8 @@ export function VideoSubmitFormV2({
     if (el.tabIndex < 0 && el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "BUTTON" && el.tagName !== "SELECT") {
       el.tabIndex = -1;
     }
-    el.focus();
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
     const highlightClasses = ["ring-2", "ring-status-warning", "ring-offset-1"];
     el.classList.add(...highlightClasses);
     const removeHighlight = () => {
@@ -980,6 +982,26 @@ export function VideoSubmitFormV2({
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
+  const focusIssueTarget = useCallback((
+    anchor: "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null,
+    invalidKey: ReturnType<typeof summarizeSubmissionIssues>["firstInvalidFieldKey"],
+    missingRequiredSlotsCount = 0,
+  ) => {
+    focusSubmissionIssueTarget({
+      anchor,
+      invalidKey,
+      missingRequiredSlotsCount,
+      focusWithHighlight,
+      triggerSlotsPulse,
+      metricsGroupRef,
+      metaVideoTitleRef,
+      contentTextareaRef,
+      topicTagSectionRef,
+      publishedAtSectionRef,
+      slotsSectionRef,
+    });
+  }, [focusWithHighlight, triggerSlotsPulse]);
+
   // 聚焦某个数字时，对应那张截图的状态行高亮，宽屏对照栏切到那张截图
   function handleFieldFocus(key: EditableMetricKey) {
     const role = getSlotRoleForMetric(key);
@@ -1118,45 +1140,22 @@ export function VideoSubmitFormV2({
     }
 
     if (!submitCheck.ok || !issueSummary.canSubmit) {
+      setHasAttemptedSubmit(true);
       triggerFormShake();
       scrollToIssueAnchor(issueSummary.firstIssueAnchor);
-      const invalidKey = issueSummary.firstInvalidFieldKey;
-      if (invalidKey) {
-        if (invalidKey === "videoTitle") {
-          focusWithHighlight(metaVideoTitleRef.current);
-        } else if (invalidKey === "content") {
-          focusWithHighlight(contentTextareaRef.current);
-        } else if (invalidKey === "topicTag") {
-          const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
-          focusWithHighlight(topicBtn ?? null);
-        } else {
-          metricsGroupRef.current?.focusMetric(invalidKey);
-        }
-      } else if (issueSummary.firstIssueAnchor === "slots" || issueSummary.missingRequiredSlots.length > 0) {
-        triggerSlotsPulse();
-        const slotEl = slotsSectionRef.current?.querySelector<HTMLElement>(
-          '[role="button"][tabindex="0"], [tabindex="0"], button'
-        ) ?? slotsSectionRef.current;
-        focusWithHighlight(slotEl);
-      } else if (issueSummary.firstIssueAnchor === "meta") {
-        focusWithHighlight(metaVideoTitleRef.current ?? contentTextareaRef.current);
-      } else if (issueSummary.firstIssueAnchor === "topicTag") {
-        const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
-        focusWithHighlight(topicBtn ?? null);
-      } else if (issueSummary.firstIssueAnchor === "publishedAt") {
-        const pubInput = publishedAtSectionRef.current?.querySelector<HTMLElement>("input, button, [tabindex='0']");
-        focusWithHighlight(pubInput ?? null);
-      }
+      focusIssueTarget(
+        issueSummary.firstIssueAnchor,
+        issueSummary.firstInvalidFieldKey,
+        issueSummary.missingRequiredSlots.length,
+      );
       return;
     }
 
     if (!isDailyReportOnly && !meta.topicTag) {
+      setHasAttemptedSubmit(true);
       triggerFormShake();
       scrollToIssueAnchor("topicTag");
-      const topicBtn = topicTagSectionRef.current?.querySelector("button");
-      if (topicBtn) {
-        focusWithHighlight(topicBtn);
-      }
+      focusIssueTarget("topicTag", "topicTag");
       return;
     }
 
@@ -1217,34 +1216,11 @@ export function VideoSubmitFormV2({
       setHasAttemptedSubmit(true);
       triggerFormShake();
       scrollToIssueAnchor(issueSummaryRef.current.firstIssueAnchor);
-      const anchor = issueSummaryRef.current.firstIssueAnchor;
-      const invalidKey = issueSummaryRef.current.firstInvalidFieldKey;
-      if (invalidKey) {
-        if (invalidKey === "videoTitle") {
-          focusWithHighlight(metaVideoTitleRef.current);
-        } else if (invalidKey === "content") {
-          focusWithHighlight(contentTextareaRef.current);
-        } else if (invalidKey === "topicTag") {
-          const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
-          focusWithHighlight(topicBtn ?? null);
-        } else {
-          metricsGroupRef.current?.focusMetric(invalidKey);
-        }
-      } else if (anchor === "slots" || issueSummaryRef.current.missingRequiredSlots.length > 0) {
-        triggerSlotsPulse();
-        const slotEl = slotsSectionRef.current?.querySelector<HTMLElement>(
-          '[role="button"][tabindex="0"], [tabindex="0"], button'
-        ) ?? slotsSectionRef.current;
-        focusWithHighlight(slotEl);
-      } else if (anchor === "meta") {
-        focusWithHighlight(metaVideoTitleRef.current ?? contentTextareaRef.current);
-      } else if (anchor === "topicTag") {
-        const topicBtn = topicTagSectionRef.current?.querySelector<HTMLElement>("button, [tabindex='0']");
-        focusWithHighlight(topicBtn ?? null);
-      } else if (anchor === "publishedAt") {
-        const pubInput = publishedAtSectionRef.current?.querySelector<HTMLElement>("input, button, [tabindex='0']");
-        focusWithHighlight(pubInput ?? null);
-      }
+      focusIssueTarget(
+        issueSummaryRef.current.firstIssueAnchor,
+        issueSummaryRef.current.firstInvalidFieldKey,
+        issueSummaryRef.current.missingRequiredSlots.length,
+      );
       const gaps = listSubmitGaps(issueSummaryRef.current);
       if (gaps.length > 0) {
         feedbackToast.warning(`还差 ${gaps.length} 项，第一个是 ${gaps[0].label}`);
@@ -1267,11 +1243,10 @@ export function VideoSubmitFormV2({
     }
   }, [
     canActuallySubmit,
-    focusWithHighlight,
+    focusIssueTarget,
     scrollToIssueAnchor,
     setHasAttemptedSubmit,
     triggerFormShake,
-    triggerSlotsPulse,
   ]);
 
   useEffect(() => {
