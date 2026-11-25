@@ -30,7 +30,7 @@ function isPhysicallyPossible(play: number, counts: Array<number | null | undefi
   return true;
 }
 
-/** 互动率 = (赞+评+藏+转) / 播放；任一输入未采集或物理上不可能则返回 null */
+/** 互动率 = (赞+评+分享+藏) / 播放；任一输入未采集或物理上不可能则返回 null */
 export function interactionRate(
   s: Pick<VideoMetricsSnapshot, "play_count" | "likes" | "comments" | "favorites" | "shares">
 ): number | null {
