@@ -101,7 +101,8 @@ test("页面结构：没有固定标题、导语、统计四宫格、时间预�
   const bar = read("src/app/(app)/admin/fulfillment/components/filter-bar.tsx");
   const roster = read("src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx");
   assert.doesNotMatch(page, /title="发布管理"|PageEpigraph/);
-  assert.match(view, /<h1[\s\S]*\{headline\}/);
+  // 标题即答案：加载中显示目标月份的加载提示，加载完成后显示 headline
+  assert.match(view, /<h1[\s\S]*:\s*headline\}/);
   assert.doesNotMatch(view, /FulfillmentStatsOverview/);
   assert.doesNotMatch(bar, /最近7天|自定义|PRESET_OPTIONS/);
   assert.doesNotMatch(roster, /backdrop-blur|全员发布战况主表|落后优先/);
