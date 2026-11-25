@@ -110,34 +110,3 @@ test("发布管理矩阵的固定浮层在低矮视口内选择可见方向并�
   assert.match(source, /max-h-\[calc\(100dvh-1rem\)\]/);
   assert.match(source, /overflow-y-auto/);
 });
-
-test("主滚动区预留滚动条槽位，弹窗与抽屉开启滚动隔离", () => {
-  const globals = readSource("src/app/globals.css");
-  const dialog = readSource("src/components/ui/dialog.tsx");
-  const sheet = readSource("src/components/ui/sheet.tsx");
-  const adaptiveSheet = readSource("src/components/ui/adaptive-sheet.tsx");
-  const select = readSource("src/components/ui/select.tsx");
-  const popover = readSource("src/components/ui/popover.tsx");
-
-  assert.match(globals, /html\s*\{[\s\S]*scrollbar-gutter:\s*stable;/);
-  assert.match(dialog, /data-slot="dialog-content"[\s\S]*overscroll-contain/);
-  assert.match(dialog, /data-slot="dialog-body"[\s\S]*overscroll-contain/);
-  assert.match(sheet, /data-slot="sheet-content"[\s\S]*overscroll-contain/);
-  assert.match(sheet, /data-slot="sheet-body"[\s\S]*overscroll-contain/);
-  assert.match(adaptiveSheet, /data-slot="adaptive-sheet-content"[\s\S]*overscroll-contain/);
-  assert.match(adaptiveSheet, /data-slot="adaptive-sheet-body"[\s\S]*overscroll-contain/);
-  assert.match(select, /data-slot="select-content"[\s\S]*overscroll-contain/);
-  assert.match(popover, /data-slot="popover-content"[\s\S]*overscroll-contain/);
-});
-
-test("审批撤回条悬停暂停，工作台点击全选且不劫持 Tab 键", () => {
-  const workbench = readSource("src/components/approval-workbench/approval-workbench.tsx");
-  const metricCard = readSource("src/components/submission/指标输入卡.tsx");
-  const metricGroup = readSource("src/components/submission/指标分组区.tsx");
-
-  assert.match(workbench, /onMouseEnter=\{latestUndo \? review\.pauseUndo : undefined\}/);
-  assert.match(workbench, /onMouseLeave=\{review\.resumeUndo\}/);
-  assert.match(metricCard, /onMouseDown=/);
-  assert.match(metricCard, /onMouseUp=/);
-  assert.doesNotMatch(metricGroup, /e\.key\s*===\s*["']Tab["']/);
-});

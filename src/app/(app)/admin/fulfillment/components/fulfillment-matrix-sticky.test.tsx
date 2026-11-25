@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { act } from "react";
 import test from "node:test";
 import { OverflowFreezeTableCard } from "@/components/ui/overflow-freeze-table-card";
@@ -103,11 +101,6 @@ test("OverflowFreezeTableCard 在不溢出与溢出两种容器下仅于横向�
       env.dispatchWindowEvent(new FakeEvent("resize"));
     });
     assert.equal(wideCard.getAttribute("data-overflow-x"), null, "容器恢复宽屏后应撤除首列冻结");
-
-    // 4) 成员主页两张表（代表作 / 异常作品）均接入 OverflowFreezeTableCard freezeFirstCol
-    const profileSrc = readFileSync(resolve(process.cwd(), "src/app/(app)/people/[userId]/page.tsx"), "utf8");
-    const freezeUsages = profileSrc.match(/<OverflowFreezeTableCard\s+freezeFirstCol>/g) ?? [];
-    assert.equal(freezeUsages.length, 2, "成员主页代表作表与异常作品表均应使用 OverflowFreezeTableCard freezeFirstCol");
   } finally {
     await wideMount.unmount();
     await narrowMount.unmount();

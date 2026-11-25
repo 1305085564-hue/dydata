@@ -97,3 +97,35 @@ test("档案上下文只为目标成员返回账号关联数据", async () => {
   assert.equal(data.personContext?.operatorAccounts.length, 1);
   assert.equal(data.personContext?.operatorAccounts[0].accountId, "account-1");
 });
+
+test("只看本人的账号：四个岗位页签都只返回本人那一行", async () => {
+  const onlyMe = { ...common, restrictToSelf: true };
+  const writers = await buildCollaborationWorkbenchData({ ...onlyMe, userId: "writer-1", tab: "writers", canLoadWriterCandidates: false });
+  assert.deepEqual(writers.writerStaff.map((row) => row.userId), ["writer-1"]);
+  const editors = await buildCollaborationWorkbenchData({ ...onlyMe, userId: "editor-1", tab: "editors", canLoadWriterCandidates: false });
+  assert.deepEqual(editors.editorStaff.map((row) => row.userId), ["editor-1"]);
+  const talents = await buildCollaborationWorkbenchData({ ...onlyMe, userId: "talent-1", tab: "talents", canLoadWriterCandidates: false });
+  assert.deepEqual(talents.talents.map((row) => row.userId), ["talent-1"]);
+  const operators = await buildCollaborationWorkbenchData({ ...onlyMe, userId: "operator-1", tab: "operators", canLoadWriterCandidates: false });
+  assert.deepEqual(operators.operators.map((row) => row.userId), ["operator-1"]);
+  const stranger = await buildCollaborationWorkbenchData({ ...onlyMe, userId: "someone-else", tab: "writers", canLoadWriterCandidates: false });
+  assert.equal(stranger.writerStaff.length, 0, "与任何名单都不相关的人看不到别人的行");
+});
+
+test("没有认证权限的人不会触发候选查询；候选查询失败时文案名单仍正常返回", async () => {
+  let calls = 0;
+  const failingLoader = async () => {
+    calls += 1;
+    throw new Error("候选查询失败");
+  };
+  const noPermission = await buildCollaborationWorkbenchData({
+    ...common, tab: "writers", canLoadWriterCandidates: false, writerCandidateLoader: failingLoader,
+  });
+  assert.equal(calls, 0, "没有权限不应触发候选查询");
+  assert.deepEqual(noPermission.writerCandidates, []);
+
+  const failed = await buildCollaborationWorkbenchData({ ...common, tab: "writers", writerCandidateLoader: failingLoader });
+  assert.equal(calls, 1);
+  assert.deepEqual(failed.writerCandidates, []);
+  assert.equal(failed.writerStaff.length, 2, "候选失败不拖垮文案名单");
+});
