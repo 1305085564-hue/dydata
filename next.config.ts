@@ -8,6 +8,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1"],
   outputFileTracingRoot: path.join(__dirname),
   turbopack: {
     root: path.join(__dirname),
