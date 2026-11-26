@@ -122,9 +122,10 @@
 | 主目录只停在 main | `~/Projects/dydata` 不在 main 上不准提交（提交前钩子会拦）；需要隔离时开隔离区（git worktree） |
 | 隔离区用完即删 | 隔离区的工作合进主线后，当轮删掉目录和分支 |
 
-- 改完默认本地 commit；push 必须本轮明确授权
-- push 前核对 `git log --oneline origin/main..HEAD`，确认无夹带改动
-- push 后核对健康状态，写进日志
+- 改完默认本地 commit；push / 发版必须本轮明确授权
+- **push 即代表发版上线**：一旦本轮授权 push，默认直接执行 `npm run release`（推送 + 云托管发版 + 线上核对），除非明确说明「只推代码不发版」，不得只 `git push` 而漏发版
+- push / 发版前核对 `git log --oneline origin/main..HEAD`，确认无夹带改动
+- push / 发版后核对健康状态（`/deployment.json` 与 `/api/health?check=cloudbase`），写进日志
 
 ### 日志
 
