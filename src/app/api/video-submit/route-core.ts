@@ -71,10 +71,7 @@ export async function rollbackSafely(actions: RollbackAction[]) {
   return new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
 }
 
-export type VideoSubmitDeps = {
-  createClient: typeof createClient;
-  createAdminClient: typeof createAdminClient;
-};
+export type VideoSubmitDeps = { createClient: typeof createClient; createAdminClient: typeof createAdminClient };
 
 /** 服务端内部代指定用户提交；外部 HTTP 路由不会传入此参数。 */
 export type VideoSubmitActor = { userId: string };
@@ -816,7 +813,7 @@ async function handleVideoSubmit(
       }, { status: 500 });
     }
   }
-  scheduleFirstDailyReportNotice(existingReport, { submitter, accountName: account.name, videoTitle: persistedVideo.video_title ?? normalized.video_title, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
+  scheduleFirstDailyReportNotice(existingReport, { submitter, reportDate: persistedReport.report_date, videoTitle: persistedVideo.video_title ?? normalized.video_title, videoUrl: persistedVideo.video_url ?? normalized.video_url, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
   // 收尾：结束选题写作状态，并幂等沉淀干货选题。
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
   try {
