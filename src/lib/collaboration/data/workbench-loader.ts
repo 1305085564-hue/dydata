@@ -8,7 +8,7 @@ import type { MonthRange, CollaborationMonthDataset } from "../domain/types";
 import type { CollaborationOverviewStats, OperatorRow, StaffRow, SummaryData, TalentRow, WriterCandidateRow, WorkGroupViews, WorkGroupRow, WorkGroupRosterMember } from "../types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
-import { loadWriterCandidates } from "@/lib/writer-certifications";
+import { buildWriterCandidatesFromProfiles } from "@/lib/writer-certifications";
 import { loadWorkGroupRoster } from "@/lib/work-groups";
 
 export type CollaborationDataTab = "talents" | "operators" | "writers" | "editors" | "teams" | "person-context";
@@ -68,6 +68,7 @@ export async function loadCollaborationWorkbenchData(input: {
     includeWriterCertifications: true,
     includeWorkGroupRoster: false,
     workGroupTeamIds,
+    candidateProfileIds: input.activeVisibleUserIds,
     cacheScopeKey: input.scopeKey,
     fresh: input.fresh,
   });
@@ -86,8 +87,6 @@ export async function loadCollaborationWorkbenchData(input: {
 
 export async function buildCollaborationWorkbenchData(input: {
   dataset: CollaborationMonthDataset;
-  supabase?: SupabaseClient;
-  writerCandidateLoader?: typeof loadWriterCandidates;
   range: MonthRange;
   tab: CollaborationDataTab;
   visibleUserIds: string[];
@@ -161,12 +160,13 @@ export async function buildCollaborationWorkbenchData(input: {
     const writerList = buildStaff(dataset.currentRows, "writer", dataset.profiles, dataset.accounts, dataset.writerCertifications, snapshots, topicContext, input.standards)
       .filter((row) => targetUser(row.userId));
     let candidates: WriterCandidateRow[] = [];
-    if (input.canLoadWriterCandidates && input.supabase) {
-      candidates = await (input.writerCandidateLoader ?? loadWriterCandidates)({
-        supabase: input.supabase,
+    if (input.canLoadWriterCandidates) {
+      candidates = buildWriterCandidatesFromProfiles({
+        profiles: dataset.profiles,
+        certifications: dataset.writerCertifications ?? [],
         activeVisibleUserIds: input.activeVisibleUserIds,
         actor: input.actor,
-      }).catch(() => []);
+      });
     }
     const rowsByUserId = new Map(writerList.map((row) => [row.userId, row])); // gate:transient-map 单次请求内的文案行索引，随请求结束释放
     result.writerStaff = writerList;

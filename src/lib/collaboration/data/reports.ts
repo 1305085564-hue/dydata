@@ -32,7 +32,7 @@ const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS.replace(", da
 const REPORT_PAGE_SIZE = 1000;
 const REPORT_PAGE_CONCURRENCY = 4;
 const REPORT_MAX_ROWS = 100_000;
-const PROFILE_FIELDS = "id, name, team_id";
+const PROFILE_FIELDS = "id, name, team_id, membership_status, role, company_role";
 /** 带小队归属的读列；库还没跑 work_groups migration 时由 queryProfiles 退回 PROFILE_FIELDS。 */
 const PROFILE_FIELDS_WITH_WORK_GROUPS = `${PROFILE_FIELDS}, work_peer_group_id, work_operator_group_id`;
 
@@ -49,6 +49,9 @@ export function mapProfileRow(row: Record<string, unknown>): CollaborationProfil
     team_id: (row.team_id as string | null) ?? null,
     work_peer_group_id: (row.work_peer_group_id as string | null) ?? null,
     work_operator_group_id: (row.work_operator_group_id as string | null) ?? null,
+    membership_status: (row.membership_status as string | null) ?? null,
+    role: (row.role as string | null) ?? null,
+    company_role: (row.company_role as string | null) ?? null,
   };
 }
 
@@ -214,7 +217,21 @@ export async function loadAccounts(supabase: SupabaseClient, ids: string[]) {
   return (result.data ?? []) as CollaborationAccount[];
 }
 
-export async function loadLookups(supabase: SupabaseClient, rows: CollaborationReport[]) {
+/** 成员名下账号：达人归属口径的唯一来源（accounts.profile_id）。 */
+export async function loadOwnedAccounts(supabase: SupabaseClient, profileId: string) {
+  const result = await supabase
+    .from("accounts")
+    .select("id, name, profile_id")
+    .eq("profile_id", profileId);
+  assertSupabaseQuerySucceeded(result.error, "加载成员账号失败");
+  return (result.data ?? []) as CollaborationAccount[];
+}
+
+export async function loadLookups(
+  supabase: SupabaseClient,
+  rows: CollaborationReport[],
+  extraProfileIds: readonly string[] = [],
+) {
   const accounts = await loadAccounts(supabase, unique(rows.map((row) => row.account_id)));
   const profileIds = unique([
     ...rows.flatMap((row) => [
@@ -224,6 +241,7 @@ export async function loadLookups(supabase: SupabaseClient, rows: CollaborationR
       row.operator_user_id,
     ]),
     ...accounts.map((account) => account.profile_id),
+    ...extraProfileIds,
   ]);
   const profiles = await loadProfiles(supabase, profileIds);
   return { profiles, accounts };

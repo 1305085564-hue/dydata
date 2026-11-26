@@ -268,6 +268,7 @@ export function PersonalCard({
               {data && (
                 <Link
                   href={`/people/${data.userId}`}
+                  prefetch={false}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150"

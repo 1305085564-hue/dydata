@@ -130,6 +130,8 @@ export async function loadCollaborationMonthDataset(input: {
   /** 按需加载工作台只读取所选月份；旧调用方仍保留统计起点至当月的范围。 */
   monthOnly?: boolean;
   includeWriterCertifications?: boolean;
+  /** 认证候选所需成员：随主查一并读资料（不新增查询），用于文案页签就地计算候选。 */
+  candidateProfileIds?: readonly string[];
   /** 传了团队 id 才加载小队目录；不看 roster 时只读取组记录，供页签人数使用。 */
   workGroupTeamIds?: Array<string | null | undefined>;
   includeWorkGroupRoster?: boolean;
@@ -148,7 +150,7 @@ export async function loadCollaborationMonthDataset(input: {
   });
   // 这些读取互不依赖：日报行集准备好后同时取查找表、认证状态和小队目录，
   // 避免首屏被三段网络等待串成瀑布。认证缺失成员的补查仍在拿到 profiles 后进行。
-  const lookupsPromise = measureAsync("collaboration.lookups", () => loadLookups(input.supabase, rows));
+  const lookupsPromise = measureAsync("collaboration.lookups", () => loadLookups(input.supabase, rows, input.candidateProfileIds));
   const writerCertificationsPromise = input.includeWriterCertifications
     ? measureAsync("collaboration.writerCertifications", () => loadWriterCertifications(input.supabase, input.visibleUserIds))
     : Promise.resolve([]);

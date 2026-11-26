@@ -731,25 +731,39 @@ test("个人卡资料补全与当月视频在日报返回后并行加载", async
   assert.equal(payload.records[0]?.reportId, "person-report");
 });
 
-test("达人明细的数据层归属过滤只收录本人名下账号的作品", async () => {
-  // 全公司可见日报：account-1 归属 owner-1（本人），account-2 归属 owner-2（他人）
+test("达人视角先查本人名下账号，再按 account_id 精确取日报，不扫全公司", async () => {
+  // account-1 归属 owner-1（本人），account-2 归属 owner-2（他人）
   const rows = [
     report({ id: "mine", account_id: "account-1", report_date: "2026-09-05" }),
     report({ id: "other", account_id: "account-2", report_date: "2026-09-06" }),
   ];
-  const builder = {
-    select() { return this; },
-    in() { return this; },
-    gte() { return this; },
-    lte() { return this; },
-    eq() { return this; },
-    or() { return this; },
-    order() { return this; },
-    range() { return Promise.resolve({ data: rows, error: null }); },
+  const accountIdFilters: string[][] = [];
+  const ownedProfileFilters: string[] = [];
+  const makeReportBuilder = () => {
+    let accountIds: string[] | undefined;
+    return {
+      select() { return this; },
+      in(column: string, ids: string[]) {
+        if (column === "account_id") {
+          accountIds = ids;
+          accountIdFilters.push(ids);
+        }
+        return this;
+      },
+      gte() { return this; },
+      lte() { return this; },
+      eq() { return this; },
+      or() { return this; },
+      order() { return this; },
+      range() {
+        const data = accountIds ? rows.filter((row) => accountIds!.includes(row.account_id)) : rows;
+        return Promise.resolve({ data, error: null });
+      },
+    };
   };
   const supabase = {
     from(table: string) {
-      if (table === "daily_reports") return builder;
+      if (table === "daily_reports") return makeReportBuilder();
       if (table === "profiles") {
         return {
           select() { return this; },
@@ -762,6 +776,13 @@ test("达人明细的数据层归属过滤只收录本人名下账号的作品",
       if (table === "accounts") {
         return {
           select() { return this; },
+          eq(column: string, value: string) {
+            if (column === "profile_id") ownedProfileFilters.push(value);
+            return Promise.resolve({
+              data: accounts.filter((account) => account.profile_id === value),
+              error: null,
+            });
+          },
           in() { return Promise.resolve({ data: accounts, error: null }); },
         };
       }
@@ -788,11 +809,105 @@ test("达人明细的数据层归属过滤只收录本人名下账号的作品",
     role: "talents",
   });
 
+  assert.deepEqual(ownedProfileFilters, ["owner-1"], "先按 profile_id 查本人名下账号");
+  assert.deepEqual(accountIdFilters.at(-1), ["account-1"], "再按本人账号精确取日报");
   assert.deepEqual(
     payload.records.map((rec) => rec.reportId),
     ["mine"],
     "达人明细必须只含账号主人为本人的作品",
   );
+});
+
+test("个人卡 24h 快照与话题标签并行读取", async () => {
+  let releaseSnapshots!: () => void;
+  const snapshotGate = new Promise<void>((resolve) => { releaseSnapshots = resolve; });
+  let snapshotStarted = false;
+  let topicStarted = false;
+  const personReport = report({
+    id: "writer-report",
+    report_date: "2026-09-02",
+    video_id: "video-1",
+    script_author_user_id: "writer-1",
+  });
+  const supabase = {
+    from(table: string) {
+      if (table === "daily_reports") {
+        return {
+          select() { return this; },
+          in() { return this; },
+          gte() { return this; },
+          lte() { return this; },
+          eq() { return this; },
+          or() { return this; },
+          order() { return this; },
+          range() { return Promise.resolve({ data: [personReport], error: null }); },
+        };
+      }
+      if (table === "profiles") {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          maybeSingle() {
+            return Promise.resolve({ data: profiles.find((item) => item.id === "writer-1"), error: null });
+          },
+        };
+      }
+      if (table === "accounts") {
+        return {
+          select() { return this; },
+          in() { return Promise.resolve({ data: accounts, error: null }); },
+        };
+      }
+      if (table === "videos") {
+        return {
+          select() { return this; },
+          in() { return this; },
+          eq() { return this; },
+          or() { return this; },
+          order() { return Promise.resolve({ data: [], error: null }); },
+        };
+      }
+      if (table === "video_metrics_snapshots") {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          in() {
+            snapshotStarted = true;
+            return snapshotGate.then(() => ({ data: [], error: null }));
+          },
+        };
+      }
+      if (table === "video_tags") {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          in() {
+            topicStarted = true;
+            return Promise.resolve({ data: [], error: null });
+          },
+        };
+      }
+      throw new Error(`unexpected table: ${table}`);
+    },
+  };
+
+  const pending = loadPersonData({
+    supabase: supabase as never,
+    visibleUserIds: ["writer-1"],
+    targetUserId: "writer-1",
+    year: 2026,
+    month: 9,
+    role: "writers",
+  });
+
+  await new Promise((resolve) => setImmediate(resolve));
+  try {
+    assert.equal(snapshotStarted, true);
+    assert.equal(topicStarted, true, "话题查询不应等待快照返回");
+  } finally {
+    releaseSnapshots();
+  }
+  await pending;
 });
 
 test("共享岗位数据集的 currentRows 只包含所选月份", async () => {

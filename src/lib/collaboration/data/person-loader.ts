@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { formatShanghaiDateOnly, shanghaiDateRangeToUtc, shiftDateOnly } from "@/lib/business-time";
 import type {
+  CollaborationAccount,
   CollaborationReport,
   CollaborationRoleTab,
   CollaborationVideo,
@@ -28,6 +29,7 @@ import {
 } from "./dataset";
 import {
   loadAccounts,
+  loadOwnedAccounts,
   mapProfileRow,
   queryProfiles,
   queryScopedReports,
@@ -66,9 +68,20 @@ export async function loadPersonData(input: {
   const ranges = getSixMonthRanges(input.year, input.month);
   const today = formatShanghaiDateOnly();
   const growthStart = shiftDateOnly(new Date(`${today}T00:00:00.000Z`), -29);
-  // 达人视角需要全公司可见日报才能按「账号主人」归属（增长窗口与当月明细共用这一次查询）；
-  // 当月署名统计（currentMonth 等）仍由 targetUserId 那次查询提供，两者互不影响。
-  const [profileResult, reportsResult, growthReportsResult] = await Promise.all([
+  const isTalentView = input.role === "talents";
+  // 达人视角按「账号主人」归属：先查本人名下账号，再按账号精确取日报，不再扫全公司可见日报。
+  // 其余岗位的增长窗口仍按署名取数；当月署名统计（currentMonth 等）由 targetUserId 那次查询提供。
+  const signedGrowthPromise = input.role && !isTalentView
+    ? queryScopedReports({
+        supabase: input.supabase,
+        visibleUserIds: input.visibleUserIds,
+        start: STATS_START_DATE,
+        end: today,
+        publishedDateRange: { start: growthStart, end: today },
+        assignedUserId: input.targetUserId,
+      })
+    : Promise.resolve<CollaborationReport[]>([]);
+  const [profileResult, reportsResult, ownAccounts, signedGrowthReports] = await Promise.all([
     queryProfiles<Record<string, unknown>>((fields) =>
       input.supabase.from("profiles").select(fields).eq("id", input.targetUserId).maybeSingle(),
     ),
@@ -80,20 +93,24 @@ export async function loadPersonData(input: {
       assignedUserId: input.targetUserId,
       publishedDateRange: { start: ranges[0]!.start, end: ranges.at(-1)!.end },
     }),
-    input.role
-      ? queryScopedReports({
-          supabase: input.supabase,
-          visibleUserIds: input.visibleUserIds,
-          start: STATS_START_DATE,
-          end: today,
-          publishedDateRange: { start: growthStart, end: today },
-          assignedUserId: input.role === "talents" ? undefined : input.targetUserId,
-        })
-      : Promise.resolve([]),
+    isTalentView
+      ? loadOwnedAccounts(input.supabase, input.targetUserId)
+      : Promise.resolve<CollaborationAccount[]>([]),
+    signedGrowthPromise,
   ]);
   assertSupabaseQuerySucceeded(profileResult.error, "加载个人资料失败");
   if (!profileResult.data) throw new CollaborationNotFoundError("成员不存在");
 
+  const growthReportsResult = isTalentView
+    ? await queryScopedReports({
+        supabase: input.supabase,
+        visibleUserIds: input.visibleUserIds,
+        start: STATS_START_DATE,
+        end: today,
+        publishedDateRange: { start: growthStart, end: today },
+        accountIds: ownAccounts.map((account) => account.id),
+      })
+    : signedGrowthReports;
   const reports = reportsResult;
   const roleReports = reports.filter((row) => roleList(row, input.targetUserId).length > 0);
   const currentRange = ranges.at(-1)!;
@@ -106,15 +123,15 @@ export async function loadPersonData(input: {
     loadVideosForReports(input.supabase, currentRows),
   ]);
   // 达人明细的作品归属看账号主人，与达人榜单同源（isGrowthRoleMatch/talents）；
-  // 上面那次可见日报查询在达人场景本就覆盖当月，直接按归属收敛，不再多发一次查询。
+  // 账号精确查询已限定在本人名下，仍按同一归属口径复核，防止账号换绑后误收。
   const accountsById = accountMap(accounts);
-  const talentRecordRows = input.role === "talents"
+  const talentRecordRows = isTalentView
     ? growthReportsResult.filter((row) =>
         isGrowthRoleMatch(row, input.targetUserId, "talents", accountsById),
       )
     : undefined;
-  // 先按岗位口径收敛，再只为真正入选的作品取 24h 快照：达人视角的日报是全公司范围，
-  // 不先过滤会把几百个无关视频的快照一并拉回来（每 100 个一批）。
+  // 先按岗位口径收敛，再只为真正入选的作品取 24h 快照：
+  // 达人视角已按本人账号精确取数，这里再按 isGrowthRoleMatch 复核，避免账号换绑后把无关作品拉进快照。
   const growthReports = input.role
     ? selectGrowthReports({
         targetUserId: input.targetUserId,
@@ -128,10 +145,13 @@ export async function loadPersonData(input: {
   const qualityRows = input.role
     ? [...currentRows, ...(talentRecordRows ?? []), ...growthReports]
     : [];
-  const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, qualityRows);
-  const qualityTopics = input.role === "writers" || input.role === "talents"
-    ? await loadVideoTopicTags(input.supabase, qualityRows)
-    : undefined;
+  // 快照与话题互不依赖，同时读取，避免个人卡首屏被两段网络等待串成瀑布。
+  const [growthSnapshots, qualityTopics] = await Promise.all([
+    loadVideoSnapshotMetrics(input.supabase, qualityRows),
+    input.role === "writers" || input.role === "talents"
+      ? loadVideoTopicTags(input.supabase, qualityRows)
+      : Promise.resolve(undefined),
+  ]);
   const profile = mapProfileRow(profileResult.data);
 
   return buildPersonPayload({

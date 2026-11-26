@@ -36,6 +36,10 @@ export type CollaborationProfile = {
   /** 工种小队归属（文案/达人二选一，运营可兼任）；与 `work_groups` 同源，仅用于展示分组，不参与权限。 */
   work_peer_group_id?: string | null;
   work_operator_group_id?: string | null;
+  /** 认证候选过滤所需的在职状态与公司角色；随主查一并返回，不新增取数。 */
+  membership_status?: string | null;
+  role?: string | null;
+  company_role?: string | null;
 };
 
 export type CollaborationAccount = {

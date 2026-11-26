@@ -32,6 +32,7 @@ function buildCacheKey(input: CachedDatasetInput) {
     input.range.start,
     input.range.end,
     input.includeWriterCertifications ? "writer-certifications" : "no-writer-certifications",
+    [...(input.candidateProfileIds ?? [])].sort().join(","),
     input.monthOnly ? "month-only" : "stats-history",
     input.includeWorkGroupRoster === false ? "no-work-group-roster" : "work-group-roster",
     [...input.visibleUserIds].sort().join(","),

@@ -5,6 +5,11 @@ import { toast } from "sonner";
 import { BoundedTtlCache } from "@/lib/cache-policy";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 import type { CollaborationWorkbenchData, CollaborationPersonContext } from "@/lib/collaboration/data/workbench-loader";
+import {
+  clearCollaborationTabDataCache,
+  readCollaborationTabData,
+  writeCollaborationTabData,
+} from "./collaboration-tab-cache";
 
 interface UseCollaborationTabDataInput {
   year: number;
@@ -27,10 +32,12 @@ export function useCollaborationTabData({ year, month, scopeKey, initialData, lo
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [loadedTeamsData, setLoadedTeamsData] = useState<CollaborationWorkbenchData | null>(initialData.tab === "teams" ? initialData : null);
   const [personContext, setPersonContext] = useState<CollaborationPersonContext>(initialData.personContext ?? { ownAccountIds: [], operatorAccounts: [] });
-  const tabDataCacheRef = useRef<BoundedTtlCache<CollaborationWorkbenchData> | null>(null);
-  if (!tabDataCacheRef.current) {
-    tabDataCacheRef.current = new BoundedTtlCache({ scope: "user", ttlMs: 60_000, maxEntries: 8, name: "collaboration-client-tabs" });
-    tabDataCacheRef.current.set(`${scopeKey}|${year}-${month}|${initialData.tab}`, initialData);
+  // 首屏服务端已算好当前页签：挂载时写入模块级缓存，翻月重挂后回访同月可直接命中。
+  // 加载失败的空壳不写入，避免把失败结果缓存成「空数据」。
+  const seededRef = useRef(false);
+  if (!seededRef.current) {
+    seededRef.current = true;
+    if (!loadFailed) writeCollaborationTabData(scopeKey, year, month, initialData.tab, initialData);
   }
   const tabRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
   const personRequestRef = useRef<{ sequence: number; controller?: AbortController }>({ sequence: 0 });
@@ -44,13 +51,12 @@ export function useCollaborationTabData({ year, month, scopeKey, initialData, lo
     const sequence = ++tabRequestRef.current.sequence;
     tabRequestRef.current.controller = controller;
     const isCurrent = () => sequence === tabRequestRef.current.sequence && !controller.signal.aborted;
-    const cacheKey = `${scopeKey}|${year}-${month}|${dataTab}`;
     if (fresh) {
-      tabDataCacheRef.current?.clear();
+      clearCollaborationTabDataCache();
       personContextCacheRef.current.clear();
       setLoadedTeamsData(null);
     } else {
-      const cached = tabDataCacheRef.current?.get(cacheKey);
+      const cached = readCollaborationTabData(scopeKey, year, month, dataTab);
       if (cached) {
         setActiveData(cached);
         setPageMeta(cached);
@@ -73,7 +79,7 @@ export function useCollaborationTabData({ year, month, scopeKey, initialData, lo
       if (!response.ok) throw new Error(body.error || "这个月的数据没加载出来");
       if (!isCurrent()) return;
       const data = body as CollaborationWorkbenchData;
-      tabDataCacheRef.current?.set(cacheKey, data);
+      writeCollaborationTabData(scopeKey, year, month, dataTab, data);
       setActiveData(data);
       setPageMeta(data);
       setTabCounts(data.counts);

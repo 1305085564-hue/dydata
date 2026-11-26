@@ -51,6 +51,7 @@ test("缓存键隔离权限、月份、页签数据选项和查询范围", () =>
   assert.notEqual(__internal.buildCacheKey({ ...base, monthOnly: true }), key);
   assert.notEqual(__internal.buildCacheKey({ ...base, includeWriterCertifications: true }), key);
   assert.notEqual(__internal.buildCacheKey({ ...base, includeWorkGroupRoster: false }), key);
+  assert.notEqual(__internal.buildCacheKey({ ...base, candidateProfileIds: ["user-1"] }), key);
   assert.equal(__internal.COLLABORATION_MONTH_CACHE_TTL_MS, 60_000);
 });
 

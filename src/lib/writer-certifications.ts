@@ -22,6 +22,15 @@ type WriterCandidateProfileRow = {
   company_role?: string | null;
 };
 
+/** 认证候选所需的成员字段；工作台主查与认证接口共用同一份过滤口径。 */
+export type WriterCandidateProfile = {
+  id: string;
+  name: string | null;
+  membership_status?: string | null;
+  role?: string | null;
+  company_role?: string | null;
+};
+
 type WriterCertificationTargetRow = {
   id: string;
   name: string | null;
@@ -90,26 +99,18 @@ export async function loadWriterCertifications(
   return ((result.data ?? []) as WriterCertificationRow[]).map(toWriterCertification);
 }
 
-export async function loadWriterCandidates(input: {
-  supabase: SupabaseClient;
+/** 认证候选的唯一过滤口径：在职、在可见范围内、无角色冲突，且当前操作者有权认证。 */
+export function buildWriterCandidatesFromProfiles(input: {
+  profiles: readonly WriterCandidateProfile[];
+  certifications: readonly Pick<WriterCandidate, "userId" | "certified" | "certifiedByName">[];
   activeVisibleUserIds: readonly string[];
   actor?: { userId: string; companyRole?: CompanyRole | null };
-}): Promise<WriterCandidate[]> {
-  const ids = uniqueUserIds(input.activeVisibleUserIds);
-  if (ids.length === 0) return [];
-
-  const profilesResult = await input.supabase
-    .from("profiles")
-    .select("id, name, membership_status, role, company_role")
-    .in("id", ids);
-  assertSupabaseQuerySucceeded(profilesResult.error, "加载文案认证候选失败");
-
-  const certifications = await loadWriterCertifications(input.supabase, ids);
-  const certificationByUserId = new Map(certifications.map((item) => [item.userId, item]));
-  const activeSet = new Set(ids);
-
-  return ((profilesResult.data ?? []) as WriterCandidateProfileRow[])
-    .filter((profile) => activeSet.has(profile.id) && profile.membership_status === "active")
+}): WriterCandidate[] {
+  const activeIds = new Set(input.activeVisibleUserIds.filter(Boolean));
+  if (activeIds.size === 0) return [];
+  const certificationByUserId = new Map(input.certifications.map((item) => [item.userId, item]));
+  return input.profiles
+    .filter((profile) => activeIds.has(profile.id) && profile.membership_status === "active")
     .filter((profile) => {
       const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
       if (roleResolution.conflict) return false;
@@ -129,6 +130,29 @@ export async function loadWriterCandidates(input: {
         certifiedByName: certification?.certified === true ? certification.certifiedByName : null,
       };
     });
+}
+
+export async function loadWriterCandidates(input: {
+  supabase: SupabaseClient;
+  activeVisibleUserIds: readonly string[];
+  actor?: { userId: string; companyRole?: CompanyRole | null };
+}): Promise<WriterCandidate[]> {
+  const ids = uniqueUserIds(input.activeVisibleUserIds);
+  if (ids.length === 0) return [];
+
+  const profilesResult = await input.supabase
+    .from("profiles")
+    .select("id, name, membership_status, role, company_role")
+    .in("id", ids);
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载文案认证候选失败");
+
+  const certifications = await loadWriterCertifications(input.supabase, ids);
+  return buildWriterCandidatesFromProfiles({
+    profiles: (profilesResult.data ?? []) as WriterCandidateProfileRow[],
+    certifications,
+    activeVisibleUserIds: ids,
+    actor: input.actor,
+  });
 }
 
 export async function loadWriterCertificationTarget(
