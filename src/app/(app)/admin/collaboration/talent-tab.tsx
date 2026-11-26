@@ -95,6 +95,7 @@ export function TalentTab({
       <RoleTable
         rows={talents}
         columns={columns}
+        fullBleed={showDetail && columns.length >= 12}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}

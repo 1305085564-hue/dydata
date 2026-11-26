@@ -102,7 +102,7 @@ export function StaffTab({
         key: "certification",
         label: "认证",
         tip: "认证后才计入文案结算。",
-        width: 104,
+        width: 96,
         render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} onRefreshData={onRefreshData} />,
       },
     ];
@@ -141,6 +141,7 @@ export function StaffTab({
       <RoleTable
         rows={rows}
         columns={columns}
+        fullBleed={showDetail && columns.length >= 12}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}

@@ -22,7 +22,13 @@ import {
 } from "./content-list-cell-content";
 import { ContentListTableHeader } from "./content-list-table-header";
 import { ROW_HOVER, ROW_SELECTED } from "@/components/ui/selection";
-import { SORTED_COL_BG, SORTED_STICKY_COL_BG, visibleContentColumns, type ContentColumn } from "./content-list-columns";
+import {
+  SORTED_COL_BG,
+  SORTED_STICKY_COL_BG,
+  contentColumnPadClass,
+  visibleContentColumns,
+  type ContentColumn,
+} from "./content-list-columns";
 import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
 import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
@@ -64,18 +70,15 @@ type CellContext = {
 /** 数字列：右对齐、等宽数字；辅助列说明墨，核心列在列定义里单独提墨。 */
 const NUMBER_TD = "py-2.5 text-right tabular-nums whitespace-nowrap";
 
-function padOf(column: ContentColumn) {
-  return column.groupStart ? "pl-4 pr-2" : "px-2";
-}
-
-function renderCell(column: ContentColumn, ctx: CellContext): { className: string; content: React.ReactNode } {
+function renderCell(column: ContentColumn, ctx: CellContext, isLast: boolean): { className: string; content: React.ReactNode } {
   const { item, standards, hit } = ctx;
-  const pad = padOf(column);
+  const pad = contentColumnPadClass(column, isLast);
   switch (column.key) {
     case "title":
       return {
         className: cn(
-          "sticky left-0 z-20 py-2 px-3 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
+          "sticky left-0 z-20 py-2 shadow-[1px_0_0_0_#E2E2DF] transition-colors",
+          pad,
           ctx.isSelected
             ? "bg-[#E4E4E1] group-hover:bg-[#E4E4E1]"
             : ctx.isTitleSorted
@@ -115,6 +118,7 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
             playCount={item.playCount}
             lowSample={item.lowSample}
             standards={standards}
+            cellClassName={pad}
             highlightClass={hit("interactionRate") ? HIGHLIGHT_CELL_CLASS : ""}
           />
         ),
@@ -122,7 +126,7 @@ function renderCell(column: ContentColumn, ctx: CellContext): { className: strin
     case "retention_achievement":
       return {
         className: "p-0 text-right tabular-nums whitespace-nowrap text-[#1F1E1D]",
-        content: <RetentionAchievementTooltipCell quality={item.quality} standards={standards} />,
+        content: <RetentionAchievementTooltipCell quality={item.quality} standards={standards} cellClassName={pad} />,
       };
     case "follower_gain":
       return {
@@ -186,7 +190,8 @@ export function ContentListTable({
   highlightRules,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
-  const columns = visibleContentColumns(metricViewMode === "spacious");
+  const fullBleed = metricViewMode === "full";
+  const columns = visibleContentColumns(!fullBleed);
 
   // 打开的作品不在视口内时滚到中间。手机卡片和桌面行各有一份 DOM，
   // 只挑真正有渲染盒子（getClientRects 非空）的那一份。
@@ -220,11 +225,24 @@ export function ContentListTable({
         highlightRules={highlightRules}
       />
 
-      {/* 桌面与平板（≥768px）：列由 CONTENT_COLUMNS 统一生成，窄屏横向滚动时冻结作品列 */}
-      <Card className="hidden md:block flex-1 w-full p-0 gap-0">
-        <Table className="text-left border-collapse table-fixed min-w-[960px] lg:min-w-[1160px] xl:min-w-full">
+      {/* 桌面与平板（≥768px）：列由 CONTENT_COLUMNS 统一生成，窄屏横向滚动时冻结作品列；完整视图铺满窗口左右边缘 */}
+      <Card
+        data-full-bleed={fullBleed ? "true" : undefined}
+        className={cn(
+          "hidden md:block flex-1 w-full p-0 gap-0",
+          fullBleed && "w-[100cqw] max-w-none mx-[calc(50%-50cqw)] rounded-none",
+        )}
+      >
+        <Table className="text-left border-collapse table-fixed min-w-[960px] lg:min-w-[1160px] xl:min-w-full" style={{ minWidth: fullBleed ? 1140 : undefined }}>
           <colgroup>
-            {columns.map((column) => <col key={column.key} style={{ width: column.width }} />)}
+            {/* 作品列不设固定宽，吃掉剩余横向空间，保证所有数据列保持紧凑定宽 */}
+            {columns.map((column) =>
+              column.key === "title" ? (
+                <col key={column.key} />
+              ) : (
+                <col key={column.key} style={{ width: column.width }} />
+              ),
+            )}
           </colgroup>
           <ContentListTableHeader
             columns={columns}
@@ -270,8 +288,8 @@ export function ContentListTable({
                       isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
                     )}
                   >
-                    {columns.map((column) => {
-                      const cell = renderCell(column, ctx);
+                    {columns.map((column, index) => {
+                      const cell = renderCell(column, ctx, index === columns.length - 1);
                       const isSorted = column.sortField !== undefined && column.sortField === sortField;
                       return (
                         <td

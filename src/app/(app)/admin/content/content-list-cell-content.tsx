@@ -42,7 +42,7 @@ export function RatioCell({
   metricType,
   achievement,
   className = "",
-  cellClassName = "px-2",
+  cellClassName = "px-1",
   fullCell = false,
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
@@ -126,6 +126,7 @@ export function InteractionRateTooltipCell({
   playCount,
   lowSample = false,
   highlightClass = "",
+  cellClassName = "px-1",
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
   value: number | null | undefined;
@@ -133,6 +134,7 @@ export function InteractionRateTooltipCell({
   playCount: number | null | undefined;
   lowSample?: boolean;
   highlightClass?: string;
+  cellClassName?: string;
   standards?: EvaluationStandards;
 }) {
   const dirty = isImpossibleRatio(value);
@@ -155,7 +157,7 @@ export function InteractionRateTooltipCell({
   const hasDetail = Boolean(quality?.interactionMetrics || value != null);
   if (!hasDetail) {
     return (
-      <div className="flex h-full w-full items-center justify-end py-2.5 px-2 text-[#A8A29E]">
+      <div className={cn("flex h-full w-full items-center justify-end py-2.5 text-[#A8A29E]", cellClassName)}>
         —
       </div>
     );
@@ -165,7 +167,7 @@ export function InteractionRateTooltipCell({
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="group/cell flex h-full w-full items-center justify-end py-2.5 px-2 cursor-help">
+          <div className={cn("group/cell flex h-full w-full items-center justify-end py-2.5 cursor-help", cellClassName)}>
             <span
               className={cn(
                 highlightClass,
@@ -198,14 +200,16 @@ export function InteractionRateTooltipCell({
 /** 留存达成合成列：整格悬停展示子项达标率与折算说明，点击直透行点击。 */
 export function RetentionAchievementTooltipCell({
   quality,
+  cellClassName = "px-1",
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
   quality: WorkContentQuality | null | undefined;
+  cellClassName?: string;
   standards?: EvaluationStandards;
 }) {
   if (quality?.contentAchievement == null) {
     return (
-      <div className="flex h-full w-full items-center justify-end py-2.5 px-2 text-[#A8A29E]">
+      <div className={cn("flex h-full w-full items-center justify-end py-2.5 text-[#A8A29E]", cellClassName)}>
         —
       </div>
     );
@@ -217,7 +221,7 @@ export function RetentionAchievementTooltipCell({
 
   if (!hasDetail) {
     return (
-      <div className="flex h-full w-full items-center justify-end py-2.5 px-2">
+      <div className={cn("flex h-full w-full items-center justify-end py-2.5", cellClassName)}>
         {pct}%
       </div>
     );
@@ -227,7 +231,7 @@ export function RetentionAchievementTooltipCell({
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="group/cell flex h-full w-full items-center justify-end py-2.5 px-2 cursor-help">
+          <div className={cn("group/cell flex h-full w-full items-center justify-end py-2.5 cursor-help", cellClassName)}>
             <span className="border-b border-dashed border-[#D6D3D1] group-hover/cell:border-[#78716C] transition-colors">
               {pct}%
             </span>

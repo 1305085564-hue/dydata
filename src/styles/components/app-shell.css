@@ -2,9 +2,12 @@
 
 @layer components {
   /* 内容轨道：顶栏与正文共用同一条左边线（美学宝典 §4.3 导航同轴）。
-     页面在自己的根节点声明 data-app-rail，顶栏跟着同宽，纯 CSS，首屏不跳。 */
+     页面在自己的根节点声明 data-app-rail，顶栏跟着同宽，纯 CSS，首屏不跳。
+     container-type: inline-size 让 100cqw 精确等于可用视口宽度（自动扣掉 scrollbar-gutter），
+     宽表展开全屏铺满时不会因 100vw 算出页面级横向滚动条。 */
   .app-shell {
     --app-rail: 80rem;
+    container-type: inline-size;
     min-height: 100dvh;
     background: transparent;
     position: relative;

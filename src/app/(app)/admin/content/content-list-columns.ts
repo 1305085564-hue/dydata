@@ -50,25 +50,33 @@ export interface ContentColumn {
 }
 
 export const CONTENT_COLUMNS: readonly ContentColumn[] = [
-  { key: "title", label: "作品", width: 400, sortField: "published_at", sortLabel: "发布时间", align: "left" },
-  { key: "overall_grade", label: "评级", width: 56, sortField: "overall_grade", tip: { kind: "grade" }, align: "left" },
-  { key: "play_count", label: "播放量", width: 76, sortField: "play_count", align: "right" },
-  { key: "interaction_rate", label: "互动率", width: 72, sortField: "interaction_rate", tip: { kind: "interaction" }, align: "right" },
-  { key: "retention_achievement", label: "留存达成", width: 80, sortField: "retention_achievement", tip: { kind: "retention" }, align: "right" },
-  { key: "follower_gain", label: "涨粉", width: 60, sortField: "follower_gain", align: "right" },
-  { key: "likes", label: "点赞", width: 68, sortField: "likes", fullOnly: true, groupStart: true, align: "right" },
-  { key: "comments", label: "评论", width: 52, sortField: "comments", fullOnly: true, align: "right" },
-  { key: "shares", label: "分享", width: 52, sortField: "shares", fullOnly: true, align: "right" },
-  { key: "favorites", label: "收藏", width: 52, sortField: "favorites", fullOnly: true, align: "right" },
-  { key: "bounce_rate_2s", label: "2s跳出", width: 78, sortField: "bounce_rate_2s", groupStart: true, tip: { kind: "standard", metric: "bounceRate2s" }, align: "right" },
-  { key: "completion_rate_5s", label: "5s完播", width: 72, sortField: "completion_rate_5s", tip: { kind: "standard", metric: "completionRate5s" }, align: "right" },
-  { key: "avg_play_duration", label: "均播", width: 62, sortField: "avg_play_duration", tip: { kind: "standard", metric: "avgPlayDuration" }, align: "right" },
-  { key: "avg_play_ratio", label: "播放占比", width: 78, sortField: "avg_play_ratio", tip: { kind: "standard", metric: "avgPlayRatio" }, align: "right" },
-  { key: "completion_rate", label: "完播", width: 62, sortField: "completion_rate", tip: { kind: "standard", metric: "completionRate" }, align: "right" },
+  { key: "title", label: "作品", width: 320, sortField: "published_at", sortLabel: "发布时间", align: "left" },
+  { key: "overall_grade", label: "评级", width: 48, sortField: "overall_grade", tip: { kind: "grade" }, align: "left" },
+  { key: "play_count", label: "播放量", width: 68, sortField: "play_count", align: "right" },
+  { key: "interaction_rate", label: "互动率", width: 64, sortField: "interaction_rate", tip: { kind: "interaction" }, align: "right" },
+  { key: "retention_achievement", label: "留存达成", width: 72, sortField: "retention_achievement", tip: { kind: "retention" }, align: "right" },
+  { key: "follower_gain", label: "涨粉", width: 54, sortField: "follower_gain", align: "right" },
+  { key: "likes", label: "点赞", width: 60, sortField: "likes", fullOnly: true, groupStart: true, align: "right" },
+  { key: "comments", label: "评论", width: 48, sortField: "comments", fullOnly: true, align: "right" },
+  { key: "shares", label: "分享", width: 48, sortField: "shares", fullOnly: true, align: "right" },
+  { key: "favorites", label: "收藏", width: 48, sortField: "favorites", fullOnly: true, align: "right" },
+  { key: "bounce_rate_2s", label: "2s跳出", width: 72, sortField: "bounce_rate_2s", groupStart: true, tip: { kind: "standard", metric: "bounceRate2s" }, align: "right" },
+  { key: "completion_rate_5s", label: "5s完播", width: 64, sortField: "completion_rate_5s", tip: { kind: "standard", metric: "completionRate5s" }, align: "right" },
+  { key: "avg_play_duration", label: "均播", width: 56, sortField: "avg_play_duration", tip: { kind: "standard", metric: "avgPlayDuration" }, align: "right" },
+  { key: "avg_play_ratio", label: "播放占比", width: 72, sortField: "avg_play_ratio", tip: { kind: "standard", metric: "avgPlayRatio" }, align: "right" },
+  { key: "completion_rate", label: "完播", width: 64, sortField: "completion_rate", tip: { kind: "standard", metric: "completionRate" }, align: "right" },
 ];
 
 export function visibleContentColumns(isSpacious: boolean): ContentColumn[] {
   return CONTENT_COLUMNS.filter((column) => !(isSpacious && column.fullOnly));
+}
+
+/** 表头与表体共用的横向内边距（Tailwind 标准整数档位，禁止半档） */
+export function contentColumnPadClass(column: ContentColumn, isLast = false): string {
+  if (column.key === "title") return "pl-4 pr-2";
+  if (column.groupStart) return "pl-3 pr-1";
+  if (isLast) return "pl-1 pr-4";
+  return "px-1";
 }
 
 /** 当前排序列整列浅底，和协作管理岗位表同一配方；冻结列需不透明底防止横向滚动透字 */

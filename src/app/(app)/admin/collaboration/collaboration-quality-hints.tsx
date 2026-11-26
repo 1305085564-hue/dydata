@@ -102,7 +102,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       key: "avgInteractionAchievement",
       label: "互动达成",
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement,
-      width: 88,
+      width: 72,
       sortValue: (row) => summaryOf(getQuality(row))?.avgInteractionAchievement ?? null,
       cellClassName: (row) => {
         const value = summaryOf(getQuality(row))?.avgInteractionAchievement;
@@ -129,7 +129,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       key: "avgContentAchievement",
       label: "留存达成",
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement,
-      width: 88,
+      width: 72,
       sortValue: (row) => summaryOf(getQuality(row))?.avgContentAchievement ?? null,
       cellClassName: (row) => {
         const value = summaryOf(getQuality(row))?.avgContentAchievement;
@@ -157,7 +157,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       label: "良优率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate,
       headExtra: rulesEntry,
-      width: 96,
+      width: 80,
       sortValue: (row) => {
         const summary = summaryOf(getQuality(row));
         return summary && summary.ratedCount > 0 ? summary.goodExcellentRate : null;
@@ -189,7 +189,7 @@ export function excellentCountColumn<R>(getQuality: (row: R) => WriterQualityDat
     key: "excellentCount",
     label: "优条数",
     tip: COLLABORATION_METRIC_HEADER_TIPS.excellentCount,
-    width: 80,
+    width: 64,
     sortValue: (row) => summaryOf(getQuality(row))?.overallGradeCounts.excellent ?? null,
     render: (row) => {
       const quality = getQuality(row);
@@ -216,7 +216,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "reportCount",
       label: "本月作品",
       tip: tips.reportCount ?? COLLABORATION_METRIC_HEADER_TIPS.reportCount,
-      width: 84,
+      width: 72,
       sortValue: (row) => row.reportCount,
       render: (row) => row.reportCount,
     },
@@ -224,7 +224,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "totalPlay",
       label: "总播放",
       tip: tips.totalPlay ?? COLLABORATION_METRIC_HEADER_TIPS.totalPlay,
-      width: 88,
+      width: 72,
       sortValue: (row) => row.totalPlay,
       render: (row) => formatBigNumber(row.totalPlay),
     },
@@ -232,7 +232,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "avgPlay",
       label: "条均播放",
       tip: tips.avgPlay ?? COLLABORATION_METRIC_HEADER_TIPS.avgPlay,
-      width: 88,
+      width: 72,
       sortValue: (row) => row.avgPlay,
       render: (row) => formatBigNumber(row.avgPlay),
     },
@@ -249,7 +249,7 @@ export function rateColumns<R extends RateRow>(toneOptions?: MetricToneOptions):
       key: "followerConversionRate",
       label: "转粉率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.followerConversionRate,
-      width: 80,
+      width: 64,
       sortValue: (row) => row.followerConversionRate,
       render: (row) => formatRate(row.followerConversionRate),
     },
@@ -257,7 +257,7 @@ export function rateColumns<R extends RateRow>(toneOptions?: MetricToneOptions):
       key: "interactionRate",
       label: "互动率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.interactionRate,
-      width: 80,
+      width: 64,
       sortValue: (row) => row.interactionRate,
       cellClassName: (row) => {
         if (row.interactionRate == null) return "";
@@ -286,11 +286,19 @@ export function interactionDetailColumns<R extends InteractionDetailRow>(): Role
     key: column.key,
     label: column.label,
     tip: COLLABORATION_METRIC_HEADER_TIPS.interactionDetail,
-    width: 80,
+    width: 64,
     sortValue: (row: R) => row[column.key] ?? null,
     render: (row: R) => formatDetailRate(row[column.key]),
   }));
 }
+
+const RETENTION_DETAIL_WIDTHS: Record<(typeof RETENTION_DETAIL_COLUMNS)[number]["key"], number> = {
+  bounceRate2s: 74,
+  completionRate5s: 74,
+  avgPlayDuration: 68,
+  avgPlayRatio: 68,
+  completionRate: 80,
+};
 
 /** 展开明细·留存五项：与小队表同一份列定义与口径，按评价标准好红差绿上色。 */
 export function retentionDetailColumns<R extends { avgPlay: number }>(
@@ -302,7 +310,7 @@ export function retentionDetailColumns<R extends { avgPlay: number }>(
     key: column.key,
     label: column.label,
     tip: COLLABORATION_METRIC_HEADER_TIPS.retentionDetail,
-    width: 88,
+    width: RETENTION_DETAIL_WIDTHS[column.key],
     cellClassName: (row: R) => {
       const value = summaryOf(getQuality(row))?.retentionAverages?.[column.key];
       if (value == null) return "";

@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
 import { OneTip } from "./one-tip";
 import { SelfMemberBadge } from "./member-self-hint";
@@ -58,11 +59,17 @@ export interface RoleTableProps<R> {
   rowAriaLabel?: (row: R) => string;
   /** 表头下固定的一行合计（如小队「全队合计」），不参与排序、不可点。 */
   summary?: { name: string; sub?: string | null; row: R };
+  /** 宽表展开明细时铺满浏览器左右边缘，减少横向滚动。 */
+  fullBleed?: boolean;
 }
 
-const NAME_COL_WIDTH = 200;
+const NAME_COL_MIN_WIDTH = 180;
 /** 当前排序列整列铺一层浅底：全站只有一档字重，仅靠墨度差肉眼扫不出哪列在排序。 */
 const SORTED_COL_BG = "bg-[#F7F7F6]/70";
+
+function metricColPadding(index: number, total: number) {
+  return index === total - 1 ? "pl-1 pr-4" : "px-1";
+}
 
 export function RoleTable<R>({
   rows,
@@ -83,6 +90,7 @@ export function RoleTable<R>({
   showAvatar = true,
   rowAriaLabel,
   summary,
+  fullBleed = false,
 }: RoleTableProps<R>) {
   const [internalSortKey, setInternalSortKey] = useState(defaultSortKey);
   const [internalSortOrder, setInternalSortOrder] = useState<"asc" | "desc">("desc");
@@ -125,27 +133,38 @@ export function RoleTable<R>({
     }
   };
 
-  const minWidth = NAME_COL_WIDTH + columns.reduce((sum, c) => sum + c.width, 0);
+  const minWidth = NAME_COL_MIN_WIDTH + columns.reduce((sum, c) => sum + c.width, 0);
 
   return (
     <>
       {/* 宽屏：表格 */}
-      <Card className="hidden sm:flex overflow-hidden p-0 gap-0">
+      <Card
+        data-full-bleed={fullBleed ? "true" : undefined}
+        className={cn(
+          "hidden sm:flex overflow-hidden p-0 gap-0",
+          fullBleed && "w-[100cqw] max-w-none mx-[calc(50%-50cqw)] rounded-none",
+        )}
+      >
         <Table className="table-fixed text-[13px]" style={{ minWidth }}>
           <colgroup>
-            <col style={{ width: NAME_COL_WIDTH }} />
+            {/* 首列不设固定宽，吃掉剩余横向空间，保证所有指标列按紧凑定宽排布 */}
+            <col />
             {columns.map((c) => (
               <col key={c.key} style={{ width: c.width }} />
             ))}
           </colgroup>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="pl-4 sticky left-0 z-20 bg-[#FCFCFB]">{nameLabel}</TableHead>
-              {columns.map((c) => (
+              <TableHead className="pl-4 pr-2 sticky left-0 z-20 bg-[#FCFCFB]">{nameLabel}</TableHead>
+              {columns.map((c, index) => (
                 <TableHead
                   key={c.key}
                   aria-sort={sortKey === c.key ? (sortOrder === "desc" ? "descending" : "ascending") : undefined}
-                  className={`${c.align === "left" ? "text-left" : "text-right"} ${sortKey === c.key ? SORTED_COL_BG : ""}`}
+                  className={cn(
+                    metricColPadding(index, columns.length),
+                    c.align === "left" ? "text-left" : "text-right",
+                    sortKey === c.key && SORTED_COL_BG,
+                  )}
                 >
                   <ColumnHead
                     column={c}
@@ -160,13 +179,22 @@ export function RoleTable<R>({
           <TableBody>
             {summary && (
               <TableRow className="hover:bg-transparent bg-[#FCFCFB]">
-                <TableCell className="pl-4 sticky left-0 z-10 bg-[#FCFCFB]">
+                <TableCell className="pl-4 pr-2 sticky left-0 z-10 bg-[#FCFCFB]">
                   <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
                 </TableCell>
-                {columns.map((c) => {
+                {columns.map((c, index) => {
                   const cellColor = c.cellClassName?.(summary.row) || "text-[#141413]";
                   return (
-                    <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${cellColor} ${sortKey === c.key ? SORTED_COL_BG : ""}`}>
+                    <TableCell
+                      key={c.key}
+                      className={cn(
+                        metricColPadding(index, columns.length),
+                        c.align === "left" ? "text-left" : "text-right",
+                        "tabular-nums",
+                        cellColor,
+                        sortKey === c.key && SORTED_COL_BG,
+                      )}
+                    >
                       {c.render(summary.row)}
                     </TableCell>
                   );
@@ -187,7 +215,7 @@ export function RoleTable<R>({
                   onClick={() => onSelectPerson(userId)}
                   onMouseEnter={() => onPrefetchPerson?.(userId)}
                 >
-                  <TableCell className="pl-4 sticky left-0 z-10 bg-white group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-within:bg-[#F7F7F6] transition-[background-color] duration-150">
+                  <TableCell className="pl-4 pr-2 sticky left-0 z-10 bg-white group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-within:bg-[#F7F7F6] transition-[background-color] duration-150">
                     <button
                       type="button"
                       aria-label={rowAriaLabel ? rowAriaLabel(row) : `查看${getName(row)}的个人档案`}
@@ -201,14 +229,20 @@ export function RoleTable<R>({
                       <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} avatar={showAvatar} />
                     </button>
                   </TableCell>
-                  {columns.map((c) => {
+                  {columns.map((c, index) => {
                     const cellColor = zero
                       ? "text-[#A8A29E]"
                       : c.cellClassName?.(row) || (sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]");
                     return (
                       <TableCell
                         key={c.key}
-                        className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${cellColor} ${sortKey === c.key ? SORTED_COL_BG : ""}`}
+                        className={cn(
+                          metricColPadding(index, columns.length),
+                          c.align === "left" ? "text-left" : "text-right",
+                          "tabular-nums",
+                          cellColor,
+                          sortKey === c.key && SORTED_COL_BG,
+                        )}
                       >
                         {c.render(row)}
                       </TableCell>

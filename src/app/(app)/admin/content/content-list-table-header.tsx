@@ -10,7 +10,13 @@ import {
 } from "@/lib/evaluation-standards";
 import { KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD } from "@/lib/breakout-rating";
 import type { SortField } from "@/lib/content/domain/content-list";
-import { SORTED_COL_BG, SORTED_STICKY_COL_BG, type ContentColumn, type ContentColumnTip } from "./content-list-columns";
+import {
+  SORTED_COL_BG,
+  SORTED_STICKY_COL_BG,
+  contentColumnPadClass,
+  type ContentColumn,
+  type ContentColumnTip,
+} from "./content-list-columns";
 
 type ContentListTableHeaderProps = {
   columns: ContentColumn[];
@@ -55,8 +61,9 @@ export function ContentListTableHeader({
   return (
     <thead className="sticky top-0 z-30 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] text-[#78716C] select-none">
       <tr>
-        {columns.map((column) => {
+        {columns.map((column, index) => {
           const isTitle = column.key === "title";
+          const isLast = index === columns.length - 1;
           const isSorted = column.sortField !== undefined && column.sortField === sortField;
           const ariaSort = column.sortField
             ? isSorted ? (sortDir === "desc" ? "descending" : "ascending") : "none"
@@ -98,12 +105,12 @@ export function ContentListTableHeader({
               key={column.key}
               data-col-key={column.key}
               aria-sort={ariaSort}
-              style={{ width: column.width }}
+              style={isTitle ? undefined : { width: column.width }}
               className={cn(
                 "py-2 font-normal whitespace-nowrap",
                 column.align === "right" ? "text-right" : "text-left",
-                column.groupStart ? "pl-4 pr-2" : "px-2",
-                isTitle && "sticky left-0 z-30 bg-[#FCFCFB] px-3 shadow-[1px_0_0_0_#E2E2DF]",
+                contentColumnPadClass(column, isLast),
+                isTitle && "sticky left-0 z-30 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]",
                 isSorted && (isTitle ? SORTED_STICKY_COL_BG : SORTED_COL_BG),
               )}
             >
