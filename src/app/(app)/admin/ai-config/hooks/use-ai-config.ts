@@ -206,26 +206,88 @@ export type AiConfigBundle = {
   featureControls: AiFeatureControl[];
 };
 
-let cachedBundle: AiConfigBundle | null = null;
-let listeners: Array<(bundle: AiConfigBundle | null) => void> = [];
+/**
+ * 页面内多个 useAiConfig 会在同一时刻挂载（外壳、各面板、弹窗都各调一次）。
+ * 挂载自动读取走共享请求 + 短窗口去重，整屏只发一次 GET；显式刷新与命令后读取
+ * 仍走强制新请求，保证「刷新就能拿到最新状态」的语义不变。
+ */
+export const AI_CONFIG_MOUNT_DEDUPE_WINDOW_MS = 1_000;
+
+export type AiConfigStore = {
+  getBundle: () => AiConfigBundle | null;
+  subscribe: (listener: (bundle: AiConfigBundle | null) => void) => () => void;
+  mutate: (bundle: AiConfigBundle | null) => void;
+  /** 挂载自动读取：共享进行中的请求；短窗口内已读过则返回 null，直接用缓存。 */
+  loadForMount: () => Promise<AiConfigBundle | null>;
+  /** 显式刷新：总是发起一次新的 GET，不复用进行中的请求或缓存。 */
+  loadFresh: () => Promise<AiConfigBundle>;
+};
+
+export function createAiConfigStore(
+  fetchBundle: () => Promise<AiConfigBundle>,
+  mountDedupeWindowMs = AI_CONFIG_MOUNT_DEDUPE_WINDOW_MS,
+): AiConfigStore {
+  let cachedBundle: AiConfigBundle | null = null;
+  let listeners: Array<(bundle: AiConfigBundle | null) => void> = [];
+  let inFlight: Promise<AiConfigBundle> | null = null;
+  let lastSettledAt = 0;
+
+  const mutate = (bundle: AiConfigBundle | null) => {
+    cachedBundle = bundle;
+    lastSettledAt = Date.now();
+    listeners.forEach((l) => l(bundle));
+  };
+
+  const subscribe = (listener: (bundle: AiConfigBundle | null) => void) => {
+    listeners.push(listener);
+    return () => {
+      listeners = listeners.filter((l) => l !== listener);
+    };
+  };
+
+  const startShared = (): Promise<AiConfigBundle> => {
+    if (inFlight) return inFlight;
+    const promise = fetchBundle();
+    inFlight = promise;
+    const settle = () => {
+      if (inFlight === promise) inFlight = null;
+      lastSettledAt = Date.now();
+    };
+    promise.then(settle, settle);
+    return promise;
+  };
+
+  const loadForMount = async (): Promise<AiConfigBundle | null> => {
+    if (!inFlight && cachedBundle && Date.now() - lastSettledAt < mountDedupeWindowMs) {
+      return null;
+    }
+    return startShared();
+  };
+
+  const loadFresh = (): Promise<AiConfigBundle> => fetchBundle();
+
+  return { getBundle: () => cachedBundle, subscribe, mutate, loadForMount, loadFresh };
+}
+
+async function fetchAiConfigBundle(): Promise<AiConfigBundle> {
+  const res = await fetchWithTimeout("/api/admin/ai-config");
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || "加载配置失败");
+  return data as AiConfigBundle;
+}
+
+const aiConfigStore = createAiConfigStore(fetchAiConfigBundle);
 
 export function useAiConfig() {
-  const [bundle, setBundle] = useState<AiConfigBundle | null>(cachedBundle);
-  const [isLoading, setIsLoading] = useState(!cachedBundle);
+  const [bundle, setBundle] = useState<AiConfigBundle | null>(aiConfigStore.getBundle());
+  const [isLoading, setIsLoading] = useState(!aiConfigStore.getBundle());
   const [error, setError] = useState<string | null>(null);
   const requestSeq = useRef(0);
 
-  useEffect(() => {
-    const handler = (b: AiConfigBundle | null) => setBundle(b);
-    listeners.push(handler);
-    return () => {
-      listeners = listeners.filter((l) => l !== handler);
-    };
-  }, []);
+  useEffect(() => aiConfigStore.subscribe(setBundle), []);
 
   const mutate = useCallback((newBundle: AiConfigBundle | null) => {
-    cachedBundle = newBundle;
-    listeners.forEach((l) => l(newBundle));
+    aiConfigStore.mutate(newBundle);
   }, []);
 
   const loadData = useCallback(async (silent = false, notifyOnError = false): Promise<boolean> => {
@@ -234,11 +296,9 @@ export function useAiConfig() {
     if (!silent) setIsLoading(true);
     setError(null);
     try {
-      const res = await fetchWithTimeout("/api/admin/ai-config");
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "加载配置失败");
+      const data = await aiConfigStore.loadFresh();
       // 只让最后发起的那次读取落到页面，避免检测中旧快照晚到覆盖新状态。
-      if (seq === requestSeq.current) mutate(data as AiConfigBundle);
+      if (seq === requestSeq.current) mutate(data);
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "加载配置失败";
@@ -251,6 +311,24 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const loadForMount = useCallback(async (silent: boolean) => {
+    const seq = requestSeq.current + 1;
+    requestSeq.current = seq;
+    if (!silent) setIsLoading(true);
+    setError(null);
+    try {
+      const data = await aiConfigStore.loadForMount();
+      if (data && seq === requestSeq.current) mutate(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "加载配置失败";
+      const friendly = presentError(msg, "加载配置失败");
+      if (seq === requestSeq.current) setError(friendly);
+      if (!silent) feedbackToast.error(friendly);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  }, [mutate]);
+
   const runCommand = useCallback(async (action: string, data: Record<string, unknown> = {}, entity?: "provider" | "key" | "model" | "feature_binding", timeoutMs?: number) => {
     const result = await requestAiConfigCommand(action, data, entity, timeoutMs);
     if (result.ok && result.body.availability) mutate(result.body as AiConfigBundle);
@@ -258,9 +336,9 @@ export function useAiConfig() {
   }, [mutate]);
 
   useEffect(() => {
-    // Cached data is rendered immediately, then revalidated without a loading flash.
-    void loadData(Boolean(cachedBundle));
-  }, [loadData]);
+    // 缓存数据先渲染，挂载读取只做一次共享校验，不产生加载闪烁。
+    void loadForMount(aiConfigStore.getBundle() != null);
+  }, [loadForMount]);
 
   return { bundle, isLoading, error, loadData, runCommand };
 }
