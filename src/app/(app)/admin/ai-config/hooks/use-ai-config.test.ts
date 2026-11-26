@@ -5,6 +5,13 @@ import { AI_CONFIG_MOUNT_DEDUPE_WINDOW_MS, createAiConfigStore, startDetectionRe
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const waitFor = async (predicate: () => boolean, timeoutMs: number, stepMs = 5) => {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate() && Date.now() < deadline) {
+    await sleep(stepMs);
+  }
+};
+
 const makeBundle = (): AiConfigBundle => ({
   providers: [],
   keys: [],
@@ -28,15 +35,15 @@ test("R4 有界刷新：短周期读取、读取不重叠、stop 后停止", asy
     },
     onWindowEnd: () => {},
     intervalMs: 5,
-    windowMs: 200,
+    windowMs: 400,
   });
 
-  await sleep(30);
+  await waitFor(() => calls >= 2, 250);
   assert.ok(calls >= 2, `应至少读取两次，实际 ${calls}`);
   assert.equal(maxActive, 1, "读取不能重叠");
   refresh.stop();
   const stoppedAt = calls;
-  await sleep(20);
+  await sleep(25);
   assert.equal(calls, stoppedAt, "stop 后不能再读取");
 });
 
@@ -53,10 +60,10 @@ test("R4 到窗口上限停止自动读取并回调一次", async () => {
     windowMs: 20,
   });
 
-  await sleep(45);
+  await waitFor(() => windowEnd >= 1, 200);
   assert.equal(windowEnd, 1, "窗口到期只回调一次");
   const stoppedAt = calls;
-  await sleep(15);
+  await sleep(20);
   assert.equal(calls, stoppedAt, "窗口到期后停止读取");
   refresh.stop();
 });
@@ -73,10 +80,10 @@ test("R4 读取失败只提示一次，并在窗口内继续读取", async () =>
     onWindowEnd: () => { windowEnd += 1; },
     onReadError: () => { errors += 1; },
     intervalMs: 5,
-    windowMs: 20,
+    windowMs: 30,
   });
 
-  await sleep(45);
+  await waitFor(() => windowEnd >= 1, 200);
   assert.ok(calls >= 2);
   assert.equal(errors, 1, "同一次检测的读取失败只提示一次");
   assert.equal(windowEnd, 1);

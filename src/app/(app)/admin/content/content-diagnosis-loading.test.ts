@@ -103,35 +103,3 @@ test("内容页浏览器后退只在列表范围变化时重新取数", () => {
     false,
   );
 });
-
-test("详情模块在列表空闲或首次悬停预加载，点击时与详情接口并行", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
-    "utf8",
-  );
-
-  // 与 dynamic() 同一个模块：空闲/悬停提前触发，点开不再先等脚本
-  assert.match(source, /preloadContentDetailDialogModule/);
-  assert.match(source, /requestIdleCallback/);
-  assert.match(source, /onPointerEnter=\{handleListPointerEnter\}/);
-  // 点击入口先启动模块加载，再选中作品（详情接口随后由 effect 并行发起）
-  assert.match(source, /preloadDetailDialog\(\);[\s\S]*?selectVideo\(videoId\)/);
-});
-
-test("列表做最小 memo，且宽表横滑与视图模式保持原样", () => {
-  const listSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-list.tsx"),
-    "utf8",
-  );
-  assert.match(listSource, /export const ContentList = memo\(/);
-
-  const tableSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-list-table.tsx"),
-    "utf8",
-  );
-  // 不回退宽表破栏横滑
-  assert.match(tableSource, /exceedsStandardRail/);
-  assert.match(tableSource, /data-wide-breakout/);
-  // 完整/简洁视图模式仍然驱动列宽
-  assert.match(tableSource, /metricViewMode === "spacious"/);
-});

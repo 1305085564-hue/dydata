@@ -108,7 +108,7 @@ export function buildWriterCandidatesFromProfiles(input: {
 }): WriterCandidate[] {
   const activeIds = new Set(input.activeVisibleUserIds.filter(Boolean));
   if (activeIds.size === 0) return [];
-  const certificationByUserId = new Map(input.certifications.map((item) => [item.userId, item]));
+  const certificationByUserId = new Map(input.certifications.map((item) => [item.userId, item])); // gate:transient-map 单次请求内文案认证索引，随请求结束释放
   return input.profiles
     .filter((profile) => activeIds.has(profile.id) && profile.membership_status === "active")
     .filter((profile) => {

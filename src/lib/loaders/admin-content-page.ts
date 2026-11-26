@@ -2,6 +2,8 @@ import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { queryAdminContentRpcPage } from "./admin-content-rpc";
+import { loadPageTopicLibraryStatuses } from "./admin-content-topic-library";
+import { attachPlayChangeSignals, findPreviousVideoByVisibleId, type PreviousSnapshotRow, type PreviousVideoCandidateRow } from "./admin-content-play-signals";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
@@ -10,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import { classifyVideoTopicKind, resolveVideoTopicLibraryStatuses, type VideoTopicKind, type VideoTopicLibraryStatusInfo } from "@/lib/topics/library";
+import { classifyVideoTopicKind, type VideoTopicKind, type VideoTopicLibraryStatusInfo } from "@/lib/topics/library";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { buildContentQualityRecord, type ContentQualityTopicContext } from "@/lib/content-quality";
@@ -33,8 +35,6 @@ type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type SegmentRow = { video_id: string };
-type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
-type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
@@ -242,97 +242,6 @@ async function selectInBatchesParallel<Row>(
     }
   }
   return rows;
-}
-
-function buildLatestPlayCountByVideoId(snapshots: PreviousSnapshotRow[]) {
-  const playCountByVideoId = new Map<string, number | null>();
-  const capturedAtByVideoId = new Map<string, number>();
-
-  for (const snapshot of snapshots) {
-    const capturedAt = snapshot.captured_at ? new Date(snapshot.captured_at).getTime() : 0;
-    const existingCapturedAt = capturedAtByVideoId.get(snapshot.video_id);
-    if (existingCapturedAt !== undefined && existingCapturedAt >= capturedAt) continue;
-
-    capturedAtByVideoId.set(snapshot.video_id, capturedAt);
-    playCountByVideoId.set(snapshot.video_id, snapshot.play_count ?? null);
-  }
-
-  return playCountByVideoId;
-}
-
-function findPreviousVideoByVisibleId(visibleVideos: VideoRow[], candidates: PreviousVideoCandidateRow[]) {
-  const candidatesByAccountId = new Map<string, PreviousVideoCandidateRow[]>();
-
-  for (const candidate of candidates) {
-    if (!candidate.account_id || !candidate.published_at) continue;
-    const rows = candidatesByAccountId.get(candidate.account_id) ?? [];
-    rows.push(candidate);
-    candidatesByAccountId.set(candidate.account_id, rows);
-  }
-
-  for (const rows of candidatesByAccountId.values()) {
-    rows.sort((left, right) => new Date(right.published_at!).getTime() - new Date(left.published_at!).getTime());
-  }
-
-  const previousByVideoId = new Map<string, PreviousVideoCandidateRow>();
-  for (const video of visibleVideos) {
-    if (!video.account_id || !video.published_at) continue;
-    const currentPublishedAt = new Date(video.published_at).getTime();
-    const previousVideo = candidatesByAccountId
-      .get(video.account_id)
-      ?.find((candidate) => candidate.id !== video.id && new Date(candidate.published_at!).getTime() < currentPublishedAt);
-
-    if (previousVideo) {
-      previousByVideoId.set(video.id, previousVideo);
-    }
-  }
-
-  return previousByVideoId;
-}
-
-function attachPlayChangeSignals({
-  videos,
-  currentSnapshots,
-  previousVideos,
-  previousSnapshots,
-}: {
-  videos: VideoRow[];
-  currentSnapshots: PreviousSnapshotRow[];
-  previousVideos: PreviousVideoCandidateRow[];
-  previousSnapshots: PreviousSnapshotRow[];
-}) {
-  const currentPlayCountByVideoId = buildLatestPlayCountByVideoId(currentSnapshots);
-  const previousPlayCountByVideoId = buildLatestPlayCountByVideoId(previousSnapshots);
-  const previousVideoByVisibleId = findPreviousVideoByVisibleId(videos, previousVideos);
-
-  return videos.map((video) => {
-    const previousVideo = previousVideoByVisibleId.get(video.id);
-    const currentPlayCount = currentPlayCountByVideoId.get(video.id);
-    const previousPlayCount = previousVideo ? previousPlayCountByVideoId.get(previousVideo.id) : null;
-
-    if (currentPlayCount == null || previousPlayCount == null || previousPlayCount <= 0) {
-      return {
-        ...video,
-        previous_play_count: previousPlayCount ?? null,
-        play_count_change_pct: null,
-        play_change_signal: null,
-      };
-    }
-
-    const playCountChangePct = ((currentPlayCount - previousPlayCount) / previousPlayCount) * 100;
-    const isSurge =
-      currentPlayCount - previousPlayCount >= PLAY_CHANGE_SURGE_DELTA_MIN &&
-      playCountChangePct >= 100;
-    // 「腰斩」信号已整体下线（2026-10-14 阿禅确认）：不再产出 halve，跌幅只保留原始百分比
-    const playChangeSignal: Video["play_change_signal"] = isSurge ? "surge" : null;
-
-    return {
-      ...video,
-      previous_play_count: previousPlayCount,
-      play_count_change_pct: playCountChangePct,
-      play_change_signal: playChangeSignal,
-    };
-  });
 }
 
 async function loadPlayChangeSignals({
@@ -676,43 +585,6 @@ type AdminContentRpcPage = {
     next?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
   };
 };
-
-/**
- * 列表页随当前页视频一起下发选题库状态，省掉前端首屏再发一批 POST。
- *
- * 权限与失败口径对齐 /api/admin/content/topic-library-status：
- * - 只有具备「作品复盘只读」（view_video_review）时才计算，否则不下发，前端回退原接口；
- * - 只返回可见范围内的视频，范围为空返回空对象；
- * - 查询失败不拖垮列表，记日志后不下发，由前端原接口兜底并提示。
- */
-async function loadPageTopicLibraryStatuses({
-  supabase,
-  videos,
-  scope,
-  permissionInfo,
-}: {
-  supabase: LoaderSupabase;
-  videos: Array<{ id: string; topic_id?: string | null; user_id?: string | null; accounts?: { profile_id?: string | null } | null }>;
-  scope: ScopeInput;
-  permissionInfo?: UserPermissionInfo;
-}): Promise<Record<string, VideoTopicLibraryStatusInfo> | undefined> {
-  if (permissionInfo?.permissions?.view_video_review !== true) return undefined;
-  if (!scope) return undefined;
-  const visibleUserIds = new Set(scope.visibleUserIds);
-  const scopedVideos = videos
-    .filter((video) => {
-      const ownerId = video.accounts?.profile_id ?? video.user_id ?? null;
-      return Boolean(ownerId && visibleUserIds.has(ownerId));
-    })
-    .map((video) => ({ id: video.id, topic_id: video.topic_id ?? null }));
-  if (scopedVideos.length === 0) return {};
-  try {
-    return await resolveVideoTopicLibraryStatuses(supabase, scopedVideos);
-  } catch (error) {
-    console.error("[content-list] 选题库状态下发失败，回退前端状态接口", error);
-    return undefined;
-  }
-}
 
 async function loadAdminContentRpcPageData({
   evaluationStandards,
