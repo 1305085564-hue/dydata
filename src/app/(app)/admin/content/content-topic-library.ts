@@ -80,7 +80,8 @@ export function useContentTopicLibrary({
   refreshList,
 }: UseContentTopicLibraryArgs) {
   const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>(
-    () => initialTopicLibraryStatuses ?? {},
+    // 没有复盘权限时保持原行为：首屏也不展示选题库状态，避免水合瞬间闪一下又消失。
+    () => (canReviewContent ? initialTopicLibraryStatuses ?? {} : {}),
   );
   // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
   const topicStatusKeyRef = useRef<string | null>(null);
