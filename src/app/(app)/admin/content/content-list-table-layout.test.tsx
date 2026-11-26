@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
+import { DEFAULT_CONTENT_LIST_FILTERS } from "@/lib/content/domain/content-list-filters";
 import { TABLE_STANDARD_RAIL_WIDTH } from "@/lib/table-view-mode";
 import { ContentListTable } from "./content-list-table";
+import { ContentListToolbar } from "./content-list-toolbar";
 import { contentColumnWidth, visibleContentColumns } from "./content-list-columns";
 
 function makeRow(): ProcessedContentRow {
@@ -81,6 +83,37 @@ test("内容驱动表宽：简洁视图还原 w-full 标准容器不缩窄，完
   assert.match(fullHtml, /w-auto text-left border-collapse table-fixed/);
   assert.match(fullHtml, new RegExp(`style="width:${fullTotal}px;min-width:100%"`));
   assert.match(fullHtml, /data-slot="table-container"[^>]*class="[^"]*overflow-x-auto/);
+});
+
+test("工具栏「完整 / 简洁」开关对称文案与 14px 轻按钮样式", () => {
+  const toolbarProps = {
+    view: "all" as const,
+    canManageVideos: false,
+    profiles: [],
+    filters: DEFAULT_CONTENT_LIST_FILTERS,
+    updateFilter: () => {},
+    applyFilterPatch: () => {},
+    profileLabel: "全部成员",
+    accountOptions: [],
+    hasActiveFilters: false,
+    handleResetFilters: () => {},
+    metricViewMode: "full" as const,
+    setMetricViewMode: () => {},
+    isSecondaryOpen: false,
+    setIsSecondaryOpen: () => {},
+    activePlayBucket: null,
+    handlePlayBucketChange: () => {},
+    highlightRules: {},
+    setHighlightRule: () => {},
+    clearHighlightRules: () => {},
+    segmentCounts: { all: 1, excellent: 0, good: 0, normal: 1, unrated: 0, abnormal: 0 },
+  } as unknown as Parameters<typeof ContentListToolbar>[0];
+  const html = renderToStaticMarkup(<ContentListToolbar {...toolbarProps} />);
+  assert.match(html, /data-metric-mode="full"/);
+  assert.match(html, />完整<\/button>/);
+  assert.match(html, />简洁<\/button>/);
+  assert.doesNotMatch(html, /简洁模式/);
+  assert.match(html, /text-\[14px\][^"]*"[^>]*>完整<\/button>/);
 });
 
 test("列宽与内边距：简洁视图还原原版 400px 首列与宽松内边距，完整视图保持 360px 首列与适中紧凑内边距", () => {

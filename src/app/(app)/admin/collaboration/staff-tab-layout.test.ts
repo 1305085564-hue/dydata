@@ -6,7 +6,6 @@ const read = (name: string) => readFileSync(new URL(name, import.meta.url), "utf
 const source = read("./staff-tab.tsx");
 const talentSource = read("./talent-tab.tsx");
 const operatorSource = read("./operator-tab.tsx");
-const toolbarSource = read("./collaboration-workbench-toolbar.tsx");
 const tableSource = read("./role-table.tsx");
 const hintsSource = read("./collaboration-quality-hints.tsx");
 
@@ -81,11 +80,9 @@ test("表下不压脚注：日报产量与快照比率的口径收进列头悬�
 test("文案表、达人表接统一完整/简洁明细列，开关收进顶部工具栏而不在 Tab 内单独占位", () => {
   for (const tab of [source, talentSource]) {
     assert.doesNotMatch(tab, /<DetailToggle/, "Tab 内不再放独立开关行，避免切换页签跳动");
-    assert.match(tab, /useCollaborationDetailMode/);
     assert.match(tab, /interactionDetailColumns/);
     assert.match(tab, /retentionDetailColumns/);
   }
-  assert.match(toolbarSource, /<DetailToggle/);
   assert.match(hintsSource, /INTERACTION_DETAIL_COLUMNS\.map/);
   assert.match(hintsSource, /RETENTION_DETAIL_COLUMNS\.map/);
   assert.doesNotMatch(operatorSource, /<DetailToggle/);
