@@ -77,6 +77,7 @@ test("content list route 以单日播放量默认排序委托 loader 并回传 S
     teamId: null,
     permissionInfo,
     scope,
+    includeTopicLibraryStatuses: true,
     query: {
       view: "all",
       page: 1,
@@ -221,6 +222,46 @@ test("content list route fresh=1 回到第一页并禁用所有响应缓存", as
   assert.equal((receivedArgs as { query?: { page?: number; cursor?: string | null } } | null)?.query?.page, 1);
   assert.equal((receivedArgs as { query?: { cursor?: string | null } } | null)?.query?.cursor, null);
   assert.equal(response.headers.get("cache-control"), "no-store");
+});
+
+test("content list route 原样下发服务端选题库状态", async () => {
+  const topicLibraryStatuses = {
+    "video-1": { status: "in_library" as const, subTopicId: "topic-1", topicKind: "dry_goods" as const },
+  };
+  const response = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          permissions: { review_content: true, view_video_review: true },
+          name: "阿禅",
+          dataScope: "team" as const,
+          teamId: null,
+          activeVisibleUserIds: ["user-1"],
+        },
+      }),
+      getTeamOptions: async () => [],
+      getCurrentPermissionContext: async () => ({
+        permissionInfo: {
+          userId: "owner-1", name: "阿禅", dataScope: "team" as const, role: "admin" as const,
+          companyRole: "company_owner" as const, permissions: { review_content: true, view_video_review: true }, teamId: null,
+        },
+        scope: {
+          userId: "owner-1", role: "admin" as const, permissions: { review_content: true, view_video_review: true },
+          teamId: null, kind: "team" as const, visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"],
+        },
+      }),
+      createAdminClient: () => ({}) as never,
+      loadAdminContentListData: async () => ({ ...buildContentPayload(), topicLibraryStatuses }),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).topicLibraryStatuses, topicLibraryStatuses);
 });
 
 test("content list route 非法 view 直接拒绝", async () => {

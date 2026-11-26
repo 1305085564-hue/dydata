@@ -4,17 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getApiFailureMessage } from "@/lib/api-failure-message";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
-import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
+import type { VideoTopicLibraryStatusInfo } from "@/lib/topics/library";
 import { buildTopicLibraryStatusRequests } from "./topic-library-status-request";
 
 type AdminContentVideo = AdminContentPageData["videos"][number];
 
-export type TopicLibraryStatusInfo = {
-  status: VideoTopicLibraryStatus;
-  subTopicId: string | null;
-  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
-  topicKind: VideoTopicKind;
-};
+export type TopicLibraryStatusInfo = VideoTopicLibraryStatusInfo;
 
 type TopicLibraryStatusPayload = {
   statuses?: Record<string, TopicLibraryStatusInfo>;
@@ -22,6 +17,27 @@ type TopicLibraryStatusPayload = {
 
 export function buildTopicLibraryStatusSignature(videos: Array<Pick<AdminContentVideo, "id">>) {
   return [...videos.map((video) => video.id).filter(Boolean)].sort().join(",");
+}
+
+/** 服务端随列表下发的状态覆盖了哪些视频；没有下发时返回 null（需要回退到状态接口）。 */
+export function buildServerTopicLibraryStatusSignature(
+  statuses: Record<string, TopicLibraryStatusInfo> | null | undefined,
+): string | null {
+  if (!statuses) return null;
+  return buildTopicLibraryStatusSignature(Object.keys(statuses).map((id) => ({ id })));
+}
+
+/**
+ * 服务端状态是否正好覆盖当前列表。
+ * 覆盖时直接复用，不再 POST /api/admin/content/topic-library-status；
+ * 没下发、或列表已变化（翻页/切视角/筛选）时返回 false，走原接口兜底。
+ */
+export function shouldUseServerTopicLibraryStatus(
+  videos: Array<Pick<AdminContentVideo, "id">>,
+  statuses: Record<string, TopicLibraryStatusInfo> | null | undefined,
+): boolean {
+  const serverSignature = buildServerTopicLibraryStatusSignature(statuses);
+  return serverSignature !== null && serverSignature === buildTopicLibraryStatusSignature(videos);
 }
 
 /**
@@ -51,16 +67,21 @@ export function mergeTopicLibraryStatusPayloads(payloads: Array<TopicLibraryStat
 
 interface UseContentTopicLibraryArgs {
   videos: AdminContentVideo[];
+  /** 服务端随列表下发的当前页选题库状态；签名覆盖当前视频时不再发状态请求。 */
+  initialTopicLibraryStatuses?: Record<string, TopicLibraryStatusInfo> | null;
   canReviewContent: boolean;
   refreshList: () => Promise<unknown>;
 }
 
 export function useContentTopicLibrary({
   videos,
+  initialTopicLibraryStatuses,
   canReviewContent,
   refreshList,
 }: UseContentTopicLibraryArgs) {
-  const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
+  const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>(
+    () => initialTopicLibraryStatuses ?? {},
+  );
   // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
   const topicStatusKeyRef = useRef<string | null>(null);
   // 正在途中的签名。首屏 videos 会先来一批、随即再变一次，两次签名相同；
@@ -69,6 +90,8 @@ export function useContentTopicLibrary({
   // 用「在途签名」在 effect 入口同步拦掉这一轮重复请求。
   const topicStatusPendingSignatureRef = useRef<string | null>(null);
   const topicStatusAbortRef = useRef<AbortController | null>(null);
+  // 记录已采用的服务端状态对象；同一份对象不重复 setState，刷新后新对象仍会覆盖本地状态。
+  const appliedServerPayloadRef = useRef<Record<string, TopicLibraryStatusInfo> | null>(null);
 
   const loadTopicLibraryStatuses = useCallback(async (nextVideos: AdminContentVideo[]) => {
     const ids = nextVideos.map((video) => video.id).filter(Boolean);
@@ -129,14 +152,45 @@ export function useContentTopicLibrary({
     }
   }, []);
 
+  const serverStatusSignature = useMemo(
+    () => buildServerTopicLibraryStatusSignature(initialTopicLibraryStatuses),
+    [initialTopicLibraryStatuses],
+  );
+
   useEffect(() => {
     if (!canReviewContent) {
       setTopicLibraryStatuses({});
+      topicStatusKeyRef.current = null;
+      topicStatusPendingSignatureRef.current = null;
       return;
     }
-    // 列表变化时按需拉取选题库状态（请求生命周期状态）
+    const signature = buildTopicLibraryStatusSignature(videos);
+    // 服务端已随列表下发且正好覆盖当前列表：直接采用，不再发状态请求。
+    if (
+      initialTopicLibraryStatuses
+      && serverStatusSignature !== null
+      && serverStatusSignature === signature
+    ) {
+      // 取消可能仍在途的旧请求，避免过期结果覆盖服务端结果
+      topicStatusAbortRef.current?.abort();
+      topicStatusPendingSignatureRef.current = null;
+      topicStatusKeyRef.current = signature;
+      if (appliedServerPayloadRef.current !== initialTopicLibraryStatuses) {
+        appliedServerPayloadRef.current = initialTopicLibraryStatuses;
+        setTopicLibraryStatuses(initialTopicLibraryStatuses);
+      }
+      return;
+    }
+    // 没下发或列表已变化：回退到原状态接口（与原行为一致）
+    appliedServerPayloadRef.current = null;
     void loadTopicLibraryStatuses(videos);
-  }, [canReviewContent, loadTopicLibraryStatuses, videos]);
+  }, [
+    canReviewContent,
+    initialTopicLibraryStatuses,
+    loadTopicLibraryStatuses,
+    serverStatusSignature,
+    videos,
+  ]);
 
   const videosWithLibraryStatus = useMemo(
     () => videos.map((video) => ({
@@ -162,9 +216,11 @@ export function useContentTopicLibrary({
       throw new Error(payload?.error || "操作失败，请重试");
     }
     // 入库状态已在服务端变更，置空签名让列表刷新后强制重算该列表状态；
-    // 在途标记也要一起清，否则新列表签名若与在途请求相同会被误判为「正在途」而跳过刷新
+    // 在途标记也要一起清，否则新列表签名若与在途请求相同会被误判为「正在途」而跳过刷新；
+    // 已采用的服务端对象也置空，确保刷新回来的新状态一定覆盖本地显示。
     topicStatusKeyRef.current = null;
     topicStatusPendingSignatureRef.current = null;
+    appliedServerPayloadRef.current = null;
     await refreshList();
   }, [refreshList, topicLibraryStatuses]);
 

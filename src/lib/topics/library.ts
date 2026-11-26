@@ -32,6 +32,14 @@ export type VideoTopicLibraryStatus =
   | "ineligible"
   | "pending_entry";
 
+/** 单条视频的选题库状态；列表接口与选题库状态接口共用同一形状。 */
+export type VideoTopicLibraryStatusInfo = {
+  status: VideoTopicLibraryStatus;
+  subTopicId: string | null;
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  topicKind: VideoTopicKind;
+};
+
 export type ApiFailureResult = { ok: false; status: number; message: string };
 
 export function isReviewExcludedTopicTag(tag: string | null | undefined) {
@@ -389,9 +397,7 @@ async function selectInBatches<T>(
 export async function resolveVideoTopicLibraryStatuses(
   supabase: SupabaseClient,
   videos: Array<{ id: string; topic_id?: string | null }>,
-): Promise<
-  Record<string, { status: VideoTopicLibraryStatus; subTopicId: string | null; topicKind: VideoTopicKind }>
-> {
+): Promise<Record<string, VideoTopicLibraryStatusInfo>> {
   const videoIds = [...new Set(videos.map((video) => video.id).filter(Boolean))];
   if (!videoIds.length) return {};
 
@@ -446,10 +452,7 @@ export async function resolveVideoTopicLibraryStatuses(
     }
   }
 
-  const result: Record<
-    string,
-    { status: VideoTopicLibraryStatus; subTopicId: string | null; topicKind: VideoTopicKind }
-  > = {};
+  const result: Record<string, VideoTopicLibraryStatusInfo> = {};
   for (const video of videos) {
     if (!video.id) continue;
     const topicTag = tagByVideoId.get(video.id) ?? null;

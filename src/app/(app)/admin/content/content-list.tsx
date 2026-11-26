@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
@@ -25,7 +25,7 @@ function shiftDateString(dateStr: string, days: number): string {
 const NO_DATES: string[] = [];
 const NO_COUNTS: Array<{ d: string; c: number }> = [];
 
-export function ContentList(props: ContentListProps) {
+export const ContentList = memo(function ContentList(props: ContentListProps) {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.toString();
   const state = useContentListState(props);
@@ -272,4 +272,4 @@ export function ContentList(props: ContentListProps) {
       )}
     </div>
   );
-}
+});

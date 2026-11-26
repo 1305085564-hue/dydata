@@ -88,6 +88,8 @@ export async function ContentDataContainer({
       permissionInfo: scopedPermissionContext.permissionInfo,
       scope: readOnlyScope,
       query: { ...query, perspective: scope.perspective, teamId: scope.teamId },
+      // SSR 首屏直接把当前页选题库状态带进 HTML，避免水合后再发一批状态请求。
+      includeTopicLibraryStatuses: true,
     }),
     directVideoId
       ? loadAdminContentVideoDetail({

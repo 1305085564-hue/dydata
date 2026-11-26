@@ -33,6 +33,18 @@ const AuthorWorksDrawer = dynamic(
   { ssr: false },
 );
 
+/**
+ * 与 ContentDetailDialog 的 dynamic() 指向同一个模块：列表空闲或首次悬停时先触发，
+ * 让详情 chunk 与详情 API 并行加载，点开时不再先等脚本再等接口。
+ */
+function preloadContentDetailDialogModule() {
+  return import("./content-detail-dialog");
+}
+
+// 稳定空数组引用，避免每次渲染都给 memo 化的 ContentList 传新 prop。
+const EMPTY_DATES: string[] = [];
+const EMPTY_COUNTS: Array<{ d: string; c: number }> = [];
+
 import type { UserPermissionInfo } from "@/lib/permissions";
 
 interface ContentPageClientProps {
@@ -85,6 +97,33 @@ export function ContentPageClient({
   useEffect(() => {
     listRef.current?.setAttribute("data-content-ready", "true");
   }, []);
+
+  const detailModulePreloadStartedRef = useRef(false);
+  const preloadDetailDialog = useCallback(() => {
+    if (detailModulePreloadStartedRef.current) return;
+    detailModulePreloadStartedRef.current = true;
+    void preloadContentDetailDialogModule().catch(() => {
+      // 预加载失败不改变功能；允许下一次悬停/点击再试。
+      detailModulePreloadStartedRef.current = false;
+    });
+  }, []);
+  // 列表空闲时提前把详情 chunk 拉下来；不支持 requestIdleCallback 的环境延后一次再拉。
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      const handle = idleWindow.requestIdleCallback(() => preloadDetailDialog(), { timeout: 2000 });
+      return () => idleWindow.cancelIdleCallback?.(handle);
+    }
+    const timer = window.setTimeout(() => preloadDetailDialog(), 1500);
+    return () => window.clearTimeout(timer);
+  }, [preloadDetailDialog]);
+  const handleListPointerEnter = useCallback(() => {
+    preloadDetailDialog();
+  }, [preloadDetailDialog]);
   const refreshList = useCallback(
     () => loadData(view, perspective, teamId, { background: true }),
     [loadData, perspective, teamId, view],
@@ -92,12 +131,16 @@ export function ContentPageClient({
   const handleQueryChange = useCallback(() => {
     void loadData(view, perspective, teamId);
   }, [loadData, perspective, teamId, view]);
+  const handleViewChange = useCallback((nextView: ContentView) => {
+    void loadData(nextView, perspective, teamId, { resetPage: true });
+  }, [loadData, perspective, teamId]);
   const {
     topicLibraryStatuses,
     videosWithLibraryStatus,
     toggleTopicLibrary: handleToggleTopicLibrary,
   } = useContentTopicLibrary({
     videos: data.videos,
+    initialTopicLibraryStatuses: data.topicLibraryStatuses,
     canReviewContent: permissionInfo.permissions.review_content === true,
     refreshList,
   });
@@ -105,6 +148,11 @@ export function ContentPageClient({
   const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>(
     directVideoDetail ? { [directVideoDetail.video.id]: directVideoDetail } : {},
   );
+  // openVideo 需要读已缓存详情，但缓存更新不应让列表回调用新引用、拖累 ContentList 的 memo。
+  const loadedDetailsRef = useRef(loadedDetails);
+  useEffect(() => {
+    loadedDetailsRef.current = loadedDetails;
+  }, [loadedDetails]);
   const [lastDisplayedDetail, setLastDisplayedDetail] = useState<AdminContentVideoDetail | null>(
     directVideoDetail ?? null,
   );
@@ -158,12 +206,23 @@ export function ContentPageClient({
   const openVideo = useCallback(
     (videoId: string) => {
       setDetailError(null);
-      if (loadedDetails[videoId]) {
-        setLastDisplayedDetail(loadedDetails[videoId]);
+      // 点击即开始下载详情 chunk，与下面 effect 里的详情 API 请求并行，不等脚本回来再发接口。
+      preloadDetailDialog();
+      const cached = loadedDetailsRef.current[videoId];
+      if (cached) {
+        setLastDisplayedDetail(cached);
       }
       selectVideo(videoId);
     },
-    [loadedDetails, selectVideo],
+    [preloadDetailDialog, selectVideo],
+  );
+  const handleSelectVideoId = useCallback((videoId: string | null) => {
+    if (videoId) openVideo(videoId);
+    else closeVideo();
+  }, [closeVideo, openVideo]);
+  const contentCursors = useMemo(
+    () => data.cursors ?? { previous: null, next: null },
+    [data.cursors],
   );
 
   useEffect(() => {
@@ -333,6 +392,7 @@ export function ContentPageClient({
         ref={listRef}
         aria-busy={isLoading}
         data-content-first-id={data.videos[0]?.id ?? ""}
+        onPointerEnter={handleListPointerEnter}
         className="flex flex-1 flex-col scroll-mt-8"
       >
         <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>
@@ -346,7 +406,7 @@ export function ContentPageClient({
             contentQualityByVideoId={data.contentQualityByVideoId}
             evaluationStandards={data.evaluationStandards}
             view={view}
-            onViewChange={(nextView) => void loadData(nextView, perspective, teamId, { resetPage: true })}
+            onViewChange={handleViewChange}
             isViewLoading={isLoading}
             perspective={perspective}
             onPerspectiveChange={switchPerspective}
@@ -360,15 +420,12 @@ export function ContentPageClient({
             serverPage={data.summary.page}
             serverPageSize={data.summary.pageSize}
             serverPaginated
-            cursors={data.cursors ?? { previous: null, next: null }}
-            availableDates={data.availableDates ?? []}
-            availableCounts={data.availableCounts ?? []}
+            cursors={contentCursors}
+            availableDates={data.availableDates ?? EMPTY_DATES}
+            availableCounts={data.availableCounts ?? EMPTY_COUNTS}
             onQueryChange={handleQueryChange}
             canReviewContent={permissionInfo.permissions.review_content === true}
-            onSelectVideoId={(videoId) => {
-              if (videoId) openVideo(videoId);
-              else closeVideo();
-            }}
+            onSelectVideoId={handleSelectVideoId}
             onSelectAuthor={handleSelectAuthor}
             ownerNames={data.ownerNames}
           />

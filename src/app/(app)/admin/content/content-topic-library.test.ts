@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildServerTopicLibraryStatusSignature,
   buildTopicLibraryStatusSignature,
   mergeTopicLibraryStatusPayloads,
   shouldLoadTopicLibraryStatus,
+  shouldUseServerTopicLibraryStatus,
 } from "./content-topic-library";
 
 test("选题库状态签名与视频顺序无关，重复列表不会重复请求", () => {
@@ -54,4 +56,38 @@ test("列表真的变了仍然会重新取数（不能为了去重把该刷的�
   assert.equal(shouldLoadTopicLibraryStatus(next, loaded, null), true);
   // 在途的是旧签名，新签名仍要发（切换视角/筛选后必须更新状态）
   assert.equal(shouldLoadTopicLibraryStatus(next, loaded, loaded), true);
+});
+
+test("服务端状态覆盖当前列表时直接复用，不再 POST 状态接口", () => {
+  const videos = [{ id: "video-2" }, { id: "video-1" }];
+  const statuses = {
+    "video-1": { status: "in_library", subTopicId: "topic-1", topicKind: "dry_goods" },
+    "video-2": { status: "removed", subTopicId: "topic-2", topicKind: "review" },
+  } as const;
+
+  // 顺序无关，只看覆盖的 ID 集合
+  assert.equal(shouldUseServerTopicLibraryStatus(videos, statuses), true);
+  assert.equal(buildServerTopicLibraryStatusSignature(statuses), "video-1,video-2");
+  // 空列表 + 空状态也算覆盖，避免空列表反复请求
+  assert.equal(shouldUseServerTopicLibraryStatus([], {}), true);
+});
+
+test("服务端没下发或列表已变化时回退原状态接口", () => {
+  const videos = [{ id: "video-1" }, { id: "video-2" }];
+  const statuses = {
+    "video-1": { status: "in_library", subTopicId: "topic-1", topicKind: "dry_goods" },
+  } as const;
+
+  assert.equal(shouldUseServerTopicLibraryStatus(videos, undefined), false);
+  assert.equal(shouldUseServerTopicLibraryStatus(videos, null), false);
+  // 服务端只覆盖了一部分（例如部分视频被权限过滤）→ 仍需原接口补齐
+  assert.equal(shouldUseServerTopicLibraryStatus(videos, statuses), false);
+  // 翻页/切筛选后视频集合变了 → 不能复用旧状态
+  assert.equal(
+    shouldUseServerTopicLibraryStatus([{ id: "video-3" }], {
+      "video-1": { status: "in_library", subTopicId: "topic-1", topicKind: "dry_goods" },
+      "video-2": { status: "removed", subTopicId: "topic-2", topicKind: "review" },
+    }),
+    false,
+  );
 });

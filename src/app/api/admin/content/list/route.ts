@@ -111,6 +111,8 @@ export async function buildAdminContentListResponse(
       permissionInfo: permissionContext.permissionInfo,
       scope: readOnlyScope,
       query,
+      // 列表页首屏与翻页都在同一次请求里拿到选题库状态，前端不再额外发一批 POST。
+      includeTopicLibraryStatuses: true,
     });
   } catch (error) {
     if (error instanceof Error && error.message === "CONTENT_LIST_CURSOR_STALE") {

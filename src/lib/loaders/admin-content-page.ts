@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import { getPublishedDateKey } from "@/lib/date-semantics";
-import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
+import { classifyVideoTopicKind, resolveVideoTopicLibraryStatuses, type VideoTopicKind, type VideoTopicLibraryStatusInfo } from "@/lib/topics/library";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { buildContentQualityRecord, type ContentQualityTopicContext } from "@/lib/content-quality";
@@ -60,6 +60,12 @@ export interface AdminContentPageData {
   reviewReadiness: Record<string, ContentReviewReadiness>;
   /** 列表范围内每条视频的统一内容质量结果；Record 可直接随 JSON 刷新传输。 */
   contentQualityByVideoId: Record<string, WorkContentQuality>;
+  /**
+   * 当前页视频的选题库状态，与 /api/admin/content/topic-library-status 同口径。
+   * 仅在调用方显式要求且有「作品复盘只读」权限时下发；查询失败时保持 undefined，
+   * 前端会回退到原状态接口，列表本身不受影响。
+   */
+  topicLibraryStatuses?: Record<string, VideoTopicLibraryStatusInfo>;
   summary: {
     totalVideos: number;
     page?: number;
@@ -650,6 +656,11 @@ export type AdminContentListArgs = {
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
   query?: ContentListQuery;
+  /**
+   * 是否随当前页视频下发选题库状态。只有数据复盘列表页（SSR 与 GET 列表接口）需要；
+   * 作者作品抽屉等批量复用列表的分页调用不打开，避免每页多算一遍。
+   */
+  includeTopicLibraryStatuses?: boolean;
 };
 
 type AdminContentRpcPage = {
@@ -666,16 +677,57 @@ type AdminContentRpcPage = {
   };
 };
 
+/**
+ * 列表页随当前页视频一起下发选题库状态，省掉前端首屏再发一批 POST。
+ *
+ * 权限与失败口径对齐 /api/admin/content/topic-library-status：
+ * - 只有具备「作品复盘只读」（view_video_review）时才计算，否则不下发，前端回退原接口；
+ * - 只返回可见范围内的视频，范围为空返回空对象；
+ * - 查询失败不拖垮列表，记日志后不下发，由前端原接口兜底并提示。
+ */
+async function loadPageTopicLibraryStatuses({
+  supabase,
+  videos,
+  scope,
+  permissionInfo,
+}: {
+  supabase: LoaderSupabase;
+  videos: Array<{ id: string; topic_id?: string | null; user_id?: string | null; accounts?: { profile_id?: string | null } | null }>;
+  scope: ScopeInput;
+  permissionInfo?: UserPermissionInfo;
+}): Promise<Record<string, VideoTopicLibraryStatusInfo> | undefined> {
+  if (permissionInfo?.permissions?.view_video_review !== true) return undefined;
+  if (!scope) return undefined;
+  const visibleUserIds = new Set(scope.visibleUserIds);
+  const scopedVideos = videos
+    .filter((video) => {
+      const ownerId = video.accounts?.profile_id ?? video.user_id ?? null;
+      return Boolean(ownerId && visibleUserIds.has(ownerId));
+    })
+    .map((video) => ({ id: video.id, topic_id: video.topic_id ?? null }));
+  if (scopedVideos.length === 0) return {};
+  try {
+    return await resolveVideoTopicLibraryStatuses(supabase, scopedVideos);
+  } catch (error) {
+    console.error("[content-list] 选题库状态下发失败，回退前端状态接口", error);
+    return undefined;
+  }
+}
+
 async function loadAdminContentRpcPageData({
   evaluationStandards,
   supabase,
   query,
   scope,
+  permissionInfo,
+  includeTopicLibraryStatuses = false,
 }: {
   supabase: LoaderSupabase;
   evaluationStandards: EvaluationStandards;
   query: ContentListQuery;
   scope: NonNullable<ScopeInput>;
+  permissionInfo?: UserPermissionInfo;
+  includeTopicLibraryStatuses?: boolean;
 }): Promise<AdminContentPageData> {
   if (typeof (supabase as SupabaseClient & { rpc?: unknown }).rpc !== "function") {
     throw new Error("admin_content_list_page RPC client unavailable");
@@ -698,6 +750,20 @@ async function loadAdminContentRpcPageData({
   if (effectiveQuery.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
   const rawVideos = (payload.videos ?? []) as Array<RawVideoRow & { has_content?: boolean }>;
   const videos = normalizeVideoRows(rawVideos);
+  // 当前页视频一到手就并行解析选题库状态；后面的质量/就绪度组装是同步计算，不额外串行等待。
+  const topicLibraryStatusesPromise = includeTopicLibraryStatuses
+    ? loadPageTopicLibraryStatuses({
+        supabase,
+        videos: videos.map((video) => ({
+          id: video.id,
+          topic_id: (video as VideoRow & { topic_id?: string | null }).topic_id ?? null,
+          user_id: video.user_id,
+          accounts: video.accounts,
+        })),
+        scope,
+        permissionInfo,
+      })
+    : Promise.resolve(undefined);
   const snapshots = (payload.snapshots ?? []) as VideoMetricsSnapshot[];
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => String(snapshot.video_id)));
   const segmentedVideoIds = new Set(
@@ -745,6 +811,7 @@ async function loadAdminContentRpcPageData({
     directReviewVideoId: null,
     ...(payload.summary ?? {}),
   };
+  const topicLibraryStatuses = await topicLibraryStatusesPromise;
   return {
     videos,
     snapshots,
@@ -753,6 +820,7 @@ async function loadAdminContentRpcPageData({
     accountOptions: payload.accountOptions ?? [],
     reviewReadiness,
     contentQualityByVideoId,
+    ...(topicLibraryStatuses ? { topicLibraryStatuses } : {}),
     evaluationStandards,
     summary,
     availableDates: payload.availableDates ?? [],
@@ -799,7 +867,14 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
     ? bindContentListQueryToEffectiveScope(args.query, resolvedScope.teamId)
     : args.query;
   const payload = resolvedScope && effectiveQuery
-    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: effectiveQuery, scope: resolvedScope, evaluationStandards })
+    ? await loadAdminContentRpcPageData({
+        supabase: args.supabase,
+        query: effectiveQuery,
+        scope: resolvedScope,
+        evaluationStandards,
+        permissionInfo: args.permissionInfo,
+        includeTopicLibraryStatuses: args.includeTopicLibraryStatuses === true,
+      })
     : await loadAdminContentPageData({
         supabase: args.supabase,
         view: args.view,
@@ -824,4 +899,5 @@ export const __internal = {
   getVideoSortTimestamp,
   buildScopedProfileOptions,
   buildReviewReadinessMap,
+  loadPageTopicLibraryStatuses,
 };
