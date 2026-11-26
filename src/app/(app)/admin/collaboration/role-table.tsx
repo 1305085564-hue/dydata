@@ -28,6 +28,8 @@ export interface RoleColumn<R> {
   /** 列宽（px），表格按列宽合计定最小宽度。 */
   width: number;
   align?: "left" | "right";
+  /** 单元格动态样式（如好红差绿、样本不足降灰）；空串沿用表格默认墨色。 */
+  cellClassName?: (row: R) => string;
   render: (row: R) => ReactNode;
 }
 
@@ -161,11 +163,14 @@ export function RoleTable<R>({
                 <TableCell className="pl-4 sticky left-0 z-10 bg-[#FCFCFB]">
                   <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
                 </TableCell>
-                {columns.map((c) => (
-                  <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums text-[#141413] ${sortKey === c.key ? SORTED_COL_BG : ""}`}>
-                    {c.render(summary.row)}
-                  </TableCell>
-                ))}
+                {columns.map((c) => {
+                  const cellColor = c.cellClassName?.(summary.row) || "text-[#141413]";
+                  return (
+                    <TableCell key={c.key} className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${cellColor} ${sortKey === c.key ? SORTED_COL_BG : ""}`}>
+                      {c.render(summary.row)}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             )}
             {sorted.map((row) => {
@@ -196,16 +201,19 @@ export function RoleTable<R>({
                       <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} avatar={showAvatar} />
                     </button>
                   </TableCell>
-                  {columns.map((c) => (
-                    <TableCell
-                      key={c.key}
-                      className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${
-                        zero ? "text-[#A8A29E]" : sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]"
-                      } ${sortKey === c.key ? SORTED_COL_BG : ""}`}
-                    >
-                      {c.render(row)}
-                    </TableCell>
-                  ))}
+                  {columns.map((c) => {
+                    const cellColor = zero
+                      ? "text-[#A8A29E]"
+                      : c.cellClassName?.(row) || (sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]");
+                    return (
+                      <TableCell
+                        key={c.key}
+                        className={`${c.align === "left" ? "text-left" : "text-right"} tabular-nums ${cellColor} ${sortKey === c.key ? SORTED_COL_BG : ""}`}
+                      >
+                        {c.render(row)}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               );
             })}

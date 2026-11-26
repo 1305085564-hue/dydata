@@ -14,11 +14,13 @@ import {
   type WorkGroupDetailView as WorkGroupDetailViewType,
   type WorkGroupMemberRow,
 } from "@/lib/collaboration/types";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;
   canManage?: boolean;
   currentUserId?: string | null;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -36,6 +38,7 @@ export function WorkGroupDetailView({
   detail,
   canManage = false,
   currentUserId = null,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
@@ -49,8 +52,8 @@ export function WorkGroupDetailView({
 
   const withQuality = summary.contentQuality !== null || members.some((m) => m.contentQuality !== null);
   const columns = useMemo(
-    () => teamMetricColumns<WorkGroupMemberRow>({ showDetail, withQuality }),
-    [showDetail, withQuality],
+    () => teamMetricColumns<WorkGroupMemberRow>({ showDetail, withQuality, standards: evaluationStandards }),
+    [showDetail, withQuality, evaluationStandards],
   );
 
   const summaryRow: WorkGroupMemberRow = useMemo(

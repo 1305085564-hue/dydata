@@ -131,18 +131,18 @@ export function RetentionBreakdownContent({
         <div className="space-y-1">
           {details.map((item) => {
             const dotClass =
-              item.status === "poor"
+              item.status === "good"
                 ? "bg-status-danger"
-                : item.status === "good"
+                : item.status === "poor"
                   ? "bg-status-success"
                   : "bg-[#D6D3D1]";
             const achText =
               item.achievement != null ? `达成 ${item.achievement}%` : "未回传";
             const achColor =
-              item.status === "poor"
+              item.status === "good"
                 ? "text-status-danger"
-                : item.status === "good"
-                  ? "text-status-success-text"
+                : item.status === "poor"
+                  ? "text-status-success"
                   : "text-[#78716C]";
 
             return (

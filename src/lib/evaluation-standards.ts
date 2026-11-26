@@ -124,18 +124,63 @@ export function canEditEvaluationStandards(identity: { companyRole?: string | nu
   return identity.companyRole === "company_owner" && identity.permissions.manage_system === true;
 }
 
-export function evaluationTone(metric: EvaluationMetric, value: number | null | undefined, playCount: number | null | undefined, standards: EvaluationStandards): "good" | "poor" | "normal" {
+/** 留存达成的固定好/差线（百分数）：≥100% 标红、≤60% 标绿。 */
+export const CONTENT_ACHIEVEMENT_BAND: EvaluationBand = { good: 100, poor: 60 };
+
+export type EvaluationTone = "good" | "poor" | "normal";
+
+export function evaluationToneClass(tone: EvaluationTone, lowSample = false): string {
+  if (lowSample) return "text-[#A8A29E]";
+  if (tone === "good") return "text-status-danger";
+  if (tone === "poor") return "text-status-success";
+  return "";
+}
+
+export function bandTone(
+  band: EvaluationBand,
+  value: number | null | undefined,
+  { lowerIsBetter = false, inclusivePoor = true }: { lowerIsBetter?: boolean; inclusivePoor?: boolean } = {},
+): EvaluationTone {
+  if (value == null || !Number.isFinite(value)) return "normal";
+  if (lowerIsBetter) {
+    if (value <= band.good) return "good";
+    if (inclusivePoor ? value >= band.poor : value > band.poor) return "poor";
+    return "normal";
+  }
+  if (value >= band.good) return "good";
+  if (inclusivePoor ? value <= band.poor : value < band.poor) return "poor";
+  return "normal";
+}
+
+export function evaluationTone(metric: EvaluationMetric, value: number | null | undefined, playCount: number | null | undefined, standards: EvaluationStandards): EvaluationTone {
   if (value == null || !Number.isFinite(value) || (playCount != null && playCount < standards.minPlayCount)) return "normal";
   const band = standards[metric] ?? DEFAULT_EVALUATION_STANDARDS[metric];
   if (!band) return "normal";
-  if (metric === "bounceRate2s") {
-    if (value <= band.good) return "good";
-    if (value > band.poor) return "poor";
-  } else {
-    if (value >= band.good) return "good";
-    if (metric === "avgPlayRatio" ? value < band.poor : value <= band.poor) return "poor";
-  }
-  return "normal";
+  return bandTone(band, value, {
+    lowerIsBetter: metric === "bounceRate2s",
+    inclusivePoor: metric !== "bounceRate2s" && metric !== "avgPlayRatio",
+  });
+}
+
+export function contentAchievementTone(
+  value: number | null | undefined,
+  playCount?: number | null,
+  minPlay = DEFAULT_EVALUATION_STANDARDS.minPlayCount,
+): EvaluationTone {
+  if (playCount != null && playCount < minPlay) return "normal";
+  return bandTone(CONTENT_ACHIEVEMENT_BAND, value);
+}
+
+export function interactionRateTone(
+  rateDecimal: number | null | undefined,
+  playCount: number | null | undefined,
+  standards: EvaluationStandards,
+  minPlay = standards.minPlayCount,
+): EvaluationTone {
+  if (rateDecimal == null || !Number.isFinite(rateDecimal) || standards.targets.interactionRate <= 0) return "normal";
+  if (playCount != null && playCount < minPlay) return "normal";
+  const achievement = (rateDecimal / (standards.targets.interactionRate / 100)) * 100;
+  return evaluationTone("interactionAchievement", achievement, undefined, standards);
 }
 
 export function hasCustomEvaluationTargets(standards: EvaluationStandards): boolean {

@@ -9,11 +9,13 @@ import { goodExcellentText } from "./talent-tab";
 import { RoleTable } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "@/lib/collaboration/types";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];
   ready?: boolean;
   canManage?: boolean;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -51,6 +53,7 @@ export function WorkGroupListTab({
   groups,
   ready = true,
   canManage = false,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
@@ -73,7 +76,10 @@ export function WorkGroupListTab({
   );
 
   const withQuality = groups.some((group) => group.contentQuality !== null);
-  const columns = useMemo(() => teamMetricColumns<GroupRow>({ showDetail, withQuality }), [showDetail, withQuality]);
+  const columns = useMemo(
+    () => teamMetricColumns<GroupRow>({ showDetail, withQuality, standards: evaluationStandards }),
+    [showDetail, withQuality, evaluationStandards],
+  );
 
   if (!ready) {
     return (

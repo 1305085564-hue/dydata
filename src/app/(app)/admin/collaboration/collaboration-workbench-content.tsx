@@ -88,6 +88,7 @@ export function CollaborationWorkbenchContent({
               onSortChange={onSortChange}
               canManage={canManageWorkGroups}
               currentUserId={currentUserId}
+              evaluationStandards={evaluationStandards}
               onBack={onBackToGroupList}
               onOpenManageDrawer={(groupId) => {
                 onOpenManageDrawer(groupId);
@@ -110,6 +111,7 @@ export function CollaborationWorkbenchContent({
                 onSortChange={onSortChange}
                 ready={resolvedWorkGroupViews?.ready ?? true}
                 canManage={canManageWorkGroups}
+                evaluationStandards={evaluationStandards}
                 onOpenManageDrawer={() => {
                   onOpenManageDrawer(null);
                 }}
@@ -124,6 +126,7 @@ export function CollaborationWorkbenchContent({
             sortOrder={sortDir}
             onSortChange={onSortChange}
             rulesEntry={rulesEntry}
+            evaluationStandards={evaluationStandards}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -135,6 +138,7 @@ export function CollaborationWorkbenchContent({
             sortKey={sortKey}
             sortOrder={sortDir}
             onSortChange={onSortChange}
+            evaluationStandards={evaluationStandards}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}
@@ -149,6 +153,7 @@ export function CollaborationWorkbenchContent({
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
             rulesEntry={rulesEntry}
+            evaluationStandards={evaluationStandards}
             currentUserId={currentUserId}
             isMemberViewer={isMemberViewer}
             onSelectPerson={onSelectPerson}

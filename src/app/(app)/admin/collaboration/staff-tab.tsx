@@ -18,6 +18,7 @@ import { formatAccountLine, goodExcellentText } from "./talent-tab";
 import { DetailToggle } from "./work-group-detail-columns";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { formatBigNumber, type StaffRow } from "@/lib/collaboration/types";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 export type StaffRole = "writer" | "editor";
 
@@ -29,6 +30,7 @@ interface StaffTabProps {
   isMemberViewer?: boolean;
   /** 良优率列头旁的「评级规则」入口（只有文案表有评级列） */
   rulesEntry?: ReactNode;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -71,6 +73,7 @@ export function StaffTab({
   currentUserId = null,
   isMemberViewer = false,
   rulesEntry,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
@@ -87,12 +90,13 @@ export function StaffTab({
     if (role === "editor") return volumeColumns<StaffRow>();
     const getQuality = (row: StaffRow) => row.writerQuality;
     const certifiable = new Set(certifiableUserIds);
+    const toneOptions = { standards: evaluationStandards };
     return [
       ...volumeColumns<StaffRow>(),
-      ...rateColumns<StaffRow>(),
+      ...rateColumns<StaffRow>(toneOptions),
       ...(showDetail ? interactionDetailColumns<StaffRow>() : []),
-      ...qualityColumns<StaffRow>(getQuality, rulesEntry),
-      ...(showDetail ? retentionDetailColumns<StaffRow>(getQuality) : []),
+      ...qualityColumns<StaffRow>(getQuality, rulesEntry, undefined, toneOptions),
+      ...(showDetail ? retentionDetailColumns<StaffRow>(getQuality, toneOptions) : []),
       excellentCountColumn<StaffRow>(getQuality),
       {
         key: "certification",
@@ -102,7 +106,7 @@ export function StaffTab({
         render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} onRefreshData={onRefreshData} />,
       },
     ];
-  }, [role, showDetail, rulesEntry, certifiableUserIds, onRefreshData]);
+  }, [role, showDetail, rulesEntry, evaluationStandards, certifiableUserIds, onRefreshData]);
 
   const showSelfZeroHint = Boolean(
     isMemberViewer && currentUserId && !rows.some((r) => r.userId === currentUserId && r.reportCount > 0),

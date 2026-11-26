@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { rateColumns, volumeColumns } from "./collaboration-quality-hints";
@@ -7,11 +8,13 @@ import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
 import { formatAccountLine } from "./talent-tab";
 import { formatBigNumber, type OperatorRow } from "@/lib/collaboration/types";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 interface OperatorTabProps {
   operators: OperatorRow[];
   currentUserId?: string | null;
   isMemberViewer?: boolean;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -19,22 +22,24 @@ interface OperatorTabProps {
   onPrefetchPerson?: (userId: string) => void;
 }
 
-/** 运营只统计给别人孵化、负责的账号；逐个账号的条数与导粉放在个人档案里看。 */
-const OPERATOR_COLUMNS: RoleColumn<OperatorRow>[] = [
-  ...volumeColumns<OperatorRow>(),
-  ...rateColumns<OperatorRow>(),
-];
-
 export function OperatorTab({
   operators,
   currentUserId = null,
   isMemberViewer = false,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
   onSelectPerson,
   onPrefetchPerson,
 }: OperatorTabProps) {
+  const columns = useMemo<RoleColumn<OperatorRow>[]>(
+    () => [
+      ...volumeColumns<OperatorRow>(),
+      ...rateColumns<OperatorRow>({ standards: evaluationStandards }),
+    ],
+    [evaluationStandards],
+  );
   const showSelfZeroHint = Boolean(
     isMemberViewer && currentUserId && !operators.some((r) => r.userId === currentUserId && r.reportCount > 0),
   );
@@ -58,7 +63,7 @@ export function OperatorTab({
       {showSelfZeroHint && <MemberZeroOutputBanner tab="operators" />}
       <RoleTable
         rows={operators}
-        columns={OPERATOR_COLUMNS}
+        columns={columns}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}

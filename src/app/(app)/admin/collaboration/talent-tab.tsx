@@ -14,6 +14,7 @@ import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type TalentRow } from "@/lib/collaboration/types";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 interface TalentTabProps {
   talents: TalentRow[];
@@ -21,6 +22,7 @@ interface TalentTabProps {
   isMemberViewer?: boolean;
   /** 良优率列头旁的「评级规则」入口 */
   rulesEntry?: ReactNode;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -45,6 +47,7 @@ export function TalentTab({
   currentUserId = null,
   isMemberViewer = false,
   rulesEntry,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
@@ -55,14 +58,15 @@ export function TalentTab({
 
   const columns = useMemo<RoleColumn<TalentRow>[]>(() => {
     const getQuality = (row: TalentRow) => row.writerQuality;
+    const toneOptions = { standards: evaluationStandards };
     return [
       ...volumeColumns<TalentRow>(),
-      ...rateColumns<TalentRow>(),
+      ...rateColumns<TalentRow>(toneOptions),
       ...(showDetail ? interactionDetailColumns<TalentRow>() : []),
-      ...qualityColumns<TalentRow>(getQuality, rulesEntry),
-      ...(showDetail ? retentionDetailColumns<TalentRow>(getQuality) : []),
+      ...qualityColumns<TalentRow>(getQuality, rulesEntry, undefined, toneOptions),
+      ...(showDetail ? retentionDetailColumns<TalentRow>(getQuality, toneOptions) : []),
     ];
-  }, [showDetail, rulesEntry]);
+  }, [showDetail, rulesEntry, evaluationStandards]);
 
   const showSelfZeroHint = Boolean(
     isMemberViewer && currentUserId && !talents.some((r) => r.userId === currentUserId && r.reportCount > 0),

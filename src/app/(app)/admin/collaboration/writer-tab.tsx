@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { StaffTab } from "./staff-tab";
 import type { StaffRow, WriterCandidateRow } from "@/lib/collaboration/types";
 import { partitionWriterCandidates } from "@/lib/collaboration/domain/workbench-state";
+import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
 function candidateToStaffRow(candidate: WriterCandidateRow): StaffRow {
   return {
@@ -31,6 +32,7 @@ export function WriterTab({
   currentUserId,
   isMemberViewer = false,
   rulesEntry,
+  evaluationStandards,
   sortKey = null,
   sortOrder = "desc",
   onSortChange,
@@ -39,6 +41,7 @@ export function WriterTab({
   onRefreshData,
 }: {
   rulesEntry?: ReactNode;
+  evaluationStandards?: EvaluationStandards;
   sortKey?: string | null;
   sortOrder?: "asc" | "desc";
   onSortChange?: (next: { sortKey: string; sortOrder: "asc" | "desc" }) => void;
@@ -89,6 +92,7 @@ export function WriterTab({
         currentUserId={currentUserId}
         isMemberViewer={isMemberViewer}
         rulesEntry={rulesEntry}
+        evaluationStandards={evaluationStandards}
         sortKey={sortKey}
         sortOrder={sortOrder}
         onSortChange={onSortChange}

@@ -16,6 +16,13 @@ import {
   type WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
+import {
+  DEFAULT_EVALUATION_STANDARDS,
+  contentAchievementTone,
+  evaluationTone,
+  evaluationToneClass,
+  type EvaluationStandards,
+} from "@/lib/evaluation-standards";
 import { OneTip } from "./one-tip";
 import type { CollaborationRoleTab, OperatorAccount, PersonDetailData } from "@/lib/collaboration/types";
 import { formatBigNumber } from "@/lib/collaboration/types";
@@ -31,6 +38,7 @@ interface PersonalCardWorksProps {
   activeTab?: CollaborationRoleTab;
   /** 运营负责的账号明细（来自主表，原运营表展开行） */
   operatorAccounts?: OperatorAccount[];
+  evaluationStandards?: EvaluationStandards;
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }
 
@@ -121,12 +129,37 @@ function PlayCell({ work }: { work: WorkRow }) {
   );
 }
 
-function InteractionCell({ quality, playCount, rules }: { quality: WorkContentQuality | null | undefined; playCount: number | null; rules: ContentQualityRules | null | undefined }) {
+function workMetricColor(
+  effectivePlay: number | null,
+  standards: EvaluationStandards,
+  tone: "good" | "poor" | "normal",
+): string {
+  const lowSample = effectivePlay != null && effectivePlay < standards.minPlayCount;
+  return evaluationToneClass(tone, lowSample) || "text-[#1F1E1D]";
+}
+
+function InteractionCell({
+  quality,
+  playCount,
+  rules,
+  standards,
+}: {
+  quality: WorkContentQuality | null | undefined;
+  playCount: number | null;
+  rules: ContentQualityRules | null | undefined;
+  standards: EvaluationStandards;
+}) {
   if (quality?.interactionAchievement == null) return <td className={`py-2.5 px-3 text-right ${signal}`}>—</td>;
   const text = `${Math.round(quality.interactionAchievement)}%`;
+  const effectivePlay = quality.snapshotPlayCount ?? playCount;
+  const color = workMetricColor(
+    effectivePlay,
+    standards,
+    evaluationTone("interactionAchievement", quality.interactionAchievement, undefined, standards),
+  );
   const hasDetail = Boolean(quality.interactionMetrics || quality.interactionValue != null);
   return (
-    <td className="py-2.5 px-3 text-right tabular-nums text-[#1F1E1D]">
+    <td className={`py-2.5 px-3 text-right tabular-nums ${color}`}>
       {hasDetail ? (
         <OneTip wide tip={<InteractionBreakdownContent quality={quality} playCount={playCount} rules={rules} />}>
           <span className="cursor-default">{text}</span>
@@ -138,11 +171,27 @@ function InteractionCell({ quality, playCount, rules }: { quality: WorkContentQu
   );
 }
 
-function RetentionCell({ quality, rules }: { quality: WorkContentQuality | null | undefined; rules: ContentQualityRules | null | undefined }) {
+function RetentionCell({
+  quality,
+  playCount,
+  rules,
+  standards,
+}: {
+  quality: WorkContentQuality | null | undefined;
+  playCount: number | null;
+  rules: ContentQualityRules | null | undefined;
+  standards: EvaluationStandards;
+}) {
   if (quality?.contentAchievement == null) return <td className={`py-2.5 px-3 text-right ${signal}`}>—</td>;
   const text = `${Math.round(quality.contentAchievement)}%`;
+  const effectivePlay = quality.snapshotPlayCount ?? playCount;
+  const color = workMetricColor(
+    effectivePlay,
+    standards,
+    contentAchievementTone(quality.contentAchievement),
+  );
   return (
-    <td className="py-2.5 px-3 text-right tabular-nums text-[#1F1E1D]">
+    <td className={`py-2.5 px-3 text-right tabular-nums ${color}`}>
       {quality.retentionMetrics ? (
         <OneTip wide tip={<RetentionBreakdownContent quality={quality} rules={rules} />}>
           <span className="cursor-default">{text}</span>
@@ -190,11 +239,13 @@ function QualityWorksTable({
   ownerName,
   works,
   rules,
+  evaluationStandards,
   diagnosisContext,
 }: {
   ownerName: string;
   works: WorkRow[];
   rules: ContentQualityRules | null | undefined;
+  evaluationStandards: EvaluationStandards;
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }) {
   const showAccountName = shouldShowWorkAccountNames(ownerName, works);
@@ -234,8 +285,8 @@ function QualityWorksTable({
                 </td>
                 <TitleCell work={work} subtitle={subtitle || null} />
                 <PlayCell work={work} />
-                <InteractionCell quality={q} playCount={work.playCount} rules={rules} />
-                <RetentionCell quality={q} rules={rules} />
+                <InteractionCell quality={q} playCount={work.playCount} rules={rules} standards={evaluationStandards} />
+                <RetentionCell quality={q} playCount={work.playCount} rules={rules} standards={evaluationStandards} />
                 <GradeCell quality={q} playCount={work.playCount} rules={rules} />
               </tr>
             );
@@ -355,6 +406,7 @@ export function PersonalCardWorks({
   data,
   activeTab,
   operatorAccounts = [],
+  evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
   diagnosisContext,
 }: PersonalCardWorksProps) {
   if (activeTab === "writers") {
@@ -369,7 +421,13 @@ export function PersonalCardWorks({
         ) : works.length === 0 ? (
           <EmptyBlock>本月还没有署名文案的作品</EmptyBlock>
         ) : (
-          <QualityWorksTable ownerName={data.name} works={works} rules={quality.rules} diagnosisContext={diagnosisContext} />
+          <QualityWorksTable
+            ownerName={data.name}
+            works={works}
+            rules={quality.rules}
+            evaluationStandards={evaluationStandards}
+            diagnosisContext={diagnosisContext}
+          />
         )}
       </Section>
     );
@@ -385,6 +443,7 @@ export function PersonalCardWorks({
             ownerName={data.name}
             works={data.records}
             rules={data.talentQuality?.rules}
+            evaluationStandards={evaluationStandards}
             diagnosisContext={diagnosisContext}
           />
         )}

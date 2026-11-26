@@ -315,6 +315,7 @@ export function PersonalCard({
                 data={data}
                 activeTab={activeTab}
                 operatorAccounts={operatorAccounts}
+                evaluationStandards={evaluationStandards}
                 diagnosisContext={diagnosisContext}
               />
               <PersonalCardGrowth

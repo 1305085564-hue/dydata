@@ -6,6 +6,16 @@ import {
   formatRetentionValue,
   type ContentQualitySummary,
 } from "@/lib/collaboration/content-quality-contract";
+import {
+  DEFAULT_EVALUATION_STANDARDS,
+  contentAchievementTone,
+  evaluationTone,
+  evaluationToneClass,
+  interactionRateTone,
+  type EvaluationStandards,
+  type EvaluationTone,
+} from "@/lib/evaluation-standards";
+import { CALIBER } from "@/lib/metrics/caliber";
 import { OneTip } from "./one-tip";
 import type { RoleColumn } from "./role-table";
 import { formatBigNumber } from "@/lib/collaboration/types";
@@ -63,12 +73,30 @@ function summaryOf(quality: WriterQualityData) {
   return quality && quality.state === "ready" ? quality.summary : null;
 }
 
+export type MetricToneOptions = {
+  standards?: EvaluationStandards;
+  /** 样本不足（不变红绿）的条均播放门槛；岗位表用公司 minPlayCount（默认 5,000），小队表用 2,000。 */
+  minPlay?: number;
+};
+
+function resolveToneOptions(options?: MetricToneOptions) {
+  const standards = options?.standards ?? DEFAULT_EVALUATION_STANDARDS;
+  const minPlay = options?.minPlay ?? standards.minPlayCount;
+  return { standards, minPlay };
+}
+
+function metricCellClass(avgPlay: number, minPlay: number, tone: EvaluationTone): string {
+  return evaluationToneClass(tone, avgPlay < minPlay);
+}
+
 /** 互动达成 / 留存达成 / 良优率：文案表与达人表共用。 */
-export function qualityColumns<R>(
+export function qualityColumns<R extends { avgPlay: number }>(
   getQuality: (row: R) => WriterQualityData,
   rulesEntry?: ReactNode,
   emptyTip?: string,
+  toneOptions?: MetricToneOptions,
 ): RoleColumn<R>[] {
+  const { standards, minPlay } = resolveToneOptions(toneOptions);
   return [
     {
       key: "avgInteractionAchievement",
@@ -76,6 +104,11 @@ export function qualityColumns<R>(
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement,
       width: 88,
       sortValue: (row) => summaryOf(getQuality(row))?.avgInteractionAchievement ?? null,
+      cellClassName: (row) => {
+        const value = summaryOf(getQuality(row))?.avgInteractionAchievement;
+        if (value == null) return "";
+        return metricCellClass(row.avgPlay, minPlay, evaluationTone("interactionAchievement", value, undefined, standards));
+      },
       render: (row) => {
         const quality = getQuality(row);
         const blocked = qualityUnavailable(quality, emptyTip);
@@ -84,11 +117,9 @@ export function qualityColumns<R>(
         if (summary.avgInteractionAchievement == null) {
           return <HintValue tip="还没有互动数据完整的作品" dim>—</HintValue>;
         }
+        const lowPlayTip = row.avgPlay < minPlay ? ` · 条均播放不足 ${minPlay.toLocaleString("zh-CN")}，不标好坏` : "";
         return (
-          <HintValue
-            tip={`按 ${summary.interactionSampleCount} 篇有互动数据的作品平均`}
-            dim={summary.interactionSampleCount < 3}
-          >
+          <HintValue tip={`按 ${summary.interactionSampleCount} 篇有互动数据的作品平均${lowPlayTip}`}>
             {Math.round(summary.avgInteractionAchievement)}%
           </HintValue>
         );
@@ -100,6 +131,11 @@ export function qualityColumns<R>(
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement,
       width: 88,
       sortValue: (row) => summaryOf(getQuality(row))?.avgContentAchievement ?? null,
+      cellClassName: (row) => {
+        const value = summaryOf(getQuality(row))?.avgContentAchievement;
+        if (value == null) return "";
+        return metricCellClass(row.avgPlay, minPlay, contentAchievementTone(value));
+      },
       render: (row) => {
         const quality = getQuality(row);
         const blocked = qualityUnavailable(quality, emptyTip);
@@ -108,11 +144,9 @@ export function qualityColumns<R>(
         if (summary.avgContentAchievement == null) {
           return <HintValue tip="还没有算得出留存的作品" dim>—</HintValue>;
         }
+        const lowPlayTip = row.avgPlay < minPlay ? ` · 条均播放不足 ${minPlay.toLocaleString("zh-CN")}，不标好坏` : "";
         return (
-          <HintValue
-            tip={`按 ${summary.achievementSampleCount} 篇算得出留存的作品平均`}
-            dim={summary.achievementSampleCount < 3}
-          >
+          <HintValue tip={`按 ${summary.achievementSampleCount} 篇算得出留存的作品平均${lowPlayTip}`}>
             {Math.round(summary.avgContentAchievement)}%
           </HintValue>
         );
@@ -205,10 +239,11 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
   ];
 }
 
-type RateRow = { followerConversionRate: number | null; interactionRate: number | null };
+type RateRow = { avgPlay: number; followerConversionRate: number | null; interactionRate: number | null };
 
-/** 转粉率 / 互动率（参考指标，按播放加权）。 */
-export function rateColumns<R extends RateRow>(): RoleColumn<R>[] {
+/** 转粉率 / 互动率（参考指标，按播放加权）；互动率按评价标准标红绿，转粉率不上色。 */
+export function rateColumns<R extends RateRow>(toneOptions?: MetricToneOptions): RoleColumn<R>[] {
+  const { standards, minPlay } = resolveToneOptions(toneOptions);
   return [
     {
       key: "followerConversionRate",
@@ -224,6 +259,10 @@ export function rateColumns<R extends RateRow>(): RoleColumn<R>[] {
       tip: COLLABORATION_METRIC_HEADER_TIPS.interactionRate,
       width: 80,
       sortValue: (row) => row.interactionRate,
+      cellClassName: (row) => {
+        if (row.interactionRate == null) return "";
+        return metricCellClass(row.avgPlay, minPlay, interactionRateTone(row.interactionRate, undefined, standards));
+      },
       render: (row) => formatRate(row.interactionRate),
     },
   ];
@@ -253,13 +292,22 @@ export function interactionDetailColumns<R extends InteractionDetailRow>(): Role
   }));
 }
 
-/** 展开明细·留存五项：与小队表同一份列定义与口径。 */
-export function retentionDetailColumns<R>(getQuality: (row: R) => WriterQualityData): RoleColumn<R>[] {
+/** 展开明细·留存五项：与小队表同一份列定义与口径，按评价标准好红差绿上色。 */
+export function retentionDetailColumns<R extends { avgPlay: number }>(
+  getQuality: (row: R) => WriterQualityData,
+  toneOptions?: MetricToneOptions,
+): RoleColumn<R>[] {
+  const { standards, minPlay } = resolveToneOptions(toneOptions);
   return RETENTION_DETAIL_COLUMNS.map((column) => ({
     key: column.key,
     label: column.label,
     tip: COLLABORATION_METRIC_HEADER_TIPS.retentionDetail,
     width: 88,
+    cellClassName: (row: R) => {
+      const value = summaryOf(getQuality(row))?.retentionAverages?.[column.key];
+      if (value == null) return "";
+      return metricCellClass(row.avgPlay, minPlay, evaluationTone(column.key, value, undefined, standards));
+    },
     render: (row: R) =>
       formatRetentionValue(summaryOf(getQuality(row))?.retentionAverages?.[column.key], column.unit),
   }));
@@ -288,20 +336,26 @@ type TeamMetricRow = {
 const teamQuality = (row: TeamMetricRow): WriterQualityData =>
   row.contentQuality ? { state: "ready", summary: row.contentQuality } : null;
 
-/** 小队列表与小队详情的列：与文案表同一套列名和口径，只是播放按快照统计。 */
+/** 小队列表与小队详情的列：与文案表同一套列名和口径，只是播放按快照统计，上色门槛为 2,000。 */
 export function teamMetricColumns<R extends TeamMetricRow>({
   showDetail,
   withQuality,
+  standards,
 }: {
   showDetail: boolean;
   withQuality: boolean;
+  standards?: EvaluationStandards;
 }): RoleColumn<R>[] {
   const getQuality = (row: R) => teamQuality(row);
+  const toneOptions: MetricToneOptions = {
+    standards,
+    minPlay: CALIBER.effectiveMinPlay,
+  };
   return [
     ...volumeColumns<R>(TEAM_VOLUME_TIPS),
-    ...rateColumns<R>(),
+    ...rateColumns<R>(toneOptions),
     ...(showDetail ? interactionDetailColumns<R>() : []),
-    ...(withQuality ? qualityColumns<R>(getQuality, undefined, "运营小队不评级") : []),
-    ...(withQuality && showDetail ? retentionDetailColumns<R>(getQuality) : []),
+    ...(withQuality ? qualityColumns<R>(getQuality, undefined, "运营小队不评级", toneOptions) : []),
+    ...(withQuality && showDetail ? retentionDetailColumns<R>(getQuality, toneOptions) : []),
   ];
 }

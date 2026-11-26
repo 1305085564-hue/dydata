@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_EVALUATION_STANDARDS, parseEvaluationStandards, evaluationTone, evaluationSettingsKey, canEditEvaluationStandards, avgPlayRatioAsPercentagePoints } from "./evaluation-standards";
+import {
+  CONTENT_ACHIEVEMENT_BAND,
+  DEFAULT_EVALUATION_STANDARDS,
+  avgPlayRatioAsPercentagePoints,
+  canEditEvaluationStandards,
+  contentAchievementTone,
+  evaluationSettingsKey,
+  evaluationTone,
+  evaluationToneClass,
+  interactionRateTone,
+  parseEvaluationStandards,
+} from "./evaluation-standards";
 
 const draft = () => structuredClone(DEFAULT_EVALUATION_STANDARDS);
 
@@ -112,4 +123,23 @@ test("公司键隔离，无公司拒绝；负责人可写，普通管理员即�
   assert.equal(canEditEvaluationStandards({ companyRole: "company_owner", permissions: { manage_system: true } }), true);
   assert.equal(canEditEvaluationStandards({ companyRole: "admin", permissions: { manage_system: true } }), false);
   assert.equal(canEditEvaluationStandards({ companyRole: "member", permissions: {} }), false);
+});
+
+test("留存达成固定 100/60 线、互动率折算好差线与统一样式类（好红差绿）", () => {
+  const standards = draft();
+  assert.deepEqual(CONTENT_ACHIEVEMENT_BAND, { good: 100, poor: 60 });
+  assert.equal(contentAchievementTone(100, 5000), "good");
+  assert.equal(contentAchievementTone(80, 5000), "normal");
+  assert.equal(contentAchievementTone(60, 5000), "poor");
+  assert.equal(contentAchievementTone(120, 4999), "normal");
+
+  assert.equal(interactionRateTone(0.035, 5000, standards), "good");
+  assert.equal(interactionRateTone(0.025, 5000, standards), "normal");
+  assert.equal(interactionRateTone(0.021, 5000, standards), "poor");
+  assert.equal(interactionRateTone(0.05, 4999, standards), "normal");
+
+  assert.equal(evaluationToneClass("good"), "text-status-danger");
+  assert.equal(evaluationToneClass("poor"), "text-status-success");
+  assert.equal(evaluationToneClass("normal"), "");
+  assert.equal(evaluationToneClass("good", true), "text-[#A8A29E]");
 });
