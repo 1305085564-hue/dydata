@@ -26,9 +26,9 @@ export interface RoleColumn<R> {
   headExtra?: ReactNode;
   /** 给出即可排序；返回 null 的行排在最后。 */
   sortValue?: (row: R) => number | null;
-  /** 列宽（px），表格按所有列宽之和紧致排布。 */
+  /** 列宽（px），宽表按所有列宽之和紧致排布，窄表作最小列宽比例铺满标准容器。 */
   width: number;
-  /** 新一组指标的起始列：左侧多留白做视觉分组，不画竖线。 */
+  /** 新一组指标的起始列：宽表左侧多留白做视觉分组，不画竖线。 */
   groupStart?: boolean;
   align?: "left" | "right";
   /** 单元格动态样式（如好红差绿、样本不足降灰）；空串沿用表格默认墨色。 */
@@ -68,7 +68,13 @@ export const ROLE_STANDARD_RAIL_WIDTH = 1200;
 /** 当前排序列整列铺一层浅底：全站只有一档字重，仅靠墨度差肉眼扫不出哪列在排序。 */
 const SORTED_COL_BG = "bg-[#F7F7F6]/70";
 
-function metricColPadding<R>(column: RoleColumn<R>, index: number, total: number) {
+function metricColPadding<R>(
+  column: RoleColumn<R>,
+  index: number,
+  total: number,
+  exceedsStandardRail: boolean,
+) {
+  if (!exceedsStandardRail) return "px-3";
   const isLast = index === total - 1;
   if (column.groupStart && isLast) return "pl-3 pr-4";
   if (column.groupStart) return "pl-3 pr-1.5";
@@ -139,136 +145,148 @@ export function RoleTable<R>({
 
   const totalWidth = ROLE_NAME_COL_WIDTH + columns.reduce((sum, c) => sum + c.width, 0);
   const exceedsStandardRail = totalWidth > ROLE_STANDARD_RAIL_WIDTH;
+  const firstColPad = exceedsStandardRail ? "pl-4 pr-2" : "pl-4 pr-3";
 
-  const desktopCard = (
-    <Card
-      data-wide-table={exceedsStandardRail ? "true" : undefined}
-      className="hidden sm:flex overflow-hidden p-0 gap-0 w-fit max-w-full"
-    >
-      <Table className="w-auto table-fixed text-[13px]" style={{ width: totalWidth }}>
-        <colgroup>
-          <col style={{ width: ROLE_NAME_COL_WIDTH }} />
-          {columns.map((c) => (
-            <col key={c.key} style={{ width: c.width }} />
-          ))}
-        </colgroup>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="pl-4 pr-2 sticky left-0 z-20 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]">
-              {nameLabel}
+  const tableInner = (
+    <>
+      <colgroup>
+        <col style={{ width: ROLE_NAME_COL_WIDTH }} />
+        {columns.map((c) => (
+          <col key={c.key} style={{ width: c.width }} />
+        ))}
+      </colgroup>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className={cn(firstColPad, "sticky left-0 z-20 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]")}>
+            {nameLabel}
+          </TableHead>
+          {columns.map((c, index) => (
+            <TableHead
+              key={c.key}
+              aria-sort={sortKey === c.key ? (sortOrder === "desc" ? "descending" : "ascending") : undefined}
+              className={cn(
+                metricColPadding(c, index, columns.length, exceedsStandardRail),
+                c.align === "left" ? "text-left" : "text-right",
+                sortKey === c.key && SORTED_COL_BG,
+              )}
+            >
+              <ColumnHead
+                column={c}
+                active={sortKey === c.key}
+                order={sortOrder}
+                onSort={() => handleSort(c.key)}
+              />
             </TableHead>
-            {columns.map((c, index) => (
-              <TableHead
-                key={c.key}
-                aria-sort={sortKey === c.key ? (sortOrder === "desc" ? "descending" : "ascending") : undefined}
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {summary && (
+          <TableRow className="hover:bg-transparent bg-[#FCFCFB]">
+            <TableCell className={cn(firstColPad, "sticky left-0 z-10 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]")}>
+              <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
+            </TableCell>
+            {columns.map((c, index) => {
+              const cellColor = c.cellClassName?.(summary.row) || "text-[#141413]";
+              return (
+                <TableCell
+                  key={c.key}
+                  className={cn(
+                    metricColPadding(c, index, columns.length, exceedsStandardRail),
+                    c.align === "left" ? "text-left" : "text-right",
+                    "tabular-nums",
+                    cellColor,
+                    sortKey === c.key && SORTED_COL_BG,
+                  )}
+                >
+                  {c.render(summary.row)}
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        )}
+        {sorted.map((row) => {
+          const userId = getId(row);
+          const isSelf = Boolean(currentUserId && userId === currentUserId);
+          const zero = isZero?.(row) ?? false;
+          const sub = getSub?.(row) ?? null;
+          return (
+            // 整行可点（鼠标）；键盘与读屏落在名字格里的真按钮上，<tr> 保留表格行语义
+            <TableRow
+              key={userId}
+              data-self={isSelf ? "true" : undefined}
+              className="group cursor-pointer data-[self=true]:bg-[#F7F7F6] focus-within:bg-[#F7F7F6]"
+              onClick={() => onSelectPerson(userId)}
+              onMouseEnter={() => onPrefetchPerson?.(userId)}
+            >
+              <TableCell
                 className={cn(
-                  metricColPadding(c, index, columns.length),
-                  c.align === "left" ? "text-left" : "text-right",
-                  sortKey === c.key && SORTED_COL_BG,
+                  firstColPad,
+                  "sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#E2E2DF] group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-within:bg-[#F7F7F6] transition-[background-color] duration-150",
                 )}
               >
-                <ColumnHead
-                  column={c}
-                  active={sortKey === c.key}
-                  order={sortOrder}
-                  onSort={() => handleSort(c.key)}
-                />
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {summary && (
-            <TableRow className="hover:bg-transparent bg-[#FCFCFB]">
-              <TableCell className="pl-4 pr-2 sticky left-0 z-10 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]">
-                <PersonName name={summary.name} sub={summary.sub ?? null} isSelf={false} zero={false} />
+                <button
+                  type="button"
+                  aria-label={rowAriaLabel ? rowAriaLabel(row) : `查看${getName(row)}的个人档案`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelectPerson(userId);
+                  }}
+                  onFocus={() => onPrefetchPerson?.(userId)}
+                  className="block w-full min-w-0 rounded-md text-left cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-2"
+                >
+                  <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} avatar={showAvatar} />
+                </button>
               </TableCell>
               {columns.map((c, index) => {
-                const cellColor = c.cellClassName?.(summary.row) || "text-[#141413]";
+                const cellColor = zero
+                  ? "text-[#A8A29E]"
+                  : c.cellClassName?.(row) || (sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]");
                 return (
                   <TableCell
                     key={c.key}
                     className={cn(
-                      metricColPadding(c, index, columns.length),
+                      metricColPadding(c, index, columns.length, exceedsStandardRail),
                       c.align === "left" ? "text-left" : "text-right",
                       "tabular-nums",
                       cellColor,
                       sortKey === c.key && SORTED_COL_BG,
                     )}
                   >
-                    {c.render(summary.row)}
+                    {c.render(row)}
                   </TableCell>
                 );
               })}
             </TableRow>
-          )}
-          {sorted.map((row) => {
-            const userId = getId(row);
-            const isSelf = Boolean(currentUserId && userId === currentUserId);
-            const zero = isZero?.(row) ?? false;
-            const sub = getSub?.(row) ?? null;
-            return (
-              // 整行可点（鼠标）；键盘与读屏落在名字格里的真按钮上，<tr> 保留表格行语义
-              <TableRow
-                key={userId}
-                data-self={isSelf ? "true" : undefined}
-                className="group cursor-pointer data-[self=true]:bg-[#F7F7F6] focus-within:bg-[#F7F7F6]"
-                onClick={() => onSelectPerson(userId)}
-                onMouseEnter={() => onPrefetchPerson?.(userId)}
-              >
-                <TableCell className="pl-4 pr-2 sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#E2E2DF] group-hover:bg-[#F7F7F6] group-data-[self=true]:bg-[#F7F7F6] group-focus-within:bg-[#F7F7F6] transition-[background-color] duration-150">
-                  <button
-                    type="button"
-                    aria-label={rowAriaLabel ? rowAriaLabel(row) : `查看${getName(row)}的个人档案`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSelectPerson(userId);
-                    }}
-                    onFocus={() => onPrefetchPerson?.(userId)}
-                    className="block w-full min-w-0 rounded-md text-left cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-2"
-                  >
-                    <PersonName name={getName(row)} sub={sub} isSelf={isSelf} zero={zero} avatar={showAvatar} />
-                  </button>
-                </TableCell>
-                {columns.map((c, index) => {
-                  const cellColor = zero
-                    ? "text-[#A8A29E]"
-                    : c.cellClassName?.(row) || (sortKey === c.key ? "text-[#141413]" : "text-[#1F1E1D]");
-                  return (
-                    <TableCell
-                      key={c.key}
-                      className={cn(
-                        metricColPadding(c, index, columns.length),
-                        c.align === "left" ? "text-left" : "text-right",
-                        "tabular-nums",
-                        cellColor,
-                        sortKey === c.key && SORTED_COL_BG,
-                      )}
-                    >
-                      {c.render(row)}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
+          );
+        })}
+      </TableBody>
+    </>
   );
 
   return (
     <>
-      {/* 宽屏：表格按实际内容宽包裹，超出标准轨道（1200px）才居中向外延展 */}
+      {/* 宽屏：超 1200px 宽表居中破栏；不超过 1200px 保持标准容器 w-full 与宽松内边距 */}
       {exceedsStandardRail ? (
         <div
           data-wide-breakout="true"
           className="hidden sm:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)]"
         >
-          {desktopCard}
+          <Card
+            data-wide-table="true"
+            className="hidden sm:flex overflow-hidden p-0 gap-0 w-fit max-w-full"
+          >
+            <Table className="w-auto table-fixed text-[13px]" style={{ width: totalWidth }}>
+              {tableInner}
+            </Table>
+          </Card>
         </div>
       ) : (
-        desktopCard
+        <Card className="hidden sm:flex overflow-hidden p-0 gap-0 w-full">
+          <Table className="w-full table-fixed text-[13px]" style={{ minWidth: totalWidth }}>
+            {tableInner}
+          </Table>
+        </Card>
       )}
 
       {/* 窄屏：每人一行 */}

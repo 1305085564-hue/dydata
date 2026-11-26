@@ -14,12 +14,14 @@ import {
   SORTED_COL_BG,
   SORTED_STICKY_COL_BG,
   contentColumnPadClass,
+  contentColumnWidth,
   type ContentColumn,
   type ContentColumnTip,
 } from "./content-list-columns";
 
 type ContentListTableHeaderProps = {
   columns: ContentColumn[];
+  isSpacious?: boolean;
   sortField: SortField;
   sortDir: "asc" | "desc";
   handleSort: (field: SortField) => void;
@@ -53,6 +55,7 @@ export function columnTipText(tip: ContentColumnTip, standards: EvaluationStanda
  */
 export function ContentListTableHeader({
   columns,
+  isSpacious = false,
   sortField,
   sortDir,
   handleSort,
@@ -105,11 +108,11 @@ export function ContentListTableHeader({
               key={column.key}
               data-col-key={column.key}
               aria-sort={ariaSort}
-              style={{ width: column.width }}
+              style={{ width: contentColumnWidth(column, isSpacious) }}
               className={cn(
                 "py-2 font-normal whitespace-nowrap",
                 column.align === "right" ? "text-right" : "text-left",
-                contentColumnPadClass(column, isLast),
+                contentColumnPadClass(column, isSpacious, isLast),
                 isTitle && "sticky left-0 z-30 bg-[#FCFCFB] shadow-[1px_0_0_0_#E2E2DF]",
                 isSorted && (isTitle ? SORTED_STICKY_COL_BG : SORTED_COL_BG),
               )}

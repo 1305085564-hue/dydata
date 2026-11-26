@@ -26,6 +26,7 @@ import {
   SORTED_COL_BG,
   SORTED_STICKY_COL_BG,
   contentColumnPadClass,
+  contentColumnWidth,
   visibleContentColumns,
   type ContentColumn,
 } from "./content-list-columns";
@@ -72,9 +73,14 @@ type CellContext = {
 /** 数字列：右对齐、等宽数字；辅助列说明墨，核心列在列定义里单独提墨。 */
 const NUMBER_TD = "py-2.5 text-right tabular-nums whitespace-nowrap";
 
-function renderCell(column: ContentColumn, ctx: CellContext, isLast: boolean): { className: string; content: React.ReactNode } {
+function renderCell(
+  column: ContentColumn,
+  ctx: CellContext,
+  isSpacious: boolean,
+  isLast: boolean,
+): { className: string; content: React.ReactNode } {
   const { item, standards, hit } = ctx;
-  const pad = contentColumnPadClass(column, isLast);
+  const pad = contentColumnPadClass(column, isSpacious, isLast);
   switch (column.key) {
     case "title":
       return {
@@ -194,8 +200,8 @@ export function ContentListTable({
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
   const columns = visibleContentColumns(isSpacious);
-  const totalWidth = columns.reduce((sum, column) => sum + column.width, 0);
-  const exceedsStandardRail = totalWidth > CONTENT_STANDARD_RAIL_WIDTH;
+  const totalWidth = columns.reduce((sum, column) => sum + contentColumnWidth(column, isSpacious), 0);
+  const exceedsStandardRail = !isSpacious && totalWidth > CONTENT_STANDARD_RAIL_WIDTH;
 
   // 打开的作品不在视口内时滚到中间。手机卡片和桌面行各有一份 DOM，
   // 只挑真正有渲染盒子（getClientRects 非空）的那一份。
@@ -213,81 +219,77 @@ export function ContentListTable({
     }
   }, [selectedVideoId, tableContainerRef]);
 
-  const desktopCard = (
-    <Card
-      data-wide-table={exceedsStandardRail ? "true" : undefined}
-      className="hidden md:block overflow-hidden p-0 gap-0 w-fit max-w-full"
-    >
-      <Table className="w-auto text-left border-collapse table-fixed" style={{ width: totalWidth }}>
-        <colgroup>
-          {columns.map((column) => (
-            <col key={column.key} style={{ width: column.width }} />
-          ))}
-        </colgroup>
-        <ContentListTableHeader
-          columns={columns}
-          sortField={sortField}
-          sortDir={sortDir}
-          handleSort={handleSort}
-          evaluationStandards={evaluationStandards}
-        />
-        <tbody className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]">
-          {visibleRows.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="py-8 text-[#1F1E1D]">
-                <EmptyState variant="compact" title={emptyTitle} description={emptyDescription} />
-              </td>
-            </tr>
-          ) : (
-            visibleRows.map((item) => {
-              const isSelected = selectedVideoId === item.video.id;
-              const ctx: CellContext = {
-                item,
-                isSingleDay,
-                isSelected,
-                isTitleSorted: sortField === "published_at",
-                standards: evaluationStandards,
-                hit: (key) => isCellHighlighted(item, key, highlightRules),
-                ownerNames,
-                onSelectAuthor,
-                buildVideoHref,
-                buildAuthorHref,
-                onOpen: () => onSelectVideoId(item.video.id),
-              };
-              return (
-                <tr
-                  key={item.video.id}
-                  data-video-id={item.video.id}
-                  aria-selected={isSelected || undefined}
-                  onClick={(event) => {
-                    if (!shouldHandleInPlaceLinkClick(event)) return;
-                    onSelectVideoId(item.video.id);
-                  }}
-                  className={cn(
-                    "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
-                    isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
-                  )}
-                >
-                  {columns.map((column, index) => {
-                    const cell = renderCell(column, ctx, index === columns.length - 1);
-                    const isSorted = column.sortField !== undefined && column.sortField === sortField;
-                    return (
-                      <td
-                        key={column.key}
-                        data-col-key={column.key}
-                        className={cn(cell.className, isSorted && column.key !== "title" && SORTED_COL_BG)}
-                      >
-                        {cell.content}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </Table>
-    </Card>
+  const tableInner = (
+    <>
+      <colgroup>
+        {columns.map((column) => (
+          <col key={column.key} style={{ width: contentColumnWidth(column, isSpacious) }} />
+        ))}
+      </colgroup>
+      <ContentListTableHeader
+        columns={columns}
+        isSpacious={isSpacious}
+        sortField={sortField}
+        sortDir={sortDir}
+        handleSort={handleSort}
+        evaluationStandards={evaluationStandards}
+      />
+      <tbody className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]">
+        {visibleRows.length === 0 ? (
+          <tr>
+            <td colSpan={columns.length} className="py-8 text-[#1F1E1D]">
+              <EmptyState variant="compact" title={emptyTitle} description={emptyDescription} />
+            </td>
+          </tr>
+        ) : (
+          visibleRows.map((item) => {
+            const isSelected = selectedVideoId === item.video.id;
+            const ctx: CellContext = {
+              item,
+              isSingleDay,
+              isSelected,
+              isTitleSorted: sortField === "published_at",
+              standards: evaluationStandards,
+              hit: (key) => isCellHighlighted(item, key, highlightRules),
+              ownerNames,
+              onSelectAuthor,
+              buildVideoHref,
+              buildAuthorHref,
+              onOpen: () => onSelectVideoId(item.video.id),
+            };
+            return (
+              <tr
+                key={item.video.id}
+                data-video-id={item.video.id}
+                aria-selected={isSelected || undefined}
+                onClick={(event) => {
+                  if (!shouldHandleInPlaceLinkClick(event)) return;
+                  onSelectVideoId(item.video.id);
+                }}
+                className={cn(
+                  "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
+                  isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
+                )}
+              >
+                {columns.map((column, index) => {
+                  const cell = renderCell(column, ctx, isSpacious, index === columns.length - 1);
+                  const isSorted = column.sortField !== undefined && column.sortField === sortField;
+                  return (
+                    <td
+                      key={column.key}
+                      data-col-key={column.key}
+                      className={cn(cell.className, isSorted && column.key !== "title" && SORTED_COL_BG)}
+                    >
+                      {cell.content}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </>
   );
 
   return (
@@ -306,16 +308,27 @@ export function ContentListTable({
         highlightRules={highlightRules}
       />
 
-      {/* 桌面与平板（≥768px）：按所有可见列宽紧致包裹，仅当超出标准轨道（1200px）时才居中向外延展 */}
+      {/* 桌面与平板（≥768px）：完整视图超 1200px 按实际列宽居中破栏；简洁视图保留标准容器 w-full 与宽松内边距 */}
       {exceedsStandardRail ? (
         <div
           data-wide-breakout="true"
           className="hidden md:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)]"
         >
-          {desktopCard}
+          <Card
+            data-wide-table="true"
+            className="hidden md:block overflow-hidden p-0 gap-0 w-fit max-w-full"
+          >
+            <Table className="w-auto text-left border-collapse table-fixed" style={{ width: totalWidth }}>
+              {tableInner}
+            </Table>
+          </Card>
         </div>
       ) : (
-        desktopCard
+        <Card className="hidden md:block flex-1 w-full overflow-hidden p-0 gap-0">
+          <Table className="w-full text-left border-collapse table-fixed min-w-[960px] lg:min-w-[1160px] xl:min-w-full">
+            {tableInner}
+          </Table>
+        </Card>
       )}
     </div>
   );

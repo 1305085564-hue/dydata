@@ -35,7 +35,7 @@ export type ContentColumnTip =
 export interface ContentColumn {
   key: ContentColumnKey;
   label: string;
-  /** 列宽（px），配合 table-fixed */
+  /** 完整视图列宽（px），配合 table-fixed */
   width: number;
   sortField?: SortField;
   /** 只在「完整」视图出现 */
@@ -67,12 +67,46 @@ export const CONTENT_COLUMNS: readonly ContentColumn[] = [
   { key: "completion_rate", label: "完播", width: 68, sortField: "completion_rate", tip: { kind: "standard", metric: "completionRate" }, align: "right" },
 ];
 
+/** 简洁模式沿用原版列宽（合计 1096px，配合 w-full 铺满 1200px 标准轨道）。 */
+const SPACIOUS_COLUMN_WIDTHS: Partial<Record<ContentColumnKey, number>> = {
+  title: 400,
+  overall_grade: 56,
+  play_count: 76,
+  interaction_rate: 72,
+  retention_achievement: 80,
+  follower_gain: 60,
+  bounce_rate_2s: 78,
+  completion_rate_5s: 72,
+  avg_play_duration: 62,
+  avg_play_ratio: 78,
+  completion_rate: 62,
+};
+
 export function visibleContentColumns(isSpacious: boolean): ContentColumn[] {
   return CONTENT_COLUMNS.filter((column) => !(isSpacious && column.fullOnly));
 }
 
-/** 表头与表体共用的横向内边距（适中紧凑档 px-1.5，组边界 pl-3 pr-1.5，首列 pl-4 pr-2，末列 pl-1.5 pr-4） */
-export function contentColumnPadClass(column: ContentColumn, isLast = false): string {
+export function contentColumnWidth(column: ContentColumn, isSpacious: boolean): number {
+  if (isSpacious) {
+    return SPACIOUS_COLUMN_WIDTHS[column.key] ?? column.width;
+  }
+  return column.width;
+}
+
+/**
+ * 表头与表体共用的横向内边距：
+ * - 简洁模式（spacious）：还原原版宽松内边距（title 为 px-3，其余列 groupStart ? "pl-4 pr-2" : "px-2"）
+ * - 完整模式（full）：适中紧凑档（title 为 pl-4 pr-2，组边界 pl-3 pr-1.5，其余 px-1.5，末列 pr-4）
+ */
+export function contentColumnPadClass(
+  column: ContentColumn,
+  isSpacious: boolean,
+  isLast = false,
+): string {
+  if (isSpacious) {
+    if (column.key === "title") return "px-3";
+    return column.groupStart ? "pl-4 pr-2" : "px-2";
+  }
   if (column.key === "title") return "pl-4 pr-2";
   if (column.groupStart && isLast) return "pl-3 pr-4";
   if (column.groupStart) return "pl-3 pr-1.5";

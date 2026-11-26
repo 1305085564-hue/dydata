@@ -45,51 +45,73 @@ function renderRoleTable(columns: RoleColumn<DummyRow>[]) {
   );
 }
 
-test("RoleTable 内容驱动表宽：窄表留在标准轨道内不撑满全屏，超 1200px 才居中向外延展", () => {
+test("RoleTable：不超过 1200px 保持标准容器 w-full 不缩窄，超 1200px 才内容驱动居中破栏", () => {
   const narrowTotal = ROLE_NAME_COL_WIDTH + narrowColumns.reduce((sum, c) => sum + c.width, 0);
   assert.ok(narrowTotal <= ROLE_STANDARD_RAIL_WIDTH);
   const narrowHtml = renderRoleTable(narrowColumns);
   assert.doesNotMatch(narrowHtml, /data-wide-breakout="true"/);
+  assert.doesNotMatch(narrowHtml, /data-wide-table="true"/);
   assert.doesNotMatch(narrowHtml, /w-\[100cqw\]/);
-  assert.match(narrowHtml, /w-fit max-w-full/);
-  assert.match(narrowHtml, /w-auto table-fixed/);
-  assert.match(narrowHtml, new RegExp(`style="width:${narrowTotal}px"`));
+  assert.doesNotMatch(narrowHtml, /\bw-fit\b/);
+  assert.doesNotMatch(narrowHtml, /\bw-auto\b/);
+  assert.match(narrowHtml, /data-slot="card"[^>]*class="[^"]*\bw-full\b/);
+  assert.match(narrowHtml, /<table[^>]*class="[^"]*\bw-full\b[^"]*table-fixed/);
+  assert.match(narrowHtml, new RegExp(`style="min-width:${narrowTotal}px"`));
 
   const wideTotal = ROLE_NAME_COL_WIDTH + wideColumns.reduce((sum, c) => sum + c.width, 0);
   assert.ok(wideTotal > ROLE_STANDARD_RAIL_WIDTH);
   const wideHtml = renderRoleTable(wideColumns);
   assert.match(wideHtml, /data-wide-breakout="true"/);
+  assert.match(wideHtml, /data-wide-table="true"/);
   assert.match(wideHtml, /w-\[100cqw\]/);
   assert.match(wideHtml, /mx-\[calc\(50%-50cqw\)\]/);
   assert.match(wideHtml, /justify-center/);
   assert.match(wideHtml, /w-fit max-w-full/);
+  assert.match(wideHtml, /w-auto table-fixed/);
   assert.match(wideHtml, new RegExp(`style="width:${wideTotal}px"`));
 });
 
-test("RoleTable 首列与所有指标列均定宽，使用适中紧凑间距（px-1.5 / 组边界 pl-3 pr-1.5）", () => {
-  const html = renderRoleTable(narrowColumns);
-  const cols = [...html.matchAll(/<col\b([^>]*)\/>/g)].map((m) => m[1]);
-  assert.equal(cols.length, 4);
-  assert.match(cols[0], new RegExp(`width:\\s*${ROLE_NAME_COL_WIDTH}px`));
-  assert.match(cols[1], /width:\s*78px/);
-  assert.match(cols[2], /width:\s*72px/);
-  assert.match(cols[3], /width:\s*68px/);
+test("RoleTable：窄表恢复宽松间距（首列 pl-4 pr-3、指标列 px-3），宽表使用适中紧凑间距（px-1.5 / 组边界 pl-3 pr-1.5）", () => {
+  const narrowHtml = renderRoleTable(narrowColumns);
+  const narrowCols = [...narrowHtml.matchAll(/<col\b([^>]*)\/>/g)].map((m) => m[1]);
+  assert.equal(narrowCols.length, 4);
+  assert.match(narrowCols[0], new RegExp(`width:\\s*${ROLE_NAME_COL_WIDTH}px`));
+  assert.match(narrowCols[1], /width:\s*78px/);
+  assert.match(narrowCols[2], /width:\s*72px/);
+  assert.match(narrowCols[3], /width:\s*68px/);
 
-  const ths = [...html.matchAll(/<th\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
-  assert.match(ths[0], /\bpl-4\b/);
-  assert.match(ths[0], /\bpr-2\b/);
-  assert.match(ths[1], /\bpx-1\.5\b/);
-  assert.match(ths[2], /\bpl-3\b/);
-  assert.match(ths[2], /\bpr-1\.5\b/);
-  assert.match(ths[3], /\bpl-1\.5\b/);
-  assert.match(ths[3], /\bpr-4\b/);
+  const narrowThs = [...narrowHtml.matchAll(/<th\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
+  assert.match(narrowThs[0], /\bpl-4\b/);
+  assert.match(narrowThs[0], /\bpr-3\b/);
+  for (const th of narrowThs.slice(1)) {
+    assert.match(th, /\bpx-3\b/);
+    assert.doesNotMatch(th, /\bpx-1\.5\b/);
+  }
 
-  const tds = [...html.matchAll(/<td\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
-  assert.match(tds[0], /\bpl-4\b/);
-  assert.match(tds[0], /\bpr-2\b/);
-  assert.match(tds[1], /\bpx-1\.5\b/);
-  assert.match(tds[2], /\bpl-3\b/);
-  assert.match(tds[2], /\bpr-1\.5\b/);
-  assert.match(tds[3], /\bpl-1\.5\b/);
-  assert.match(tds[3], /\bpr-4\b/);
+  const narrowTds = [...narrowHtml.matchAll(/<td\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
+  assert.match(narrowTds[0], /\bpl-4\b/);
+  assert.match(narrowTds[0], /\bpr-3\b/);
+  for (const td of narrowTds.slice(1)) {
+    assert.match(td, /\bpx-3\b/);
+    assert.doesNotMatch(td, /\bpx-1\.5\b/);
+  }
+
+  const wideHtml = renderRoleTable(wideColumns);
+  const wideThs = [...wideHtml.matchAll(/<th\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
+  assert.match(wideThs[0], /\bpl-4\b/);
+  assert.match(wideThs[0], /\bpr-2\b/);
+  assert.match(wideThs[1], /\bpx-1\.5\b/);
+  assert.match(wideThs[6], /\bpl-3\b/);
+  assert.match(wideThs[6], /\bpr-1\.5\b/);
+  assert.match(wideThs[16], /\bpl-1\.5\b/);
+  assert.match(wideThs[16], /\bpr-4\b/);
+
+  const wideTds = [...wideHtml.matchAll(/<td\b[^>]*class="([^"]+)"/g)].map((m) => m[1]);
+  assert.match(wideTds[0], /\bpl-4\b/);
+  assert.match(wideTds[0], /\bpr-2\b/);
+  assert.match(wideTds[1], /\bpx-1\.5\b/);
+  assert.match(wideTds[6], /\bpl-3\b/);
+  assert.match(wideTds[6], /\bpr-1\.5\b/);
+  assert.match(wideTds[16], /\bpl-1\.5\b/);
+  assert.match(wideTds[16], /\bpr-4\b/);
 });
