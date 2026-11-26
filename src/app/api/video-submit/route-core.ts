@@ -813,7 +813,7 @@ async function handleVideoSubmit(
       }, { status: 500 });
     }
   }
-  scheduleFirstDailyReportNotice(existingReport, { submitter, reportDate: persistedReport.report_date, videoTitle: persistedVideo.video_title ?? normalized.video_title, videoUrl: persistedVideo.video_url ?? normalized.video_url, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
+  scheduleFirstDailyReportNotice(existingReport, { submitter, teamId: typedProfile.team_id, reportDate: persistedReport.report_date, videoTitle: persistedVideo.video_title ?? normalized.video_title, videoUrl: persistedVideo.video_url ?? normalized.video_url, topicTag: normalized.topic_tag, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
   // 收尾：结束选题写作状态，并幂等沉淀干货选题。
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
   try {
@@ -824,9 +824,7 @@ async function handleVideoSubmit(
       persistedVideo.topic_id ?? normalized.topic_id ?? null,
       persistedVideo.id,
     );
-    if (writingEnd.ended) {
-      console.log("[video-submit] writing state completed for topic", normalized.topic_id);
-    }
+    if (writingEnd.ended) console.log("[video-submit] writing state completed for topic", normalized.topic_id);
   } catch (writingError) {
     console.error("[video-submit] complete writing state failed", writingError);
   }
