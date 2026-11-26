@@ -56,7 +56,7 @@ export async function POST() {
     }
   }
 
-  const response = NextResponse.json({ exp, mode: "fast" });
+  const response = NextResponse.json({ exp, mode: "fast", userId: user.id });
   response.cookies.set(GRANT_COOKIE_NAME, grant.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

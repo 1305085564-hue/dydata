@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
+import { formatShanghaiDateTimeLocal } from "@/lib/business-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -93,7 +94,7 @@ function formatUpdatedAt(value: string | null) {
   if (!value) return "目前使用默认标准";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "已载入当前标准";
-  return `最近保存于 ${date.toLocaleString("zh-CN", { hour12: false })}`;
+  return `最近保存于 ${formatShanghaiDateTimeLocal(date).replace("T", " ")}`;
 }
 
 function errorMessage(value: unknown) {

@@ -7,6 +7,7 @@ import { getNavGroups } from "@/lib/navigation/domain/navigation";
 import { MobileNavigationShell } from "@/components/navigation/mobile-navigation-shell";
 import { NavigationHeader } from "@/components/navigation/navigation-header";
 import { useActionCenterSummary } from "@/components/navigation/use-action-center-summary";
+import { useSyncScreenshotGrantUser } from "@/components/screenshot-grant";
 import type { Permissions } from "@/types";
 import {
   initDashboardStore,
@@ -60,6 +61,7 @@ export function NavBarClient({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const tabBarMoreButtonRef = useRef<HTMLButtonElement | null>(null);
   const { summary, loading, error, sync: syncActionCenterSummary } = useActionCenterSummary(userId);
+  useSyncScreenshotGrantUser(userId);
   const navGroups = useMemo(() => getNavGroups({ showAdmin, showSystemSettings, canAccessTeamManagement, permissions }), [canAccessTeamManagement, permissions, showAdmin, showSystemSettings]);
   const snapshot = useSyncExternalStore(subscribeDashboardStore, getDashboardSnapshot, getDashboardSnapshot);
   const selectedAccountId = snapshot.selectedAccountId || accounts[0]?.id || "";
