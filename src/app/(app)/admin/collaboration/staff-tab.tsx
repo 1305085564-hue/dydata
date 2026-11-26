@@ -15,7 +15,6 @@ import {
 import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
 import { formatAccountLine, goodExcellentText } from "./talent-tab";
-import { DetailToggle } from "./work-group-detail-columns";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { formatBigNumber, type StaffRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
@@ -85,7 +84,7 @@ export function StaffTab({
 }: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const tabKey = role === "writer" ? "writers" : "editors";
-  const { showDetail, setMode } = useCollaborationDetailMode();
+  const { showDetail } = useCollaborationDetailMode();
 
   const columns = useMemo<RoleColumn<StaffRow>[]>(() => {
     if (role === "editor") return volumeColumns<StaffRow>();
@@ -103,7 +102,7 @@ export function StaffTab({
         key: "certification",
         label: "认证",
         tip: "认证后才计入文案结算。",
-        width: 92,
+        width: 104,
         render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} onRefreshData={onRefreshData} />,
       },
     ];
@@ -134,11 +133,6 @@ export function StaffTab({
   return (
     <div className="space-y-2">
       {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
-      {role === "writer" && (
-        <div className="hidden sm:block">
-          <DetailToggle expanded={showDetail} onModeChange={setMode} />
-        </div>
-      )}
       <RoleTable
         rows={rows}
         columns={columns}

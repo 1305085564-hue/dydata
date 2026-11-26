@@ -7,7 +7,6 @@ import { CompassConstellationIllustration, DeskStudyIllustration } from "@/compo
 import { teamMetricColumns } from "./collaboration-quality-hints";
 import { goodExcellentText } from "./talent-tab";
 import { RoleTable } from "./role-table";
-import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import { useCollaborationDetailMode } from "@/lib/table-view-mode";
@@ -61,7 +60,7 @@ export function WorkGroupListTab({
   onOpenManageDrawer,
   onSelectGroup,
 }: WorkGroupListTabProps) {
-  const { showDetail, setMode } = useCollaborationDetailMode();
+  const { showDetail } = useCollaborationDetailMode();
 
   const rows = useMemo<GroupRow[]>(
     () =>
@@ -109,9 +108,6 @@ export function WorkGroupListTab({
 
   return (
     <div className="space-y-2">
-      <div className="hidden sm:block">
-        <DetailToggle expanded={showDetail} onModeChange={setMode} />
-      </div>
       <RoleTable
         rows={rows}
         columns={columns}

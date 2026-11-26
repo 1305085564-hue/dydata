@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   COLLABORATION_DETAIL_MODE_KEY,
   CONTENT_METRIC_VIEW_MODE_KEY,
+  TABLE_STANDARD_RAIL_WIDTH,
   readPersistedMode,
   writePersistedMode,
 } from "./table-view-mode";
@@ -18,6 +19,10 @@ function createMemoryStorage(initial: Record<string, string> = {}) {
     },
   };
 }
+
+test("标准内容轨道门槛单一来源为 1232px（max-w-7xl 1280px 减去左右 px-6 48px）", () => {
+  assert.equal(TABLE_STANDARD_RAIL_WIDTH, 1232);
+});
 
 test("协作管理与数据复盘默认均为完整视图，未持久化或非法值安全回落 full", () => {
   const storage = createMemoryStorage({

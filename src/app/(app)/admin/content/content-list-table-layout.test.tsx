@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
-import { CONTENT_STANDARD_RAIL_WIDTH, ContentListTable } from "./content-list-table";
+import { TABLE_STANDARD_RAIL_WIDTH } from "@/lib/table-view-mode";
+import { ContentListTable } from "./content-list-table";
 import { contentColumnWidth, visibleContentColumns } from "./content-list-columns";
 
 function makeRow(): ProcessedContentRow {
@@ -48,10 +49,12 @@ function renderView(metricViewMode: "full" | "spacious") {
   );
 }
 
-test("内容驱动表宽：简洁视图还原 w-full 标准容器不缩窄，完整视图（>1200px）按实际宽居中破栏而不拉满全屏", () => {
+test("内容驱动表宽：简洁视图还原 w-full 标准容器不缩窄，完整视图（>1232px）居中破栏且保留左右安全留白与下限保护", () => {
+  assert.equal(TABLE_STANDARD_RAIL_WIDTH, 1232);
+
   const spaciousTotal = visibleContentColumns(true).reduce((sum, c) => sum + contentColumnWidth(c, true), 0);
   assert.equal(spaciousTotal, 1096);
-  assert.ok(spaciousTotal <= CONTENT_STANDARD_RAIL_WIDTH);
+  assert.ok(spaciousTotal <= TABLE_STANDARD_RAIL_WIDTH);
   const spaciousHtml = renderView("spacious");
   assert.doesNotMatch(spaciousHtml, /data-wide-breakout="true"/);
   assert.doesNotMatch(spaciousHtml, /data-wide-table="true"/);
@@ -60,20 +63,24 @@ test("内容驱动表宽：简洁视图还原 w-full 标准容器不缩窄，完
   assert.doesNotMatch(spaciousHtml, /\bw-auto\b/);
   assert.match(spaciousHtml, /data-slot="card"[^>]*class="[^"]*\bw-full\b/);
   assert.match(spaciousHtml, /<table[^>]*class="[^"]*\bw-full\b[^"]*min-w-\[960px\] lg:min-w-\[1160px\] xl:min-w-full/);
-  assert.doesNotMatch(spaciousHtml, new RegExp(`style="width:${spaciousTotal}px"`));
+  assert.doesNotMatch(spaciousHtml, new RegExp(`style="width:${spaciousTotal}px`));
+  assert.match(spaciousHtml, /data-slot="table-container"[^>]*class="[^"]*overflow-x-auto/);
 
   const fullTotal = visibleContentColumns(false).reduce((sum, c) => sum + contentColumnWidth(c, false), 0);
   assert.equal(fullTotal, 1292);
-  assert.ok(fullTotal > CONTENT_STANDARD_RAIL_WIDTH);
+  assert.ok(fullTotal > TABLE_STANDARD_RAIL_WIDTH);
   const fullHtml = renderView("full");
   assert.match(fullHtml, /data-wide-breakout="true"/);
   assert.match(fullHtml, /data-wide-table="true"/);
   assert.match(fullHtml, /w-\[100cqw\]/);
   assert.match(fullHtml, /mx-\[calc\(50%-50cqw\)\]/);
+  assert.match(fullHtml, /px-4 sm:px-6/);
+  assert.match(fullHtml, /box-border/);
   assert.match(fullHtml, /justify-center/);
-  assert.match(fullHtml, /w-fit max-w-full/);
+  assert.match(fullHtml, /w-fit min-w-\[min\(100%,77rem\)\] max-w-full/);
   assert.match(fullHtml, /w-auto text-left border-collapse table-fixed/);
-  assert.match(fullHtml, new RegExp(`style="width:${fullTotal}px"`));
+  assert.match(fullHtml, new RegExp(`style="width:${fullTotal}px;min-width:100%"`));
+  assert.match(fullHtml, /data-slot="table-container"[^>]*class="[^"]*overflow-x-auto/);
 });
 
 test("列宽与内边距：简洁视图还原原版 400px 首列与宽松内边距，完整视图保持 360px 首列与适中紧凑内边距", () => {

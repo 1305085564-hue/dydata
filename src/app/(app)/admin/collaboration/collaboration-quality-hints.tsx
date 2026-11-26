@@ -38,7 +38,7 @@ export const COLLABORATION_METRIC_HEADER_TIPS = {
   followerConversionRate:
     "参考指标：已同步 24 小时数据的涨粉合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
   interactionRate:
-    "参考指标：已同步 24 小时数据的（赞＋评＋转＋藏）合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
+    "参考指标：已同步 24 小时数据的（赞＋评＋分享＋藏）合计 ÷ 播放合计，受高播作品影响大；未同步数据复盘的作品不参与。",
   avgInteractionAchievement: "每条作品互动指标对标准线的达成率，按作品平均，不按播放加权。",
   avgContentAchievement: `播放 ${KPI_PLAY_FLOOR.toLocaleString()} 以上且算得出留存的作品，按好标准算达成率后取平均。`,
   goodExcellentRate: `综合评级为良或优的篇数 ÷ 已评级篇数。播放不足 ${KPI_PLAY_FLOOR.toLocaleString()} 直接评普，也计入分母。`,
@@ -102,7 +102,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       key: "avgInteractionAchievement",
       label: "互动达成",
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgInteractionAchievement,
-      width: 82,
+      width: 90,
       groupStart: true,
       sortValue: (row) => summaryOf(getQuality(row))?.avgInteractionAchievement ?? null,
       cellClassName: (row) => {
@@ -130,7 +130,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       key: "avgContentAchievement",
       label: "留存达成",
       tip: COLLABORATION_METRIC_HEADER_TIPS.avgContentAchievement,
-      width: 76,
+      width: 84,
       sortValue: (row) => summaryOf(getQuality(row))?.avgContentAchievement ?? null,
       cellClassName: (row) => {
         const value = summaryOf(getQuality(row))?.avgContentAchievement;
@@ -158,7 +158,7 @@ export function qualityColumns<R extends { avgPlay: number }>(
       label: "良优率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.goodExcellentRate,
       headExtra: rulesEntry,
-      width: 84,
+      width: 94,
       sortValue: (row) => {
         const summary = summaryOf(getQuality(row));
         return summary && summary.ratedCount > 0 ? summary.goodExcellentRate : null;
@@ -190,7 +190,7 @@ export function excellentCountColumn<R>(getQuality: (row: R) => WriterQualityDat
     key: "excellentCount",
     label: "优条数",
     tip: COLLABORATION_METRIC_HEADER_TIPS.excellentCount,
-    width: 72,
+    width: 78,
     groupStart: true,
     sortValue: (row) => summaryOf(getQuality(row))?.overallGradeCounts.excellent ?? null,
     render: (row) => {
@@ -218,7 +218,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "reportCount",
       label: "本月作品",
       tip: tips.reportCount ?? COLLABORATION_METRIC_HEADER_TIPS.reportCount,
-      width: 78,
+      width: 84,
       sortValue: (row) => row.reportCount,
       render: (row) => row.reportCount,
     },
@@ -226,7 +226,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "totalPlay",
       label: "总播放",
       tip: tips.totalPlay ?? COLLABORATION_METRIC_HEADER_TIPS.totalPlay,
-      width: 68,
+      width: 74,
       sortValue: (row) => row.totalPlay,
       render: (row) => formatBigNumber(row.totalPlay),
     },
@@ -234,7 +234,7 @@ export function volumeColumns<R extends VolumeRow>(tips: VolumeTips = {}): RoleC
       key: "avgPlay",
       label: "条均播放",
       tip: tips.avgPlay ?? COLLABORATION_METRIC_HEADER_TIPS.avgPlay,
-      width: 78,
+      width: 84,
       sortValue: (row) => row.avgPlay,
       render: (row) => formatBigNumber(row.avgPlay),
     },
@@ -251,7 +251,7 @@ export function rateColumns<R extends RateRow>(toneOptions?: MetricToneOptions):
       key: "followerConversionRate",
       label: "转粉率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.followerConversionRate,
-      width: 68,
+      width: 74,
       sortValue: (row) => row.followerConversionRate,
       render: (row) => formatRate(row.followerConversionRate),
     },
@@ -259,7 +259,7 @@ export function rateColumns<R extends RateRow>(toneOptions?: MetricToneOptions):
       key: "interactionRate",
       label: "互动率",
       tip: COLLABORATION_METRIC_HEADER_TIPS.interactionRate,
-      width: 66,
+      width: 72,
       sortValue: (row) => row.interactionRate,
       cellClassName: (row) => {
         if (row.interactionRate == null) return "";
@@ -283,10 +283,10 @@ function formatDetailRate(value: number | null | undefined) {
 }
 
 const INTERACTION_DETAIL_WIDTHS: Record<(typeof INTERACTION_DETAIL_COLUMNS)[number]["key"], number> = {
-  likeRate: 72,
-  commentRate: 58,
-  shareRate: 58,
-  favoriteRate: 66,
+  likeRate: 78,
+  commentRate: 72,
+  shareRate: 72,
+  favoriteRate: 72,
 };
 
 /** 展开明细·互动四项：与小队表同一份列定义与口径。 */
@@ -303,11 +303,11 @@ export function interactionDetailColumns<R extends InteractionDetailRow>(): Role
 }
 
 const RETENTION_DETAIL_WIDTHS: Record<(typeof RETENTION_DETAIL_COLUMNS)[number]["key"], number> = {
-  bounceRate2s: 76,
-  completionRate5s: 72,
-  avgPlayDuration: 64,
-  avgPlayRatio: 64,
-  completionRate: 80,
+  bounceRate2s: 84,
+  completionRate5s: 78,
+  avgPlayDuration: 70,
+  avgPlayRatio: 70,
+  completionRate: 92,
 };
 
 /** 展开明细·留存五项：与小队表同一份列定义与口径，按评价标准好红差绿上色。 */

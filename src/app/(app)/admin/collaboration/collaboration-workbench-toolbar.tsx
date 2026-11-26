@@ -6,7 +6,13 @@ import { Alert } from "@/components/ui/alert";
 import type { WorkGroupViews } from "@/lib/collaboration/types";
 import type { TabKey } from "@/lib/collaboration/domain/workbench-state";
 import type { CollaborationTabCounts } from "@/lib/collaboration/data/workbench-loader";
+import type { CollaborationDetailMode } from "@/lib/table-view-mode";
 import { OneTip } from "./one-tip";
+import {
+  COLLABORATION_DETAIL_TOGGLE_TIP_FULL,
+  COLLABORATION_DETAIL_TOGGLE_TIP_INTERACTION_ONLY,
+  DetailToggle,
+} from "./work-group-detail-columns";
 
 /** 一排切换：四个岗位与小队并列，少点一层。 */
 export type CollaborationSegment = TabKey | "teams";
@@ -18,6 +24,9 @@ interface CollaborationWorkbenchToolbarProps {
   loadFailed: boolean;
   canManageWorkGroups: boolean;
   hasActiveGroupDetail: boolean;
+  activeGroupHasQuality?: boolean;
+  detailMode?: CollaborationDetailMode;
+  onDetailModeChange?: (mode: CollaborationDetailMode) => void;
   resolvedWorkGroupViews?: WorkGroupViews;
   counts: CollaborationTabCounts;
   onMonthChange: (val: string | null) => void;
@@ -33,6 +42,9 @@ export function CollaborationWorkbenchToolbar({
   loadFailed,
   canManageWorkGroups,
   hasActiveGroupDetail,
+  activeGroupHasQuality = true,
+  detailMode = "full",
+  onDetailModeChange,
   resolvedWorkGroupViews,
   counts,
   onMonthChange,
@@ -52,6 +64,13 @@ export function CollaborationWorkbenchToolbar({
     { key: "editors", label: "剪辑", count: counts.editors, tip: "只统计给别人账号剪辑的人。" },
     { key: "teams", label: "小队", count: resolvedWorkGroupViews?.groups.length ?? counts.teams },
   ];
+
+  // 仅支持明细模式的视图（达人、文案、小队列表与小队详情）展示完整/简洁切换；运营、剪辑页签隐藏。
+  const showDetailToggle = segment === "talents" || segment === "writers" || segment === "teams";
+  const detailToggleTip =
+    hasActiveGroupDetail && !activeGroupHasQuality
+      ? COLLABORATION_DETAIL_TOGGLE_TIP_INTERACTION_ONLY
+      : COLLABORATION_DETAIL_TOGGLE_TIP_FULL;
 
   return (
     <div className="space-y-3">
@@ -101,6 +120,17 @@ export function CollaborationWorkbenchToolbar({
         </div>
 
         <div className="ml-auto flex items-center gap-1">
+          {showDetailToggle && (
+            <>
+              <DetailToggle
+                expanded={detailMode === "full"}
+                onModeChange={onDetailModeChange}
+                tip={detailToggleTip}
+                className="hidden sm:inline-flex"
+              />
+              <span className="mx-1 hidden h-4 w-px bg-[#E2E2DF] sm:block" aria-hidden="true" />
+            </>
+          )}
           {segment === "teams" && !hasActiveGroupDetail && canManageWorkGroups && (
             <button
               type="button"

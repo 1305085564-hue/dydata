@@ -67,7 +67,7 @@ export const CONTENT_COLUMNS: readonly ContentColumn[] = [
   { key: "completion_rate", label: "完播", width: 68, sortField: "completion_rate", tip: { kind: "standard", metric: "completionRate" }, align: "right" },
 ];
 
-/** 简洁模式沿用原版列宽（合计 1096px，配合 w-full 铺满 1200px 标准轨道）。 */
+/** 简洁视图沿用原版列宽（合计 1096px，配合 w-full 铺满标准内容轨道）。 */
 const SPACIOUS_COLUMN_WIDTHS: Partial<Record<ContentColumnKey, number>> = {
   title: 400,
   overall_grade: 56,
@@ -95,8 +95,8 @@ export function contentColumnWidth(column: ContentColumn, isSpacious: boolean): 
 
 /**
  * 表头与表体共用的横向内边距：
- * - 简洁模式（spacious）：还原原版宽松内边距（title 为 px-3，其余列 groupStart ? "pl-4 pr-2" : "px-2"）
- * - 完整模式（full）：适中紧凑档（title 为 pl-4 pr-2，组边界 pl-3 pr-1.5，其余 px-1.5，末列 pr-4）
+ * - 简洁视图（spacious）：还原原版宽松内边距（title 为 px-3，其余列 groupStart ? "pl-4 pr-2" : "px-2"）
+ * - 完整视图（full）：适中紧凑档（title 为 pl-4 pr-2，组边界 pl-3 pr-1.5，其余 px-1.5，末列 pr-4）
  */
 export function contentColumnPadClass(
   column: ContentColumn,

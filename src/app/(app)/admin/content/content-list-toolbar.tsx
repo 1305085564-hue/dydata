@@ -27,7 +27,7 @@ const QUIET_BUTTON =
 /**
  * 数据复盘工具栏：一排，和协作管理同一套语言。
  * 左：分段（全部 · 优 · 良 · 普 · 未评级 · 异常），每段带篇数，点一下只看这些。
- * 右：负责人 · 搜索 · 更多筛选 · 重置 ｜ 完整 / 简洁模式 · 归档。
+ * 右：负责人 · 搜索 · 更多筛选 · 重置 ｜ 完整 / 简洁 · 归档。
  * 日期不在这里——日期就是页头标题本身。
  */
 export function ContentListToolbar(props: ContentListToolbarProps) {
@@ -125,7 +125,7 @@ export function ContentListToolbar(props: ContentListToolbarProps) {
         <span className="mx-1 hidden h-4 w-px bg-[#E2E2DF] md:block" aria-hidden="true" />
 
         {view === "all" && (
-          <SimpleTooltip tip="完整：显示赞评转藏互动明细；简洁：仅保留核心指标" side="bottom" align="end">
+          <SimpleTooltip tip="完整：展示点赞、评论、分享、收藏明细；简洁：仅保留核心指标" side="bottom" align="end">
             <div
               role="group"
               aria-label="指标视图模式"
@@ -154,7 +154,7 @@ export function ContentListToolbar(props: ContentListToolbarProps) {
                   metricViewMode === "spacious" ? "bg-[#F1F1F0] text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
                 )}
               >
-                简洁模式
+                简洁
               </button>
             </div>
           </SimpleTooltip>

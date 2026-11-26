@@ -12,7 +12,6 @@ import {
 } from "./collaboration-quality-hints";
 import { MemberZeroOutputBanner } from "./member-self-hint";
 import { RoleTable, type RoleColumn } from "./role-table";
-import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type TalentRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 import { useCollaborationDetailMode } from "@/lib/table-view-mode";
@@ -55,7 +54,7 @@ export function TalentTab({
   onSelectPerson,
   onPrefetchPerson,
 }: TalentTabProps) {
-  const { showDetail, setMode } = useCollaborationDetailMode();
+  const { showDetail } = useCollaborationDetailMode();
 
   const columns = useMemo<RoleColumn<TalentRow>[]>(() => {
     const getQuality = (row: TalentRow) => row.writerQuality;
@@ -90,9 +89,6 @@ export function TalentTab({
   return (
     <div className="space-y-2">
       {showSelfZeroHint && <MemberZeroOutputBanner tab="talents" />}
-      <div className="hidden sm:block">
-        <DetailToggle expanded={showDetail} onModeChange={setMode} />
-      </div>
       <RoleTable
         rows={talents}
         columns={columns}

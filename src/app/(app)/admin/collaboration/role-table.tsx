@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { pinCurrentUserFirst } from "@/lib/collaboration/domain/workbench-state";
+import { TABLE_STANDARD_RAIL_WIDTH } from "@/lib/table-view-mode";
 import { OneTip } from "./one-tip";
 import { SelfMemberBadge } from "./member-self-hint";
 import { InitialAvatar } from "@/components/ui/initial-avatar";
@@ -64,7 +65,6 @@ export interface RoleTableProps<R> {
 }
 
 export const ROLE_NAME_COL_WIDTH = 212;
-export const ROLE_STANDARD_RAIL_WIDTH = 1200;
 /** 当前排序列整列铺一层浅底：全站只有一档字重，仅靠墨度差肉眼扫不出哪列在排序。 */
 const SORTED_COL_BG = "bg-[#F7F7F6]/70";
 
@@ -144,7 +144,7 @@ export function RoleTable<R>({
   };
 
   const totalWidth = ROLE_NAME_COL_WIDTH + columns.reduce((sum, c) => sum + c.width, 0);
-  const exceedsStandardRail = totalWidth > ROLE_STANDARD_RAIL_WIDTH;
+  const exceedsStandardRail = totalWidth > TABLE_STANDARD_RAIL_WIDTH;
   const firstColPad = exceedsStandardRail ? "pl-4 pr-2" : "pl-4 pr-3";
 
   const tableInner = (
@@ -266,17 +266,17 @@ export function RoleTable<R>({
 
   return (
     <>
-      {/* 宽屏：超 1200px 宽表居中破栏；不超过 1200px 保持标准容器 w-full 与宽松内边距 */}
+      {/* 宽屏：超过标准轨道宽度时居中破栏并保留页面同款水平留白；否则保持标准容器 w-full 与宽松内边距 */}
       {exceedsStandardRail ? (
         <div
           data-wide-breakout="true"
-          className="hidden sm:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)]"
+          className="hidden sm:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)] px-4 sm:px-6 box-border"
         >
           <Card
             data-wide-table="true"
-            className="hidden sm:flex overflow-hidden p-0 gap-0 w-fit max-w-full"
+            className="hidden sm:flex overflow-hidden p-0 gap-0 w-fit min-w-[min(100%,77rem)] max-w-full"
           >
-            <Table className="w-auto table-fixed text-[13px]" style={{ width: totalWidth }}>
+            <Table className="w-auto table-fixed text-[13px]" style={{ width: totalWidth, minWidth: "100%" }}>
               {tableInner}
             </Table>
           </Card>

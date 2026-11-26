@@ -33,8 +33,7 @@ import {
 import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
 import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
-
-export const CONTENT_STANDARD_RAIL_WIDTH = 1200;
+import { TABLE_STANDARD_RAIL_WIDTH } from "@/lib/table-view-mode";
 
 type ContentListTableProps = {
   metricViewMode: "full" | "spacious";
@@ -201,7 +200,7 @@ export function ContentListTable({
   const isSpacious = metricViewMode === "spacious";
   const columns = visibleContentColumns(isSpacious);
   const totalWidth = columns.reduce((sum, column) => sum + contentColumnWidth(column, isSpacious), 0);
-  const exceedsStandardRail = !isSpacious && totalWidth > CONTENT_STANDARD_RAIL_WIDTH;
+  const exceedsStandardRail = !isSpacious && totalWidth > TABLE_STANDARD_RAIL_WIDTH;
 
   // 打开的作品不在视口内时滚到中间。手机卡片和桌面行各有一份 DOM，
   // 只挑真正有渲染盒子（getClientRects 非空）的那一份。
@@ -308,17 +307,17 @@ export function ContentListTable({
         highlightRules={highlightRules}
       />
 
-      {/* 桌面与平板（≥768px）：完整视图超 1200px 按实际列宽居中破栏；简洁视图保留标准容器 w-full 与宽松内边距 */}
+      {/* 桌面与平板（≥768px）：完整视图超标准轨道宽时居中破栏并保留页面同款水平留白；简洁视图保留标准容器 w-full 与宽松内边距 */}
       {exceedsStandardRail ? (
         <div
           data-wide-breakout="true"
-          className="hidden md:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)]"
+          className="hidden md:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)] px-4 sm:px-6 box-border"
         >
           <Card
             data-wide-table="true"
-            className="hidden md:block overflow-hidden p-0 gap-0 w-fit max-w-full"
+            className="hidden md:block overflow-hidden p-0 gap-0 w-fit min-w-[min(100%,77rem)] max-w-full"
           >
-            <Table className="w-auto text-left border-collapse table-fixed" style={{ width: totalWidth }}>
+            <Table className="w-auto text-left border-collapse table-fixed" style={{ width: totalWidth, minWidth: "100%" }}>
               {tableInner}
             </Table>
           </Card>

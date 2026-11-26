@@ -82,11 +82,13 @@ test("D1: 协作入口诊断把接口返回的 contentQuality 透传到详情状
   assert.match(diagnosisHandler, /contentQuality: payload\.contentQuality \?\? null,/);
 });
 
-test("P3.2: 小队列表接共用表格，列与岗位表同名同口径（明细可展开）", () => {
+test("P3.2: 小队列表接共用表格，列与岗位表同名同口径（完整/简洁切换收进顶部工具栏）", () => {
   // 列头真实渲染由 work-group-list-tab.test.tsx 用 DOM 断言；这里锁住「同一套表格、同一份列定义」
   assert.match(listTabSource, /<RoleTable/);
   assert.match(listTabSource, /teamMetricColumns/);
-  assert.match(listTabSource, /DetailToggle/);
+  assert.match(listTabSource, /useCollaborationDetailMode/);
+  assert.doesNotMatch(listTabSource, /<DetailToggle/);
+  assert.match(workbenchSource, /<DetailToggle/);
   assert.match(listTabSource, /workGroupKindLabel\(row\.kind\)/);
   assert.doesNotMatch(listTabSource, /sortableHead|ArrowUpDown|<p className="px-4 text-\[12px\]/);
   assert.doesNotMatch(listTabSource, /工种关键指标/);
@@ -95,6 +97,8 @@ test("P3.2: 小队列表接共用表格，列与岗位表同名同口径（明�
 test("P3.3: 小队详情接共用表格，表头下一行全队合计，下面一行一位组员", () => {
   assert.match(detailViewSource, /<RoleTable/);
   assert.match(detailViewSource, /teamMetricColumns/);
+  assert.match(detailViewSource, /useCollaborationDetailMode/);
+  assert.doesNotMatch(detailViewSource, /<DetailToggle/);
   assert.match(detailViewSource, /summary=\{\{ name: "全队合计"/);
   assert.match(detailViewSource, /这支小队还没有成员/);
   assert.doesNotMatch(detailViewSource, /StaffRowCells|TalentRowCells|OperatorRowCells|sortableHead/);

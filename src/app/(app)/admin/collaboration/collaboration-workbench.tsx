@@ -32,6 +32,7 @@ import {
   CollaborationDiagnosisContext,
   type CollaborationDiagnosisDetail,
 } from "@/components/admin/collaboration-work-review-link";
+import { useCollaborationDetailMode } from "@/lib/table-view-mode";
 
 interface CollaborationWorkbenchProps {
   year: number;
@@ -83,6 +84,7 @@ export function CollaborationWorkbench({
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(defaultPersonId);
+  const { mode: detailMode, setMode: setDetailMode } = useCollaborationDetailMode();
   const { sortKey, sortDir, syncSortFromParams, resetSort, handleSortChange } = useCollaborationSort({
     defaultSortKey, defaultSortDir, year, month, view, tab, selectedGroupId, selectedPersonId,
   });
@@ -151,6 +153,15 @@ export function CollaborationWorkbench({
         details: resolvedWorkGroupViews?.details,
       }),
     [selectedGroupId, view, resolvedWorkGroupViews],
+  );
+
+  const activeGroupHasQuality = useMemo(
+    () =>
+      activeGroupDetail
+        ? activeGroupDetail.summary.contentQuality !== null ||
+          activeGroupDetail.members.some((m) => m.contentQuality !== null)
+        : true,
+    [activeGroupDetail],
   );
 
   // 档案卡的岗位视角：按岗位模式跟当前页签；小队模式没有页签，按小队工种换算。
@@ -387,6 +398,9 @@ export function CollaborationWorkbench({
         loadFailed={loadFailedState}
         canManageWorkGroups={canManageWorkGroups}
         hasActiveGroupDetail={Boolean(activeGroupDetail)}
+        activeGroupHasQuality={activeGroupHasQuality}
+        detailMode={detailMode}
+        onDetailModeChange={setDetailMode}
         resolvedWorkGroupViews={resolvedWorkGroupViews}
         counts={tabCounts}
         onMonthChange={handleMonthChange}

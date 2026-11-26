@@ -7,7 +7,6 @@ import { DeskStudyIllustration } from "@/components/editorial/editorial-illustra
 import { teamMetricColumns } from "./collaboration-quality-hints";
 import { RoleTable } from "./role-table";
 import { goodExcellentText } from "./talent-tab";
-import { DetailToggle } from "./work-group-detail-columns";
 import { workGroupKindLabel } from "./work-group-list-tab";
 import {
   formatBigNumber,
@@ -49,7 +48,7 @@ export function WorkGroupDetailView({
   onPrefetchPerson,
 }: WorkGroupDetailViewProps) {
   const { summary, members } = detail;
-  const { showDetail, setMode } = useCollaborationDetailMode();
+  const { showDetail } = useCollaborationDetailMode();
 
   const withQuality = summary.contentQuality !== null || members.some((m) => m.contentQuality !== null);
   const columns = useMemo(
@@ -106,9 +105,6 @@ export function WorkGroupDetailView({
         />
       ) : (
         <div className="space-y-2">
-          <div className="hidden sm:block">
-            <DetailToggle expanded={showDetail} onModeChange={setMode} />
-          </div>
           <RoleTable
             rows={members}
             columns={columns}

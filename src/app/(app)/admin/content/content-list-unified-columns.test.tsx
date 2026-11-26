@@ -47,9 +47,17 @@ function makeRow(video: Partial<ProcessedContentRow["video"]> = {}): ProcessedCo
   } as unknown as ProcessedContentRow;
 }
 
-test("视频复盘列表支持完整/宽松指标视图切换，评级与留存达成常驻", () => {
+test("视频复盘列表支持完整/简洁对称切换（无「转」旧词），评级与留存达成常驻", () => {
+  const toolbarSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/content/content-list-toolbar.tsx"),
+    "utf8",
+  );
   assert.match(source, /metricViewMode/);
-  assert.match(source, /互动明细/);
+  assert.match(toolbarSource, /完整：展示点赞、评论、分享、收藏明细；简洁：仅保留核心指标/);
+  assert.doesNotMatch(toolbarSource, /赞评转藏/);
+  assert.doesNotMatch(toolbarSource, /简洁模式/);
+  assert.match(toolbarSource, />\s*完整\s*<\/button>/);
+  assert.match(toolbarSource, />\s*简洁\s*<\/button>/);
   const full = visibleContentColumns(false).map((column) => column.label);
   const spacious = visibleContentColumns(true).map((column) => column.label);
   for (const label of ["点赞", "评论", "分享", "收藏", "互动率", "2s跳出", "5s完播", "均播", "完播", "留存达成", "评级"]) {
@@ -166,9 +174,10 @@ test("异常状态使用统一橙色标记（腰斩已下线，不再单独成�
   assert.match(source, /variant: "warning" as const/);
 });
 
-test("窄屏列表通过表格容器横向滚动查看全部列", () => {
+test("窄屏列表通过表格容器横向滚动查看全部列（完整/简洁双模式）", () => {
   assert.match(source, /import \{ Table \} from "@\/components\/ui\/table"/);
-  assert.match(source, /<Table className="[^"]*w-auto[^"]*table-fixed" style=\{\{ width: totalWidth \}\}/);
+  assert.match(source, /<Table className="[^"]*w-auto[^"]*table-fixed" style=\{\{ width: totalWidth, minWidth: "100%" \}\}/);
+  assert.match(source, /<Table className="w-full text-left border-collapse table-fixed min-w-\[960px\] lg:min-w-\[1160px\] xl:min-w-full">/);
 });
 
 test("未评级原因短文案与长文案同源，未知状态不等于硬编码待采集", () => {

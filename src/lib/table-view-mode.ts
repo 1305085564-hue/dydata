@@ -6,6 +6,13 @@ export type ContentMetricViewMode = "full" | "spacious";
 export const COLLABORATION_DETAIL_MODE_KEY = "dydata:collaboration:detail-mode";
 export const CONTENT_METRIC_VIEW_MODE_KEY = "dydata:content:metric-view-mode";
 
+/**
+ * 标准内容区内部宽门槛（px）：
+ * `AdminWorkspaceLayout` `max-w-7xl`（80rem = 1280px @ 16px）减去页面左右安全留白 `px-6`（48px）= 1232px。
+ * 宽表列宽总和超过此门槛时启用居中破栏展开；未超过时保持标准容器 `w-full` 与原宽松内边距。
+ */
+export const TABLE_STANDARD_RAIL_WIDTH = 1232;
+
 const COLLABORATION_MODES = ["full", "concise"] as const;
 const CONTENT_MODES = ["full", "spacious"] as const;
 
