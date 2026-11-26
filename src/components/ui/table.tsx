@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { TableHorizontalScroll } from "@/components/ui/table-horizontal-scroll"
 
 interface TableProps extends React.ComponentProps<"table"> {
   freezeFirst?: boolean
@@ -14,30 +15,38 @@ interface TableProps extends React.ComponentProps<"table"> {
 }
 
 function Table({ className, freezeFirst, stickyHeader, ...props }: TableProps) {
-  return (
-    <div
-      data-slot="table-container"
-      data-sticky-header={stickyHeader || undefined}
-      className={cn("relative w-full", !stickyHeader && "overflow-x-auto")}
-    >
-      <table
-        data-slot="table"
-        data-freeze-first={freezeFirst}
-        className={cn(
-          "w-full caption-bottom text-[14px] text-[#1F1E1D] tabular-nums",
-          freezeFirst && [
-            "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FCFCFB]/85 [&_th:first-child]:backdrop-blur-md",
-            "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-[calc(var(--z-sticky-table,10)-1)] [&_td:first-child]:bg-white",
-            "[&_th:first-child]:after:content-[''] [&_th:first-child]:after:absolute [&_th:first-child]:after:right-0 [&_th:first-child]:after:top-0 [&_th:first-child]:after:bottom-0 [&_th:first-child]:after:w-[8px] [&_th:first-child]:after:translate-x-full [&_th:first-child]:after:bg-gradient-to-r [&_th:first-child]:after:from-black/[0.03] [&_th:first-child]:after:to-transparent [&_th:first-child]:after:pointer-events-none",
-            "[&_td:first-child]:after:content-[''] [&_td:first-child]:after:absolute [&_td:first-child]:after:right-0 [&_td:first-child]:after:top-0 [&_td:first-child]:after:bottom-0 [&_td:first-child]:after:w-[8px] [&_td:first-child]:after:translate-x-full [&_td:first-child]:after:bg-gradient-to-r [&_td:first-child]:after:from-black/[0.03] [&_td:first-child]:after:to-transparent [&_td:first-child]:after:pointer-events-none",
-            "[&_tr:hover_td:first-child]:bg-[#F7F7F6]"
-          ],
-          className
-        )}
-        {...props}
-      />
-    </div>
+  const tableEl = (
+    <table
+      data-slot="table"
+      data-freeze-first={freezeFirst}
+      className={cn(
+        "w-full caption-bottom text-[14px] text-[#1F1E1D] tabular-nums",
+        freezeFirst && [
+          "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FCFCFB]/85 [&_th:first-child]:backdrop-blur-md",
+          "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-[calc(var(--z-sticky-table,10)-1)] [&_td:first-child]:bg-white",
+          "[&_th:first-child]:after:content-[''] [&_th:first-child]:after:absolute [&_th:first-child]:after:right-0 [&_th:first-child]:after:top-0 [&_th:first-child]:after:bottom-0 [&_th:first-child]:after:w-[8px] [&_th:first-child]:after:translate-x-full [&_th:first-child]:after:bg-gradient-to-r [&_th:first-child]:after:from-black/[0.03] [&_th:first-child]:after:to-transparent [&_th:first-child]:after:pointer-events-none",
+          "[&_td:first-child]:after:content-[''] [&_td:first-child]:after:absolute [&_td:first-child]:after:right-0 [&_td:first-child]:after:top-0 [&_td:first-child]:after:bottom-0 [&_td:first-child]:after:w-[8px] [&_td:first-child]:after:translate-x-full [&_td:first-child]:after:bg-gradient-to-r [&_td:first-child]:after:from-black/[0.03] [&_td:first-child]:after:to-transparent [&_td:first-child]:after:pointer-events-none",
+          "[&_tr:hover_td:first-child]:bg-[#F7F7F6]"
+        ],
+        className
+      )}
+      {...props}
+    />
   )
+
+  if (stickyHeader) {
+    return (
+      <div
+        data-slot="table-container"
+        data-sticky-header="true"
+        className="relative w-full"
+      >
+        {tableEl}
+      </div>
+    )
+  }
+
+  return <TableHorizontalScroll>{tableEl}</TableHorizontalScroll>
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
