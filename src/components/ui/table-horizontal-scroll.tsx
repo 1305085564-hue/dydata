@@ -278,7 +278,7 @@ function FloatingHorizontalScrollbar({
   return createPortal(
     <div
       data-slot="table-floating-hscroll"
-      className="pointer-events-none fixed bottom-3 z-[var(--z-floating-action,30)] px-3"
+      className="pointer-events-none fixed bottom-2 z-[var(--z-floating-action,30)] px-3 [@media(hover:none)]:hidden"
       style={{ left: `${metrics.barLeft}px`, width: `${metrics.barWidth}px` }}
     >
       <div
@@ -466,7 +466,7 @@ export function TableHorizontalScroll({ children }: TableHorizontalScrollProps) 
                 left: `${leftButtonOffset}px`,
                 top: `${metrics.buttonTop}px`,
               }}
-              className="absolute z-20 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#E2E2DF] bg-[#FFFFFF]/95 text-[#78716C] shadow-claude-float opacity-0 transition-[opacity,background-color,color,transform] duration-150 ease-smooth hover:bg-[#FFFFFF] hover:text-[#141413] hover:opacity-100 group-hover/table-hscroll:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
+              className="absolute z-20 flex [@media(hover:none)]:hidden h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#E2E2DF] bg-[#FFFFFF]/95 text-[#78716C] shadow-claude-float opacity-0 transition-[opacity,background-color,color,transform] duration-150 ease-smooth hover:bg-[#FFFFFF] hover:text-[#141413] hover:opacity-100 group-hover/table-hscroll:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -482,7 +482,7 @@ export function TableHorizontalScroll({ children }: TableHorizontalScrollProps) 
                 right: `${ARROW_GUTTER_PX}px`,
                 top: `${metrics.buttonTop}px`,
               }}
-              className="absolute z-20 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#E2E2DF] bg-[#FFFFFF]/95 text-[#78716C] shadow-claude-float opacity-0 transition-[opacity,background-color,color,transform] duration-150 ease-smooth hover:bg-[#FFFFFF] hover:text-[#141413] hover:opacity-100 group-hover/table-hscroll:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
+              className="absolute z-20 flex [@media(hover:none)]:hidden h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#E2E2DF] bg-[#FFFFFF]/95 text-[#78716C] shadow-claude-float opacity-0 transition-[opacity,background-color,color,transform] duration-150 ease-smooth hover:bg-[#FFFFFF] hover:text-[#141413] hover:opacity-100 group-hover/table-hscroll:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20"
             >
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
