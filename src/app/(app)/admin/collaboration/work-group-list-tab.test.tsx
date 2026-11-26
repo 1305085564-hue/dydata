@@ -50,9 +50,20 @@ function renderList(groups: WorkGroupSummaryRow[], canManage = false) {
   );
 }
 
-test("列表列头：小队 + 与岗位表同名的绩效列（运营小队不出评级列）", () => {
+test("列表列头：默认全展开（运营小队含基础与互动明细 10 列，不出评级列）", () => {
   const html = renderList([group({ kind: "operator" })]);
-  assert.deepEqual(tableHeaderLabels(html), ["小队", "本月作品", "总播放", "条均播放", "转粉率", "互动率"]);
+  assert.deepEqual(tableHeaderLabels(html), [
+    "小队",
+    "本月作品",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "评论率",
+    "分享率",
+    "收藏率",
+  ]);
 });
 
 test("小队名下一行灰字写工种与人数，不用英文代号", () => {
@@ -92,11 +103,11 @@ test("绩效列按数值格式化：比率保留 1 位小数", () => {
   assert.ok(text.includes("4.5%"), "互动率 2700/60000 = 4.5%");
 });
 
-test("无快照的组：两个比率显示 —，不显示 0.0%", () => {
+test("无快照的组：比率列显示 —，不显示 0.0%", () => {
   const html = renderList([group({ memberCount: 2, kind: "operator" })]);
   const table = html.slice(html.indexOf("<table"), html.indexOf("</table>"));
   assert.equal(table.includes("0.0%"), false, "没有快照时不得显示 0.0%");
-  assert.equal((stripTags(table).match(/—/g) ?? []).length, 2, "转粉率/互动率两个空值用 — 兜底");
+  assert.equal((stripTags(table).match(/—/g) ?? []).length, 6, "转粉率/互动率及四项互动明细空值用 — 兜底");
 });
 
 test("进入详情靠名字格里的真按钮，整行不冒充 button，表下不压脚注", () => {
@@ -120,7 +131,7 @@ test("空态与未就绪态不出表格，文案随权限变化", () => {
   assert.equal(emptyManageable.includes("<table"), false, "没有小队时不出表格");
 });
 
-test("文案小队含质量数据时：出互动达成、留存达成、良优率三列，运营小队那一行写 —", () => {
+test("文案小队含质量数据时：默认全展开 18 列（含互动明细、评级、留存明细），运营小队那一行写 —", () => {
   const writerWithQuality = group({
     id: "wg-w",
     name: "文案一组",
@@ -146,7 +157,26 @@ test("文案小队含质量数据时：出互动达成、留存达成、良优�
   });
 
   const html = renderList([writerWithQuality, group({ id: "wg-o", name: "运营一组", kind: "operator" })]);
-  assert.deepEqual(tableHeaderLabels(html), ["小队", "本月作品", "总播放", "条均播放", "转粉率", "互动率", "互动达成", "留存达成", "良优率"]);
+  assert.deepEqual(tableHeaderLabels(html), [
+    "小队",
+    "本月作品",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "评论率",
+    "分享率",
+    "收藏率",
+    "互动达成",
+    "留存达成",
+    "良优率",
+    "2秒跳出率",
+    "5秒完播率",
+    "均播时长",
+    "播放占比",
+    "整体完播率",
+  ]);
   const text = stripTags(html);
   assert.ok(text.includes("90%"));
   assert.ok(text.includes("88%"));

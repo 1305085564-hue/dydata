@@ -42,7 +42,7 @@ export function RatioCell({
   metricType,
   achievement,
   className = "",
-  cellClassName = "px-1",
+  cellClassName = "px-1.5",
   fullCell = false,
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
@@ -126,7 +126,7 @@ export function InteractionRateTooltipCell({
   playCount,
   lowSample = false,
   highlightClass = "",
-  cellClassName = "px-1",
+  cellClassName = "px-1.5",
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
   value: number | null | undefined;
@@ -200,7 +200,7 @@ export function InteractionRateTooltipCell({
 /** 留存达成合成列：整格悬停展示子项达标率与折算说明，点击直透行点击。 */
 export function RetentionAchievementTooltipCell({
   quality,
-  cellClassName = "px-1",
+  cellClassName = "px-1.5",
   standards = DEFAULT_EVALUATION_STANDARDS,
 }: {
   quality: WorkContentQuality | null | undefined;

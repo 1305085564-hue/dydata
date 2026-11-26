@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
-import { ContentListTable } from "./content-list-table";
+import { CONTENT_STANDARD_RAIL_WIDTH, ContentListTable } from "./content-list-table";
+import { visibleContentColumns } from "./content-list-columns";
 
 function makeRow(): ProcessedContentRow {
   return {
@@ -47,41 +48,49 @@ function renderView(metricViewMode: "full" | "spacious") {
   );
 }
 
-test("互动明细（full）启用全宽破栏，宽松视图保持定宽轨道", () => {
+test("内容驱动表宽：简洁视图（≤1200px）留在标准轨道，完整视图（>1200px）按实际宽居中延展而不拉满全屏", () => {
+  const spaciousTotal = visibleContentColumns(true).reduce((sum, c) => sum + c.width, 0);
+  assert.ok(spaciousTotal <= CONTENT_STANDARD_RAIL_WIDTH);
   const spaciousHtml = renderView("spacious");
-  assert.doesNotMatch(spaciousHtml, /data-full-bleed="true"/);
+  assert.doesNotMatch(spaciousHtml, /data-wide-breakout="true"/);
   assert.doesNotMatch(spaciousHtml, /w-\[100cqw\]/);
+  assert.match(spaciousHtml, /w-fit max-w-full/);
+  assert.match(spaciousHtml, new RegExp(`style="width:${spaciousTotal}px"`));
 
+  const fullTotal = visibleContentColumns(false).reduce((sum, c) => sum + c.width, 0);
+  assert.ok(fullTotal > CONTENT_STANDARD_RAIL_WIDTH);
   const fullHtml = renderView("full");
-  assert.match(fullHtml, /data-full-bleed="true"/);
+  assert.match(fullHtml, /data-wide-breakout="true"/);
   assert.match(fullHtml, /w-\[100cqw\]/);
   assert.match(fullHtml, /mx-\[calc\(50%-50cqw\)\]/);
-  assert.match(fullHtml, /rounded-none/);
+  assert.match(fullHtml, /justify-center/);
+  assert.match(fullHtml, /w-fit max-w-full/);
+  assert.match(fullHtml, new RegExp(`style="width:${fullTotal}px"`));
 });
 
-test("作品列 <col> 不设固定宽，表头与表体单元格水平内边距严格对齐", () => {
+test("作品列与所有数据列均设固定宽度，表头与表体适中紧凑内边距严格对齐", () => {
   const fullHtml = renderView("full");
   const cols = [...fullHtml.matchAll(/<col\b([^>]*)\/>/g)].map((m) => m[1]);
   assert.equal(cols.length, 15);
-  assert.doesNotMatch(cols[0], /width:/);
-  assert.match(cols[1], /width:\s*48px/);
+  assert.match(cols[0], /width:\s*360px/);
+  assert.match(cols[1], /width:\s*54px/);
 
   const bounceTh = fullHtml.match(/<th\b[^>]*data-col-key="bounce_rate_2s"[^>]*class="([^"]+)"/)?.[1] ?? "";
   const bounceTd = fullHtml.match(/<td\b[^>]*data-col-key="bounce_rate_2s"[^>]*>(.*?)<\/td>/)?.[1] ?? "";
   assert.match(bounceTh, /\bpl-3\b/);
-  assert.match(bounceTh, /\bpr-1\b/);
+  assert.match(bounceTh, /\bpr-1\.5\b/);
   assert.match(bounceTd, /\bpl-3\b/);
-  assert.match(bounceTd, /\bpr-1\b/);
+  assert.match(bounceTd, /\bpr-1\.5\b/);
 
   const interactionTh = fullHtml.match(/<th\b[^>]*data-col-key="interaction_rate"[^>]*class="([^"]+)"/)?.[1] ?? "";
   const interactionTd = fullHtml.match(/<td\b[^>]*data-col-key="interaction_rate"[^>]*>(.*?)<\/td>/)?.[1] ?? "";
-  assert.match(interactionTh, /\bpx-1\b/);
-  assert.match(interactionTd, /\bpx-1\b/);
+  assert.match(interactionTh, /\bpx-1\.5\b/);
+  assert.match(interactionTd, /\bpx-1\.5\b/);
 
   const completionTh = fullHtml.match(/<th\b[^>]*data-col-key="completion_rate"[^>]*class="([^"]+)"/)?.[1] ?? "";
   const completionTd = fullHtml.match(/<td\b[^>]*data-col-key="completion_rate"[^>]*>(.*?)<\/td>/)?.[1] ?? "";
-  assert.match(completionTh, /\bpl-1\b/);
+  assert.match(completionTh, /\bpl-1\.5\b/);
   assert.match(completionTh, /\bpr-4\b/);
-  assert.match(completionTd, /\bpl-1\b/);
+  assert.match(completionTd, /\bpl-1\.5\b/);
   assert.match(completionTd, /\bpr-4\b/);
 });

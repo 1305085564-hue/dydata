@@ -79,10 +79,21 @@ function renderDetail(detail: WorkGroupDetailViewType) {
   );
 }
 
-test("小队详情列：姓名 + 与岗位表同名的绩效列；全队合计与组员行逐列对齐", () => {
+test("小队详情默认全展开（含互动四项明细）；全队合计与组员行逐列对齐", () => {
   const html = renderDetail({ summary: summary({ kind: "talent" }), members: [member("u-1", "张达人")] });
-  assert.deepEqual(tableHeaderLabels(html), ["姓名", "本月作品", "总播放", "条均播放", "转粉率", "互动率"]);
-  assert.deepEqual(bodyRowCellCounts(html), [6, 6]);
+  assert.deepEqual(tableHeaderLabels(html), [
+    "姓名",
+    "本月作品",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "评论率",
+    "分享率",
+    "收藏率",
+  ]);
+  assert.deepEqual(bodyRowCellCounts(html), [10, 10]);
 });
 
 test("标题写小队名，下面一行写工种、人数与本月篇数", () => {
@@ -168,7 +179,7 @@ test("成员管理入口：canManage 且传入回调时渲染「成员管理」�
   assert.ok(html.includes("成员管理"));
 });
 
-test("文案小队含质量数据时：出互动达成、留存达成、良优率三列，标题行写良优率", () => {
+test("文案小队含质量数据时：默认全展开 18 列（基础 + 互动四项 + 评级 + 留存五项），标题行写良优率", () => {
   const quality = {
     totalCount: 5,
     achievementSampleCount: 4,
@@ -191,8 +202,27 @@ test("文案小队含质量数据时：出互动达成、留存达成、良优�
     summary: summary({ kind: "writer", contentQuality: quality }),
     members: [member("u-1", "张文案", { contentQuality: quality })],
   });
-  assert.deepEqual(tableHeaderLabels(html), ["姓名", "本月作品", "总播放", "条均播放", "转粉率", "互动率", "互动达成", "留存达成", "良优率"]);
-  assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
+  assert.deepEqual(tableHeaderLabels(html), [
+    "姓名",
+    "本月作品",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "评论率",
+    "分享率",
+    "收藏率",
+    "互动达成",
+    "留存达成",
+    "良优率",
+    "2秒跳出率",
+    "5秒完播率",
+    "均播时长",
+    "播放占比",
+    "整体完播率",
+  ]);
+  assert.deepEqual(bodyRowCellCounts(html), [18, 18]);
   const text = stripTags(html);
   assert.ok(text.includes("95%") && text.includes("93%") && text.includes("80%"));
   assert.ok(text.includes("良优率 80%"), "标题下一行写本月良优率");

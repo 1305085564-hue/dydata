@@ -33,6 +33,8 @@ import { ContentListMobile } from "./content-list-mobile";
 import { GradeMark, StatusMark, TitleButton, WorkMetaLine } from "./content-list-row-parts";
 import { shouldHandleInPlaceLinkClick } from "@/lib/navigation/link-click";
 
+export const CONTENT_STANDARD_RAIL_WIDTH = 1200;
+
 type ContentListTableProps = {
   metricViewMode: "full" | "spacious";
   visibleRows: ProcessedContentRow[];
@@ -82,7 +84,7 @@ function renderCell(column: ContentColumn, ctx: CellContext, isLast: boolean): {
           ctx.isSelected
             ? "bg-[#E4E4E1] group-hover:bg-[#E4E4E1]"
             : ctx.isTitleSorted
-              ? `${SORTED_STICKY_COL_BG} group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[a:focus-visible]:bg-[#F7F7F6] group-has-[a:focus-visible]:bg-[#F7F7F6] has-[button:focus-visible]:bg-[#F7F7F6]`
+              ? `${SORTED_STICKY_COL_BG} group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[a:focus-visible]:bg-[#F7F7F6] has-[button:focus-visible]:bg-[#F7F7F6]`
               : "bg-white group-hover:bg-[#F7F7F6] group-active:bg-[#EBEBE9] group-has-[a:focus-visible]:bg-[#F7F7F6] group-has-[button:focus-visible]:bg-[#F7F7F6]",
         ),
         content: (
@@ -190,8 +192,10 @@ export function ContentListTable({
   highlightRules,
   evaluationStandards = DEFAULT_EVALUATION_STANDARDS,
 }: ContentListTableProps) {
-  const fullBleed = metricViewMode === "full";
-  const columns = visibleContentColumns(!fullBleed);
+  const isSpacious = metricViewMode === "spacious";
+  const columns = visibleContentColumns(isSpacious);
+  const totalWidth = columns.reduce((sum, column) => sum + column.width, 0);
+  const exceedsStandardRail = totalWidth > CONTENT_STANDARD_RAIL_WIDTH;
 
   // 打开的作品不在视口内时滚到中间。手机卡片和桌面行各有一份 DOM，
   // 只挑真正有渲染盒子（getClientRects 非空）的那一份。
@@ -209,6 +213,83 @@ export function ContentListTable({
     }
   }, [selectedVideoId, tableContainerRef]);
 
+  const desktopCard = (
+    <Card
+      data-wide-table={exceedsStandardRail ? "true" : undefined}
+      className="hidden md:block overflow-hidden p-0 gap-0 w-fit max-w-full"
+    >
+      <Table className="w-auto text-left border-collapse table-fixed" style={{ width: totalWidth }}>
+        <colgroup>
+          {columns.map((column) => (
+            <col key={column.key} style={{ width: column.width }} />
+          ))}
+        </colgroup>
+        <ContentListTableHeader
+          columns={columns}
+          sortField={sortField}
+          sortDir={sortDir}
+          handleSort={handleSort}
+          evaluationStandards={evaluationStandards}
+        />
+        <tbody className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]">
+          {visibleRows.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="py-8 text-[#1F1E1D]">
+                <EmptyState variant="compact" title={emptyTitle} description={emptyDescription} />
+              </td>
+            </tr>
+          ) : (
+            visibleRows.map((item) => {
+              const isSelected = selectedVideoId === item.video.id;
+              const ctx: CellContext = {
+                item,
+                isSingleDay,
+                isSelected,
+                isTitleSorted: sortField === "published_at",
+                standards: evaluationStandards,
+                hit: (key) => isCellHighlighted(item, key, highlightRules),
+                ownerNames,
+                onSelectAuthor,
+                buildVideoHref,
+                buildAuthorHref,
+                onOpen: () => onSelectVideoId(item.video.id),
+              };
+              return (
+                <tr
+                  key={item.video.id}
+                  data-video-id={item.video.id}
+                  aria-selected={isSelected || undefined}
+                  onClick={(event) => {
+                    if (!shouldHandleInPlaceLinkClick(event)) return;
+                    onSelectVideoId(item.video.id);
+                  }}
+                  className={cn(
+                    "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
+                    isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
+                  )}
+                >
+                  {columns.map((column, index) => {
+                    const cell = renderCell(column, ctx, index === columns.length - 1);
+                    const isSorted = column.sortField !== undefined && column.sortField === sortField;
+                    return (
+                      <td
+                        key={column.key}
+                        data-col-key={column.key}
+                        className={cn(cell.className, isSorted && column.key !== "title" && SORTED_COL_BG)}
+                      >
+                        {cell.content}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </Table>
+    </Card>
+  );
+
   return (
     <div ref={tableContainerRef} className="flex-1 w-full min-h-0">
       <ContentListMobile
@@ -225,89 +306,17 @@ export function ContentListTable({
         highlightRules={highlightRules}
       />
 
-      {/* 桌面与平板（≥768px）：列由 CONTENT_COLUMNS 统一生成，窄屏横向滚动时冻结作品列；完整视图铺满窗口左右边缘 */}
-      <Card
-        data-full-bleed={fullBleed ? "true" : undefined}
-        className={cn(
-          "hidden md:block flex-1 w-full p-0 gap-0",
-          fullBleed && "w-[100cqw] max-w-none mx-[calc(50%-50cqw)] rounded-none",
-        )}
-      >
-        <Table className="text-left border-collapse table-fixed min-w-[960px] lg:min-w-[1160px] xl:min-w-full" style={{ minWidth: fullBleed ? 1140 : undefined }}>
-          <colgroup>
-            {/* 作品列不设固定宽，吃掉剩余横向空间，保证所有数据列保持紧凑定宽 */}
-            {columns.map((column) =>
-              column.key === "title" ? (
-                <col key={column.key} />
-              ) : (
-                <col key={column.key} style={{ width: column.width }} />
-              ),
-            )}
-          </colgroup>
-          <ContentListTableHeader
-            columns={columns}
-            sortField={sortField}
-            sortDir={sortDir}
-            handleSort={handleSort}
-            evaluationStandards={evaluationStandards}
-          />
-          <tbody className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]">
-            {visibleRows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="py-8 text-[#1F1E1D]">
-                  <EmptyState variant="compact" title={emptyTitle} description={emptyDescription} />
-                </td>
-              </tr>
-            ) : (
-              visibleRows.map((item) => {
-                const isSelected = selectedVideoId === item.video.id;
-                const ctx: CellContext = {
-                  item,
-                  isSingleDay,
-                  isSelected,
-                  isTitleSorted: sortField === "published_at",
-                  standards: evaluationStandards,
-                  hit: (key) => isCellHighlighted(item, key, highlightRules),
-                  ownerNames,
-                  onSelectAuthor,
-                  buildVideoHref,
-                  buildAuthorHref,
-                  onOpen: () => onSelectVideoId(item.video.id),
-                };
-                return (
-                  <tr
-                    key={item.video.id}
-                    data-video-id={item.video.id}
-                    aria-selected={isSelected || undefined}
-                    onClick={(event) => {
-                      if (!shouldHandleInPlaceLinkClick(event)) return;
-                      onSelectVideoId(item.video.id);
-                    }}
-                    className={cn(
-                      "group transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]",
-                      isSelected ? ROW_SELECTED : `${ROW_HOVER} active:bg-[#EBEBE9]`,
-                    )}
-                  >
-                    {columns.map((column, index) => {
-                      const cell = renderCell(column, ctx, index === columns.length - 1);
-                      const isSorted = column.sortField !== undefined && column.sortField === sortField;
-                      return (
-                        <td
-                          key={column.key}
-                          data-col-key={column.key}
-                          className={cn(cell.className, isSorted && column.key !== "title" && SORTED_COL_BG)}
-                        >
-                          {cell.content}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </Table>
-      </Card>
+      {/* 桌面与平板（≥768px）：按所有可见列宽紧致包裹，仅当超出标准轨道（1200px）时才居中向外延展 */}
+      {exceedsStandardRail ? (
+        <div
+          data-wide-breakout="true"
+          className="hidden md:flex justify-center w-[100cqw] mx-[calc(50%-50cqw)]"
+        >
+          {desktopCard}
+        </div>
+      ) : (
+        desktopCard
+      )}
     </div>
   );
 }

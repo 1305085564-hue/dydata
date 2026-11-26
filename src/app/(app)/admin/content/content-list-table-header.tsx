@@ -79,9 +79,9 @@ export function ContentListTableHeader({
           );
           const indicator = column.sortField ? (
             isSorted ? (
-              sortDir === "desc" ? <ArrowDown className="size-3 text-[#141413]" aria-hidden /> : <ArrowUp className="size-3 text-[#141413]" aria-hidden />
+              sortDir === "desc" ? <ArrowDown className="size-3 shrink-0 text-[#141413]" aria-hidden /> : <ArrowUp className="size-3 shrink-0 text-[#141413]" aria-hidden />
             ) : (
-              <ArrowDown className="size-3 text-[#A8A29E] opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
+              <ArrowDown className="size-3 shrink-0 text-[#A8A29E] opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
             )
           ) : null;
           const sortName = column.sortLabel ?? column.label;
@@ -105,7 +105,7 @@ export function ContentListTableHeader({
               key={column.key}
               data-col-key={column.key}
               aria-sort={ariaSort}
-              style={isTitle ? undefined : { width: column.width }}
+              style={{ width: column.width }}
               className={cn(
                 "py-2 font-normal whitespace-nowrap",
                 column.align === "right" ? "text-right" : "text-left",

@@ -1,6 +1,9 @@
 "use client";
 
 import type { RetentionMetrics } from "@/lib/collaboration/content-quality-contract";
+import type { CollaborationDetailMode } from "@/lib/table-view-mode";
+import { cn } from "@/lib/utils";
+import { OneTip } from "./one-tip";
 
 /**
  * 小队表「展开明细」共用部分：
@@ -41,24 +44,63 @@ export function formatRate(value: number | null | undefined) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-/** 展开/收起开关：默认合并展示，点开后互动与留存都拆成细项。 */
+/** 完整 / 简洁模式切换：默认完整展开，切换后浏览器记住选择。 */
 export function DetailToggle({
   expanded,
   onToggle,
+  onModeChange,
 }: {
   expanded: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
+  onModeChange?: (mode: CollaborationDetailMode) => void;
 }) {
+  const selectMode = (next: CollaborationDetailMode) => {
+    if (onModeChange) {
+      onModeChange(next);
+      return;
+    }
+    if ((next === "full") !== expanded) {
+      onToggle?.();
+    }
+  };
+
   return (
     <div className="flex justify-end">
-      <button
-        type="button"
-        aria-pressed={expanded}
-        onClick={onToggle}
-        className="rounded-md px-2 py-1 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors duration-150 cursor-pointer"
-      >
-        {expanded ? "收起明细" : "展开明细（互动四项 · 留存五项）"}
-      </button>
+      <OneTip tip="完整：展示互动四项与留存五项明细；简洁：仅保留核心绩效指标" side="bottom" align="end">
+        <div
+          role="group"
+          aria-label="指标明细视图"
+          data-detail-mode={expanded ? "full" : "concise"}
+          className="inline-flex items-center gap-1"
+        >
+          <button
+            type="button"
+            aria-pressed={expanded}
+            onClick={() => selectMode("full")}
+            className={cn(
+              "inline-flex h-7 items-center rounded-md px-2.5 text-[12px] transition-colors duration-150 cursor-pointer",
+              expanded
+                ? "bg-[#F1F1F0] text-[#141413]"
+                : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
+            )}
+          >
+            完整
+          </button>
+          <button
+            type="button"
+            aria-pressed={!expanded}
+            onClick={() => selectMode("concise")}
+            className={cn(
+              "inline-flex h-7 items-center rounded-md px-2.5 text-[12px] transition-colors duration-150 cursor-pointer",
+              !expanded
+                ? "bg-[#F1F1F0] text-[#141413]"
+                : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]",
+            )}
+          >
+            简洁模式
+          </button>
+        </div>
+      </OneTip>
     </div>
   );
 }

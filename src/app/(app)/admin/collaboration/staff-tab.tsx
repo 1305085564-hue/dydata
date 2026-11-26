@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
@@ -19,6 +19,7 @@ import { DetailToggle } from "./work-group-detail-columns";
 import { WriterCertificationButton } from "./writer-certification-button";
 import { formatBigNumber, type StaffRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { useCollaborationDetailMode } from "@/lib/table-view-mode";
 
 export type StaffRole = "writer" | "editor";
 
@@ -84,7 +85,7 @@ export function StaffTab({
 }: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const tabKey = role === "writer" ? "writers" : "editors";
-  const [showDetail, setShowDetail] = useState(false);
+  const { showDetail, setMode } = useCollaborationDetailMode();
 
   const columns = useMemo<RoleColumn<StaffRow>[]>(() => {
     if (role === "editor") return volumeColumns<StaffRow>();
@@ -102,7 +103,7 @@ export function StaffTab({
         key: "certification",
         label: "认证",
         tip: "认证后才计入文案结算。",
-        width: 96,
+        width: 92,
         render: (row) => <WriterCertificationCell row={row} canCertify={certifiable.has(row.userId)} onRefreshData={onRefreshData} />,
       },
     ];
@@ -135,13 +136,12 @@ export function StaffTab({
       {showSelfZeroHint && <MemberZeroOutputBanner tab={tabKey} />}
       {role === "writer" && (
         <div className="hidden sm:block">
-          <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
+          <DetailToggle expanded={showDetail} onModeChange={setMode} />
         </div>
       )}
       <RoleTable
         rows={rows}
         columns={columns}
-        fullBleed={showDetail && columns.length >= 12}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}

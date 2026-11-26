@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ChevronLeft, UserPlus } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
@@ -15,6 +15,7 @@ import {
   type WorkGroupMemberRow,
 } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { useCollaborationDetailMode } from "@/lib/table-view-mode";
 
 interface WorkGroupDetailViewProps {
   detail: WorkGroupDetailViewType;
@@ -48,7 +49,7 @@ export function WorkGroupDetailView({
   onPrefetchPerson,
 }: WorkGroupDetailViewProps) {
   const { summary, members } = detail;
-  const [showDetail, setShowDetail] = useState(false);
+  const { showDetail, setMode } = useCollaborationDetailMode();
 
   const withQuality = summary.contentQuality !== null || members.some((m) => m.contentQuality !== null);
   const columns = useMemo(
@@ -106,16 +107,15 @@ export function WorkGroupDetailView({
       ) : (
         <div className="space-y-2">
           <div className="hidden sm:block">
-            <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
+            <DetailToggle expanded={showDetail} onModeChange={setMode} />
           </div>
           <RoleTable
             rows={members}
             columns={columns}
-            fullBleed={showDetail && columns.length >= 12}
             defaultSortKey="totalPlay"
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        onSortChange={onSortChange}
+            sortKey={sortKey}
+            sortOrder={sortOrder}
+            onSortChange={onSortChange}
             summary={{ name: "全队合计", sub: "比率按全队作品合计重算", row: summaryRow }}
             getId={(row) => row.userId}
             getName={(row) => row.name}

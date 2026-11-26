@@ -21,6 +21,18 @@ function extractCells(html: string): string[] {
   return [...html.matchAll(/<td\b[^>]*>[\s\S]*?<\/td>/g)].map((m) => m[0]);
 }
 
+function extractHeaders(html: string): string[] {
+  return [...html.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) =>
+    m[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+  );
+}
+
+function colIndex(headers: string[], label: string): number {
+  const idx = headers.indexOf(label);
+  assert.notEqual(idx, -1, `找不到列头：${label}`);
+  return idx;
+}
+
 function makeQuality(overrides: Partial<ContentQualitySummary> = {}): ContentQualitySummary {
   return {
     totalCount: 2,
@@ -83,25 +95,26 @@ test("岗位主表（达人/文案/运营）：按 5,000 门槛标好红差绿�
     />,
   );
 
+  const talentHeaders = extractHeaders(talentHtml);
   const rows = [...talentHtml.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].slice(1).map((m) => m[1]);
   assert.equal(rows.length, 2);
 
-  // 高播行：0=姓名, 1=本月作品, 2=总播放, 3=条均播放, 4=转粉率, 5=互动率, 6=互动达成, 7=留存达成, 8=良优率
+  // 高播行（默认全展开：基础 + 互动四项 + 质量 + 留存五项）
   const highCells = extractCells(rows[0]);
-  assert.doesNotMatch(highCells[1], /text-status-/);
-  assert.doesNotMatch(highCells[2], /text-status-/);
-  assert.doesNotMatch(highCells[3], /text-status-/);
-  assert.doesNotMatch(highCells[4], /text-status-/, "转粉率不上红绿");
-  assert.match(highCells[5], /text-status-danger/, "互动率好标准标红");
-  assert.match(highCells[6], /text-status-danger/, "互动达成好标准标红（不卡 3 篇）");
-  assert.match(highCells[7], /text-status-success/, "留存达成差标准标绿（不卡 3 篇）");
-  assert.doesNotMatch(highCells[8], /text-status-/, "良优率不上红绿");
+  assert.doesNotMatch(highCells[colIndex(talentHeaders, "本月作品")], /text-status-/);
+  assert.doesNotMatch(highCells[colIndex(talentHeaders, "总播放")], /text-status-/);
+  assert.doesNotMatch(highCells[colIndex(talentHeaders, "条均播放")], /text-status-/);
+  assert.doesNotMatch(highCells[colIndex(talentHeaders, "转粉率")], /text-status-/, "转粉率不上红绿");
+  assert.match(highCells[colIndex(talentHeaders, "互动率")], /text-status-danger/, "互动率好标准标红");
+  assert.match(highCells[colIndex(talentHeaders, "互动达成")], /text-status-danger/, "互动达成好标准标红（不卡 3 篇）");
+  assert.match(highCells[colIndex(talentHeaders, "留存达成")], /text-status-success/, "留存达成差标准标绿（不卡 3 篇）");
+  assert.doesNotMatch(highCells[colIndex(talentHeaders, "良优率")], /text-status-/, "良优率不上红绿");
 
   // 低播行（avgPlay=4000 < 5000）：互动率、互动达成、留存达成变灰，不上红绿
   const lowCells = extractCells(rows[1]);
-  assert.match(lowCells[5], /text-\[#A8A29E\]/);
-  assert.match(lowCells[6], /text-\[#A8A29E\]/);
-  assert.match(lowCells[7], /text-\[#A8A29E\]/);
+  assert.match(lowCells[colIndex(talentHeaders, "互动率")], /text-\[#A8A29E\]/);
+  assert.match(lowCells[colIndex(talentHeaders, "互动达成")], /text-\[#A8A29E\]/);
+  assert.match(lowCells[colIndex(talentHeaders, "留存达成")], /text-\[#A8A29E\]/);
   assert.doesNotMatch(rows[1], /text-status-danger|text-status-success/);
 
   // 运营表：互动率按 5,000 门槛标绿，转粉率不上色
@@ -168,10 +181,11 @@ test("岗位主表（达人/文案/运营）：按 5,000 门槛标好红差绿�
       onPrefetchPerson={noop}
     />,
   );
+  const writerHeaders = extractHeaders(writerHtml);
   const wCells = extractCells(writerHtml);
-  assert.doesNotMatch(wCells[5], /text-status-/, "按自定义 5% 互动基准，4% 属普通不上色");
-  assert.match(wCells[7], /text-status-danger/, "达到自定义 3000 门槛且留存达成 105% 标红");
-  assert.doesNotMatch(wCells[9], /text-status-/, "优条数不上红绿");
+  assert.doesNotMatch(wCells[colIndex(writerHeaders, "互动率")], /text-status-/, "按自定义 5% 互动基准，4% 属普通不上色");
+  assert.match(wCells[colIndex(writerHeaders, "留存达成")], /text-status-danger/, "达到自定义 3000 门槛且留存达成 105% 标红");
+  assert.doesNotMatch(wCells[colIndex(writerHeaders, "优条数")], /text-status-/, "优条数不上红绿");
 });
 
 test("展开留存明细五项：按公司好差线好红差绿，低播放降灰", () => {
@@ -229,13 +243,14 @@ test("小队视图（小队列表与小队详情含全队合计）：使用 2,00
       onSelectGroup={noop}
     />,
   );
+  const listHeaders = extractHeaders(listHtml);
   const listRows = [...listHtml.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].slice(1).map((m) => m[1]);
   const g1Cells = extractCells(listRows[0]);
   const g2Cells = extractCells(listRows[1]);
-  assert.match(g1Cells[5], /text-status-danger/, "小队条均 2500 >= 2000，互动率标红");
-  assert.match(g1Cells[6], /text-status-danger/, "小队条均 2500 >= 2000，互动达成标红");
-  assert.match(g1Cells[7], /text-status-success/, "小队条均 2500 >= 2000，留存达成标绿");
-  assert.match(g2Cells[5], /text-\[#A8A29E\]/, "小队条均 < 2000，不上红绿");
+  assert.match(g1Cells[colIndex(listHeaders, "互动率")], /text-status-danger/, "小队条均 2500 >= 2000，互动率标红");
+  assert.match(g1Cells[colIndex(listHeaders, "互动达成")], /text-status-danger/, "小队条均 2500 >= 2000，互动达成标红");
+  assert.match(g1Cells[colIndex(listHeaders, "留存达成")], /text-status-success/, "小队条均 2500 >= 2000，留存达成标绿");
+  assert.match(g2Cells[colIndex(listHeaders, "互动率")], /text-\[#A8A29E\]/, "小队条均 < 2000，不上红绿");
   assert.doesNotMatch(listRows[1], /text-status-danger|text-status-success/);
 
   const m1: WorkGroupMemberRow = { userId: "u1", name: "甲", ...agg, contentQuality: makeQuality() };
@@ -254,11 +269,12 @@ test("小队视图（小队列表与小队详情含全队合计）：使用 2,00
       onSelectPerson={noop}
     />,
   );
+  const detailHeaders = extractHeaders(detailHtml);
   const detailRows = [...detailHtml.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].slice(1).map((m) => m[1]);
   assert.equal(detailRows.length, 3); // 全队合计 + 2 名组员
-  assert.match(extractCells(detailRows[0])[5], /text-status-danger/, "全队合计行条均 2500 标红");
-  assert.match(extractCells(detailRows[1])[6], /text-status-danger/, "小队成员条均 2500 标红");
-  assert.match(extractCells(detailRows[2])[6], /text-\[#A8A29E\]/, "小队成员条均 1500 降灰");
+  assert.match(extractCells(detailRows[0])[colIndex(detailHeaders, "互动率")], /text-status-danger/, "全队合计行条均 2500 标红");
+  assert.match(extractCells(detailRows[1])[colIndex(detailHeaders, "互动达成")], /text-status-danger/, "小队成员条均 2500 标红");
+  assert.match(extractCells(detailRows[2])[colIndex(detailHeaders, "互动达成")], /text-\[#A8A29E\]/, "小队成员条均 1500 降灰");
 });
 
 test("个人档案「本月作品」：>=5000 按好红差绿上色，<5000 变灰不上红绿", () => {

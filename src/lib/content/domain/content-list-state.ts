@@ -6,6 +6,7 @@ import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, get
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import { getPublishedDateKey } from "@/lib/business-time";
 import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
+import { useContentMetricViewMode } from "@/lib/table-view-mode";
 
 function resetPageParams(params: URLSearchParams) {
   params.delete("page");
@@ -31,7 +32,7 @@ export function useContentListState(props: ContentListProps) {
   } = props;
 
   const searchParams = useSearchParams();
-  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("full");
+  const [metricViewMode, setMetricViewMode] = useContentMetricViewMode();
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );

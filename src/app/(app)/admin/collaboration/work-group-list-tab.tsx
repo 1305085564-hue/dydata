@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration, DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
@@ -10,6 +10,7 @@ import { RoleTable } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type WorkGroupKind, type WorkGroupSummaryRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { useCollaborationDetailMode } from "@/lib/table-view-mode";
 
 interface WorkGroupListTabProps {
   groups: WorkGroupSummaryRow[];
@@ -60,7 +61,7 @@ export function WorkGroupListTab({
   onOpenManageDrawer,
   onSelectGroup,
 }: WorkGroupListTabProps) {
-  const [showDetail, setShowDetail] = useState(false);
+  const { showDetail, setMode } = useCollaborationDetailMode();
 
   const rows = useMemo<GroupRow[]>(
     () =>
@@ -109,12 +110,11 @@ export function WorkGroupListTab({
   return (
     <div className="space-y-2">
       <div className="hidden sm:block">
-        <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
+        <DetailToggle expanded={showDetail} onModeChange={setMode} />
       </div>
       <RoleTable
         rows={rows}
         columns={columns}
-        fullBleed={showDetail && columns.length >= 12}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}

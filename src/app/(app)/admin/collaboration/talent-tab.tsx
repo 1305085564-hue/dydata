@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import {
@@ -15,6 +15,7 @@ import { RoleTable, type RoleColumn } from "./role-table";
 import { DetailToggle } from "./work-group-detail-columns";
 import { formatBigNumber, type TalentRow } from "@/lib/collaboration/types";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
+import { useCollaborationDetailMode } from "@/lib/table-view-mode";
 
 interface TalentTabProps {
   talents: TalentRow[];
@@ -54,7 +55,7 @@ export function TalentTab({
   onSelectPerson,
   onPrefetchPerson,
 }: TalentTabProps) {
-  const [showDetail, setShowDetail] = useState(false);
+  const { showDetail, setMode } = useCollaborationDetailMode();
 
   const columns = useMemo<RoleColumn<TalentRow>[]>(() => {
     const getQuality = (row: TalentRow) => row.writerQuality;
@@ -90,12 +91,11 @@ export function TalentTab({
     <div className="space-y-2">
       {showSelfZeroHint && <MemberZeroOutputBanner tab="talents" />}
       <div className="hidden sm:block">
-        <DetailToggle expanded={showDetail} onToggle={() => setShowDetail((value) => !value)} />
+        <DetailToggle expanded={showDetail} onModeChange={setMode} />
       </div>
       <RoleTable
         rows={talents}
         columns={columns}
-        fullBleed={showDetail && columns.length >= 12}
         defaultSortKey="totalPlay"
         sortKey={sortKey}
         sortOrder={sortOrder}
