@@ -10,7 +10,6 @@ import { normalizePublishedAtForStorage } from "../../src/lib/日报";
 const fixtureFamily: AvailabilityModelFamily = {
   modelId: "fixture-model",
   displayName: "测试模型",
-  globalIsEnabled: true,
   isShelved: true,
   isSelectable: true,
   isConfigured: true,
@@ -20,7 +19,6 @@ const fixtureFamily: AvailabilityModelFamily = {
   schedulableChannelCount: 1,
   untestedChannelCount: 0,
   faultChannelCount: 0,
-  channelReadyButGlobalDisabled: 0,
   unavailableReasonKey: null,
   identityCounts: { active: 1, retest: 0, sleeping: 0, invalid: 0, disabled: 0 },
   channels: [

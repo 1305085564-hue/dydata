@@ -25,6 +25,7 @@
 - 页面所有状态统一读取 `GET /api/admin/ai-config` 返回的 `bundle.availability`，不在前端依据开关或失败次数重算可用性；密钥在接口层仅返回末四位掩码。
 - 所有写操作统一走 `POST /api/admin/ai-config`（`useAiConfig().runCommand`）；停用或删除会令活跃业务无可用模型时，后端先返回 409 与影响名单（`requiresConfirmation`），经管理员确认后才执行；修改共享地址影响多条渠道时另行触发 `confirm_shared_address` 确认。
 - 批量检测（顶部「检查一遍」与渠道「检测此渠道」）前端采用 120 秒有界刷新；接口中断或超时不自动重跑检测，最终读取失败时常驻显示未同步提示与手动重读入口。
+- 废弃旧列治理与报错收口（2026-11-27）：应用层已彻底清零对 4 个废弃旧列（`global_is_enabled`、`provider_key_model_id`、`priority` 等）的业务读写，且全组 AI 配置接口失败统一返回友好中文提示与 `requestId`（不透传底层数据库或模型原文）；暂缓删列迁移 `supabase/deferred-migrations/20261105072558_ai_config_drop_legacy_columns.sql` 保持暂缓，待新版稳定运行满 3 天并跑完前置只读核查零依赖后择机执行。
 
 <a id="现行-入口"></a>
 

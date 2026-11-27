@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { getContentOwner } from "@/lib/content/content-owner";
 import { getStatusDot } from "@/lib/content/domain/content-list";
@@ -18,11 +18,24 @@ export function videoAriaLabel(video: ProcessedContentRow["video"]): string {
   return `查看作品详情：${videoTitleOf(video)}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`;
 }
 
-/** 只有需要留意的状态才出徽标（删稿 / 限流 / 异常 / 未满24h），正常作品不占位 */
+/** 只有需要留意的状态才出徽标（删稿 / 限流 / 异常 / 未满24h / 不计优结算），正常作品不占位 */
 export function StatusMark({ video }: { video: ProcessedContentRow["video"] }) {
   const dot = getStatusDot(video);
-  if (dot.quiet) return null;
-  return <Badge variant={dot.variant} className="shrink-0">{dot.label}</Badge>;
+  const excluded = video.settlement_excluded === true;
+  if (dot.quiet && !excluded) return null;
+  const exclusionTip = video.settlement_excluded_reason
+    ? `事后核查标为无效，不计入文案优条数结算（原因：${video.settlement_excluded_reason}）`
+    : "事后核查标为无效，不计入文案优条数结算";
+  return (
+    <>
+      {!dot.quiet ? <Badge variant={dot.variant} className="shrink-0">{dot.label}</Badge> : null}
+      {excluded ? (
+        <SimpleTooltip align="start" tip={exclusionTip}>
+          <Badge variant="secondary" className="shrink-0 cursor-help">不计优结算</Badge>
+        </SimpleTooltip>
+      ) : null}
+    </>
+  );
 }
 
 export function GradeMark({ grade }: { grade: "优" | "良" | "普" | null | undefined }) {

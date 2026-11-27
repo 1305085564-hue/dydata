@@ -2,6 +2,7 @@ import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/ev
 import { DEFAULT_RATING_RULE } from "@/lib/breakout-rating";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContentListCursor, ContentListQuery } from "@/lib/content/domain/content-list-query";
+import type { SettlementExclusionLookup } from "@/lib/content-quality";
 import {
   hasNarrowingContentFilters,
   hasScopedContentFilters,
@@ -151,4 +152,67 @@ export async function resolveAdminContentUnfilteredTotal({
     evaluationStandards,
   }).catch(() => null);
   return typeof rawTotal === "number" ? Math.max(matchedTotal, rawTotal) : null;
+}
+
+/** 只读补查当前页作品的不计优结算标记；仅拉取被排除的行，且在旧库未跑迁移或测试桩缺表时优雅降级。 */
+export async function loadVideoSettlementExclusions(
+  supabase: SupabaseClient,
+  videoIds: string[],
+): Promise<SettlementExclusionLookup> {
+  const result: SettlementExclusionLookup = new Map(); // gate:transient-map 请求内结算排除映射，随返回释放
+  if (videoIds.length === 0 || typeof supabase.from !== "function") return result;
+  try {
+    const query = supabase.from("videos");
+    if (!query || typeof query.select !== "function") return result;
+    const { data, error } = await query
+      .select("id, settlement_excluded, settlement_excluded_reason")
+      .in("id", videoIds)
+      .eq("settlement_excluded", true);
+    if (error || !Array.isArray(data)) return result;
+    for (const row of data as Array<{
+      id?: string;
+      settlement_excluded?: boolean | null;
+      settlement_excluded_reason?: string | null;
+    }>) {
+      if (row.id && row.settlement_excluded === true) {
+        result.set(String(row.id), {
+          excluded: true,
+          reason: row.settlement_excluded_reason ?? null,
+        });
+      }
+    }
+  } catch {
+    return result;
+  }
+  return result;
+}
+
+export function attachSettlementExclusionsToVideos<
+  T extends { id: string; settlement_excluded?: boolean; settlement_excluded_reason?: string | null },
+>(videos: T[], exclusions: SettlementExclusionLookup): T[] {
+  if (exclusions.size === 0) return videos;
+  return videos.map((video) => {
+    const item = exclusions.get(video.id);
+    if (!item?.excluded) return video;
+    return {
+      ...video,
+      settlement_excluded: true,
+      settlement_excluded_reason: item.reason ?? null,
+    };
+  });
+}
+
+export function buildSettlementExclusionMapFromVideos(
+  videos: Array<{ id: string; settlement_excluded?: boolean | null; settlement_excluded_reason?: string | null }>,
+): SettlementExclusionLookup {
+  const result: SettlementExclusionLookup = new Map(); // gate:transient-map 请求内单视频结算排除映射，随返回释放
+  for (const video of videos) {
+    if (video.settlement_excluded === true) {
+      result.set(String(video.id), {
+        excluded: true,
+        reason: video.settlement_excluded_reason ?? null,
+      });
+    }
+  }
+  return result;
 }

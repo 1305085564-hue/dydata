@@ -215,6 +215,8 @@ export interface Video {
    *  保留该值仅因数据库 RPC 仍可能返回历史口径，前端一律忽略。 */
   play_change_signal?: "surge" | "halve" | null;
   play_count_change_pct?: number | null;
+  settlement_excluded?: boolean;
+  settlement_excluded_reason?: string | null;
   created_at: string;
 }
 

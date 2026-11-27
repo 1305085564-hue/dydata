@@ -87,17 +87,9 @@
       "maxLines": 695,
       "category": "source"
     },
-    "src/app/(app)/dashboard/video-submit-form-v2.tsx": {
-      "maxLines": 2146,
-      "category": "source"
-    },
     "src/app/(app)/dashboard/video-submit-panel-v2.tsx": {
       "maxLines": 614,
       "category": "source"
-    },
-    "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
-      "maxLines": 1130,
-      "category": "test"
     },
     "src/app/api/admin/ai-config/ai-config.model-health.behavior.test.ts": {
       "maxLines": 768,
@@ -137,10 +129,6 @@
     },
     "src/app/api/video-submit/route.ts": {
       "maxLines": 12,
-      "category": "source"
-    },
-    "src/app/api/video-submit/route-core.ts": {
-      "maxLines": 951,
       "category": "source"
     },
     "src/app/api/video-submit/validation.test.ts": {
@@ -208,7 +196,7 @@
       "category": "test"
     },
     "src/lib/topics/service.test.ts": {
-      "maxLines": 991,
+      "maxLines": 610,
       "category": "test"
     },
     "src/lib/topics/v2-client-contract.ts": {

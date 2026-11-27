@@ -294,6 +294,11 @@ export function OverallGradeBreakdownContent({
           </span>
         </div>
       </div>
+      {quality.settlementExcluded ? (
+        <div className="border-t border-[#E2E2DF]/80 pt-1 text-[12px] text-[#78716C] leading-snug">
+          已标为不计优结算{quality.settlementExcludedReason ? `：${quality.settlementExcludedReason}` : ""}
+        </div>
+      ) : null}
     </>
   );
 }

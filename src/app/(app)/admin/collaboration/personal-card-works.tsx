@@ -96,13 +96,26 @@ function EmptyBlock({ children, danger = false }: { children: ReactNode; danger?
 
 function TitleCell({ work, subtitle }: { work: WorkRow; subtitle: string | null }) {
   const title = work.title || "未命名作品";
+  const excluded = work.contentQuality?.settlementExcluded === true;
+  const exclusionTip = work.contentQuality?.settlementExcludedReason
+    ? `事后核查标为无效，不计入文案优条数结算（原因：${work.contentQuality.settlementExcludedReason}）`
+    : "事后核查标为无效，不计入文案优条数结算";
   return (
     <td className="py-2.5 px-3 min-w-0">
-      <OneTip tip={title} align="start" onlyWhenTruncated>
-        <span className="block truncate text-[13px] leading-[1.40] text-[#1F1E1D] group-hover:text-[#141413]">
-          {title}
-        </span>
-      </OneTip>
+      <div className="flex min-w-0 items-center gap-2">
+        <OneTip tip={title} align="start" onlyWhenTruncated>
+          <span className="block min-w-0 truncate text-[13px] leading-[1.40] text-[#1F1E1D] group-hover:text-[#141413]">
+            {title}
+          </span>
+        </OneTip>
+        {excluded ? (
+          <OneTip tip={exclusionTip} align="start">
+            <span className="shrink-0 cursor-help rounded-md border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] leading-none text-[#78716C]">
+              不计优结算
+            </span>
+          </OneTip>
+        ) : null}
+      </div>
       {subtitle ? (
         <OneTip tip={subtitle} align="start" onlyWhenTruncated>
           <span className="mt-1 block truncate text-[12px] leading-[1.50] text-[#78716C]">

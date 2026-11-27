@@ -148,9 +148,18 @@ export function ContentDetailNotices({ video, canPurge, isPurgeEligible }: Pick<
     video.lifecycle_state === "trashed" && canPurge && video.trashed_at && !isPurgeEligible(video.trashed_at)
       ? new Date(new Date(video.trashed_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleString("zh-CN")
       : null;
-  if (!anomalyReason && !protectedUntil) return null;
+  const settlementExcluded = video.settlement_excluded === true;
+  if (!anomalyReason && !protectedUntil && !settlementExcluded) return null;
   return (
     <div className="space-y-2">
+      {settlementExcluded && (
+        <Alert variant="warning" className="items-start text-[12px]">
+          <div>
+            该作品在事后核查中被标为无效，不计入文案优条数结算
+            {video.settlement_excluded_reason ? `（原因：${video.settlement_excluded_reason}）` : ""}。
+          </div>
+        </Alert>
+      )}
       {anomalyReason && (
         <Alert variant="warning" className="items-start text-[12px]">
           <div>为什么需要处理这条：{anomalyReason}</div>
@@ -181,6 +190,7 @@ export function ContentDetailHeadline({ video, snapshot, contentQuality = null, 
     <section className="space-y-2">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#78716C]">
         {video.lifecycle_state === "trashed" && <Badge variant="secondary">回收站</Badge>}
+        {video.settlement_excluded === true && <Badge variant="secondary">不计优结算</Badge>}
         {statusLabel !== "正常" && (
           <Badge variant={statusBadgeConfig[statusLabel]?.variant ?? "secondary"}>{statusLabel}</Badge>
         )}

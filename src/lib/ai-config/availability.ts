@@ -85,9 +85,6 @@ export type AvailabilityModelFamily = {
   displayName: string;
   modelScope?: AiModelScope;
   isShelved: boolean;
-  /** Optional transitional type slots for external UI fixtures; never populated or read. */
-  globalIsEnabled?: boolean | null;
-  channelReadyButGlobalDisabled?: number;
   channels: AvailabilityChannel[];
   identityCounts: Record<ChannelIdentity, number>;
   redundancyCount: number;

@@ -1,7 +1,7 @@
 import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
-import { queryAdminContentRpcPage, resolveAdminContentUnfilteredTotal } from "./admin-content-rpc";
+import { attachSettlementExclusionsToVideos, buildSettlementExclusionMapFromVideos, loadVideoSettlementExclusions, queryAdminContentRpcPage, resolveAdminContentUnfilteredTotal } from "./admin-content-rpc";
 import { loadPageTopicLibraryStatuses } from "./admin-content-topic-library";
 import { attachPlayChangeSignals, findPreviousVideoByVisibleId, type PreviousSnapshotRow, type PreviousVideoCandidateRow } from "./admin-content-play-signals";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -36,8 +36,9 @@ type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
 type FilterOption = Pick<Profile, "id" | "name">;
 type SegmentRow = { video_id: string };
 
-const CONTENT_VIDEO_SELECT =
+const CONTENT_VIDEO_SELECT_BASE =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
+const CONTENT_VIDEO_SELECT = `settlement_excluded, settlement_excluded_reason, ${CONTENT_VIDEO_SELECT_BASE}`;
 
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio, vs_previous, screenshot_urls, curve_screenshot_url, retention_screenshot_url";
@@ -364,7 +365,7 @@ export async function loadAdminContentPageData({
       (from, to) =>
         supabase
           .from("videos")
-          .select(CONTENT_VIDEO_SELECT)
+          .select(CONTENT_VIDEO_SELECT_BASE)
           .eq("lifecycle_state", view === "trash" ? "trashed" : "active")
           .order("uploaded_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
@@ -387,7 +388,7 @@ export async function loadAdminContentPageData({
   const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
   const visibleVideoIds = videos.map((video) => video.id);
-  const [snapshotRows, segmentRows, topicTags] = await Promise.all([
+  const [snapshotRows, segmentRows, topicTags, settlementExclusions] = await Promise.all([
     visibleVideoIds.length > 0
       ? selectInBatchesParallel<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase
@@ -404,6 +405,7 @@ export async function loadAdminContentPageData({
         )
       : Promise.resolve([]),
     loadContentQualityTopicTags(supabase, visibleVideoIds),
+    loadVideoSettlementExclusions(supabase, visibleVideoIds),
   ]);
   // 列表与排序只消费每视频最新一条 24h 快照，避免把历史快照整包搬进浏览器
   const snapshots = Array.from(buildLatestVideoSnapshotMap(snapshotRows).values());
@@ -427,15 +429,17 @@ export async function loadAdminContentPageData({
     ),
     topicTags,
     evaluationStandards,
+    settlementExclusions,
   );
+  const videosWithSettlement = attachSettlementExclusionsToVideos(videos, settlementExclusions);
   const reviewReadiness = buildReviewReadinessMap({
-    videos,
+    videos: videosWithSettlement,
     snapshotVideoIds,
     segmentedVideoIds,
   });
   const videosWithSignals = await loadPlayChangeSignals({
     supabase,
-    videos,
+    videos: videosWithSettlement,
     previousCandidateVideos: videos,
     currentSnapshots: snapshots as PreviousSnapshotRow[],
   });
@@ -474,12 +478,20 @@ export async function loadAdminContentVideoDetail({
   const normalizedVideoId = videoId.trim();
   if (!normalizedVideoId) return null;
 
-  const videoResult = await supabase
+  let videoResult = await supabase
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
     .eq("id", normalizedVideoId)
     .eq("lifecycle_state", lifecycleState)
     .maybeSingle();
+  if (videoResult.error && /settlement_excluded|schema cache|column .* does not exist/i.test(videoResult.error.message ?? "")) {
+    videoResult = await supabase
+      .from("videos")
+      .select(CONTENT_VIDEO_SELECT_BASE)
+      .eq("id", normalizedVideoId)
+      .eq("lifecycle_state", lifecycleState)
+      .maybeSingle();
+  }
   assertSupabaseQuerySucceeded(videoResult.error, "加载指定视频失败");
   if (!videoResult.data) return null;
 
@@ -491,6 +503,7 @@ export async function loadAdminContentVideoDetail({
   );
   if (scopedVideos.length === 0) return null;
 
+  const settlementExclusions = buildSettlementExclusionMapFromVideos([video]);
   const [snapshotResult, segmentResult, topicTagResult] = await Promise.all([
     supabase
       .from("video_metrics_snapshots")
@@ -540,6 +553,7 @@ export async function loadAdminContentVideoDetail({
     }]] : []),
     { state: "ready", tags: new Map([[normalizedVideoId, topicTag]]) },
     evaluationStandards,
+    settlementExclusions,
   )[normalizedVideoId] ?? null;
 
   // 详情与列表同源计算播放涨跌信号，保证同一作品两处口径一致（审计 H1）
@@ -651,41 +665,32 @@ async function loadAdminContentRpcPageData({
     const tag = (video as RawVideoRow & { topic_tag?: string | null }).topic_tag ?? null;
     topicTags.set(String(video.id), tag);
   }
+  const [topicLibraryStatuses, unfilteredTotalVideos, settlementExclusions] = await Promise.all([
+    topicLibraryStatusesPromise,
+    resolveAdminContentUnfilteredTotal({
+      supabase, query: effectiveQuery, scope, evaluationStandards,
+      matchedTotal: payload.summary?.totalVideos ?? 0,
+      availableDates: payload.availableDates, availableCounts: payload.availableCounts,
+    }),
+    loadVideoSettlementExclusions(supabase, videos.map((video) => video.id)),
+  ]);
+  const videosWithSettlement = attachSettlementExclusionsToVideos(videos, settlementExclusions);
   const contentQualityByVideoId = buildContentQualityRecord(
-    videos.map((video) => video.id),
+    videosWithSettlement.map((video) => video.id),
     new Map(snapshots.map((snapshot) => [String(snapshot.video_id), {
-      playCount: snapshot.play_count,
-      likes: snapshot.likes,
-      comments: snapshot.comments,
-      shares: snapshot.shares,
-      favorites: snapshot.favorites,
-      avgPlayDuration: snapshot.avg_play_duration,
-      avgPlayRatio: snapshot.avg_play_ratio,
-      bounceRate2s: snapshot.bounce_rate_2s,
-      completionRate5s: snapshot.completion_rate_5s,
-      completionRate: snapshot.completion_rate,
+      playCount: snapshot.play_count, likes: snapshot.likes, comments: snapshot.comments,
+      shares: snapshot.shares, favorites: snapshot.favorites, avgPlayDuration: snapshot.avg_play_duration,
+      avgPlayRatio: snapshot.avg_play_ratio, bounceRate2s: snapshot.bounce_rate_2s,
+      completionRate5s: snapshot.completion_rate_5s, completionRate: snapshot.completion_rate,
     }])),
     { state: "ready", tags: topicTags },
     evaluationStandards,
+    settlementExclusions,
   );
   const reviewReadiness = buildReviewReadinessMap({
-    videos,
-    snapshotVideoIds,
-    segmentedVideoIds,
+    videos: videosWithSettlement, snapshotVideoIds, segmentedVideoIds,
     contentPresenceByVideoId: new Map(rawVideos.map((video) => [String(video.id), video.has_content === true])),
   });
-  const [topicLibraryStatuses, unfilteredTotalVideos] = await Promise.all([
-    topicLibraryStatusesPromise,
-    resolveAdminContentUnfilteredTotal({
-      supabase,
-      query: effectiveQuery,
-      scope,
-      evaluationStandards,
-      matchedTotal: payload.summary?.totalVideos ?? 0,
-      availableDates: payload.availableDates,
-      availableCounts: payload.availableCounts,
-    }),
-  ]);
   const summary = {
     totalVideos: 0, page: effectiveQuery.page, pageSize: effectiveQuery.pageSize, totalPages: 1,
     anomalyCount: 0, pageStartIndex: (effectiveQuery.page - 1) * effectiveQuery.pageSize,
@@ -694,7 +699,7 @@ async function loadAdminContentRpcPageData({
     ...(typeof unfilteredTotalVideos === "number" ? { unfilteredTotalVideos } : {}),
   };
   return {
-    videos,
+    videos: videosWithSettlement,
     snapshots,
     profiles: buildScopedProfileOptions(profiles, scope),
     ownerNames: Object.fromEntries(profiles.map(p => [p.id, p.name])),
