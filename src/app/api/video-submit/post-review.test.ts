@@ -1,3 +1,5 @@
+import { createPublishTimeEvidence, publishImageDigest } from "@/lib/publish-time-evidence";
+import { before, after } from "node:test";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -5,6 +7,13 @@ import { NextRequest } from "next/server";
 import { checkCreateDuplicateSubmission, evaluateSubmissionDeadlineGuard, type NormalizedVideoSubmit } from "./prechecks";
 import { createPostSubmitReviewAndNotify } from "./post-review";
 import { buildVideoSubmitResponse, type VideoSubmitDeps } from "./route-core";
+
+const oldSecret = process.env.SCREENSHOT_GRANT_SECRET;
+before(() => { process.env.SCREENSHOT_GRANT_SECRET = "local-p0-regression"; });
+after(() => {
+  if (oldSecret === undefined) delete process.env.SCREENSHOT_GRANT_SECRET;
+  else process.env.SCREENSHOT_GRANT_SECRET = oldSecret;
+});
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const ACCOUNT_ID = "22222222-2222-4222-8222-222222222222";
@@ -40,7 +49,11 @@ function makeNormalized(overrides: Partial<NormalizedVideoSubmit> = {}): Normali
     screenshots_refreshed: false,
     assets: [
       { role: "screenshot_1", url: `/api/submission-screenshots/file?path=${USER_ID}/s1.png`, confirmed: true, confidence_score: 0.99 },
-      { role: "screenshot_2", url: `/api/submission-screenshots/file?path=${USER_ID}/s2.png`, confirmed: true, confidence_score: 0.99 },
+      { role: "screenshot_2", url: `/api/submission-screenshots/file?path=${USER_ID}/s2.png`, confirmed: true, confidence_score: 0.99, recognized_fields: {
+        publish_time_evidence: createPublishTimeEvidence({
+          userId: USER_ID, path: publishImageDigest(Buffer.from("test screenshot")), publishedAt: "2026-01-01T10:00:00+08:00",
+        }),
+      } },
     ],
     metrics: {
       play_count: 18000,
@@ -72,6 +85,7 @@ function fakeAppealSupabase(rows: Array<{ id: string; submission_payload: unknow
 
 test("超 72 小时提交不再 409 拦截，而是放行并携带 expired 事后核查触发器", async () => {
   const result = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
     supabase: fakeAppealSupabase(),
     userId: USER_ID,
     normalized: makeNormalized(),
@@ -86,6 +100,7 @@ test("超 72 小时提交不再 409 拦截，而是放行并携带 expired 事�
 test("手改发布时间提交不再 409 拦截，放行并携带 manual_published_at 与 OCR 原值", async () => {
   const recentPublishedAt = new Date(Date.now() - 2 * 3_600_000).toISOString();
   const result = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
     supabase: fakeAppealSupabase(),
     userId: USER_ID,
     normalized: makeNormalized({
@@ -103,6 +118,7 @@ test("手改发布时间提交不再 409 拦截，放行并携带 manual_publish
 
 test("编辑模式与异常上报模式不触发事后核查；未确认发布时间仍 409", async () => {
   const editResult = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
     supabase: fakeAppealSupabase(),
     userId: USER_ID,
     normalized: makeNormalized({ mode: "edit", video_id: "55555555-5555-4555-8555-555555555555" }),
@@ -111,6 +127,7 @@ test("编辑模式与异常上报模式不触发事后核查；未确认发布�
   if (editResult.ok) assert.equal(editResult.postReviewTrigger, null);
 
   const abnormalResult = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
     supabase: fakeAppealSupabase(),
     userId: USER_ID,
     normalized: makeNormalized({ mode: "abnormal", anomaly_status: "abnormal" }),
@@ -119,6 +136,7 @@ test("编辑模式与异常上报模式不触发事后核查；未确认发布�
   if (abnormalResult.ok) assert.equal(abnormalResult.postReviewTrigger, null);
 
   const unconfirmed = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
     supabase: fakeAppealSupabase(),
     userId: USER_ID,
     normalized: makeNormalized({ published_at_text: null }),
@@ -348,4 +366,43 @@ test("buildVideoSubmitResponse 对重复提交保持 409，不进入事后核查
   assert.equal(res.status, 409);
   assert.equal((await res.json()).code, "SUBMISSION_DUPLICATE");
   assert.equal(postReviewCalled, false);
+});
+
+
+test("近期发布时间仅有客户端OCR声明仍进入核查，匹配服务端证据才正常放行", async () => {
+  const publishedAt = new Date(Date.now() - 2 * 3600_000).toISOString();
+  const normalized = makeNormalized({ published_at: publishedAt, published_at_source: "ocr" });
+  const check = () => evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async () => ({ ok: true, body: Buffer.from("test screenshot"), contentType: "image/png" }) as never,
+    supabase: fakeAppealSupabase(), userId: USER_ID, normalized,
+  });
+  const untrusted = await check();
+  assert.equal(untrusted.ok && untrusted.postReviewTrigger?.reason, "manual_published_at");
+  normalized.assets[1].recognized_fields = {
+    publish_time_evidence: createPublishTimeEvidence({
+      userId: USER_ID, path: publishImageDigest(Buffer.from("test screenshot")), publishedAt,
+    }),
+  };
+  const trusted = await check();
+  assert.equal(trusted.ok, true);
+  assert.equal(trusted.ok && trusted.postReviewTrigger, null);
+  normalized.published_at = new Date(Date.now() - 3600_000).toISOString();
+  const changed = await check();
+  assert.equal(changed.ok && changed.postReviewTrigger?.reason, "manual_published_at");
+});
+
+
+test("识别凭据对应截图读取失败时保守进入核查，提交不假装已验证", async () => {
+  const normalized = makeNormalized({
+    published_at: new Date(Date.now() - 3600_000).toISOString(),
+  });
+  for (const downloadScreenshot of [
+    async () => ({ ok: false, errors: ["unavailable"] }) as never,
+    async (): Promise<never> => { throw new Error("storage unavailable"); },
+  ]) {
+    const result = await evaluateSubmissionDeadlineGuard({
+      supabase: fakeAppealSupabase(), userId: USER_ID, normalized, downloadScreenshot,
+    });
+    assert.equal(result.ok && result.postReviewTrigger?.reason, "manual_published_at");
+  }
 });

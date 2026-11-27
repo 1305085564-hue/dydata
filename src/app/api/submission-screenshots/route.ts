@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
+import { optimizeStoredSubmissionScreenshot } from "@/lib/submission-screenshot-image";
+export { optimizeStoredSubmissionScreenshot } from "@/lib/submission-screenshot-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -14,7 +15,6 @@ import { writeSubmissionScreenshot } from "@/lib/screenshot-storage";
 const BUCKET_NAME = "submission-screenshots";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const JPEG_OPTIMIZE_THRESHOLD = 250 * 1024;
 
 type SubmissionScreenshotDeps = {
   getCurrentUserContext: typeof getCurrentUserContext;
@@ -42,20 +42,6 @@ function getExtension(file: File) {
   return byType[file.type] ?? "jpg";
 }
 
-export async function optimizeStoredSubmissionScreenshot(input: {
-  buffer: Buffer;
-  contentType: string;
-}) {
-  if (input.contentType !== "image/jpeg" || input.buffer.length < JPEG_OPTIMIZE_THRESHOLD) {
-    return input;
-  }
-
-  // 高频上传使用快速 JPEG 编码；mozjpeg 的额外压缩收益不足以抵消 CPU 成本。
-  const optimized = await sharp(input.buffer).jpeg({ quality: 90 }).toBuffer();
-  return optimized.length < input.buffer.length
-    ? { buffer: optimized, contentType: "image/jpeg" }
-    : input;
-}
 
 function buildStoragePath(input: {
   userId: string;

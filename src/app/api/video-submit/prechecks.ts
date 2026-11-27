@@ -1,8 +1,10 @@
+import { verifyPublishTimeEvidence, publishImageDigest } from "@/lib/publish-time-evidence";
+import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import { NextResponse } from "next/server";
 import type { createClient } from "@/lib/supabase/server";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
-import { findReadableSubmissionScreenshots } from "@/lib/screenshot-storage";
+import { findReadableSubmissionScreenshots, downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { findApprovedAppealForSubmission } from "./appeal-consumption";
 import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
@@ -138,6 +140,7 @@ export async function evaluateSubmissionDeadlineGuard(input: {
   supabase: SupabaseLike;
   userId: string;
   normalized: NormalizedVideoSubmit;
+  downloadScreenshot?: typeof downloadSubmissionScreenshotBytes;
 }): Promise<
   | {
       ok: true;
@@ -151,12 +154,35 @@ export async function evaluateSubmissionDeadlineGuard(input: {
     return { ok: true, approvedAppealUsed: null, postReviewTrigger: null };
   }
 
+  const publishAsset = normalized.assets.find((asset) => asset.role === "screenshot_2");
+  const publishPath = publishAsset ? parseSubmissionScreenshotPath(publishAsset.url) : null;
+  const token = publishAsset?.recognized_fields?.publish_time_evidence;
+  let trustedOcr = false;
+  if (normalized.mode !== "edit" && publishPath?.startsWith(userId + "/") && typeof token === "string") {
+    try {
+      const screenshot = await (input.downloadScreenshot ?? downloadSubmissionScreenshotBytes)(publishPath);
+      trustedOcr = screenshot.ok && verifyPublishTimeEvidence(token, {
+        userId,
+        path: publishImageDigest(screenshot.body),
+        publishedAt: normalized.published_at,
+      });
+    } catch {
+      // 证据读取失败时继续入库并核查，不授予免核查资格。
+      trustedOcr = false;
+    }
+  }
+
+  const publishedAtConfirmed = isPublishedAtConfirmed(normalized.published_at_text);
+  let publishedAtSource: "ocr" | "manual" | null = null;
+  if (publishedAtConfirmed) {
+    publishedAtSource = trustedOcr && normalized.published_at_source !== "manual" ? "ocr" : "manual";
+  }
   const deadline = resolveVideoSubmitDeadline({
     mode: normalized.mode === "edit" ? "edit" : "create",
     publishedAt: normalized.published_at,
     businessDate: normalized.biz_date,
-    publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
-    publishedAtSource: normalized.published_at_source,
+    publishedAtConfirmed,
+    publishedAtSource,
   });
   const hasPublishScreenshot = normalized.assets.some((asset) => asset.role === "screenshot_2");
 

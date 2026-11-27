@@ -88,8 +88,10 @@ test("标为无效（不计优结算）从文案优条数单一真源自动剔�
     topics,
   );
   assert.equal(staffRow.reportCount, 2, "原始作品数量保留不丢数据");
-  assert.equal(staffRow.writerQuality?.summary?.overallGradeCounts.excellent, 1, "文案优条数自动剔除无效作品");
+  assert.equal(staffRow.writerQuality?.summary?.settlementEligibleExcellentCount, 1, "文案优条数自动剔除无效作品");
   assert.equal(staffRow.writerQuality?.summary?.excludedExcellentCount, 1);
+  assert.equal(staffRow.writerQuality?.summary?.overallGradeCounts.excellent, 2);
+  assert.equal(staffRow.writerQuality?.summary?.goodExcellentRate, 1);
 
   const personQuality = buildPersonWriterQuality({
     targetUserId: WRITER_ID,
@@ -104,7 +106,7 @@ test("标为无效（不计优结算）从文案优条数单一真源自动剔�
   assert.equal(invalidWork?.contentQuality?.overallGrade, "优", "原始评级留痕可追溯");
   assert.equal(invalidWork?.contentQuality?.settlementExcluded, true);
   assert.equal(invalidWork?.contentQuality?.settlementExcludedReason, "超过 72 小时且无法核实真实发布时间");
-  assert.equal(personQuality.monthSummary?.overallGradeCounts.excellent, 1);
+  assert.equal(personQuality.monthSummary?.settlementEligibleExcellentCount, 1);
 
   // 模拟管理员「打回待处理」后 settlement_excluded 对称恢复为 false
   const reopenedRows = excludedRows.map((row) => ({
@@ -121,6 +123,6 @@ test("标为无效（不计优结算）从文案优条数单一真源自动剔�
     snapshots,
     topics,
   );
-  assert.equal(restoredStaffRow.writerQuality?.summary?.overallGradeCounts.excellent, 2, "打回恢复后优条数对称恢复");
+  assert.equal(restoredStaffRow.writerQuality?.summary?.settlementEligibleExcellentCount, 2, "打回恢复后优条数对称恢复");
   assert.equal(restoredStaffRow.writerQuality?.summary?.excludedExcellentCount, undefined);
 });

@@ -38,7 +38,7 @@ const todo = (id: string, appealId: string) => ({ id, category: "todo", source_t
 
 test("撤回本人待审补交申请：申请删除，管理员那条补交审批待办同时关闭", async () => {
   const { admin, state } = fakeAdmin({
-    appeals: [{ id: "a1", user_id: "u1", status: "pending" }, { id: "a2", user_id: "u1", status: "pending" }],
+    appeals: [{ id: "a1", user_id: "u1", status: "pending", review_mode: "pre_submit" }, { id: "a2", user_id: "u1", status: "pending", review_mode: "pre_submit" }],
     todos: [todo("t1", "a1"), todo("t2", "a1"), todo("t3", "a2")],
   });
   const result = await withdrawPendingFulfillmentAppeal({ admin, userId: "u1", appealId: "a1" });
@@ -49,7 +49,7 @@ test("撤回本人待审补交申请：申请删除，管理员那条补交审�
 
 test("不是本人的申请、已被处理的申请都撤不了，也不动别人的待办", async () => {
   const { admin, state } = fakeAdmin({
-    appeals: [{ id: "a1", user_id: "u2", status: "pending" }, { id: "a3", user_id: "u1", status: "approved" }],
+    appeals: [{ id: "a1", user_id: "u2", status: "pending", review_mode: "pre_submit" }, { id: "a3", user_id: "u1", status: "approved" }],
     todos: [todo("t1", "a1")],
   });
   for (const appealId of ["a1", "a3", "missing"]) {
@@ -61,7 +61,7 @@ test("不是本人的申请、已被处理的申请都撤不了，也不动别�
 });
 
 test("待办关闭失败不回滚撤回，但如实标出", async () => {
-  const { admin, state } = fakeAdmin({ appeals: [{ id: "a1", user_id: "u1", status: "pending" }], todos: [todo("t1", "a1")], failTodos: true });
+  const { admin, state } = fakeAdmin({ appeals: [{ id: "a1", user_id: "u1", status: "pending", review_mode: "pre_submit" }], todos: [todo("t1", "a1")], failTodos: true });
   const originalError = console.error;
   console.error = () => {};
   try {
@@ -71,4 +71,16 @@ test("待办关闭失败不回滚撤回，但如实标出", async () => {
   } finally {
     console.error = originalError;
   }
+});
+
+
+test("本人事后核查和重开后的待审单不可撤回，申请和管理员待办保留", async () => {
+  const { admin, state } = fakeAdmin({
+    appeals: [{ id: "post", user_id: "u1", status: "pending", review_mode: "post_submit" }],
+    todos: [todo("t1", "post")],
+  });
+  const result = await withdrawPendingFulfillmentAppeal({ admin, userId: "u1", appealId: "post" });
+  assert.equal(!result.ok && result.status, 409);
+  assert.equal(state.appeals.length, 1);
+  assert.equal(state.todos[0].status, "unread");
 });

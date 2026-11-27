@@ -1,3 +1,5 @@
+import { optimizeStoredSubmissionScreenshot } from "@/lib/submission-screenshot-image";
+import { createPublishTimeEvidence, publishImageDigest } from "@/lib/publish-time-evidence";
 import { NextRequest, NextResponse } from "next/server";
 import { logApiError } from "@/lib/api-logger";
 import { createClient } from "@/lib/supabase/server";
@@ -55,6 +57,7 @@ type ImagePayloadSuccess = {
   screenshotType: ScreenshotType | null;
   assetRole: ScreenshotAssetRole | null;
   downloadMs?: number;
+  fromStorage?: boolean;
 };
 
 type ScreenshotTypeSource = "explicit" | "asset_role";
@@ -259,6 +262,22 @@ export async function buildOcrScreenshotResponse(
         );
       }
 
+      const publishedAt = parsed.recognized_fields?.published_at;
+      if (typeof publishedAt === "string" && parsed.recognized_fields) {
+        const originalBytes = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
+        const storedImage = imagePayload.fromStorage
+          ? { buffer: originalBytes }
+          : await optimizeStoredSubmissionScreenshot({
+            buffer: originalBytes,
+            contentType: dataUrl.slice(5, dataUrl.indexOf(";")),
+          });
+        parsed.recognized_fields.publish_time_evidence = createPublishTimeEvidence({
+          userId: user.id,
+          path: publishImageDigest(storedImage.buffer),
+          publishedAt,
+        });
+      }
+
       return await finish(
         {
           data: parsed,
@@ -346,6 +365,7 @@ async function parseJsonPayload(
     return {
       ...downloaded,
       downloadMs,
+      fromStorage: true,
       screenshotType: normalizeScreenshotType(body?.screenshot_type),
       assetRole: normalizeAssetRole(body?.asset_role),
     };

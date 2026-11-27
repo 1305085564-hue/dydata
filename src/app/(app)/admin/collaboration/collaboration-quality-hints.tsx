@@ -192,18 +192,24 @@ export function excellentCountColumn<R>(getQuality: (row: R) => WriterQualityDat
     tip: COLLABORATION_METRIC_HEADER_TIPS.excellentCount,
     width: 78,
     groupStart: true,
-    sortValue: (row) => summaryOf(getQuality(row))?.overallGradeCounts.excellent ?? null,
+    sortValue: (row) => {
+      const summary = summaryOf(getQuality(row));
+      return summary ? summary.settlementEligibleExcellentCount
+        ?? Math.max(0, summary.overallGradeCounts.excellent - (summary.excludedExcellentCount ?? 0)) : null;
+    },
     render: (row) => {
       const quality = getQuality(row);
       const blocked = qualityUnavailable(quality);
       if (blocked) return blocked;
       const { overallGradeCounts, ratedCount, excludedExcellentCount = 0 } = quality!.summary!;
+      const excellentCount = quality!.summary!.settlementEligibleExcellentCount
+        ?? Math.max(0, overallGradeCounts.excellent - excludedExcellentCount);
       const tip = excludedExcellentCount > 0
-        ? `已评级 ${ratedCount} 篇中，有效计优 ${overallGradeCounts.excellent} 篇（另有 ${excludedExcellentCount} 篇标为不计优结算，已自动排除）`
+        ? `已评级 ${ratedCount} 篇中，有效计优 ${excellentCount} 篇（另有 ${excludedExcellentCount} 篇标为不计优结算，已自动排除）`
         : `已评级 ${ratedCount} 篇中，评为优 ${overallGradeCounts.excellent} 篇`;
       return (
         <HintValue tip={tip}>
-          {overallGradeCounts.excellent}
+          {excellentCount}
         </HintValue>
       );
     },
