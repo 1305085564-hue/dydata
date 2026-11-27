@@ -49,6 +49,8 @@ export function buildWorkContentQuality(
   return buildWorkContentQualityFromMetrics(
     {
       videoId: row.video_id,
+      settlementExcluded: row.settlement_excluded === true,
+      settlementExcludedReason: row.settlement_excluded_reason ?? null,
       snapshot: snapshot ? {
         playCount: snapshot.playCount,
         likes: snapshot.likes,

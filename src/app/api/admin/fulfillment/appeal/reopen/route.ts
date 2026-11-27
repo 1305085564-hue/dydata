@@ -3,6 +3,7 @@ import { UUID_PATTERN, requireAdminServiceClient, requireActiveVisibleUsers, req
 import { emit } from "@/lib/notifications/server";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { isActiveMembership } from "@/lib/member-lifecycle";
+import { clearCollaborationMonthCache } from "@/lib/loaders/collaboration-month-cache";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
@@ -28,18 +29,26 @@ async function handlePost(request: Request, observation: MutationObservation, la
   if (forbidden) return forbidden;
 
   observation.mark("read");
-  const appealResult = await auth.supabase
+  let appealResult = await auth.supabase
     .from("fulfillment_appeals")
-    .select("id, user_id, account_id, record_date, reason, status")
+    .select("id, user_id, account_id, record_date, reason, status, review_mode, video_id, daily_report_id")
     .eq("id", appealId)
     .maybeSingle();
+  if (appealResult.error && /review_mode|video_id|daily_report_id|schema cache|column .* does not exist/i.test(appealResult.error.message ?? "")) {
+    appealResult = await auth.supabase
+      .from("fulfillment_appeals")
+      .select("id, user_id, account_id, record_date, reason, status")
+      .eq("id", appealId)
+      .maybeSingle() as typeof appealResult;
+  }
   if (appealResult.error) return NextResponse.json({ error: "读取补交申诉失败" }, { status: 500 });
   if (!appealResult.data) return NextResponse.json({ error: "补交申诉不存在" }, { status: 404 });
+  const isPostSubmit = appealResult.data.review_mode === "post_submit";
   observation.mark("scope");
   const scoped = requireActiveVisibleUsers(auth, [appealResult.data.user_id]);
   if (scoped) return scoped;
   if (appealResult.data.status !== "approved" && appealResult.data.status !== "rejected") {
-    return NextResponse.json({ error: "仅支持打回已处理的补交申诉" }, { status: 409 });
+    return NextResponse.json({ error: isPostSubmit ? "仅支持打回已处理的事后核查单" : "仅支持打回已处理的补交申诉" }, { status: 409 });
   }
 
   observation.mark("review-rpc");
@@ -48,6 +57,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
     p_handler_id: auth.actor.userId,
   });
   if (rpc.error) return NextResponse.json({ error: rpc.error.message || "打回补交申诉失败" }, { status: 409 });
+  if (isPostSubmit) clearCollaborationMonthCache();
   layers.businessSucceeded = true;
   layers.auditStatus = "succeeded";
 
@@ -76,13 +86,22 @@ async function handlePost(request: Request, observation: MutationObservation, la
     type: "fulfillment.appeal",
     category: "todo",
     severity: "warning",
-    title: `${requester.data?.name || "成员"}的补交申诉已打回待审批`,
+    title: isPostSubmit
+      ? `${requester.data?.name || "成员"}的事后核查已打回待处理`
+      : `${requester.data?.name || "成员"}的补交申诉已打回待审批`,
     body: `${appealResult.data.record_date}\n${appealResult.data.reason}`,
-    actionLabel: "处理补交申请",
+    actionLabel: isPostSubmit ? "去核查" : "处理补交申请",
     actionUrl: "/admin/fulfillment",
     sourceType: "fulfillment_appeal",
     sourceId: appealId,
-    payload: { appealId, accountId: appealResult.data.account_id, recordDate: appealResult.data.record_date, userId: appealResult.data.user_id, reopened: true },
+    payload: {
+      appealId,
+      accountId: appealResult.data.account_id,
+      recordDate: appealResult.data.record_date,
+      userId: appealResult.data.user_id,
+      reviewMode: isPostSubmit ? "post_submit" : "pre_submit",
+      reopened: true,
+    },
   });
   layers.todoStatus = notification.ok ? "succeeded" : "failed";
   if (!notification.ok) observation.mark("compensate");
@@ -92,6 +111,8 @@ async function handlePost(request: Request, observation: MutationObservation, la
     ok: true,
     appealId,
     status: "pending",
+    reviewMode: isPostSubmit ? "post_submit" : "pre_submit",
+    settlementRestored: isPostSubmit && appealResult.data.status === "rejected",
     oldResultNotificationsVoided: true,
     todoReissued: notification.ok,
   });

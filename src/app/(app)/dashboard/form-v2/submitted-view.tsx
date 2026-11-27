@@ -27,6 +27,11 @@ export interface SubmittedViewProps {
   submittedReportId: string | null;
   submittedReportDate?: string | null;
   submittedVideoId: string | null;
+  postReviewResult?: {
+    status: "created" | "partial" | "failed";
+    warning: string | null;
+    triggerReason?: "expired" | "manual_published_at";
+  } | null;
   setQualityCheck: (
     next:
       | SubmissionUiState["qualityCheck"]
@@ -51,6 +56,7 @@ export function SubmittedView({
   submittedReportId,
   submittedReportDate,
   submittedVideoId,
+  postReviewResult = null,
   setQualityCheck,
   qualityCheck,
   onRequestEdit,
@@ -80,6 +86,19 @@ export function SubmittedView({
             {publishedDate} 发布 · 已写入日报与 24 小时数据
             {submittedReportId ? <> · 编号 <span className="select-text font-mono">{submittedReportId.slice(0, 8)}</span></> : null}
           </p>
+          {postReviewResult ? (
+            <p
+              className={
+                postReviewResult.status === "created"
+                  ? "text-[12px] text-[#78716C]"
+                  : "text-[12px] text-status-warning-text"
+              }
+            >
+              {postReviewResult.status === "created"
+                ? "该条因超 72 小时或手改发布时间，已同步管理员事后核查"
+                : postReviewResult.warning || "已入库，但事后核查同步未完全成功，请联系管理员核对"}
+            </p>
+          ) : null}
         </div>
         <Button
           type="button"

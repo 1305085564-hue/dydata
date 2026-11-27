@@ -249,6 +249,10 @@ export interface WorkContentQuality {
   overallGrade: BreakoutGrade | null;
   /** 计算可用性状态 */
   status: ContentQualityStatus;
+  /** 事后核查标为无效时为 true：保留原作品与原始数据，但排除在文案「优条数」结算外。 */
+  settlementExcluded?: boolean;
+  /** 不计优结算的原因（来自事后核查决定理由）。 */
+  settlementExcludedReason?: string | null;
 }
 
 /**
@@ -285,12 +289,14 @@ export interface ContentQualitySummary {
   avgInteractionAchievement: number | null;
   /** 留存分均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
-  /** 综合优/良/普件数计数 */
+  /** 综合优/良/普件数计数（文案「优条数」已自动排除事后核查标为无效的作品） */
   overallGradeCounts: {
     excellent: number;
     good: number;
     fair: number;
   };
+  /** 原本评优但因事后核查标为无效而被剔除结算的作品数（用于界面可追溯说明）。 */
+  excludedExcellentCount?: number;
   /** 综合良优率（0–1 小数，例如 0.65 表示 65%）；无参评样本时为 null */
   goodExcellentRate: number | null;
 }

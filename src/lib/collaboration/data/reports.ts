@@ -25,8 +25,11 @@ const DAILY_REPORT_FIELDS = [
   "script_author_user_id",
   "video_editor_user_id",
   "operator_user_id",
+  "settlement_excluded",
+  "settlement_excluded_reason",
 ].join(", ");
-const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS.replace(", data_source", "");
+const DAILY_REPORT_FIELDS_BEFORE_SETTLEMENT = DAILY_REPORT_FIELDS.replace(", settlement_excluded, settlement_excluded_reason", "");
+const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS_BEFORE_SETTLEMENT.replace(", data_source", "");
 
 // Supabase/PostgREST 默认单次最多返回 1000 行；岗位历史样本不能因为超过上限而静默丢失。
 const REPORT_PAGE_SIZE = 1000;
@@ -127,13 +130,15 @@ export async function queryScopedReports(input: {
       .order("report_date", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + REPORT_PAGE_SIZE - 1);
-    // 允许应用先于数据库迁移部署，旧库仍可展示完整岗位数据；迁移后自动读取来源字段。
-    if (result.error && /data_source|schema cache|column .* does not exist/i.test(result.error.message ?? "")) {
+    // 允许应用先于数据库迁移部署，旧库仍可展示完整岗位数据；迁移后自动读取来源与结算排除字段。
+    if (result.error && /settlement_excluded|data_source|schema cache|column .* does not exist/i.test(result.error.message ?? "")) {
+      const missingSettlementOnly = /settlement_excluded/i.test(result.error.message ?? "") && !/data_source/i.test(result.error.message ?? "");
       let fallbackQuery = input.supabase
         .from("daily_reports")
-        .select(DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
+        .select(missingSettlementOnly ? DAILY_REPORT_FIELDS_BEFORE_SETTLEMENT : DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
         .in("user_id", input.visibleUserIds)
-        .gte("report_date", STATS_START_DATE);
+        .gte("report_date", STATS_START_DATE)
+        .eq("is_void", false);
       if (input.accountIds) {
         fallbackQuery = fallbackQuery.in("account_id", input.accountIds);
       }

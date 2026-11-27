@@ -26,20 +26,28 @@ export async function GET(request: NextRequest) {
   const limitValue = Number.parseInt(request.nextUrl.searchParams.get("limit") ?? "", 10);
   const limit = Number.isFinite(limitValue) ? Math.max(1, Math.min(limitValue, 200)) : 50;
 
-  let query = auth.supabase
-    .from("fulfillment_appeals")
-    .select("id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload")
-    .order("created_at", { ascending: false });
+  const buildAppealsQuery = (columns: string) => {
+    let query = auth.supabase
+      .from("fulfillment_appeals")
+      .select(columns)
+      .order("created_at", { ascending: false });
+    if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
+    return query.in("user_id", auth.scope.visibleUserIds).limit(limit);
+  };
 
-  if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
-  query = query.in("user_id", auth.scope.visibleUserIds);
-
-  const appealsResult = await query.limit(limit);
+  let appealsResult = await buildAppealsQuery(
+    "id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload, review_mode, video_id, daily_report_id, trigger_reason, elapsed_hours",
+  );
+  if (appealsResult.error && /review_mode|video_id|daily_report_id|trigger_reason|elapsed_hours|schema cache|column .* does not exist/i.test(appealsResult.error.message ?? "")) {
+    appealsResult = await buildAppealsQuery(
+      "id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload",
+    );
+  }
   if (appealsResult.error) {
     return NextResponse.json({ error: appealsResult.error.message || "读取履约申诉失败" }, { status: 500 });
   }
 
-  const scopedAppeals = filterScopedRows(auth.scope, appealsResult.data, (row) => row.user_id);
+  const scopedAppeals = filterScopedRows(auth.scope, (appealsResult.data ?? []) as unknown as Array<Parameters<typeof mapAppealRowForResponse>[0]>, (row) => row.user_id);
   const relatedUserIds = Array.from(new Set(
     scopedAppeals
       .flatMap((item) => [item.user_id, item.handler_id])

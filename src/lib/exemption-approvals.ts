@@ -115,6 +115,14 @@ export interface ExemptionRequest {
   published_at_source?: "ocr" | "manual" | null;
   ocr_published_at_text?: string | null;
   appeal_trigger_reason?: "expired" | "manual_published_at" | null;
+  review_mode?: "pre_submit" | "post_submit";
+  video_id?: string | null;
+  daily_report_id?: string | null;
+  video_title?: string | null;
+  play_count?: number | null;
+  published_at?: string | null;
+  uploaded_at?: string | null;
+  elapsed_hours?: number | null;
   daily_items?: Array<{
     id: string;
     request_id: string;

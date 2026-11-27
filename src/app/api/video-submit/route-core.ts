@@ -56,6 +56,8 @@ import {
   type RollbackAction,
 } from "./persistence-orchestrator";
 
+import type { createPostSubmitReviewAndNotify } from "./post-review";
+
 export { buildPublishedDayWindow } from "./create-conflict";
 export { resolvePublishEvidenceFailureMessage, shouldCheckPublishDeadline } from "./prechecks";
 export {
@@ -67,6 +69,7 @@ export {
 export type VideoSubmitDeps = {
   createClient: typeof createClient;
   createAdminClient: typeof createAdminClient;
+  createPostSubmitReview?: typeof createPostSubmitReviewAndNotify;
 };
 
 /** 服务端内部代指定用户提交；外部 HTTP 路由不会传入此参数。 */
@@ -448,18 +451,12 @@ async function handleVideoSubmit(
     }
   }
 
-  await finalizeVideoSubmission({
+  const postReview = await finalizeVideoSubmission({
     createAdminClient: deps.createAdminClient,
-    observation,
-    userId,
-    submitter,
-    teamId: typedProfile.team_id,
-    nowIso,
-    normalized,
-    existingReport,
-    persistedReport,
-    persistedVideo,
-    approvedAppealUsed,
+    createPostSubmitReview: deps.createPostSubmitReview,
+    observation, userId, submitter, teamId: typedProfile.team_id, accountName: account.name ?? null, nowIso,
+    normalized, existingReport, persistedReport, persistedVideo, approvedAppealUsed,
+    postReviewTrigger: deadlineGuard.postReviewTrigger,
   });
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
   try {
@@ -476,6 +473,7 @@ async function handleVideoSubmit(
     video: persistedVideo,
     idempotent_video_id: submissionVideoId,
     topic_library_entry: topicLibraryEntry,
+    ...(postReview ? { post_review: postReview } : {}),
   });
 }
 

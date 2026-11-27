@@ -69,6 +69,11 @@ export function useFormUiState({
   );
   const [submittedReportDate, setSubmittedReportDate] = useState<string | null>(null);
   const [pendingSubmissionPayload, setPendingSubmissionPayload] = useState<Record<string, unknown> | null>(null);
+  const [postReviewResult, setPostReviewResult] = useState<{
+    status: "created" | "partial" | "failed";
+    warning: string | null;
+    triggerReason?: "expired" | "manual_published_at";
+  } | null>(null);
   const [, setHasUserInteracted] = useState(false);
 
   const updateUi = useCallback(
@@ -152,6 +157,7 @@ export function useFormUiState({
     setIsSubmitted(false);
     setSubmittedReportId(null);
     setPendingSubmissionPayload(null);
+    setPostReviewResult(null);
     setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
     setFocusedRole(null);
@@ -236,6 +242,8 @@ export function useFormUiState({
     setSubmittedReportDate,
     pendingSubmissionPayload,
     setPendingSubmissionPayload,
+    postReviewResult,
+    setPostReviewResult,
     setIsSubmitting,
     setAppealRequired,
     setAppealStatus,

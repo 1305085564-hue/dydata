@@ -2,7 +2,20 @@ import { deriveResumePending, type AppealRow } from "@/app/api/exemptions/_fulfi
 
 export type AppealResponseRow = Pick<
   AppealRow,
-  "id" | "user_id" | "record_date" | "reason" | "status" | "handler_id" | "handled_at" | "created_at" | "submission_payload"
+  | "id"
+  | "user_id"
+  | "record_date"
+  | "reason"
+  | "status"
+  | "handler_id"
+  | "handled_at"
+  | "created_at"
+  | "submission_payload"
+  | "review_mode"
+  | "video_id"
+  | "daily_report_id"
+  | "trigger_reason"
+  | "elapsed_hours"
 >;
 
 export type AppealNameMap = Map<string, { name: string | null }>;
@@ -12,7 +25,7 @@ export function mapAppealRowForResponse(row: AppealResponseRow, profileMap: Appe
   const { submission_payload: submissionPayload, ...appeal } = row;
   return {
     ...appeal,
-    resumePending: deriveResumePending(row.status, submissionPayload),
+    resumePending: deriveResumePending(row.status, submissionPayload, row.review_mode ?? "pre_submit"),
     user_name: profileMap.get(row.user_id)?.name ?? null,
     handler_name: row.handler_id ? profileMap.get(row.handler_id)?.name ?? null : null,
   };

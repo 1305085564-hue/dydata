@@ -18,6 +18,7 @@ export interface FormV2SubmitFooterProps {
   appealStatus: AppealStatus;
   appealResultReason: string | null;
   appealPrecheckRequired: boolean;
+  postReviewNotice?: string | null;
   requestLateSubmission: () => void;
   retryAppealResume: () => void;
   /** 待审批时可撤回申请；没有申请 ID 时不传。 */
@@ -46,6 +47,7 @@ export function FormV2SubmitFooter({
   appealStatus,
   appealResultReason,
   appealPrecheckRequired,
+  postReviewNotice = null,
   requestLateSubmission,
   retryAppealResume,
   onWithdrawAppeal,
@@ -78,6 +80,7 @@ export function FormV2SubmitFooter({
         {!isSubmitted && lastSavedAt
           ? `已自动保存 ${lastSavedAt.getHours().toString().padStart(2, "0")}:${lastSavedAt.getMinutes().toString().padStart(2, "0")}`
           : ""}
+        {!isSubmitted && postReviewNotice ? `${lastSavedAt ? " · " : ""}${postReviewNotice}` : null}
         {appealStatus === "pending" ? " · 补交申请审批中" : null}
         {appealStatus === "rejected" && appealResultReason ? ` · 已驳回：${appealResultReason}` : null}
         {appealStatus === "resume_pending" && appealResultReason ? ` · ${appealResultReason}` : null}

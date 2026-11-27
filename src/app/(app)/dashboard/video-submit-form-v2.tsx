@@ -19,7 +19,11 @@ import {
   PUBLISHED_AT_UNCONFIRMED_REASON,
   type SubmissionSlotRole,
 } from "@/components/submission/提交状态机";
-import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
+import {
+  isPublishedAtConfirmed,
+  VIDEO_SUBMIT_EXPIRED_POST_REVIEW_NOTICE,
+  VIDEO_SUBMIT_MANUAL_POST_REVIEW_NOTICE,
+} from "@/lib/video-submit-deadline";
 import { summarizeSubmissionIssues } from "@/components/submission/填报表单状态";
 import {
   getHiddenRoleRestoreLabel,
@@ -178,7 +182,13 @@ export function VideoSubmitFormV2({
     }),
     [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content, submitMode, publishedAtConfirmed, screenshotsRequired, isDailyReportOnly],
   );
-  const appealPrecheckRequired = deadlinePrecheck.decision === "requires_appeal" && appealStatus === "idle";
+  const appealPrecheckRequired = false;
+  const postReviewNotice =
+    deadlinePrecheck.decision === "post_review" && appealStatus === "idle"
+      ? deadlinePrecheck.reason === "manual_published_at"
+        ? VIDEO_SUBMIT_MANUAL_POST_REVIEW_NOTICE
+        : VIDEO_SUBMIT_EXPIRED_POST_REVIEW_NOTICE
+      : null;
   const issueSummaryRef = useRef(issueSummary);
   useEffect(() => { issueSummaryRef.current = issueSummary; }, [issueSummary]);
 
@@ -252,6 +262,7 @@ export function VideoSubmitFormV2({
     account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId,
     topicTitle: activeTopicTitle, supabase,
     pendingSubmissionPayload: ui.pendingSubmissionPayload, setPendingSubmissionPayload: ui.setPendingSubmissionPayload,
+    setPostReviewResult: ui.setPostReviewResult,
     setIsSubmitting: ui.setIsSubmitting, setAppealRequired: ui.setAppealRequired, setAppealStatus: ui.setAppealStatus,
     setAppealId: ui.setAppealId, setAppealResultReason: ui.setAppealResultReason, setAppealReason: ui.setAppealReason,
     setIsSubmitted: ui.setIsSubmitted, setSubmittedReportId: ui.setSubmittedReportId,
@@ -346,7 +357,8 @@ export function VideoSubmitFormV2({
           meta={meta} setHasUserInteracted={ui.setHasUserInteracted} handleGoToTopics={handleGoToTopics}
           setIsSubmitted={ui.setIsSubmitted} setSubmittedReportId={ui.setSubmittedReportId}
           submittedReportId={submittedReportId} submittedReportDate={ui.submittedReportDate}
-          submittedVideoId={submittedVideoId} setQualityCheck={ui.setQualityCheck} qualityCheck={qualityCheck}
+          submittedVideoId={submittedVideoId} postReviewResult={ui.postReviewResult}
+          setQualityCheck={ui.setQualityCheck} qualityCheck={qualityCheck}
           onRequestEdit={onRequestEdit} onCancel={onCancel} onCreateAnother={onCreateAnother}
           handleQualityCheck={handleQualityCheck} handleFixIssue={handleFixIssue}
           onViewHistory={onViewHistory} onViewVideo={onViewVideo}
@@ -404,7 +416,8 @@ export function VideoSubmitFormV2({
               <FormV2SubmitFooter
                 canActuallySubmit={canActuallySubmit} issueSummary={issueSummary} isSubmitted={isSubmitted} lastSavedAt={lastSavedAt}
                 appealRequired={appealRequired} appealStatus={appealStatus} appealResultReason={appealResultReason}
-                appealPrecheckRequired={appealPrecheckRequired} requestLateSubmission={requestLateSubmission}
+                appealPrecheckRequired={appealPrecheckRequired} postReviewNotice={postReviewNotice}
+                requestLateSubmission={requestLateSubmission}
                 retryAppealResume={retryAppealResume} onWithdrawAppeal={appealId ? withdrawAppeal : undefined}
                 isAppealResuming={isAppealResuming} isAppealSubmitting={isAppealSubmitting} isBackfillMode={isBackfillMode}
                 submittedViewActive={submittedViewActive} onCancel={onCancel} triggerSubmit={triggerSubmit}

@@ -9,8 +9,8 @@ import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./crea
 import {
   isPublishedAtConfirmed,
   resolveVideoSubmitDeadline,
-  VIDEO_SUBMIT_EXPIRED_API_ERROR,
 } from "@/lib/video-submit-deadline";
+import type { PostSubmitReviewTrigger } from "./post-review";
 import type { validateVideoSubmitPayload } from "./validation";
 
 export type NormalizedVideoSubmit = Extract<
@@ -139,12 +139,16 @@ export async function evaluateSubmissionDeadlineGuard(input: {
   userId: string;
   normalized: NormalizedVideoSubmit;
 }): Promise<
-  | { ok: true; approvedAppealUsed: { id: string; submission_payload: unknown } | null }
+  | {
+      ok: true;
+      approvedAppealUsed: { id: string; submission_payload: unknown } | null;
+      postReviewTrigger: PostSubmitReviewTrigger | null;
+    }
   | { ok: false; response: NextResponse }
 > {
   const { supabase, userId, normalized } = input;
   if (!shouldCheckPublishDeadline({ mode: normalized.mode })) {
-    return { ok: true, approvedAppealUsed: null };
+    return { ok: true, approvedAppealUsed: null, postReviewTrigger: null };
   }
 
   const deadline = resolveVideoSubmitDeadline({
@@ -183,37 +187,29 @@ export async function evaluateSubmissionDeadlineGuard(input: {
     };
   }
 
-  if (deadline.decision === "requires_appeal") {
-    const { appeal: approvedAppeal, failed: appealFailed } = await findApprovedAppealForSubmission({
+  if (deadline.decision === "post_review" || deadline.decision === "requires_appeal") {
+    const { appeal: approvedAppeal } = await findApprovedAppealForSubmission({
       supabase,
       userId,
       submitted: normalized,
     });
-    if (appealFailed) {
-      return { ok: false, response: NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 }) };
+    if (approvedAppeal) {
+      return { ok: true, approvedAppealUsed: approvedAppeal, postReviewTrigger: null };
     }
-    if (!approvedAppeal) {
-      return {
-        ok: false,
-        response: NextResponse.json(
-          {
-            error:
-              deadline.reason === "manual_published_at"
-                ? "发布时间由成员手工填写，请先申请补交"
-                : VIDEO_SUBMIT_EXPIRED_API_ERROR,
-            code: "SUBMISSION_APPEAL_REQUIRED",
-            reason: deadline.reason,
-            published_date: deadline.publishedDate,
-            elapsed_hours: deadline.elapsedHours,
-          },
-          { status: 409 },
-        ),
-      };
-    }
-    return { ok: true, approvedAppealUsed: approvedAppeal };
+    const triggerReason = deadline.reason === "manual_published_at" ? "manual_published_at" : "expired";
+    return {
+      ok: true,
+      approvedAppealUsed: null,
+      postReviewTrigger: {
+        reason: triggerReason,
+        publishedDate: deadline.publishedDate,
+        elapsedHours: deadline.elapsedHours,
+        ocrPublishedAtText: normalized.ocr_published_at_text ?? null,
+      },
+    };
   }
 
-  return { ok: true, approvedAppealUsed: null };
+  return { ok: true, approvedAppealUsed: null, postReviewTrigger: null };
 }
 
 export async function validateExternalAssignees(input: {

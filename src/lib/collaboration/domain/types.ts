@@ -27,6 +27,9 @@ export type CollaborationReport = {
   script_author_user_id: string | null;
   video_editor_user_id: string | null;
   operator_user_id: string | null;
+  /** 单一真源：事后核查标为无效（不计优结算）标记。 */
+  settlement_excluded?: boolean | null;
+  settlement_excluded_reason?: string | null;
 };
 
 export type CollaborationProfile = {

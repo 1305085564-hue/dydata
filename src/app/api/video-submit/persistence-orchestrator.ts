@@ -14,6 +14,11 @@ import {
 } from "./edit-binding";
 import type { EditSubmissionContract } from "./edit-detail";
 import type { NormalizedVideoSubmit } from "./prechecks";
+import {
+  createPostSubmitReviewAndNotify,
+  type PostSubmitReviewOutcome,
+  type PostSubmitReviewTrigger,
+} from "./post-review";
 
 type SupabaseLike = Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createAdminClient>;
 type AdminSupabaseLike = ReturnType<typeof createAdminClient>;
@@ -167,10 +172,12 @@ export async function replaceSubmissionManualTags(input: {
 
 export async function finalizeVideoSubmission(input: {
   createAdminClient: typeof createAdminClient;
+  createPostSubmitReview?: typeof createPostSubmitReviewAndNotify;
   observation?: MutationObservation;
   userId: string;
   submitter: string;
   teamId: string | null;
+  accountName?: string | null;
   nowIso: string;
   normalized: NormalizedVideoSubmit;
   existingReport: { id: string } | null;
@@ -183,19 +190,23 @@ export async function finalizeVideoSubmission(input: {
     topic_id?: string | null;
   };
   approvedAppealUsed: { id: string; submission_payload: unknown } | null;
-}): Promise<void> {
+  postReviewTrigger?: PostSubmitReviewTrigger | null;
+}): Promise<PostSubmitReviewOutcome | null> {
   const {
     createAdminClient: makeAdminClient,
+    createPostSubmitReview = createPostSubmitReviewAndNotify,
     observation,
     userId,
     submitter,
     teamId,
+    accountName = null,
     nowIso,
     normalized,
     existingReport,
     persistedReport,
     persistedVideo,
     approvedAppealUsed,
+    postReviewTrigger = null,
   } = input;
 
   scheduleFirstDailyReportNotice(existingReport, {
@@ -227,5 +238,23 @@ export async function finalizeVideoSubmission(input: {
     admin: makeAdminClient(),
     appeal: approvedAppealUsed,
     submitted: normalized,
+  });
+
+  if (!postReviewTrigger) return null;
+
+  return createPostSubmitReview({
+    admin: makeAdminClient(),
+    userId,
+    submitter,
+    teamId,
+    accountId: normalized.account_id,
+    accountName,
+    recordDate: persistedReport.report_date,
+    videoId: persistedVideo.id,
+    dailyReportId: persistedReport.id,
+    nowIso,
+    normalized,
+    trigger: postReviewTrigger,
+    requestId: observation?.requestId ?? null,
   });
 }

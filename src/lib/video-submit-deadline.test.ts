@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  formatPostSubmitReviewReason,
   formatVideoSubmitExpiredDialogNotice,
   isPublishedAtConfirmed,
   parsePublishedAtText,
@@ -33,15 +34,16 @@ test("同月且 72 小时内允许首次提交", () => {
   assert.equal(result.reason, "within_window");
 });
 
-test("超过 72 小时需要申请", () => {
+test("超过 72 小时转事后核查（先交后核，不再前置拦截）", () => {
   const result = resolveVideoSubmitDeadline({
     mode: "create",
     publishedAt: "2026-09-27T10:00:00+08:00",
     uploadedAt: "2026-09-30T10:01:00+08:00",
     businessDate: "2026-09-27",
   });
-  assert.equal(result.decision, "requires_appeal");
+  assert.equal(result.decision, "post_review");
   assert.equal(result.reason, "expired");
+  assert.ok((result.elapsedHours ?? 0) > 72);
 });
 
 test("跨月但未超过 72 小时仍可直接提交", () => {
@@ -112,7 +114,7 @@ test("首次创建发布时间已确认且在窗口内允许提交", () => {
   assert.equal(result.reason, "within_window");
 });
 
-test("手填或改过识别值的发布时间统一要求补交审批", () => {
+test("手填或改过识别值的发布时间转事后核查并保留发布距上传时长", () => {
   const result = resolveVideoSubmitDeadline({
     mode: "create",
     publishedAt: "2026-09-29T10:00",
@@ -121,8 +123,17 @@ test("手填或改过识别值的发布时间统一要求补交审批", () => {
     publishedAtConfirmed: true,
     publishedAtSource: "manual",
   });
-  assert.equal(result.decision, "requires_appeal");
+  assert.equal(result.decision, "post_review");
   assert.equal(result.reason, "manual_published_at");
+  assert.equal(result.elapsedHours, 1);
+  assert.match(
+    formatPostSubmitReviewReason({ reason: "manual_published_at", elapsedHours: 1, ocrPublishedAtText: "2026-09-28 20:00" }),
+    /2026-09-28 20:00/,
+  );
+  assert.match(
+    formatPostSubmitReviewReason({ reason: "expired", elapsedHours: 80 }),
+    /80 小时/,
+  );
 });
 
 test("跨月且发布时间未确认仍要求确认真实时间", () => {

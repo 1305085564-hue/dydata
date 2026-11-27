@@ -7,14 +7,35 @@ export const VIDEO_SUBMIT_GRACE_HOURS = CALIBER.submitGraceHours;
 export const VIDEO_SUBMIT_EXPIRED_APPEAL_REASON = `超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，需要补交数据`;
 export const VIDEO_SUBMIT_EXPIRED_API_ERROR = `该提交已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，请先申请补交`;
 export const VIDEO_SUBMIT_EXPIRED_TRIGGER_LABEL = `触发原因：超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时才交`;
+export const VIDEO_SUBMIT_EXPIRED_POST_REVIEW_NOTICE = `发布已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时，提交后将直接入库并同步管理员复核`;
+export const VIDEO_SUBMIT_MANUAL_POST_REVIEW_NOTICE = "发布时间为手工填写或修改，提交后将直接入库并同步管理员复核";
 
 export function formatVideoSubmitExpiredDialogNotice(bizDate: string): string {
   return `当前作品记录日期（${bizDate}）已超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时。`;
 }
 
+export function formatPostSubmitReviewReason(input: {
+  reason: "expired" | "manual_published_at";
+  elapsedHours: number | null;
+  ocrPublishedAtText?: string | null;
+}): string {
+  if (input.reason === "manual_published_at") {
+    return input.ocrPublishedAtText
+      ? `手工修改发布时间（识别原值 ${input.ocrPublishedAtText}），已直接入库待核查`
+      : "手工填写发布时间，已直接入库待核查";
+  }
+  const roundedHours = input.elapsedHours != null && Number.isFinite(input.elapsedHours)
+    ? Math.max(VIDEO_SUBMIT_GRACE_HOURS, Math.round(input.elapsedHours))
+    : null;
+  return roundedHours
+    ? `超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时提交（发布距上传约 ${roundedHours} 小时），已直接入库待核查`
+    : `超过 ${VIDEO_SUBMIT_GRACE_HOURS} 小时提交，已直接入库待核查`;
+}
+
 export type VideoSubmitDeadlineMode = "create" | "edit";
 export type VideoSubmitDeadlineDecision =
   | "allow"
+  | "post_review"
   | "requires_appeal"
   | "requires_confirmation"
   | "invalid";
@@ -80,15 +101,6 @@ export function resolveVideoSubmitDeadline(input: {
     };
   }
 
-  if (input.publishedAtSource === "manual") {
-    return {
-      decision: "requires_appeal",
-      reason: "manual_published_at",
-      publishedDate,
-      elapsedHours: null,
-    };
-  }
-
   const uploadedAt = parseBusinessDateTime(input.uploadedAt) ?? new Date();
   const elapsedHours = (uploadedAt.getTime() - publishedAt.getTime()) / 3_600_000;
 
@@ -96,6 +108,15 @@ export function resolveVideoSubmitDeadline(input: {
     return {
       decision: "invalid",
       reason: "invalid_published_at",
+      publishedDate,
+      elapsedHours,
+    };
+  }
+
+  if (input.publishedAtSource === "manual") {
+    return {
+      decision: "post_review",
+      reason: "manual_published_at",
       publishedDate,
       elapsedHours,
     };
@@ -114,7 +135,7 @@ export function resolveVideoSubmitDeadline(input: {
 
   if (elapsedHours > VIDEO_SUBMIT_GRACE_HOURS) {
     return {
-      decision: "requires_appeal",
+      decision: "post_review",
       reason: "expired",
       publishedDate,
       elapsedHours,

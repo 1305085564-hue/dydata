@@ -85,6 +85,28 @@ export function getMonthContext(group: GroupedApprovalItem): string | null {
   return stats.approved_waived_days > 0 ? `本月已免交 ${stats.approved_waived_days} 天` : "本月还没免交过";
 }
 
+export function isPostSubmitAppeal(appeal: Pick<ExemptionRequest, "review_mode">): boolean {
+  return appeal.review_mode === "post_submit";
+}
+
+export function formatPostSubmitInterval(appeal: Pick<ExemptionRequest, "elapsed_hours" | "published_at" | "uploaded_at" | "business_date">): string | null {
+  if (typeof appeal.elapsed_hours === "number" && Number.isFinite(appeal.elapsed_hours)) {
+    const hours = Math.max(0, Math.round(appeal.elapsed_hours));
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24);
+      const restHours = hours % 24;
+      return restHours > 0 ? `发布距上传约 ${days} 天 ${restHours} 小时（${hours}h）` : `发布距上传约 ${days} 天（${hours}h）`;
+    }
+    return `发布距上传约 ${hours} 小时`;
+  }
+  if (appeal.published_at && appeal.uploaded_at) {
+    const pub = appeal.published_at.slice(0, 10);
+    const up = appeal.uploaded_at.slice(0, 10);
+    return `发布 ${pub} → 上传 ${up}`;
+  }
+  return null;
+}
+
 export function getAppealTriggerText(appeal: ExemptionRequest): string | null {
   if (appeal.appeal_trigger_reason === "manual_published_at") {
     return appeal.ocr_published_at_text
@@ -152,8 +174,13 @@ export function getRelativeTime(iso: string, now: number): string {
 
 export function getApproveAllDescription(items: readonly ApprovalQueueItem[]): string {
   const exemptions = items.filter((item) => item.kind === "exemption").length;
-  const appeals = items.length - exemptions;
-  const parts = [exemptions > 0 ? `请假/免交 ${exemptions} 件` : "", appeals > 0 ? `补交 ${appeals} 件` : ""].filter(Boolean);
+  const postReviews = items.filter((item) => item.kind === "appeal" && isPostSubmitAppeal(item.appeal)).length;
+  const preAppeals = items.length - exemptions - postReviews;
+  const parts = [
+    exemptions > 0 ? `请假/免交 ${exemptions} 件` : "",
+    preAppeals > 0 ? `补交 ${preAppeals} 件` : "",
+    postReviews > 0 ? `事后核查 ${postReviews} 件` : "",
+  ].filter(Boolean);
   return `将同意全部 ${items.length} 件（${parts.join("，")}）。部分已审的申请只同意剩余日期。5 秒内可撤回。`;
 }
 

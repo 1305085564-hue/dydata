@@ -13,8 +13,17 @@ import { createOperationResult } from "@/lib/operation-result";
 import { createRequestContext } from "@/lib/request-context";
 import { withTimeout } from "@/lib/timeout";
 import { AppError, normalizeAppError, publicMessageForCode } from "@/lib/errors";
+import { clearCollaborationMonthCache } from "@/lib/loaders/collaboration-month-cache";
 import { observeMutation, type MutationObservation, type MutationStage } from "@/lib/observed-mutation";
 import { resumeAppealSubmission, type ResumeSubmissionResult } from "../_resume-submission";
+import {
+  buildFulfillmentAppealObservationDetail,
+  buildFulfillmentAppealRejectionAuditDetail,
+  buildFulfillmentAppealRejectionNotification,
+  buildFulfillmentAppealResultNotification,
+} from "./_notification";
+
+export { buildFulfillmentAppealRejectionAuditDetail, buildFulfillmentAppealRejectionNotification };
 
 export const maxDuration = 60;
 
@@ -33,6 +42,9 @@ type AppealOwner = {
   user_id: string;
   account_id: string | null;
   record_date: string;
+  review_mode?: "pre_submit" | "post_submit" | null;
+  video_id?: string | null;
+  daily_report_id?: string | null;
 };
 
 type RpcResult = { data: unknown; error: unknown };
@@ -55,25 +67,6 @@ export type HandleFulfillmentAppealDeps = {
 };
 
 const APPEAL_READ_TIMEOUT_MS = 4_000;
-
-export function buildFulfillmentAppealRejectionNotification(recordDate: string, reason: string) {
-  return `${recordDate} 的数据补交申请已被驳回。驳回原因：${reason}`;
-}
-
-export function buildFulfillmentAppealRejectionAuditDetail(input: {
-  appealId: string;
-  accountId: string | null;
-  recordDate: string;
-  reason: string;
-}) {
-  return JSON.stringify({
-    appealId: input.appealId,
-    accountId: input.accountId,
-    recordDate: input.recordDate,
-    decision: "rejected",
-    reason: input.reason,
-  });
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -195,15 +188,24 @@ function responseFromAuthFailure(response: Response) {
   return failureResponse(new AppError({ code, message, publicMessage: message, status: response.status }));
 }
 
-function defaultLoadAppealOwner(auth: AdminAuth, appealId: string, signal: AbortSignal) {
-  if ("response" in auth) return Promise.resolve({ data: null, error: auth.response });
-  return Promise.resolve(auth.supabase
+async function defaultLoadAppealOwner(auth: AdminAuth, appealId: string, signal: AbortSignal) {
+  if ("response" in auth) return { data: null, error: auth.response };
+  const primary = await auth.supabase
     .from("fulfillment_appeals")
-    .select("user_id, account_id, record_date")
+    .select("user_id, account_id, record_date, review_mode, video_id, daily_report_id")
     .eq("id", appealId)
     .abortSignal(signal)
-    .maybeSingle())
-    .then((result) => ({ data: result.data as AppealOwner | null, error: result.error }));
+    .maybeSingle();
+  if (primary.error && /review_mode|video_id|daily_report_id|schema cache|column .* does not exist/i.test(primary.error.message ?? "")) {
+    const fallback = await auth.supabase
+      .from("fulfillment_appeals")
+      .select("user_id, account_id, record_date")
+      .eq("id", appealId)
+      .abortSignal(signal)
+      .maybeSingle();
+    return { data: fallback.data as AppealOwner | null, error: fallback.error };
+  }
+  return { data: primary.data as AppealOwner | null, error: primary.error };
 }
 
 export function defaultHandleAppealRpc(auth: AdminAuth, payload: HandleFulfillmentAppealPayload) {
@@ -413,39 +415,31 @@ export async function buildHandleFulfillmentAppealResponse(
   // The RPC writes the single audit_logs row for both decisions. A successful RPC
   // therefore proves the audit write; the route must not write a second row.
   const auditStatus: FulfillmentAppealSideEffectStatus = "succeeded";
+  const reviewMode = appealOwnerResult.data.review_mode === "post_submit" ? "post_submit" : "pre_submit";
+  if (reviewMode === "post_submit") {
+    clearCollaborationMonthCache();
+  }
   let autoResume: ResumeSubmissionResult | null = null;
-  if (status === "approved" && !("response" in auth)) {
+  if (reviewMode === "pre_submit" && status === "approved" && !("response" in auth)) {
     mark("auto-resume");
     autoResume = await (deps.resumeSubmission ?? ((appealId, supabase) => resumeAppealSubmission(appealId, supabase!)))(
       payload.data.appealId,
       auth.supabase,
     );
   }
-  const autoResumeOk = autoResume?.success === true;
-  const notification: EmitResult = await deps.emit({
-    recipients: [appealOwnerResult.data.user_id],
-    type: "fulfillment.appeal.result",
-    category: "feed",
-    severity: status === "approved" ? (autoResumeOk ? "success" : "warning") : "warning",
-    title: status === "approved" ? "补交申请已通过" : "补交申请已驳回",
-    body: status === "approved"
-      ? autoResumeOk
-        ? `${appealOwnerResult.data.record_date} 的补交申请已通过，数据已自动提交。`
-        : `${appealOwnerResult.data.record_date} 的补交申请已通过，但数据写入未成功：${autoResume && !autoResume.success ? autoResume.error : "未知原因"}。请点击“去完成填报”重试。`
-      : buildFulfillmentAppealRejectionNotification(appealOwnerResult.data.record_date, payload.data.reason ?? ""),
-    actionLabel: status === "approved" && !autoResumeOk ? "去完成填报" : null,
-    actionUrl: status === "approved" && !autoResumeOk ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}` : null,
-    sourceType: "fulfillment_appeal_result",
-    sourceId: payload.data.appealId,
-    payload: {
-      appealId: payload.data.appealId,
-      accountId: appealOwnerResult.data.account_id,
-      status,
-      autoResumeStatus: autoResume ? (autoResume.success ? "succeeded" : "failed") : "skipped",
-      ...(autoResumeOk && autoResume && autoResume.success && autoResume.videoId ? { videoId: autoResume.videoId } : {}),
-      ...(status === "rejected" ? { reason: payload.data.reason ?? "" } : {}),
-    },
-  });
+  const notification: EmitResult = await deps.emit(buildFulfillmentAppealResultNotification({
+    appealId: payload.data.appealId,
+    userId: appealOwnerResult.data.user_id,
+    accountId: appealOwnerResult.data.account_id,
+    recordDate: appealOwnerResult.data.record_date,
+    reviewMode,
+    videoId: appealOwnerResult.data.video_id ?? null,
+    dailyReportId: appealOwnerResult.data.daily_report_id ?? null,
+    status,
+    reason: payload.data.reason,
+    autoResume,
+    resumeActionUrl: `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}`,
+  }));
   if (!notification.ok) {
     mark("compensate");
     const todo = await tryMarkExplicitTodoDone(deps, auth, payload.data);
@@ -509,31 +503,6 @@ export async function buildHandleFulfillmentAppealResponse(
 function resolveAppealRequestId(request: Request) {
   const supplied = request.headers.get("x-dydata-request-id")?.trim();
   return supplied && UUID_PATTERN.test(supplied) ? supplied : crypto.randomUUID();
-}
-
-function eventsForAppealResponse(body: Record<string, unknown>) {
-  const events: string[] = [];
-  if (body.status === "already_handled") events.push("fulfillment_appeal.already_handled");
-  if (body.businessSucceeded === true) events.push("fulfillment_appeal.business_succeeded");
-  if (body.auditStatus === "failed") events.push("fulfillment_appeal.audit_failed");
-  if (body.employeeNotificationStatus === "failed") events.push("fulfillment_appeal.employee_notification_failed");
-  if (body.todoStatus === "failed") events.push("fulfillment_appeal.notification_mark_failed");
-  return Array.from(new Set(events));
-}
-
-function buildFulfillmentAppealObservationDetail(response: Record<string, unknown>) {
-  return {
-    businessStatus: response.status ?? null,
-    businessSucceeded: response.businessSucceeded ?? false,
-    auditStatus: response.auditStatus ?? "skipped",
-    employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
-    todoStatus: response.todoStatus ?? "skipped",
-    todoMarkedCount: response.todoMarkedCount ?? 0,
-    autoResumeStatus: response.autoResumeStatus ?? "skipped",
-    autoResumeError: response.autoResumeError ?? null,
-    compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
-    events: eventsForAppealResponse(response),
-  };
 }
 
 export async function POST(request: Request) {

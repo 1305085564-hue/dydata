@@ -36,6 +36,7 @@ import {
   getAppealId,
   getAppealTodoId,
   getTodoItems,
+  isPostSubmitAppeal,
   splitApprovalItems,
 } from "@/lib/command-hub/domain/workbench-rules";
 import type { ApprovalQueueItem, ReviewAction } from "@/lib/command-hub/types";
@@ -195,7 +196,9 @@ export function useApprovalReview({
         toast.error("审批没能保存，已放回待批", { description: result.error || "网络异常，请刷新后重试" });
         return;
       }
-      if (entry.action === "approved") {
+      if (isPostSubmitAppeal(original)) {
+        toast.success(entry.action === "approved" ? "已确认正常" : "已标为无效（不计优结算）");
+      } else if (entry.action === "approved") {
         if (result.autoResumeStatus === "succeeded") toast.success("已批准，数据已自动提交");
         else if (result.autoResumeStatus === "failed") toast.success("已批准，数据未写入，等成员补传");
       }
@@ -312,7 +315,9 @@ export function useApprovalReview({
     setPending((current) => current.filter((item) => getAppealId(item) !== appealId));
     if (suppressedTodoIds.length > 0) setCompletedTodoIds((prev) => [...prev, ...suppressedTodoIds]);
     schedule({
-      title: `${appeal.applicant_name || "成员"}的${appeal.appeal_type || ""}补交`,
+      title: isPostSubmitAppeal(appeal)
+        ? `${appeal.applicant_name || "成员"}的事后核查`
+        : `${appeal.applicant_name || "成员"}的${appeal.appeal_type || ""}补交`,
       requestIds: [appealId],
       action,
       originalItems: [appeal],
