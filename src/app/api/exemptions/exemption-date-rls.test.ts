@@ -39,10 +39,10 @@ test("C8 解耦迁移：创建 2 参作用域函数并用其重建逐日审批�
   assert.ok(policyMatch, "缺少重建后的读策略定义");
   const policySql = policyMatch[0];
 
-  assert.match(policySql, /r\.applicant_user_id = auth\.uid\(\)/i);
+  assert.match(policySql, /r\.applicant_user_id = \(auth\.uid\(\)\)::uuid/i);
   assert.match(
     policySql,
-    /public\.exemption_target_in_active_scope\(auth\.uid\(\), r\.applicant_user_id\)/i,
+    /public\.exemption_target_in_active_scope\(\(auth\.uid\(\)\)::uuid, r\.applicant_user_id\)/i,
   );
   assert.doesNotMatch(
     policySql,

@@ -2,7 +2,8 @@
 -- 1) fulfillment_appeals 增量扩展事后核查字段（旧行默认 review_mode = 'pre_submit'，行为不变）；
 -- 2) videos 与 daily_reports 增补 settlement_excluded 单一真源字段（默认 false，不破坏旧查询）；
 -- 3) 更新 handle_fulfillment_appeal（保持 4 参唯一签名）与 reopen_fulfillment_appeal_atomically（保持 2 参签名），
---    对 post_submit 核查单同步写入/恢复不计优结算标记与审计日志；pre_submit 旧待审单行为完全保留。
+--    对 post_submit 核查单同步写入/恢复不计优结算标记与审计日志；pre_submit 旧待审单行为完全保留；
+--    完整保留线上 CloudBase 活性校验、防伪造 handler_id、防自批与单公司可见范围约束，并兼容 auth.uid() 返回 text/uuid。
 
 alter table public.fulfillment_appeals
   add column if not exists review_mode text not null default 'pre_submit',
@@ -101,26 +102,51 @@ declare
   is_post_submit boolean;
   excluded_flag boolean := false;
 begin
-  if not public.is_admin_or_owner() then
-    raise exception 'permission denied';
+  if to_regprocedure('public.cloudbase_require_active_actor_v2()') is not null then
+    perform public.cloudbase_require_active_actor_v2();
   end if;
 
-  if p_decision not in ('approve', 'reject') then
+  resolved_handler_id := case
+    when auth.role() = 'service_role' then p_handler_id
+    else (auth.uid())::uuid
+  end;
+  if resolved_handler_id is null
+    or (auth.role() = 'authenticated' and p_handler_id is not null and p_handler_id is distinct from resolved_handler_id)
+  then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  if not exists (
+    select 1
+    from public.profiles actor
+    where actor.id = resolved_handler_id
+      and actor.membership_status = 'active'
+      and coalesce(
+        actor.company_role,
+        case when actor.role = 'owner' then 'company_owner' else actor.role end
+      ) in ('admin', 'company_owner')
+  ) then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  if p_decision is null or p_decision not in ('approve', 'reject') then
     raise exception 'invalid decision: %', p_decision;
   end if;
-
-  resolved_handler_id := coalesce(
-    p_handler_id,
-    auth.uid()
-  );
 
   select * into appeal_record
   from public.fulfillment_appeals
   where id = p_appeal_id
   for update;
 
-  if not found then
-    raise exception 'appeal not found';
+  if not found
+    or appeal_record.user_id = resolved_handler_id
+    or not exists (
+      select 1
+      from public.active_visible_user_ids(resolved_handler_id) scope
+      where scope.user_id = appeal_record.user_id
+    )
+  then
+    raise exception using errcode = '42501', message = 'permission denied';
   end if;
 
   if appeal_record.status <> 'pending' then
@@ -216,19 +242,53 @@ set search_path = public
 as $$
 declare
   appeal_record public.fulfillment_appeals%rowtype;
-  resolved_handler_id uuid := coalesce(p_handler_id, auth.uid());
+  resolved_handler_id uuid;
   is_post_submit boolean;
   restored_settlement boolean := false;
 begin
-  if not public.is_admin_or_owner() then
-    raise exception 'permission denied';
+  if to_regprocedure('public.cloudbase_require_active_actor_v2()') is not null then
+    perform public.cloudbase_require_active_actor_v2();
+  end if;
+
+  resolved_handler_id := case
+    when auth.role() = 'service_role' then p_handler_id
+    else (auth.uid())::uuid
+  end;
+  if resolved_handler_id is null
+    or (auth.role() = 'authenticated' and p_handler_id is not null and p_handler_id is distinct from resolved_handler_id)
+  then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  if not exists (
+    select 1
+    from public.profiles actor
+    where actor.id = resolved_handler_id
+      and actor.membership_status = 'active'
+      and coalesce(
+        actor.company_role,
+        case when actor.role = 'owner' then 'company_owner' else actor.role end
+      ) in ('admin', 'company_owner')
+  ) then
+    raise exception using errcode = '42501', message = 'permission denied';
   end if;
 
   select * into appeal_record
   from public.fulfillment_appeals
   where id = p_appeal_id
   for update;
-  if not found then raise exception 'appeal not found'; end if;
+
+  if not found
+    or appeal_record.user_id = resolved_handler_id
+    or not exists (
+      select 1
+      from public.active_visible_user_ids(resolved_handler_id) scope
+      where scope.user_id = appeal_record.user_id
+    )
+  then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
   if appeal_record.status not in ('approved', 'rejected') then
     raise exception 'appeal is not handled';
   end if;

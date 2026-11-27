@@ -3,16 +3,16 @@
 -- 背景：
 --   1. 20260902100000_exemption_daily_review.sql 在 public.exemption_request_date 上创建的
 --      SELECT RLS 策略 "成员或管理员读取申请日期明细" 直接调用了 3 参旧函数
---      public.exemption_target_in_active_scope(auth.uid(), r.applicant_user_id, null)。
+--      public.exemption_target_in_active_scope((auth.uid())::uuid, r.applicant_user_id, null)。
 --   2. 集团模式退役迁移 20261016090000_remove_group_mode.sql 尝试删除 3 参旧函数时，
 --      被这条策略的 pg_depend 强依赖阻断，因此长期处于 not_applied 状态。
 --   3. 且旧版 3 参函数的第 3 参数带 DEFAULT NULL，若直接新增 2 参同名重载而不去掉旧 3 参的默认值，
 --      PostgreSQL 会对 2 参调用报 "is not unique" 歧义错误。
 --
--- 本迁移保持 100% 向后兼容与幂等：
+-- 本迁移保持 100% 向后兼容与幂等（同时兼容 CloudBase PG auth.uid() 返回 text 与本地演练库返回 uuid）：
 --   1. 先移除旧策略 "成员或管理员读取申请日期明细"，释放对 3 参旧函数的唯一 pg_depend 依赖。
 --   2. 创建 2 参单公司作用域函数 public.exemption_target_in_active_scope(p_actor_id uuid, p_target_id uuid)，
---      委托给已收敛为单公司作用域的 public.active_visible_user_ids(p_actor_id)（零集团模式参数）。
+--      委托给已收敛为单公司作用域的 public.active_visible_user_ids(p_actor_id)（零集团模式参数，自动继承线上活性校验）。
 --   3. 若当前库仍存在旧 3 参函数（尚未执行集团模式清理迁移），将其重建为不带 DEFAULT 的纯 3 参过渡包装并委托给 2 参函数：
 --      - 消除 2 参调用重载歧义；
 --      - 保证线上尚未切换的旧 3 参 RPC 零停机兼容；
@@ -80,9 +80,9 @@ create policy "成员或管理员读取申请日期明细"
       from public.exemption_request r
       where r.id = exemption_request_date.request_id
         and (
-          r.applicant_user_id = auth.uid()
+          r.applicant_user_id = (auth.uid())::uuid
           or public.is_owner()
-          or public.exemption_target_in_active_scope(auth.uid(), r.applicant_user_id)
+          or public.exemption_target_in_active_scope((auth.uid())::uuid, r.applicant_user_id)
         )
     )
   );
