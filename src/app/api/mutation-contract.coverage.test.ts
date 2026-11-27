@@ -47,7 +47,6 @@ const CONTRACT_ROUTES = [
   "ocr-screenshot/route.ts",
   "permission-requests/apply/route.ts",
   "submission-screenshots/route.ts",
-  "topics/sub-topics/[id]/claim/route.ts",
   "topics/sub-topics/[id]/return/route.ts",
   "topics/sub-topics/[id]/route.ts",
   "topics/sub-topics/[id]/start-scripting/route.ts",

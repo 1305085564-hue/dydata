@@ -2,69 +2,17 @@
   "_note": "统一禁用清单（scripts/forbidden-list-gate.mjs）的存量豁免名单：只准减不准增。要新增条目必须写 reason，并且当前计数不得高于本条（2026-11-23 实测的存量）。",
   "_measured": "2026-11-23 基线 bbd762b7 全量实测",
   "db-error-leak": {
-    "src/app/(app)/admin/actions.ts": {
-      "count": 11,
-      "reason": "存量：管理后台 Server Action 把读写失败文案直接回给页面（系统设置、成员、团队等）；这批接口还没逐个改成固定文案+错误码，碰到哪个改哪个"
-    },
     "src/app/(app)/admin/ai-config/components/channel-pool-view.tsx": {
       "count": 1,
       "reason": "存量：AI 渠道连通性测试把上游返回的失败原因显示在弹窗里，属于给管理员看的诊断信息，不是数据库原文"
-    },
-    "src/app/api/admin/ai-config/call-stats/route.ts": {
-      "count": 1,
-      "reason": "存量：调用统计接口把查询失败原文放进返回体"
-    },
-    "src/app/api/admin/ai-config/ocr-logs/route-core.ts": {
-      "count": 1,
-      "reason": "存量：识别记录接口把查询失败原文放进返回体"
-    },
-    "src/app/api/admin/collaboration/handlers.ts": {
-      "count": 2,
-      "reason": "存量：协作管理处理函数把失败原文同时放进 message 与 error 两个字段"
-    },
-    "src/app/api/admin/content-analysis/route.ts": {
-      "count": 1,
-      "reason": "存量：内容复盘接口把分析失败的原文放进返回体"
     },
     "src/app/api/admin/execute-tool/route.ts": {
       "count": 2,
       "reason": "存量：管理工具执行入口把工具失败原文回给页面（数据修正类，失败原因对操作者有用）"
     },
-    "src/app/api/admin/topics-library/feishu-url/route.ts": {
-      "count": 1,
-      "reason": "存量：保存飞书地址失败时回底层原文，只在原文为空时才用固定文案"
-    },
     "src/app/api/admin/topics-library/import/parse/route.ts": {
       "count": 1,
       "reason": "存量：导入解析失败回解析器原文（zod/表格解析器，不是数据库）"
-    },
-    "src/app/api/admin/topics-library/toggle/route.ts": {
-      "count": 1,
-      "reason": "存量：选题库开关失败回底层原文"
-    },
-    "src/app/api/cloudbase/_shared.ts": {
-      "count": 2,
-      "reason": "存量：CloudBase 网关封装把失败原文同时放进 message 与 error，多个接口共用"
-    },
-    "src/app/api/notifications/cleanup/route.ts": {
-      "count": 1,
-      "reason": "存量：清理定时接口回底部失败原文"
-    },
-    "src/app/api/topics/_shared.ts": {
-      "count": 1,
-      "reason": "存量：选题接口共用封装回失败原文"
-    },
-    "src/app/api/video-submit/edit-binding.ts": {
-      "count": 3,
-      "reason": "存量：补录改绑三条写入失败都回数据库原文"
-    },
-    "src/app/api/video-submit/route-core.ts": {
-      "count": 5,
-      "reason": "存量：作品提交主链路把写入失败原文包成 error.message 返回（提交页显示）"
-    },
-    "src/app/api/video-submit/topic-association.ts": {
-      "count": 1,
-      "reason": "存量：选题关联写入失败回数据库原文"
     },
     "src/app/auth/callback/route.ts": {
       "count": 1,
@@ -72,53 +20,11 @@
     }
   },
   "exemption-category-copy": {
-    "src/app/(app)/admin/fulfillment/components/fulfillment-action-dock.tsx": {
-      "count": 1,
-      "reason": "存量：履约操作条自己写 leave→请假/免交，未改成 getAdminExemptionCategoryLabel"
-    },
-    "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx": {
-      "count": 2,
-      "reason": "存量：履约矩阵待批角标自己写类别文案（两处）"
-    },
-    "src/components/approval-workbench/history-list.tsx": {
-      "count": 1,
-      "reason": "存量：审批历史混用了唯一出处函数和手写分支"
-    },
-    "src/components/approval-workbench/queue-item.tsx": {
-      "count": 1,
-      "reason": "存量：待办卡片自己写类别文案"
-    },
-    "src/components/approval-workbench/use-approval-review.ts": {
-      "count": 1,
-      "reason": "存量：审批复核 hook 自己写类别文案"
-    },
     "src/components/video-submit/workbench-notice-bar.tsx": {
       "count": 1,
       "reason": "存量：提交页提示条用的是「特殊豁免」措辞，与唯一出处的「免交」不同，改文案要产品确认，先登记"
-    },
-    "src/lib/exemption-approvals.ts": {
-      "count": 1,
-      "reason": "存量：审批列表拼接 categoryLabel 时仍自己判断 leave"
     }
   },
-  "manual-date-advance": {
-    "src/app/(app)/admin/content/content-list.tsx": {
-      "count": 1,
-      "reason": "存量：发布管理日期分页自己 setDate 推进，等同 shiftDateOnly，未替换"
-    },
-    "src/components/submission/填报表单状态.ts": {
-      "count": 1,
-      "reason": "存量：提交表单最近 7 天条自己按天回推"
-    },
-    "src/lib/content-analysis-service.ts": {
-      "count": 1,
-      "reason": "存量：内容复盘统计窗口自己按天回推 30 天"
-    }
-  },
-  "manual-metric-parse": {
-    "src/components/leaderboard/leaderboard.tsx": {
-      "count": 2,
-      "reason": "存量：排行榜展示自己 replace 掉 % 与「秒」再 parseFloat，未改用 parseMetric"
-    }
-  }
+  "manual-date-advance": {},
+  "manual-metric-parse": {}
 }

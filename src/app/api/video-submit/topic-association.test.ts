@@ -89,3 +89,19 @@ test("提交成功后结束正在写状态；无在写记录时静默跳过（�
   const none = await completeWritingOnSubmission(supabase, "user-1", null, "video-1");
   assert.deepEqual(none, { ended: false });
 });
+
+test("选题关联查询失败返回固定中文 500，并记录真实错误", async () => {
+  const raw = { message: 'relation "sub_topics" does not exist', code: "42P01" };
+  const original = console.error;
+  const logs: unknown[][] = [];
+  console.error = (...args: unknown[]) => { logs.push(args); };
+  try {
+    const client = { from: () => {
+      const query = { select: () => query, eq: () => query, maybeSingle: async () => ({ data: null, error: raw }) };
+      return query;
+    } } as never;
+    const result = await validateTopicForSubmission(client, TOPIC_ID);
+    assert.deepEqual(result, { ok: false, status: 500, message: "加载所选选题失败，请稍后重试" });
+    assert.equal(logs[0][1], raw);
+  } finally { console.error = original; }
+});

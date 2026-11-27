@@ -9,7 +9,7 @@ import {
   resolveApprovalRequestId,
   type ExemptionRequest,
 } from "@/lib/exemption-approvals";
-import { getAdminExemptionCategoryLabel, normalizeExemptionCategory, toExemptionCategory } from "@/lib/exemption-category";
+import { getAdminExemptionCategoryLabel, toExemptionCategory } from "@/lib/exemption-category";
 import { getAppealExecutionLabel, getAppealId, isPostSubmitAppeal } from "@/lib/command-hub/domain/workbench-rules";
 import { formatShanghaiDateTime } from "@/lib/command-hub/types";
 import { LoadError } from "./load-error";
@@ -29,7 +29,7 @@ function describeHistory(item: ExemptionRequest) {
     };
   }
   const category = toExemptionCategory(item.exemption_category);
-  const kind = normalizeExemptionCategory(category) === "leave" ? "请假" : getAdminExemptionCategoryLabel(category);
+  const kind = getAdminExemptionCategoryLabel(category);
   const when = item.exemption_type === "permanent"
     ? "长期"
     : item.end_date && item.end_date !== item.start_date

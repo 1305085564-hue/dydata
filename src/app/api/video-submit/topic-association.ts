@@ -17,7 +17,10 @@ export async function validateTopicForSubmission(
     .select("id, library_status")
     .eq("id", topicId)
     .maybeSingle();
-  if (error) return { ok: false, status: 500, message: error.message };
+  if (error) {
+    console.error("[video-submit] load-topic-association", error);
+    return { ok: false, status: 500, message: "加载所选选题失败，请稍后重试" };
+  }
   if (!topic) return { ok: false, status: 404, message: "所选选题不存在" };
   if ((topic as { library_status?: string }).library_status === "removed") {
     return { ok: false, status: 409, message: "该选题已被移出选题库，不能关联提交" };

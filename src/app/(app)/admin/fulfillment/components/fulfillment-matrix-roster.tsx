@@ -1,5 +1,6 @@
 "use client";
 
+import { getEmployeeExemptionCategoryLabel } from "@/lib/exemption-category";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
@@ -487,7 +488,7 @@ export function FulfillmentMatrixRoster({
           {hoveredCell.record?.reason && <p>备注：{hoveredCell.record.reason}</p>}
           {hoveredCell.record?.pendingExemption && (
             <p className="text-[#1F1E1D]">
-              {hoveredCell.record.pendingExemption.exemption_type === "leave" ? "请假" : "免交"}待批
+              {getEmployeeExemptionCategoryLabel(hoveredCell.record.pendingExemption.exemption_type)}待批
               {hoveredCell.record.pendingExemption.reason ? `：${hoveredCell.record.pendingExemption.reason}` : ""}
             </p>
           )}
@@ -518,7 +519,7 @@ export function FulfillmentMatrixRoster({
             {openMenuCell.record?.pendingExemption && onReviewPendingExemption && (
               <div className="space-y-1 border-t border-[#E2E2DF]/60 pt-2">
                 <p className="text-[12px] text-[#78716C]">
-                  {openMenuCell.record.pendingExemption.exemption_type === "leave" ? "请假" : "免交"}待批
+                  {getEmployeeExemptionCategoryLabel(openMenuCell.record.pendingExemption.exemption_type)}待批
                   {openMenuCell.record.pendingExemption.reason ? `：${openMenuCell.record.pendingExemption.reason}` : ""}
                 </p>
                 <div className="flex justify-end gap-1">

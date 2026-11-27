@@ -94,3 +94,21 @@ test("24h 快照查询失败时抛错，不伪装成缺少数据", async () => {
     /加载24h快照失败/,
   );
 });
+
+test("30 天基线跨月与北京时间凌晨保留原时分秒、毫秒，不扩大到整天", async () => {
+  const filters: unknown[][] = [];
+  const client = { from: () => {
+    const q = {
+      select: () => q, eq: () => q, neq: () => q,
+      gte: (key: string, value: string) => { filters.push(["gte", key, value]); return q; },
+      lt: (key: string, value: string) => { filters.push(["lt", key, value]); return q; },
+      limit: async () => ({ data: [], error: null }),
+    };
+    return q;
+  } };
+  await __internal.loadThirtyDayBaseline(client as never, { videoId: "video-1", accountId: "account-1", publishedAt: "2026-03-01T16:12:34.567Z" });
+  assert.deepEqual(filters, [
+    ["gte", "published_at", "2026-01-30T16:12:34.567Z"],
+    ["lt", "published_at", "2026-03-01T16:12:34.567Z"],
+  ]);
+});

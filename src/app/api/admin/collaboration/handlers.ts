@@ -72,10 +72,11 @@ export async function buildPersonResponse(
         operation: "load-person-data",
         request,
         status: 404,
-        message: error.message,
-        error: error.message,
+        message: "成员不存在",
+        error,
       });
     }
+    console.error("[collaboration] load-person-data", error);
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载个人岗位数据失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -143,6 +144,7 @@ export async function buildAttributionResponse(
       message: result.videoUpdated ? null : "暂未匹配到视频，日报已保存，后续可手动关联",
     });
   } catch (error) {
+    console.error("[collaboration] update-attribution", error);
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "更新岗位归属失败";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
@@ -191,6 +193,7 @@ export async function buildUnattributedResponse(
       candidateMembers,
     });
   } catch (error) {
+    console.error("[collaboration] load-unattributed-reports", error);
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载待补归属作品失败";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }

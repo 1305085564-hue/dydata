@@ -117,7 +117,7 @@ export function jsonResult<T>(
       requestId,
       status: result.status,
       message: result.status >= 500 ? undefined : result.message,
-      error: result.message,
+      error: new Error(result.message),
     });
   }
   return NextResponse.json(result.value);

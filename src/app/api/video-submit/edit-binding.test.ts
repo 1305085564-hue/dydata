@@ -359,3 +359,25 @@ test("日期匹配使用上海时区的发布或上传时间", () => {
   assert.equal(editVideoMatchesBizDate(video, "2026-08-25"), true);
   assert.equal(editVideoMatchesBizDate(video, "2026-08-24"), false);
 });
+
+for (const [field, expected] of [
+  ["videoError", "加载原视频失败，请稍后重试"],
+  ["reportError", "加载原日报失败，请稍后重试"],
+  ["snapshotError", "加载原视频快照失败，请稍后重试"],
+] as const) {
+  test(`编辑绑定 ${field} 不泄露库错误并保留服务端诊断`, async () => {
+    const raw = 'permission denied for relation private_table (42501)';
+    const original = console.error;
+    const logs: unknown[][] = [];
+    console.error = (...args: unknown[]) => { logs.push(args); };
+    try {
+      const adapter = happyAdapter({ [field]: raw });
+      const result = await validateEditSubmissionBinding(buildInput(), adapter);
+      assert.deepEqual(result, { ok: false, status: 500, error: expected });
+      assert.doesNotMatch(JSON.stringify(result), /private_table|42501|permission denied/);
+      assert.equal(logs.length, 1);
+      assert.deepEqual(logs[0][1], { message: raw });
+      assert.deepEqual(adapter.writes, { delete: 0, insert: 0, update: 0 });
+    } finally { console.error = original; }
+  });
+}

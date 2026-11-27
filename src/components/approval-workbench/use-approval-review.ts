@@ -6,6 +6,7 @@
  * 改动前先读对应注释，别为了界面方便简化掉。
  */
 
+import { getAdminExemptionCategoryLabel } from "@/lib/exemption-category";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ActionCenterSummary, ActionItem } from "@/lib/action-center/types";
@@ -41,10 +42,6 @@ import {
 } from "@/lib/command-hub/domain/workbench-rules";
 import type { ApprovalQueueItem, ReviewAction } from "@/lib/command-hub/types";
 import { useApprovalUndoQueue, type UndoEntry } from "./use-approval-undo-queue";
-
-function natureName(nature: "leave" | "waive") {
-  return nature === "leave" ? "请假" : "免交";
-}
 
 function withoutRequestIds(ids: string[]) {
   const idSet = new Set(ids);
@@ -247,7 +244,7 @@ export function useApprovalReview({
     }
     setPending(withoutRequestIds(group.requestIds));
     schedule({
-      title: `${group.applicant_name}的${natureName(group.nature)}`,
+      title: `${group.applicant_name}的${getAdminExemptionCategoryLabel(group.nature)}`,
       requestIds: group.requestIds,
       action,
       originalItems: group.items,
@@ -295,7 +292,7 @@ export function useApprovalReview({
       }),
     );
     schedule({
-      title: `${group.applicant_name} ${daily.dateDisplay}的${natureName(group.nature)}`,
+      title: `${group.applicant_name} ${daily.dateDisplay}的${getAdminExemptionCategoryLabel(group.nature)}`,
       requestIds: [requestId],
       action,
       originalItems: target ? [target] : [],

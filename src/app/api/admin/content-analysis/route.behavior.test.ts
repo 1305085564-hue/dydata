@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
+import { ContentAnalysisError } from "@/lib/content-analysis-service";
 import { buildContentAnalysisResponse } from "./route";
 
 function request(body: unknown) {
@@ -52,4 +53,21 @@ test("content-analysis 缺视频 id 拒绝且不静默成功", async () => {
   const body = await response.json();
   assert.equal(body.businessSucceeded, false);
   assert.equal(body.error, "缺少 video_id");
+});
+
+test("content-analysis 已知业务错误保留状态与错误码，正文不采用错误对象原文", async () => {
+  for (const [code, status, message] of [
+    ["NO_24H_SNAPSHOT", 400, "缺少24h数据，暂不能生成辅助分析"],
+    ["CONTENT_ANALYSIS_FAILED", 500, "后台服务暂时不可用，稍后重试"],
+  ] as const) {
+    const response = await buildContentAnalysisResponse(request({ video_id: "video-1" }), {
+      requireScopedAdminVideo: async () => ({ video: { id: "video-1" } } as never),
+      generateContentAnalysisForAccess: async () => { throw new ContentAnalysisError('SQL private error', code, status); },
+    });
+    assert.equal(response.status, status);
+    const body = await response.json();
+    assert.equal(body.code, code);
+    assert.equal(body.error, `${message}（编号：${body.requestId}）`);
+    assert.doesNotMatch(JSON.stringify(body), /SQL private error/);
+  }
 });
