@@ -19,11 +19,10 @@ function parseDate(dateStr: string): Date | null {
 /** 页头里跟在日期后的答案文字：「 · 23 篇」「 · 命中 5 / 23 篇」「 · 没有作品」 */
 export function buildContentHeadlineSuffix(input: Omit<ContentHeadlineInput, "currentDate" | "rangeStart" | "rangeEnd"> & { isRange: boolean }): string {
   if (input.matchedCount === 0) return input.hasActiveFilters ? " · 没有符合筛选的作品" : " · 没有作品";
-  const showHitRatio = !input.isRange
-    && input.hasActiveFilters
+  const showHitRatio = input.hasActiveFilters
     && input.dayTotal !== null
-    && input.dayTotal !== input.matchedCount;
-  return showHitRatio ? ` · 命中 ${input.matchedCount} / ${input.dayTotal} 篇` : ` · ${input.matchedCount} 篇`;
+    && (input.dayTotal !== input.matchedCount || input.isRange);
+  return showHitRatio ? ` · 命中 ${input.matchedCount} / ${Math.max(input.matchedCount, input.dayTotal!)} 篇` : ` · ${input.matchedCount} 篇`;
 }
 
 /** 11月18日 周二 */

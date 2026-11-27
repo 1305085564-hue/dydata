@@ -56,7 +56,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
       <div className="min-h-0 flex-1 overflow-y-auto space-y-6 pt-5 pb-2 text-[13px] leading-[1.6] text-[#1F1E1D] pr-1">
         <section className="space-y-3">
           <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">一、两类数据分别看什么</h3>
-          <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
+          <div className="overflow-x-auto rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]">
             <table className="w-full border-collapse text-left text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]">
@@ -86,7 +86,7 @@ export function RatingRulesContent({ className, evaluationStandards }: RatingRul
 
         <section className="space-y-3">
           <h3 className="font-normal text-[14px] text-[#141413] tracking-tight">二、留存分如何合成</h3>
-          <div className="overflow-x-auto rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB]">
+          <div className="overflow-x-auto rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]">
             <table className="w-full border-collapse text-left text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF] bg-[#F7F7F6] text-[#78716C]">

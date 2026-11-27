@@ -128,7 +128,7 @@ export function ModuleDialogsAccount({
               </DialogHeader>
 
               <DialogBody className="space-y-4 py-2">
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="permanent-exemption-reason">
                     设置原因 <span className="text-status-danger">*</span>
                   </Label>

@@ -328,13 +328,13 @@ export function WriterQualityChart({
                   >
                     {hoveredWork.title || "未命名作品"}
                   </span>
-                  <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
+                  <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
                     {getTopicLabel(hoveredWork.topicKind)}
                   </span>
                 </div>
 
                 {/* 达成率数据表现与状态 */}
-                <div className="flex items-center gap-2.5 shrink-0 tabular-nums whitespace-nowrap">
+                <div className="flex items-center gap-2 shrink-0 tabular-nums whitespace-nowrap">
                   <span className="text-[#78716C]">
                     播 <span className="font-normal text-[#1F1E1D]">{formatBigNumber(hoveredWork.playCount)}</span>
                   </span>
@@ -385,7 +385,7 @@ export function WriterQualityChart({
                       )}
                     </>
                   ) : (
-                    <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+                    <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
                       {getContentQualityStatusText(hoveredWork.status)}
                     </span>
                   )}

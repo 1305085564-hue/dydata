@@ -25,6 +25,8 @@ export interface ContentListProps {
   canSwitchPerspective?: boolean;
   canManageVideos?: boolean;
   totalVideosCount?: number;
+  /** 当前日期窗口内未加收窄筛选时的真实总基数，用于展示「命中 X / 共 Y 条」 */
+  unfilteredTotalVideosCount?: number;
   totalPages?: number;
   serverPage?: number;
   serverPageSize?: number;

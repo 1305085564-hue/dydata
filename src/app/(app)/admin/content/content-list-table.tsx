@@ -260,6 +260,7 @@ export function ContentListTable({
               <tr
                 key={item.video.id}
                 data-video-id={item.video.id}
+                data-selected={isSelected ? "true" : undefined}
                 aria-selected={isSelected || undefined}
                 onClick={(event) => {
                   if (!shouldHandleInPlaceLinkClick(event)) return;
@@ -277,7 +278,7 @@ export function ContentListTable({
                     <td
                       key={column.key}
                       data-col-key={column.key}
-                      className={cn(cell.className, isSorted && column.key !== "title" && SORTED_COL_BG)}
+                      className={cn(cell.className, !isSelected && isSorted && column.key !== "title" && SORTED_COL_BG)}
                     >
                       {cell.content}
                     </td>

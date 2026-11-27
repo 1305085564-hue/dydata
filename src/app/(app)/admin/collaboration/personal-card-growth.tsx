@@ -223,7 +223,7 @@ export function PersonalCardGrowth({
                                 )}
                               </>
                             ) : (
-                              <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+                              <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
                                 数据待采集（未满 24 小时）
                               </span>
                             )}
@@ -237,7 +237,7 @@ export function PersonalCardGrowth({
                       ) : (
                         <div className="flex items-center w-full min-w-0">
                           {/* 30天均值基线：单行展示，杜绝换行跳动 */}
-                          <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
+                          <div className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                             <Tooltip>
                               <TooltipTrigger render={<span className="text-[#78716C] font-normal shrink-0 cursor-help" />}>
                                 近30天均值

@@ -1,7 +1,7 @@
 import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
-import { queryAdminContentRpcPage } from "./admin-content-rpc";
+import { queryAdminContentRpcPage, resolveAdminContentUnfilteredTotal } from "./admin-content-rpc";
 import { loadPageTopicLibraryStatuses } from "./admin-content-topic-library";
 import { attachPlayChangeSignals, findPreviousVideoByVisibleId, type PreviousSnapshotRow, type PreviousVideoCandidateRow } from "./admin-content-play-signals";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -68,6 +68,8 @@ export interface AdminContentPageData {
   topicLibraryStatuses?: Record<string, VideoTopicLibraryStatusInfo>;
   summary: {
     totalVideos: number;
+    /** 当前日期窗口内未应用收窄筛选（评级/账号/成员/播放/异常/关键词等）时的真实总基数。 */
+    unfilteredTotalVideos?: number;
     page?: number;
     pageSize?: number;
     totalPages?: number;
@@ -450,6 +452,7 @@ export async function loadAdminContentPageData({
     availableCounts: Object.entries(videosWithSignals.reduce<Record<string, number>>((acc, v) => { const d = getPublishedDateKey(v); if (d) acc[d] = (acc[d] ?? 0) + 1; return acc; }, {})).map(([d, c]) => ({ d, c })).sort((a, b) => b.d.localeCompare(a.d)),
     summary: {
       totalVideos: videos.length,
+      unfilteredTotalVideos: videos.length,
     },
   };
 }
@@ -671,19 +674,25 @@ async function loadAdminContentRpcPageData({
     segmentedVideoIds,
     contentPresenceByVideoId: new Map(rawVideos.map((video) => [String(video.id), video.has_content === true])),
   });
+  const [topicLibraryStatuses, unfilteredTotalVideos] = await Promise.all([
+    topicLibraryStatusesPromise,
+    resolveAdminContentUnfilteredTotal({
+      supabase,
+      query: effectiveQuery,
+      scope,
+      evaluationStandards,
+      matchedTotal: payload.summary?.totalVideos ?? 0,
+      availableDates: payload.availableDates,
+      availableCounts: payload.availableCounts,
+    }),
+  ]);
   const summary = {
-    totalVideos: 0,
-    page: effectiveQuery.page,
-    pageSize: effectiveQuery.pageSize,
-    totalPages: 1,
-    anomalyCount: 0,
-    pageStartIndex: (effectiveQuery.page - 1) * effectiveQuery.pageSize,
-    hasPreviousPage: effectiveQuery.page > 1,
-    hasNextPage: false,
-    directReviewVideoId: null,
+    totalVideos: 0, page: effectiveQuery.page, pageSize: effectiveQuery.pageSize, totalPages: 1,
+    anomalyCount: 0, pageStartIndex: (effectiveQuery.page - 1) * effectiveQuery.pageSize,
+    hasPreviousPage: effectiveQuery.page > 1, hasNextPage: false, directReviewVideoId: null,
     ...(payload.summary ?? {}),
+    ...(typeof unfilteredTotalVideos === "number" ? { unfilteredTotalVideos } : {}),
   };
-  const topicLibraryStatuses = await topicLibraryStatusesPromise;
   return {
     videos,
     snapshots,

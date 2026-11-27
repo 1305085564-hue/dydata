@@ -49,6 +49,10 @@ interface DatePaginationProps {
   variant?: "toolbar" | "headline";
   /** headline 模式下紧跟日期的答案文字（如「 · 23 篇」），箭头排在它后面 */
   suffix?: React.ReactNode;
+  /** 日历弹层展开方向：顶部入口默认向下，底栏入口改为向上避免被屏幕底边裁切 */
+  popoverSide?: "top" | "bottom";
+  /** 日历弹层对齐方式 */
+  popoverAlign?: "start" | "center" | "end";
 }
 
 function toDateString(year: number, month: number, day: number): string {
@@ -87,6 +91,8 @@ export function DatePagination({
   showCountInLabel = true,
   variant = "toolbar",
   suffix,
+  popoverSide = "bottom",
+  popoverAlign = "start",
 }: DatePaginationProps) {
   const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const [open, setOpen] = useState(defaultOpen);
@@ -204,12 +210,12 @@ export function DatePagination({
             <ChevronDown className="size-4 shrink-0 text-[#A8A29E] transition-colors group-hover:text-[#141413]" aria-hidden="true" />
           </PopoverTrigger>
         ) : (
-          <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
+          <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
             <Calendar className="size-3.5 text-[#78716C]" />
             <span>{loadingLabel}</span>
           </PopoverTrigger>
         )}
-        <PopoverContent align="start" className={CALENDAR_CARD_CLASS}>
+        <PopoverContent side={popoverSide} align={popoverAlign} data-popover-side={popoverSide} className={CALENDAR_CARD_CLASS}>
           <MonthCalendar
             today={today}
             viewMonth={{ year, month: month + 1 }}
