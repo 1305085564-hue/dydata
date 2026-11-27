@@ -2,6 +2,37 @@
 
 > 地址：`/admin/ai-config`｜牵涉链路：[AI调用链路](AI调用链路.md)、[权限链路](权限链路.md)；全站通用见[工程底座](../工程底座.md)、[上线与运维](../上线与运维.md)
 
+<a id="现行设计"></a>
+
+## 现行设计
+
+> 系统现在怎么做，以这里为准；为什么这样定，看下面的历史决策。完整数据字段与顺位契约见[AI 配置数据契约](../2026-11-05-AI配置重整-数据契约.md)。最后对过代码：2026-11-27。
+
+<a id="现行-布局与视角"></a>
+
+### 一、权限与页面结构
+
+- 权限：进入 `/admin/ai-config` 先核对 `manage_system` 权限（`canAccessAdminPath`），未登录跳转 `/login`，无权跳转 `/admin`。
+- 双区块布局（`src/app/(app)/admin/ai-config/ai-config-shell.tsx`）：
+  1. **「功能用哪个模型」**（`BusinessFunctionsPanel`）：列出各已启用 AI 业务及唯一「全局默认」行（`key="default"`），直接展示服务端计算的正常 / 顶班 / 停摆状态；出现停摆或顶班时提供「去修 →」滚动定位到下方对应模型卡；「截图识别」行附带「测速台账」抽屉入口（最近 1000 次耗时汇总 + 最近 100 笔明细）。
+  2. **「模型从哪些渠道来」**（`ComputePoolPanel`）：支持「模型视角」与「渠道视角」对等切换。模型视角展示每个标准模型（`canonical_model_id`）下的渠道排队顺序、可用数、单点提醒及「为此模型找渠道」；渠道视角支持接入新密钥、同步上游真实清单、勾选在供模型、整渠道或单供应测试。
+- 顶部标题由 `buildAiConfigHeadline(bundle.availability.businessSummary)` 动态汇总当前业务保障与需处理渠道数。
+
+<a id="现行-操作与检测"></a>
+
+### 二、唯一状态源与操作守则
+
+- 页面所有状态统一读取 `GET /api/admin/ai-config` 返回的 `bundle.availability`，不在前端依据开关或失败次数重算可用性；密钥在接口层仅返回末四位掩码。
+- 所有写操作统一走 `POST /api/admin/ai-config`（`useAiConfig().runCommand`）；停用或删除会令活跃业务无可用模型时，后端先返回 409 与影响名单（`requiresConfirmation`），经管理员确认后才执行；修改共享地址影响多条渠道时另行触发 `confirm_shared_address` 确认。
+- 批量检测（顶部「检查一遍」与渠道「检测此渠道」）前端采用 120 秒有界刷新；接口中断或超时不自动重跑检测，最终读取失败时常驻显示未同步提示与手动重读入口。
+
+<a id="现行-入口"></a>
+
+### 三、入口、代码与验证
+
+- 入口：`src/app/(app)/admin/ai-config/page.tsx` → `ai-config-shell.tsx` → `GET/POST /api/admin/ai-config`、`POST /api/admin/ai-config/check-dependencies`、`GET /api/admin/ai-config/ocr-logs`。
+- 验证：`npx tsx --test src/app/(app)/admin/ai-config/detection-lifecycle.test.tsx src/app/(app)/admin/ai-config/hooks/use-ai-config.test.ts src/app/api/admin/ai-config/route.test.ts src/app/api/admin/ai-config/ai-config.model-health.behavior.test.ts`。
+
 ## 历史决策
 
 <a id="第1条"></a>

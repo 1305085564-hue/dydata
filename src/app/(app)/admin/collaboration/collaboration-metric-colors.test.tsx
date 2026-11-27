@@ -145,6 +145,7 @@ test("岗位主表（达人/文案/运营）：按 5,000 门槛标好红差绿�
   // 文案表：优条数不上红绿，互动达成/留存达成/互动率受自定义公司标准驱动
   const customStandards: EvaluationStandards = {
     ...DEFAULT_EVALUATION_STANDARDS,
+    // 故意设非默认自定义公司配置门槛 3000（线上默认标色样本下限为 5000），验证自定义 minPlayCount 生效
     minPlayCount: 3000,
     targets: { interactionRate: 5, followerRate: 1 },
   };
