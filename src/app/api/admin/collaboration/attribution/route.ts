@@ -1,4 +1,5 @@
 import { buildAttributionResponse } from "../handlers";
+import { toStringErrorResponse } from "@/lib/errors";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
@@ -27,9 +28,16 @@ export async function buildAttributionRouteResponse(
     return appendObservedMutationResult(response, observation);
   } catch (error) {
     return appendObservedMutationResult(
-      new Response(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "更新岗位归属失败" }), {
+      toStringErrorResponse({
+        code: "INTERNAL_ERROR",
+        route: "/api/admin/collaboration/attribution",
+        operation: "update-attribution",
+        request,
+        requestId: observation?.requestId,
         status: 500,
-        headers: { "content-type": "application/json" },
+        message: "更新岗位归属失败",
+        error,
+        extraFields: { ok: false },
       }),
       observation,
     );

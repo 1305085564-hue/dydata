@@ -32,9 +32,37 @@ test("履约标记通过管理员连接调用，成功返回 RPC 结果", async 
   assert.deepEqual(await response.json(), { ok: true });
 });
 
-test("履约标记 RPC 返回失败或 thrown 时明确 500", async () => {
-  assert.equal((await buildFulfillmentMarkResponse(base, deps({ data: null, error: { message: "db" } }))).status, 500);
-  assert.equal((await buildFulfillmentMarkResponse(base, deps(new Error("db")))).status, 500);
+test("履约标记 RPC 返回失败或 thrown 时明确 500 且不透传原始错误并带 requestId", async () => {
+  const originalError = console.error;
+  const logs: string[] = [];
+  console.error = (...args: unknown[]) => logs.push(args.map(String).join(" "));
+  try {
+    const rpcFail = await buildFulfillmentMarkResponse(
+      base,
+      deps({ data: null, error: { message: 'relation "fulfillment_records" does not exist' } }),
+      "11111111-1111-4111-8111-111111111111",
+    );
+    assert.equal(rpcFail.status, 500);
+    assert.equal(rpcFail.headers.get("x-dydata-request-id"), "11111111-1111-4111-8111-111111111111");
+    const rpcBody = await rpcFail.json();
+    assert.equal(rpcBody.requestId, "11111111-1111-4111-8111-111111111111");
+    assert.match(rpcBody.error, /^标记发布管理状态失败（编号：11111111-1111-4111-8111-111111111111）$/);
+    assert.doesNotMatch(rpcBody.error, /fulfillment_records|relation/);
+
+    const thrown = await buildFulfillmentMarkResponse(
+      base,
+      deps(new Error("ECONNREFUSED 127.0.0.1:5432")),
+      "22222222-2222-4222-8222-222222222222",
+    );
+    assert.equal(thrown.status, 500);
+    const thrownBody = await thrown.json();
+    assert.equal(thrownBody.requestId, "22222222-2222-4222-8222-222222222222");
+    assert.doesNotMatch(thrownBody.error, /ECONNREFUSED|5432/);
+    assert.ok(logs.some((line) => line.includes("11111111-1111-4111-8111-111111111111")));
+    assert.ok(logs.some((line) => line.includes("22222222-2222-4222-8222-222222222222")));
+  } finally {
+    console.error = originalError;
+  }
 });
 
 test("履约标记校验与权限失败不写库", async () => {

@@ -3,6 +3,7 @@ import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildDataAccessScope, resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveVideoTopicLibraryStatuses } from "@/lib/topics/library";
+import { toStringErrorResponse } from "@/lib/errors";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 import { parseTopicLibraryStatusVideoIds } from "./input";
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rawIds = request.nextUrl.searchParams.get("videoIds") ?? "";
-  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId, auth.context?.scope, deps);
+  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId, auth.context?.scope, deps, request);
 }
 
 export async function buildTopicLibraryStatusPostResponse(request: NextRequest, deps: TopicLibraryStatusDeps = defaultTopicLibraryStatusDeps) {
@@ -61,7 +62,14 @@ export async function buildTopicLibraryStatusPostResponse(request: NextRequest, 
       return finish(NextResponse.json({ error: "请求正文不是有效 JSON" }, { status: 400 }));
     }
 
-    const response = await resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope, deps);
+    const response = await resolveStatusesResponse(
+      payload,
+      auth.actor.userId,
+      auth.context?.scope,
+      deps,
+      request,
+      observation.requestId,
+    );
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }
@@ -75,6 +83,8 @@ async function resolveStatusesResponse(
   actorUserId: string,
   resolvedScope?: Awaited<ReturnType<typeof buildDataAccessScope>>,
   deps: TopicLibraryStatusDeps = defaultTopicLibraryStatusDeps,
+  request?: Request,
+  requestId?: string,
 ) {
   const parsed = Array.isArray(input)
     ? parseTopicLibraryStatusVideoIds({ videoIds: input })
@@ -127,7 +137,15 @@ async function resolveStatusesResponse(
     const statuses = await deps.resolveVideoTopicLibraryStatuses(adminSupabase, videoRows);
     return NextResponse.json({ statuses });
   } catch (error) {
-    console.error("[topics-library] status resolve failed", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "加载选题库状态失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/content/topic-library-status",
+      operation: "resolve-topic-library-status",
+      request,
+      requestId,
+      status: 500,
+      message: "加载选题库状态失败",
+      error,
+    });
   }
 }

@@ -97,6 +97,10 @@ test("admin system settings GET 缺少系统配置表时明确失败，不读取
   assert.ok(response);
   assert.equal(response.status, 500);
   assert.deepEqual(readTables, ["system_settings"]);
+  const body = await response.json();
+  assert.ok(typeof body.requestId === "string" && body.requestId.length > 0);
+  assert.match(body.error, /^读取系统配置失败（编号：/);
+  assert.doesNotMatch(body.error, /system_settings|schema cache|PGRST205/);
 });
 
 test("admin system settings POST 写入开关", async () => {
@@ -172,6 +176,10 @@ test("admin system settings POST 缺少系统配置表时明确失败，不写�
   assert.equal(response.status, 500);
   assert.equal(writes.length, 1);
   assert.equal(writes[0]?.table, "system_settings");
+  const body = await response.json();
+  assert.ok(typeof body.requestId === "string" && body.requestId.length > 0);
+  assert.match(body.error, /^更新系统配置失败（编号：/);
+  assert.doesNotMatch(body.error, /system_settings|schema cache|PGRST205/);
 });
 
 test("系统设置 POST 只允许公司所有者，管理员和成员收到真实的 403 响应", async () => {

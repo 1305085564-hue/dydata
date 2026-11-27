@@ -44,7 +44,16 @@ export async function buildContentAnalysisResponse(
   try {
     access = await deps.requireScopedAdminVideo({ videoId, pathname: "/admin/content" });
   } catch (error) {
-    return finish(NextResponse.json({ error: error instanceof Error ? error.message : "加载视频失败" }, { status: 500 }));
+    return finish(toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/content-analysis",
+      operation: "load-scoped-video",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "加载视频失败",
+      error,
+    }));
   }
   if ("error" in access) return finish(NextResponse.json({ error: access.error }, { status: access.status }));
   observation?.mark("read");
@@ -65,7 +74,17 @@ export async function buildContentAnalysisResponse(
         extraFields: { code: error.code },
       }));
     }
-    return finish(NextResponse.json({ error: error instanceof Error ? error.message : "辅助分析失败", code: "CONTENT_ANALYSIS_FAILED" }, { status: 500 }));
+    return finish(toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/content-analysis",
+      operation: "generate-content-analysis",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "辅助分析失败",
+      error,
+      extraFields: { code: "CONTENT_ANALYSIS_FAILED" },
+    }));
   }
 }
 

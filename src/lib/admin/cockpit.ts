@@ -4,11 +4,19 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/lib/admin-auth";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
 import { formatShanghaiDateOnly } from "@/lib/business-time";
+import { toStringErrorResponse } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {
   data: T | null;
   error: { message?: string } | null;
+};
+
+export type UnwrapRpcErrorContext = {
+  route: string;
+  operation: string;
+  request?: Request;
+  requestId?: string | null;
 };
 
 export function parseDateParam(request: NextRequest, key = "date") {
@@ -57,13 +65,36 @@ export function jsonBadRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export function jsonRpcError(message = "后台数据读取失败") {
-  return NextResponse.json({ error: message }, { status: 500 });
+export function jsonRpcError(
+  message = "后台数据读取失败",
+  context?: UnwrapRpcErrorContext,
+  rawError?: unknown,
+) {
+  return toStringErrorResponse({
+    code: "DEPENDENCY_FAILED",
+    route: context?.route ?? "/api/admin",
+    operation: context?.operation ?? "admin-rpc",
+    request: context?.request,
+    requestId: context?.requestId,
+    status: 500,
+    message,
+    error: rawError ?? message,
+  });
 }
 
-export function unwrapRpc<T>(result: RpcResult<T>, fallbackMessage?: string) {
+export function unwrapRpc<T>(
+  result: RpcResult<T>,
+  fallbackMessage?: string,
+  context?: UnwrapRpcErrorContext,
+): { data: T } | { response: NextResponse } {
   if (result.error) {
-    return { response: jsonRpcError(result.error.message || fallbackMessage) };
+    return {
+      response: jsonRpcError(
+        fallbackMessage || "后台数据读取失败",
+        context,
+        result.error,
+      ),
+    };
   }
 
   return { data: result.data as T };

@@ -6,8 +6,14 @@ import {
   loadFeishuWorkspaceUrl,
   validateFeishuWorkspaceUrl,
 } from "@/lib/topics/feishu-workspace";
+import { toStringErrorResponse } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+
+type FeishuUrlRouteDeps = {
+  requireActor?: typeof requireAdminActor;
+  createAdmin?: typeof createAdminClient;
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,9 +79,13 @@ export async function GET() {
   return NextResponse.json({ url });
 }
 
-async function handlePost(request: NextRequest, observation?: MutationObservation) {
+export async function handleTopicsLibraryFeishuUrlPost(
+  request: NextRequest,
+  deps: FeishuUrlRouteDeps = {},
+  observation?: MutationObservation,
+) {
   observation?.mark("auth");
-  const auth = await requireAdminActor({ requiredPermission: "manage_system" });
+  const auth = await (deps.requireActor ?? requireAdminActor)({ requiredPermission: "manage_system" });
   if ("error" in auth) {
     return mutationResponse({ error: auth.error }, auth.status, observation, { businessSucceeded: false });
   }
@@ -95,8 +105,9 @@ async function handlePost(request: NextRequest, observation?: MutationObservatio
   }
 
   const url = validated.ok ? validated.url : null;
+  const adminClient = (deps.createAdmin ?? createAdminClient)();
   observation?.mark("write-request");
-  const { error } = await createAdminClient().from("system_settings").upsert(
+  const { error } = await adminClient.from("system_settings").upsert(
     {
       key: TOPICS_FEISHU_WORKSPACE_KEY,
       value: url,
@@ -107,15 +118,27 @@ async function handlePost(request: NextRequest, observation?: MutationObservatio
     { onConflict: "key" },
   );
   if (error) {
-    return mutationResponse(
-      { error: error.message || "保存飞书地址失败" },
-      500,
-      observation,
-      { businessSucceeded: false },
-    );
+    const fields = mutationFields({ businessSucceeded: false });
+    observation?.setDetail?.({
+      ...fields,
+      permissionChecked: true,
+      businessStatus: null,
+      events: [],
+    });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/topics-library/feishu-url",
+      operation: "save-feishu-workspace-url",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "保存飞书地址失败",
+      error,
+      extraFields: { ...fields, permissionChecked: true, businessStatus: null, events: [] },
+    });
   }
 
-  const { error: auditError } = await createAdminClient().from("audit_logs").insert({
+  const { error: auditError } = await adminClient.from("audit_logs").insert({
     user_id: auth.actor.userId,
     action: "topics_feishu_workspace_url_updated",
     target: TOPICS_FEISHU_WORKSPACE_KEY,
@@ -164,6 +187,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return appendObservedMutationResult(await handlePost(request, observation), observation);
+    return appendObservedMutationResult(await handleTopicsLibraryFeishuUrlPost(request, {}, observation), observation);
   });
 }

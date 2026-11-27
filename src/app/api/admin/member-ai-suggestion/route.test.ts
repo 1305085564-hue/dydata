@@ -231,3 +231,55 @@ test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", asy
   assert.deepEqual(dateRanges[0], { end: "2026-03-17" });
   assert.deepEqual(dateRanges[1], { start: "2026-02-15", end: "2026-03-17" });
 });
+
+test("member-ai-suggestion 上游读取或 AI 抛错时返回脱敏中文 + requestId，不透传原始异常", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const reqId = "11111111-1111-4111-8111-111111111121";
+    const baseDeps = {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "owner" as const,
+          permissions: { use_ai_assist: true },
+          name: "阿禅",
+          dataScope: "team" as const,
+          activeVisibleUserIds: ["owner-1"],
+        },
+      }),
+      createAdminClient: () => buildAdminClient({ id: "member-1", name: "张三", role: "member", team_id: "team-1" }),
+      buildDataAccessScope: async () => ({
+        userId: "owner-1", role: "owner", permissions: { use_ai_assist: true },
+        accessLevel: 4, teamId: null, groupId: null, kind: "team",
+        visibleUserIds: ["member-1"], activeVisibleUserIds: ["member-1"],
+      }) as never,
+      getUserInfo: async () => ({ success: false, error: 'select * from "profiles" failed' }),
+      getAnomalousData: async () => ({ success: true, data: { anomalies: [] } }),
+      callAiJson: async () => { throw new Error("API key sk-secret invalid"); },
+      now: () => new Date("2026-05-14T09:30:00.000Z"),
+    };
+
+    const ctxFail = await buildMemberAiSuggestionResponse({ memberId: "member-1" }, baseDeps, reqId);
+    assert.equal(ctxFail.status, 500);
+    const ctxBody = await ctxFail.json();
+    assert.equal(ctxBody.requestId, reqId);
+    assert.match(ctxBody.error, /^成员上下文读取失败（编号：/);
+    assert.doesNotMatch(ctxBody.error, /profiles|select \*/);
+
+    const aiFail = await buildMemberAiSuggestionResponse({
+      memberId: "member-1",
+    }, {
+      ...baseDeps,
+      getUserInfo: async () => ({ success: true, data: { user: { id: "member-1" }, recentMetrics: [], exemptions: [] } }),
+    }, reqId);
+    assert.equal(aiFail.status, 500);
+    const aiBody = await aiFail.json();
+    assert.equal(aiBody.requestId, reqId);
+    assert.match(aiBody.error, /^AI 建议生成失败（编号：/);
+    assert.doesNotMatch(aiBody.error, /sk-secret|API key/);
+  } finally {
+    console.error = originalError;
+  }
+});

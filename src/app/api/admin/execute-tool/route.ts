@@ -270,7 +270,13 @@ export async function buildExecuteToolResponse(
     });
 
     if (error || !data) {
-      return NextResponse.json({ error: error?.message ?? "写入 admin_actions 失败" }, { status: 500 });
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/execute-tool",
+        operation: "create-pending-action",
+        requestId,
+        error: error ?? "insert admin_actions returned empty row",
+      });
     }
 
     return NextResponse.json(

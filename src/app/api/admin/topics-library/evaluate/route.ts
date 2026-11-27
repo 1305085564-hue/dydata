@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { ensureInternalLibraryEntry } from "@/lib/topics/library";
 import { isUuidLike } from "@/lib/topics/domain";
+import { toStringErrorResponse } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
@@ -133,13 +134,25 @@ export async function handleTopicsLibraryEvaluate(
       },
     );
   } catch (error) {
-    console.error("[topics-library] evaluate failed", error);
-    return mutationResponse(
-      { error: error instanceof Error ? error.message : "评估入库失败" },
-      500,
-      observation,
-      { businessSucceeded: false, events: ["topics_library.evaluate.failed"] },
-    );
+    const fields = mutationFields({ businessSucceeded: false });
+    const events = ["topics_library.evaluate.failed"];
+    observation?.setDetail?.({
+      ...fields,
+      permissionChecked: true,
+      businessStatus: null,
+      events,
+    });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/topics-library/evaluate",
+      operation: "evaluate-topic-library",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "评估入库失败",
+      error,
+      extraFields: { ...fields, permissionChecked: true, businessStatus: null, events },
+    });
   }
 }
 

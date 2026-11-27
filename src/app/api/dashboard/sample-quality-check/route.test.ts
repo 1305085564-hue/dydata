@@ -137,35 +137,43 @@ test("sample-quality-check 返回结构化问题并同步写入告警数据源",
   assert.equal((syncedIssues as Array<{ severity: string }>)[0].severity, "critical");
 });
 
-test("AI 全部渠道失败时，响应体给出可读原因，原始信息留在 detail", async () => {
-  const response = await buildSampleQualityCheckResponse(
-    { reportId: "report-1" },
-    buildDeps({
-      callAiJson: (async () => {
-        throw new Error(
-          '所有 AI 渠道不可用（已尝试 2/5 个渠道，整链上限 30 秒）（最后错误：AI 请求失败: 403 {"error":{"message":"订阅额度不足或未配置订阅: no active subscription"}}）',
-        );
-      }) as never,
-    }),
-  );
+test("AI 全部渠道失败时，响应体给出可读原因与 requestId，原始信息不透传浏览器", async () => {
+  const originalError = console.error;
+  const logs: string[] = [];
+  console.error = (...args: unknown[]) => logs.push(args.map(String).join(" "));
+  try {
+    const reqId = "11111111-1111-4111-8111-111111111122";
+    const response = await buildSampleQualityCheckResponse(
+      { reportId: "report-1" },
+      buildDeps({
+        callAiJson: (async () => {
+          throw new Error(
+            '所有 AI 渠道不可用（已尝试 2/5 个渠道，整链上限 30 秒）（最后错误：AI 请求失败: 403 {"error":{"message":"订阅额度不足或未配置订阅: no active subscription"}}）',
+          );
+        }) as never,
+      }),
+      reqId,
+    );
 
-  assert.equal(response.status, 500);
-  const payload = await response.json();
-  assert.match(payload.error, /额度不足/);
-  assert.doesNotMatch(payload.error, /请求失败|no active subscription/);
-  assert.match(payload.detail, /所有 AI 渠道不可用/);
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get("x-dydata-request-id"), reqId);
+    const payload = await response.json();
+    assert.equal(payload.requestId, reqId);
+    assert.match(payload.error, /额度不足/);
+    assert.doesNotMatch(payload.error, /请求失败|no active subscription/);
+    assert.equal("detail" in payload, false);
+    assert.ok(logs.some((line) => line.includes(reqId)));
+  } finally {
+    console.error = originalError;
+  }
 });
 
-test("describeSampleQualityFailure 覆盖额度、超时、未配置与人话兜底", () => {
+test("describeSampleQualityFailure 覆盖额度、超时、未配置与脱敏人话兜底", () => {
   assert.match(describeSampleQualityFailure('AI 请求失败: 403 {"type":"insufficient_user_quota"}'), /额度不足/);
   assert.match(describeSampleQualityFailure("AI 请求超时（15000ms）"), /超时/);
   assert.match(describeSampleQualityFailure("AI 渠道未配置，请先在后台完成 AI 渠道与功能配置"), /未配置/);
-  assert.equal(describeSampleQualityFailure("该 AI 功能已归档"), "该 AI 功能已归档");
-
-  const longMessage = `未知异常 ${"x".repeat(200)}`;
-  const mapped = describeSampleQualityFailure(longMessage);
-  assert.equal(mapped.length, 81);
-  assert.match(mapped, /…$/);
+  assert.equal(describeSampleQualityFailure("该 AI 功能已归档"), "该 AI 功能已停用，请联系管理员");
+  assert.equal(describeSampleQualityFailure('relation "sample_quality_issues" does not exist'), "样本质量检查失败，请稍后重试");
 });
 
 test("sample-quality-check POST 真 handler：未登录返回明确失败与分层字段", async () => {

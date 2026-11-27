@@ -12,6 +12,7 @@ import {
 import type { MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { emit } from "@/lib/notifications/server";
+import { toStringErrorResponse } from "@/lib/errors";
 
 type MarkDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
@@ -22,7 +23,11 @@ type MarkDeps = {
 
 export const defaultFulfillmentMarkDeps: MarkDeps = { requireAdminServiceClient, requireOwnerOrAdminRole, requireActiveVisibleUsers };
 
-export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDeps = defaultFulfillmentMarkDeps) {
+export async function buildFulfillmentMarkResponse(
+  input: unknown,
+  deps: MarkDeps = defaultFulfillmentMarkDeps,
+  requestId?: string,
+) {
   const payload = parseMarkPayload(input);
   if ("response" in payload) return payload.response;
   const auth = await deps.requireAdminServiceClient();
@@ -39,8 +44,12 @@ export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDep
       p_reason: payload.data.reason,
       p_marker_id: auth.actor.userId,
     });
-    const unwrapped = unwrapRpc<unknown>(result, "标记发布管理状态失败");
-    if ("response" in unwrapped) return unwrapped.response ?? NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
+    const unwrapped = unwrapRpc<unknown>(result, "标记发布管理状态失败", {
+      route: "/api/admin/fulfillment/mark",
+      operation: "mark-fulfillment-status",
+      requestId,
+    });
+    if ("response" in unwrapped) return unwrapped.response;
     if (payload.data.status === "absent") {
       const notification = await (deps.emit ?? emit)({
         recipients: [payload.data.userId],
@@ -66,8 +75,16 @@ export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDep
     return NextResponse.json(
       unwrapped.data ?? { ok: true, ...(payload.data.status === "absent" ? { employeeNotificationStatus: "succeeded" } : {}) },
     );
-  } catch {
-    return NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
+  } catch (error) {
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/mark",
+      operation: "mark-fulfillment-status",
+      requestId,
+      status: 500,
+      message: "标记发布管理状态失败",
+      error,
+    });
   }
 }
 
@@ -77,7 +94,7 @@ async function handlePost(request: Request, observation: MutationObservation) {
   if ("response" in body) return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
 
   observation.mark("auth");
-  const response = await buildFulfillmentMarkResponse(body.data);
+  const response = await buildFulfillmentMarkResponse(body.data, defaultFulfillmentMarkDeps, observation.requestId);
   observation.mark("finalize");
   return response;
 }

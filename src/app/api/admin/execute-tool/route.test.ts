@@ -162,3 +162,43 @@ test("execute-tool 带 confirmation token 时执行待确认动作", async () =>
   const payload = await response.json();
   assert.equal(payload.success, true);
 });
+
+test("execute-tool 写入待确认记录失败时返回脱敏中文 + requestId，不透传表名与库错误", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const response = await buildExecuteToolResponse(
+      { toolName: "kickUser", toolArgs: { userId: "user-1" } },
+      {
+        requireAdminActor: async () =>
+          buildAuth({
+            from() {
+              return {
+                insert() {
+                  return {
+                    select() {
+                      return {
+                        async single() {
+                          return { data: null, error: { message: 'insert into "admin_actions" violates fk' } };
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          }),
+        executeAdminTool: async () => ({ success: true, data: { userId: "user-1" } }),
+        shouldRequireConfirmation: () => true,
+      },
+      "11111111-1111-4111-8111-111111111114",
+    );
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get("x-dydata-request-id"), "11111111-1111-4111-8111-111111111114");
+    const body = await response.json();
+    assert.equal(body.requestId, "11111111-1111-4111-8111-111111111114");
+    assert.doesNotMatch(body.error, /admin_actions|violates fk/);
+  } finally {
+    console.error = originalError;
+  }
+});

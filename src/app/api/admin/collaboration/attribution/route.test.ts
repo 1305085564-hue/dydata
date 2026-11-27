@@ -157,13 +157,22 @@ test("补录接口保留归档成员历史可见，但拒绝继续修改其日�
 });
 
 
-test("attribution 路由 wrapper：handler 抛错时返回失败分层字段", async () => {
-  const response = await buildAttributionRouteResponse(request(), {
-    buildAttributionResponse: async () => { throw new Error("写入失败"); },
-  });
-  assert.equal(response.status, 500);
-  const body = await response.json();
-  assert.equal(body.businessSucceeded, false);
-  assert.equal(body.error, "写入失败");
-  assert.equal(body.auditStatus, "skipped");
+test("attribution 路由 wrapper：handler 抛错时返回脱敏 500、requestId 与失败分层字段", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const response = await buildAttributionRouteResponse(request(), {
+      buildAttributionResponse: async () => { throw new Error('raw db error "daily_reports"'); },
+    });
+    assert.equal(response.status, 500);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.equal(body.businessSucceeded, false);
+    assert.ok(typeof body.requestId === "string" && body.requestId.length > 0);
+    assert.match(body.error, /^更新岗位归属失败（编号：/);
+    assert.doesNotMatch(body.error, /raw db|daily_reports/);
+    assert.equal(body.auditStatus, "skipped");
+  } finally {
+    console.error = originalError;
+  }
 });
