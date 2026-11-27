@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logApiError } from "@/lib/api-logger";
 import { createClient } from "@/lib/supabase/server";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
@@ -180,7 +181,7 @@ export async function buildOcrScreenshotResponse(
     const contentType = request.headers.get("content-type") || "";
     const imagePayload = contentType.includes("multipart/form-data")
       ? await parseMultipartPayload(request)
-      : await parseJsonPayload(request, user.id);
+      : await parseJsonPayload(request, user.id, observation.requestId);
 
     if ("error" in imagePayload) {
       return await finish(
@@ -326,6 +327,7 @@ async function parseMultipartPayload(request: NextRequest): Promise<ImagePayload
 async function parseJsonPayload(
   request: NextRequest,
   userId: string,
+  requestId: string,
 ): Promise<ImagePayloadSuccess | ImagePayloadError> {
   const body = await request.json();
 
@@ -336,7 +338,7 @@ async function parseJsonPayload(
     const reference = validateOcrStorageReference(userId, bucket, path);
     if (!reference.ok) return { error: reference.error };
     const downloadStart = Date.now();
-    const downloaded = await downloadImageFromStorage(reference.bucket, reference.path);
+    const downloaded = await downloadImageFromStorage(reference.bucket, reference.path, requestId);
     const downloadMs = Date.now() - downloadStart;
     if ("error" in downloaded) {
       return { ...downloaded, errorCode: "STORAGE_READ_FAILED", status: 502 };
@@ -403,11 +405,21 @@ async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error:
 async function downloadImageFromStorage(
   bucket: string,
   path: string,
+  requestId: string,
 ): Promise<{ dataUrl: string } | { error: string }> {
   try {
     if (bucket !== "submission-screenshots") return { error: "图片存储位置不受支持" };
     const downloaded = await downloadSubmissionScreenshotBytes(path);
-    if (!downloaded.ok) return { error: downloaded.errors.join("; ") || "无法从存储读取图片" };
+    if (!downloaded.ok) {
+      logApiError({
+        route: "/api/ocr-screenshot",
+        requestId,
+        status: 502,
+        outcome: "failed",
+        detail: { operation: "download-storage-image", code: "STORAGE_READ_FAILED" },
+      }, downloaded.errors.join("; ") || "无法从存储读取图片");
+      return { error: getOcrErrorMessage("STORAGE_READ_FAILED") };
+    }
     const buffer = Buffer.from(downloaded.body);
     if (buffer.length > MAX_FILE_SIZE) {
       return { error: "图片不能超过 8MB" };
@@ -423,8 +435,15 @@ async function downloadImageFromStorage(
       dataUrl: `data:${detectedMimeType};base64,${buffer.toString("base64")}`,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "读取存储图片失败";
-    return { error: message };
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    logApiError({
+      route: "/api/ocr-screenshot",
+      requestId,
+      status: 502,
+      outcome: "failed",
+      detail: { operation: "download-storage-image", code: "STORAGE_READ_FAILED" },
+    }, rawMessage);
+    return { error: getOcrErrorMessage("STORAGE_READ_FAILED") };
   }
 }
 

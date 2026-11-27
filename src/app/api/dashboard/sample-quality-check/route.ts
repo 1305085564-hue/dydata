@@ -4,6 +4,7 @@ import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-sc
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { callAiJson } from "@/lib/ai/client";
+import { toStringErrorResponse } from "@/lib/errors";
 import { parseSampleQualityResult, type SampleQualityIssue } from "@/lib/sample-quality";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
@@ -450,54 +451,34 @@ function canAccessReport(scope: DataAccessScope | null, report: DailyReportRow, 
   return scope.visibleUserIds.includes(report.user_id);
 }
 
-/**
- * 把 AI 调用失败的原始信息翻成用户能看懂的一句话。
- * 原始信息只放进响应体的 detail 字段，供排查用，不直接展示给用户。
- */
+/** 把 AI 调用失败的原始信息翻成用户能看懂的一句话，原始信息只写服务端日志。 */
 export function describeSampleQualityFailure(rawMessage: string): string {
   const message = rawMessage.replace(/\s+/g, " ").trim();
-
   if (/insufficient_user_quota|insufficient_quota|insufficient_balance|额度|余额|欠费|no active subscription|billing/i.test(message)) {
     return "AI 服务额度不足，请联系管理员补充额度后重试";
   }
-  if (/超时|timeout|aborted|abort/i.test(message)) {
-    return "AI 响应超时，请稍后重试";
-  }
-  if (/未配置|无可用渠道|未注册的 AI 功能/i.test(message)) {
-    return "AI 渠道未配置，请联系管理员";
-  }
-  if (/已归档|已禁用/.test(message)) {
-    return message;
-  }
-  return message.length > 80 ? `${message.slice(0, 80)}…` : message;
+  if (/超时|timeout|aborted|abort/i.test(message)) return "AI 响应超时，请稍后重试";
+  if (/未配置|无可用渠道|未注册的 AI 功能/i.test(message)) return "AI 渠道未配置，请联系管理员";
+  if (/已归档|已禁用/.test(message)) return "该 AI 功能已停用，请联系管理员";
+  return "样本质量检查失败，请稍后重试";
 }
 
 export async function buildSampleQualityCheckResponse(
   input: { reportId: string },
   deps: RouteDeps = defaultSampleQualityDeps,
+  requestId?: string,
 ) {
   const supabase = await deps.createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const reportId = toTrimmedString(input.reportId);
-  if (!reportId) {
-    return NextResponse.json({ error: "缺少 reportId" }, { status: 400 });
-  }
+  if (!reportId) return NextResponse.json({ error: "缺少 reportId" }, { status: 400 });
 
   const adminSupabase = deps.createAdminClient();
   const scope = await deps.buildDataAccessScope(adminSupabase, user.id);
   const context = await deps.loadContext(adminSupabase, reportId);
-
-  if (!context) {
-    return NextResponse.json({ error: "日报不存在" }, { status: 404 });
-  }
-
+  if (!context) return NextResponse.json({ error: "日报不存在" }, { status: 404 });
   if (!canAccessReport(scope, context.report, user.id)) {
     return NextResponse.json({ error: "无权查看这条日报" }, { status: 403 });
   }
@@ -514,9 +495,7 @@ export async function buildSampleQualityCheckResponse(
     });
 
     const parsed = parseSampleQualityResult(aiResult.content, reportId, checkedAt);
-    if (!parsed) {
-      return NextResponse.json({ error: "AI 返回结构解析失败" }, { status: 500 });
-    }
+    if (!parsed) return NextResponse.json({ error: "AI 返回结构解析失败" }, { status: 500 });
 
     await deps.syncIssues({
       adminSupabase,
@@ -528,24 +507,29 @@ export async function buildSampleQualityCheckResponse(
 
     return NextResponse.json(parsed);
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "样本质量检查失败";
-    return NextResponse.json(
-      { error: describeSampleQualityFailure(detail), detail },
-      { status: 500 },
-    );
+    const rawDetail = error instanceof Error ? error.message : "样本质量检查失败";
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/dashboard/sample-quality-check",
+      operation: "sample-quality-check",
+      requestId,
+      status: 500,
+      message: describeSampleQualityFailure(rawDetail),
+      error,
+    });
   }
 }
 
 export async function POST(request: NextRequest) {
   return observeMutationRequest("/api/dashboard/sample-quality-check", request, async (observation) => {
     observation.mark("validate"); let body: Record<string, unknown>;
-    try {
-      body = toObject(await request.json());
-    } catch {
+    try { body = toObject(await request.json()); } catch {
       return appendObservedMutationResult(NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }), observation);
     }
-
     observation.mark("auth");
-    return appendObservedMutationResult(await buildSampleQualityCheckResponse({ reportId: toTrimmedString(body.reportId) }, defaultSampleQualityDeps), observation);
+    return appendObservedMutationResult(
+      await buildSampleQualityCheckResponse({ reportId: toTrimmedString(body.reportId) }, defaultSampleQualityDeps, observation.requestId),
+      observation,
+    );
   });
 }

@@ -7,6 +7,7 @@ import { callAiJson, extractJsonString } from "@/lib/ai/client";
 import { resolveActorCompanyRole, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/business-time";
+import { toStringErrorResponse } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
@@ -214,6 +215,7 @@ async function loadMemberProfile(memberId: string, deps: RouteDeps) {
 export async function buildMemberAiSuggestionResponse(
   input: { memberId: string },
   deps: RouteDeps = defaultMemberAiSuggestionDeps,
+  requestId?: string,
 ) {
   const auth = await deps.requireAdminActor({ requiredPermission: "use_ai_assist" });
   if (isAuthError(auth)) {
@@ -271,7 +273,15 @@ export async function buildMemberAiSuggestionResponse(
   const userInfoResult = await deps.getUserInfo({ userId: memberId }, undefined, memberToolContext);
   const userInfo = toSafeData(userInfoResult);
   if (!userInfo) {
-    return NextResponse.json({ error: userInfoResult.error ?? "成员上下文读取失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/member-ai-suggestion",
+      operation: "load-member-context",
+      requestId,
+      status: 500,
+      message: "成员上下文读取失败",
+      error: userInfoResult.error ?? "empty member context",
+    });
   }
 
   const today = formatShanghaiDateOnly(deps.now());
@@ -300,13 +310,28 @@ export async function buildMemberAiSuggestionResponse(
 
     const payload = parseMemberSuggestion(aiResult.content, generatedAt);
     if (!payload) {
-      return NextResponse.json({ error: "AI 返回结构解析失败" }, { status: 500 });
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/member-ai-suggestion",
+        operation: "parse-member-ai-suggestion",
+        requestId,
+        status: 500,
+        message: "AI 返回结构解析失败",
+        error: "invalid ai json payload",
+      });
     }
 
     return NextResponse.json(payload);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "AI 建议生成失败";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/member-ai-suggestion",
+      operation: "generate-member-ai-suggestion",
+      requestId,
+      status: 500,
+      message: "AI 建议生成失败",
+      error,
+    });
   }
 }
 
@@ -327,7 +352,7 @@ export async function POST(request: NextRequest) {
     observation.mark("auth");
     const response = await buildMemberAiSuggestionResponse({
       memberId: toTrimmedString(body.memberId),
-    }, defaultMemberAiSuggestionDeps);
+    }, defaultMemberAiSuggestionDeps, observation.requestId);
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

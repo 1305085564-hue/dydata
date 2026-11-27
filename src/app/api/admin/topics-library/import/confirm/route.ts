@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveRequestId } from "@/lib/api-logger";
+import { toStringErrorResponse } from "@/lib/errors";
 import {
   executeTopicImport,
   parseMetricValue,
@@ -10,6 +11,12 @@ import {
 } from "@/lib/topics/import";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+
+type ImportConfirmRouteDeps = {
+  requireActor?: typeof requireAdminActor;
+  createAdmin?: typeof createAdminClient;
+  executeImport?: typeof executeTopicImport;
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,9 +85,15 @@ function mutationResponse(
   );
 }
 
-async function handleImportConfirm(request: NextRequest, observation?: MutationObservation) {
+export async function handleTopicsLibraryImportConfirm(
+  request: NextRequest,
+  deps: ImportConfirmRouteDeps = {},
+  observation?: MutationObservation,
+) {
   observation?.mark("auth");
-  const auth = await requireAdminActor({ requiredPermission: "review_content" });
+  const auth = deps.requireActor
+    ? await deps.requireActor({ requiredPermission: "review_content" })
+    : await requireAdminActor({ requiredPermission: "review_content" });
   if ("error" in auth) {
     return mutationResponse({ error: auth.error }, auth.status, observation, { businessSucceeded: false });
   }
@@ -145,7 +158,8 @@ async function handleImportConfirm(request: NextRequest, observation?: MutationO
 
   try {
     observation?.mark("write-request");
-    const result = await executeTopicImport(createAdminClient(), {
+    const adminClient = deps.createAdmin ? deps.createAdmin() : createAdminClient();
+    const result = await (deps.executeImport ?? executeTopicImport)(adminClient, {
       rows,
       adminId: auth.actor.userId,
       requestId: observation?.requestId ?? resolveRequestId(request),
@@ -170,13 +184,25 @@ async function handleImportConfirm(request: NextRequest, observation?: MutationO
       },
     );
   } catch (error) {
-    console.error("[topics-library] import confirm failed", error);
-    return mutationResponse(
-      { error: error instanceof Error ? error.message : "导入执行失败" },
-      500,
-      observation,
-      { businessSucceeded: false, events: ["topics_library.import.confirm.failed"] },
-    );
+    const fields = mutationFields({ businessSucceeded: false });
+    const events = ["topics_library.import.confirm.failed"];
+    observation?.setDetail?.({
+      ...fields,
+      permissionChecked: true,
+      businessStatus: null,
+      events,
+    });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/topics-library/import/confirm",
+      operation: "import-topics-confirm",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "导入执行失败",
+      error,
+      extraFields: { ...fields, permissionChecked: true, businessStatus: null, events },
+    });
   }
 }
 
@@ -191,6 +217,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return appendObservedMutationResult(await handleImportConfirm(request, observation), observation);
+    return appendObservedMutationResult(await handleTopicsLibraryImportConfirm(request, {}, observation), observation);
   });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toStringErrorResponse } from "@/lib/errors";
 import {
   buildImportSummary,
   buildParsedImportRows,
@@ -10,6 +11,12 @@ import {
 } from "@/lib/topics/import";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+
+type ImportParseRouteDeps = {
+  requireActor?: typeof requireAdminActor;
+  createAdmin?: typeof createAdminClient;
+  loadTopics?: typeof loadTopicNameMap;
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,9 +73,15 @@ function mutationResponse(
   );
 }
 
-async function handleImportParse(request: NextRequest, observation?: MutationObservation) {
+export async function handleTopicsLibraryImportParse(
+  request: NextRequest,
+  deps: ImportParseRouteDeps = {},
+  observation?: MutationObservation,
+) {
   observation?.mark("auth");
-  const auth = await requireAdminActor({ requiredPermission: "review_content" });
+  const auth = deps.requireActor
+    ? await deps.requireActor({ requiredPermission: "review_content" })
+    : await requireAdminActor({ requiredPermission: "review_content" });
   if ("error" in auth) {
     return mutationResponse({ error: auth.error }, auth.status, observation, { businessSucceeded: false });
   }
@@ -103,7 +116,8 @@ async function handleImportParse(request: NextRequest, observation?: MutationObs
   }
 
   try {
-    const topicNameMap = await loadTopicNameMap(createAdminClient());
+    const adminClient = deps.createAdmin ? deps.createAdmin() : createAdminClient();
+    const topicNameMap = await (deps.loadTopics ?? loadTopicNameMap)(adminClient);
     const rows = buildParsedImportRows(parsed.rows, topicNameMap);
     observation?.mark("finalize");
     return mutationResponse(
@@ -121,13 +135,25 @@ async function handleImportParse(request: NextRequest, observation?: MutationObs
       },
     );
   } catch (error) {
-    console.error("[topics-library] import parse failed", error);
-    return mutationResponse(
-      { error: error instanceof Error ? error.message : "解析文件失败" },
-      500,
-      observation,
-      { businessSucceeded: false, events: ["topics_library.import.parse.failed"] },
-    );
+    const fields = mutationFields({ businessSucceeded: false });
+    const events = ["topics_library.import.parse.failed"];
+    observation?.setDetail?.({
+      ...fields,
+      permissionChecked: true,
+      businessStatus: null,
+      events,
+    });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/topics-library/import/parse",
+      operation: "import-topics-parse",
+      request,
+      requestId: observation?.requestId,
+      status: 500,
+      message: "解析文件失败",
+      error,
+      extraFields: { ...fields, permissionChecked: true, businessStatus: null, events },
+    });
   }
 }
 
@@ -142,6 +168,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return appendObservedMutationResult(await handleImportParse(request, observation), observation);
+    return appendObservedMutationResult(await handleTopicsLibraryImportParse(request, {}, observation), observation);
   });
 }

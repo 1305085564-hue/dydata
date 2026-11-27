@@ -180,18 +180,26 @@ test("member 无 manage_members 时认证被拒，不触发写入", async () => 
   assert.equal(writeInput, null);
 });
 
-test("文案认证路由 wrapper：依赖抛错返回 500 与分层字段", async () => {
-  const response = await buildWriterCertificationRouteResponse(
-    new Request("https://dydata.cc/api/admin/collaboration/writer-certification", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ userId: targetId, certified: true }),
-    }),
-    { buildWriterCertificationResponse: async () => { throw new Error("保存失败"); } },
-  );
-  assert.equal(response.status, 500);
-  const body = await response.json();
-  assert.equal(body.businessSucceeded, false);
-  assert.equal(body.error, "保存失败");
-  assert.equal(body.todoStatus, "skipped");
+test("文案认证路由 wrapper：依赖抛错返回脱敏 500、requestId 与分层字段", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const response = await buildWriterCertificationRouteResponse(
+      new Request("https://dydata.cc/api/admin/collaboration/writer-certification", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId: targetId, certified: true }),
+      }),
+      { buildWriterCertificationResponse: async () => { throw new Error('raw sql error "profiles"'); } },
+    );
+    assert.equal(response.status, 500);
+    const body = await response.json();
+    assert.equal(body.businessSucceeded, false);
+    assert.ok(typeof body.requestId === "string" && body.requestId.length > 0);
+    assert.match(body.error, /^保存文案认证失败（编号：/);
+    assert.doesNotMatch(body.error, /raw sql|profiles/);
+    assert.equal(body.todoStatus, "skipped");
+  } finally {
+    console.error = originalError;
+  }
 });

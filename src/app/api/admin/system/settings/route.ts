@@ -5,7 +5,7 @@ import {
   requireAdminServiceClient,
   requireSystemPermission,
 } from "../../fulfillment/_shared";
-import { publicMessageForCode } from "@/lib/errors";
+import { toStringErrorResponse } from "@/lib/errors";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
@@ -52,7 +52,10 @@ export const defaultSystemSettingsDeps: SettingsRouteDeps = {
   requireSystemPermission,
 };
 
-export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultSystemSettingsDeps) {
+export async function buildAdminSystemSettingsGetResponse(
+  deps: SettingsRouteDeps = defaultSystemSettingsDeps,
+  request?: Request,
+) {
   const auth = await deps.requireAdminServiceClient();
   const forbidden = deps.requireSystemPermission(auth);
   if (forbidden) return forbidden;
@@ -65,7 +68,15 @@ export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDep
     .maybeSingle();
 
   if (result.error) {
-    return NextResponse.json({ error: result.error.message || "读取系统配置失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/system/settings",
+      operation: "read-system-settings",
+      request,
+      status: 500,
+      message: "读取系统配置失败",
+      error: result.error,
+    });
   }
 
   return NextResponse.json({
@@ -76,6 +87,7 @@ export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDep
 export async function buildAdminSystemSettingsPostResponse(
   request: Request,
   deps: SettingsRouteDeps = defaultSystemSettingsDeps,
+  requestId?: string,
 ) {
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
@@ -100,7 +112,16 @@ export async function buildAdminSystemSettingsPostResponse(
   );
 
   if (result.error) {
-    return NextResponse.json({ error: result.error.message || "更新系统配置失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/system/settings",
+      operation: "update-system-settings",
+      request,
+      requestId,
+      status: 500,
+      message: "更新系统配置失败",
+      error: result.error,
+    });
   }
 
   return NextResponse.json({
@@ -109,16 +130,23 @@ export async function buildAdminSystemSettingsPostResponse(
   });
 }
 
-export async function GET() {
-  return buildAdminSystemSettingsGetResponse();
+export async function GET(request?: Request) {
+  return buildAdminSystemSettingsGetResponse(defaultSystemSettingsDeps, request);
 }
 
 export async function POST(request: Request) {
   return observeMutation("/api/admin/system/settings", async (observation) => {
     observation.mark("validate");
     observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
-    const response = await buildAdminSystemSettingsPostResponse(request, defaultSystemSettingsDeps)
-      ?? NextResponse.json({ error: publicMessageForCode("INTERNAL_ERROR") }, { status: 500 });
+    const response = await buildAdminSystemSettingsPostResponse(request, defaultSystemSettingsDeps, observation.requestId)
+      ?? toStringErrorResponse({
+        code: "INTERNAL_ERROR",
+        route: "/api/admin/system/settings",
+        operation: "update-system-settings",
+        request,
+        requestId: observation.requestId,
+        error: "empty response from buildAdminSystemSettingsPostResponse",
+      });
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

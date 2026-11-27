@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildWriterCertificationResponse } from "./route-core";
+import { toStringErrorResponse } from "@/lib/errors";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
@@ -36,9 +37,15 @@ export async function buildWriterCertificationRouteResponse(
     return appendObservedMutationResult(await deps.buildWriterCertificationResponse(body), observation);
   } catch (error) {
     return appendObservedMutationResult(
-      new Response(JSON.stringify({ error: error instanceof Error ? error.message : "保存文案认证失败" }), {
+      toStringErrorResponse({
+        code: "INTERNAL_ERROR",
+        route: "/api/admin/collaboration/writer-certification",
+        operation: "save-writer-certification",
+        request,
+        requestId: observation?.requestId,
         status: 500,
-        headers: { "content-type": "application/json" },
+        message: "保存文案认证失败",
+        error,
       }),
       observation,
     );

@@ -126,7 +126,10 @@ test("topic-library-status 失败路径：无效 JSON、权限范围为空、查
       } as never,
     );
     assert.equal(queryFailed.status, 500);
-    assert.equal((await queryFailed.json()).error, "db down");
+    const queryFailedBody = await queryFailed.json();
+    assert.ok(typeof queryFailedBody.requestId === "string" && queryFailedBody.requestId.length > 0);
+    assert.match(queryFailedBody.error, /^加载选题库状态失败（编号：/);
+    assert.doesNotMatch(queryFailedBody.error, /db down/);
   } finally {
     console.error = originalError;
   }
