@@ -416,6 +416,7 @@ export function ContentPageClient({
             canSwitchPerspective={canSwitchPerspective}
             canManageVideos={permissionInfo.permissions.manage_videos === true}
             totalVideosCount={data.summary.totalVideos}
+            unfilteredTotalVideosCount={data.summary.unfilteredTotalVideos}
             totalPages={data.summary.totalPages}
             serverPage={data.summary.page}
             serverPageSize={data.summary.pageSize}

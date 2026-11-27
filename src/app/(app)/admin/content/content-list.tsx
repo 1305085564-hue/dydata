@@ -2,13 +2,17 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import { useContentListState } from "@/lib/content/domain/content-list-state";
 import { useContentListData } from "@/lib/content/data/content-list";
 import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
+import {
+  hasNarrowingContentFilters,
+  sumAvailableCountsForWindow,
+} from "@/lib/content/domain/content-count-summary";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
+import { ContentListFooter } from "./content-list-footer";
 import { resolveEffectiveDates, writeContentListSort } from "@/lib/content/domain/content-list-filters";
 import { buildContentPageUrl } from "./content-video-navigation";
 import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
@@ -118,23 +122,37 @@ export const ContentList = memo(function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
-  // 页头：日期（本身是日期选择器）+ 篇数。篇数是服务端按当前条件数出的总数。
+  // 页头与底栏计数：篇数以服务端按当前条件数出的总数为准；筛选时同时呈现未筛选总基数。
   const view = props.view ?? "all";
   const matchedCount = props.totalVideosCount ?? visibleRows.length;
-  const hasActiveFilters = state.hasActiveFilters;
-  const dayTotal = useMemo(
-    () => (!isRangeMode && currentDate ? availableCounts.find((item) => item.d === currentDate)?.c ?? null : null),
-    [availableCounts, currentDate, isRangeMode],
+  const hasNarrowingFilters = useMemo(
+    () => hasNarrowingContentFilters(state.filters),
+    [state.filters],
   );
-  const headlineSuffix = buildContentHeadlineSuffix({ view, matchedCount, dayTotal, hasActiveFilters, isRange: isRangeMode });
+  const fallbackWindowTotal = useMemo(() => {
+    const startDate = isRangeMode ? effectiveStartDate : currentDate;
+    const endDate = isRangeMode ? effectiveEndDate : currentDate;
+    if (!startDate && !endDate) return null;
+    return sumAvailableCountsForWindow(availableCounts, { startDate, endDate });
+  }, [availableCounts, currentDate, effectiveEndDate, effectiveStartDate, isRangeMode]);
+  const unfilteredTotal = typeof props.unfilteredTotalVideosCount === "number"
+    ? props.unfilteredTotalVideosCount
+    : fallbackWindowTotal;
+  const headlineSuffix = buildContentHeadlineSuffix({
+    view,
+    matchedCount,
+    dayTotal: unfilteredTotal,
+    hasActiveFilters: hasNarrowingFilters,
+    isRange: isRangeMode,
+  });
   const fallbackHeadline = buildContentHeadline({
     view,
     currentDate,
     rangeStart: isRangeMode ? effectiveStartDate : undefined,
     rangeEnd: isRangeMode ? effectiveEndDate : undefined,
     matchedCount,
-    dayTotal,
-    hasActiveFilters,
+    dayTotal: unfilteredTotal,
+    hasActiveFilters: hasNarrowingFilters,
   });
 
   // 分段计数：在「全部」下、整批作品都在手上时数一次并记住；切到「优」等分段后，
@@ -209,10 +227,18 @@ export const ContentList = memo(function ContentList(props: ContentListProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 页头即答案（效率美学 §2.1）：日期本身就是日期选择器，后接篇数；手机同样显示 */}
+      {/* 手机与平板（<1024px）顶部保留日期翻页器原位；桌面端（≥1024px）挪到底栏，释放首屏一行垂直空间 */}
+      {view === "all" && (
+        <h1 className="sr-only hidden lg:block">{fallbackHeadline}</h1>
+      )}
       <h1
         aria-live="polite"
-        className="font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
+        data-top-date-pagination={view === "all" ? "mobile-only" : undefined}
+        className={
+          view === "all"
+            ? "lg:hidden font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
+            : "font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
+        }
       >
         {view === "all" && currentDate && availableDates.length > 0 ? (
           <DatePagination
@@ -259,17 +285,29 @@ export const ContentList = memo(function ContentList(props: ContentListProps) {
         evaluationStandards={props.evaluationStandards}
       />
 
-      {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
-      {!isSingleDay && processedRows.length > 0 && (
-        <TablePagination
-          currentPage={safeCurrentPage}
-          pageSize={state.pageSize}
-          totalCount={props.totalVideosCount ?? processedRows.length}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          pageSizeOptions={[50, 100, 500]}
-        />
-      )}
+      <ContentListFooter
+        view={view}
+        isSingleDay={isSingleDay}
+        matchedCount={matchedCount}
+        unfilteredTotal={unfilteredTotal}
+        hasNarrowingFilters={hasNarrowingFilters}
+        currentDate={currentDate}
+        availableDates={availableDates}
+        availableCounts={availableCounts}
+        rangeStart={isRangeMode ? effectiveStartDate : undefined}
+        rangeEnd={isRangeMode ? effectiveEndDate : undefined}
+        isLoading={props.isViewLoading}
+        timeRange={state.filters.timeRange}
+        onDateChange={handleDateChange}
+        onShiftRange={handleShiftRange}
+        onTimeRangeChange={state.handleTimeRangeChange}
+        onRangeChange={handleRangeChange}
+        currentPage={safeCurrentPage}
+        pageSize={state.pageSize}
+        pageSizeOptions={[50, 100, 500]}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   );
 });

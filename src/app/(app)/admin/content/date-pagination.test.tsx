@@ -88,3 +88,20 @@ test("MonthCalendar 渲染起止区间与快捷操作按钮", () => {
   // 区间模式不得再出现「单日选中」样式，避免区间外多点亮一天
   assert.doesNotMatch(html, /bg-status-info\/\[0\.12\]/);
 });
+
+test("底栏入口传入 popoverSide=top 时支持日历弹层向上展开且默认保持向下兼容", () => {
+  const upwardHtml = renderToStaticMarkup(
+    <DatePagination
+      currentDate="2026-10-20"
+      availableDates={["2026-10-20", "2026-10-19"]}
+      popoverSide="top"
+      popoverAlign="end"
+      showCountInLabel={false}
+      onDateChange={() => {}}
+    />,
+  );
+  assert.match(upwardHtml, /aria-label="前一天"/);
+  assert.match(upwardHtml, /aria-label="后一天"/);
+  assert.match(upwardHtml, /10月20日/);
+  assert.doesNotMatch(upwardHtml, /· \d+ 条/);
+});

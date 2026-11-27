@@ -49,6 +49,10 @@ interface DatePaginationProps {
   variant?: "toolbar" | "headline";
   /** headline 模式下紧跟日期的答案文字（如「 · 23 篇」），箭头排在它后面 */
   suffix?: React.ReactNode;
+  /** 日历弹层展开方向：顶部入口默认向下，底栏入口改为向上避免被屏幕底边裁切 */
+  popoverSide?: "top" | "bottom";
+  /** 日历弹层对齐方式 */
+  popoverAlign?: "start" | "center" | "end";
 }
 
 function toDateString(year: number, month: number, day: number): string {
@@ -87,6 +91,8 @@ export function DatePagination({
   showCountInLabel = true,
   variant = "toolbar",
   suffix,
+  popoverSide = "bottom",
+  popoverAlign = "start",
 }: DatePaginationProps) {
   const isRange = Boolean(rangeStart && rangeEnd && rangeStart !== rangeEnd);
   const [open, setOpen] = useState(defaultOpen);
@@ -209,7 +215,7 @@ export function DatePagination({
             <span>{loadingLabel}</span>
           </PopoverTrigger>
         )}
-        <PopoverContent align="start" className={CALENDAR_CARD_CLASS}>
+        <PopoverContent side={popoverSide} align={popoverAlign} data-popover-side={popoverSide} className={CALENDAR_CARD_CLASS}>
           <MonthCalendar
             today={today}
             viewMonth={{ year, month: month + 1 }}
