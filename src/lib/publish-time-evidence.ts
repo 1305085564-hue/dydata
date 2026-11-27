@@ -16,15 +16,23 @@ function sign(body: string, key: string) {
   return createHmac("sha256", key).update("publish-time-v1." + body).digest("base64url");
 }
 
+/** 表单时间选择器精确到分钟，验签与签发统一按分钟对齐，避免秒数截断误判。 */
+function normalizePublishMinuteIso(raw: string | null): string | null {
+  const date = parseBusinessDateTime(raw);
+  if (!date) return null;
+  const minuteMs = Math.floor(date.getTime() / 60_000) * 60_000;
+  return new Date(minuteMs).toISOString();
+}
+
 export function createPublishTimeEvidence(
   input: { userId: string; path: string; publishedAt: string },
   env: EvidenceEnv = process.env,
   now = Date.now(),
 ): string | null {
   const key = secret(env);
-  const date = parseBusinessDateTime(input.publishedAt);
-  if (!key || !date) return null;
-  const evidence: Evidence = { ...input, publishedAt: date.toISOString(), expiresAt: now + 7 * 86400_000 };
+  const publishedAt = normalizePublishMinuteIso(input.publishedAt);
+  if (!key || !publishedAt) return null;
+  const evidence: Evidence = { ...input, publishedAt, expiresAt: now + 7 * 86400_000 };
   const body = Buffer.from(JSON.stringify(evidence)).toString("base64url");
   return body + "." + sign(body, key);
 }
@@ -44,9 +52,10 @@ export function verifyPublishTimeEvidence(
   if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return false;
   try {
     const evidence = JSON.parse(Buffer.from(body, "base64url").toString()) as Evidence;
-    const date = parseBusinessDateTime(input.publishedAt);
+    const expectedMinute = normalizePublishMinuteIso(evidence.publishedAt);
+    const actualMinute = normalizePublishMinuteIso(input.publishedAt);
     return evidence.userId === input.userId && evidence.path === input.path
-      && evidence.publishedAt === date?.toISOString()
+      && expectedMinute !== null && expectedMinute === actualMinute
       && Number.isFinite(evidence.expiresAt) && evidence.expiresAt > now;
   } catch {
     return false;

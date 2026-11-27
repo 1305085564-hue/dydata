@@ -406,3 +406,47 @@ test("识别凭据对应截图读取失败时保守进入核查，提交不假�
     assert.equal(result.ok && result.postReviewTrigger?.reason, "manual_published_at");
   }
 });
+
+test("数据图 screenshot_1 携带有效发布时间凭据且按分钟对齐时同样正常放行", async () => {
+  const ocrPublishedAt = new Date(Math.floor((Date.now() - 2 * 3600_000) / 60_000) * 60_000 + 42_000).toISOString();
+  const submittedMinuteIso = new Date(Math.floor(Date.parse(ocrPublishedAt) / 60_000) * 60_000).toISOString();
+  const s1Bytes = Buffer.from("data-screenshot-bytes");
+  const normalized = makeNormalized({
+    published_at: submittedMinuteIso,
+    published_at_source: "ocr",
+    assets: [
+      {
+        role: "screenshot_1",
+        url: `/api/submission-screenshots/file?path=${USER_ID}/s1.png`,
+        confirmed: true,
+        confidence_score: 0.99,
+        recognized_fields: {
+          publish_time_evidence: createPublishTimeEvidence({
+            userId: USER_ID,
+            path: publishImageDigest(s1Bytes),
+            publishedAt: ocrPublishedAt,
+          }),
+        },
+      },
+      {
+        role: "screenshot_2",
+        url: `/api/submission-screenshots/file?path=${USER_ID}/s2.png`,
+        confirmed: true,
+        confidence_score: 0.99,
+        recognized_fields: null,
+      },
+    ],
+  });
+  const result = await evaluateSubmissionDeadlineGuard({
+    downloadScreenshot: async (path) => ({
+      ok: true,
+      body: path.endsWith("s1.png") ? s1Bytes : Buffer.from("other"),
+      contentType: "image/png",
+    }) as never,
+    supabase: fakeAppealSupabase(),
+    userId: USER_ID,
+    normalized,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.ok && result.postReviewTrigger, null);
+});

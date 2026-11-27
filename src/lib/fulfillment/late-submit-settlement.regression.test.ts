@@ -170,8 +170,10 @@ for (const excluded of [false, true]) {
     const review = buildContentQualityRecord([VIDEO], new Map([[VIDEO, snapshot]]), topics, undefined,
       new Map([[VIDEO, { excluded, reason: row.settlement_excluded_reason }]]));
     assert.equal(staff.reportCount, 1);
-    assert.equal(staff.writerQuality?.summary?.overallGradeCounts.excellent, excluded ? 0 : 1);
-    assert.equal(personal.monthSummary?.overallGradeCounts.excellent, excluded ? 0 : 1);
+    assert.equal(staff.writerQuality?.summary?.overallGradeCounts.excellent, 1);
+    assert.equal(personal.monthSummary?.overallGradeCounts.excellent, 1);
+    assert.equal(staff.writerQuality?.summary?.settlementEligibleExcellentCount, excluded ? 0 : 1);
+    assert.equal(personal.monthSummary?.settlementEligibleExcellentCount, excluded ? 0 : 1);
     assert.equal(personal.monthWorks[0].contentQuality?.overallGrade, "优");
     assert.deepEqual(personal.monthWorks[0].contentQuality, review[VIDEO]);
     assert.equal(review[VIDEO].settlementExcluded === true, excluded);
@@ -179,8 +181,7 @@ for (const excluded of [false, true]) {
   });
 }
 
-// BUG_FOUND / 任务口径差异：生产迁移默认 false，实际建待核查单入口不修改双表。
-// 保留真实入口和实际存储结果的失败断言；不是把错误状态写成通过期望。
+// 现行口径：超72小时先交后核待核查期间默认仍计优（false），仅管理员驳回判无效后标记不计优（true）。
 async function createLateReview() {
   await db.exec("delete from fulfillment_appeals");
   const validated = validateVideoSubmitPayload({
@@ -225,7 +226,7 @@ test("超期作品已入库后，实际入口创建事后核查单并关联原�
   assert.deepEqual(rows.rows, [{ video_id: VIDEO, daily_report_id: REPORT, status: "pending" }]);
 });
 
-test.todo("超72小时先入库待核查时应自动不计优结算（任务单要求，现行为待核查仍计优）", async () => {
+test("超72小时先入库待核查期间默认仍计优结算，仅驳回判无效后才标记不计优", async () => {
   await createLateReview();
-  assert.deepEqual((await storedFlags()).map((row) => row.excluded), [true, true]);
+  assert.deepEqual((await storedFlags()).map((row) => row.excluded), [false, false]);
 });

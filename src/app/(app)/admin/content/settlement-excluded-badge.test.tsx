@@ -145,6 +145,7 @@ test("协作管理文案「优条数」列在存在排除优作品时渲染有�
         ratedCount: number;
         overallGradeCounts: { excellent: number; good: number; average: number; poor: number };
         excludedExcellentCount?: number;
+        settlementEligibleExcellentCount?: number;
       };
     };
   }>((row) => row.writerQuality as never);
@@ -154,8 +155,9 @@ test("协作管理文案「优条数」列在存在排除优作品时渲染有�
       state: "ready" as const,
       summary: {
         ratedCount: 5,
-        overallGradeCounts: { excellent: 2, good: 2, average: 1, poor: 0 },
+        overallGradeCounts: { excellent: 3, good: 1, average: 1, poor: 0 },
         excludedExcellentCount: 1,
+        settlementEligibleExcellentCount: 2,
       },
     },
   };

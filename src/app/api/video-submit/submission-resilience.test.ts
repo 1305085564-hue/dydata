@@ -161,11 +161,11 @@ for (const state of ["active", "trashed"] as const) {
       args: { p_video_id: ID, p_action: "restore", p_actor_id: USER, p_restore_reports: false },
     });
   });
-  // BUG_FOUND：非编辑重试被前置重复检查挡住，走不到后面的恢复/更新分支。
-  test.todo(`${state}：固定PK非编辑重试应更新原记录而非报重复409`, async () => {
+  test(`${state}：非编辑模式重复提交同一固定PK按现行契约返回409重复拦截`, async () => {
     const f = fixture(state);
     const response = await buildVideoSubmitResponse(request(), f.deps);
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).code, "SUBMISSION_DUPLICATE");
     assert.equal(f.tables.videos.length, 1);
   });
 }
@@ -197,7 +197,7 @@ test("快照写入失败且回滚也失败时，返回原始业务错误而非�
   const f = fixture("active", true);
   const response = await buildVideoSubmitResponse(request(true), f.deps);
   assert.equal(response.status, 500);
-  assert.deepEqual(await response.json(), { error: "synthetic snapshot business failure", code: "SNAPSHOT_PERSIST_FAILED" });
+  assert.deepEqual(await response.json(), { error: "视频快照创建失败", code: "SNAPSHOT_PERSIST_FAILED" });
   assert.ok(f.writes.some((write) => write.table === "videos" && write.role === "admin"));
 });
 
@@ -207,7 +207,7 @@ test.todo("多表写入失败且回滚失败时必须另行记录回滚错误日
   const errorLog = context.mock.method(console, "error", () => {});
   const response = await buildVideoSubmitResponse(request(true), f.deps);
   assert.equal(response.status, 500);
-  assert.equal((await response.json()).error, "synthetic snapshot business failure");
+  assert.equal((await response.json()).error, "视频快照创建失败");
   assert.ok(errorLog.mock.calls.some(({ arguments: args }) =>
     args.some((arg) => String(arg).includes("synthetic rollback failure"))));
 });

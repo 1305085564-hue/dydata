@@ -154,21 +154,30 @@ export async function evaluateSubmissionDeadlineGuard(input: {
     return { ok: true, approvedAppealUsed: null, postReviewTrigger: null };
   }
 
-  const publishAsset = normalized.assets.find((asset) => asset.role === "screenshot_2");
-  const publishPath = publishAsset ? parseSubmissionScreenshotPath(publishAsset.url) : null;
-  const token = publishAsset?.recognized_fields?.publish_time_evidence;
   let trustedOcr = false;
-  if (normalized.mode !== "edit" && publishPath?.startsWith(userId + "/") && typeof token === "string") {
-    try {
-      const screenshot = await (input.downloadScreenshot ?? downloadSubmissionScreenshotBytes)(publishPath);
-      trustedOcr = screenshot.ok && verifyPublishTimeEvidence(token, {
-        userId,
-        path: publishImageDigest(screenshot.body),
-        publishedAt: normalized.published_at,
-      });
-    } catch {
-      // 证据读取失败时继续入库并核查，不授予免核查资格。
-      trustedOcr = false;
+  if (normalized.mode !== "edit") {
+    const download = input.downloadScreenshot ?? downloadSubmissionScreenshotBytes;
+    // 数据图（screenshot_1）与留存图（screenshot_2）均可能识别出发布时间，任一本人截图验签一致即可放行。
+    const evidenceAssets = normalized.assets.filter(
+      (asset) => typeof asset.recognized_fields?.publish_time_evidence === "string",
+    );
+    for (const asset of evidenceAssets) {
+      const assetPath = parseSubmissionScreenshotPath(asset.url);
+      const token = asset.recognized_fields?.publish_time_evidence;
+      if (!assetPath?.startsWith(userId + "/") || typeof token !== "string") continue;
+      try {
+        const screenshot = await download(assetPath);
+        if (screenshot.ok && verifyPublishTimeEvidence(token, {
+          userId,
+          path: publishImageDigest(screenshot.body),
+          publishedAt: normalized.published_at,
+        })) {
+          trustedOcr = true;
+          break;
+        }
+      } catch {
+        // 单张证据读取失败时继续尝试其余带凭据截图，全部失败则保守进入核查。
+      }
     }
   }
 
