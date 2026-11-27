@@ -2,7 +2,7 @@
 
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
-import { useState, useCallback, useMemo, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -70,6 +70,23 @@ import { ContentDetailEvidence } from "./detail/content-detail-evidence";
 import { ContentDetailPreview } from "./detail/content-detail-preview";
 import { useContentDetailLifecycle } from "./content-detail-lifecycle";
 
+function subscribeDesktopMedia(onStoreChange: () => void) {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => {};
+  const mq = window.matchMedia("(min-width: 768px)");
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
+function getDesktopMediaSnapshot(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia("(min-width: 768px)").matches
+    : false;
+}
+
+function getDesktopMediaServerSnapshot(): boolean {
+  return false;
+}
+
 export function ContentDetailDialog({
   open,
   onOpenChange,
@@ -110,20 +127,11 @@ export function ContentDetailDialog({
   const sheetBodyRef = useRef<HTMLDivElement>(null);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== "undefined" && typeof window.matchMedia === "function"
-      ? window.matchMedia("(min-width: 768px)").matches
-      : false,
+  const isDesktop = useSyncExternalStore(
+    subscribeDesktopMedia,
+    getDesktopMediaSnapshot,
+    getDesktopMediaServerSnapshot,
   );
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-    const mq = window.matchMedia("(min-width: 768px)");
-    const sync = () => setIsDesktop(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
 
   // 跨行无缝切换作品时将抽屉正文滚回顶部，避免保留上一条的滚动位置
   useEffect(() => {
@@ -512,7 +520,7 @@ export function ContentDetailDialog({
           <SheetContent
             side="right"
             role="dialog"
-            aria-modal="true"
+            aria-modal={isDesktop ? undefined : "true"}
             aria-label={`${titlePrefix} · 作品诊断`}
             data-non-modal={isDesktop ? "true" : undefined}
             ref={sheetContentRef}

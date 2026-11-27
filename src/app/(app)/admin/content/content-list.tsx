@@ -227,36 +227,37 @@ export const ContentList = memo(function ContentList(props: ContentListProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 手机与平板（<1024px）顶部保留日期翻页器原位；桌面端（≥1024px）挪到底栏，释放首屏一行垂直空间 */}
-      {view === "all" && (
-        <h1 className="sr-only hidden lg:block">{fallbackHeadline}</h1>
-      )}
+      {/* 页面唯一 h1：手机与平板（<1024px）顶部原位展示日期翻页器；桌面端（≥1024px）挪到底栏，仅保留单条读屏标题且不占布局空间 */}
       <h1
         aria-live="polite"
-        data-top-date-pagination={view === "all" ? "mobile-only" : undefined}
         className={
           view === "all"
-            ? "lg:hidden font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
+            ? "font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums lg:sr-only"
             : "font-serif text-[20px] sm:text-[28px] leading-[1.20] tracking-tight text-[#141413] tabular-nums"
         }
       >
         {view === "all" && currentDate && availableDates.length > 0 ? (
-          <DatePagination
-            variant="headline"
-            currentDate={currentDate}
-            availableDates={availableDates}
-            availableCounts={availableCounts}
-            showCountInLabel={false}
-            rangeStart={isRangeMode ? effectiveStartDate : undefined}
-            rangeEnd={isRangeMode ? effectiveEndDate : undefined}
-            isLoading={props.isViewLoading}
-            onDateChange={handleDateChange}
-            onShiftRange={handleShiftRange}
-            timeRange={state.filters.timeRange}
-            onTimeRangeChange={state.handleTimeRangeChange}
-            onRangeChange={handleRangeChange}
-            suffix={<span>{headlineSuffix}</span>}
-          />
+          <>
+            <span className="hidden lg:inline">{fallbackHeadline}</span>
+            <span data-top-date-pagination="mobile-only" className="lg:hidden">
+              <DatePagination
+                variant="headline"
+                currentDate={currentDate}
+                availableDates={availableDates}
+                availableCounts={availableCounts}
+                showCountInLabel={false}
+                rangeStart={isRangeMode ? effectiveStartDate : undefined}
+                rangeEnd={isRangeMode ? effectiveEndDate : undefined}
+                isLoading={props.isViewLoading}
+                onDateChange={handleDateChange}
+                onShiftRange={handleShiftRange}
+                timeRange={state.filters.timeRange}
+                onTimeRangeChange={state.handleTimeRangeChange}
+                onRangeChange={handleRangeChange}
+                suffix={<span>{headlineSuffix}</span>}
+              />
+            </span>
+          </>
         ) : (
           fallbackHeadline
         )}
