@@ -250,7 +250,6 @@ export function buildContentQualitySummaryFromWorks(
   for (const work of ratedWorks) {
     if (work.overallGrade === "优" && work.settlementExcluded) {
       excludedExcellentCount += 1;
-      continue;
     }
     incrementGradeCount(overallGradeCounts, work.overallGrade!);
   }
@@ -279,6 +278,7 @@ export function buildContentQualitySummaryFromWorks(
     avgInteractionAchievement: avg(interactionWorks, "interactionAchievement"),
     avgContentAchievement: avg(retentionWorks, "contentAchievement"),
     overallGradeCounts,
+    settlementEligibleExcellentCount: overallGradeCounts.excellent - excludedExcellentCount,
     ...(excludedExcellentCount > 0 ? { excludedExcellentCount } : {}),
     goodExcellentRate: ratedWorks.length ? goodCount / ratedWorks.length : null,
   };

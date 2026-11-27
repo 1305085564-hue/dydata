@@ -22,6 +22,7 @@ export async function withdrawPendingFulfillmentAppeal(input: {
     .eq("id", input.appealId)
     .eq("user_id", input.userId)
     .eq("status", "pending")
+    .eq("review_mode", "pre_submit")
     .select("id");
   if (deleted.error) return { ok: false, status: 500, error: "撤回失败，请稍后重试" };
   if ((deleted.data ?? []).length === 0) {

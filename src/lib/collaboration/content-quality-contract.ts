@@ -289,7 +289,7 @@ export interface ContentQualitySummary {
   avgInteractionAchievement: number | null;
   /** 留存分均值（百分数，可超过 100） */
   avgContentAchievement: number | null;
-  /** 综合优/良/普件数计数（文案「优条数」已自动排除事后核查标为无效的作品） */
+  /** 原始综合优/良/普件数计数。 */
   overallGradeCounts: {
     excellent: number;
     good: number;
@@ -297,6 +297,8 @@ export interface ContentQualitySummary {
   };
   /** 原本评优但因事后核查标为无效而被剔除结算的作品数（用于界面可追溯说明）。 */
   excludedExcellentCount?: number;
+  /** 可结算优条数。历史序列化数据缺失时从原始优减去排除数。 */
+  settlementEligibleExcellentCount?: number;
   /** 综合良优率（0–1 小数，例如 0.65 表示 65%）；无参评样本时为 null */
   goodExcellentRate: number | null;
 }

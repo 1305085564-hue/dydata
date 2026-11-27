@@ -749,6 +749,8 @@ export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
   if (!perm) return { error: "未登录" };
   if (!canManageTeamStructure(perm.companyRole, perm.permissions)) return { error: "无权限" };
 
+  if (!perm.teamId || teamId !== perm.teamId) return { error: "无权删除该团队" };
+
   const adminSupabase = createAdminClient();
 
   // Check if team has members
