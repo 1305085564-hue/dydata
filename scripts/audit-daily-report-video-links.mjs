@@ -189,6 +189,7 @@ function screenshotEvidence(snapshot) {
 }
 
 export function buildVideoFirstAuditOutput(videos, snapshots, reports, range) {
+  const activeVideos = videos.filter((video) => video.lifecycle_state === "active");
   const snapshotsByVideo = new Map();
   for (const snapshot of snapshots) {
     const list = snapshotsByVideo.get(snapshot.video_id) ?? [];
@@ -204,7 +205,7 @@ export function buildVideoFirstAuditOutput(videos, snapshots, reports, range) {
     reportsByVideo.set(report.video_id, list);
   }
 
-  const chains = videos.map((video) => {
+  const chains = activeVideos.map((video) => {
     const videoSnapshots = snapshotsByVideo.get(video.id) ?? [];
     const snapshots24h = videoSnapshots
       .filter((snapshot) => snapshot.snapshot_type === "24h")

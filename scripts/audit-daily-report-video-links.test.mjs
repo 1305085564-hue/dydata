@@ -178,3 +178,22 @@ test("video-first audit chooses the latest 24h snapshot by captured_at even when
   assert.equal(output.summary.with_screenshots, 1);
   assert.equal(output.summary.with_ocr_publish_evidence, 1);
 });
+
+test("video-first audit ignores trashed and purged videos so recycle-bin rows do not pollute readings", () => {
+  const output = buildVideoFirstAuditOutput(
+    [
+      video({ id: "video-active", lifecycle_state: "active" }),
+      video({ id: "video-trashed", lifecycle_state: "trashed" }),
+      video({ id: "video-purged", lifecycle_state: "purged" }),
+    ],
+    [
+      { id: "snap-1", video_id: "video-trashed", snapshot_type: "24h", play_count: 99999, captured_at: "2026-09-09T05:00:00.000Z" },
+    ],
+    [],
+    range,
+  );
+
+  assert.equal(output.summary.videos_scanned, 1);
+  assert.equal(output.summary.with_24h_snapshot, 0);
+  assert.deepEqual(output.chains.map((chain) => chain.video.video_id), ["video-active"]);
+});
