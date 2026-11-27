@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { publicMessageForCode } from "@/lib/errors";
+import { publicMessageForCode, toStringErrorResponse } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { resumeAppealSubmission } from "../../appeal/_resume-submission";
@@ -15,9 +15,20 @@ type MutationLayers = {
   todoStatus: LayerStatus;
 };
 
-async function handlePost(request: NextRequest, observation: MutationObservation, layers: MutationLayers) {
+export type ResumeFulfillmentAppealDeps = {
+  createClient: typeof createClient;
+  createAdminClient: typeof createAdminClient;
+  resumeAppealSubmission: typeof resumeAppealSubmission;
+};
+
+export async function handleResumeFulfillmentAppealPost(
+  request: NextRequest,
+  observation: MutationObservation,
+  layers: MutationLayers,
+  deps: ResumeFulfillmentAppealDeps = { createClient, createAdminClient, resumeAppealSubmission },
+) {
   observation.mark("auth");
-  const supabase = await createClient();
+  const supabase = await deps.createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
@@ -31,21 +42,33 @@ async function handlePost(request: NextRequest, observation: MutationObservation
   const appealId = typeof body.appealId === "string" ? body.appealId.trim() : "";
   if (!appealId) return NextResponse.json({ error: "缺少补交申请编号" }, { status: 400 });
 
-  const admin = createAdminClient();
+  const admin = deps.createAdminClient();
   observation.mark("read");
   observation.mark("write-video");
-  const result = await resumeAppealSubmission(appealId, admin, {
+  const result = await deps.resumeAppealSubmission(appealId, admin, {
     getBaseUrl: () => new URL(request.url).origin,
     markWriteRequest: () => observation.mark("write-request"),
   }, user.id);
   if (!result.success) {
-    const status = result.error === "补交申请不存在" ? 404
-      : result.error === "补交申请尚未通过" || result.error === "没有找到待续交的数据" ? 409
-        : 500;
-    const error = result.error === "补交申请不存在" ? publicMessageForCode("APPEAL_NOT_FOUND")
-      : result.error === "没有找到待续交的数据" ? "没有找到待续交的数据，请回到填报页重新提交"
-        : result.error;
-    return NextResponse.json({ error }, { status });
+    if (result.error === "补交申请不存在") {
+      return NextResponse.json({ error: publicMessageForCode("APPEAL_NOT_FOUND") }, { status: 404 });
+    }
+    if (result.error === "补交申请尚未通过") {
+      return NextResponse.json({ error: "补交申请尚未通过" }, { status: 409 });
+    }
+    if (result.error === "没有找到待续交的数据") {
+      return NextResponse.json({ error: "没有找到待续交的数据，请回到填报页重新提交" }, { status: 409 });
+    }
+    return toStringErrorResponse({
+      code: "INTERNAL_ERROR",
+      route: "/api/admin/fulfillment/appeals/resume",
+      operation: "resume-appeal-submission",
+      request,
+      requestId: observation.requestId,
+      error: result.error,
+      status: 500,
+      message: "补交数据续交失败，请回到填报页重试",
+    });
   }
   layers.businessSucceeded = true;
 
@@ -62,7 +85,7 @@ export async function POST(request: NextRequest) {
       todoStatus: "skipped",
     };
     observation.setDetail?.(layers);
-    const response = await handlePost(request, observation, layers);
+    const response = await handleResumeFulfillmentAppealPost(request, observation, layers);
     observation.setDetail?.(layers);
     return appendObservedMutationResult(response, observation);
   });

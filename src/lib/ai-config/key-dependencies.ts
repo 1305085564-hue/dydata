@@ -57,24 +57,19 @@ async function loadDependencySnapshot(supabase: any): Promise<DependencySnapshot
   const [providersResult, keysResult, modelsResult, bindingsResult] = await Promise.all([
     supabase.from("ai_providers").select("id, name, is_enabled"),
     supabase.from("ai_provider_keys").select("id, provider_id, label, is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, first_failure_at, invalidated_at, manual_sleep_until"),
-    // `*` keeps the new marker readable with an app-before-migration rollout; old columns are discarded below.
-    supabase.from("ai_provider_key_models").select("*"),
+    supabase.from("ai_provider_key_models").select("id, key_id, model_id, canonical_model_id, display_name, is_enabled, disabled_by_model, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, first_failure_at, invalidated_at, sort_order"),
     supabase.from("ai_feature_bindings").select("id, feature_key, label, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason"),
   ]);
   const firstError = providersResult.error ?? keysResult.error ?? modelsResult.error ?? bindingsResult.error;
   if (firstError) throw new Error(firstError.message);
 
-  const models = ((modelsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => {
-    const model: Record<string, unknown> = {
-      ...row,
-      canonical_model_id: readCanonicalModelId(
-        String(row.model_id ?? ""),
-        typeof row.canonical_model_id === "string" ? row.canonical_model_id : null,
-      ),
-    };
-    delete model.global_is_enabled;
-    return model;
-  }) as unknown as NonNullable<AvailabilityInput["models"]>;
+  const models = ((modelsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    ...row,
+    canonical_model_id: readCanonicalModelId(
+      String(row.model_id ?? ""),
+      typeof row.canonical_model_id === "string" ? row.canonical_model_id : null,
+    ),
+  })) as unknown as NonNullable<AvailabilityInput["models"]>;
 
   return {
     providers: (providersResult.data ?? []) as NonNullable<AvailabilityInput["providers"]>,
@@ -95,11 +90,15 @@ function computeReport(snapshot: DependencySnapshot) {
   });
 }
 
+function notFoundError(message: string) {
+  return Object.assign(new Error(message), { status: 404, isPublic: true });
+}
+
 function requireTarget(snapshot: DependencySnapshot, input: DependencyInput) {
-  if (input.scope === "provider" && !snapshot.providers.some((provider) => provider.id === input.id)) throw new Error("接入点不存在");
-  if (input.scope === "key" && !snapshot.keys.some((key) => key.id === input.id)) throw new Error("渠道不存在");
-  if (input.scope === "supply" && !snapshot.models.some((model) => model.id === input.id)) throw new Error("渠道未挂载此模型");
-  if (input.scope === "model" && !snapshot.models.some((model) => readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id))) throw new Error("模型不存在");
+  if (input.scope === "provider" && !snapshot.providers.some((provider) => provider.id === input.id)) throw notFoundError("接入点不存在");
+  if (input.scope === "key" && !snapshot.keys.some((key) => key.id === input.id)) throw notFoundError("渠道不存在");
+  if (input.scope === "supply" && !snapshot.models.some((model) => model.id === input.id)) throw notFoundError("渠道未挂载此模型");
+  if (input.scope === "model" && !snapshot.models.some((model) => readCanonicalModelId(model.model_id, model.canonical_model_id) === toCanonicalModelId(input.id))) throw notFoundError("模型不存在");
 }
 
 function simulateDisable(snapshot: DependencySnapshot, input: DependencyInput): DependencySnapshot {

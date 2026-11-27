@@ -9,19 +9,18 @@ test("同次调用先用所选模型的渠道，再尝试默认模型的全部�
     ai_feature_bindings: [
       {
         feature_key: "content_tools",
-        provider_key_model_id: null,
         model_id: "gemini-2.5-flash",
         system_prompt: null,
         is_enabled: true,
       },
-      { feature_key: "default", provider_key_model_id: null, model_id: "gpt-5.6-luna", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "gpt-5.6-luna", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "selected-b", modelId: "gemini-2.5-flash", keyPriority: 1, keyName: "keyB", sortOrder: 2 }),
-      makePkmRow({ id: "other-model", modelId: "gpt-5.4-mini", keyPriority: 1, keyName: "keyC", sortOrder: 0 }),
-      makePkmRow({ id: "default-b", modelId: "gpt-5.6-luna", keyPriority: 1, keyName: "keyD", sortOrder: 2 }),
-      makePkmRow({ id: "selected-a", modelId: "gemini-2.5-flash", keyPriority: 100, keyName: "keyA", sortOrder: 1 }),
-      makePkmRow({ id: "default-a", modelId: "gpt-5.6-luna", keyPriority: 100, keyName: "keyE", sortOrder: 1 }),
+      makePkmRow({ id: "selected-b", modelId: "gemini-2.5-flash", keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "other-model", modelId: "gpt-5.4-mini", keyName: "keyC", sortOrder: 0 }),
+      makePkmRow({ id: "default-b", modelId: "gpt-5.6-luna", keyName: "keyD", sortOrder: 2 }),
+      makePkmRow({ id: "selected-a", modelId: "gemini-2.5-flash", keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "default-a", modelId: "gpt-5.6-luna", keyName: "keyE", sortOrder: 1 }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -42,14 +41,14 @@ test("同次调用先用所选模型的渠道，再尝试默认模型的全部�
 test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选模型并切到默认渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "content_tools", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "content_tools", model_id: "selected-model", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "selected-a", modelId: "selected-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
-      makePkmRow({ id: "selected-b", modelId: "selected-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
-      makePkmRow({ id: "default-a", modelId: "default-model", keyPriority: 100, keyName: "keyC", sortOrder: 1 }),
-      makePkmRow({ id: "unselected", modelId: "other-model", keyPriority: 1, keyName: "keyD" }),
+      makePkmRow({ id: "selected-a", modelId: "selected-model", keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "selected-b", modelId: "selected-model", keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "default-a", modelId: "default-model", keyName: "keyC", sortOrder: 1 }),
+      makePkmRow({ id: "unselected", modelId: "other-model", keyName: "keyD" }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -74,14 +73,14 @@ test("所选模型渠道遇到不可重试的401后，仍继续尝试完所选�
 test("所选模型渠道遇到上游408超时后，仍继续尝试完所选模型并切到默认渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "content_tools", model_id: "selected-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "content_tools", model_id: "selected-model", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "selected-a", modelId: "selected-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
-      makePkmRow({ id: "selected-b", modelId: "selected-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
-      makePkmRow({ id: "default-a", modelId: "default-model", keyPriority: 100, keyName: "keyC", sortOrder: 1 }),
-      makePkmRow({ id: "unselected", modelId: "other-model", keyPriority: 1, keyName: "keyD" }),
+      makePkmRow({ id: "selected-a", modelId: "selected-model", keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "selected-b", modelId: "selected-model", keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "default-a", modelId: "default-model", keyName: "keyC", sortOrder: 1 }),
+      makePkmRow({ id: "unselected", modelId: "other-model", keyName: "keyD" }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -108,23 +107,21 @@ test("空 modelId 跟随全局默认，调用链不包含其他模型", async ()
     ai_feature_bindings: [
       {
         feature_key: "content_analysis",
-        provider_key_model_id: null,
         model_id: null,
         system_prompt: null,
         is_enabled: true,
       },
       {
         feature_key: "default",
-        provider_key_model_id: null,
         model_id: "gpt-5.6-luna",
         system_prompt: null,
         is_enabled: true,
       },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "pkm-luna-1", modelId: "gpt-5.6-luna", keyPriority: 1, keyName: "keyA" }),
-      makePkmRow({ id: "pkm-luna-2", modelId: "gpt-5.6-luna", keyPriority: 2, keyName: "keyA" }),
-      makePkmRow({ id: "pkm-mini-1", modelId: "gpt-5.4-mini", keyPriority: 1, keyName: "keyA" }),
+      makePkmRow({ id: "pkm-luna-1", modelId: "gpt-5.6-luna", keyName: "keyA" }),
+      makePkmRow({ id: "pkm-luna-2", modelId: "gpt-5.6-luna", keyName: "keyA" }),
+      makePkmRow({ id: "pkm-mini-1", modelId: "gpt-5.4-mini", keyName: "keyA" }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -142,52 +139,19 @@ test("空 modelId 跟随全局默认，调用链不包含其他模型", async ()
   }
 });
 
-test("旧 provider_key_model_id 不参与解析，空 modelId 仍跟随全局默认", async () => {
-  const db: FakeDb = {
-    ai_feature_bindings: [
-      {
-        feature_key: "ocr_screenshot",
-        provider_key_model_id: "pkm-combo-old",
-        model_id: null,
-        system_prompt: null,
-        is_enabled: true,
-      },
-      { feature_key: "default", provider_key_model_id: null, model_id: "default-model", system_prompt: null, is_enabled: true },
-    ],
-    ai_provider_key_models: [
-      makePkmRow({ id: "pkm-combo-old", modelId: "legacy-model", keyPriority: 1, keyName: "keyC" }),
-      makePkmRow({ id: "pkm-default", modelId: "default-model", keyPriority: 100, keyName: "keyD" }),
-      makePkmRow({ id: "pkm-unselected", modelId: "other-model", keyPriority: 1, keyName: "keyE" }),
-    ],
-  };
-  __internal.setServiceClientForTests(createFakeService(db));
-
-  try {
-    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
-    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
-
-    assert.equal(config?.providerKeyModelId, null);
-    assert.equal(config?.modelId, null);
-    assert.deepEqual(chain.map((channel) => channel.providerKeyModelId), ["pkm-default"]);
-    assert.equal(chain[0]?.model, "default-model");
-  } finally {
-    __internal.setServiceClientForTests(null);
-  }
-});
-
 test("主模型最多试两条渠道，之后直接交给全局默认模型", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "ocr_screenshot", model_id: "primary-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "ocr_screenshot", model_id: "primary-model", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "primary-1", modelId: "primary-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
-      makePkmRow({ id: "primary-2", modelId: "primary-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
-      makePkmRow({ id: "primary-3", modelId: "primary-model", keyPriority: 3, keyName: "keyC", sortOrder: 3 }),
-      makePkmRow({ id: "primary-4", modelId: "primary-model", keyPriority: 4, keyName: "keyD", sortOrder: 4 }),
-      makePkmRow({ id: "default-1", modelId: "default-model", keyPriority: 1, keyName: "keyE", sortOrder: 1 }),
-      makePkmRow({ id: "default-2", modelId: "default-model", keyPriority: 2, keyName: "keyF", sortOrder: 2 }),
+      makePkmRow({ id: "primary-1", modelId: "primary-model", keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "primary-2", modelId: "primary-model", keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "primary-3", modelId: "primary-model", keyName: "keyC", sortOrder: 3 }),
+      makePkmRow({ id: "primary-4", modelId: "primary-model", keyName: "keyD", sortOrder: 4 }),
+      makePkmRow({ id: "default-1", modelId: "default-model", keyName: "keyE", sortOrder: 1 }),
+      makePkmRow({ id: "default-2", modelId: "default-model", keyName: "keyF", sortOrder: 2 }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -231,8 +195,8 @@ test("主模型为 clairic 时放宽主模型健康渠道上限至 5 条，确�
 
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "ocr_screenshot", model_id: "clairic", provider_key_model_id: null, system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: "default-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "ocr_screenshot", model_id: "clairic", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "default-model", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
       makeClairicRow("cf-1", 1),
@@ -241,7 +205,7 @@ test("主模型为 clairic 时放宽主模型健康渠道上限至 5 条，确�
       makeClairicRow("cf-4", 4),
       makeClairicRow("cf-5", 5),
       makeClairicRow("cf-6", 6),
-      makePkmRow({ id: "default-1", modelId: "default-model", keyPriority: 1, keyName: "keyD", sortOrder: 1 }),
+      makePkmRow({ id: "default-1", modelId: "default-model", keyName: "keyD", sortOrder: 1 }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));
@@ -265,13 +229,13 @@ test("主模型为 clairic 时放宽主模型健康渠道上限至 5 条，确�
 test("主模型与全局默认相同时只有一条链，不截断渠道", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
-      { feature_key: "ocr_screenshot", model_id: "same-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: "same-model", provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "ocr_screenshot", model_id: "same-model", system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: "same-model", system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "same-1", modelId: "same-model", keyPriority: 1, keyName: "keyA", sortOrder: 1 }),
-      makePkmRow({ id: "same-2", modelId: "same-model", keyPriority: 2, keyName: "keyB", sortOrder: 2 }),
-      makePkmRow({ id: "same-3", modelId: "same-model", keyPriority: 3, keyName: "keyC", sortOrder: 3 }),
+      makePkmRow({ id: "same-1", modelId: "same-model", keyName: "keyA", sortOrder: 1 }),
+      makePkmRow({ id: "same-2", modelId: "same-model", keyName: "keyB", sortOrder: 2 }),
+      makePkmRow({ id: "same-3", modelId: "same-model", keyName: "keyC", sortOrder: 3 }),
     ],
   };
   __internal.setServiceClientForTests(createFakeService(db));

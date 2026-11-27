@@ -26,7 +26,7 @@ export async function recordManualProbeFailure(
 export async function handleTestKey(supabase: AiConfigClient, data: Record<string, unknown>, options: { healthClient?: AiConfigClient } = {}) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
-  if (!keyId) throw new Error("缺少 key_id");
+  if (!keyId) throw Object.assign(new Error("缺少 key_id"), { status: 400, isPublic: true });
 
   const { key, provider } = await loadKeyProvider(supabase, keyId);
   const protocol = provider.protocol;
@@ -60,13 +60,14 @@ export async function handleTestKey(supabase: AiConfigClient, data: Record<strin
 export async function handleTestKeyModel(supabase: AiConfigClient, data: Record<string, unknown>, options: { recordFailure?: boolean; healthClient?: AiConfigClient } = {}) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
-  if (!keyId) throw new Error("缺少 key_id");
-  if (!modelId) throw new Error("缺少 model_id");
+  if (!keyId) throw Object.assign(new Error("缺少 key_id"), { status: 400, isPublic: true });
+  if (!modelId) throw Object.assign(new Error("缺少 model_id"), { status: 400, isPublic: true });
 
   const { data: modelData, error: modelError } = await supabase
     .from("ai_provider_key_models").select("id, key_id, model_id, canonical_model_id")
     .eq("key_id", keyId).eq("canonical_model_id", toCanonicalModelId(modelId)).maybeSingle();
-  if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
+  if (modelError) throw new Error(modelError.message);
+  if (!modelData) throw Object.assign(new Error("该渠道未挂载此模型"), { status: 404, isPublic: true });
   const mounted = modelData as { id: string; model_id: string; canonical_model_id?: string | null };
   const supplyId = mounted.id;
 

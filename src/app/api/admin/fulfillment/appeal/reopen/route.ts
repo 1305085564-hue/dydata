@@ -4,6 +4,7 @@ import { emit } from "@/lib/notifications/server";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { clearCollaborationMonthCache } from "@/lib/loaders/collaboration-month-cache";
+import { toStringErrorResponse } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
@@ -15,7 +16,24 @@ type MutationLayers = {
   todoStatus: LayerStatus;
 };
 
-async function handlePost(request: Request, observation: MutationObservation, layers: MutationLayers) {
+export type ReopenFulfillmentAppealDeps = {
+  requireAdminServiceClient: typeof requireAdminServiceClient;
+  requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
+  requireActiveVisibleUsers: typeof requireActiveVisibleUsers;
+  emit: typeof emit;
+};
+
+export async function buildReopenFulfillmentAppealResponse(
+  request: Request,
+  observation: MutationObservation,
+  layers: MutationLayers,
+  deps: ReopenFulfillmentAppealDeps = {
+    requireAdminServiceClient,
+    requireOwnerOrAdminRole,
+    requireActiveVisibleUsers,
+    emit,
+  },
+) {
   observation.mark("validate");
   const body = await readJsonBody(request);
   if ("response" in body) return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
@@ -23,9 +41,9 @@ async function handlePost(request: Request, observation: MutationObservation, la
   if (!UUID_PATTERN.test(appealId)) return NextResponse.json({ error: "appealId 必须是 uuid" }, { status: 400 });
 
   observation.mark("auth");
-  const auth = await requireAdminServiceClient();
+  const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
-  const forbidden = requireOwnerOrAdminRole(auth);
+  const forbidden = deps.requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
 
   observation.mark("read");
@@ -41,11 +59,22 @@ async function handlePost(request: Request, observation: MutationObservation, la
       .eq("id", appealId)
       .maybeSingle() as typeof appealResult;
   }
-  if (appealResult.error) return NextResponse.json({ error: "读取补交申诉失败" }, { status: 500 });
+  if (appealResult.error) {
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeal/reopen",
+      operation: "load-appeal",
+      request,
+      requestId: observation.requestId,
+      error: appealResult.error,
+      status: 500,
+      message: "读取补交申诉失败",
+    });
+  }
   if (!appealResult.data) return NextResponse.json({ error: "补交申诉不存在" }, { status: 404 });
   const isPostSubmit = appealResult.data.review_mode === "post_submit";
   observation.mark("scope");
-  const scoped = requireActiveVisibleUsers(auth, [appealResult.data.user_id]);
+  const scoped = deps.requireActiveVisibleUsers(auth, [appealResult.data.user_id]);
   if (scoped) return scoped;
   if (appealResult.data.status !== "approved" && appealResult.data.status !== "rejected") {
     return NextResponse.json({ error: isPostSubmit ? "仅支持打回已处理的事后核查单" : "仅支持打回已处理的补交申诉" }, { status: 409 });
@@ -56,7 +85,18 @@ async function handlePost(request: Request, observation: MutationObservation, la
     p_appeal_id: appealId,
     p_handler_id: auth.actor.userId,
   });
-  if (rpc.error) return NextResponse.json({ error: rpc.error.message || "打回补交申诉失败" }, { status: 409 });
+  if (rpc.error) {
+    return toStringErrorResponse({
+      code: "CONFLICT",
+      route: "/api/admin/fulfillment/appeal/reopen",
+      operation: "reopen-appeal-rpc",
+      request,
+      requestId: observation.requestId,
+      error: rpc.error,
+      status: 409,
+      message: isPostSubmit ? "打回事后核查单失败，请刷新后重试" : "打回补交申诉失败，请刷新后重试",
+    });
+  }
   if (isPostSubmit) clearCollaborationMonthCache();
   layers.businessSucceeded = true;
   layers.auditStatus = "succeeded";
@@ -81,7 +121,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
       return !role.conflict && (role.companyRole === "company_owner" || (role.companyRole === "admin" && profile.permissions?.manage_members === true));
     })
     .map((profile) => profile.id);
-  const notification = await emit({
+  const notification = await deps.emit({
     recipients,
     type: "fulfillment.appeal",
     category: "todo",
@@ -127,7 +167,7 @@ export async function POST(request: Request) {
       todoStatus: "skipped",
     };
     observation.setDetail?.(layers);
-    const response = await handlePost(request, observation, layers);
+    const response = await buildReopenFulfillmentAppealResponse(request, observation, layers);
     observation.setDetail?.(layers);
     return appendObservedMutationResult(response, observation);
   });

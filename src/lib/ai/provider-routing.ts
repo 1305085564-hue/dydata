@@ -25,7 +25,6 @@ type ProviderKeyModelJoinRow = ProviderHealthFields & {
   model_id: string;
   canonical_model_id?: string | null;
   sort_order?: number | null;
-  global_is_enabled?: boolean | null;
   last_error_message?: string | null;
   last_failure_scope?: "model" | "unknown" | null;
   key: ProviderKeyJoinRow | ProviderKeyJoinRow[] | null;

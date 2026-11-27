@@ -8,7 +8,6 @@ test("功能总控以代码目录为准，统一合并截图识别并移除旧 o
     {
       id: "binding-ocr",
       feature_key: "ocr_screenshot",
-      provider_key_model_id: "model-1",
       model_id: "clairic",
       system_prompt: "识别截图提示词",
       output_token_limit: 2400,
@@ -21,7 +20,6 @@ test("功能总控以代码目录为准，统一合并截图识别并移除旧 o
     {
       id: "binding-structure",
       feature_key: "ocr_screenshot_structure",
-      provider_key_model_id: "model-2",
       system_prompt: null,
       output_token_limit: 3600,
       context_message_limit: 30,
@@ -35,7 +33,6 @@ test("功能总控以代码目录为准，统一合并截图识别并移除旧 o
   const ocrControl = controls.find((control) => control.key === "ocr_screenshot");
   assert.equal(ocrControl?.label, "截图识别");
   assert.equal(ocrControl?.modelId, "clairic");
-  assert.equal(ocrControl?.providerKeyModelId, null);
   assert.equal(ocrControl?.systemPrompt, "识别截图提示词");
   assert.equal(ocrControl?.outputTokenLimit, 2400);
   assert.equal(ocrControl?.contextMessageLimit, 12);
@@ -49,7 +46,6 @@ test("已删除功能即使数据库仍有遗留记录，也不能出现在业�
     {
       id: "binding-alert",
       feature_key: "smart_alert",
-      provider_key_model_id: "model-1",
       system_prompt: null,
       output_token_limit: 3600,
       context_message_limit: 30,

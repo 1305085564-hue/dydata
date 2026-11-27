@@ -30,7 +30,7 @@ export function channelCooldownMinutes(consecutiveFailures: number): number {
 }
 
 export function getChannelGovernance(input: {
-  model: ProviderHealthFields & { global_is_enabled?: boolean | null };
+  model: ProviderHealthFields;
   key?: (ProviderHealthFields & { manual_sleep_until?: string | null }) | null;
   provider?: { is_enabled: boolean } | null;
   now?: number;

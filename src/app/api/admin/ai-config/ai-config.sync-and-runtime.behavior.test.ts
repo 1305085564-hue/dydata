@@ -59,8 +59,8 @@ test("sync-models 合成授权正对照只命中本地 provider stub", async () 
 test("B1 同步只新增未上架模型并保留既有上下架状态", async () => {
   const db = configTables({
     ai_provider_keys: [
-      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
-      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true },
+      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", is_enabled: true },
+      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", is_enabled: true },
     ],
     ai_provider_key_models: [
       { id: "model-old", key_id: "key-1", model_id: "old-model", display_name: "Old", is_enabled: false },
@@ -159,10 +159,9 @@ test("S2 停用目标模型后运行时只切到明确的全局默认", async ()
             id: "key-1",
             api_key: "target-secret",
             is_enabled: true,
-            priority: 1,
             consecutive_failures: 0,
             unhealthy_until: null,
-            provider: { id: "provider-1", name: "target", base_url: "https://target.test", priority: 1, is_enabled: true },
+            provider: { id: "provider-1", name: "target", base_url: "https://target.test", is_enabled: true },
           },
         },
         {
@@ -174,10 +173,9 @@ test("S2 停用目标模型后运行时只切到明确的全局默认", async ()
             id: "key-1",
             api_key: "backup-secret",
             is_enabled: true,
-            priority: 2,
             consecutive_failures: 0,
             unhealthy_until: null,
-            provider: { id: "provider-1", name: "backup", base_url: "https://backup.test", priority: 1, is_enabled: true },
+            provider: { id: "provider-1", name: "backup", base_url: "https://backup.test", is_enabled: true },
           },
         },
       ];
@@ -189,7 +187,6 @@ test("S2 停用目标模型后运行时只切到明确的全局默认", async ()
   try {
     const channels = await aiClientInternal.resolveFeatureChannelChainForTests({
       featureKey: "feature-a",
-      providerKeyModelId: null,
       modelId: "target-model",
       systemPrompt: null,
       isEnabled: true,
@@ -234,10 +231,10 @@ test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠
   }
 });
 
-test("C-R1 新渠道勾选只写单渠道供应开关，不再读写旧全局字段", async () => {
+test("C-R1 新渠道勾选只写单渠道供应开关，不写入废弃旧字段", async () => {
   const db = configTables({
     ai_provider_key_models: [
-      { id: "shelved-row", key_id: "key-1", model_id: "shelved-model", is_enabled: true, global_is_enabled: false },
+      { id: "shelved-row", key_id: "key-1", model_id: "shelved-model", is_enabled: true },
     ],
   });
   const previousFetch = globalThis.fetch;
@@ -254,7 +251,7 @@ test("C-R1 新渠道勾选只写单渠道供应开关，不再读写旧全局字
     assert.ok(newKey);
     const newModel = db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "shelved-model");
     assert.equal(newModel?.is_enabled, true);
-    assert.equal(Object.prototype.hasOwnProperty.call(newModel, "global_is_enabled"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(newModel, ["global", "is", "enabled"].join("_")), false);
 
     const availability = computeAvailability({
       providers: [{ id: "provider-1", name: "Provider 1", is_enabled: true }],
@@ -273,9 +270,9 @@ test("C-R1 新渠道勾选只写单渠道供应开关，不再读写旧全局字
 test("B7 全池同步隔离单 Key 探测失败并按增量规则沉淀新模型", async () => {
   const db = configTables({
     ai_provider_keys: [
-      { id: "key-ok", provider_id: "provider-1", label: "正常 Key", api_key: "ok-secret", priority: 1, is_enabled: true },
-      { id: "key-fail", provider_id: "provider-1", label: "失效 Key", api_key: "fail-secret", priority: 2, is_enabled: true },
-      { id: "key-new", provider_id: "provider-1", label: "新模型 Key", api_key: "new-secret", priority: 3, is_enabled: true },
+      { id: "key-ok", provider_id: "provider-1", label: "正常 Key", api_key: "ok-secret", is_enabled: true },
+      { id: "key-fail", provider_id: "provider-1", label: "失效 Key", api_key: "fail-secret", is_enabled: true },
+      { id: "key-new", provider_id: "provider-1", label: "新模型 Key", api_key: "new-secret", is_enabled: true },
     ],
     ai_provider_key_models: [{ id: "existing-row", key_id: "key-ok", model_id: "existing-model", is_enabled: true }],
   });

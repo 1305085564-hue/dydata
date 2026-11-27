@@ -31,12 +31,16 @@ export function parseModelIds(value: unknown) {
     : [];
 }
 
+function validationError(message: string, status = 400) {
+  return Object.assign(new Error(message), { status, isPublic: true });
+}
+
 export async function handleSyncKeyModels(
   supabase: AiConfigSupabase,
   data: Record<string, unknown>,
 ) {
   const keyId = toTrimmedString(data.key_id);
-  if (!keyId) throw new Error("缺少 key_id");
+  if (!keyId) throw validationError("缺少 key_id");
   const result = await syncModelsForKey(supabase, { keyId });
   return result;
 }
@@ -46,12 +50,12 @@ export async function handleSetKeyModelSelection(
   data: Record<string, unknown>,
 ) {
   const keyId = toTrimmedString(data.key_id);
-  if (!keyId) throw new Error("缺少 key_id");
+  if (!keyId) throw validationError("缺少 key_id");
   const modelIds = parseModelIds(data.model_ids);
 
   const { data: existing, error: existErr } = await supabase
     .from("ai_provider_key_models")
-    .select("*")
+    .select("id, key_id, model_id, canonical_model_id, is_enabled, disabled_by_model")
     .eq("key_id", keyId);
   if (existErr) throw new Error(existErr.message);
 
@@ -97,7 +101,7 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
   const hasExplicitProtocol = data.protocol !== undefined && data.protocol !== null && toTrimmedString(data.protocol) !== "";
   if (hasExplicitProtocol) {
     const parsed = parseProviderProtocol(data.protocol);
-    if (!parsed) throw new Error("不支持的接入协议");
+    if (!parsed) throw validationError("不支持的接入协议");
     protocol = parsed;
   }
 
@@ -115,9 +119,10 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
       return groupProtocol === protocol && normalizeProtocolBaseUrl(groupProtocol, group.base_url) === baseUrl;
     })?.id ?? null;
   } else {
-    if (!providerId) throw new Error("缺少渠道地址");
+    if (!providerId) throw validationError("缺少渠道地址");
     const { data: provider, error } = await supabase.from("ai_providers").select("base_url,protocol").eq("id", providerId).single();
-    if (error || !provider) throw new Error(error?.message || "地址分组不存在");
+    if (error) throw new Error(error.message);
+    if (!provider) throw validationError("地址分组不存在", 404);
     protocol = normalizeProviderProtocol((provider as { protocol?: unknown }).protocol);
     baseUrl = normalizeProtocolBaseUrl(protocol, provider.base_url);
   }
@@ -126,7 +131,7 @@ export async function handleCreateKey(supabase: AiConfigSupabase, data: Record<s
   if (providerId) {
     const { data: duplicates, error } = await supabase.from("ai_provider_keys").select("id").eq("provider_id", providerId).eq("label", label).limit(1);
     if (error) throw new Error(error.message);
-    if (duplicates?.length) throw new Error("同一接入点下已有同名渠道，请换一个渠道显示名");
+    if (duplicates?.length) throw validationError("同一接入点下已有同名渠道，请换一个渠道显示名", 409);
   }
   const selectedModelIds = parseModelIds(data.selectedModelIds ?? data.selected_model_ids);
   const selectedModelIdSet = new Set(selectedModelIds);
@@ -218,9 +223,9 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
 }
 export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Record<string, unknown>) {
   const modelId = toTrimmedString(data.modelId ?? data.model_id);
-  if (!modelId) throw new Error("缺少 modelId");
+  if (!modelId) throw validationError("缺少 modelId");
   const canonicalModelId = toCanonicalModelId(modelId);
-  if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
+  if (typeof data.is_enabled !== "boolean") throw validationError("缺少 is_enabled");
   const isEnabled = data.is_enabled;
   if (!isEnabled) {
     const preview = await buildDependencyPreview(supabase, { scope: "model", id: canonicalModelId });

@@ -46,9 +46,7 @@ export function createFakeService(db: FakeDb) {
 export function makePkmRow(opts: {
   id: string;
   modelId: string;
-  keyPriority: number;
   keyName: string;
-  providerPriority?: number;
   modelName?: string;
   sortOrder?: number;
 }) {
@@ -63,7 +61,6 @@ export function makePkmRow(opts: {
         id: opts.keyName,
         api_key: "sk-test",
         is_enabled: true,
-        priority: opts.keyPriority,
         consecutive_failures: 0,
         unhealthy_until: null,
         provider: [
@@ -71,7 +68,6 @@ export function makePkmRow(opts: {
             id: "prov-1",
             name: opts.modelName ?? "测试供应商",
             base_url: "https://example.com",
-            priority: opts.providerPriority ?? 1,
             is_enabled: true,
           },
         ],

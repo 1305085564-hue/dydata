@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "@/lib/admin/ai-channels";
 import { buildDependencyPreview } from "@/lib/ai-config/key-dependencies";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { toSafeAiConfigErrorResponse } from "../_error-response";
 
 type CheckDependenciesDeps = {
   requireSystemActor: typeof requireSystemActor;
@@ -56,10 +57,15 @@ export async function buildCheckDependenciesResponse(
       if (response.ok) observation?.mark("finalize");
       return finish(response);
     } catch (error) {
-      return finish(NextResponse.json(
-        { error: error instanceof Error ? error.message : "检查依赖失败" },
-        { status: 500 }
-      ));
+      return finish(toSafeAiConfigErrorResponse({
+        error,
+        fallbackMessage: "检查依赖失败",
+        route: "/api/admin/ai-config/check-dependencies",
+        operation: "check-dependencies",
+        request: req,
+        requestId: observation?.requestId,
+        defaultStatus: 500,
+      }));
     }
 }
 

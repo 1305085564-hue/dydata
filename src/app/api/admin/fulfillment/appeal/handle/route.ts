@@ -10,7 +10,8 @@ import {
 import { emit, markDone, type EmitResult } from "@/lib/notifications/server";
 import { withRetry } from "@/lib/retry";
 import { createOperationResult } from "@/lib/operation-result";
-import { createRequestContext } from "@/lib/request-context";
+import { createRequestContext, requestContextHeaders } from "@/lib/request-context";
+import { logApiError } from "@/lib/api-logger";
 import { withTimeout } from "@/lib/timeout";
 import { AppError, normalizeAppError, publicMessageForCode } from "@/lib/errors";
 import { clearCollaborationMonthCache } from "@/lib/loaders/collaboration-month-cache";
@@ -91,13 +92,27 @@ function failureResponse(error: AppError, input: {
   auditStatus?: FulfillmentAppealSideEffectStatus;
   employeeNotificationStatus?: FulfillmentAppealSideEffectStatus;
   todoStatus?: FulfillmentAppealSideEffectStatus;
+  requestId?: string;
 } = {}) {
   const normalized = normalizeAppError(error);
   const todoStatus = input.todoStatus ?? sideEffectStatus(input.notificationMarked);
+  if (normalized.status >= 500) {
+    logApiError(
+      {
+        requestId: input.requestId ?? "untracked",
+        route: "/api/admin/fulfillment/appeal/handle",
+        status: normalized.status,
+        outcome: "failed",
+        detail: { code: normalized.code, auditStatus: input.auditStatus ?? "skipped", employeeNotificationStatus: input.employeeNotificationStatus ?? "skipped" },
+      },
+      normalized.message,
+    );
+  }
   return NextResponse.json({
     ok: false,
     code: normalized.code,
     error: normalized.publicMessage,
+    ...(input.requestId ? { requestId: input.requestId } : {}),
     businessSucceeded: input.businessSucceeded ?? false,
     notificationMarked: input.notificationMarked ?? null,
     auditSucceeded: input.auditStatus === "succeeded" ? true : input.auditStatus === "failed" ? false : null,
@@ -109,7 +124,10 @@ function failureResponse(error: AppError, input: {
     auditStatus: input.auditStatus ?? "skipped",
     employeeNotificationStatus: input.employeeNotificationStatus ?? "skipped",
     todoStatus,
-  }, { status: normalized.status });
+  }, {
+    status: normalized.status,
+    ...(input.requestId ? { headers: { [requestContextHeaders.requestId]: input.requestId } } : {}),
+  });
 }
 
 export function parseHandleFulfillmentAppealPayload(
@@ -334,14 +352,14 @@ export async function buildHandleFulfillmentAppealResponse(
       },
       { maxAttempts: 2, baseDelayMs: 25, maxDelayMs: 100, operation: "load fulfillment appeal" },
     );
-  } catch {
-    return failureResponse(new AppError({ code: "DEPENDENCY_FAILED", message: "appeal read failed" }));
+  } catch (err) {
+    return failureResponse(new AppError({ code: "DEPENDENCY_FAILED", message: errorText(err) ?? "appeal read failed" }), { requestId: observation?.requestId });
   }
-  if (!appealOwnerResult.data) return failureResponse(new AppError({ code: "APPEAL_NOT_FOUND", message: "appeal not found" }));
+  if (!appealOwnerResult.data) return failureResponse(new AppError({ code: "APPEAL_NOT_FOUND", message: "appeal not found" }), { requestId: observation?.requestId });
 
   mark("scope");
   const scoped = deps.requireActiveVisibleUsers(auth, [appealOwnerResult.data.user_id]);
-  if (scoped) return failureResponse(new AppError({ code: "APPEAL_OUT_OF_SCOPE", message: "appeal out of scope" }));
+  if (scoped) return failureResponse(new AppError({ code: "APPEAL_OUT_OF_SCOPE", message: "appeal out of scope" }), { requestId: observation?.requestId });
 
   mark("review-rpc");
   const rpcResult = await deps.handleAppealRpc(auth, payload.data);
@@ -392,6 +410,7 @@ export async function buildHandleFulfillmentAppealResponse(
       employeeNotificationStatus: "skipped",
       todoStatus: "skipped",
       notificationMarked: null,
+      requestId: observation?.requestId,
     });
   }
 
@@ -409,6 +428,7 @@ export async function buildHandleFulfillmentAppealResponse(
       employeeNotificationStatus: "skipped",
       todoStatus: "skipped",
       notificationMarked: null,
+      requestId: observation?.requestId,
     });
   }
 
@@ -459,6 +479,7 @@ export async function buildHandleFulfillmentAppealResponse(
       notificationMarked,
       auditStatus,
       employeeNotificationStatus: "failed",
+      requestId: observation?.requestId,
     });
   }
 

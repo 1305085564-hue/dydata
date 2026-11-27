@@ -126,8 +126,12 @@ export async function syncModelsForKey(
     .eq("id", input.keyId)
     .single();
 
-  if (keyErr || !keyData) {
-    throw syncError(keyErr?.message || "密钥不存在", 404);
+  if (keyErr) {
+    if ((keyErr as { code?: string }).code === "PGRST116") throw syncError("密钥不存在", 404);
+    throw new Error(keyErr.message);
+  }
+  if (!keyData) {
+    throw syncError("密钥不存在", 404);
   }
 
   let provider = firstProvider((keyData as { provider?: ProviderInfo | ProviderInfo[] | null }).provider);
@@ -137,14 +141,14 @@ export async function syncModelsForKey(
       .select("name, base_url, protocol")
       .eq("id", (keyData as { provider_id: string }).provider_id)
       .single();
-    if (providerError) throw syncError(providerError.message);
+    if (providerError) throw new Error(providerError.message);
     provider = providerRow as ProviderInfo | null;
   }
   const { data: existingModels, error: existingError } = await supabase
     .from("ai_provider_key_models")
     .select("id, model_id, canonical_model_id, display_name, is_enabled")
     .eq("key_id", input.keyId);
-  if (existingError) throw syncError(existingError.message);
+  if (existingError) throw new Error(existingError.message);
 
   const existingRows = (existingModels ?? []) as ExistingModelRow[];
   const hasClientModelIds = Boolean(input.modelIds && input.modelIds.length > 0);
@@ -198,7 +202,7 @@ export async function syncModelsForKey(
     .from("ai_provider_key_models")
     .select("id, model_id, canonical_model_id, display_name, is_enabled")
     .eq("key_id", input.keyId);
-  if (finalModelsError) throw syncError(finalModelsError.message);
+  if (finalModelsError) throw new Error(finalModelsError.message);
 
   const finalModelRows = (finalModels ?? []) as ExistingModelRow[];
   // 撤下结果按事务后的真实剩余记录计算；数据库未撤下时如实报告 0，不假装已清。
@@ -216,7 +220,7 @@ export async function syncModelsForKey(
       .eq("is_enabled", true)
       .in("canonical_model_id", finalModelIds)
     : { data: [], error: null };
-  if (globalActiveError) throw syncError(globalActiveError.message);
+  if (globalActiveError) throw new Error(globalActiveError.message);
   const globalActiveModelIds = new Set(
     ((globalActiveModels ?? []) as Array<{ canonical_model_id: string }>).map((model) => model.canonical_model_id),
   );

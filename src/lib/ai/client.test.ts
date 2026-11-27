@@ -104,13 +104,12 @@ test("R3 实际 callAi 遇到模型 404 只记录可恢复模型故障", async (
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address() as AddressInfo;
 
-  const pkm = makePkmRow({ id: "supply-1", modelId: "model-x", keyPriority: 1, keyName: "key-1" });
+  const pkm = makePkmRow({ id: "supply-1", modelId: "model-x", keyName: "key-1" });
   (pkm.key as Array<{ provider: Array<{ base_url: string }> }>)[0].provider[0].base_url = `http://127.0.0.1:${address.port}/v1`;
   const db: FakeDb = {
     ai_feature_bindings: [{
       feature_key: "content_analysis",
       model_id: "model-x",
-      provider_key_model_id: null,
       system_prompt: null,
       is_enabled: true,
       lifecycle_state: "active",
@@ -265,7 +264,7 @@ test("feature config 只读 ai_feature_bindings，旧表数据不再参与", asy
     ai_feature_bindings: [
       {
         feature_key: "content_analysis",
-        provider_key_model_id: "pkm-new",
+        model_id: "model-new",
         system_prompt: "新版提示词",
         is_enabled: true,
       },
@@ -286,7 +285,7 @@ test("feature config 只读 ai_feature_bindings，旧表数据不再参与", asy
   try {
     const config = await __internal.getFeatureConfigForTests("content_analysis");
 
-    assert.equal(config?.providerKeyModelId, null);
+    assert.equal(config?.modelId, "model-new");
     assert.equal(config?.systemPrompt, "新版提示词");
   } finally {
     __internal.setServiceClientForTests(null);
@@ -355,12 +354,12 @@ test("数据库业务没有选中模型时，不从providerKeyModelId或环境�
   process.env.AI_CHANNELS_ENABLED = "true";
   __internal.setServiceClientForTests(createFakeService({
     ai_feature_bindings: [
-      { feature_key: "content_analysis", model_id: null, provider_key_model_id: "legacy-provider-model", system_prompt: null, is_enabled: true },
-      { feature_key: "default", model_id: null, provider_key_model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "content_analysis", model_id: null, system_prompt: null, is_enabled: true },
+      { feature_key: "default", model_id: null, system_prompt: null, is_enabled: true },
     ],
     ai_provider_key_models: [
-      makePkmRow({ id: "unselected", modelId: "other-model", keyPriority: 1, keyName: "key-a" }),
-      makePkmRow({ id: "legacy-provider-model", modelId: "other-model", keyPriority: 1, keyName: "key-b" }),
+      makePkmRow({ id: "unselected", modelId: "other-model", keyName: "key-a" }),
+      makePkmRow({ id: "legacy-provider-model", modelId: "other-model", keyName: "key-b" }),
     ],
   }));
 
@@ -400,7 +399,7 @@ test("正式功能被归档后会在运行时阻断，不会继续使用旧映�
     ai_feature_bindings: [
       {
         feature_key: "content_analysis",
-        provider_key_model_id: "pkm-1",
+        model_id: "model-1",
         system_prompt: "旧配置仍在",
         is_enabled: false,
         lifecycle_state: "archived",
