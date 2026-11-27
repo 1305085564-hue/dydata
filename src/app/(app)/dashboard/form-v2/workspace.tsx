@@ -103,7 +103,7 @@ export function FormV2Workspace(props: FormV2WorkspaceProps) {
   return (
     <div className="space-y-5">
       {videoFieldsEnabled !== false && (
-      <div ref={slotsSectionRef} className="space-y-2">
+      <div ref={slotsSectionRef} data-submit-anchor="slots" className="space-y-2">
         <截图槽位区
           slots={slots}
           onSelectFile={handleSlotUpload}

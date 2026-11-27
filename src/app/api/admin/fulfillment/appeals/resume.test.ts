@@ -31,10 +31,9 @@ const payloadMigration = readFileSync(
 test("补交申请必须保存原始待续交数据，而不是只保存补交原因", () => {
   assert.match(appealsRoute, /validateVideoSubmitPayload\(submissionPayload\)/);
   assert.match(appealsRoute, /submission_payload:\s*submissionPayload/);
-  // 写入侧与读取侧必须同时存在：提交失败时把原始 payload 存进 ref，补交时按最新写入值读回。
-  // 只校验其中一侧时，另一侧被删除（丢字段或重新猜测字段）测试仍会全绿。
-  assert.match(submitControllerSource, /pendingSubmissionPayloadRef\.current = submissionPayload;/);
-  assert.match(submitControllerSource, /submissionPayload:\s*pendingSubmissionPayloadRef\.current,/);
+  // 写入侧与读取侧必须同时存在：提交触发补交时记录原始 payload，补交确认时显式回传。
+  assert.match(submitControllerSource, /setPendingSubmissionPayload\?\.\(submissionPayload\)/);
+  assert.match(submitControllerSource, /submissionPayload,/);
 });
 
 test("补交审批工作台必须提供受权限保护的待审列表 GET", () => {

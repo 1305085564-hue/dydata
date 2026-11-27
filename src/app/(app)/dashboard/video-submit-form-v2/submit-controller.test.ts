@@ -126,3 +126,53 @@ test("服务端返回补交门禁时一次提交就打开申请框并停止错�
     else (globalThis as { window?: unknown }).window = originalWindow;
   }
 });
+
+test("补交确认支持显式传入 submissionPayload 实参而不依赖 ref", async () => {
+  const originalFetch = globalThis.fetch;
+  const capturedBodies: Array<Record<string, unknown>> = [];
+  globalThis.fetch = async (_url, init) => {
+    capturedBodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    return new Response(JSON.stringify({ appeal: { id: "appeal-explicit-1" } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  try {
+    const controller = createSubmitController({
+      account: { id: "account-1" },
+      userId: "user-1",
+      mode: "create",
+      today: "2026-11-16",
+      workflow: createWorkflow(),
+      editDetail: null,
+      selectedTopicId: null,
+      initialTopicId: null,
+      supabase: { auth: { getUser: async () => ({ data: { user: { id: "user-1" } } }) } },
+      pendingSubmissionPayload: null,
+      setPendingSubmissionPayload: () => undefined,
+      setIsSubmitting: () => undefined,
+      setAppealRequired: () => undefined,
+      setAppealStatus: () => undefined,
+      setAppealId: () => undefined,
+      setAppealResultReason: () => undefined,
+      setAppealReason: () => undefined,
+      setIsSubmitted: () => undefined,
+      setSubmittedReportId: () => undefined,
+      setSubmittedReportDate: () => undefined,
+      setSubmittedVideoId: () => undefined,
+      setIsAppealDialogOpen: () => undefined,
+      setIsAppealSubmitting: () => undefined,
+      isAppealSubmitting: false,
+      appealReason: "手工补交",
+      onSubmitted: () => undefined,
+      clearDraft: () => undefined,
+      pauseDraftSaving: () => undefined,
+      scrollToIssueAnchor: () => undefined,
+    });
+
+    await controller.handleConfirmAppeal({ mode: "create", video_title: "显式传入标题" });
+    assert.deepEqual(capturedBodies[0]?.submissionPayload, { mode: "create", video_title: "显式传入标题" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

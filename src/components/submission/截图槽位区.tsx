@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Trash2, Eye, RefreshCw, Loader2, Image as ImageIcon } from "lucide-react";
+import { Trash2, Eye, RefreshCw, Loader2, Image as ImageIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { extractClipboardImageFiles } from "./截图粘贴";
 import { ScreenshotInspector } from "./截图检视器";
 import { getUploadProgress } from "@/lib/video-submit-workflow/upload-progress";
+import {
+  isCloudRestoredSlotImage,
+  markCloudSlotImageFailed,
+  markCloudSlotImageLoaded,
+  resolveCloudSlotImageEntry,
+  retryCloudSlotImageLoad,
+  type CloudSlotImageStateMap,
+} from "./cloud-slot-image-state";
 
 interface SubmissionSlotsProps {
   slots: Record<
@@ -93,6 +101,10 @@ export function SubmissionSlotsSection({
     screenshot_1: null,
     screenshot_2: null,
   });
+  const [cloudImageStates, setCloudImageStates] = useState<CloudSlotImageStateMap>({
+    screenshot_1: null,
+    screenshot_2: null,
+  });
 
   const [now, setNow] = useState(() => Date.now());
   const hasActiveSlots = Object.values(slots).some(
@@ -105,18 +117,13 @@ export function SubmissionSlotsSection({
   }, [hasActiveSlots]);
   const uploadProgress = getUploadProgress(slots, now);
 
-  const handleImplicitFiles = (files: File[]) => {
-    if (files.length === 0) return;
-    onUploadFiles(files);
-  };
-
   useEffect(() => {
     const handleDocumentPaste = (event: ClipboardEvent) => {
       if (event.defaultPrevented) return;
       const files = extractClipboardImageFiles(event.clipboardData?.items);
       if (files.length === 0) return;
       event.preventDefault();
-      handleImplicitFiles(files);
+      onUploadFiles(files);
     };
     document.addEventListener("paste", handleDocumentPaste);
     return () => document.removeEventListener("paste", handleDocumentPaste);
@@ -138,7 +145,8 @@ export function SubmissionSlotsSection({
         e.preventDefault();
         setIsDragOverGlobal(false);
         setDragOverRole(null);
-        handleImplicitFiles(extractImageFiles(e.dataTransfer.files));
+        const files = extractImageFiles(e.dataTransfer.files);
+        if (files.length > 0) onUploadFiles(files);
       }}
       className="flex h-[136px] flex-col"
     >
@@ -213,8 +221,13 @@ export function SubmissionSlotsSection({
               needsAction;
             const elapsed = Math.max(1, Math.round((uploadProgress[item.role]?.elapsedMs ?? 0) / 1000));
             const isLongWaiting = Boolean(uploadProgress[item.role]?.isLongWaiting);
+            const isCloudRestored = isCloudRestoredSlotImage(slot);
+            const cloudSrc = isCloudRestored ? slot.assetUrl! : null;
+            const cloudEntry = isCloudRestored ? resolveCloudSlotImageEntry(cloudImageStates[item.role], cloudSrc) : null;
+            const isCloudLoading = Boolean(cloudEntry && cloudEntry.phase === "loading");
+            const isCloudFailed = Boolean(cloudEntry && cloudEntry.phase === "failed");
 
-            const statusText = isUploading
+            const baseStatusText = isUploading
               ? "上传中…"
               : isRecognizing
                 ? isLongWaiting
@@ -227,6 +240,11 @@ export function SubmissionSlotsSection({
                     : isWarning
                       ? slot.error ? `${slot.error} · 请核对下方数字` : "已识别，有几项请核对"
                       : "已识别";
+            const statusText = isCloudFailed
+              ? "来自云端 · 加载失败，请重试或重新上传"
+              : isCloudLoading
+                ? "来自云端 · 正在加载截图…"
+                : baseStatusText;
 
             return (
               <div
@@ -270,8 +288,10 @@ export function SubmissionSlotsSection({
                     : "border-[#E2E2DF] bg-white hover:border-[#78716C]/60",
                   dragOverRole === item.role && "border-[#78716C] bg-[#EBEBE9]",
                   focusedRole === item.role && "border-[#78716C]/80 bg-[#F7F7F6]",
-                  isError && "border-status-danger/40 bg-status-danger/[0.04]",
+                  (isError || isCloudFailed) && "border-status-danger/40 bg-status-danger/[0.04]",
                 )}
+                data-cloud-image-loading={isCloudLoading ? "1" : undefined}
+                data-cloud-image-failed={isCloudFailed ? "1" : undefined}
               >
                 <input
                   ref={(el) => {
@@ -305,12 +325,23 @@ export function SubmissionSlotsSection({
                     aria-label={`同屏核对${item.title}原图`}
                   >
                     <ScreenshotImage
+                      key={cloudEntry ? `${cloudEntry.src}:${cloudEntry.reloadSeq}` : (slot.assetUrl || slot.previewUrl)!}
                       src={(slot.assetUrl || slot.previewUrl)!}
                       alt={item.title}
                       variant="thumb"
                       className="h-full w-full object-cover"
+                      onLoad={() => {
+                        if (cloudSrc) {
+                          setCloudImageStates((current) => markCloudSlotImageLoaded(current, item.role, cloudSrc));
+                        }
+                      }}
+                      onError={() => {
+                        if (cloudSrc) {
+                          setCloudImageStates((current) => markCloudSlotImageFailed(current, item.role, cloudSrc));
+                        }
+                      }}
                     />
-                    {isProcessing ? (
+                    {isProcessing || isCloudLoading ? (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[0.5px]">
                         <Loader2 className="size-4 animate-spin text-white" />
                       </span>
@@ -331,7 +362,7 @@ export function SubmissionSlotsSection({
                   <div
                     className={cn(
                       "text-[12px] truncate",
-                      isError ? "text-status-danger" : isWarning || slot.ocrFallback ? "text-status-warning-text" : "text-[#78716C]",
+                      isError || isCloudFailed ? "text-status-danger" : isWarning || slot.ocrFallback ? "text-status-warning-text" : "text-[#78716C]",
                     )}
                     title={slot.error ?? undefined}
                   >
@@ -347,10 +378,38 @@ export function SubmissionSlotsSection({
                   <div
                     className={cn(
                       "flex shrink-0 items-center gap-1 transition-opacity",
-                      // 识别出问题时「重新识别 / 手动填」就是下一步，常显；正常时只剩删除，平时隐藏
-                      !needsAction && "sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+                      // 识别出问题或云端图加载失败时，操作按钮常显；正常时只剩删除，平时隐藏
+                      !(needsAction || isCloudFailed) && "sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
                     )}
                   >
+                    {isCloudFailed && cloudSrc && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCloudImageStates((current) => retryCloudSlotImageLoad(current, item.role, cloudSrc));
+                          }}
+                          aria-label={`重试加载${item.shortTitle}`}
+                          className="inline-flex min-h-[44px] sm:min-h-0 h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
+                        >
+                          <RefreshCw className="size-3" />
+                          重试加载
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            slotInputRefs.current[item.role]?.click();
+                          }}
+                          aria-label={`重新上传${item.shortTitle}`}
+                          className="inline-flex min-h-[44px] sm:min-h-0 h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] cursor-pointer"
+                        >
+                          <Upload className="size-3" />
+                          重传
+                        </button>
+                      </>
+                    )}
                     {canRetry && (
                       <button
                         type="button"

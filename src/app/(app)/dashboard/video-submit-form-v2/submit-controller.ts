@@ -21,7 +21,9 @@ export type SubmitControllerOptions = {
   workflow: SubmissionWorkflowState;
   editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; topicTitle?: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
-  pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
+  pendingSubmissionPayload?: Record<string, unknown> | null;
+  setPendingSubmissionPayload?: Setter<Record<string, unknown> | null>;
+  pendingSubmissionPayloadRef?: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setAppealStatus: Setter<"idle" | "pending" | "resume_pending" | "approved" | "rejected">; setAppealId: Setter<string | null>; setAppealResultReason: Setter<string | null>; setAppealReason: Setter<string>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
   onSubmitted: (
@@ -39,7 +41,7 @@ export type SubmitControllerOptions = {
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setAppealStatus, setAppealId, setAppealResultReason, setAppealReason, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, pauseDraftSaving, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayload, setPendingSubmissionPayload, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setAppealStatus, setAppealId, setAppealResultReason, setAppealReason, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, pauseDraftSaving, scrollToIssueAnchor } = options;
   const { meta, fields, slots, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
@@ -170,7 +172,10 @@ export function createSubmitController(options: SubmitControllerOptions) {
       const payload = (await response.json()) as SubmitResponse | Video;
       if (!response.ok) {
         if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
-          pendingSubmissionPayloadRef.current = submissionPayload;
+          setPendingSubmissionPayload?.(submissionPayload);
+          if (pendingSubmissionPayloadRef) {
+            pendingSubmissionPayloadRef.current = submissionPayload;
+          }
           setAppealRequired(true);
           setAppealReason(
             payload.reason === "manual_published_at"
@@ -251,9 +256,13 @@ export function createSubmitController(options: SubmitControllerOptions) {
     setIsAppealDialogOpen(true);
   }
 
-  async function handleConfirmAppeal() {
+  async function handleConfirmAppeal(explicitSubmissionPayload?: Record<string, unknown> | null) {
     if (!account || isAppealSubmitting) return;
     const reason = appealReason.trim() || VIDEO_SUBMIT_EXPIRED_APPEAL_REASON;
+    const submissionPayload =
+      explicitSubmissionPayload !== undefined
+        ? explicitSubmissionPayload
+        : (pendingSubmissionPayload ?? pendingSubmissionPayloadRef?.current ?? null);
     setIsAppealSubmitting(true);
     try {
       const response = await fetch("/api/admin/fulfillment/appeals", {
@@ -263,7 +272,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
           accountId: account.id,
           recordDate: meta.bizDate,
           reason,
-          submissionPayload: pendingSubmissionPayloadRef.current,
+          submissionPayload,
         }),
       });
       const payload = (await response.json()) as { error?: string; appeal?: { id?: string }; appealId?: string };

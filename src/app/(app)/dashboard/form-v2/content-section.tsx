@@ -31,7 +31,7 @@ export function FormV2ContentSection({
 }: FormV2ContentSectionProps) {
   const showMissing = hasAttemptedSubmit && contentMissing;
   return (
-    <div ref={metaSectionRef} className="space-y-2">
+    <div ref={metaSectionRef} data-submit-anchor="meta" className="space-y-2">
       <div className="flex h-7 items-center justify-between gap-2 px-2">
         <Label htmlFor="content" className="flex min-w-0 items-baseline gap-2 font-normal">
           <span className="text-[14px] text-[#1F1E1D]">文案</span>
