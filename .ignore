@@ -1,1 +1,6 @@
+# 默认跳过历史归档（查历史用 rg --no-ignore）
 docs/archive/
+
+# 高噪音大文件：体积大、几乎不参与阅读，不影响构建/测试/门禁
+package-lock.json
+supabase/migration-ledger-exceptions.json

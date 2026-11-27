@@ -79,6 +79,8 @@ wrangler.jsonc.*.bak
 output/
 video-intro/out/
 .claude/*
+# 团队共享的 Claude Code 权限配置要入库（settings.local.json、*.bak、worktrees 仍忽略）
+!.claude/settings.json
 .workbuddy/
 .claude-cache/
 .trae/

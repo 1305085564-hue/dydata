@@ -1,6 +1,16 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions"
+    "defaultMode": "bypassPermissions",
+    "deny": [
+      "Read(.env)",
+      "Edit(.env)",
+      "Read(.env.local)",
+      "Edit(.env.local)",
+      "Read(.env.*.local)",
+      "Edit(.env.*.local)",
+      "Read(package-lock.json)",
+      "Edit(package-lock.json)"
+    ]
   },
   "enabledPlugins": {
     "financial-analysis@financial-services-plugins": false,
