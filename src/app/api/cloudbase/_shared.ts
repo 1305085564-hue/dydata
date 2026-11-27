@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { isTrustedWrite } from "@/lib/csrf";
 
-import { isCloudBaseInactiveAccountError, validateCloudBaseSession } from "@/lib/cloudbase/auth";
+import { getCloudBaseInactiveAccountMessage, isCloudBaseInactiveAccountError, validateCloudBaseSession } from "@/lib/cloudbase/auth";
 import { CloudBaseAuthError } from "@/lib/cloudbase/core";
 import {
   CLOUD_BASE_SESSION_COOKIE,
@@ -55,8 +55,8 @@ export function inactiveCloudBaseAccountResponse(
     operation: "verify-active-account",
     request,
     status: 401,
-    message: error.message,
-    error: error.message,
+    message: getCloudBaseInactiveAccountMessage(error.code),
+    error,
     extraFields: { code: error.code },
   });
   response.headers.set("Cache-Control", "no-store");

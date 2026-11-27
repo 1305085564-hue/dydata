@@ -1,5 +1,6 @@
 "use client";
 
+import { getAdminExemptionCategoryLabel } from "@/lib/exemption-category";
 import { Check, ExternalLink, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { listItemMotion } from "@/lib/animations";
@@ -78,7 +79,7 @@ function ExemptionBody({
   onApproveDay,
 }: QueueItemProps & { item: Extract<ApprovalQueueItem, { kind: "exemption" }>; rejectingThis: RejectScope | null }) {
   const { group } = item;
-  const kind = group.nature === "leave" ? "请假" : "免交";
+  const kind = getAdminExemptionCategoryLabel(group.nature);
   const span = group.isPermanent ? `长期${kind}` : `${kind} ${group.dayCount} 天`;
   const monthContext = getMonthContext(group);
   const multiDay = group.dailyItems.length > 1;

@@ -17,6 +17,11 @@ const INACTIVE_ACCOUNT_ERRORS = {
   missing: ["account_missing", "账号资料不存在，请联系管理员"],
 } as const;
 
+/** 仅返回本地定义的账号状态提示，网关错误正文不能作为页面文案。 */
+export function getCloudBaseInactiveAccountMessage(code: string): string {
+  return Object.values(INACTIVE_ACCOUNT_ERRORS).find(([knownCode]) => knownCode === code)?.[1] ?? "账号暂不可用，请联系管理员";
+}
+
 export function isCloudBaseInactiveAccountError(error: unknown): error is CloudBaseAuthError {
   return error instanceof CloudBaseAuthError && Object.values(INACTIVE_ACCOUNT_ERRORS).some(([code]) => error.code === code);
 }

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       route: "/api/notifications/cleanup",
       operation: "cleanup-expired-notifications",
       request,
-      error: error.message,
+      error,
     });
   }
 

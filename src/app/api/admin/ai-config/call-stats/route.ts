@@ -25,7 +25,7 @@ export async function buildCallStatsResponse(
       route: "/api/admin/ai-config/call-stats",
       operation: "load-call-stats",
       request,
-      error: error.message,
+      error,
     });
   }
 

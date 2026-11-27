@@ -75,7 +75,10 @@ export async function validateEditSubmissionBinding(
   adapter: EditBindingDbAdapter,
 ): Promise<EditBindingResult> {
   const { data: videos, error: videoError } = await adapter.loadVideoById(input.videoId);
-  if (videoError) return { ok: false, status: 500, error: videoError.message };
+  if (videoError) {
+    console.error("[video-submit/edit-binding] load-video", videoError);
+    return { ok: false, status: 500, error: "加载原视频失败，请稍后重试" };
+  }
 
   // 其他用户的视频统一返回 404，不泄露记录是否存在
   if (!videos?.length || videos[0].user_id !== input.userId) {
@@ -90,7 +93,10 @@ export async function validateEditSubmissionBinding(
     return { ok: false, status: 409, error: "编辑视频与提交账号不一致" };
   }
   const { data: reports, error: reportError } = await adapter.loadDailyReportsByAccountAndDate(input.accountId, input.bizDate);
-  if (reportError) return { ok: false, status: 500, error: reportError.message };
+  if (reportError) {
+    console.error("[video-submit/edit-binding] load-report", reportError);
+    return { ok: false, status: 500, error: "加载原日报失败，请稍后重试" };
+  }
   if (!reports?.length) {
     return { ok: false, status: 404, error: "该账号该日期没有可编辑的日报" };
   }
@@ -117,7 +123,10 @@ export async function validateEditSubmissionBinding(
   }
 
   const { data: snapshots, error: snapshotError } = await adapter.load24hSnapshotsByVideoId(input.videoId);
-  if (snapshotError) return { ok: false, status: 500, error: snapshotError.message };
+  if (snapshotError) {
+    console.error("[video-submit/edit-binding] load-snapshot", snapshotError);
+    return { ok: false, status: 500, error: "加载原视频快照失败，请稍后重试" };
+  }
   if (!snapshots?.length) {
     return { ok: false, status: 422, error: "原视频缺少24h快照，已停止编辑以避免覆盖历史数据" };
   }

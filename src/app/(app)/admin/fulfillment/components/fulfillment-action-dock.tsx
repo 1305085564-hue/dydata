@@ -1,5 +1,6 @@
 "use client";
 
+import { getEmployeeExemptionCategoryLabel } from "@/lib/exemption-category";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CalendarX, FileClock, Plane } from "lucide-react";
@@ -290,7 +291,7 @@ export function FulfillmentActionDock({
                   <InitialAvatar name={member.userName} />
                   <span className="text-[#141413]">{member.userName}</span>
                   <span className="text-[12px] tabular-nums text-[#78716C]">
-                    {request.exemption_type === "leave" ? "请假" : "免交"} {span}
+                    {getEmployeeExemptionCategoryLabel(request.exemption_type)} {span}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[#1F1E1D]" title={request.reason ?? undefined}>
                     {request.reason || ""}

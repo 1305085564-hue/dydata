@@ -48,6 +48,11 @@ import {
   type OrphanMutationContext,
 } from "@/lib/admin-actions-helpers";
 
+function adminActionFailure(operation: string, message: string, error: unknown): { error: string } {
+  console.error(`[admin-actions] ${operation}`, error);
+  return { error: message };
+}
+
 type AdminWriteSupabase = Awaited<ReturnType<typeof createClient>>;
 
 /**
@@ -71,7 +76,11 @@ async function recordAdminAudit(entry: {
     target: entry.target,
     detail: entry.detail ?? null,
   });
-  return result.ok ? { ok: true } : { ok: false, message: result.message };
+  if (!result.ok) {
+    console.error("[admin-actions] write-audit", result.message);
+    return { ok: false, message: "审计留档失败" };
+  }
+  return { ok: true };
 }
 
 /** 审计失败且这次写操作回不去：明确承认「已生效」，不伪装成功也不伪装失败。 */
@@ -199,7 +208,7 @@ export async function reviewExemptionRequest(input: {
     .select("id, applicant_user_id, request_status")
     .eq("id", input.requestId)
     .maybeSingle();
-  if (requestError) return { error: requestError.message };
+  if (requestError) return adminActionFailure("review-exemption-request", "加载豁免申请失败，请稍后重试", requestError);
   if (!requestRow) return { error: "豁免申请不存在" };
   if (!hasActiveScopeAccess(scope, requestRow.applicant_user_id)) {
     return { error: "不能操作已归档或当前管理范围外的成员" };
@@ -210,7 +219,7 @@ export async function reviewExemptionRequest(input: {
     requestId: input.requestId,
     decision: input.decision,
   });
-  if (!result.ok) return { error: result.message };
+  if (!result.ok) return adminActionFailure("review-exemption-request", result.message, result.cause);
 
   const audit = await recordAdminAudit({
     supabase,
@@ -246,7 +255,7 @@ export async function updateMemberTeam(
     .from("profiles")
     .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
-  if (profileError) return { error: profileError.message };
+  if (profileError) return adminActionFailure("update-member-team", "加载成员资料失败，请稍后重试", profileError);
 
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
@@ -551,7 +560,7 @@ export async function resetMemberPassword(
     .from("profiles")
     .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
-  if (profileError) return { error: profileError.message };
+  if (profileError) return adminActionFailure("reset-member-password", "加载成员资料失败，请稍后重试", profileError);
 
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
@@ -576,7 +585,7 @@ export async function resetMemberPassword(
   const { error } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
     password: normalizedPassword,
   });
-  if (error) return { error: error.message };
+  if (error) return adminActionFailure("reset-member-password", "重置密码失败，请稍后重试", error);
 
   const audit = await recordAdminAudit({
     supabase,
@@ -611,7 +620,7 @@ export async function changeRole(
     .from("profiles")
     .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
-  if (profileError) return { error: profileError.message };
+  if (profileError) return adminActionFailure("change-member-role", "加载成员资料失败，请稍后重试", profileError);
 
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
@@ -649,7 +658,7 @@ export async function changeRole(
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) return adminActionFailure("change-member-role", "修改角色失败，请稍后重试", error);
   if (!isProfileWriteApplied(updatedProfile)) return { error: "角色更新未生效，请刷新后重试" };
 
   const { data: rereadProfile, error: rereadError } = await adminSupabase
@@ -658,7 +667,7 @@ export async function changeRole(
     .eq("id", targetUserId)
     .single();
   if (rereadError || !rereadProfile) {
-    return { error: rereadError?.message ?? "角色更新复读失败，请刷新后重试" };
+    return adminActionFailure("reread-member-role", "角色更新复读失败，请刷新后重试", rereadError);
   }
   const rereadRole = resolveProfileCompanyRole(rereadProfile.role, rereadProfile.company_role);
   if (
@@ -714,7 +723,7 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
     })
     .select("id, name")
     .single();
-  if (error) return { error: error.message };
+  if (error) return adminActionFailure("create-team", "创建团队失败，请稍后重试", error);
 
   const supabase = await createClient();
   const audit = await recordAdminAudit({
@@ -757,13 +766,13 @@ export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
     .select("id")
     .eq("team_id", teamId)
     .limit(1);
-  if (membersError) return { error: membersError.message };
+  if (membersError) return adminActionFailure("delete-team-members", "加载团队成员失败，请稍后重试", membersError);
   if (members && members.length > 0) return { error: "该团队下还有成员，无法删除" };
 
   const { data: team } = await adminSupabase.from("teams").select("name").eq("id", teamId).single();
 
   const { error } = await adminSupabase.from("teams").delete().eq("id", teamId);
-  if (error) return { error: error.message };
+  if (error) return adminActionFailure("delete-team", "删除团队失败，请稍后重试", error);
 
   const supabase = await createClient();
   const audit = await recordAdminAudit({

@@ -95,7 +95,7 @@ async function handleVideoSubmit(
     .eq("id", userId)
     .single();
   if (profileError) {
-    return videoSubmitErrorResponse(request, observation?.requestId, "load-submitter-profile", profileError.message);
+    return videoSubmitErrorResponse(request, observation?.requestId, "load-submitter-profile", profileError);
   }
   const membershipResponse = resolveVideoSubmitMembershipResponse(profile);
   if (membershipResponse) return membershipResponse;
@@ -243,7 +243,7 @@ async function handleVideoSubmit(
       .eq("id", submissionVideoId)
       .maybeSingle();
     if (existingVideoError) {
-      return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-video", existingVideoError.message);
+      return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-video", existingVideoError);
     }
     if (fetchedVideo && fetchedVideo.user_id !== userId) {
       return NextResponse.json({ error: "视频记录已被其他成员占用" }, { status: 409 });
@@ -269,7 +269,8 @@ async function handleVideoSubmit(
     try {
       await restoreVideoSubmission(submissionVideoId, userId, deps.createAdminClient);
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "视频记录恢复失败" }, { status: 500 });
+      console.error("[video-submit] restore-video", error);
+      return NextResponse.json({ error: "视频记录恢复失败，请稍后重试" }, { status: 500 });
     }
   }
 
@@ -296,12 +297,11 @@ async function handleVideoSubmit(
       .select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT)
       .single()
     : supabase.from("videos").insert(videoPayload).select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT).single(), rollbackAndMark);
-  const persistedVideo = videoStep.ok ? videoStep.data : null;
-  const videoError = videoStep.ok ? null : videoStep.error;
-  if (videoError || !persistedVideo) {
-    return NextResponse.json({ error: videoError instanceof Error ? videoError.message : "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
+  if (!videoStep.ok || !videoStep.data) {
+    console.error("[video-submit] persist-video", videoStep.ok ? null : videoStep.error);
+    return NextResponse.json({ error: "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
   }
-
+  const persistedVideo = videoStep.data;
   const snapshotPayload = buildSnapshotPayload(normalized, persistedVideo.id);
   const { data: queriedSnapshot, error: existingSnapshotError } = editBinding && editBinding.ok
     ? { data: editBinding.snapshot24h, error: null }
@@ -314,7 +314,7 @@ async function handleVideoSubmit(
   if (existingSnapshotError) {
     const rbErr = await rollbackAndMark();
     if (rbErr) console.error("[video-submit] rollback failed", rbErr);
-    return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-snapshot", existingSnapshotError.message);
+    return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-snapshot", existingSnapshotError);
   }
 
   const preservedSnapshotPayload = mergePreservedEditSnapshotFields(normalized.mode, snapshotPayload, editBinding && editBinding.ok ? editBinding.snapshot24h : null);
@@ -375,12 +375,10 @@ async function handleVideoSubmit(
   const snapshotStep = await runSubmissionPersistenceStep("snapshot", async () => existingSnapshot
     ? await supabase.from("video_metrics_snapshots").update(effectiveSnapshotPayload).eq("id", existingSnapshot.id).select(submitResponseFields.SNAPSHOT_WRITE_SELECT).single()
     : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(submitResponseFields.SNAPSHOT_WRITE_SELECT).single(), rollbackAndMark);
-  const persistedSnapshot = snapshotStep.ok ? snapshotStep.data : null;
-  const snapshotError = snapshotStep.ok ? null : snapshotStep.error;
-  if (snapshotError || !persistedSnapshot) {
-    return NextResponse.json({ error: snapshotError instanceof Error ? snapshotError.message : "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
+  if (!snapshotStep.ok || !snapshotStep.data) {
+    console.error("[video-submit] persist-snapshot", snapshotStep.ok ? null : snapshotStep.error);
+    return NextResponse.json({ error: "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
   }
-
   const dailyReportPayload = buildDailyReportPayload({ normalized, videoId: persistedVideo.id, userId, submitter, nowIso, assigneeColumns, existingVideo });
   const existingReport = resolveDailyReportSubmissionTarget({ mode: normalized.mode, editBinding }).existingReport;
   if (editBinding && editBinding.ok && !existingReport) {
@@ -394,11 +392,11 @@ async function handleVideoSubmit(
   const reportStep = await runSubmissionPersistenceStep("report", async () => existingReport
     ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single()
     : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single(), rollbackAndMark);
-  const persistedReport = reportStep.ok ? reportStep.data : null;
-  const dailyReportError = reportStep.ok ? null : reportStep.error;
-  if (dailyReportError || !persistedReport) {
-    return NextResponse.json({ error: dailyReportError instanceof Error ? dailyReportError.message : "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
+  if (!reportStep.ok || !reportStep.data) {
+    console.error("[video-submit] persist-report", reportStep.ok ? null : reportStep.error);
+    return NextResponse.json({ error: "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
   }
+  const persistedReport = reportStep.data;
 
   if (existingReport) {
     rollbackActions.push(async () => {
@@ -423,7 +421,8 @@ async function handleVideoSubmit(
   if (!tagResult.ok) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
-    return NextResponse.json({ error: tagResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
+    console.error("[video-submit] persist-tags", tagResult.error);
+    return NextResponse.json({ error: "保存作品标签失败，请稍后重试", code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
 
   const dataSource = resolveDailyReportDataSource({
@@ -436,7 +435,8 @@ async function handleVideoSubmit(
   if (dataSourceError) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
-    return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}`, code: SUBMISSION_PERSISTENCE_ERROR_CODES.source }, { status: 500 });
+    console.error("[video-submit] persist-source", dataSourceError);
+    return NextResponse.json({ error: "保存日报来源失败，请稍后重试", code: SUBMISSION_PERSISTENCE_ERROR_CODES.source }, { status: 500 });
   }
 
   if (screenshotReplacementHistoryRows.length) {

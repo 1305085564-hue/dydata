@@ -307,6 +307,7 @@ export async function toggleTopicLibrary(
     }
     // 应用先于 migration 发布时兼容旧库；其他 RPC 错误不能伪装成功。
     if (error.code !== "PGRST202" && error.code !== "42883") {
+      console.error("[topics-library] toggle-topic-library-rpc", error);
       return { ok: false, status: 500, message: "选题库状态更新失败" };
     }
   }
@@ -316,7 +317,10 @@ export async function toggleTopicLibrary(
     .select("id, title, library_status, removed_at, removed_by")
     .eq("id", input.subTopicId)
     .maybeSingle();
-  if (existingError) return { ok: false, status: 500, message: existingError.message };
+  if (existingError) {
+    console.error("[topics-library] load-toggle-topic", existingError);
+    return { ok: false, status: 500, message: "查询选题失败" };
+  }
   const existingRow = existing as { id: string; title: string | null; library_status: string } | null;
   if (!existingRow) return { ok: false, status: 404, message: "选题不存在" };
   const previousState = {
@@ -341,7 +345,10 @@ export async function toggleTopicLibrary(
     .eq("id", input.subTopicId)
     .select("id, title, library_status, removed_at, removed_by")
     .single();
-  if (updateError) return { ok: false, status: 500, message: updateError.message };
+  if (updateError) {
+    console.error("[topics-library] update-toggle-topic", updateError);
+    return { ok: false, status: 500, message: "选题库状态更新失败" };
+  }
 
   const { error: auditError } = await supabase.from("audit_logs").insert({
     user_id: input.actorId,

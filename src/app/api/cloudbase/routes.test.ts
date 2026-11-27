@@ -9,8 +9,8 @@ import { POST as signin } from "./auth/signin/route";
 import { POST as refresh } from "./auth/refresh/route";
 import { POST as signout } from "./auth/signout/route";
 import { GET as getUser } from "./auth/user/route";
-import { CLOUD_BASE_SESSION_COOKIE, serializeCloudBaseSession } from "@/lib/cloudbase/core";
-import { isTrustedCloudBaseWrite } from "./_shared";
+import { CloudBaseAuthError, CLOUD_BASE_SESSION_COOKIE, serializeCloudBaseSession } from "@/lib/cloudbase/core";
+import { inactiveCloudBaseAccountResponse, isTrustedCloudBaseWrite } from "./_shared";
 
 const oldFetch = globalThis.fetch;
 
@@ -159,4 +159,20 @@ test("same-origin sign-in returns user only in JSON and logout clears the HttpOn
     assert.match(logoutResponse.headers.get("set-cookie") ?? "", /shot_grant=;/);
     assert.match(logoutResponse.headers.get("set-cookie") ?? "", /Path=\/api\/submission-screenshots/);
   } finally { globalThis.fetch = oldFetch; }
+});
+
+test("账号状态提示只取可信本地文案，网关原文仅留服务端", async () => {
+  const original = console.error;
+  const logs: string[] = [];
+  console.error = (...args: unknown[]) => { logs.push(args.map(String).join(" ")); };
+  try {
+    const response = inactiveCloudBaseAccountResponse(new CloudBaseAuthError(401, "account_archived", "database private-host error"));
+    assert.ok(response);
+    assert.equal(response.status, 401);
+    const body = await response.json();
+    assert.equal(body.code, "account_archived");
+    assert.match(body.error, /^账号已归档，请联系 owner 恢复/);
+    assert.doesNotMatch(JSON.stringify(body), /private-host|database/);
+    assert.match(logs[0], /database private-host error/);
+  } finally { console.error = original; }
 });

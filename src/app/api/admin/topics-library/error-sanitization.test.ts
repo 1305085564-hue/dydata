@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import { handleTopicsLibraryImportConfirm } from "./import/confirm/route";
 import { handleTopicsLibraryImportParse } from "./import/parse/route";
 import { handleTopicsLibraryEvaluate } from "./evaluate/route";
+import { handleTopicsLibraryToggle } from "./toggle/route";
 import { handleTopicsLibraryFeishuUrlPost } from "./feishu-url/route";
 
 const VALID_ID = "123e4567-e89b-42d3-a456-426614174000";
@@ -132,4 +133,37 @@ test("topics-library 四处写接口失败时不透传原始库错误，返回�
   } finally {
     console.error = originalError;
   }
+});
+
+test("选题库状态更新区分业务拒绝与服务失败，底层错误仅留服务端", async () => {
+  const original = console.error;
+  const logs: unknown[][] = [];
+  console.error = (...args: unknown[]) => { logs.push(args); };
+  try {
+    for (const [status, message, expected] of [
+      [500, 'permission denied for relation sub_topics (42501)', "更新选题库状态失败，请稍后重试"],
+      [404, "选题不存在", "选题不存在"],
+      [500, "选题移出失败，状态回滚未完成", "选题移出失败，状态回滚未完成"],
+      [500, "选题移出失败，状态已回滚", "选题移出失败，状态已回滚"],
+    ] as const) {
+      const response = await handleTopicsLibraryToggle(new NextRequest("https://dydata.cc/api/admin/topics-library/toggle", {
+        method: "POST", body: JSON.stringify({ subTopicId: VALID_ID, action: "remove" }),
+      }), {
+        requireActor: async () => adminAuth as never,
+        createAdmin: () => ({ from: () => {
+          const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { created_by: "owner-1" }, error: null }) };
+          return q;
+        } }) as never,
+        buildScope: async () => ({ activeVisibleUserIds: ["owner-1"] }) as never,
+        toggle: async () => ({ ok: false, status, message }),
+      }, obs);
+      assert.equal(response.status, status);
+      const body = await response.json();
+      assert.equal(body.error, expected);
+      assert.equal(body.businessSucceeded, false);
+      assert.equal(body.auditStatus, message.includes("回滚") ? "failed" : "skipped");
+      assert.doesNotMatch(JSON.stringify(body), /permission denied|sub_topics|42501/);
+    }
+    assert.ok(logs.some((args) => (args[1] as { message?: string })?.message?.includes("42501")));
+  } finally { console.error = original; }
 });

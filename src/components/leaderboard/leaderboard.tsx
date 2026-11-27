@@ -1,5 +1,6 @@
 "use client";
 
+import { parseMetric } from "@/lib/dashboard-logic/metric-input-cleaner";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
 import { AnimatedNumber } from "@/components/animated-number";
@@ -772,13 +773,13 @@ function formatLargeNumber(value: number) {
 
 function parsePercent(value: string | null) {
   if (!value) return null;
-  const parsed = Number.parseFloat(value.replace(/%/g, "").trim());
+  const parsed = parseMetric(value, "rate", NaN);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
 function parseSeconds(value: string | null) {
   if (!value) return null;
-  const parsed = Number.parseFloat(value.replace(/秒/g, "").trim());
+  const parsed = parseMetric(value, "duration", NaN);
   return Number.isFinite(parsed) ? parsed : null;
 }
 

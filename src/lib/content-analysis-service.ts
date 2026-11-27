@@ -1,3 +1,4 @@
+import { shiftDateOnly, shanghaiDayStartTimestamp } from "@/lib/business-time";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
@@ -231,8 +232,8 @@ async function loadThirtyDayBaseline(
   if (!params.accountId) return buildSnapshotBaseline([]);
 
   const end = params.publishedAt ? new Date(params.publishedAt) : new Date();
-  const start = new Date(end);
-  start.setDate(end.getDate() - 30);
+  // 平移业务日期，保留发布时间在当天的时分秒与毫秒。
+  const start = new Date(shanghaiDayStartTimestamp(shiftDateOnly(end, -30)) + end.getTime() - shanghaiDayStartTimestamp(shiftDateOnly(end, 0)));
 
   const videos = requireQueryRows(
     await supabase

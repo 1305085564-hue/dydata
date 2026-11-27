@@ -303,7 +303,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
         dateDisplay: formatShortDate(dateStr),
         dayOfWeek: getWeekdayText(dateStr),
         nature,
-        categoryLabel: nature === "leave" ? "请假" : catLabel,
+        categoryLabel: catLabel,
         reason: stored?.reason || matchItem.reason || (reasons[0] || "未填写事由"),
         status: stored?.status || matchItem.request_status || "pending",
         reviewerFeedback: stored?.feedback || matchItem.feedback || null,

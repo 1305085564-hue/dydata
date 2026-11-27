@@ -1,3 +1,4 @@
+import { addShanghaiDateOnly } from "@/lib/business-time";
 import type { EditableMetricKey, SubmissionFieldSource, SubmissionState, SubmissionIssueSummary } from "./提交状态机";
 import type { SubmissionSlotRole } from "./提交状态机";
 import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
@@ -263,21 +264,8 @@ export function getMetricAbovePlayCountReason(
   return metricValue > playCount ? METRIC_ABOVE_PLAY_COUNT_REASON : null;
 }
 
-function formatDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export function getRecentBizDateRange(today: string): string[] {
-  const [year, month, day] = today.split("-").map(Number);
-  const current = new Date(year, (month || 1) - 1, day || 1);
-  return Array.from({ length: 7 }, (_, index) => {
-    const next = new Date(current);
-    next.setDate(current.getDate() - (6 - index));
-    return formatDateKey(next);
-  });
+  return Array.from({ length: 7 }, (_, index) => addShanghaiDateOnly(today, index - 6));
 }
 
 export function isBizDateSelectable(today: string, value: string): boolean {

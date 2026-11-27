@@ -9,6 +9,7 @@ import { mock } from "node:test";
 
 const dbCalls = [];
 let permissionValue = null;
+let databaseFactory = createDbRecorder;
 
 function mockFile(relativePath, namedExports) {
   mock.module(pathToFileURL(resolve(process.cwd(), relativePath)).href, { namedExports });
@@ -39,10 +40,10 @@ before(async () => {
     getUserPermissions: async () => permissionValue,
   });
   mockFile("src/lib/supabase/server.ts", {
-    createClient: async () => createDbRecorder("supabase"),
+    createClient: async () => databaseFactory("supabase"),
   });
   mockFile("src/lib/supabase/admin.ts", {
-    createAdminClient: () => createDbRecorder("adminSupabase"),
+    createAdminClient: () => databaseFactory("adminSupabase"),
   });
   mockFile("src/lib/teams.ts", {
     getTeamOptions: async () => [],
@@ -105,4 +106,32 @@ test("管理后台每个导出操作：没有权限一律拦下，且不碰数�
   }
 
   assert.deepEqual(problems, [], `以下操作没有先过权限检查：\n${problems.join("\n")}`);
+});
+
+test("管理操作库错返回固定中文，真实错误保留在服务端", async () => {
+  const actions = await import("./actions.ts");
+  const raw = { message: 'permission denied for relation profiles', code: "42501" };
+  const logs = [];
+  const original = console.error;
+  console.error = (...args) => logs.push(args);
+  permissionValue = { ...noPermissionUser(), role: "owner", companyRole: "company_owner", permissions: { manage_members: true } };
+  databaseFactory = () => {
+    const q = { from: () => q, insert: () => q, select: () => q, in: async () => ({ data: null, error: raw }), single: async () => ({ data: null, error: raw }) };
+    return q;
+  };
+  try {
+    for (const [invoke, message, role] of [
+      [() => actions.createTeam("新团队"), "创建团队失败，请稍后重试", "owner"],
+      [() => actions.updateMemberTeam("target-1", "team-2"), "加载成员资料失败，请稍后重试", "admin"],
+      [() => actions.resetMemberPassword("target-1", "test-password"), "加载成员资料失败，请稍后重试", "owner"],
+      [() => actions.changeRole("target-1", "admin"), "加载成员资料失败，请稍后重试", "owner"],
+    ]) {
+      permissionValue.role = role;
+      const result = await invoke();
+      assert.deepEqual(result, { error: message });
+      assert.doesNotMatch(JSON.stringify(result), /permission denied|profiles|42501/);
+    }
+    assert.equal(logs.length, 4);
+    assert.ok(logs.every((args) => args[1] === raw));
+  } finally { console.error = original; databaseFactory = createDbRecorder; permissionValue = null; }
 });

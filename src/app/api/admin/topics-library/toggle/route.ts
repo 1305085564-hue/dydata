@@ -109,7 +109,10 @@ export async function handleTopicsLibraryToggle(
     .select("created_by")
     .eq("id", subTopicId)
     .maybeSingle();
-  if (targetError) return mutationResponse({ error: "查询选题失败" }, 500, observation, { businessSucceeded: false });
+  if (targetError) {
+    console.error("[topics-library] load-toggle-target", targetError);
+    return mutationResponse({ error: "查询选题失败" }, 500, observation, { businessSucceeded: false });
+  }
   if (!target) return mutationResponse({ error: "选题不存在" }, 404, observation, { businessSucceeded: false });
   const creatorId = (target as { created_by: string }).created_by;
   if (!scope.activeVisibleUserIds.includes(creatorId)) {
@@ -123,9 +126,13 @@ export async function handleTopicsLibraryToggle(
     actorId: auth.actor.userId,
   });
   if (!result.ok) {
+    console.error("[topics-library] toggle failed", result);
     const auditStatus: SideEffectStatus = /审计|回滚/.test(result.message) ? "failed" : "skipped";
+    const safeRollbackMessages = ["选题移出失败，状态已回滚", "选题移出失败，状态回滚未完成"];
+    const message = result.status >= 500 && !safeRollbackMessages.includes(result.message)
+      ? "更新选题库状态失败，请稍后重试" : result.message;
     return mutationResponse(
-      { error: result.message },
+      { error: message },
       result.status,
       observation,
       {

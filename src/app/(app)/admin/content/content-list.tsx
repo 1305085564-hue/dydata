@@ -1,5 +1,6 @@
 "use client";
 
+import { addShanghaiDateOnly } from "@/lib/business-time";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
@@ -18,13 +19,6 @@ import { buildContentPageUrl } from "./content-video-navigation";
 import { buildContentHeadline, buildContentHeadlineSuffix, countGrades } from "./content-headline";
 import { activeSegmentOf, segmentBaseKey, type ContentSegmentCounts } from "./content-segments";
 import { DatePagination } from "./date-pagination";
-
-/** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
-function shiftDateString(dateStr: string, days: number): string {
-  const date = new Date(`${dateStr}T00:00:00`);
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
 
 const NO_DATES: string[] = [];
 const NO_COUNTS: Array<{ d: string; c: number }> = [];
@@ -74,8 +68,8 @@ export const ContentList = memo(function ContentList(props: ContentListProps) {
     const shiftDays = direction === -1 ? -windowDays : windowDays;
     applyFilterPatch({
       timeRange: "custom",
-      startDate: shiftDateString(start, shiftDays),
-      endDate: shiftDateString(end, shiftDays),
+      startDate: addShanghaiDateOnly(start, shiftDays),
+      endDate: addShanghaiDateOnly(end, shiftDays),
     });
   }, [applyFilterPatch, earliestAvailableDate, latestAvailableDate, effectiveEndDate, effectiveStartDate]);
   const onQueryChange = props.onQueryChange;

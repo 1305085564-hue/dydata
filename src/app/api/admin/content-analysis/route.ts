@@ -69,8 +69,8 @@ export async function buildContentAnalysisResponse(
         request,
         requestId: observation?.requestId,
         status: error.status,
-        message: error.code === "NO_24H_SNAPSHOT" ? error.message : undefined,
-        error: error.message,
+        message: error.code === "NO_24H_SNAPSHOT" ? "缺少24h数据，暂不能生成辅助分析" : undefined,
+        error,
         extraFields: { code: error.code },
       }));
     }

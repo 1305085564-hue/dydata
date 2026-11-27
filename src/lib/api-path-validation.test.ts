@@ -10,7 +10,6 @@ test("动态 API 记录 ID 必须是 UUID", () => {
   assert.equal(hasInvalidUuidPathParameter("/api/notifications/not-an-id/read"), true);
   // 文案助手相关接口已下线，其 UUID 校验规则一并移除，不再命中
   assert.equal(hasInvalidUuidPathParameter("/api/rewrite/documents/nope/revisions"), false);
-  assert.equal(hasInvalidUuidPathParameter(`/api/topics/sub-topics/${VALID_UUID}/claim`), false);
   assert.equal(hasInvalidUuidPathParameter(`/api/topics/sub-topics/${VALID_UUID}/claims`), false);
   assert.equal(hasInvalidUuidPathParameter("/api/topics/sub-topics/not-an-id/claims"), true);
 });

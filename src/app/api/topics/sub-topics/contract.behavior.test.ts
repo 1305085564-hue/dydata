@@ -15,11 +15,6 @@ import {
   buildSubTopicDeleteResponse,
 } from "@/app/api/topics/sub-topics/[id]/route";
 import {
-  POST as postClaim,
-  defaultClaimRouteDeps,
-  buildClaimResponse,
-} from "@/app/api/topics/sub-topics/[id]/claim/route";
-import {
   POST as postReturn,
   defaultReturnRouteDeps,
   buildReturnResponse,
@@ -171,15 +166,8 @@ test("topics/sub-topics/[id]：PATCH/DELETE 失败不静默，成功结果保留
   assert.equal(deleteBody.removed, true);
 });
 
-test("topics 认领链：claim/return/start-scripting 均传播依赖失败和成功分层结果", async () => {
+test("topics 认领链：return/start-scripting 均传播依赖失败和成功分层结果", async () => {
   const cases = [
-    {
-      label: "claim",
-      build: buildClaimResponse,
-      deps: defaultClaimRouteDeps,
-      failed: () => ({ ok: false as const, status: 500 as const, message: "认领失败" }),
-      success: () => ({ ok: true as const, value: { status: "writing" } }),
-    },
     {
       label: "return",
       build: buildReturnResponse,
@@ -219,7 +207,7 @@ test("topics 认领链：claim/return/start-scripting 均传播依赖失败和�
   }
 });
 
-test("claim 与 start-scripting 都把可信团队可见范围交给共享开始写作入口", async () => {
+test("start-scripting 把可信团队可见范围交给共享开始写作入口", async () => {
   const received: unknown[][] = [];
   const deps = {
     requireActiveTeamContext: async () => context(),
@@ -229,11 +217,10 @@ test("claim 与 start-scripting 都把可信团队可见范围交给共享开始
     },
   } as never;
 
-  await buildClaimResponse(request(), ctx, deps);
   await buildStartScriptingResponse(request(), ctx, deps);
 
-  assert.equal(received.length, 2);
-  assert.deepEqual(received.map((args) => args[3]), [trustedTeamScope, trustedTeamScope]);
+  assert.equal(received.length, 1);
+  assert.deepEqual(received.map((args) => args[3]), [trustedTeamScope]);
 });
 
 test("topics 认领链：一次请求只写一条结构化观测日志，且 request id 原样回传", async () => {
@@ -268,8 +255,6 @@ test("topics 每个写入 handler：一请求只落一条日志（含动态 id �
     detailAuth: defaultSubTopicDetailRouteDeps.requireActiveTeamContext,
     update: defaultSubTopicDetailRouteDeps.updateSubTopic,
     remove: defaultSubTopicDetailRouteDeps.removeSubTopic,
-    claimAuth: defaultClaimRouteDeps.requireActiveTeamContext,
-    claim: defaultClaimRouteDeps.startWritingClaim,
     returnAuth: defaultReturnRouteDeps.requireActiveTeamContext,
     cancel: defaultReturnRouteDeps.cancelWritingClaim,
     startAuth: defaultStartScriptingRouteDeps.requireActiveTeamContext,
@@ -278,8 +263,6 @@ test("topics 每个写入 handler：一请求只落一条日志（含动态 id �
   defaultSubTopicDetailRouteDeps.requireActiveTeamContext = async () => context();
   defaultSubTopicDetailRouteDeps.updateSubTopic = async () => ({ ok: false, status: 500, message: "更新失败" });
   defaultSubTopicDetailRouteDeps.removeSubTopic = async () => ({ ok: false, status: 500, message: "移出失败" });
-  defaultClaimRouteDeps.requireActiveTeamContext = async () => context();
-  defaultClaimRouteDeps.startWritingClaim = async () => ({ ok: false, status: 500, message: "认领失败" });
   defaultReturnRouteDeps.requireActiveTeamContext = async () => context();
   defaultReturnRouteDeps.cancelWritingClaim = async () => ({ ok: false, status: 500, message: "取消失败" });
   defaultStartScriptingRouteDeps.requireActiveTeamContext = async () => context();
@@ -287,15 +270,12 @@ test("topics 每个写入 handler：一请求只落一条日志（含动态 id �
   try {
     await patchSubTopic(request("PATCH", {}), ctx as never);
     await deleteSubTopic(request("DELETE"), ctx as never);
-    await postClaim(request(), ctx as never);
     await postReturn(request(), ctx as never);
     await postStartScripting(request(), ctx as never);
   } finally {
     defaultSubTopicDetailRouteDeps.requireActiveTeamContext = original.detailAuth;
     defaultSubTopicDetailRouteDeps.updateSubTopic = original.update;
     defaultSubTopicDetailRouteDeps.removeSubTopic = original.remove;
-    defaultClaimRouteDeps.requireActiveTeamContext = original.claimAuth;
-    defaultClaimRouteDeps.startWritingClaim = original.claim;
     defaultReturnRouteDeps.requireActiveTeamContext = original.returnAuth;
     defaultReturnRouteDeps.cancelWritingClaim = original.cancel;
     defaultStartScriptingRouteDeps.requireActiveTeamContext = original.startAuth;
@@ -304,7 +284,6 @@ test("topics 每个写入 handler：一请求只落一条日志（含动态 id �
   }
   for (const route of [
     "/api/topics/sub-topics/[id]",
-    "/api/topics/sub-topics/[id]/claim",
     "/api/topics/sub-topics/[id]/return",
     "/api/topics/sub-topics/[id]/start-scripting",
   ]) {
