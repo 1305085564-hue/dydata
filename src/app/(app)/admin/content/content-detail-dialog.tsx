@@ -2,7 +2,7 @@
 
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -107,9 +107,14 @@ export function ContentDetailDialog({
     getPurgeTooltip,
   } = useContentDetailLifecycle({ video, onLifecycleChanged });
   const sheetContentRef = useRef<HTMLDivElement>(null);
+  const sheetBodyRef = useRef<HTMLDivElement>(null);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(min-width: 768px)").matches
+      : false,
+  );
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
@@ -119,6 +124,13 @@ export function ContentDetailDialog({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
+
+  // 跨行无缝切换作品时将抽屉正文滚回顶部，避免保留上一条的滚动位置
+  useEffect(() => {
+    if (sheetBodyRef.current) {
+      sheetBodyRef.current.scrollTop = 0;
+    }
+  }, [video?.id]);
 
   const hasIndex = typeof currentIndex === "number" && currentIndex >= 0;
   const hasPrev = hasIndex && currentIndex > 0;
@@ -132,7 +144,19 @@ export function ContentDetailDialog({
   const curveScreenshot = screenshots.find((item) => item.slot === "curve");
   const retentionScreenshot = screenshots.find((item) => item.slot === "retention");
 
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [previewState, setPreviewState] = useState<{ videoId: string | null; index: number } | null>(null);
+  const currentVideoId = video?.id ?? null;
+  const previewIndex = previewState && previewState.videoId === currentVideoId ? previewState.index : null;
+  const setPreviewIndex = useCallback<Dispatch<SetStateAction<number | null>>>(
+    (updater) => {
+      setPreviewState((prev) => {
+        const prevIndex = prev && prev.videoId === currentVideoId ? prev.index : null;
+        const nextIndex = typeof updater === "function" ? updater(prevIndex) : updater;
+        return nextIndex === null ? null : { videoId: currentVideoId, index: nextIndex };
+      });
+    },
+    [currentVideoId],
+  );
   const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
   const [failedScreenshots, setFailedScreenshots] = useState<Record<string, boolean>>({});
 
@@ -167,6 +191,27 @@ export function ContentDetailDialog({
   // 有电脑宽图就上下排，全是手机竖图就左右并排；不再让人手动切
   const stackedScreenshots = activeScreenshots.some((s) => (aspectRatios[s.url] ?? 0.5) > 1.15);
 
+  const closeEntirely = useCallback(() => {
+    if (onCloseEntirely) {
+      onCloseEntirely();
+    } else {
+      onOpenChange(false);
+    }
+  }, [onCloseEntirely, onOpenChange]);
+
+  const closeAndRestoreFocus = useCallback(() => {
+    const targetVideoId = video?.id ?? null;
+    closeEntirely();
+    if (!targetVideoId || renderMode !== "sheet" || typeof document === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const selector = `[data-video-id="${CSS.escape(targetVideoId)}"]`;
+      const rows = document.querySelectorAll<HTMLElement>(selector);
+      const visibleRow = Array.from(rows).find((el) => el.getClientRects().length > 0);
+      const focusTarget = visibleRow?.querySelector<HTMLElement>("a[href], button");
+      focusTarget?.focus({ preventScroll: true });
+    });
+  }, [closeEntirely, renderMode, video?.id]);
+
   useEffect(() => {
     if (!open) return;
     const handleEscKey = (e: KeyboardEvent) => {
@@ -187,20 +232,15 @@ export function ContentDetailDialog({
         onBack();
         return;
       }
-      if (renderMode === "inline") {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (onCloseEntirely) {
-          onCloseEntirely();
-        } else {
-          onOpenChange(false);
-        }
-      }
+      // inline 模式或桌面非模态抽屉（焦点可能在左侧表格行上）都由全局 Esc 收口关闭并自然回焦
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      closeAndRestoreFocus();
     };
     window.addEventListener("keydown", handleEscKey, true);
     return () => window.removeEventListener("keydown", handleEscKey, true);
-  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, clearConfirmation, onBack, renderMode, onCloseEntirely, onOpenChange]);
+  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, clearConfirmation, onBack, closeAndRestoreFocus]);
 
   useContentVideoStepShortcut({
     open,
@@ -227,8 +267,6 @@ export function ContentDetailDialog({
   const fanConv = snapshot ? fanConversionRate(snapshot) : null;
   const breakoutTargets = breakoutTargetsFor(topicKind, evaluationStandards);
   const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
-
-  const closeEntirely = onCloseEntirely || (() => onOpenChange(false));
 
   const confirmBanner = !video ? null
     : showConfirmTrash ? {
@@ -334,7 +372,7 @@ export function ContentDetailDialog({
           )}
 
           <SimpleTooltip side="bottom" align="end" tip="关闭（Esc）">
-            <button type="button" onClick={closeEntirely} aria-label="关闭作品诊断" className={iconButton}>
+            <button type="button" onClick={closeAndRestoreFocus} aria-label="关闭作品诊断" className={iconButton}>
               <X className="size-4" aria-hidden />
             </button>
           </SimpleTooltip>
@@ -356,7 +394,11 @@ export function ContentDetailDialog({
       )}
 
       {/* 正文：结论 → 四个核心数 → 截图 → 全部指标 → 文案 → 选题库 */}
-      <SheetBody aria-busy={switching || undefined} className="px-4 pt-3 sm:px-6 space-y-5 overflow-y-auto transition-opacity duration-150 aria-busy:opacity-50 max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
+      <SheetBody
+        ref={sheetBodyRef}
+        aria-busy={switching || undefined}
+        className="px-4 pt-3 sm:px-6 space-y-5 overflow-y-auto overscroll-contain transition-opacity duration-150 aria-busy:opacity-50 max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6"
+      >
         {video ? (
           <>
             <ContentDetailNotices video={video} canPurge={canPurge} isPurgeEligible={isPurgeEligible} />
@@ -460,16 +502,9 @@ export function ContentDetailDialog({
           open={open}
           modal={!isDesktop}
           onOpenChange={(nextOpen, eventDetails) => {
-            if (!nextOpen) {
-              if (eventDetails?.reason === "focus-out") {
-                return;
-              }
-              if (eventDetails?.event) {
-                const target = eventDetails.event.target as Element | null;
-                if (target?.closest?.("[data-video-id]")) {
-                  return;
-                }
-              }
+            if (!nextOpen && shouldIgnoreContentDrawerDismiss(eventDetails)) {
+              eventDetails?.cancel?.();
+              return;
             }
             onOpenChange(nextOpen);
           }}
@@ -479,12 +514,13 @@ export function ContentDetailDialog({
             role="dialog"
             aria-modal="true"
             aria-label={`${titlePrefix} · 作品诊断`}
+            data-non-modal={isDesktop ? "true" : undefined}
             ref={sheetContentRef}
             tabIndex={-1}
             initialFocus={sheetContentRef}
             showCloseButton={false}
-            overlayClassName="md:pointer-events-none md:bg-transparent"
-            className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
+            overlayClassName="md:hidden"
+            className="w-full max-w-full p-0 md:w-[min(820px,60vw)] lg:w-[min(820px,58vw)] md:min-w-[520px] md:max-w-[820px] md:rounded-l-2xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog overflow-hidden"
           >
             {innerContent}
           </SheetContent>
@@ -499,6 +535,18 @@ export function ContentDetailDialog({
     />
     </>
   );
+}
+
+export function shouldIgnoreContentDrawerDismiss(
+  eventDetails?: {
+    reason?: string;
+    event?: Event | { target?: EventTarget | { closest?: (selector: string) => unknown } | null };
+  },
+): boolean {
+  if (!eventDetails) return false;
+  if (eventDetails.reason === "focus-out") return true;
+  const target = eventDetails.event?.target as { closest?: (selector: string) => unknown } | null | undefined;
+  return Boolean(target?.closest?.("[data-video-id]"));
 }
 
 export default ContentDetailDialog;
