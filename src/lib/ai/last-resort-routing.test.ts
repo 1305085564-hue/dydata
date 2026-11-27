@@ -7,7 +7,7 @@ import { AI_CONFIG_MESSAGES } from "@/lib/ai-config/presentation";
 
 const NOW = Date.now();
 function supply(id: string, modelId: string, cooldown = 0) {
-  return { ...makePkmRow({ id, modelId, keyName: `key-${id}`, keyPriority: 1 }),
+  return { ...makePkmRow({ id, modelId, keyName: `key-${id}` }),
     ...(cooldown ? { consecutive_failures: 1, unhealthy_until: new Date(NOW + cooldown).toISOString() } : {}) };
 }
 async function withChain(rows: ReturnType<typeof supply>[], selected: string | null, fallback: string, run: (chain: Awaited<ReturnType<typeof __internal.resolveFeatureChannelChainForTests>>) => Promise<void>) {

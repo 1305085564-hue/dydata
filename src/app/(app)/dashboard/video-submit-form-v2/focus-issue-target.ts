@@ -4,6 +4,20 @@ import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填
 
 export type IssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null;
 
+/** 通过稳定 DOM 锚点滚动到问题区块，避免事件回调在渲染期捕获 React ref。 */
+export function scrollToSubmitIssueAnchor(
+  anchor: IssueAnchor,
+  options?: { onOpenMoreSection?: () => void },
+) {
+  if (!anchor) return;
+  if (anchor === "topicTag") {
+    options?.onOpenMoreSection?.();
+  }
+  if (typeof document === "undefined") return;
+  const target = document.querySelector<HTMLElement>(`[data-submit-anchor="${anchor}"]`);
+  target?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 export function focusSubmissionIssueTarget(args: {
   anchor: IssueAnchor;
   invalidKey: ExtendedSubmissionIssueSummary["firstInvalidFieldKey"];

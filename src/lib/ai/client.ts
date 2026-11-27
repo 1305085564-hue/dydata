@@ -539,7 +539,7 @@ async function runAi(options: AiRequestOptions, recordHealth: boolean): Promise<
     }
 
     {
-      for (const channel of await resolveFeatureChannelChain(featureConfig ?? { featureKey: options.featureKey, modelId: null, providerKeyModelId: null, systemPrompt: null, isEnabled: true, lifecycleState: "active" })) {
+      for (const channel of await resolveFeatureChannelChain(featureConfig ?? { featureKey: options.featureKey, modelId: null, systemPrompt: null, isEnabled: true, lifecycleState: "active" })) {
         pushChannelUnique(channel);
       }
     }

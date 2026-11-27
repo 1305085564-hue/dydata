@@ -18,7 +18,7 @@ export async function loadAiConfig(supabase: AiConfigClient) {
 
   const modelsResult = await supabase
     .from("ai_provider_key_models")
-    .select("*");
+    .select("id, key_id, model_id, canonical_model_id, display_name, is_enabled, disabled_by_model, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, last_error_message, last_failure_scope, last_failure_kind, first_failure_at, invalidated_at, sort_order, created_at");
 
   const firstError =
     providersResult.error ??
@@ -31,49 +31,41 @@ export async function loadAiConfig(supabase: AiConfigClient) {
   const normalizedProviders = (providersResult.data ?? []).map((provider) => ({
     ...provider,
     protocol: normalizeProviderProtocol((provider as { protocol?: unknown }).protocol),
-    priority: 0,
   }));
 
   const rawModels = (modelsResult.data ?? []) as Array<Record<string, unknown>>;
-  const modelsWithoutLegacyState = rawModels.map((row) => {
-    const model: Record<string, unknown> = {
-      ...row,
-      canonical_model_id: readCanonicalModelId(
-        String(row.model_id ?? ""),
-        typeof row.canonical_model_id === "string" ? row.canonical_model_id : null,
-      ),
-    };
-    delete model.global_is_enabled;
-    return model;
-  });
-  const enabledModelIds = new Set(modelsWithoutLegacyState.filter((row) => row.is_enabled === true).map((row) => row.canonical_model_id));
+  const normalizedModels: Array<Record<string, unknown> & { canonical_model_id: string }> = rawModels.map((row) => ({
+    ...row,
+    canonical_model_id: readCanonicalModelId(
+      String(row.model_id ?? ""),
+      typeof row.canonical_model_id === "string" ? row.canonical_model_id : null,
+    ),
+  }));
   const secrets = (keysResult.data ?? []).map((key) => String(key.api_key ?? ""));
   const bundle = {
     providers: normalizedProviders,
     keys: (keysResult.data ?? []).map((row) => ({
       ...row,
-      priority: 0,
       last_error_message: row.last_error_message ? sanitizeProviderErrorMessage(row.last_error_message, secrets) : null,
       failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: String(row.last_error_message), secrets }) : null,
       api_key: undefined,
       api_key_masked: maskApiKeyLast4((row as { api_key?: unknown }).api_key),
     })),
-    models: modelsWithoutLegacyState.map((row) => ({ ...row,
-      global_is_enabled: enabledModelIds.has(row.model_id),
+    models: normalizedModels.map((row) => ({
+      ...row,
       last_error_message: row.last_error_message ? sanitizeProviderErrorMessage(row.last_error_message, secrets) : null,
       failureDiagnostic: row.last_error_message ? describeChannelFailure({ message: String(row.last_error_message), secrets }) : null,
     })),
     featureBindings: (featureBindingsResult.data ?? []).map((binding) => ({
       ...binding,
       model_id: binding.model_id ? readCanonicalModelId(String(binding.model_id)) : binding.model_id,
-      provider_key_model_id: null,
     })),
     featureControls: buildAiFeatureControls((featureBindingsResult.data ?? []) as AiFeatureBindingControlRow[]),
   };
   return { ...bundle, availability: computeAvailability({
     providers: normalizedProviders,
     keys: keysResult.data ?? [],
-    models: modelsWithoutLegacyState as never,
+    models: normalizedModels as never,
     featureControls: bundle.featureControls,
     defaultBinding: bundle.featureBindings.find((binding) => binding.feature_key === "default") ?? null,
   }) };

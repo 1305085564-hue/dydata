@@ -7,7 +7,12 @@ import { cn } from "@/lib/utils";
 import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { rowSelectionClass } from "@/components/ui/selection";
 import { formatShortDate, type DailyApprovalDetail } from "@/lib/exemption-approvals";
-import { getAppealTriggerText, getMonthContext } from "@/lib/command-hub/domain/workbench-rules";
+import {
+  formatPostSubmitInterval,
+  getAppealTriggerText,
+  getMonthContext,
+  isPostSubmitAppeal,
+} from "@/lib/command-hub/domain/workbench-rules";
 import type { ApprovalQueueItem } from "@/lib/command-hub/types";
 import { RejectReason } from "./reject-reason";
 
@@ -151,10 +156,15 @@ function AppealBody({
   onCancelReject,
 }: QueueItemProps & { item: Extract<ApprovalQueueItem, { kind: "appeal" }>; rejectingThis: RejectScope | null }) {
   const { appeal } = item;
+  const isPostSubmit = isPostSubmitAppeal(appeal);
   const attachments = appeal.attachment_urls ?? appeal.attachments ?? [];
   const trigger = getAppealTriggerText(appeal);
+  const intervalText = isPostSubmit ? formatPostSubmitInterval(appeal) : null;
   const businessDate = formatShortDate(appeal.business_date || appeal.start_date);
   const absence = typeof appeal.absence_days === "number" && appeal.absence_days > 0 ? appeal.absence_days : 0;
+  const playText = typeof appeal.play_count === "number" && Number.isFinite(appeal.play_count)
+    ? `播放 ${appeal.play_count.toLocaleString("zh-CN")}`
+    : null;
 
   return (
     <>
@@ -163,12 +173,25 @@ function AppealBody({
           <span className="text-[14px] leading-[1.4] text-[#141413]">{appeal.applicant_name || "成员"}</span>
           <span className="text-[12px] text-[#78716C]">{appeal.account_name || "未指定账号"}</span>
           {metaDot}
-          <span className="text-[12px] text-[#78716C]">{appeal.appeal_type || ""}补交</span>
+          <span className="text-[12px] text-[#78716C]">
+            {isPostSubmit ? "事后核查" : `${appeal.appeal_type || ""}补交`}
+          </span>
           {metaDot}
           <span className="text-[12px] tabular-nums text-[#78716C]">{businessDate}</span>
         </div>
-        {absence > 0 && <span className="shrink-0 text-[12px] text-[#78716C]">已缺勤 {absence} 天</span>}
+        {isPostSubmit && intervalText ? (
+          <span className="shrink-0 text-[12px] tabular-nums text-[#78716C]">{intervalText}</span>
+        ) : absence > 0 ? (
+          <span className="shrink-0 text-[12px] text-[#78716C]">已缺勤 {absence} 天</span>
+        ) : null}
       </div>
+
+      {isPostSubmit && (appeal.video_title || playText) ? (
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[14px] leading-[1.5] text-[#141413]">
+          {appeal.video_title ? <span className="break-words">{appeal.video_title}</span> : null}
+          {playText ? <span className="text-[12px] tabular-nums text-[#78716C]">{playText}</span> : null}
+        </div>
+      ) : null}
 
       <p className={cn("mt-1 break-words text-[14px] leading-[1.6]", appeal.reason ? "text-[#1F1E1D]" : "text-[#A8A29E]")}>
         {appeal.reason || "没写事由"}
@@ -196,15 +219,17 @@ function AppealBody({
       {rejectingThis ? (
         <RejectReason
           required
-          hint="原因会通知成员"
+          placeholder={isPostSubmit ? "无效原因（必填，不计入文案优条数结算）" : undefined}
+          confirmLabel={isPostSubmit ? "确认标为无效" : "确认拒绝"}
+          hint={isPostSubmit ? "原因会写入审计日志并通知成员，该作品不计入文案优条数结算" : "原因会通知成员"}
           onConfirm={onConfirmReject}
           onCancel={onCancelReject}
         />
       ) : (
         <Actions
           focused={focused}
-          approveLabel="同意"
-          rejectLabel="拒绝"
+          approveLabel={isPostSubmit ? "确认正常" : "同意"}
+          rejectLabel={isPostSubmit ? "标为无效（不计优结算）" : "拒绝"}
           onApprove={onApprove}
           onReject={() => onStartReject()}
         />

@@ -76,8 +76,6 @@ export type AiProvider = {
   base_url: string;
   protocol?: AiProviderProtocol;
   is_enabled: boolean;
-  global_is_enabled?: boolean | null;
-  priority: number;
 };
 
 export type AiProviderKey = ProviderHealthFields & {
@@ -87,7 +85,6 @@ export type AiProviderKey = ProviderHealthFields & {
   id: string;
   provider_id: string;
   label: string;
-  priority: number;
   is_enabled: boolean;
   unhealthy_until: string | null;
   consecutive_failures: number;
@@ -108,7 +105,6 @@ export type AiProviderKeyModel = ProviderHealthFields & {
   canonical_model_id?: string | null;
   display_name: string | null;
   is_enabled: boolean;
-  global_is_enabled?: boolean | null;
   created_at: string;
   updated_at?: string;
   consecutive_failures?: number;
@@ -167,7 +163,6 @@ export type AiFeatureBinding = {
   id: string;
   feature_key: string;
   label: string;
-  provider_key_model_id: string | null;
   model_id?: string | null;
   system_prompt: string | null;
   output_token_limit: number;
@@ -186,7 +181,6 @@ export type AiFeatureControl = {
   group: "business" | "review" | "archived";
   routing: "binding" | "system";
   bindingId: string | null;
-  providerKeyModelId: string | null;
   modelId: string | null;
   systemPrompt: string | null;
   outputTokenLimit: number;

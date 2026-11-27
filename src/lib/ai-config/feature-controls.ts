@@ -8,7 +8,6 @@ import { readCanonicalModelId } from "./canonical-model";
 export type AiFeatureBindingControlRow = {
   id: string;
   feature_key: string;
-  provider_key_model_id?: string | null;
   model_id?: string | null;
   system_prompt: string | null;
   output_token_limit: number;
@@ -27,7 +26,6 @@ export type AiFeatureControl = {
   group: AiFeatureGroup;
   routing: AiFeatureRouting;
   bindingId: string | null;
-  providerKeyModelId: string | null;
   modelId: string | null;
   systemPrompt: string | null;
   outputTokenLimit: number;
@@ -39,6 +37,7 @@ export type AiFeatureControl = {
 };
 
 export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFeatureControl[] {
+  // gate:transient-map 函数内临时按 feature_key 建索引，随本次返回释放
   const bindings = new Map(rows.map((row) => [row.feature_key, row]));
   const groups = getAiFeatureCatalogGroups();
   const entries = [...groups.business];
@@ -53,7 +52,6 @@ export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFe
       group: entry.group,
       routing: entry.routing,
       bindingId: binding?.id ?? null,
-      providerKeyModelId: null,
       modelId: binding?.model_id
         ? readCanonicalModelId(binding.model_id)
         : null,

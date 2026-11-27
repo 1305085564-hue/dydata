@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "@/lib/admin/ai-channels";
-import { syncModelsForKey, type SyncError } from "@/lib/ai-config/sync-models";
+import { syncModelsForKey } from "@/lib/ai-config/sync-models";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toSafeAiConfigErrorResponse } from "../_error-response";
 
 export type SyncModelsDeps = {
   requireSystemActor: typeof requireSystemActor;
@@ -15,6 +16,7 @@ export const defaultSyncModelsDeps: SyncModelsDeps = { requireSystemActor, creat
 export async function buildSyncModelsResponse(
   request: NextRequest,
   deps: SyncModelsDeps = defaultSyncModelsDeps,
+  requestId?: string | null,
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -38,8 +40,15 @@ export async function buildSyncModelsResponse(
         : auth.supabase;
     return NextResponse.json(await syncModelsForKey(supabase, { keyId, modelIds }, deps.fetcher ?? fetch));
   } catch (error) {
-    const status = typeof (error as SyncError)?.status === "number" ? (error as SyncError).status : 400;
-    return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status });
+    return toSafeAiConfigErrorResponse({
+      error,
+      fallbackMessage: "同步模型列表失败",
+      route: "/api/admin/ai-config/sync-models",
+      operation: "sync-models",
+      request,
+      requestId,
+      defaultStatus: 500,
+    });
   }
 }
 
@@ -54,6 +63,9 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return appendObservedMutationResult(await buildSyncModelsResponse(request, defaultSyncModelsDeps), observation);
+    return appendObservedMutationResult(
+      await buildSyncModelsResponse(request, defaultSyncModelsDeps, observation.requestId),
+      observation,
+    );
   });
 }

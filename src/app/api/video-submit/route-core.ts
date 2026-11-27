@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrigin } from "@/lib/csrf";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildManualTagPayload } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
@@ -18,172 +17,65 @@ import {
 import {
   buildSubmissionAssigneeColumns,
   collectAssigneeIdsRequiringValidation,
-  EDIT_BINDING_REPORT_SELECT,
-  EDIT_BINDING_SNAPSHOT_SELECT,
-  EDIT_BINDING_VIDEO_SELECT,
   mergePreservedEditMetricFields,
   mergePreservedEditSnapshotFields,
-  validateEditSubmissionBinding,
 } from "./edit-binding";
-import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
-import { findReadableSubmissionScreenshots } from "@/lib/screenshot-storage";
-import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import * as submitResponseFields from "./response-fields";
-import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
-import { consumeApprovedAppealPayload, findApprovedAppealForSubmission } from "./appeal-consumption";
-import { scheduleFirstDailyReportNotice } from "./feishu-report-notice";
+import { validateTopicForSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
-import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "./create-conflict";
 import { resolveDailyReportSubmissionTarget } from "./report-target";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
 import { normalizeDailyReportDataSource, resolveDailyReportDataSource } from "@/lib/daily-report-data-source";
-import { appendObservedMutationResult, observeMutationRequest, type MutationObservation } from "@/lib/observed-mutation-result";
-import { isPublishedAtConfirmed, resolveVideoSubmitDeadline, VIDEO_SUBMIT_EXPIRED_API_ERROR } from "@/lib/video-submit-deadline";
+import {
+  appendObservedMutationResult,
+  observeMutationRequest,
+  type MutationObservation,
+} from "@/lib/observed-mutation-result";
 import { videoSubmitErrorResponse } from "./error-response";
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
   buildScreenshotReplacementHistoryRows,
-  persistSubmissionTags,
   runSubmissionPersistenceStep,
   SUBMISSION_PERSISTENCE_ERROR_CODES,
   stripSubmissionId,
 } from "./persist";
-type RollbackAction = () => Promise<void>;
+import {
+  assertReadableSubmissionScreenshots,
+  checkCreateDuplicateSubmission,
+  evaluateSubmissionDeadlineGuard,
+  validateExternalAssignees,
+} from "./prechecks";
+import {
+  finalizeVideoSubmission,
+  loadValidatedEditBinding,
+  replaceSubmissionManualTags,
+  restoreVideoSubmission,
+  rollbackNewVideoSubmission,
+  rollbackSafely,
+  type RollbackAction,
+} from "./persistence-orchestrator";
 
-/**
- * 业务键判重的发布日窗口：按上海自然日（与数据复盘页的日期分组口径一致）。
- * 返回 [start, end) 两个 UTC ISO 边界；发布时间缺失或非法时返回 null（跳过业务键判重）。
- */
+import type { createPostSubmitReviewAndNotify } from "./post-review";
+
 export { buildPublishedDayWindow } from "./create-conflict";
+export { resolvePublishEvidenceFailureMessage, shouldCheckPublishDeadline } from "./prechecks";
+export {
+  rollbackSafely,
+  rollbackNewVideoSubmission,
+  type VideoSubmissionRollbackRpc,
+} from "./persistence-orchestrator";
 
-export async function rollbackSafely(actions: RollbackAction[]) {
-  const errors: Error[] = [];
-  for (const action of [...actions].reverse()) {
-    try {
-      await action();
-    } catch (error) {
-      errors.push(error instanceof Error ? error : new Error("回滚失败"));
-    }
-  }
-  if (!errors.length) return null;
-
-  return new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
-}
-
-export type VideoSubmitDeps = { createClient: typeof createClient; createAdminClient: typeof createAdminClient };
+export type VideoSubmitDeps = {
+  createClient: typeof createClient;
+  createAdminClient: typeof createAdminClient;
+  createPostSubmitReview?: typeof createPostSubmitReviewAndNotify;
+};
 
 /** 服务端内部代指定用户提交；外部 HTTP 路由不会传入此参数。 */
 export type VideoSubmitActor = { userId: string };
 
 export const defaultVideoSubmitDeps: VideoSubmitDeps = { createClient, createAdminClient };
-
-export function resolvePublishEvidenceFailureMessage(input: {
-  reason: string;
-  hasPublishScreenshot: boolean;
-  punishType: string | null;
-}) {
-  if (input.reason === "unconfirmed_published_at") {
-    return "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试";
-  }
-  if (!input.hasPublishScreenshot) {
-    // 只有「手上确实没有完播截图」才需要区分能否补救：
-    // 删稿作品无法再提供截图，才指向管理员；其余（限流/正常）都能自助补传。
-    return input.punishType === "deleted"
-      ? "这条无法自动补交，请联系管理员确认。"
-      : "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图";
-  }
-  if (input.reason === "missing_published_at") {
-    return "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图";
-  }
-  return "作品发布时间无效，请重新上传能看清“发布”时间的完播截图";
-}
-
-/**
- * 72 小时补交门禁的适用范围：只豁免「异常上报」这一种提交模式。
- * 限流 / 删稿是作品状态，不是门禁豁免理由——否则标一个限流就能无审批补录任意旧日期。
- */
-export function shouldCheckPublishDeadline(input: {
-  mode: "create" | "edit" | "abnormal";
-}) {
-  return input.mode !== "abnormal";
-}
-
-export type VideoSubmissionRollbackRpc = (params: {
-  p_video_id: string;
-  p_user_id: string;
-}) => Promise<{ data: unknown; error: { message?: string } | null }>;
-const defaultVideoSubmissionRollbackRpc: VideoSubmissionRollbackRpc = async (params) => {
-  const { data, error } = await createAdminClient().rpc("rollback_new_video_submission", params);
-  return { data, error: error ? { message: error.message } : null };
-};
-
-export async function rollbackNewVideoSubmission(
-  videoId: string,
-  userId: string,
-  rpc: VideoSubmissionRollbackRpc = defaultVideoSubmissionRollbackRpc,
-) {
-  const { data, error } = await rpc({ p_video_id: videoId, p_user_id: userId });
-  // 中危修复：回滚失败不能泄漏 SHA256 幂等键导致永久 409
-  // 旧逻辑在回滚失败时抛 Error，而前面的 409 conflict 检测会阻止后续重试，导致永久卡死
-  // 新逻辑：记录失败但不抛错，让主流程能继续清理幂等键
-  if (error || (data !== "deleted" && data !== "trashed")) {
-    console.error("[video-submit] rollback_new_video_submission failed but non-blocking", {
-      videoId,
-      userId,
-      data,
-      error: error?.message,
-    });
-    // 不抛错，让调用方能继续清理幂等键等后续步骤
-  }
-}
-
-async function restoreVideoSubmission(
-  videoId: string,
-  userId: string,
-  createAdminClientFn: typeof createAdminClient = createAdminClient,
-) {
-  const { data, error } = await createAdminClientFn().rpc("transition_video_lifecycle_with_report_link", {
-    p_video_id: videoId,
-    p_action: "restore",
-    p_actor_id: userId,
-    // 重传路径只恢复视频本身：被 trash 联动作废的旧日报保持作废，
-    // 否则会复活数据管理里的重复行，并与本次重传新建的日报撞 video_id 绑定。
-    p_restore_reports: false,
-  });
-  const restored = Array.isArray(data) ? data[0] : null;
-  if (error || restored?.lifecycle_state !== "active") {
-    throw new Error(error?.message || "视频记录恢复失败");
-  }
-}
-
-type ScreenshotAccessResult =
-  | { ok: true; paths: string[] }
-  | { ok: false; status: 400 | 403; error: string };
-
-async function assertReadableSubmissionScreenshots(
-  userId: string,
-  urls: string[],
-  expectedOrigin: string,
-  findReadableFn: typeof findReadableSubmissionScreenshots = findReadableSubmissionScreenshots,
-): Promise<ScreenshotAccessResult> {
-  const paths = getOwnedSubmissionScreenshotPaths(userId, urls, expectedOrigin);
-  if (!paths) {
-    return { ok: false, status: 403, error: "截图不存在或不属于当前用户，请重新上传" };
-  }
-
-  if (!paths.length) return { ok: true, paths };
-
-  // 必须用与读路径一致的分层查找：COS 为唯一写入目标后，新图**只写 COS、不写
-  // Supabase**。此前这里直接向 Supabase 签发链接来判断存在性，会把刚上传成功的新图
-  // 误判成「不存在」，导致投稿提交在最后一步被拦下（2026-10-20 上午的线上故障）。
-  const { missing } = await findReadableFn(paths);
-  if (missing.length) {
-    return { ok: false, status: 400, error: "截图不存在或无法读取，请重新上传" };
-  }
-
-  return { ok: true, paths };
-}
 
 async function handleVideoSubmit(
   request: NextRequest,
@@ -194,7 +86,6 @@ async function handleVideoSubmit(
   observation?.mark("auth");
   const supabase = actor ? deps.createAdminClient() : await deps.createClient();
   const userId = actor ? actor.userId : (await supabase.auth.getUser()).data.user?.id;
-
   if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
   observation?.mark("read");
@@ -203,22 +94,15 @@ async function handleVideoSubmit(
     .select("name, team_id, membership_status")
     .eq("id", userId)
     .single();
-
   if (profileError) {
     return videoSubmitErrorResponse(request, observation?.requestId, "load-submitter-profile", profileError.message);
   }
-
   const membershipResponse = resolveVideoSubmitMembershipResponse(profile);
   if (membershipResponse) return membershipResponse;
 
-  const typedProfile = profile as {
-    name: string | null;
-    team_id: string | null;
-    membership_status: string | null;
-  };
+  const typedProfile = profile as { name: string | null; team_id: string | null; membership_status: string | null };
 
   let body: unknown;
-
   try {
     observation?.mark("validate");
     body = await request.json();
@@ -227,19 +111,14 @@ async function handleVideoSubmit(
   }
 
   const validationResult = validateVideoSubmitPayload(body);
-  if (!validationResult.ok) {
-    return NextResponse.json({ error: validationResult.error }, { status: 400 });
-  }
-
+  if (!validationResult.ok) return NextResponse.json({ error: validationResult.error }, { status: 400 });
   const normalized = validationResult.normalized;
   const submissionVideoId = buildSubmissionRecordId(normalized);
 
   let editContract: EditSubmissionContract | null = null;
   if (normalized.mode === "edit") {
     const editContractResult = buildEditSubmissionContract(body);
-    if (!editContractResult.ok) {
-      return NextResponse.json({ error: editContractResult.error }, { status: 400 });
-    }
+    if (!editContractResult.ok) return NextResponse.json({ error: editContractResult.error }, { status: 400 });
     editContract = editContractResult.dto;
   }
 
@@ -249,149 +128,24 @@ async function handleVideoSubmit(
     .select("id, profile_id, name")
     .eq("id", normalized.account_id)
     .single();
-
   if (accountError || !account || account.profile_id !== userId) {
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
-  if (normalized.mode !== "edit") {
-    const dayWindow = normalized.video_title ? buildPublishedDayWindow(normalized.published_at) : null;
-    const [existingReportResult, existingVideoResult, existingSameDayResult] = await Promise.all([
-      supabase
-        .from("daily_reports")
-        .select("id")
-        .eq("video_id", submissionVideoId)
-        .eq("user_id", userId)
-        .eq("is_void", false)
-        .limit(1),
-      deps.createAdminClient()
-        .from("videos")
-        .select("id")
-        .eq("id", submissionVideoId)
-        .limit(1),
-      dayWindow
-        ? deps.createAdminClient()
-            .from("videos")
-            .select("id")
-            .eq("account_id", normalized.account_id)
-            .eq("video_title", normalized.video_title)
-            .eq("lifecycle_state", "active")
-            .gte("published_at", dayWindow.start)
-            .lt("published_at", dayWindow.end)
-            .limit(1)
-        : Promise.resolve({ data: [] as { id: string }[] | null, error: null }),
-    ]);
+  const duplicateResponse = await checkCreateDuplicateSubmission({
+    supabase,
+    createAdminClient: deps.createAdminClient,
+    userId,
+    submissionVideoId,
+    normalized,
+  });
+  if (duplicateResponse) return duplicateResponse;
 
-    if (existingReportResult.error || existingVideoResult.error || existingSameDayResult.error) {
-      return NextResponse.json({ error: "核对重复提交状态失败" }, { status: 500 });
-    }
+  const deadlineGuard = await evaluateSubmissionDeadlineGuard({ supabase, userId, normalized });
+  if (!deadlineGuard.ok) return deadlineGuard.response;
+  const approvedAppealUsed = deadlineGuard.approvedAppealUsed;
 
-    const duplicateResponse = resolveCreateSubmissionConflict({
-      mode: normalized.mode,
-      existingReportWithSameVideo: (existingReportResult.data ?? []).length > 0,
-      existingVideo: (existingVideoResult.data ?? []).length > 0,
-      existingActiveWorkSameDay: (existingSameDayResult.data ?? []).length > 0,
-    });
-    if (duplicateResponse) {
-      return NextResponse.json({ error: "这条已经上传过,无需重复提交", code: "SUBMISSION_DUPLICATE" }, { status: duplicateResponse.status });
-    }
-  }
-
-  // The 72h / cross-month deadline only guards first-time normal submissions.
-  // Violation reporting (abnormal) and historical edits are exempt so this rule
-  // never re-judges or blocks existing/edge flows.
-  let approvedAppealUsed: { id: string; submission_payload: unknown } | null = null;
-  if (shouldCheckPublishDeadline({ mode: normalized.mode })) {
-    // published_at_text is only present when the publish time was recognized by
-    // OCR or explicitly entered by the user; the silent fallback default leaves
-    // it empty, which is exactly the case we must not trust for the window check.
-    const deadline = resolveVideoSubmitDeadline({
-      mode: normalized.mode === "edit" ? "edit" : "create",
-      publishedAt: normalized.published_at,
-      businessDate: normalized.biz_date,
-      publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
-      publishedAtSource: normalized.published_at_source,
-    });
-    const hasPublishScreenshot = normalized.assets.some((asset) => asset.role === "screenshot_2");
-    if (deadline.decision === "invalid") {
-      // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
-      // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
-      const message = resolvePublishEvidenceFailureMessage({
-        reason: deadline.reason,
-        hasPublishScreenshot,
-        punishType: normalized.punish_type,
-      });
-      return NextResponse.json({ error: message }, { status: 400 });
-    }
-    if (deadline.decision === "requires_confirmation") {
-      return NextResponse.json({
-        error: resolvePublishEvidenceFailureMessage({
-          reason: deadline.reason,
-          hasPublishScreenshot,
-          punishType: normalized.punish_type,
-        }),
-        code: "PUBLISH_TIME_CONFIRM_REQUIRED",
-        reason: deadline.reason,
-      }, { status: 409 });
-    }
-    if (deadline.decision === "requires_appeal") {
-      const { appeal: approvedAppeal, failed: appealFailed } = await findApprovedAppealForSubmission({ supabase, userId, submitted: normalized });
-      if (appealFailed) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
-      if (!approvedAppeal) {
-        return NextResponse.json({
-          error: deadline.reason === "manual_published_at"
-            ? "发布时间由成员手工填写，请先申请补交"
-            : VIDEO_SUBMIT_EXPIRED_API_ERROR,
-          code: "SUBMISSION_APPEAL_REQUIRED",
-          reason: deadline.reason,
-          published_date: deadline.publishedDate,
-          elapsed_hours: deadline.elapsedHours,
-        }, { status: 409 });
-      }
-      approvedAppealUsed = approvedAppeal;
-    }
-  }
-
-  // 编辑模式独立安全边界：在任何写入前重新核对原视频、日期、日报与快照绑定
-  const editBinding = editContract
-    ? await validateEditSubmissionBinding(
-        {
-          userId,
-          accountId: normalized.account_id,
-          bizDate: normalized.biz_date,
-          videoId: editContract.video_id,
-        },
-        {
-          loadVideoById: async (videoId) => {
-            const { data, error } = await supabase
-              .from("videos")
-              .select(EDIT_BINDING_VIDEO_SELECT)
-              .eq("id", videoId)
-              .limit(2);
-            return { data: (data ?? null) as never, error };
-          },
-          loadDailyReportsByAccountAndDate: async (accountId, bizDate) => {
-            const { data, error } = await supabase
-              .from("daily_reports")
-              .select(EDIT_BINDING_REPORT_SELECT)
-              .eq("account_id", accountId)
-              .eq("report_date", bizDate)
-              .eq("is_void", false)
-              .limit(2);
-            return { data: (data ?? null) as never, error };
-          },
-          load24hSnapshotsByVideoId: async (videoId) => {
-            const { data, error } = await supabase
-              .from("video_metrics_snapshots")
-              .select(EDIT_BINDING_SNAPSHOT_SELECT)
-              .eq("video_id", videoId)
-              .eq("snapshot_type", "24h")
-              .limit(2);
-            return { data: (data ?? null) as never, error };
-          },
-        },
-      )
-    : null;
+  const editBinding = await loadValidatedEditBinding({ supabase, editContract, userId, normalized });
   if (editBinding && !editBinding.ok) {
     return NextResponse.json({ error: editBinding.error }, { status: editBinding.status });
   }
@@ -406,10 +160,16 @@ async function handleVideoSubmit(
   }
 
   if (normalized.topic_id) {
-    // V3：只校验选题真实存在且在库；排他认领已废除，允许多人同时写同一题
     const topicAssociation = await validateTopicForSubmission(deps.createAdminClient(), normalized.topic_id);
     if (!topicAssociation.ok) {
-      return videoSubmitErrorResponse(request, observation?.requestId, "validate-topic-association", topicAssociation.message, topicAssociation.status, topicAssociation.message);
+      return videoSubmitErrorResponse(
+        request,
+        observation?.requestId,
+        "validate-topic-association",
+        topicAssociation.message,
+        topicAssociation.status,
+        topicAssociation.message,
+      );
     }
   }
 
@@ -426,41 +186,16 @@ async function handleVideoSubmit(
         scriptAuthorUserId: editBinding.video.script_author_user_id,
         videoEditorUserId: editBinding.video.video_editor_user_id,
         operatorUserId: editBinding.video.operator_user_id,
-    }
+      }
     : null;
   const assigneeColumns = buildSubmissionAssigneeColumns(roleUserIds);
-  const externalAssigneeIds = collectAssigneeIdsRequiringValidation(
-    roleUserIds,
-    originalAssignees,
-    userId,
-  );
-
-  if (externalAssigneeIds.length) {
-    const assigneeProfilesResult = await loadWithMembershipFallback({
-      loadWithMembership: async () => deps.createAdminClient()
-        .from("profiles")
-        .select("id, team_id, membership_status")
-        .in("id", externalAssigneeIds),
-      loadWithoutMembership: async () => deps.createAdminClient()
-        .from("profiles")
-        .select("id, team_id")
-        .in("id", externalAssigneeIds),
-    });
-    const assigneeProfiles = filterActiveMemberships(
-      (assigneeProfilesResult.data ?? []) as Array<{ id: string; team_id: string | null; membership_status?: string | null }>,
-    );
-
-    const validAssigneeIds = new Set(
-      assigneeProfiles
-        .filter((assignee) => {
-          return typedProfile.team_id ? assignee.team_id === typedProfile.team_id : false;
-        })
-        .map((assignee) => assignee.id),
-    );
-    if (assigneeProfilesResult.error || externalAssigneeIds.some((id) => !validAssigneeIds.has(id))) {
-      return NextResponse.json({ error: "责任人必须是当前团队或小组中的在职成员" }, { status: 403 });
-    }
-  }
+  const externalAssigneeIds = collectAssigneeIdsRequiringValidation(roleUserIds, originalAssignees, userId);
+  const assigneeErrorResponse = await validateExternalAssignees({
+    createAdminClient: deps.createAdminClient,
+    externalAssigneeIds,
+    submitterTeamId: typedProfile.team_id,
+  });
+  if (assigneeErrorResponse) return assigneeErrorResponse;
 
   const nowIso = new Date().toISOString();
   const rollbackActions: RollbackAction[] = [];
@@ -487,7 +222,7 @@ async function handleVideoSubmit(
   };
 
   const adminSupabase = deps.createAdminClient();
-  let existingVideo: Record<string, unknown> & {
+  let existingVideo: (Record<string, unknown> & {
     id: string;
     account_id: string;
     user_id: string;
@@ -497,10 +232,9 @@ async function handleVideoSubmit(
     script_author_user_id?: string | null;
     video_editor_user_id?: string | null;
     operator_user_id?: string | null;
-  } | null = null;
+  }) | null = null;
 
   if (editBinding && editBinding.ok) {
-    // 编辑模式：绑定校验已确认归属与日期，直接复用校验读取到的原视频
     existingVideo = editBinding.video;
   } else {
     const { data: fetchedVideo, error: existingVideoError } = await adminSupabase
@@ -508,11 +242,9 @@ async function handleVideoSubmit(
       .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, script_author_user_id, video_editor_user_id, operator_user_id, lifecycle_state, created_at")
       .eq("id", submissionVideoId)
       .maybeSingle();
-
     if (existingVideoError) {
       return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-video", existingVideoError.message);
     }
-
     if (fetchedVideo && fetchedVideo.user_id !== userId) {
       return NextResponse.json({ error: "视频记录已被其他成员占用" }, { status: 409 });
     }
@@ -522,12 +254,9 @@ async function handleVideoSubmit(
   if (normalized.mode === "edit" && !existingVideo) {
     return NextResponse.json({ error: "原视频不存在或无权限编辑" }, { status: 404 });
   }
-
   if (normalized.mode === "edit" && existingVideo && existingVideo.account_id !== normalized.account_id) {
     return NextResponse.json({ error: "编辑视频与提交账号不一致" }, { status: 409 });
   }
-
-  // 发布时间是平台截图识别出的事实；历史编辑只能修改日报数据，不能覆盖原发布时间。
   if (normalized.mode === "edit" && existingVideo) {
     videoPayload.published_at = existingVideo.published_at ?? null;
   }
@@ -536,7 +265,6 @@ async function handleVideoSubmit(
   if (existingVideo && videoWriteMode === "insert") {
     return NextResponse.json({ error: "视频记录已永久删除，请修改内容后重新提交" }, { status: 409 });
   }
-
   if (videoWriteMode === "restore_then_update") {
     try {
       await restoreVideoSubmission(submissionVideoId, userId, deps.createAdminClient);
@@ -570,7 +298,6 @@ async function handleVideoSubmit(
     : supabase.from("videos").insert(videoPayload).select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT).single(), rollbackAndMark);
   const persistedVideo = videoStep.ok ? videoStep.data : null;
   const videoError = videoStep.ok ? null : videoStep.error;
-
   if (videoError || !persistedVideo) {
     return NextResponse.json({ error: videoError instanceof Error ? videoError.message : "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
   }
@@ -580,30 +307,18 @@ async function handleVideoSubmit(
     ? { data: editBinding.snapshot24h, error: null }
     : await supabase
       .from("video_metrics_snapshots")
-      .select(
-        "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio, vs_previous, screenshot_urls, curve_screenshot_url, retention_screenshot_url, captured_at"
-      )
+      .select("id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio, vs_previous, screenshot_urls, curve_screenshot_url, retention_screenshot_url, captured_at")
       .eq("video_id", persistedVideo.id)
       .eq("snapshot_type", "24h")
       .maybeSingle();
-
   if (existingSnapshotError) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    const rbErr = await rollbackAndMark();
+    if (rbErr) console.error("[video-submit] rollback failed", rbErr);
     return videoSubmitErrorResponse(request, observation?.requestId, "load-existing-snapshot", existingSnapshotError.message);
   }
 
-  // 编辑模式由服务端保留数据库中不可编辑指标的原值，不信任前端默认值
-  const preservedSnapshotPayload = mergePreservedEditSnapshotFields(
-    normalized.mode,
-    snapshotPayload,
-    editBinding && editBinding.ok ? editBinding.snapshot24h : null,
-  );
-  const preservedNullableSnapshotPayload = mergePreservedEditMetricFields(
-    normalized.mode,
-    preservedSnapshotPayload,
-    queriedSnapshot,
-  );
-
+  const preservedSnapshotPayload = mergePreservedEditSnapshotFields(normalized.mode, snapshotPayload, editBinding && editBinding.ok ? editBinding.snapshot24h : null);
+  const preservedNullableSnapshotPayload = mergePreservedEditMetricFields(normalized.mode, preservedSnapshotPayload, queriedSnapshot);
   const existingScreenshotFields = queriedSnapshot as ExistingSubmissionScreenshotFields | null;
   const screenshotReplacementHistoryRows = buildScreenshotReplacementHistoryRows({
     existing: existingScreenshotFields,
@@ -613,11 +328,7 @@ async function handleVideoSubmit(
     userId,
     replacedAt: nowIso,
   });
-  const reusableScreenshotFields = mergeReusableScreenshotFields(
-    normalized.mode,
-    normalized.assets,
-    existingScreenshotFields,
-  );
+  const reusableScreenshotFields = mergeReusableScreenshotFields(normalized.mode, normalized.assets, existingScreenshotFields);
 
   if (normalized.mode === "edit" && normalized.assets.length === 0) {
     const existingScreenshotAccess = await assertReadableSubmissionScreenshots(
@@ -626,12 +337,13 @@ async function handleVideoSubmit(
       getSiteOrigin() ?? request.nextUrl.origin,
     );
     if (!existingScreenshotAccess.ok) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      const rbErr = await rollbackAndMark();
+      if (rbErr) console.error("[video-submit] rollback failed", rbErr);
       return NextResponse.json({ error: existingScreenshotAccess.error }, { status: existingScreenshotAccess.status });
     }
-
     if (normalized.anomaly_status === "normal" && !hasReusableConfirmedScreenshots(existingScreenshotFields)) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      const rbErr = await rollbackAndMark();
+      if (rbErr) console.error("[video-submit] rollback failed", rbErr);
       return NextResponse.json({ error: "编辑提交缺少已确认的互动截图和完播截图，请重新上传" }, { status: 400 });
     }
   }
@@ -639,12 +351,11 @@ async function handleVideoSubmit(
   const effectiveSnapshotPayload = (reusableScreenshotFields
     ? { ...preservedNullableSnapshotPayload, ...reusableScreenshotFields }
     : preservedNullableSnapshotPayload) as typeof snapshotPayload;
-
   const existingSnapshot: Record<string, unknown> | null = queriedSnapshot;
 
-  // 编辑模式禁止创建新快照：绑定校验后快照意外缺失时立即阻断
   if (editBinding && editBinding.ok && !existingSnapshot) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    const rbErr = await rollbackAndMark();
+    if (rbErr) console.error("[video-submit] rollback failed", rbErr);
     return NextResponse.json({ error: "原视频缺少24h快照，已停止编辑以避免覆盖历史数据" }, { status: 422 });
   }
 
@@ -655,12 +366,7 @@ async function handleVideoSubmit(
     });
   } else {
     rollbackActions.push(async () => {
-      // video_metrics_snapshots 无成员 DELETE RLS，必须用 adminSupabase，否则 user client 静默 0 行
-      const { error } = await adminSupabase
-        .from("video_metrics_snapshots")
-        .delete()
-        .eq("video_id", persistedVideo.id)
-        .eq("snapshot_type", "24h");
+      const { error } = await adminSupabase.from("video_metrics_snapshots").delete().eq("video_id", persistedVideo.id).eq("snapshot_type", "24h");
       if (error) throw error;
     });
   }
@@ -671,45 +377,25 @@ async function handleVideoSubmit(
     : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(submitResponseFields.SNAPSHOT_WRITE_SELECT).single(), rollbackAndMark);
   const persistedSnapshot = snapshotStep.ok ? snapshotStep.data : null;
   const snapshotError = snapshotStep.ok ? null : snapshotStep.error;
-
   if (snapshotError || !persistedSnapshot) {
     return NextResponse.json({ error: snapshotError instanceof Error ? snapshotError.message : "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
   }
 
-  const dailyReportPayload = buildDailyReportPayload({
-    normalized,
-    videoId: persistedVideo.id,
-    userId,
-    submitter,
-    nowIso,
-    assigneeColumns,
-    existingVideo,
-  });
-  const reportTarget = resolveDailyReportSubmissionTarget({
-    mode: normalized.mode,
-    editBinding,
-  });
-  const existingReport = reportTarget.existingReport;
-
-  // 编辑模式禁止创建新日报：绑定校验后日报意外缺失时立即阻断
+  const dailyReportPayload = buildDailyReportPayload({ normalized, videoId: persistedVideo.id, userId, submitter, nowIso, assigneeColumns, existingVideo });
+  const existingReport = resolveDailyReportSubmissionTarget({ mode: normalized.mode, editBinding }).existingReport;
   if (editBinding && editBinding.ok && !existingReport) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    const rbErr = await rollbackAndMark();
+    if (rbErr) console.error("[video-submit] rollback failed", rbErr);
     return NextResponse.json({ error: "原日报不存在，已停止编辑以避免新建日报" }, { status: 404 });
   }
 
-  const effectiveDailyReportPayload = mergePreservedEditMetricFields(
-    normalized.mode,
-    dailyReportPayload,
-    existingReport,
-  );
-
+  const effectiveDailyReportPayload = mergePreservedEditMetricFields(normalized.mode, dailyReportPayload, existingReport);
   observation?.mark("write-report");
   const reportStep = await runSubmissionPersistenceStep("report", async () => existingReport
     ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single()
     : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(submitResponseFields.DAILY_REPORT_WRITE_SELECT).single(), rollbackAndMark);
   const persistedReport = reportStep.ok ? reportStep.data : null;
   const dailyReportError = reportStep.ok ? null : reportStep.error;
-
   if (dailyReportError || !persistedReport) {
     return NextResponse.json({ error: dailyReportError instanceof Error ? dailyReportError.message : "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
   }
@@ -722,75 +408,31 @@ async function handleVideoSubmit(
   } else {
     const createdReportId = persistedReport.id;
     rollbackActions.push(async () => {
-      const { error } = await supabase
-        .from("daily_reports")
-        .delete()
-        .eq("id", createdReportId);
+      const { error } = await supabase.from("daily_reports").delete().eq("id", createdReportId);
       if (error) throw error;
     });
   }
 
   observation?.mark("write-tags");
-  const tagResult = await persistSubmissionTags({
-    loadPrevious: async () => {
-      const result = await supabase
-        .from("video_tags")
-        .select("id, video_id, tag_dimension, tag_value, source, confidence, reason, reviewed_by, created_at")
-        .eq("video_id", persistedVideo.id);
-      return { data: (result.data ?? []) as unknown[], error: result.error ? { message: result.error.message } : null };
-    },
-    writeManualTags: async () => {
-      const manualTags = buildManualTagPayload({
-        videoId: persistedVideo.id,
-        topicTag: normalized.topic_tag,
-        videoForm: normalized.video_form,
-        contentKeywords: normalized.content_keywords,
-      });
-      const { error: deleteError } = await supabase
-        .from("video_tags")
-        .delete()
-        .eq("video_id", persistedVideo.id)
-        .in("tag_dimension", ["话题", "表达形式", "关键词"]);
-      if (deleteError) return { error: { message: deleteError.message } };
-      if (!manualTags.length) return {};
-      const { error: insertError } = await supabase.from("video_tags").insert(manualTags);
-      return insertError ? { error: { message: insertError.message } } : {};
-    },
-    restorePrevious: async (rows) => {
-      const { error: deleteError } = await adminSupabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
-      if (deleteError) throw deleteError;
-      if (!rows.length) return;
-      const { error: insertError } = await adminSupabase.from("video_tags").insert(rows as Record<string, unknown>[]);
-      if (insertError) throw insertError;
-    },
+  const tagResult = await replaceSubmissionManualTags({
+    supabase,
+    adminSupabase,
+    videoId: persistedVideo.id,
+    normalized,
   });
-
   if (!tagResult.ok) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
     return NextResponse.json({ error: tagResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
-  // 导粉话术自 2026-10-27 起并入文案（产品决定）：日报不再单独收集话术，
-  // 因此不再写 script_usage_records，也不再在编辑时清空历史使用记录——
-  // 老记录的话术使用数据保持原样，不随编辑被删改。
 
-  // 来源是核心提交的最后一个阻塞写入：失败时回滚此前的整条提交，避免
-  // 日报已标为手工后又因后续失败尝试把来源回退成历史值。
   const dataSource = resolveDailyReportDataSource({
     existing: normalizeDailyReportDataSource(existingReport?.data_source),
-    hasOcrRecognizedFields: normalized.assets.some((asset) => {
-      const fields = asset.recognized_fields;
-      return Boolean(fields && Object.keys(fields).length > 0);
-    }),
+    hasOcrRecognizedFields: normalized.assets.some((asset) => Boolean(asset.recognized_fields && Object.keys(asset.recognized_fields).length > 0)),
     hasManualEdit: normalized.manual_edit,
-    // 换图信号取两路并集：前端比对过新旧链接，服务端又比对出留痕，任一成立即算换过图。
-    // 只信留痕会漏掉「首次上传」和「老记录只有 retention_screenshot_url」两种情况。
     screenshotsRefreshed: normalized.screenshots_refreshed || screenshotReplacementHistoryRows.length > 0,
   });
-  const { error: dataSourceError } = await supabase
-    .from("daily_reports")
-    .update({ data_source: dataSource })
-    .eq("id", persistedReport.id);
+  const { error: dataSourceError } = await supabase.from("daily_reports").update({ data_source: dataSource }).eq("id", persistedReport.id);
   if (dataSourceError) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
@@ -800,40 +442,29 @@ async function handleVideoSubmit(
   if (screenshotReplacementHistoryRows.length) {
     observation?.mark("write-screenshot-history");
     const historyStep = await runSubmissionPersistenceStep("history", async () => {
-      const result = await adminSupabase
-        .from("video_screenshot_replacement_history")
-        .insert(screenshotReplacementHistoryRows);
+      const result = await adminSupabase.from("video_screenshot_replacement_history").insert(screenshotReplacementHistoryRows);
       return { data: null, error: result.error };
     }, rollbackAndMark);
     if (!historyStep.ok) {
       console.error("[video-submit] screenshot history write failed", historyStep.error);
-      return NextResponse.json({
-        error: "截图替换留痕保存失败，原记录未修改",
-        code: SUBMISSION_PERSISTENCE_ERROR_CODES.history,
-      }, { status: 500 });
+      return NextResponse.json({ error: "截图替换留痕保存失败，原记录未修改", code: SUBMISSION_PERSISTENCE_ERROR_CODES.history }, { status: 500 });
     }
   }
-  scheduleFirstDailyReportNotice(existingReport, { submitter, teamId: typedProfile.team_id, reportDate: persistedReport.report_date, videoTitle: persistedVideo.video_title ?? normalized.video_title, videoUrl: persistedVideo.video_url ?? normalized.video_url, topicTag: normalized.topic_tag, publishedAt: persistedVideo.published_at ?? normalized.published_at, submittedAt: nowIso, metrics: normalized.metrics });
-  // 收尾：结束选题写作状态，并幂等沉淀干货选题。
+
+  const postReview = await finalizeVideoSubmission({
+    createAdminClient: deps.createAdminClient,
+    createPostSubmitReview: deps.createPostSubmitReview,
+    observation, userId, submitter, teamId: typedProfile.team_id, accountName: account.name ?? null, nowIso,
+    normalized, existingReport, persistedReport, persistedVideo, approvedAppealUsed,
+    postReviewTrigger: deadlineGuard.postReviewTrigger,
+  });
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
-  try {
-    observation?.mark("finalize");
-    const writingEnd = await completeWritingOnSubmission(
-      deps.createAdminClient(),
-      userId,
-      persistedVideo.topic_id ?? normalized.topic_id ?? null,
-      persistedVideo.id,
-    );
-    if (writingEnd.ended) console.log("[video-submit] writing state completed for topic", normalized.topic_id);
-  } catch (writingError) {
-    console.error("[video-submit] complete writing state failed", writingError);
-  }
   try {
     topicLibraryEntry = await ensureInternalLibraryEntry(deps.createAdminClient(), persistedVideo.id, typedProfile.team_id!);
   } catch (libraryError) {
     console.error("[video-submit] topic library auto entry failed", libraryError);
   }
-  await consumeApprovedAppealPayload({ admin: deps.createAdminClient(), appeal: approvedAppealUsed, submitted: normalized });
+
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,
@@ -842,6 +473,7 @@ async function handleVideoSubmit(
     video: persistedVideo,
     idempotent_video_id: submissionVideoId,
     topic_library_entry: topicLibraryEntry,
+    ...(postReview ? { post_review: postReview } : {}),
   });
 }
 
@@ -858,7 +490,9 @@ export async function POST(request: NextRequest) {
   return observeMutationRequest(
     "/api/video-submit",
     request,
-    observation => buildVideoSubmitResponse(request, defaultVideoSubmitDeps, observation)
-      .then(response => appendObservedMutationResult(response, observation)),
+    (observation) =>
+      buildVideoSubmitResponse(request, defaultVideoSubmitDeps, observation).then((response) =>
+        appendObservedMutationResult(response, observation),
+      ),
   );
 }

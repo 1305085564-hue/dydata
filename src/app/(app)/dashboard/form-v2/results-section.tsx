@@ -70,7 +70,7 @@ export function FormV2ResultsSection({
 
   return (
     <div className="space-y-3">
-      <div ref={metricsSectionRef}>
+      <div ref={metricsSectionRef} data-submit-anchor="metrics">
         <指标分组区
           ref={metricsGroupRef}
           editing={editing}
@@ -115,7 +115,7 @@ export function FormV2ResultsSection({
           />
         </div>
 
-        <div ref={publishedAtSectionRef} className="flex h-9 items-center gap-3 px-2">
+        <div ref={publishedAtSectionRef} data-submit-anchor="publishedAt" className="flex h-9 items-center gap-3 px-2">
           <span className="w-16 shrink-0 text-[12px] text-[#78716C]">发布时间</span>
           {!editing ? (
             <Input

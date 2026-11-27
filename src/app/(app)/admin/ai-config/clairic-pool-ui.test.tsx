@@ -19,8 +19,6 @@ function makeFamily(
     displayName,
     modelScope: modelId === "clairic" ? "ocr_only" : "general",
     isShelved: true,
-    globalIsEnabled: true,
-    channelReadyButGlobalDisabled: 0,
     channels: [],
     identityCounts: { active: 1, retest: 0, sleeping: 0, invalid: 0, disabled: 0 },
     redundancyCount: 0,

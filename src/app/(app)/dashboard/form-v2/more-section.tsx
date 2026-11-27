@@ -101,7 +101,7 @@ export function FormV2MoreSection({
   ];
 
   return (
-    <div ref={topicTagSectionRef} className="space-y-2">
+    <div ref={topicTagSectionRef} data-submit-anchor="topicTag" className="space-y-2">
       <div className="flex min-h-9 items-center gap-2 rounded-md px-2 text-[14px]">
         <span className="min-w-0 flex-1 truncate text-[#1F1E1D]">
           {summaryParts.map((part, index) => (

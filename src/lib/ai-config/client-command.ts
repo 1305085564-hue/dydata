@@ -23,8 +23,7 @@ export async function requestAiConfigCommand(
 ): Promise<AiConfigCommandResult> {
   const response = await fetcher("/api/admin/ai-config", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...(entity ? { entity } : {}),
-      data: Object.fromEntries(Object.entries(data).filter(([key]) => key !== "provider_key_model_id")) }),
+    body: JSON.stringify({ action, ...(entity ? { entity } : {}), data }),
   }, timeoutMs);
   const body = await response.json();
   if (!response.ok || body.error) return {

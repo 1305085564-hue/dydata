@@ -10,18 +10,20 @@ import {
   type ExemptionRequest,
 } from "@/lib/exemption-approvals";
 import { getAdminExemptionCategoryLabel, normalizeExemptionCategory, toExemptionCategory } from "@/lib/exemption-category";
-import { getAppealExecutionLabel, getAppealId } from "@/lib/command-hub/domain/workbench-rules";
+import { getAppealExecutionLabel, getAppealId, isPostSubmitAppeal } from "@/lib/command-hub/domain/workbench-rules";
 import { formatShanghaiDateTime } from "@/lib/command-hub/types";
 import { LoadError } from "./load-error";
 
 export const REOPEN_EXEMPTION_NOTICE =
   "打回后会撤销这几天已生效的请假/免交，发布考核按未批重新计算；申请回到「等你批」，成员重新等待审批。";
 export const REOPEN_APPEAL_NOTICE = "打回后原审批通知作废，申请回到「等你批」，并重新提醒管理员。";
+export const REOPEN_POST_SUBMIT_NOTICE =
+  "打回后会恢复该作品原有效结算状态，原核查通知作废，核查单回到「等你批」，并重新提醒管理员。";
 
 function describeHistory(item: ExemptionRequest) {
   if (item.source === "fulfillment_appeal") {
     return {
-      kind: `${item.appeal_type || ""}补交`,
+      kind: isPostSubmitAppeal(item) ? "事后核查" : `${item.appeal_type || ""}补交`,
       when: formatShortDate(item.business_date || item.start_date),
       sub: item.account_name || null,
     };
@@ -64,13 +66,17 @@ export function HistoryList({
       <p className="px-4 pb-1 text-[12px] text-[#78716C]">最近 {items.length} 条</p>
       {items.map((item) => {
         const isAppeal = item.source === "fulfillment_appeal";
+        const isPostSubmit = isAppeal && isPostSubmitAppeal(item);
         const id = (isAppeal ? getAppealId(item) : resolveApprovalRequestId(item)) || item.id;
         const approved = item.request_status === "approved";
         const { kind, when, sub } = describeHistory(item);
-        const execution = isAppeal && approved ? getAppealExecutionLabel(item.resumePending ?? false) : null;
+        const execution = isAppeal && !isPostSubmit && approved ? getAppealExecutionLabel(item.resumePending ?? false) : null;
         const rejection = !approved ? item.rejection_reason || item.feedback : null;
         const reopening = reopeningId === id;
         const confirming = confirmingId === id;
+        const statusLabel = isPostSubmit
+          ? (approved ? "已确认正常" : "已标为无效（不计优结算）")
+          : (approved ? "已同意" : "已拒绝");
 
         return (
           <div key={id} className="flex gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-[#F7F7F6]">
@@ -87,17 +93,22 @@ export function HistoryList({
               </div>
               <span className="inline-flex shrink-0 items-center gap-1 text-[12px] text-[#1F1E1D]">
                 <span className={cn("size-1.5 rounded-full", approved ? "bg-status-success" : "bg-status-danger")} />
-                {approved ? "已同意" : "已拒绝"}
+                {statusLabel}
                 {execution && <span className="text-[#78716C]">· {execution}</span>}
               </span>
             </div>
 
+            {isPostSubmit && item.video_title && (
+              <p className="mt-1 break-words text-[14px] leading-[1.5] text-[#141413]">{item.video_title}</p>
+            )}
             {item.reason && <p className="mt-1 break-words text-[14px] leading-[1.6] text-[#1F1E1D]">{item.reason}</p>}
-            {rejection && <p className="mt-1 text-[12px] text-[#78716C]">拒绝原因：{rejection}</p>}
+            {rejection && <p className="mt-1 text-[12px] text-[#78716C]">{isPostSubmit ? "无效原因：" : "拒绝原因："}{rejection}</p>}
 
             {confirming ? (
               <div className="mt-2 space-y-2">
-                <p className="text-[12px] leading-[1.5] text-[#1F1E1D]">{isAppeal ? REOPEN_APPEAL_NOTICE : REOPEN_EXEMPTION_NOTICE}</p>
+                <p className="text-[12px] leading-[1.5] text-[#1F1E1D]">
+                  {isPostSubmit ? REOPEN_POST_SUBMIT_NOTICE : isAppeal ? REOPEN_APPEAL_NOTICE : REOPEN_EXEMPTION_NOTICE}
+                </p>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"

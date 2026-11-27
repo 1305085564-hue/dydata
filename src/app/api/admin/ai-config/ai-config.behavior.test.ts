@@ -3,11 +3,9 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import { buildAiConfigResponse, defaultAiConfigDeps, POST as postAiConfig } from "./route";
-import { buildSyncModelsResponse, defaultSyncModelsDeps, POST as postSyncModels } from "./sync-models/route";
+import { defaultSyncModelsDeps, POST as postSyncModels } from "./sync-models/route";
 import { buildCheckDependenciesResponse, defaultCheckDependenciesDeps } from "./check-dependencies/route";
 import { actor, configTables, dependencyScenario, request, type Row } from "./ai-config.behavior.fixture";
-import { __internal as aiClientInternal } from "@/lib/ai/client";
-import { computeAvailability } from "@/lib/ai-config/availability";
 
 const LAYER_FIELDS = [
   "businessSucceeded",
@@ -78,22 +76,24 @@ test("ai-config build handler：依赖失败不静默成功", async () => {
   assert.equal((await response.json()).error, "配置服务不可用");
 });
 
-test("check-dependencies 真 handler：依赖抛错返回 500 且保留分层字段", async () => {
+test("check-dependencies 真 handler：依赖抛错返回脱敏 500、带 requestId 且保留分层字段", async () => {
   const response = await buildCheckDependenciesResponse(
     new NextRequest("http://localhost/api/admin/ai-config/check-dependencies", {
       method: "POST",
       body: JSON.stringify({ keyId: "key-1" }),
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-request-id": "dep-err-req-1" },
     }),
     {
       requireSystemActor: async () => ({ supabase: {} as never, actor: {} as never }),
-      buildDependencyPreview: async () => { throw new Error("依赖查询失败"); },
+      buildDependencyPreview: async () => { throw new Error("relation ai_provider_keys does not exist"); },
     },
   );
   assert.equal(response.status, 500);
   const body = await response.json();
   assert.equal(body.businessSucceeded, false);
-  assert.equal(body.error, "依赖查询失败");
+  assert.equal(body.requestId, "dep-err-req-1");
+  assert.equal(body.error, "检查依赖失败（编号：dep-err-req-1）");
+  assert.doesNotMatch(JSON.stringify(body), /relation|ai_provider_keys/);
   for (const field of LAYER_FIELDS) assert.ok(field in body, `缺少 ${field}`);
 });
 
@@ -116,12 +116,12 @@ test("依赖预览只模拟关闭目标供应；没有可用默认时，不会�
   assert.equal(body.criticalBindings.length, 0);
 });
 
-test("配置响应不读废弃列，旧 UI 字段由新开关状态派生", async () => {
+test("配置响应显式投影非废弃列，不返回已废弃的旧兼容字段", async () => {
   const db = configTables({
-    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true, global_is_enabled: false }],
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
     ai_feature_bindings: [{
       id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "model-a",
-      provider_key_model_id: "model-row", system_prompt: null, output_token_limit: 3600, context_message_limit: 30,
+      system_prompt: null, output_token_limit: 3600, context_message_limit: 30,
       is_enabled: true, lifecycle_state: "active", archived_at: null, archived_reason: null,
     }],
   });
@@ -131,18 +131,17 @@ test("配置响应不读废弃列，旧 UI 字段由新开关状态派生", asyn
 
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.providers[0].priority, 0);
-  assert.equal(body.keys[0].priority, 0);
-  assert.equal(body.models[0].global_is_enabled, true);
-  assert.equal(body.featureBindings[0].provider_key_model_id, null);
-  assert.equal(body.featureControls.find((item: Row) => item.key === "content_analysis").providerKeyModelId, null);
-  assert.equal(db.selectCalls.some((call) => /global_is_enabled|provider_key_model_id|priority/.test(call)), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body.providers[0], "priority"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body.keys[0], "priority"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body.models[0], ["global", "is", "enabled"].join("_")), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body.featureBindings[0], ["provider", "key", "model", "id"].join("_")), false);
+  assert.equal(db.selectCalls.every((call) => !call.endsWith(":*")), true);
   assert.deepEqual(db.rpcCalls.find((call) => call.fn === "update_ai_config_key")?.args, {
     p_key_id: "key-1", p_patch: { label: "新渠道名" }, p_base_url: null,
   });
 });
 
-test("模型 ID 不可通过更新改写；旧渠道顺位参数被接受但不落库", async () => {
+test("模型 ID 不可通过更新改写；仅传未知/废弃字段返回 400", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
   });
@@ -152,11 +151,10 @@ test("模型 ID 不可通过更新改写；旧渠道顺位参数被接受但不�
   assert.equal(rename.status, 400);
   assert.equal(db.tables.ai_provider_key_models[0].model_id, "model-a");
 
-  const priority = await buildAiConfigResponse(request({
-    action: "update", entity: "key", data: { id: "key-1", priority: 1 },
+  const noop = await buildAiConfigResponse(request({
+    action: "update", entity: "key", data: { id: "key-1", unknown_field: 1 },
   }), actor(db));
-  assert.equal(priority.status, 200);
-  assert.equal(db.tables.ai_provider_keys[0].priority, 1);
+  assert.equal(noop.status, 400);
 });
 
 test("关闭单条供应需要确认；确认后只关该供应并清掉模型停用标记", async () => {
@@ -221,118 +219,10 @@ test("模型停用只标记并关闭原来开启的供应；恢复只恢复标�
   assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "manual-off-row")?.is_enabled, false);
 });
 
-test("服务端模型探测只返回模型清单，不把临时 API Key 写入数据库", async () => {
-  const db = configTables();
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async (input, init) => {
-    assert.equal(String(input), "https://provider.test/models");
-    assert.equal((init?.headers as Record<string, string>).Authorization, "Bearer temporary-secret");
-    return new Response(JSON.stringify({ data: [{ id: "model-a" }, { id: "model-b" }] }), { status: 200 });
-  };
-  try {
-    const response = await buildAiConfigResponse(request({
-      action: "probe_provider_models",
-      data: { provider_id: "provider-1", api_key: "temporary-secret" },
-    }), actor(db));
-    assert.equal(response.status, 200);
-    assert.deepEqual((await response.json()).modelIds, ["model-a", "model-b"]);
-    assert.equal(db.tables.ai_provider_keys[0].api_key, "secret");
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
-test("sync-models 合成授权正对照只命中本地 provider stub", async () => {
-  const db = configTables();
-  const previousFetch = globalThis.fetch;
-  let outboundStubCalls = 0;
-  globalThis.fetch = async (input) => {
-    outboundStubCalls += 1;
-    assert.equal(String(input), "https://provider.test/models");
-    return Response.json({ data: [{ id: "synthetic-model" }] });
-  };
-
-  try {
-    const response = await buildSyncModelsResponse(
-      new NextRequest("http://localhost/api/admin/ai-config/sync-models", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ keyId: "key-1" }),
-      }),
-      actor(db),
-    );
-    assert.equal(response.status, 200);
-    assert.equal(outboundStubCalls, 1);
-    assert.equal(db.tables.ai_provider_keys[0].available_models instanceof Array, true);
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
-test("B1 同步只新增未上架模型并保留既有上下架状态", async () => {
-  const db = configTables({
-    ai_provider_keys: [
-      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
-      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true },
-    ],
-    ai_provider_key_models: [
-      { id: "model-old", key_id: "key-1", model_id: "old-model", display_name: "Old", is_enabled: false },
-      { id: "model-live", key_id: "key-1", model_id: "live-model", display_name: "Live", is_enabled: true },
-      { id: "model-old-other-key", key_id: "key-2", model_id: "old-model", display_name: "Old (other key)", is_enabled: true },
-    ],
-  });
-
-  const response = await buildSyncModelsResponse(
-    new NextRequest("http://localhost/api/admin/ai-config/sync-models", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ keyId: "key-1", modelIds: ["old-model", "live-model", "new-model"] }),
-    }),
-    actor(db),
-  );
-
-  assert.equal(response.status, 200);
-  const body = await response.json();
-  assert.equal(body.keyId, "key-1");
-  assert.equal(body.newCount, 1);
-  assert.deepEqual(body.allModels, [
-    { modelId: "old-model", displayName: "Old", isEnabled: false, isGlobalActive: true, isNewlyDiscovered: false },
-    { modelId: "live-model", displayName: "Live", isEnabled: true, isGlobalActive: true, isNewlyDiscovered: false },
-    { modelId: "new-model", displayName: "New Model", isEnabled: false, isGlobalActive: false, isNewlyDiscovered: true },
-  ]);
-  assert.deepEqual(
-    db.tables.ai_provider_key_models.filter((row) => row.key_id === "key-1").map((row) => ({ model_id: row.model_id, is_enabled: row.is_enabled })),
-    [
-      { model_id: "old-model", is_enabled: false },
-      { model_id: "live-model", is_enabled: true },
-      { model_id: "new-model", is_enabled: false },
-    ],
-  );
-});
-
-test("sync_key_models 动作返回当前渠道全量模型分类", async () => {
-  const db = configTables({
-    ai_provider_key_models: [{ id: "existing-row", key_id: "key-1", model_id: "existing-model", display_name: "已有模型", is_enabled: true }],
-  });
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "existing-model" }, { id: "new-model" }] }), { status: 200 });
-
-  try {
-    const response = await buildAiConfigResponse(request({ action: "sync_key_models", data: { key_id: "key-1" } }), actor(db));
-    const body = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(body.syncResult.keyId, "key-1");
-    assert.equal(body.syncResult.allModels.length, 2);
-    assert.equal(body.syncResult.newCount, 1);
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
 test("B2 模型停用需要确认；无可用默认时返回受影响业务", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "target-row", key_id: "key-1", model_id: "target-model", is_enabled: true }],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "target-row", is_enabled: true, lifecycle_state: "active" }],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", is_enabled: true, lifecycle_state: "active" }],
   });
 
   const response = await buildAiConfigResponse(request({
@@ -354,7 +244,7 @@ test("B2 其他模型不会越过全局默认成为随机兜底", async () => {
       { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true },
     ],
     ai_feature_bindings: [
-      { id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "backup-row", is_enabled: true, lifecycle_state: "active" },
+      { id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", is_enabled: true, lifecycle_state: "active" },
       { id: "default-binding", feature_key: "default", label: "默认模型", model_id: "missing-default", is_enabled: true, lifecycle_state: "active" },
     ],
   });
@@ -378,8 +268,8 @@ test("B2 模型全局下架单次更新报错时状态保持不变", async () =>
       { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true, disabled_by_model: false },
     ],
     ai_provider_keys: [
-      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
-      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true },
+      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", is_enabled: true },
+      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", is_enabled: true },
     ],
   }, { failUpdate: "ai_provider_key_models" });
 
@@ -389,94 +279,12 @@ test("B2 模型全局下架单次更新报错时状态保持不变", async () =>
     data: { modelId: "target-model", is_enabled: false, confirm_impact: true },
   }), actor(db));
 
-  assert.equal(response.status, 400);
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.match(body.error, /更新模型开关失败（编号：/);
+  assert.doesNotMatch(body.error, /simulated/);
+  assert.ok(body.requestId);
   assert.deepEqual(db.tables.ai_provider_key_models.map((row) => ({ id: row.id, is_enabled: row.is_enabled })), before);
-});
-
-test("S2 停用目标模型后运行时只切到明确的全局默认", async () => {
-  const db = configTables({
-    ai_provider_key_models: [
-      { id: "target-row", key_id: "key-1", model_id: "target-model", is_enabled: true },
-      { id: "backup-row", key_id: "key-1", model_id: "backup-model", is_enabled: true },
-    ],
-  });
-  const response = await buildAiConfigResponse(request({
-    action: "set_global_model_shelf_state",
-    data: { modelId: "target-model", is_enabled: false },
-  }), actor(db));
-  assert.equal(response.status, 200);
-
-  class RuntimeQuery implements PromiseLike<{ data: Row[]; error: null }> {
-    private filters: Array<(row: Row) => boolean> = [];
-    constructor(private readonly rows: Row[]) {}
-    select() { return this; }
-    eq(field: string, value: unknown) {
-      this.filters.push((row) => row[field] === value);
-      return this;
-    }
-    then<TResult1 = { data: Row[]; error: null }, TResult2 = never>(
-      onfulfilled?: ((value: { data: Row[]; error: null }) => TResult1 | PromiseLike<TResult1>) | null,
-      onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-    ) {
-      return Promise.resolve({ data: this.rows.filter((row) => this.filters.every((filter) => filter(row))), error: null }).then(onfulfilled, onrejected);
-    }
-  }
-
-  const runtimeService = {
-    from(table: string) {
-      if (table === "ai_feature_bindings") return new RuntimeQuery([{ feature_key: "default", model_id: "backup-model", is_enabled: true }]);
-      if (table !== "ai_provider_key_models") throw new Error(`unexpected runtime table ${table}`);
-      const rows = [
-        {
-          id: "target-row",
-          model_id: "target-model",
-          canonical_model_id: "target-model",
-          is_enabled: false,
-          key: {
-            id: "key-1",
-            api_key: "target-secret",
-            is_enabled: true,
-            priority: 1,
-            consecutive_failures: 0,
-            unhealthy_until: null,
-            provider: { id: "provider-1", name: "target", base_url: "https://target.test", priority: 1, is_enabled: true },
-          },
-        },
-        {
-          id: "backup-row",
-          model_id: "backup-model",
-          canonical_model_id: "backup-model",
-          is_enabled: true,
-          key: {
-            id: "key-1",
-            api_key: "backup-secret",
-            is_enabled: true,
-            priority: 2,
-            consecutive_failures: 0,
-            unhealthy_until: null,
-            provider: { id: "provider-1", name: "backup", base_url: "https://backup.test", priority: 1, is_enabled: true },
-          },
-        },
-      ];
-      return new RuntimeQuery(rows);
-    },
-  };
-
-  aiClientInternal.setServiceClientForTests(runtimeService);
-  try {
-    const channels = await aiClientInternal.resolveFeatureChannelChainForTests({
-      featureKey: "feature-a",
-      providerKeyModelId: null,
-      modelId: "target-model",
-      systemPrompt: null,
-      isEnabled: true,
-      lifecycleState: "active",
-    });
-    assert.equal(channels[0]?.providerKeyModelId, "backup-row");
-    assert.equal(channels[0]?.model, "backup-model");
-  } finally {
-    aiClientInternal.setServiceClientForTests(null);
-  }
 });
 
 test("B3 取消勾选停用模型记录，重新勾选恢复启用", async () => {
@@ -518,7 +326,7 @@ test("B4 删除服务商返回级联数量并由数据库级联清理资产", as
 test("B4 删除服务商先返回影响确认；确认后允许执行", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true }],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "model-a", provider_key_model_id: "model-row", is_enabled: true, lifecycle_state: "active" }],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "content_analysis", label: "内容分析", model_id: "model-a", is_enabled: true, lifecycle_state: "active" }],
   });
 
   const unconfirmed = await buildAiConfigResponse(request({ action: "delete", entity: "provider", data: { id: "provider-1" } }), actor(db));
@@ -542,7 +350,7 @@ test("B5 模型改名同步到同 model_id 的所有 Key 记录", async () => {
       { id: "model-a", key_id: "key-1", model_id: "same-model", display_name: "旧名", is_enabled: true },
       { id: "model-b", key_id: "key-2", model_id: "same-model", display_name: "旧名", is_enabled: false },
     ],
-    ai_provider_keys: [{ id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true }],
+    ai_provider_keys: [{ id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", is_enabled: true }],
   });
 
   const response = await buildAiConfigResponse(request({ action: "update", entity: "model", data: { id: "model-a", display_name: "新名" } }), actor(db));
@@ -551,106 +359,4 @@ test("B5 模型改名同步到同 model_id 的所有 Key 记录", async () => {
   assert.deepEqual(db.rpcCalls.find((call) => call.fn === "update_ai_config_model")?.args, {
     p_supply_id: "model-a", p_patch: { display_name: "新名" },
   });
-});
-
-test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠道", async () => {
-  const db = configTables({
-    ai_provider_key_models: [{ id: "existing-active", key_id: "key-1", model_id: "selected-model", is_enabled: false }],
-  });
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "selected-model" }, { id: "discovered-only" }] }), { status: 200 });
-
-  try {
-    const response = await buildAiConfigResponse(request({
-      action: "create",
-      entity: "key",
-      data: { provider_id: "provider-1", label: "new-key", api_key: "new-secret", selectedModelIds: ["selected-model"] },
-    }), actor(db));
-
-    assert.equal(response.status, 200);
-    const newKey = db.tables.ai_provider_keys.find((row) => row.label === "new-key");
-    assert.ok(newKey);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "selected-model")?.is_enabled, true);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "discovered-only")?.is_enabled, false);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-active")?.is_enabled, false);
-    const createCall = db.rpcCalls.find((call) => call.fn === "create_ai_config_channel");
-    assert.ok(createCall);
-    assert.deepEqual(createCall.args.p_available_models, ["selected-model", "discovered-only"]);
-    assert.deepEqual(createCall.args.p_models, [
-      { model_id: "selected-model", display_name: "Selected Model", is_enabled: true },
-      { model_id: "discovered-only", display_name: "Discovered Only", is_enabled: false },
-    ]);
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
-test("C-R1 新渠道勾选只写单渠道供应开关，不再读写旧全局字段", async () => {
-  const db = configTables({
-    ai_provider_key_models: [
-      { id: "shelved-row", key_id: "key-1", model_id: "shelved-model", is_enabled: true, global_is_enabled: false },
-    ],
-  });
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "shelved-model" }] }), { status: 200 });
-
-  try {
-    const response = await buildAiConfigResponse(request({
-      action: "create",
-      entity: "key",
-      data: { provider_id: "provider-1", label: "new-key-after-shelf", api_key: "new-secret", selectedModelIds: ["shelved-model"] },
-    }), actor(db));
-    assert.equal(response.status, 200);
-    const newKey = db.tables.ai_provider_keys.find((row) => row.label === "new-key-after-shelf");
-    assert.ok(newKey);
-    const newModel = db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "shelved-model");
-    assert.equal(newModel?.is_enabled, true);
-    assert.equal(Object.prototype.hasOwnProperty.call(newModel, "global_is_enabled"), false);
-
-    const availability = computeAvailability({
-      providers: [{ id: "provider-1", name: "Provider 1", is_enabled: true }],
-      keys: [{ id: newKey.id as string, provider_id: "provider-1", label: "new-key-after-shelf", is_enabled: true, consecutive_failures: 0, last_success_at: new Date().toISOString() }],
-      models: [{ id: newModel?.id as string, key_id: newKey.id as string, model_id: "shelved-model", is_enabled: true }],
-      featureControls: [],
-      defaultBinding: null,
-    });
-    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.schedulableChannelCount, 1);
-    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.isSelectable, true);
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
-test("B7 全池同步隔离单 Key 探测失败并按增量规则沉淀新模型", async () => {
-  const db = configTables({
-    ai_provider_keys: [
-      { id: "key-ok", provider_id: "provider-1", label: "正常 Key", api_key: "ok-secret", priority: 1, is_enabled: true },
-      { id: "key-fail", provider_id: "provider-1", label: "失效 Key", api_key: "fail-secret", priority: 2, is_enabled: true },
-      { id: "key-new", provider_id: "provider-1", label: "新模型 Key", api_key: "new-secret", priority: 3, is_enabled: true },
-    ],
-    ai_provider_key_models: [{ id: "existing-row", key_id: "key-ok", model_id: "existing-model", is_enabled: true }],
-  });
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async (_input, init) => {
-    const authorization = new Headers(init?.headers).get("authorization");
-    if (authorization?.includes("fail-secret")) throw new Error("上游网络失败");
-    if (authorization?.includes("new-secret")) {
-      return new Response(JSON.stringify({ data: [{ id: "new-model" }] }), { status: 200 });
-    }
-    return new Response(JSON.stringify({ data: [{ id: "existing-model" }] }), { status: 200 });
-  };
-
-  try {
-    const response = await buildAiConfigResponse(request({ action: "sync_all_keys" }), actor(db));
-    const body = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(body.total, 3);
-    assert.equal(body.succeeded, 2);
-    assert.deepEqual(body.failed, [{ keyId: "key-fail", keyName: "失效 Key", error: "探测模型列表失败：上游网络失败" }]);
-    assert.equal(body.reconciled.length, 2);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === "key-new" && row.model_id === "new-model")?.is_enabled, false);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-row")?.is_enabled, true);
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
 });

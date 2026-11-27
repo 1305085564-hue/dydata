@@ -13,49 +13,90 @@ import { appendObservedMutationResult, observeMutationRequest } from "@/lib/obse
 import { mapAppealRowForResponse } from "./_appeal-response";
 import { buildPublishedDayWindow, resolveCreateSubmissionConflict } from "@/app/api/video-submit/create-conflict";
 import { buildSubmissionRecordId } from "@/app/api/video-submit/stability";
+import { toStringErrorResponse } from "@/lib/errors";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
-export async function GET(request: NextRequest) {
-  const auth = await requireAdminServiceClient();
-  const forbidden = requireOwnerOrAdminRole(auth);
+export type FulfillmentAppealsGetDeps = {
+  requireAdminServiceClient: typeof requireAdminServiceClient;
+  requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
+};
+
+export async function buildFulfillmentAppealsGetResponse(
+  request: NextRequest,
+  deps: FulfillmentAppealsGetDeps = { requireAdminServiceClient, requireOwnerOrAdminRole },
+) {
+  const auth = await deps.requireAdminServiceClient();
+  const forbidden = deps.requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
-  if ("response" in auth) return auth.response;
+  if ("response" in auth) return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const status = request.nextUrl.searchParams.get("status")?.trim() ?? "";
   const limitValue = Number.parseInt(request.nextUrl.searchParams.get("limit") ?? "", 10);
   const limit = Number.isFinite(limitValue) ? Math.max(1, Math.min(limitValue, 200)) : 50;
 
-  let query = auth.supabase
-    .from("fulfillment_appeals")
-    .select("id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload")
-    .order("created_at", { ascending: false });
+  const buildAppealsQuery = (columns: string) => {
+    let query = auth.supabase
+      .from("fulfillment_appeals")
+      .select(columns)
+      .order("created_at", { ascending: false });
+    if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
+    return query.in("user_id", auth.scope.visibleUserIds).limit(limit);
+  };
 
-  if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
-  query = query.in("user_id", auth.scope.visibleUserIds);
-
-  const appealsResult = await query.limit(limit);
+  let appealsResult = await buildAppealsQuery(
+    "id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload, review_mode, video_id, daily_report_id, trigger_reason, elapsed_hours",
+  );
+  if (appealsResult.error && /review_mode|video_id|daily_report_id|trigger_reason|elapsed_hours|schema cache|column .* does not exist/i.test(appealsResult.error.message ?? "")) {
+    appealsResult = await buildAppealsQuery(
+      "id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload",
+    );
+  }
   if (appealsResult.error) {
-    return NextResponse.json({ error: appealsResult.error.message || "读取履约申诉失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeals",
+      operation: "list-appeals",
+      request,
+      error: appealsResult.error,
+      status: 500,
+      message: "读取履约申诉失败",
+    });
   }
 
-  const scopedAppeals = filterScopedRows(auth.scope, appealsResult.data, (row) => row.user_id);
+  const scopedAppeals = filterScopedRows(auth.scope, (appealsResult.data ?? []) as unknown as Array<Parameters<typeof mapAppealRowForResponse>[0]>, (row) => row.user_id);
   const relatedUserIds = Array.from(new Set(
     scopedAppeals
       .flatMap((item) => [item.user_id, item.handler_id])
       .filter((value): value is string => typeof value === "string" && value.length > 0),
   ));
+  // gate:transient-map 请求内按 user_id 映射申诉成员姓名，随响应返回释放
   const profileMap = new Map<string, { name: string | null }>();
   if (relatedUserIds.length > 0) {
     const profilesResult = await auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds);
     if (profilesResult.error) {
-      return NextResponse.json({ error: profilesResult.error.message || "读取申诉成员信息失败" }, { status: 500 });
+      return toStringErrorResponse({
+        code: "DEPENDENCY_FAILED",
+        route: "/api/admin/fulfillment/appeals",
+        operation: "load-appeal-profiles",
+        request,
+        error: profilesResult.error,
+        status: 500,
+        message: "读取申诉成员信息失败",
+      });
     }
     for (const profile of profilesResult.data ?? []) profileMap.set(profile.id, { name: profile.name ?? null });
   }
 
   return NextResponse.json({
     appeals: scopedAppeals.map((item) => mapAppealRowForResponse(item, profileMap)),
+  });
+}
+
+export async function GET(request: NextRequest) {
+  return buildFulfillmentAppealsGetResponse(request, {
+    requireAdminServiceClient,
+    requireOwnerOrAdminRole,
   });
 }
 
@@ -125,7 +166,16 @@ async function handlePost(request: Request, observation: MutationObservation, la
       : Promise.resolve({ data: [] as { id: string }[] | null, error: null }),
   ]);
   if (existingReportResult.error || existingVideoResult.error || existingSameDayResult.error) {
-    return NextResponse.json({ error: "核对重复提交状态失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeals",
+      operation: "check-duplicate-submission",
+      request,
+      requestId: observation.requestId,
+      error: existingReportResult.error ?? existingVideoResult.error ?? existingSameDayResult.error,
+      status: 500,
+      message: "核对重复提交状态失败",
+    });
   }
   const duplicateResponse = resolveCreateSubmissionConflict({
     mode: normalized.mode,
@@ -145,7 +195,18 @@ async function handlePost(request: Request, observation: MutationObservation, la
     .eq("record_date", recordDate)
     .eq("status", "pending")
     .maybeSingle();
-  if (existingError) return NextResponse.json({ error: "核对已有申请失败" }, { status: 500 });
+  if (existingError) {
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeals",
+      operation: "check-existing-appeal",
+      request,
+      requestId: observation.requestId,
+      error: existingError,
+      status: 500,
+      message: "核对已有申请失败",
+    });
+  }
   if (existing) return NextResponse.json({ error: "该账号该日期已有待审批申请", appealId: existing.id }, { status: 409 });
 
   observation.mark("write-request");
@@ -161,7 +222,18 @@ async function handlePost(request: Request, observation: MutationObservation, la
     })
     .select("id, user_id, account_id, record_date, reason, status, created_at")
     .single();
-  if (insertError || !appeal) return NextResponse.json({ error: insertError?.message || "提交补交申请失败" }, { status: 500 });
+  if (insertError || !appeal) {
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeals",
+      operation: "create-appeal",
+      request,
+      requestId: observation.requestId,
+      error: insertError ?? new Error("insert fulfillment appeal returned empty row"),
+      status: 500,
+      message: "提交补交申请失败",
+    });
+  }
   layers.businessSucceeded = true;
 
   const { data: requester } = await admin.from("profiles").select("name, team_id").eq("id", user.id).single();
@@ -196,7 +268,16 @@ async function handlePost(request: Request, observation: MutationObservation, la
   if (!notification.ok) {
     observation.mark("compensate");
     layers.todoStatus = "failed";
-    return NextResponse.json({ error: "申请已提交，但管理通知发送失败，请联系管理员" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/fulfillment/appeals",
+      operation: "emit-appeal-todo",
+      request,
+      requestId: observation.requestId,
+      error: notification.error ?? "emit fulfillment appeal todo failed",
+      status: 500,
+      message: "申请已提交，但管理通知发送失败，请联系管理员",
+    });
   }
   layers.todoStatus = "succeeded";
   observation.mark("finalize");

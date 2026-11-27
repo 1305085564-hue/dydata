@@ -440,8 +440,8 @@ export function actor(db: MemorySupabase) {
 
 export function configTables(overrides: Partial<Record<TableName, Row[]>> = {}, options: MemoryOptions = {}) {
   return new MemorySupabase({
-    ai_providers: [{ id: "provider-1", name: "Provider 1", base_url: "https://provider.test", protocol: "openai_compatible", priority: 1, is_enabled: true }],
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true }],
+    ai_providers: [{ id: "provider-1", name: "Provider 1", base_url: "https://provider.test", protocol: "openai_compatible", is_enabled: true }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", is_enabled: true }],
     ai_provider_key_models: [],
     ai_feature_bindings: [],
     ...overrides,
@@ -456,8 +456,8 @@ export function dependencyScenario() {
       { id: "unrelated-row", key_id: "key-1", model_id: "unrelated-model", display_name: "其他模型", is_enabled: true, disabled_by_model: false },
     ],
     ai_feature_bindings: [
-      { id: "default-binding", feature_key: "default", label: "全局默认", model_id: "default-model", provider_key_model_id: "unrelated-row", is_enabled: true, lifecycle_state: "active" },
-      { id: "business-binding", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", provider_key_model_id: "unrelated-row", is_enabled: true, lifecycle_state: "active" },
+      { id: "default-binding", feature_key: "default", label: "全局默认", model_id: "default-model", is_enabled: true, lifecycle_state: "active" },
+      { id: "business-binding", feature_key: "content_analysis", label: "内容分析", model_id: "target-model", is_enabled: true, lifecycle_state: "active" },
     ],
   });
 }

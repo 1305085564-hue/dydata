@@ -28,14 +28,14 @@ test("B8 check_all_in_use 只测已启用业务与默认的开启供应，包含
   const invalidSince = new Date().toISOString();
   const db = configTables({
     ai_providers: [
-      { id: "provider-1", name: "Provider 1", base_url: "https://provider.test", priority: 1, is_enabled: true },
-      { id: "provider-off", name: "Provider Off", base_url: "https://off.test", priority: 2, is_enabled: false },
+      { id: "provider-1", name: "Provider 1", base_url: "https://provider.test", is_enabled: true },
+      { id: "provider-off", name: "Provider Off", base_url: "https://off.test", is_enabled: false },
     ],
     ai_provider_keys: [
-      { id: "key-invalid", provider_id: "provider-1", label: "失效但开启", api_key: "invalid-secret", priority: 1, is_enabled: true, consecutive_failures: 3, invalidated_at: invalidSince },
-      { id: "key-sleeping", provider_id: "provider-1", label: "休眠但开启", api_key: "sleep-secret", priority: 2, is_enabled: true, manual_sleep_until: sleepUntil },
-      { id: "key-disabled", provider_id: "provider-1", label: "手动停用", api_key: "disabled-secret", priority: 3, is_enabled: false },
-      { id: "key-provider-disabled", provider_id: "provider-off", label: "接入点停用", api_key: "provider-off-secret", priority: 4, is_enabled: true },
+      { id: "key-invalid", provider_id: "provider-1", label: "失效但开启", api_key: "invalid-secret", is_enabled: true, consecutive_failures: 3, invalidated_at: invalidSince },
+      { id: "key-sleeping", provider_id: "provider-1", label: "休眠但开启", api_key: "sleep-secret", is_enabled: true, manual_sleep_until: sleepUntil },
+      { id: "key-disabled", provider_id: "provider-1", label: "手动停用", api_key: "disabled-secret", is_enabled: false },
+      { id: "key-provider-disabled", provider_id: "provider-off", label: "接入点停用", api_key: "provider-off-secret", is_enabled: true },
     ],
     ai_provider_key_models: [
       { id: "selected-invalid", key_id: "key-invalid", model_id: "selected-model", is_enabled: true, invalidated_at: invalidSince, consecutive_failures: 5, last_error_message: "old model failure" },
@@ -102,7 +102,6 @@ test("B9 成功测试只恢复对应Key和实测模型，不清兄弟模型故�
       provider_id: "provider-1",
       label: "测试 Key",
       api_key: "model-secret",
-      priority: 1,
       is_enabled: true,
       consecutive_failures: 4,
       first_failure_at: stale,
@@ -151,7 +150,7 @@ test("截图功能试跑失败不改健康；成功只恢复实际返回的Key�
   const stale = new Date(Date.now() - 10 * 60_000).toISOString();
   const sleepUntil = new Date(Date.now() + 30 * 60_000).toISOString();
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "测试 Key", api_key: "secret", priority: 1, is_enabled: true, consecutive_failures: 4, first_failure_at: stale, last_failure_at: stale, unhealthy_until: sleepUntil, manual_sleep_until: sleepUntil }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "测试 Key", api_key: "secret", is_enabled: true, consecutive_failures: 4, first_failure_at: stale, last_failure_at: stale, unhealthy_until: sleepUntil, manual_sleep_until: sleepUntil }],
     ai_provider_key_models: [
       { id: "tested-row", key_id: "key-1", model_id: "haiku-model", is_enabled: true, consecutive_failures: 5, first_failure_at: stale, last_failure_at: stale, unhealthy_until: sleepUntil, invalidated_at: stale, last_error_message: "tested model failure" },
       { id: "sibling-row", key_id: "key-1", model_id: "sibling-model", is_enabled: true, consecutive_failures: 3, first_failure_at: stale, last_failure_at: stale, unhealthy_until: sleepUntil, invalidated_at: stale, last_error_message: "sibling model failure" },
@@ -193,7 +192,7 @@ test("Haiku 5.5 看图探测走原生 Messages API，并校验识别正文", asy
   const stale = new Date(Date.now() - 10 * 60_000).toISOString();
   const db = configTables({
     ai_provider_key_models: [{ id: "haiku-row", key_id: "key-1", model_id: "claude-haiku-5-5", is_enabled: true, consecutive_failures: 3, first_failure_at: stale, last_failure_at: stale, invalidated_at: stale }],
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "Haiku", api_key: "haiku-secret", priority: 1, is_enabled: true, consecutive_failures: 3, first_failure_at: stale, last_failure_at: stale, manual_sleep_until: new Date(Date.now() + 60_000).toISOString() }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "Haiku", api_key: "haiku-secret", is_enabled: true, consecutive_failures: 3, first_failure_at: stale, last_failure_at: stale, manual_sleep_until: new Date(Date.now() + 60_000).toISOString() }],
   });
   const previousFetch = globalThis.fetch;
   let responseText = '{"number":"427"}';
@@ -250,7 +249,6 @@ test("B10 test_key_model 的模型错误只写当前模型，且错误响应不�
       provider_id: "provider-1",
       label: "测试 Key",
       api_key: "model-secret",
-      priority: 1,
       is_enabled: true,
       consecutive_failures: 0,
     }],
@@ -297,7 +295,7 @@ test("B11 检测此渠道只测当前勾选在供的模型，不盲抽第 1 个�
     ai_provider_key_models: [
       { id: "row-live", key_id: "key-1", model_id: "model-live", is_enabled: true },
       { id: "row-draft", key_id: "key-1", model_id: "model-draft", is_enabled: false },
-      { id: "row-unshelved", key_id: "key-1", model_id: "model-unshelved", is_enabled: true, global_is_enabled: false },
+      { id: "row-unshelved", key_id: "key-1", model_id: "model-unshelved", is_enabled: true },
     ],
   });
   const previousFetch = globalThis.fetch;
@@ -536,8 +534,8 @@ test("C2 批量停用恢复只恢复原来打开的供应", async () => {
 
 test("C3 同一渠道连点五次检测每次都写冷却，但绝不动供给开关", async () => {
   const db = configTables({
-    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true, global_is_enabled: true, consecutive_failures: 2 }],
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true, consecutive_failures: 1 }],
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", is_enabled: true, consecutive_failures: 2 }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", is_enabled: true, consecutive_failures: 1 }],
   });
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response("model unavailable", { status: 400 });
@@ -559,7 +557,7 @@ test("C3 同一渠道连点五次检测每次都写冷却，但绝不动供给�
 
 test("C4 同步以上游清单为准，一次撤下历史旧账并报告在供数量", async () => {
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang Gemini", api_key: "secret", priority: 1, is_enabled: true, available_models: [] }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang Gemini", api_key: "secret", is_enabled: true, available_models: [] }],
     ai_provider_key_models: [
       { id: "live-row", key_id: "key-1", model_id: "model-live", is_enabled: true },
       { id: "dead-row", key_id: "key-1", model_id: "model-dead", is_enabled: true },
@@ -580,8 +578,8 @@ test("C4 同步以上游清单为准，一次撤下历史旧账并报告在供�
 
 test("C6 收走渠道模型成功后写入操作人、对象和来源审计", async () => {
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", priority: 1, is_enabled: true, available_models: ["model-a"] }],
-    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", display_name: "模型 A", is_enabled: false, global_is_enabled: true }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", is_enabled: true, available_models: ["model-a"] }],
+    ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", display_name: "模型 A", is_enabled: false }],
   });
   const response = await buildAiConfigResponse(request({ action: "delete", entity: "model", data: { id: "model-row" } }), actor(db));
   assert.equal(response.status, 200);
@@ -602,7 +600,7 @@ test("C6 收走渠道模型成功后写入操作人、对象和来源审计", as
 
 test("收走供应的原子审计 RPC 报错时返回已回滚并保持完整状态", async () => {
   const db = configTables({
-    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", priority: 1, is_enabled: true, available_models: ["model-a"] }],
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", is_enabled: true, available_models: ["model-a"] }],
     ai_provider_key_models: [{ id: "model-row", key_id: "key-1", model_id: "model-a", display_name: "模型 A", is_enabled: false }],
   }, { failRpc: "remove_ai_config_supply_with_audit" });
   const before = structuredClone(db.tables);

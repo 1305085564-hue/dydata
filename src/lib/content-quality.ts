@@ -44,6 +44,9 @@ export type ContentQualitySnapshot = {
 export type ContentQualityWorkInput = {
   videoId: string | null;
   snapshot?: ContentQualitySnapshot;
+  /** 单一真源：事后核查标为无效（不计优结算）时传 true。 */
+  settlementExcluded?: boolean;
+  settlementExcludedReason?: string | null;
 };
 
 export function contentQualityRules(standards?: EvaluationStandards): ContentQualityRules {
@@ -91,7 +94,13 @@ export function buildWorkContentQualityFromMetrics(
   topics: ContentQualityTopicContext,
   standards?: EvaluationStandards,
 ): WorkContentQuality {
-  if (!input.videoId) return emptyWorkContentQuality("unlinked");
+  const settlementPatch = input.settlementExcluded
+    ? {
+        settlementExcluded: true,
+        settlementExcludedReason: input.settlementExcludedReason ?? null,
+      }
+    : {};
+  if (!input.videoId) return { ...emptyWorkContentQuality("unlinked"), ...settlementPatch };
   const topicReady = topics.state === "ready" && topics.tags.has(input.videoId);
   const topicKind = topicReady ? classifyVideoTopicKind(topics.tags.get(input.videoId)) : null;
   const targets = standards?.targets.interactionRate != null
@@ -100,6 +109,7 @@ export function buildWorkContentQualityFromMetrics(
   const base: WorkContentQuality = {
     ...emptyWorkContentQuality("pending_snapshot"),
     topicKind,
+    ...settlementPatch,
   };
   if (!input.snapshot) return base;
 
@@ -236,7 +246,14 @@ export function buildContentQualitySummaryFromWorks(
       : null;
   };
   const overallGradeCounts = { excellent: 0, good: 0, fair: 0 };
-  for (const work of ratedWorks) incrementGradeCount(overallGradeCounts, work.overallGrade!);
+  let excludedExcellentCount = 0;
+  for (const work of ratedWorks) {
+    if (work.overallGrade === "优" && work.settlementExcluded) {
+      excludedExcellentCount += 1;
+      continue;
+    }
+    incrementGradeCount(overallGradeCounts, work.overallGrade!);
+  }
   const unratedReasons = {
     unlinked: 0,
     pendingSnapshot: 0,
@@ -262,20 +279,39 @@ export function buildContentQualitySummaryFromWorks(
     avgInteractionAchievement: avg(interactionWorks, "interactionAchievement"),
     avgContentAchievement: avg(retentionWorks, "contentAchievement"),
     overallGradeCounts,
+    ...(excludedExcellentCount > 0 ? { excludedExcellentCount } : {}),
     goodExcellentRate: ratedWorks.length ? goodCount / ratedWorks.length : null,
   };
 }
+
+export type SettlementExclusionLookup = Map<
+  string,
+  { excluded: boolean; reason?: string | null }
+>;
 
 export function buildContentQualityMap(
   videoIds: string[],
   snapshots: Map<string, ContentQualitySnapshot>,
   topics: ContentQualityTopicContext,
   standards?: EvaluationStandards,
+  settlementExclusions?: SettlementExclusionLookup,
 ): Map<string, WorkContentQuality> {
-  return new Map(videoIds.map((videoId) => [
-    videoId,
-    buildWorkContentQualityFromMetrics({ videoId, snapshot: snapshots.get(videoId) }, topics, standards),
-  ]));
+  return new Map(videoIds.map((videoId) => { // gate:transient-map 请求内作品质量映射，随返回释放
+    const exclusion = settlementExclusions?.get(videoId);
+    return [
+      videoId,
+      buildWorkContentQualityFromMetrics(
+        {
+          videoId,
+          snapshot: snapshots.get(videoId),
+          settlementExcluded: exclusion?.excluded === true,
+          settlementExcludedReason: exclusion?.reason ?? null,
+        },
+        topics,
+        standards,
+      ),
+    ];
+  }));
 }
 
 /** 对外接口使用 Record，避免 NextResponse JSON.stringify(Map) 后变成空对象。 */
@@ -284,8 +320,9 @@ export function buildContentQualityRecord(
   snapshots: Map<string, ContentQualitySnapshot>,
   topics: ContentQualityTopicContext,
   standards?: EvaluationStandards,
+  settlementExclusions?: SettlementExclusionLookup,
 ): Record<string, WorkContentQuality> {
-  return Object.fromEntries(buildContentQualityMap(videoIds, snapshots, topics, standards));
+  return Object.fromEntries(buildContentQualityMap(videoIds, snapshots, topics, standards, settlementExclusions));
 }
 
 export type { VideoTopicKind };

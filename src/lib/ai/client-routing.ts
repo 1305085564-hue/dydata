@@ -23,7 +23,8 @@ export type ChannelConfig = {
 
 export type FeatureConfig = {
   featureKey: string;
-  providerKeyModelId: string | null;
+  /** Optional transitional type slot for external test/caller literals; never read or populated. */
+  providerKeyModelId?: null;
   modelId: string | null;
   systemPrompt: string | null;
   isEnabled: boolean;
@@ -32,7 +33,6 @@ export type FeatureConfig = {
 
 type AiFeatureBindingRow = {
   feature_key: string;
-  provider_key_model_id: string | null;
   model_id?: string | null;
   system_prompt: string | null;
   is_enabled: boolean;
@@ -79,7 +79,6 @@ function getServiceSupabaseClient() {
 function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
   return {
     featureKey: row.feature_key,
-    providerKeyModelId: null,
     modelId: row.model_id ? readCanonicalModelId(row.model_id) : null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,

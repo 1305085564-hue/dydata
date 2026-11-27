@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ActionItem } from "@/lib/action-center/types";
 import { groupPendingApprovals, type ExemptionRequest } from "@/lib/exemption-approvals";
 import { buildApprovalQueue } from "@/lib/command-hub/domain/workbench-rules";
-import { HistoryList, REOPEN_EXEMPTION_NOTICE } from "./history-list";
+import { HistoryList, REOPEN_EXEMPTION_NOTICE, REOPEN_POST_SUBMIT_NOTICE } from "./history-list";
 import { QueueItem } from "./queue-item";
 import { TodoRow } from "./todo-row";
 
@@ -147,4 +147,50 @@ test("已处理记录：被拒的补交不显示执行状态，打回说明讲�
   assert.match(REOPEN_EXEMPTION_NOTICE, /撤销/);
   assert.match(REOPEN_EXEMPTION_NOTICE, /重新计算/);
   assert.match(REOPEN_EXEMPTION_NOTICE, /重新等待审批/);
+});
+
+test("事后核查卡片展示触发原因、发布间隔、作品标题与「确认正常 / 标为无效（不计优结算）」按钮", () => {
+  const postAppeal = request({
+    id: "appeal-post-1",
+    source: "fulfillment_appeal",
+    review_mode: "post_submit",
+    account_name: "达人主号",
+    business_date: "2026-11-17",
+    appeal_trigger_reason: "manual_published_at",
+    ocr_published_at_text: "2026-11-15 18:00",
+    video_title: "爆款干货拆解",
+    play_count: 23500,
+    elapsed_hours: 84,
+    reason: "手工修改发布时间（识别原值 2026-11-15 18:00），已直接入库待核查",
+  });
+  const [postItem] = buildApprovalQueue([], [postAppeal]);
+  const cardHtml = renderToStaticMarkup(
+    <QueueItem item={postItem} index={0} focused rejecting={null} onFocus={noop} onApprove={noop} onStartReject={noop} onConfirmReject={noop} onCancelReject={noop} onApproveDay={noop} />,
+  );
+  assert.match(cardHtml, /事后核查/);
+  assert.match(cardHtml, /爆款干货拆解/);
+  assert.match(cardHtml, /23,500/);
+  assert.match(cardHtml, /84h/);
+  assert.match(cardHtml, /确认正常/);
+  assert.match(cardHtml, /标为无效（不计优结算）/);
+
+  const rejectHtml = renderToStaticMarkup(
+    <QueueItem item={postItem} index={0} focused rejecting={{ itemId: postItem.id }} onFocus={noop} onApprove={noop} onStartReject={noop} onConfirmReject={noop} onCancelReject={noop} onApproveDay={noop} />,
+  );
+  assert.match(rejectHtml, /确认标为无效/);
+  assert.match(rejectHtml, /不计入文案优条数结算/);
+
+  const historyHtml = renderToStaticMarkup(
+    <HistoryList
+      items={[{ ...postAppeal, request_status: "rejected", rejection_reason: "发布时间核实不符" }]}
+      loading={false}
+      error={null}
+      reopeningId={null}
+      onRetry={noop}
+      onReopen={noop}
+    />,
+  );
+  assert.match(historyHtml, /已标为无效（不计优结算）/);
+  assert.match(historyHtml, /无效原因：发布时间核实不符/);
+  assert.match(REOPEN_POST_SUBMIT_NOTICE, /恢复该作品原有效结算状态/);
 });

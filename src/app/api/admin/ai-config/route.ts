@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { __internal as aiClientInternal, probeAiFeature } from "@/lib/ai/client";
 import { getAiFeatureCatalogEntry } from "@/lib/ai/feature-catalog";
-import { sanitizeProviderErrorMessage } from "@/lib/ai/provider-health";
 import { isModelAllowedForFeature, normalizeProtocolBaseUrl, normalizeProviderProtocol, parseProviderProtocol, type AiProviderProtocol } from "@/lib/ai/provider-protocols";
 import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
 import { runAiConfigWrite } from "@/lib/ai-config/atomic-write";
@@ -21,8 +20,10 @@ import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-
 import { requireSystemActor, toBoolean, toNullableString, toTrimmedString } from "@/lib/admin/ai-channels";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { auditRollbackMessage } from "@/lib/audit-log";
+import { toStringErrorResponse } from "@/lib/errors";
 import { readCanonicalModelId, toCanonicalModelId } from "@/lib/ai-config/canonical-model";
 import { probeClairicOcr } from "@/lib/clairic-ocr";
+import { toSafeAiConfigErrorResponse } from "./_error-response";
 
 type AiConfigEntity = "provider" | "key" | "model" | "feature_binding";
 type AiConfigAction =
@@ -56,7 +57,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 function requireId(data: Record<string, unknown>) {
   const id = toTrimmedString(data.id);
-  if (!id) throw new Error("缺少 id");
+  if (!id) throw mutationError("缺少 id");
   return id;
 }
 
@@ -78,7 +79,7 @@ function providerPatch(data: Record<string, unknown>, mode: "create" | "update")
   }
   if (data.description !== undefined) patch.description = toNullableString(data.description);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-  if (mode === "create" && (!patch.name || !patch.base_url)) throw new Error("供应商缺少 name/base_url");
+  if (mode === "create" && (!patch.name || !patch.base_url)) throw mutationError("供应商缺少 name/base_url");
   return patch;
 }
 
@@ -86,10 +87,10 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
   const patch: Record<string, unknown> = {};
   if (mode === "create" || data.key_id !== undefined) patch.key_id = toTrimmedString(data.key_id);
   if (mode === "create") patch.model_id = toTrimmedString(data.model_id);
-  else if (data.model_id !== undefined) throw new Error("模型 ID 不可修改");
+  else if (data.model_id !== undefined) throw mutationError("模型 ID 不可修改");
   if (data.display_name !== undefined) patch.display_name = toNullableString(data.display_name);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-  if (mode === "create" && (!patch.key_id || !patch.model_id)) throw new Error("模型缺少 key_id/model_id");
+  if (mode === "create" && (!patch.key_id || !patch.model_id)) throw mutationError("模型缺少 key_id/model_id");
   return patch;
 }
 
@@ -103,23 +104,12 @@ async function requireSelectableModel(supabase: SupabaseClient, modelId: string,
 
 type MutationResult = { affectedCount?: number; cascade?: { keyCount: number; modelCount: number }; sharedAddressImpact?: SharedAddressImpact };
 type MutationError = Error & {
-  status?: number; requiresConfirmation?: boolean; sharedAddressImpact?: SharedAddressImpact; unknownReasons?: string[];
+  status?: number; isPublic?: boolean; requiresConfirmation?: boolean; sharedAddressImpact?: SharedAddressImpact; unknownReasons?: string[];
   affectedBusinesses?: Array<{ key: string; label: string; selectedModelId: string | null; preferredModelId: string | null; defaultModelId: string | null }>;
 };
 
 function mutationError(message: string, status = 400): MutationError {
-  return Object.assign(new Error(message), { status });
-}
-
-function mutationErrorBody(error: unknown, fallback: string) {
-  const cause = error as MutationError;
-  return {
-    error: error instanceof Error ? error.message : fallback,
-    ...(typeof cause?.requiresConfirmation === "boolean" ? { requiresConfirmation: cause.requiresConfirmation } : {}),
-    ...(Array.isArray(cause?.affectedBusinesses) ? { affectedBusinesses: cause.affectedBusinesses } : {}),
-    ...(cause?.sharedAddressImpact ? { sharedAddressImpact: cause.sharedAddressImpact } : {}),
-    ...(Array.isArray(cause?.unknownReasons) ? { unknownReasons: cause.unknownReasons } : {}),
-  };
+  return Object.assign(new Error(message), { status, isPublic: true });
 }
 
 export function boundedInteger(value: unknown, fieldLabel: string, min: number, max: number, fallback: number) {
@@ -133,13 +123,14 @@ async function handleRemoveKeyModel(supabase: SupabaseClient, data: Record<strin
   const keyModelId = toTrimmedString(data.key_model_id ?? data.id);
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
-  if (!keyModelId && (!keyId || !modelId)) throw new Error("缺少 key_model_id 或 key_id/model_id");
+  if (!keyModelId && (!keyId || !modelId)) throw mutationError("缺少 key_model_id 或 key_id/model_id");
 
-  const query = supabase.from("ai_provider_key_models").select("*, key:ai_provider_keys(label, provider_id, provider:ai_providers(name))");
+  const query = supabase.from("ai_provider_key_models").select("id, key_id, model_id, canonical_model_id, display_name, is_enabled, key:ai_provider_keys(label, provider_id, provider:ai_providers(name))");
   const { data: row, error: rowError } = keyModelId
     ? await query.eq("id", keyModelId).maybeSingle()
     : await query.eq("key_id", keyId).eq("canonical_model_id", toCanonicalModelId(modelId)).maybeSingle();
-  if (rowError || !row) throw new Error(rowError?.message || "渠道未挂载此模型");
+  if (rowError) throw new Error(rowError.message);
+  if (!row) throw mutationError("渠道未挂载此模型", 404);
 
   const target = row as {
     id: string; key_id: string; model_id: string; canonical_model_id?: string | null; display_name?: string | null; is_enabled: boolean;
@@ -174,12 +165,12 @@ async function applyMutation(
   actorId?: string,
   fetcher?: typeof fetch,
 ): Promise<MutationResult> {
-  if (entity === "feature_binding") throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
+  if (entity === "feature_binding") throw mutationError("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
   const table = { provider: "ai_providers", key: "ai_provider_keys", model: "ai_provider_key_models", feature_binding: "ai_feature_bindings" }[entity];
   const targetId = action === "delete" || action === "update" ? requireId(data) : "";
 
   if (action === "delete" && entity === "model") {
-    if (!actorId) throw new Error("缺少审计操作人");
+    if (!actorId) throw mutationError("缺少审计操作人");
     return handleRemoveKeyModel(supabase, { ...data, id: targetId }, actorId) as unknown as MutationResult;
   }
   if (action === "delete") {
@@ -202,8 +193,7 @@ async function applyMutation(
 
   const patch = entity === "provider" ? providerPatch(data, action) : entity === "key" ? buildAiKeyPatch(data, action) : modelPatch(data, action);
   if (Object.keys(patch).length === 0 && !(entity === "key" && data.base_url !== undefined)) {
-    if (action === "update" && data.priority !== undefined) return {};
-    throw new Error("没有可写入字段");
+    throw mutationError("没有可写入字段");
   }
 
   let sharedAddressImpact: SharedAddressImpact | undefined;
@@ -220,8 +210,9 @@ async function applyMutation(
     }
     if (entity === "key" && (data.provider_id !== undefined || data.base_url !== undefined)) {
       const { data: currentKey, error: keyError } = await supabase.from("ai_provider_keys").select("provider_id").eq("id", targetId).single();
-      if (keyError || !currentKey) throw new Error(keyError?.message || "渠道不存在");
-      if (data.provider_id !== undefined && toTrimmedString(data.provider_id) !== currentKey.provider_id) throw new Error("渠道不能改换所属地址组，请新接入渠道");
+      if (keyError) throw new Error(keyError.message);
+      if (!currentKey) throw mutationError("渠道不存在", 404);
+      if (data.provider_id !== undefined && toTrimmedString(data.provider_id) !== currentKey.provider_id) throw mutationError("渠道不能改换所属地址组，请新接入渠道");
       if (data.base_url !== undefined) {
         const { data: providerRow } = await supabase.from("ai_providers").select("protocol").eq("id", currentKey.provider_id).maybeSingle();
         normalizedKeyBaseUrl = normalizeProtocolBaseUrl(normalizeProviderProtocol((providerRow as { protocol?: unknown } | null)?.protocol), data.base_url);
@@ -250,7 +241,7 @@ async function applyMutation(
 
 function requireManageableBusinessFeature(data: Record<string, unknown>) {
   const feature = getAiFeatureCatalogEntry(toTrimmedString(data.feature_key));
-  if (!feature || feature.group !== "business" || feature.routing !== "binding") throw new Error("该功能不支持在业务总控中调整");
+  if (!feature || feature.group !== "business" || feature.routing !== "binding") throw mutationError("该功能不支持在业务总控中调整");
   return feature;
 }
 
@@ -285,22 +276,51 @@ async function changeFeatureLifecycle(supabase: SupabaseClient, data: Record<str
   return feature;
 }
 
-export async function GET() {
-  const auth = await requireSystemActor();
+export async function buildAiConfigGetResponse(
+  request?: Request,
+  deps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor },
+) {
+  const auth = await deps.requireSystemActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   try {
     return NextResponse.json(await loadAiConfig(auth.supabase));
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "读取 AI 配置失败" }, { status: 500 });
+    return toStringErrorResponse({
+      code: "DEPENDENCY_FAILED",
+      route: "/api/admin/ai-config",
+      operation: "load-ai-config",
+      request,
+      error,
+      status: 500,
+      message: "读取 AI 配置失败",
+    });
   }
+}
+
+export async function GET(request: NextRequest) {
+  const auth = await requireSystemActor();
+  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  return buildAiConfigGetResponse(request, { requireSystemActor: async () => auth });
 }
 
 export async function buildAiConfigResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; probeClairicOcr?: typeof probeClairicOcr; createAdminClient?: typeof createAdminClient; fetcher?: typeof fetch } = { requireSystemActor }
+  deps: { requireSystemActor: typeof requireSystemActor; probeAiFeature?: typeof probeAiFeature; probeClairicOcr?: typeof probeClairicOcr; createAdminClient?: typeof createAdminClient; fetcher?: typeof fetch } = { requireSystemActor },
+  requestId?: string | null,
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  const fail = (error: unknown, fallbackMessage: string, operation: string, defaultStatus = 500) =>
+    toSafeAiConfigErrorResponse({
+      error,
+      fallbackMessage,
+      route: "/api/admin/ai-config",
+      operation,
+      request,
+      requestId,
+      defaultStatus,
+    });
 
   let body: AiConfigBody;
   try { body = (await request.json()) as AiConfigBody; } catch { return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }); }
@@ -322,18 +342,18 @@ export async function buildAiConfigResponse(
       const { data: provider, error } = providerId
         ? await auth.supabase.from("ai_providers").select("id, name, base_url, protocol, is_enabled").eq("id", providerId).maybeSingle()
         : { data: { base_url: normalizeProtocolBaseUrl(requestedProtocol, data.base_url), protocol: requestedProtocol, is_enabled: true }, error: null };
-      if (error || !provider) throw new Error(error?.message || "接入点不存在");
-      if (!(provider as { is_enabled?: boolean }).is_enabled) throw new Error("接入点已停用");
+      if (error) throw new Error(error.message);
+      if (!provider) throw mutationError("接入点不存在", 404);
+      if (!(provider as { is_enabled?: boolean }).is_enabled) throw mutationError("接入点已停用", 409);
       effectiveProtocol = normalizeProviderProtocol((provider as { protocol?: unknown }).protocol);
       const upstreamModelIds = await discoverModelIds(provider as { name?: string; base_url?: string; protocol?: string | null }, apiKey, deps.fetcher);
       const modelIds = [...new Set(upstreamModelIds.map(toCanonicalModelId))];
       return NextResponse.json({ modelIds, upstreamModelIds, modelGroups: groupModelIdAliases(upstreamModelIds) });
     } catch (error) {
-      if (effectiveProtocol === "cloudflare_clairic") {
-        const safeMsg = sanitizeProviderErrorMessage(error instanceof Error ? error.message : "探测 Cloudflare Clairic 失败，请检查接口地址与 API Token", [apiKey]);
-        return NextResponse.json({ error: safeMsg }, { status: 502 });
-      }
-      return NextResponse.json({ error: "服务端探测模型列表失败，请检查接入点和 API Key" }, { status: 502 });
+      const fallback = effectiveProtocol === "cloudflare_clairic"
+        ? "探测 Cloudflare Clairic 失败，请检查接口地址与 API Token"
+        : "服务端探测模型列表失败，请检查接入点和 API Key";
+      return fail(error, fallback, "probe-provider-models", 502);
     }
   }
 
@@ -341,14 +361,14 @@ export async function buildAiConfigResponse(
     try {
       const data = asRecord(body.data);
       const modelId = toTrimmedString(data.model_id);
-      if (!modelId) throw new Error("缺少 model_id");
+      if (!modelId) throw mutationError("缺少 model_id");
       const canonicalModelId = toCanonicalModelId(modelId);
       const bundle = await loadAiConfig(auth.supabase);
       const candidates = findModelChannelCandidates(bundle as unknown as ModelChannelDiscoveryInput, canonicalModelId);
       if (action === "find_model_channels") return NextResponse.json({ modelId: canonicalModelId, candidates });
       const candidate = candidates.find((item) => item.keyId === toTrimmedString(data.key_id));
-      if (!candidate) throw new Error("该供应已经打开，或上游缓存未发现这个模型，请先同步");
-      if (!candidate.keyEnabled || !candidate.providerEnabled) throw new Error("请先打开渠道及其地址组，再开启模型供应");
+      if (!candidate) throw mutationError("该供应已经打开，或上游缓存未发现这个模型，请先同步");
+      if (!candidate.keyEnabled || !candidate.providerEnabled) throw mutationError("请先打开渠道及其地址组，再开启模型供应");
       const target = await loadKeyProvider(auth.supabase, candidate.keyId);
       const testResult = await probeProviderModel(target.key.api_key, target.provider.base_url, candidate.upstreamModelId, "text", target.provider.protocol);
       if (!testResult.ok) return NextResponse.json({ error: "该渠道的模型测试未通过，供应仍关闭", testResult }, { status: 422 });
@@ -358,7 +378,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json({ ...await loadAiConfig(auth.supabase), enableResult: { keyId: candidate.keyId, modelId: canonicalModelId, supplyId, testResult } });
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "模型供应操作失败"), { status: (error as MutationError).status ?? 400 });
+      return fail(error, "模型供应操作失败", action);
     }
   }
 
@@ -372,7 +392,7 @@ export async function buildAiConfigResponse(
         .map((a) => ({ key: a.key, label: a.label, modelId: a.selectedModelId ?? a.defaultModelId }));
       return NextResponse.json({ syncResult: { ...result, lostBusinesses }, ...bundle });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status: 400 });
+      return fail(error, "同步模型列表失败", "sync-key-models");
     }
   }
 
@@ -382,7 +402,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json({ syncResult: result, ...await loadAiConfig(auth.supabase) });
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "保存模型勾选失败"), { status: (error as MutationError)?.status ?? 400 });
+      return fail(error, "保存模型勾选失败", "set-key-model-selection");
     }
   }
 
@@ -392,7 +412,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json({ ...await loadAiConfig(auth.supabase), shelfResult: result, affectedCount: result.affectedCount });
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "更新模型开关失败"), { status: (error as MutationError)?.status ?? 400 });
+      return fail(error, "更新模型开关失败", "set-model-enabled");
     }
   }
 
@@ -402,7 +422,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json({ ...await loadAiConfig(auth.supabase), removalResult: result });
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "收走模型失败"), { status: (error as MutationError)?.status ?? 400 });
+      return fail(error, "收走模型失败", "remove-key-model");
     }
   }
 
@@ -410,7 +430,7 @@ export async function buildAiConfigResponse(
     try {
       return NextResponse.json(await handleSyncAllKeys((deps.createAdminClient ?? createAdminClient)()));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "全池同步模型列表失败" }, { status: 400 });
+      return fail(error, "全池同步模型列表失败", "sync-all-keys");
     }
   }
 
@@ -418,7 +438,7 @@ export async function buildAiConfigResponse(
     try {
       return NextResponse.json(await handleCheckAllInUse(auth.supabase, { healthClient: (deps.createAdminClient ?? createAdminClient)() }));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "使用中模型检查失败" }, { status: 400 });
+      return fail(error, "使用中模型检查失败", "check-all-in-use");
     }
   }
 
@@ -432,7 +452,7 @@ export async function buildAiConfigResponse(
       const result = await handleTestKey(auth.supabase, data, { healthClient: (deps.createAdminClient ?? createAdminClient)() });
       return NextResponse.json({ testResult: result, ...await loadAiConfig(auth.supabase) });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "连通性测试失败" }, { status: 400 });
+      return fail(error, "连通性测试失败", "test-key");
     }
   }
 
@@ -441,7 +461,7 @@ export async function buildAiConfigResponse(
       const result = await handleTestKeyModel(auth.supabase, asRecord(body.data), { recordFailure: true, healthClient: (deps.createAdminClient ?? createAdminClient)() });
       return NextResponse.json({ testResult: result, ...await loadAiConfig(auth.supabase) });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
+      return fail(error, "模型连通测试失败", "test-key-model");
     }
   }
 
@@ -449,7 +469,7 @@ export async function buildAiConfigResponse(
     try {
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
-      if (!keyId) throw new Error("缺少 key_id");
+      if (!keyId) throw mutationError("缺少 key_id");
       const { data: rows, error } = await auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled").eq("key_id", keyId);
       if (error) throw new Error(error.message);
       const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
@@ -475,7 +495,7 @@ export async function buildAiConfigResponse(
         failedModelIds: modelResults.filter((r) => !r.ok).map((r) => r.modelId),
       });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
+      return fail(error, "模型连通测试失败", "test-key-all-models");
     }
   }
 
@@ -502,11 +522,11 @@ export async function buildAiConfigResponse(
       const { error } = await (deps.createAdminClient ?? createAdminClient)().rpc("swap_provider_key_model_order", {
         p_model_id: canonicalModelId, p_key_model_id: id, p_target_key_model_id: targetId,
       });
-      if (error) throw mutationError(error.message, 409);
+      if (error) throw new Error(error.message);
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "渠道处置失败" }, { status: (error as MutationError).status ?? 400 });
+      return fail(error, "渠道顺位调整失败，请刷新后重试", "swap-model-channel-order", 409);
     }
   }
 
@@ -514,7 +534,7 @@ export async function buildAiConfigResponse(
     try {
       const data = asRecord(body.data);
       const modelId = toNullableString(data.model_id);
-      if (!modelId) throw new Error("还没有选择默认兜底模型");
+      if (!modelId) throw mutationError("还没有选择默认兜底模型");
       const canonicalModelId = toCanonicalModelId(modelId);
       const capability = isModelAllowedForFeature("default", canonicalModelId);
       if (!capability.allowed) throw mutationError(capability.reason, 400);
@@ -526,7 +546,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "设置全局默认模型失败"), { status: (error as MutationError)?.status ?? 400 });
+      return fail(error, "设置全局默认模型失败", "set-global-default-model");
     }
   }
 
@@ -540,7 +560,7 @@ export async function buildAiConfigResponse(
       aiClientInternal.resetCache();
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
-      return NextResponse.json(mutationErrorBody(error, "保存业务功能失败"), { status: (error as MutationError)?.status ?? 400 });
+      return fail(error, "保存业务功能失败", action);
     }
   }
 
@@ -557,7 +577,7 @@ export async function buildAiConfigResponse(
       ...(mutationResult.sharedAddressImpact ? { sharedAddressImpact: mutationResult.sharedAddressImpact } : {}),
     });
   } catch (error) {
-    return NextResponse.json(mutationErrorBody(error, "保存 AI 配置失败"), { status: typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 400 });
+    return fail(error, "保存 AI 配置失败", `${action}-${entity}`);
   }
 }
 
@@ -566,6 +586,9 @@ export const defaultAiConfigDeps: { requireSystemActor: typeof requireSystemActo
 export async function POST(request: NextRequest) {
   return observeMutationRequest("/api/admin/ai-config", request, async (observation) => {
     observation.mark("validate");
-    return appendObservedMutationResult(await buildAiConfigResponse(request, defaultAiConfigDeps), observation);
+    return appendObservedMutationResult(
+      await buildAiConfigResponse(request, defaultAiConfigDeps, observation.requestId),
+      observation,
+    );
   });
 }

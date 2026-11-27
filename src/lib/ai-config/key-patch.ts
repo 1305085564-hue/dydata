@@ -9,7 +9,7 @@ export function buildAiKeyPatch(data: Record<string, unknown>, mode: "create" | 
   if (mode === "update" && apiKey) Object.assign(patch,{consecutive_failures:0,unhealthy_until:null,invalidated_at:null,first_failure_at:null,last_error_message:null});
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.provider_id || !patch.label || !patch.api_key)) {
-    throw new Error("Key 缺少 provider_id/label/api_key");
+    throw Object.assign(new Error("Key 缺少 provider_id/label/api_key"), { status: 400, isPublic: true });
   }
   return patch;
 }

@@ -22,20 +22,18 @@ function baseInput(overrides: Partial<AvailabilityInput> = {}): AvailabilityInpu
   };
 }
 
-test("global_is_enabled 的 null、false、true 均不影响供给开关", () => {
-  for (const globalIsEnabled of [null, false, true]) {
-    const report = computeAvailabilityT(baseInput({
-      keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
-      models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: globalIsEnabled }],
-    }));
+test("单渠道供应开关 is_enabled 唯一决定可调度与上架状态", () => {
+  const report = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
+  }));
 
-    assert.equal(report.modelFamilies[0]?.schedulableChannelCount, 1);
-    assert.equal(report.modelFamilies[0]?.isShelved, true);
-  }
+  assert.equal(report.modelFamilies[0]?.schedulableChannelCount, 1);
+  assert.equal(report.modelFamilies[0]?.isShelved, true);
 
   const switchedOff = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
-    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: false, global_is_enabled: true }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: false }],
   }));
   assert.equal(switchedOff.modelFamilies[0]?.schedulableChannelCount, 0);
   assert.equal(switchedOff.modelFamilies[0]?.isShelved, false);
@@ -44,19 +42,11 @@ test("global_is_enabled 的 null、false、true 均不影响供给开关", () =>
 test("渠道本身正常但某模型已冻结时，该模型不计为可调度", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW).toISOString() }],
-    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: true,
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true,
       consecutive_failures: 3, unhealthy_until: new Date(NOW + MINUTE).toISOString() }],
   }));
   assert.equal(report.modelFamilies[0].schedulableChannelCount, 0);
   assert.equal(report.schedulableKeyCount, 0);
-});
-
-test("global_is_enabled 为空时，页面仍按正式供给开关计为可调度", () => {
-  const report = computeAvailabilityT(baseInput({
-    keys: [{ id: "k1", provider_id: "p1", is_enabled: true }],
-    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: null }],
-  }));
-  assert.equal(report.modelFamilies[0].schedulableChannelCount, 1);
 });
 
 test("同一份配置的页面可调度数与正式候选链逐项一致", async () => {
@@ -64,17 +54,15 @@ test("同一份配置的页面可调度数与正式候选链逐项一致", async
   const cases = [
     { model: {}, key: {}, provider: {}, expected: 1 },
     { model: { consecutive_failures: 3, unhealthy_until: future }, key: {}, provider: {}, expected: 0 },
-    { model: { global_is_enabled: null }, key: {}, provider: {}, expected: 1 },
     { model: { is_enabled: false }, key: {}, provider: {}, expected: 0 },
-    { model: { global_is_enabled: false }, key: {}, provider: {}, expected: 1 },
     { model: {}, key: { consecutive_failures: 3, unhealthy_until: future }, provider: {}, expected: 0 },
     { model: {}, key: { is_enabled: false }, provider: {}, expected: 0 },
     { model: {}, key: {}, provider: { is_enabled: false }, expected: 0 },
   ];
   for (const item of cases) {
-    const model = { id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: true, ...item.model };
-    const key = { id: "k1", provider_id: "p1", is_enabled: true, priority: 1, ...item.key };
-    const provider = { id: "p1", name: "provider", base_url: "https://example.invalid", is_enabled: true, priority: 1, ...item.provider };
+    const model = { id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, ...item.model };
+    const key = { id: "k1", provider_id: "p1", is_enabled: true, ...item.key };
+    const provider = { id: "p1", name: "provider", base_url: "https://example.invalid", is_enabled: true, ...item.provider };
     const report = computeAvailability({ providers: [provider], keys: [key], models: [model] });
     const query = {
       select() { return this; }, eq() { return this; },
@@ -155,7 +143,7 @@ test("指定模型不可用时改由全局默认顶班，不借用其他模型",
       { id: "m3", key_id: "k1", model_id: "model-random", is_enabled: true },
     ],
     featureControls: [
-      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "model-selected", providerKeyModelId: "must-be-ignored" },
+      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "model-selected" },
     ],
     defaultBinding: { feature_key: "default", model_id: "model-default" },
   }));
@@ -173,7 +161,7 @@ test("指定模型不可用时改由全局默认顶班，不借用其他模型",
 });
 
 test("未指定模型的业务跟随全局默认：默认可用不算受影响，默认缺失或不可用才算", () => {
-  const feature = { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: null, providerKeyModelId: null };
+  const feature = { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: null };
   const keys = [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }];
   const models = [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }];
 
@@ -218,7 +206,7 @@ test("无可用模型时保留业务所选模型但不伪造实际模型", () =>
     { id: "m2", key_id: "k1", model_id: "model-ghost", is_enabled: true },
   ];
   const feature = (modelId: string | null) => ({
-    key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId, providerKeyModelId: null,
+    key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId,
   });
 
   const unavailable = computeAvailabilityT(baseInput({
@@ -239,20 +227,20 @@ test("无可用模型时保留业务所选模型但不伪造实际模型", () =>
   assert.equal(unavailable.modelFamilies.find((family) => family.modelId === "model-ghost")?.isShelved, true);
 });
 
-test("空 modelId 忽略旧 providerKeyModelId 并跟随默认模型", () => {
+test("空 modelId 跟随默认模型", () => {
   const keys = [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }];
   const models = [
-    { id: "m1", key_id: "k1", model_id: "model-legacy-pinned", is_enabled: true },
+    { id: "m1", key_id: "k1", model_id: "model-other", is_enabled: true },
     { id: "m2", key_id: "k1", model_id: "model-default", is_enabled: true },
   ];
   const feature = {
     key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active",
-    modelId: null, providerKeyModelId: "m1",
+    modelId: null,
   };
 
   const healthy = computeAvailabilityT(baseInput({
     keys, models,
-    featureControls: [{ ...feature, providerKeyModelId: "m1" }],
+    featureControls: [feature],
     defaultBinding: { feature_key: "default", model_id: "model-default" },
   }));
   const assurance = healthy.businessAssurances[0];
@@ -270,9 +258,9 @@ test("暂停与归档的业务不计入受影响", () => {
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3, unhealthy_until: new Date(NOW + 10 * MINUTE).toISOString(), last_failure_at: new Date(NOW - MINUTE).toISOString() }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
     featureControls: [
-      { key: "f1", label: "已暂停", group: "business", isEnabled: false, lifecycleState: "active", modelId: "model-a", providerKeyModelId: null },
-      { key: "f2", label: "已归档", group: "business", isEnabled: true, lifecycleState: "archived", modelId: "model-a", providerKeyModelId: null },
-      { key: "f3", label: "系统项", group: "system", isEnabled: true, lifecycleState: "active", modelId: "model-a", providerKeyModelId: null },
+      { key: "f1", label: "已暂停", group: "business", isEnabled: false, lifecycleState: "active", modelId: "model-a" },
+      { key: "f2", label: "已归档", group: "business", isEnabled: true, lifecycleState: "archived", modelId: "model-a" },
+      { key: "f3", label: "系统项", group: "system", isEnabled: true, lifecycleState: "active", modelId: "model-a" },
     ],
   }));
   assert.equal(report.affectedBusinessCount, 0);
@@ -304,22 +292,12 @@ test("模型配置开关决定是否保留在模型列表中", () => {
   assert.equal(report.schedulableModelFamilyCount, 1);
 });
 
-test("global_is_enabled=false 不会覆盖已开启的模型供应", () => {
-  const report = computeAvailabilityT(baseInput({
-    keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }],
-    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: false }],
-  }));
-  const family = report.modelFamilies.find((item) => item.modelId === "model-a");
-  assert.equal(family?.schedulableChannelCount, 1);
-  assert.equal(family?.isSelectable, true);
-});
-
 test("默认模型不可用时没有实际模型，并保留默认模型标识", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3, unhealthy_until: new Date(NOW + 10 * MINUTE).toISOString(), last_failure_at: new Date(NOW - MINUTE).toISOString() }],
     models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true }],
     featureControls: [
-      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: null, providerKeyModelId: null },
+      { key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: null },
     ],
     defaultBinding: { feature_key: "default", model_id: "model-a" },
   }));

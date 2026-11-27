@@ -143,8 +143,8 @@ function createDeleteKeyTestClient(options: {
   const allRows: Record<string, Record<string, unknown>[]> = {
     ai_providers: [{ id: "provider", is_enabled: true }],
     ai_provider_keys: [{ id: options.targetKeyId, provider_id: "provider", is_enabled: true }, ...(options.hasBackup ? [{ id: "key-backup", provider_id: "provider", is_enabled: true }] : [])],
-    ai_provider_key_models: [{ id: "km-exclusive", key_id: options.targetKeyId, model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }, ...(options.hasBackup ? [{ id: "km-backup", key_id: "key-backup", model_id: "claude-3-5-sonnet", is_enabled: true, global_is_enabled: true }] : [])],
-    ai_feature_bindings: [{ id: "binding-1", feature_key: "next_day_review", label: "次日复盘", model_id: "claude-3-5-sonnet", provider_key_model_id: "km-exclusive", is_enabled: true, lifecycle_state: "active" }],
+    ai_provider_key_models: [{ id: "km-exclusive", key_id: options.targetKeyId, model_id: "claude-3-5-sonnet", is_enabled: true }, ...(options.hasBackup ? [{ id: "km-backup", key_id: "key-backup", model_id: "claude-3-5-sonnet", is_enabled: true }] : [])],
+    ai_feature_bindings: [{ id: "binding-1", feature_key: "next_day_review", label: "次日复盘", model_id: "claude-3-5-sonnet", is_enabled: true, lifecycle_state: "active" }],
   };
   let keyDeleteCalls = 0;
   let modelDeleteCalls = 0;
@@ -248,17 +248,17 @@ test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除
 function createSwapTestClient(options: { middleInvalidated?: boolean } = {}) {
   const now = new Date().toISOString();
   const rows: Record<string, Record<string, unknown>[]> = {
-    ai_providers: [{ id: "p1", name: "P1", base_url: "https://p1.test/v1", description: null, priority: 0, is_enabled: true, created_at: now, updated_at: now }],
+    ai_providers: [{ id: "p1", name: "P1", base_url: "https://p1.test/v1", description: null, is_enabled: true, created_at: now, updated_at: now }],
     ai_provider_keys: ["k1", "k2", "k3"].map((id) => ({
-      id, provider_id: "p1", label: id, api_key: `secret-${id}`, priority: 55, is_enabled: true,
+      id, provider_id: "p1", label: id, api_key: `secret-${id}`, is_enabled: true,
       unhealthy_until: null, consecutive_failures: 0, last_failure_at: null, last_success_at: null,
       last_error_message: null, first_failure_at: null, invalidated_at: null, manual_sleep_until: null,
       available_models: [], created_at: now, updated_at: now,
     })),
     ai_provider_key_models: [
-      { id: "m1", key_id: "k1", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 1, created_at: now },
-      { id: "m2", key_id: "k2", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: options.middleInvalidated ? now : null, sort_order: 2, created_at: now },
-      { id: "m3", key_id: "k3", model_id: "model-x", display_name: null, is_enabled: true, global_is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 3, created_at: now },
+      { id: "m1", key_id: "k1", model_id: "model-x", display_name: null, is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 1, created_at: now },
+      { id: "m2", key_id: "k2", model_id: "model-x", display_name: null, is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: options.middleInvalidated ? now : null, sort_order: 2, created_at: now },
+      { id: "m3", key_id: "k3", model_id: "model-x", display_name: null, is_enabled: true, consecutive_failures: 0, unhealthy_until: null, last_failure_at: null, last_success_at: null, last_error_message: null, last_failure_scope: null, first_failure_at: null, invalidated_at: null, sort_order: 3, created_at: now },
     ],
     ai_feature_bindings: [],
   };

@@ -21,7 +21,6 @@ export type AvailabilityProvider = {
 };
 
 export type AvailabilityKey = ProviderHealthFields & {
-  priority?: number;
   manual_sleep_until?: string | null;
   id: string;
   provider_id: string;
@@ -41,7 +40,6 @@ export type AvailabilityModel = ProviderHealthFields & {
   canonical_model_id?: string | null;
   display_name?: string | null;
   is_enabled: boolean;
-  global_is_enabled?: boolean | null;
   consecutive_failures?: number | null;
   unhealthy_until?: string | null;
 };
@@ -53,7 +51,6 @@ export type AvailabilityFeatureControl = {
   isEnabled: boolean;
   lifecycleState: string;
   modelId: string | null;
-  providerKeyModelId?: string | null;
 };
 
 export type AvailabilityDefaultBinding = {
@@ -88,8 +85,9 @@ export type AvailabilityModelFamily = {
   displayName: string;
   modelScope?: AiModelScope;
   isShelved: boolean;
-  globalIsEnabled: boolean | null;
-  channelReadyButGlobalDisabled: number;
+  /** Optional transitional type slots for external UI fixtures; never populated or read. */
+  globalIsEnabled?: boolean | null;
+  channelReadyButGlobalDisabled?: number;
   channels: AvailabilityChannel[];
   identityCounts: Record<ChannelIdentity, number>;
   redundancyCount: number;
@@ -168,11 +166,6 @@ function countIdentities(rows: Array<{ identity: ChannelIdentity }>): Record<Cha
   return counts;
 }
 
-/** Compatibility name for the old UI; only supply switches determine configuration. */
-export function resolveModelGlobalEnabled(modelId: string, models: AvailabilityModel[]): boolean {
-  return models.some(model => readCanonicalModelId(model.model_id, model.canonical_model_id) === modelId && model.is_enabled);
-}
-
 export function computeAvailability(
   input: AvailabilityInput,
   options: { now?: number } = {},
@@ -196,18 +189,13 @@ export function computeAvailability(
   const channels: AvailabilityChannel[] = [];
   const shelvedModelIds = new Set<string>(); // gate:transient-map 函数内上架集合，随调用返回释放
   const displayNameByModelId = new Map<string, string>(); // gate:transient-map 函数内显示名索引，随调用返回释放
-  const globalStateByModelId = new Map<string, boolean | null>();
-  for (const model of models) {
-    globalStateByModelId.set(model.canonical_model_id, resolveModelGlobalEnabled(model.canonical_model_id, models));
-  }
 
   for (const m of models) {
     const key = keyById.get(m.key_id);
     const provider = key ? providerById.get(key.provider_id) : undefined;
     const canonicalModelId = m.canonical_model_id;
-    const globalEnabled = globalStateByModelId.get(canonicalModelId) === true;
 
-    if (globalEnabled) shelvedModelIds.add(canonicalModelId);
+    if (m.is_enabled) shelvedModelIds.add(canonicalModelId);
     if (!displayNameByModelId.has(canonicalModelId)) {
       const resolved = resolveModelDisplayName(m.display_name, m.model_id);
       displayNameByModelId.set(canonicalModelId, resolved);
@@ -269,8 +257,6 @@ export function computeAvailability(
         displayName: displayNameByModelId.get(ch.modelId) ?? getModelDisplayName(ch.modelId),
         modelScope: getModelScope(ch.modelId),
         isShelved: shelvedModelIds.has(ch.modelId),
-        globalIsEnabled: globalStateByModelId.get(ch.modelId) ?? null,
-        channelReadyButGlobalDisabled: 0,
         channels: [],
         identityCounts: countIdentities([]),
         redundancyCount: 0,
@@ -347,8 +333,8 @@ export function computeAvailability(
   for (const id of referenced) {
     if (familyByModelId.has(id)) continue;
     const family: AvailabilityModelFamily = {
-      modelId: id, displayName: getModelDisplayName(id), modelScope: getModelScope(id), isShelved: true, globalIsEnabled: false,
-      channelReadyButGlobalDisabled: 0, channels: [], identityCounts: countIdentities([]),
+      modelId: id, displayName: getModelDisplayName(id), modelScope: getModelScope(id), isShelved: true,
+      channels: [], identityCounts: countIdentities([]),
       redundancyCount: 0, singlePointRisk: true, healthyChannelCount: 0, untestedChannelCount: 0,
       schedulableChannelCount: 0, faultChannelCount: 0, isConfigured: false, isSelectable: false,
       unavailableReasonKey: "model.no_available_supply",

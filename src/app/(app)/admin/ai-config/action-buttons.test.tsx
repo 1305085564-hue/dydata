@@ -108,8 +108,6 @@ function makeFamily(channels: AvailabilityChannel[]): AvailabilityModelFamily {
     modelId: "model-x",
     displayName: "测试模型",
     isShelved: true,
-    globalIsEnabled: true,
-    channelReadyButGlobalDisabled: 0,
     channels,
     identityCounts,
     redundancyCount: Math.max(0, schedulableChannelCount - 1),

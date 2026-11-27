@@ -6,17 +6,22 @@ import { useState } from "react";
 export function RejectReason({
   hint,
   required = false,
+  placeholder,
+  confirmLabel = "确认拒绝",
   onConfirm,
   onCancel,
 }: {
   hint: string;
   required?: boolean;
+  placeholder?: string;
+  confirmLabel?: string;
   onConfirm: (reason: string) => void;
   onCancel: () => void;
 }) {
   const [reason, setReason] = useState("");
   const trimmed = reason.trim();
   const canConfirm = !required || trimmed.length > 0;
+  const inputPlaceholder = placeholder ?? (required ? "拒绝原因（必填，会发给成员）" : "拒绝原因（可不填）");
 
   return (
     <div className="mt-3 space-y-1" onClick={(e) => e.stopPropagation()}>
@@ -35,7 +40,7 @@ export function RejectReason({
               onCancel();
             }
           }}
-          placeholder={required ? "拒绝原因（必填，会发给成员）" : "拒绝原因（可不填）"}
+          placeholder={inputPlaceholder}
           aria-label="拒绝原因"
           className="h-8 min-w-0 flex-1 rounded-md border border-[#E2E2DF] bg-white px-3 text-[14px] text-[#1F1E1D] shadow-input outline-none placeholder:text-[#A8A29E] focus-visible:border-[#1F1E1D] focus-visible:ring-2 focus-visible:ring-[#1F1E1D]/10"
         />
@@ -52,7 +57,7 @@ export function RejectReason({
           onClick={() => onConfirm(trimmed)}
           className="h-7 shrink-0 cursor-pointer rounded-md border border-[#E2E2DF] bg-white px-3 text-[14px] text-[#1F1E1D] shadow-input transition-colors hover:bg-[#EBEBE9] disabled:cursor-not-allowed disabled:text-[#A8A29E]"
         >
-          确认拒绝
+          {confirmLabel}
         </button>
       </div>
       <p className="text-[12px] text-[#78716C]">{hint}</p>
