@@ -216,7 +216,7 @@ export default async function PersonProfilePage({
           <div className="text-[12px] text-[#78716C]">
             {[person.teamName ?? "未分配团队", ...person.workGroupNames].join(" · ")}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             {roleTags.length > 0 ? (
               roleTags.map((role) => (
                 <span

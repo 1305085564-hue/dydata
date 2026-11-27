@@ -210,7 +210,7 @@ export function DatePagination({
             <ChevronDown className="size-4 shrink-0 text-[#A8A29E] transition-colors group-hover:text-[#141413]" aria-hidden="true" />
           </PopoverTrigger>
         ) : (
-          <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
+          <PopoverTrigger aria-label="选择日期" className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
             <Calendar className="size-3.5 text-[#78716C]" />
             <span>{loadingLabel}</span>
           </PopoverTrigger>
