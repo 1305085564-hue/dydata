@@ -1,3 +1,4 @@
+import { __internal as contentLoader } from "./loaders/admin-content-page";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -116,7 +117,6 @@ test("最新列表迁移只调用评级函数，其他播放分档仍与应用�
       `数据库播放分档 ${bucket.key} 没有逐格复现应用的 ${bucket.min}-${bucket.max ?? "∞"} 区间`,
     );
   }
-  const loader = readFileSync(join(process.cwd(), "src/lib/loaders/admin-content-page.ts"), "utf8");
-  assert.match(loader, /const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000/);
+  assert.equal(contentLoader.PLAY_CHANGE_SURGE_DELTA_MIN, 5_000);
   assert.match(migration.source, /r\.play_count - prev\.play_count >= 5000/);
 });
