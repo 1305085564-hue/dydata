@@ -5,6 +5,7 @@ import { groupPendingApprovals, type ExemptionRequest } from "@/lib/exemption-ap
 import { deriveResumePending } from "@/app/api/exemptions/_fulfillment-appeals";
 import {
   buildApprovalQueue,
+  getQueueItemDate,
   getAppealExecutionLabel,
   getAppealTriggerText,
   getApproveAllDescription,
@@ -167,4 +168,20 @@ test("全部同意前说清范围和可撤回", () => {
 
 test("一小时内显示刚刚", () => {
   assert.equal(getRelativeTime("2026-10-12T01:30:00.000Z", Date.parse("2026-10-12T01:45:00.000Z")), "刚刚");
+});
+
+test("工作台申诉的凌晨创建时间按北京时间兜底，已有业务日保持", () => {
+  for (const created_at of ["2026-11-27T16:30:00.000Z", "2026-11-27T23:59:00.000Z"]) {
+    const appeal = request({ start_date: "", business_date: "", created_at });
+    assert.equal(getQueueItemDate({ kind: "appeal", id: "a", appeal }), "2026-11-28");
+    assert.equal(getQueueItemDate({ kind: "appeal", id: "a", appeal: { ...appeal, business_date: "2026-11-25" } }), "2026-11-25");
+    assert.equal(getQueueItemDate({ kind: "appeal", id: "a", appeal: { ...appeal, start_date: "2026-11-26" } }), "2026-11-26");
+  }
+});
+
+test("工作台豁免缺少业务日期时用北京时间创建日排序", () => {
+  const group = groupPendingApprovals([request({ start_date: "2026-11-28", created_at: "2026-11-27T16:30:00.000Z" })])[0];
+  assert.ok(group);
+  const fallback = { ...group, dailyItems: [], items: [] };
+  assert.equal(getQueueItemDate({ kind: "exemption", id: "g", group: fallback }), "2026-11-28");
 });

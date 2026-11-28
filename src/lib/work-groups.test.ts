@@ -222,22 +222,22 @@ function auditRows(db: Record<string, Row[]>) {
 // ---------- 门禁与校验 ----------
 
 test("写入门禁：必须 manage_members 且能确定本公司 team_id", () => {
-  assert.deepEqual(resolveWorkGroupWriteGate({ permissions: {}, actorTeamId: TEAM_A }), {
+  assert.deepEqual(resolveWorkGroupWriteGate({ companyRole: "member", actorTeamId: TEAM_A }), {
     ok: false,
     status: 403,
     message: "无权限管理工种小队",
   });
-  assert.deepEqual(resolveWorkGroupWriteGate({ permissions: { manage_members: false }, actorTeamId: TEAM_A }), {
+  assert.deepEqual(resolveWorkGroupWriteGate({ companyRole: undefined, actorTeamId: TEAM_A }), {
     ok: false,
     status: 403,
     message: "无权限管理工种小队",
   });
-  assert.deepEqual(resolveWorkGroupWriteGate({ permissions: { manage_members: true }, actorTeamId: null }), {
+  assert.deepEqual(resolveWorkGroupWriteGate({ companyRole: "admin", actorTeamId: null }), {
     ok: false,
     status: 403,
     message: "无法确认操作人所属团队，已拒绝管理小队",
   });
-  assert.deepEqual(resolveWorkGroupWriteGate({ permissions: { manage_members: true }, actorTeamId: TEAM_A }), {
+  assert.deepEqual(resolveWorkGroupWriteGate({ companyRole: "admin", actorTeamId: TEAM_A }), {
     ok: true,
     teamId: TEAM_A,
   });

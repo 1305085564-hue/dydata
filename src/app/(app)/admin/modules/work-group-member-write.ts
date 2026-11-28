@@ -85,14 +85,13 @@ async function resolveActor(
   const { permissionInfo, scope } = permission;
   if (
     permissionInfo.membershipStatus !== "active" ||
-    (permissionInfo.companyRole !== "admin" && permissionInfo.companyRole !== "company_owner") ||
-    permissionInfo.permissions?.manage_members !== true
+    (permissionInfo.companyRole !== "admin" && permissionInfo.companyRole !== "company_owner")
   ) {
     return failure(403, "无权限管理成员小队");
   }
 
   const gate = resolveWorkGroupWriteGate({
-    permissions: permissionInfo.permissions,
+    companyRole: permissionInfo.companyRole,
     actorTeamId: scope.teamId,
   });
   if (!gate.ok) return gate;

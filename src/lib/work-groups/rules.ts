@@ -1,4 +1,5 @@
-import type { Permissions } from "@/types";
+import type { CompanyRole } from "@/types";
+import { hasFixedPermission } from "@/lib/company-permissions";
 
 export type WorkGroupKind = "writer" | "talent" | "operator";
 
@@ -142,10 +143,10 @@ export function mapWorkGroupRow(row: WorkGroupDbRow): WorkGroupRow | null {
  * 不使用 `canManageTeamStructure`，普通公司 admin 仍按自己的团队管理权限判定。
  */
 export function resolveWorkGroupWriteGate(input: {
-  permissions: Permissions | null | undefined;
+  companyRole: CompanyRole | undefined;
   actorTeamId: string | null | undefined;
 }): WorkGroupWriteGate {
-  if (input.permissions?.manage_members !== true) {
+  if (!hasFixedPermission(input.companyRole, "manage_members")) {
     return { ok: false, status: 403, message: "无权限管理工种小队" };
   }
   const teamId = typeof input.actorTeamId === "string" ? input.actorTeamId.trim() : "";

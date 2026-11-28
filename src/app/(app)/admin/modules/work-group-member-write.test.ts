@@ -36,7 +36,7 @@ function permissionContext(options: {
       userId: ACTOR_ID,
       name: "Admin",
       role: options.companyRole === "company_owner" ? "admin" : options.companyRole ?? "admin",
-      permissions: { manage_members: options.manageMembers ?? true } as never,
+      permissions: options.manageMembers === undefined ? {} : { manage_members: options.manageMembers },
       dataScope: "team",
       teamId: options.teamId === undefined ? TEAM_ID : options.teamId,
       companyRole: options.companyRole ?? "admin",

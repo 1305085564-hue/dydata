@@ -74,7 +74,7 @@ export function buildAdminModuleMemberSummaries(
       role: profile.role,
       company_role: profile.company_role ?? null,
       status: profile.status ?? null,
-      permissions: profile.permissions ?? {},
+      permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 仅搬运成员展示资料，不用旧 JSON 授权
       data_scope: dataScope,
       email: null,
       last_sign_in_at: null,

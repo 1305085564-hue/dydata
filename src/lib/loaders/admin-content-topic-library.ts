@@ -1,3 +1,4 @@
+import { hasFixedPermission } from "@/lib/company-permissions";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { buildDataAccessScope } from "@/lib/data-access-scope";
 import { resolveVideoTopicLibraryStatuses, type VideoTopicLibraryStatusInfo } from "@/lib/topics/library";
@@ -24,7 +25,7 @@ export async function loadPageTopicLibraryStatuses({
   scope: ScopeInput;
   permissionInfo?: UserPermissionInfo;
 }): Promise<Record<string, VideoTopicLibraryStatusInfo> | undefined> {
-  if (permissionInfo?.permissions?.view_video_review !== true) return undefined;
+  if (!permissionInfo || !hasFixedPermission(permissionInfo.companyRole ?? permissionInfo.role, "view_video_review")) return undefined;
   if (!scope) return undefined;
   const visibleUserIds = new Set(scope.visibleUserIds);
   const scopedVideos = videos

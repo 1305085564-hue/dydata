@@ -365,12 +365,12 @@ async function loadAdminModuleProfiles(
         ...profile,
         role: profile.role as UserRole,
         company_role: profile.company_role ?? null,
-        permissions: (profile.permissions ?? {}) as Permissions,
+        permissions: (profile.permissions ?? {}) as Permissions, // gate:legacy-permissions-ok 旧成员资料协议兼容搬运；权限与范围另由角色固定生成
         data_scope: (() => {
           const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
           return roleResolution.conflict || !roleResolution.companyRole
             ? "self"
-            : inferDataScope(profile.role as UserRole, profile.permissions ?? {}, profile.company_role);
+            : inferDataScope(profile.role as UserRole, profile.permissions ?? {}, profile.company_role); // gate:legacy-permissions-ok 旧成员资料协议兼容搬运；权限与范围另由角色固定生成
         })(),
         status: profile.status ?? null,
         membership_status: profile.membership_status ?? "active",
@@ -504,7 +504,7 @@ function buildAdminModulesTeamManagementPayload({
 }): AdminModulesTeamManagementData {
   const normalizedHydratedProfiles = allProfiles.map((profile) => ({
     ...profile,
-    permissions: profile.permissions ?? {},
+    permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 旧成员资料协议兼容搬运；权限与范围另由角色固定生成
   })) as AdminModuleMemberSummary[];
   const actorFromProfiles = normalizedHydratedProfiles.find((profile) => profile.id === perm.userId);
   const actorRoleResolution = resolveProfileCompanyRole(

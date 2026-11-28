@@ -17,6 +17,7 @@
  * - 北京时间（+08:00 / Asia/Shanghai / toISOString 切日期）→ scripts/maintainability-gate.mjs
  * - 组员可见范围（activeVisibleUserIds 三处公开类型必填）→ tsc
  */
+import ts from "typescript";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
@@ -29,6 +30,10 @@ export const SCREENSHOT_ALLOWLIST_PATH = "scripts/screenshot-storage-allowlist.j
 
 /** 每条规矩的「该用什么」；报错正文直接引用，避免只说禁止。 */
 export const GUIDANCE = {
+  legacyPermissions:
+    "禁止直接读取旧 profile.permissions 或用 permissions?. 判权限；先 resolveProfileCompanyRole 校验身份，再用 src/lib/company-permissions.ts 的 hasFixedPermission / fixedPermissionsForRole。兼容搬运须注释 // gate:legacy-permissions-ok <理由>，不得用来授权。",
+  timestampDateSlice:
+    "禁止对业务时间戳使用 slice(0, 10) / substring(0, 10) 切日期；纯 YYYY-MM-DD 保留，时间戳用 src/lib/business-time.ts 的 formatShanghaiDateOnly。纯日历确需豁免时注明 // gate:timestamp-date-ok <理由>。",
   backendSwitch:
     "后端开关已经下线（2026-11-23 第四批）：全站只剩腾讯云 CloudBase 一套后台。直接调转接层 @/lib/supabase/server、@/lib/supabase/admin、@/lib/supabase/client，不要再按 DYDATA_BACKEND / isCloudBaseBackend 分叉。",
   screenshotStorage:
@@ -86,7 +91,68 @@ const MANUAL_DATE_PATTERN = /setDate\([^)]*getDate\(\)/;
 const MANUAL_METRIC_NUMBER_PATTERN = /(?:parseFloat|Number\.parseFloat|Number\()/;
 const MANUAL_METRIC_UNIT_PATTERN = /replace\(\s*\/[^/]*(?:%|秒|万|w|W|k|K|千)[^/]*\//;
 
+// 用语法树识别访问与调用：排除注释、字符串、数组切片，并覆盖跨行和方括号写法。
+function propertyName(node) {
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteralLike(node.argumentExpression)) return node.argumentExpression.text;
+  return null;
+}
+
+export function findBusinessRuleReads(source, ruleId, filePath = "source.ts") {
+  const file = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true);
+  const lines = source.split(/\r?\n/);
+  const hits = new Set();
+  const marker = ruleId === "legacy-permissions" ? "legacy-permissions-ok" : "timestamp-date-ok";
+  const hasMarker = (line) => new RegExp(`//\\s*gate:${marker}\\s+\\S`).test(line);
+  const containsTimestamp = (node) => {
+    const name = propertyName(node) ?? (ts.isIdentifier(node) ? node.text : "");
+    if (/^(?:created|updated|submitted|published|uploaded|handled|reviewed|archived|captured|deleted|completed|requested|processed|resolved|expires|done|sent|received|started|ended)(?:_at|At)$/.test(name)) return true;
+    if (ts.isParenthesizedExpression(node) || ts.isNonNullExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node) || ts.isAwaitExpression(node)) return containsTimestamp(node.expression);
+    if (ts.isBinaryExpression(node) && [ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken, ts.SyntaxKind.AmpersandAmpersandToken].includes(node.operatorToken.kind)) return containsTimestamp(node.left) || containsTimestamp(node.right);
+    if (ts.isConditionalExpression(node)) return containsTimestamp(node.whenTrue) || containsTimestamp(node.whenFalse);
+    // map/sort/filter 等返回数组：回调内出现时间戳不代表切的是时间戳。
+    if (ts.isCallExpression(node) && ["trim", "trimStart", "trimEnd", "toString", "replace", "replaceAll"].includes(propertyName(node.expression))) return containsTimestamp(node.expression.expression);
+    return false;
+  };
+  const visit = (node) => {
+    let matched = false;
+    if (ruleId === "legacy-permissions" && (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))) {
+      const expression = node.expression;
+      // 原始资料的权限字段只能作明确登记的迁移兼容搬运。
+      matched = propertyName(node) === "permissions" && /profile$/i.test(expression.getText(file));
+      // 可选权限读取也要回到固定矩阵入口；可信矩阵的普通索引读取不在此禁令内。
+      matched ||= Boolean(node.questionDotToken) && (propertyName(expression) === "permissions" || (ts.isIdentifier(expression) && expression.text === "permissions"));
+    }
+    if (ruleId === "timestamp-date-slice" && ts.isCallExpression(node) && ["slice", "substring"].includes(propertyName(node.expression))) {
+      matched = node.arguments.length === 2 && node.arguments[0].getText(file) === "0" && node.arguments[1].getText(file) === "10" && containsTimestamp(node.expression.expression);
+    }
+    if (matched) {
+      const line = file.getLineAndCharacterOfPosition(node.getStart(file)).line;
+      const previous = lines[line - 1] ?? "";
+      if (!hasMarker(lines[line]) && !(/^\s*\/\//.test(previous) && hasMarker(previous))) hits.add(line);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return [...hits];
+}
+
 export const SCAN_RULES = [
+  {
+    id: "legacy-permissions",
+    label: "旧权限字段绕过固定矩阵",
+    roots: ["src"],
+    find: (source, file) => findBusinessRuleReads(source, "legacy-permissions", file),
+    guidance: GUIDANCE.legacyPermissions,
+  },
+  {
+    id: "timestamp-date-slice",
+    label: "业务时间戳直接切日期",
+    roots: ["src"],
+    skip: ["src/lib/business-time.ts"],
+    find: (source, file) => findBusinessRuleReads(source, "timestamp-date-slice", file),
+    guidance: GUIDANCE.timestampDateSlice,
+  },
   {
     id: "db-error-leak",
     label: "数据库原始报错回页面",
@@ -200,10 +266,10 @@ export function countScanRule(rule, files) {
   const counts = {};
   for (const [file, source] of Object.entries(files)) {
     if (rule.skip?.includes(file)) continue;
-    let count = 0;
+    let count = rule.find ? rule.find(source, file).length : 0;
     for (const line of source.split(/\r?\n/)) {
       if (isComment(line)) continue;
-      if (rule.match(line)) count += 1;
+      if (rule.match?.(line)) count += 1;
     }
     if (count > 0) counts[file] = count;
   }

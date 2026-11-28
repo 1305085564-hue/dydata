@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 
 import { Button } from "@/components/ui/button";
 import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
@@ -104,7 +105,7 @@ export function MemberAlerts({
                 <MemberAvatar name={req.applicantName} />
                 <span className="ml-2 text-[#141413]">{req.applicantName}</span>
                 <span className="mx-2">申请加入 {req.targetTeamName}</span>
-                <span className="tabular-nums">{formatDateKey(req.createdAt.slice(0, 10))}</span>
+                <span className="tabular-nums">{formatDateKey(formatShanghaiDateOnly(new Date(req.createdAt)))}</span>
               </p>
               {canManageMembers && rejectingId !== req.id && (
                 <div className="flex shrink-0 items-center gap-1">

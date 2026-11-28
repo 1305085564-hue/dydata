@@ -92,7 +92,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
 
   return {
     ...profile,
-    data_scope: inferDataScope(profile.role, profile.permissions, null),
+    data_scope: inferDataScope(profile.role, profile.permissions, null), // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
   };
 }
 
@@ -173,7 +173,7 @@ export async function buildDataAccessScope(
   const kind = resolveDataScope(
     profile.role,
     profile.data_scope,
-    profile.permissions,
+    profile.permissions, // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
     profile.company_role,
   ) as DataAccessScopeKind;
   // Team scope comes only from the trusted profile. Request parameters must
@@ -206,7 +206,7 @@ export async function buildDataAccessScope(
     userId,
     role,
     companyRole,
-    permissions: fixedPermissions(companyRole, profile.permissions),
+    permissions: fixedPermissions(companyRole, profile.permissions), // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
     teamId: effectiveTeamId,
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),

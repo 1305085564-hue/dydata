@@ -1,5 +1,5 @@
 import type { CompanyRole, Permissions, UserRole } from "@/types";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
 
 export interface TeamManagementProfile {
   id: string;
@@ -41,7 +41,7 @@ export function isIgnoredTeamManagementUser(profile: Pick<TeamManagementProfile,
 
 export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "company_role" | "permissions">) {
   const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
-  return roleResolution.companyRole === "admin" && profile.permissions?.manage_members === true;
+  return !roleResolution.conflict && roleResolution.companyRole === "admin" && hasFixedPermission(roleResolution.companyRole, "manage_members");
 }
 
 export function canManageTeamStructure(
@@ -133,7 +133,7 @@ export function filterUsableLeaderCandidates(
     if (!profile.team_id) return false;
     const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
     if (roleResolution.conflict || roleResolution.companyRole !== "admin") return false;
-    if (profile.permissions?.manage_members === true) return false;
+    if (hasFixedPermission(roleResolution.companyRole, "manage_members")) return false;
     if (isIgnoredTeamManagementUser(profile)) return false;
     return canAccessTeam(access, profile.team_id);
   });

@@ -212,14 +212,13 @@ async function loadName(
   if (result.error) return { error: result.error.message ?? "加载团队名称失败" };
   return { name: result.data?.name ?? null };
 }
-
 function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<string, unknown> {
   return {
     id: profile.id,
     name: profile.name ?? null,
     role: profile.role,
     ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
-    permissions: profile.permissions ?? {},
+    permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 归档快照与失败回滚须保留原始字段，不用旧 JSON 授权
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
@@ -233,7 +232,7 @@ function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<s
   return {
     role: profile.role,
     ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
-    permissions: profile.permissions ?? {},
+    permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 归档快照与失败回滚须保留原始字段，不用旧 JSON 授权
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,

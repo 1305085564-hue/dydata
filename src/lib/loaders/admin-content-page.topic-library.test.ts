@@ -174,11 +174,12 @@ test("列表加载器随当前页下发选题库状态，且只覆盖权限范�
   assert.deepEqual(sourceQuery?.filters.source_video_id, ["video-1"]);
 });
 
-test("没有作品复盘只读权限时不计算选题库状态，前端可回退原状态接口", async () => {
+test("缺少可信身份时不计算选题库状态，前端可回退原状态接口", async () => {
   const { supabase, queries } = buildSupabase();
   const data = await loadAdminContentListData({
     supabase,
-    ...buildArgs({ includeTopicLibraryStatuses: true, permissions: { review_content: true } }),
+    ...buildArgs({ includeTopicLibraryStatuses: true, permissions: {} }),
+    permissionInfo: undefined,
   });
 
   assert.equal("topicLibraryStatuses" in data, false);
