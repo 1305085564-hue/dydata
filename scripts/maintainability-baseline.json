@@ -3,10 +3,6 @@
   "generatedAt": "2026-10-31",
   "baseCommit": "30fb6bf3921aee3c39165d6b26ce4f41be1cf9aa",
   "files": {
-    "src/app/(app)/admin/actions.ts": {
-      "maxLines": 970,
-      "category": "source"
-    },
     "src/app/(app)/admin/ai-config/components/bindings-client.tsx": {
       "maxLines": 1346,
       "category": "source"
@@ -163,10 +159,6 @@
       "maxLines": 1235,
       "category": "source"
     },
-    "src/lib/ai/client.ts": {
-      "maxLines": 859,
-      "category": "source"
-    },
     "src/lib/content-comparison-reference.test.ts": {
       "maxLines": 562,
       "category": "test"
@@ -175,10 +167,6 @@
       "maxLines": 558,
       "category": "test"
     },
-    "src/lib/loaders/admin-content-page.ts": {
-      "maxLines": 793,
-      "category": "source"
-    },
     "src/lib/loaders/admin-modules.ts": {
       "maxLines": 673,
       "category": "source"
@@ -186,14 +174,6 @@
     "src/lib/loaders/dashboard-page.ts": {
       "maxLines": 580,
       "category": "source"
-    },
-    "src/lib/member-lifecycle-service.ts": {
-      "maxLines": 832,
-      "category": "source"
-    },
-    "src/lib/topics/library.test.ts": {
-      "maxLines": 508,
-      "category": "test"
     },
     "src/lib/topics/service.test.ts": {
       "maxLines": 610,
