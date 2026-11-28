@@ -28,8 +28,11 @@ export async function buildDashboardActivityResponse(
   }
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "30", 10);
+  const page = Number(searchParams.get("page") ?? "1");
+  const pageSize = Number(searchParams.get("pageSize") ?? "30");
+  if (!Number.isInteger(page) || page < 1 || page > 10000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    return NextResponse.json({ error: "分页参数不正确" }, { status: 400 });
+  }
 
   try {
     const activity = await measureAsync("dashboard.activity", () =>

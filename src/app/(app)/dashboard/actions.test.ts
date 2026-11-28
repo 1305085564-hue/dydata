@@ -2,7 +2,7 @@ import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { submitExemptionRequestWithClient } from "./actions";
+import { submitExemptionRequestWithClient } from "./exemption-submit";
 
 type RequestRow = Record<string, unknown>;
 

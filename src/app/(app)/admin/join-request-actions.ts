@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { actionNote, validActionIds } from "@/lib/server-action-input";
 import { getUserPermissions } from "@/lib/permissions";
 import { reviewRequest } from "@/lib/team-join/service";
 
@@ -27,6 +28,8 @@ export async function approveJoinRequestAction(
   const gate = await ensureAdmin();
   if (!gate.ok) return gate;
 
+  if (!validActionIds(requestId) || !actionNote.safeParse(note).success) return { ok: false, error: "申请编号或备注格式不正确" };
+
   const result = await reviewRequest({ requestId, action: "approve", note });
   if (!result.ok) {
     return { ok: false, error: mapReviewError(result.error) };
@@ -42,6 +45,8 @@ export async function rejectJoinRequestAction(
 ): Promise<ReviewActionResult> {
   const gate = await ensureAdmin();
   if (!gate.ok) return gate;
+
+  if (!validActionIds(requestId) || !actionNote.safeParse(note).success) return { ok: false, error: "申请编号或备注格式不正确" };
 
   const result = await reviewRequest({ requestId, action: "reject", note: note?.trim().slice(0, 200) || null });
   if (!result.ok) {

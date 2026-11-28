@@ -37,7 +37,7 @@ export async function buildContentAnalysisResponse(
   } catch {
     return finish(NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }));
   }
-  const videoId = typeof body.video_id === "string" && body.video_id.trim() ? body.video_id.trim() : null;
+  const videoId = body && typeof body.video_id === "string" && body.video_id.trim() ? body.video_id.trim() : null;
   if (!videoId) return finish(NextResponse.json({ error: "缺少 video_id" }, { status: 400 }));
   observation?.mark("scope");
   let access: Awaited<ReturnType<typeof requireScopedAdminVideo>>;
@@ -56,6 +56,10 @@ export async function buildContentAnalysisResponse(
     }));
   }
   if ("error" in access) return finish(NextResponse.json({ error: access.error }, { status: access.status }));
+  const ownerId = access.video.accounts?.profile_id ?? access.video.user_id;
+  if (access.actor.permissions.review_content !== true || !access.scope.activeVisibleUserIds.includes(ownerId)) {
+    return finish(NextResponse.json({ error: "无权生成该作品的辅助分析" }, { status: 403 }));
+  }
   observation?.mark("read");
   try {
     const result = await deps.generateContentAnalysisForAccess(access);

@@ -53,7 +53,13 @@ async function forward(request: NextRequest, context: RouteContext) {
     if (value) responseHeaders.set(name, value);
   }
   responseHeaders.set("Cache-Control", "no-store");
-  const response = new NextResponse(upstream.body, { status: upstream.status, headers: responseHeaders });
+  // 网关失败正文含 SQL/表列名；兼容客户端只需要状态及稳定的错误结构。
+  const response = upstream.status < 400
+    ? new NextResponse(upstream.body, { status: upstream.status, headers: responseHeaders })
+    : NextResponse.json({ code: "DATA_REQUEST_FAILED", message: "数据请求失败，请稍后重试", details: null, hint: null }, {
+      status: upstream.status,
+      headers: { "Cache-Control": "no-store" },
+    });
   const previousSession = getCloudBaseCookieSession(request);
   if (previousSession && hasCloudBaseSessionChanged(previousSession, verified.result.session)) {
     setCloudBaseCookie(response, request, verified.result.session);

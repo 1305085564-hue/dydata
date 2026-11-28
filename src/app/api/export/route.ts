@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { getUserPermissions } from "@/lib/permissions";
+import { isValidDate } from "@/app/api/production/_shared";
 import { formatShanghaiDateTime } from "@/lib/日报";
 import { buildPublishedDateRangeFilter, getPublishedDateForStats } from "@/lib/business-time";
 import {
@@ -58,6 +59,9 @@ export async function buildExportResponse(request: NextRequest, deps = { createC
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  if ((from !== null && !isValidDate(from)) || (to !== null && !isValidDate(to)) || (from && to && from > to)) {
+    return NextResponse.json({ error: "导出日期格式或范围不正确" }, { status: 400 });
+  }
 
   // 先 count 估算数据量
   let countQuery = adminSupabase
