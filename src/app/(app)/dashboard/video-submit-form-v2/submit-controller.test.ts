@@ -73,15 +73,18 @@ test("服务端返回补交门禁时一次提交就打开申请框并停止错�
   const originalFetch = globalThis.fetch;
   const originalWindow = (globalThis as { window?: unknown }).window;
   let dialogCalls = 0;
+  let sent: unknown;
+  let pending: unknown;
+  const pendingRef = { current: null as Record<string, unknown> | null };
 
-  globalThis.fetch = async () => new Response(
+  globalThis.fetch = async (_url, init) => { sent = JSON.parse(String(init?.body)); return new Response(
     JSON.stringify({
       error: "该提交已超过 72 小时，请先申请补交",
       code: "SUBMISSION_APPEAL_REQUIRED",
       reason: "expired",
     }),
     { status: 409, headers: { "Content-Type": "application/json" } },
-  );
+  ); };
   (globalThis as { window?: unknown }).window = {};
 
   try {
@@ -95,7 +98,8 @@ test("服务端返回补交门禁时一次提交就打开申请框并停止错�
       selectedTopicId: null,
       initialTopicId: null,
       supabase: { auth: { getUser: async () => ({ data: { user: { id: "user-1" } } }) } },
-      pendingSubmissionPayloadRef: { current: null },
+      pendingSubmissionPayloadRef: pendingRef,
+      setPendingSubmissionPayload: (value) => { pending = value; },
       setIsSubmitting: () => undefined,
       setAppealRequired: () => undefined,
       setAppealStatus: () => undefined,
@@ -120,6 +124,9 @@ test("服务端返回补交门禁时一次提交就打开申请框并停止错�
 
     await controller.executeSubmit();
     assert.equal(dialogCalls, 1);
+    assert.deepEqual(pending, sent);
+    assert.deepEqual(pendingRef.current, sent);
+    assert.equal((pending as { video_title: string }).video_title, "超期作品");
   } finally {
     globalThis.fetch = originalFetch;
     if (originalWindow === undefined) delete (globalThis as { window?: unknown }).window;

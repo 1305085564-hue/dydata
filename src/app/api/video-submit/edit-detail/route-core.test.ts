@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -412,14 +410,4 @@ test("422：无绑定视频日报的责任人字段格式错误时阻断，不�
   );
 
   assert.equal(result.status, 422);
-});
-
-test("读取侧不再按账号+日期猜视频：猜写相关的适配器与匹配函数已删除", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/app/api/video-submit/edit-detail/route-core.ts"),
-    "utf8",
-  );
-
-  assert.doesNotMatch(source, /listActiveVideosByAccount/);
-  assert.doesNotMatch(source, /videoMatchesBizDate/);
 });

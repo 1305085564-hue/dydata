@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { NextRequest } from "next/server";
 
 import { buildSampleQualityCheckResponse, describeSampleQualityFailure, defaultSampleQualityDeps, POST as postSampleQuality } from "./route";
+
+import { memoryDatabase } from "@/lib/testing/maintenance.test.fixture";
 
 type RouteDeps = NonNullable<Parameters<typeof buildSampleQualityCheckResponse>[1]>;
 
@@ -194,9 +195,27 @@ test("sample-quality-check POST 真 handler：未登录返回明确失败与分�
   }
 });
 
-test("样本质检只把手动话题和关键词送进标签上下文", () => {
-  const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
-  assert.match(source, /\.eq\("source", "manual"\)/);
-  assert.match(source, /\.in\("tag_dimension", \["话题", "关键词"\]\)/);
-  assert.match(source, /手动标签：/);
+test("样本质检从数据库读取标签，只向 AI 发送手动话题与关键词", async () => {
+  const db = memoryDatabase({
+    daily_reports: [baseContext.report],
+    videos: [{ ...baseContext.video, account_id: "account-1", user_id: "member-1", lifecycle_state: "active" }],
+    video_metrics_snapshots: [{ ...baseContext.snapshot, video_id: "video-1" }],
+    video_tags: [
+      { video_id: "video-1", source: "manual", tag_dimension: "话题", tag_value: "经营复盘" },
+      { video_id: "video-1", source: "manual", tag_dimension: "关键词", tag_value: "现金流" },
+      { video_id: "video-1", source: "ai", tag_dimension: "话题", tag_value: "AI噪声" },
+      { video_id: "video-1", source: "manual", tag_dimension: "表达形式", tag_value: "出镜噪声" },
+      { video_id: "other-video", source: "manual", tag_dimension: "话题", tag_value: "他人噪声" },
+    ],
+  });
+  let prompt = "";
+  const response = await buildSampleQualityCheckResponse({ reportId: "report-1" }, buildDeps({
+    createAdminClient: () => db as never,
+    loadContext: defaultSampleQualityDeps.loadContext,
+    callAiJson: async (input) => { prompt = input; return { content: '{"overallStatus":"pass","issues":[]}', model: "test", channelName: "test", elapsedMs: 1 }; },
+  }));
+  assert.equal(response.status, 200);
+  const line = prompt.split("\n").find((part) => part.startsWith("手动标签："));
+  assert.deepEqual(JSON.parse(line!.slice("手动标签：".length)).map((tag: { tag_dimension: string; tag_value: string }) => [tag.tag_dimension, tag.tag_value]), [["话题", "经营复盘"], ["关键词", "现金流"]]);
+  assert.equal(prompt.includes("噪声"), false);
 });

@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { NextRequest } from "next/server";
-import { MemorySupabase } from "./ai-config.behavior.fixture";
+import { actor, configTables, request, MemorySupabase } from "./ai-config.behavior.fixture";
 import { boundedInteger, buildAiConfigResponse, buildProbeRequestBody } from "./route";
 
 test("视觉模型试跑发送图片消息，文本连通测试保持文本消息", () => {
@@ -96,14 +95,17 @@ test("AI 配置失败路径：非法 JSON、探测缺参、批量测试缺 key_i
   assert.equal((await missingKeyId.json()).error, "缺少 key_id");
 });
 
-const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
-test("更新 AI Key 时空 api_key 不进入写入 patch", () => {
+test("更新 AI Key 时空 api_key 不进入写入 patch", async () => {
   assert.deepEqual(
     buildAiKeyPatch({ id: "key-1", label: "新名称", api_key: "   " }, "update"),
     { label: "新名称" },
   );
-  assert.match(source, /buildAiKeyPatch\(data, action\)/);
+  const db = configTables();
+  const response = await buildAiConfigResponse(request({ action: "update", entity: "key", data: { id: "key-1", label: "新名称", api_key: "   ", priority: 20 } }), actor(db));
+  assert.equal(response.status, 200);
+  assert.deepEqual(db.rpcCalls.find((call) => call.fn === "update_ai_config_key")?.args.p_patch, { label: "新名称" });
+  assert.equal(db.tables.ai_provider_keys[0].api_key, "secret");
 });
 
 test("已废弃的渠道全局顺位参数不再写入数据库", () => {
@@ -122,19 +124,32 @@ test("高级参数边界拒绝越界值并保留默认值", () => {
   assert.throws(() => boundedInteger("12abc", "上下文轮数", 1, 50, 30), /1-50/);
 });
 
-test("AI 功能总控只接受系统目录中的保存、归档和恢复动作", () => {
-  assert.match(source, /"save_feature_control"/);
-  assert.match(source, /"archive_feature"/);
-  assert.match(source, /"restore_feature"/);
-  assert.match(readFileSync("src/lib/ai-config/config-loader.ts", "utf8"), /buildAiFeatureControls/);
-  assert.match(source, /getAiFeatureCatalogEntry/);
+test("功能保存、归档和恢复返回实际状态，未知功能不能写入", async () => {
+  const db = configTables({ ai_provider_key_models: [{ id: "supply", key_id: "key-1", model_id: "model-a", is_enabled: true }] });
+  const rpc = db.rpc.bind(db);
+  db.rpc = async (fn, args) => {
+    if (fn !== "manage_ai_feature_lifecycle") return rpc(fn, args);
+    db.rpcCalls.push({ fn, args });
+    const binding = db.tables.ai_feature_bindings.find((row) => row.feature_key === args.p_feature_key)!;
+    assert.equal(args.p_feature_key, "sample_quality_check");
+    assert.equal(args.p_label, "样本质检");
+    binding.lifecycle_state = args.p_action === "archive" ? "archived" : "active";
+    binding.is_enabled = args.p_action !== "archive";
+    return { data: null, error: null };
+  };
+  for (const [action, lifecycle] of [["save_feature_control", "active"], ["archive_feature", "archived"], ["restore_feature", "active"]]) {
+    const response = await buildAiConfigResponse(request({ action, data: { feature_key: "sample_quality_check", model_id: "model-a", archived_reason: "暂停使用" } }), actor(db));
+    assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+    const control = (await response.json()).featureControls.find((item: { key: string }) => item.key === "sample_quality_check");
+    assert.equal(control.lifecycleState, lifecycle);
+  }
+  const before = structuredClone(db.tables.ai_feature_bindings);
+  const invalid = await buildAiConfigResponse(request({ action: "save_feature_control", data: { feature_key: "unknown-feature" } }), actor(db));
+  assert.equal(invalid.status, 400);
+  assert.deepEqual(db.tables.ai_feature_bindings, before);
 });
 
-test("路由入口保持 Next 框架签名，测试注入口只挂在独立函数上", () => {
-  const postSignature = (source.match(/export async function POST\([^)]*\)/) ?? [""])[0];
-  assert.equal(postSignature, "export async function POST(request: NextRequest)");
-  assert.match(source, /export async function buildAiConfigResponse\(/);
-});
+// Next 入口签名由类型门禁校验；真实 POST 的未登录响应由 ai-config.behavior.test.ts 覆盖。
 
 function createDeleteKeyTestClient(options: {
   targetKeyId: string;

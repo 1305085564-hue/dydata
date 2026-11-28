@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -88,26 +89,9 @@ test("审计失败措辞三态互不相同：已回滚 / 回滚未完成 / 已�
   assert.doesNotMatch(applied, /已回滚/);
 });
 
-test("管理写操作不再静默吞审计错误：actions.ts 只用统一出口且每个结果都被检查", () => {
-  const source = ["audit", "exemptions", "members", "teams"].map((name) => readFileSync(
-    new URL(`../app/(app)/admin/action-modules/${name}.ts`, import.meta.url), "utf8",
-  )).join("\n");
-
-  assert.doesNotMatch(
-    source,
-    /\.then\(\s*\(\)\s*=>\s*\{\}\s*,\s*\(\)\s*=>\s*\{\}\s*\)/,
-    "旧实现用空成功/失败回调把审计错误吞掉了，禁止回退",
-  );
-  assert.doesNotMatch(source, /from\("audit_logs"\)/, "审计写入只允许走 src/lib/audit-log.ts");
-  assert.match(source, /import\s*\{[\s\S]*?writeAuditLog[\s\S]*?\}\s*from\s*"@\/lib\/audit-log"/);
-
-  // 每个审计调用点都必须处理失败分支（成功路径不写这段）
-  const callSites = source.match(/recordAdminAudit\(\{/g) ?? [];
-  const failureBranches = source.match(/if \(!audit\.ok\)/g) ?? [];
-  assert.equal(
-    callSites.length,
-    failureBranches.length,
-    `审计调用点 ${callSites.length} 个，失败分支 ${failureBranches.length} 个，必须一一对应`,
-  );
-  assert.ok(callSites.length >= 10, `管理写操作的审计覆盖数偏低：${callSites.length}`);
+test("管理写操作实际处理审计失败：可回滚则还原，已生效则明确告知", () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, ["--experimental-test-module-mocks", "--import", "tsx", "--test", fileURLToPath(new URL("../app/(app)/admin/action-modules/audit-log.test.fixture.mjs", import.meta.url))], { env, encoding: "utf8", timeout: 30_000 });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });

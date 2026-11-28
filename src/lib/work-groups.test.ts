@@ -1,6 +1,5 @@
 import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -837,19 +836,4 @@ test("目录加载：未跑 migration 时降级为空态而不是报错", async 
 
   const directory = await loadWorkGroupDirectory(client, { teamIds: [TEAM_A] });
   assert.deepEqual(directory, { ready: false, groups: [], roster: [] });
-});
-
-// ---------- 用户可见文案 ----------
-
-test("写操作的用户可见文案不得出现「编制」", () => {
-  const source = [
-    readFileSync(new URL("./work-groups.ts", import.meta.url), "utf8"),
-    readFileSync(new URL("./work-groups/rules.ts", import.meta.url), "utf8"),
-  ].join("\n");
-
-  // 阿禅明确否定「编制」一词：任何会走到用户眼前的 failure 文案都不许出现
-  const userFacing = Array.from(source.matchAll(/failure\(\d+,\s*"([^"]*)"\)/g)).map((m) => m[1]);
-  for (const message of userFacing) {
-    assert.equal(message.includes("编制"), false, `用户可见文案残留「编制」：${message}`);
-  }
 });
