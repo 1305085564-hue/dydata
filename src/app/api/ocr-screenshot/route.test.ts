@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
-import { readFileSync } from "node:fs";
+
+import { runScreenshotOcr } from "./ocr-runner";
+import { AiChannelError } from "@/lib/ai/client";
 
 import {
   getScreenshotTypeByAssetRole,
@@ -401,7 +403,27 @@ test("渠道正文契约探针：只有可解析的 JSON 对象才算识别结�
   assert.equal(hasJsonObject("[1,2,3]"), false);
 });
 
-test("统一 OCR 调度器对 OpenAI 兼容渠道强制校验正文契约", () => {
-  const runnerSource = readFileSync(new URL("./ocr-runner.ts", import.meta.url), "utf8");
-  assert.match(runnerSource, /validateContent:\s*hasJsonObject/);
+test("统一 OCR 调度器拒绝非 JSON 正文，换用下一条渠道返回实际识别结果", async () => {
+  const tried: string[] = [];
+  const result = await runScreenshotOcr({ dataUrl: "data:image/png;base64,AA==", screenshotType: "data", timings: {}, requestId: "ocr-contract-test" }, {
+    getServiceClient: () => null,
+    getFeatureConfig: async () => null,
+    resolveFeatureChannelChain: async () => ["bad", "good"].map((id) => ({ id, name: id, baseUrl: "https://vision.test", apiKey: "fake", model: "m", source: "provider_key_model" as const })),
+    normalizeVisionDataUrl: async (url) => url,
+    recordAiCallAttempt: async () => {},
+    sendToChannel: async (channel, options) => {
+      tried.push(channel.id!);
+      const content = channel.id === "bad" ? "请先提供截图" : '{"play_count":32100}';
+      // 外部渠道替身只执行真实调度器交给它的正文校验契约。
+      assert.equal(typeof options.validateContent, "function");
+      assert.equal(options.validateContent!("{broken}"), false);
+      assert.equal(options.validateContent!("[1,2]"), false);
+      if (!options.validateContent!(content)) throw new AiChannelError("正文不符合契约", "parse_failed", true);
+      return { content, model: "m", channelName: channel.id!, elapsedMs: 1 };
+    },
+  });
+  assert.deepEqual(tried, ["bad", "good"]);
+  assert.equal(result.parsed.recognized_fields?.play_count, 32100);
+  assert.equal(result.channelName, "good");
+  assert.equal(result.fallbackDetail.attempts[0].ok, false);
 });

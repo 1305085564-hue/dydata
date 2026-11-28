@@ -1,58 +1,71 @@
-import { readFileSync } from "node:fs";
-import test from "node:test";
+import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
+import { abnormalSubmission, submissionDatabase } from "@/lib/testing/maintenance.test.fixture";
+import { createQualityCheckController } from "@/app/(app)/dashboard/video-submit-form-v2/quality-check-controller";
+import { buildVideoSubmitResponse } from "./route-core";
+import { buildSubmittedDailyReportFields, DAILY_REPORT_WRITE_SELECT, SNAPSHOT_WRITE_SELECT, VIDEO_SUBMIT_RESPONSE_SELECT } from "./response-fields";
 
-import {
-  buildSubmittedDailyReportFields,
-  DAILY_REPORT_WRITE_SELECT,
-  SNAPSHOT_WRITE_SELECT,
-  VIDEO_SUBMIT_RESPONSE_SELECT,
-} from "./response-fields";
+// 通知是外部边界；测试显式禁用 webhook，避免受开发者环境变量影响。
+const originalWebhook = process.env.FEISHU_WEBHOOK_URL;
+before(() => { delete process.env.FEISHU_WEBHOOK_URL; });
+after(() => {
+  if (originalWebhook === undefined) delete process.env.FEISHU_WEBHOOK_URL;
+  else process.env.FEISHU_WEBHOOK_URL = originalWebhook;
+});
 
 test("视频提交写入只返回后续流程需要的固定字段", () => {
-  assert.doesNotMatch(VIDEO_SUBMIT_RESPONSE_SELECT, /\*/);
-  assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\bid\b/);
-  assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\buser_id\b/);
+  assert.equal(VIDEO_SUBMIT_RESPONSE_SELECT.includes("*"), false);
+  assert.equal(VIDEO_SUBMIT_RESPONSE_SELECT.split(",").map((field) => field.trim()).includes("id"), true);
+  assert.equal(VIDEO_SUBMIT_RESPONSE_SELECT.split(",").map((field) => field.trim()).includes("user_id"), true);
   assert.equal(SNAPSHOT_WRITE_SELECT, "id");
   assert.equal(DAILY_REPORT_WRITE_SELECT, "id, report_date");
-  assert.deepEqual(
-    buildSubmittedDailyReportFields({ id: "report-1", report_date: "2026-10-25" }),
-    { daily_report_id: "report-1", daily_report_date: "2026-10-25" },
-  );
+  assert.deepEqual(buildSubmittedDailyReportFields({ id: "report-1", report_date: "2026-10-25" }), { daily_report_id: "report-1", daily_report_date: "2026-10-25" });
 });
 
-test("提交成功响应必须返回 daily_report_id，供样本质量检查按日报 id 调用", () => {
-  // 回归锁：2026-09-28 曾因前端把视频 id 当 reportId 传给
-  // /api/dashboard/sample-quality-check 导致该按钮必然 404。
-  // 后端成功响应必须携带 daily_report_id，前端必须用它发起检查。
-  const submitRoute = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
-  assert.match(
-    submitRoute,
-    /\.\.\.submitResponseFields\.buildSubmittedDailyReportFields\(persistedReport\)/,
-    "video-submit 成功响应必须返回本次日报 id 和服务端实际保存的归属日",
-  );
-
-  const qualityCheckControllerSource = readFileSync(
-    new URL(
-      "../../../app/(app)/dashboard/video-submit-form-v2/quality-check-controller.ts",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  assert.match(
-    qualityCheckControllerSource,
-    /reportId:\s*submittedReportId/,
-    "样本质量检查必须使用提交响应返回的日报 id，而不是视频 id",
-  );
-  assert.doesNotMatch(
-    qualityCheckControllerSource,
-    /reportId:\s*submittedVideo\.id/,
-    "禁止再把视频 id 当作 reportId 传给 sample-quality-check",
-  );
+test("提交成功返回实际保存的日报编号和归属日，质检用该编号发送请求", async () => {
+  const db = submissionDatabase();
+  const response = await buildVideoSubmitResponse(new NextRequest("http://localhost/api/video-submit", {
+    method: "POST", body: JSON.stringify(abnormalSubmission()),
+  }), { createClient: async () => db as never, createAdminClient: () => db as never });
+  assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+  const body = await response.json();
+  assert.equal(body.daily_report_id, db.tables.daily_reports[0].id);
+  assert.equal(body.daily_report_date, "2026-11-28");
+  assert.notEqual(body.daily_report_id, body.video_id);
+  assert.equal("ai_tags" in body, false);
+  assert.equal("ai_tags" in body.video, false);
+  let sent: unknown;
+  const errors: string[] = [];
+  const controller = createQualityCheckController({
+    submittedReportId: body.daily_report_id,
+    setHasUserInteracted() {}, setQualityCheck() {}, setIsSubmitted() {}, updateSlotsState() {}, onManualReview() {},
+    onError: (message) => errors.push(message),
+    fetchImpl: async (url, init) => {
+      assert.equal(url, "/api/dashboard/sample-quality-check");
+      sent = JSON.parse(String(init?.body));
+      return Response.json({ overallStatus: "pass", issues: [] });
+    },
+  });
+  await controller.handleQualityCheck();
+  assert.deepEqual(sent, { reportId: db.tables.daily_reports[0].id });
+  assert.deepEqual(errors, []);
 });
 
-test("日报提交不再生成或返回 AI 视频标签", () => {
-  const routeSource = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(routeSource, /featureKey:\s*["']video_tag["']/);
-  assert.doesNotMatch(routeSource, /generateAiTags|ai_tags/);
+test("日报提交只保存手动标签，不发出 AI 标签生成请求", async () => {
+  const db = submissionDatabase();
+  const outbound: string[] = [];
+  const oldFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => { outbound.push(String(url)); throw new Error("本次提交不能调用外部 AI"); };
+  try {
+    const response = await buildVideoSubmitResponse(new NextRequest("http://localhost/api/video-submit", {
+      method: "POST", body: JSON.stringify(abnormalSubmission({ topic_tag: "复盘", content_keywords: ["现金流"] })),
+    }), { createClient: async () => db as never, createAdminClient: () => db as never });
+    assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+    assert.deepEqual(db.tables.video_tags.map((tag) => ({ source: tag.source, dimension: tag.tag_dimension, value: tag.tag_value })), [
+      { source: "manual", dimension: "话题", value: "复盘" },
+      { source: "manual", dimension: "关键词", value: "现金流" },
+    ]);
+    assert.deepEqual(outbound, []);
+  } finally { globalThis.fetch = oldFetch; }
 });
