@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -14,7 +15,7 @@ function client(options: {
   const supabase = {
     from(table: string) {
       calls.push(table);
-      if (table === "exemption_request") return {
+      if (table === "exemption_request") return pagedQueryDouble({
         select(columns: string) {
           assert.equal(columns, "id, start_date, end_date");
           return this;
@@ -29,8 +30,8 @@ function client(options: {
           assert.equal(value, 500);
           return { data: category === "leave" ? options.requests ?? [] : [], error: options.requestError ?? null };
         },
-      };
-      if (table === "exemption_request_date") return {
+      });
+      if (table === "exemption_request_date") return pagedQueryDouble({
         select(columns: string) {
           assert.equal(columns, "request_id, request_date, status");
           return this;
@@ -40,7 +41,7 @@ function client(options: {
           assert.deepEqual(ids, (options.requests ?? []).map((row) => row.id).filter(Boolean));
           return { data: options.dates ?? [], error: options.dateError ?? null };
         },
-      };
+      });
       throw new Error(`unexpected table ${table}`);
     },
   };

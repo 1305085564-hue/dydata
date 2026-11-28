@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type WithdrawResult =
@@ -14,20 +15,20 @@ export async function withdrawPendingExemptionRequests(
   supabase: Pick<SupabaseClient, "from">,
   userId: string,
 ): Promise<WithdrawResult> {
-  const pending = await supabase
+  const pending = await readQueryPages((from, to, signal) => supabase
     .from("exemption_request")
     .select("id")
     .eq("applicant_user_id", userId)
-    .eq("request_status", "pending");
+    .eq("request_status", "pending").order("id", { ascending: true }).range(from, to).abortSignal(signal));
   if (pending.error) return { ok: false, status: 500, error: "读取待审批申请失败，请稍后重试" };
   const pendingIds = ((pending.data ?? []) as Array<{ id: string }>).map((row) => row.id);
   if (pendingIds.length === 0) return { ok: false, status: 409, error: "没有待审批的申请可以撤回，可能已经被管理员处理" };
 
-  const reviewed = await supabase
+  const reviewed = await readQueryPages((from, to, signal) => supabase
     .from("exemption_request_date")
     .select("request_id")
     .in("request_id", pendingIds)
-    .neq("status", "pending");
+    .neq("status", "pending").order("id", { ascending: true }).range(from, to).abortSignal(signal));
   if (reviewed.error) return { ok: false, status: 500, error: "核对审批进度失败，请稍后重试" };
   const reviewedIds = new Set(((reviewed.data ?? []) as Array<{ request_id: string }>).map((row) => row.request_id));
   const withdrawableIds = pendingIds.filter((id) => !reviewedIds.has(id));

@@ -17,13 +17,14 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
   private selectColumns = "";
   private singleMode: "many" | "single" | "maybeSingle" = "many";
   private limitValue: number | null = null;
+  private offsetValue = 0;
 
   constructor(
     private readonly db: MemorySupabase,
     private readonly table: TableName,
   ) {}
 
-  select(columns?: string) { this.operation = "select"; if (columns) { this.selectColumns = columns; this.db.selectCalls.push(`${this.table}:${columns}`); } return this; }
+  select(columns?: string) { if (columns) { this.selectColumns = columns; this.db.selectCalls.push(`${this.table}:${columns}`); } return this; }
   insert(payload: Row | Row[]) { this.operation = "insert"; this.payload = payload; return this; }
   upsert(payload: Row | Row[], options?: { onConflict?: string }) { this.operation = "upsert"; this.payload = payload; this.conflictField = options?.onConflict ?? "id"; return this; }
   update(payload: Row) { this.operation = "update"; this.payload = payload; return this; }
@@ -44,6 +45,8 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
 
   order() { return this; }
   limit(value: number) { this.limitValue = value; return this; }
+  range(from: number, to: number) { this.offsetValue = from; this.limitValue = to - from + 1; return this; }
+  abortSignal() { return this; }
   single() { this.singleMode = "single"; return this; }
   maybeSingle() { this.singleMode = "maybeSingle"; return this; }
 
@@ -64,7 +67,7 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
     const matches = () => rows.filter((row) => this.filters.every((filter) => filter(row)));
 
     if (this.operation === "select") {
-      const selected = matches().slice(0, this.limitValue ?? Number.POSITIVE_INFINITY).map((row) => {
+      const selected = matches().slice(this.offsetValue, this.limitValue === null ? undefined : this.offsetValue + this.limitValue).map((row) => {
         const copy: Row = { ...row };
         if (this.table === "ai_provider_key_models" && this.selectColumns.includes("key:ai_provider_keys")) {
           const keyRow = this.db.tables.ai_provider_keys.find((k) => k.id === copy.key_id);
@@ -120,7 +123,7 @@ class MemoryQuery implements PromiseLike<{ data: Row[] | Row | null; error: { me
         return { data: null, error: { message: `simulated ${this.table} update failure` } };
       }
       for (const row of matchingRows) Object.assign(row, this.payload ?? {});
-      return { data: matchingRows, error: null };
+      return { data: this.singleMode === "many" ? matchingRows : matchingRows[0] ?? null, count: matchingRows.length, error: null };
     }
 
     const deletedIds = new Set(matchingRows.map((row) => row.id));

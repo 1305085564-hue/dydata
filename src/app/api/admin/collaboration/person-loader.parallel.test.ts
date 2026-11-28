@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { loadPersonData } from "@/lib/collaboration/data/person-loader";
@@ -45,7 +46,7 @@ test("个人卡 24h 快照与话题标签并行读取", async () => {
   const supabase = {
     from(table: string) {
       if (table === "daily_reports") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           in() { return this; },
           gte() { return this; },
@@ -54,51 +55,51 @@ test("个人卡 24h 快照与话题标签并行读取", async () => {
           or() { return this; },
           order() { return this; },
           range() { return Promise.resolve({ data: [personReport], error: null }); },
-        };
+        });
       }
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq() { return this; },
           maybeSingle() {
             return Promise.resolve({ data: profiles[0], error: null });
           },
-        };
+        });
       }
       if (table === "accounts") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           in() { return Promise.resolve({ data: accounts, error: null }); },
-        };
+        });
       }
       if (table === "videos") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           in() { return this; },
           eq() { return this; },
           or() { return this; },
           order() { return Promise.resolve({ data: [], error: null }); },
-        };
+        });
       }
       if (table === "video_metrics_snapshots") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq() { return this; },
           in() {
             snapshotStarted = true;
             return snapshotGate.then(() => ({ data: [], error: null }));
           },
-        };
+        });
       }
       if (table === "video_tags") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq() { return this; },
           in() {
             topicStarted = true;
             return Promise.resolve({ data: [], error: null });
           },
-        };
+        });
       }
       throw new Error(`unexpected table: ${table}`);
     },

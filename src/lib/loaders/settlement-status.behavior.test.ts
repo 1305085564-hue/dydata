@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -18,7 +19,7 @@ function client(error: unknown, throws = false) {
           return (table === "videos" && throws ? Promise.reject(error) : Promise.resolve({ data: [], error: table === "videos" ? error : null })).then(resolve, reject);
         },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   } as never;
 }

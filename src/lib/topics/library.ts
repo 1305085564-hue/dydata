@@ -361,16 +361,18 @@ export async function toggleTopicLibrary(
     }),
   });
   if (auditError) {
-    const { error: rollbackError } = await supabase
+    const { data: rolledBack, error: rollbackError } = await supabase
       .from("sub_topics")
       .update({
         library_status: previousState.library_status,
         removed_at: previousState.removed_at,
         removed_by: previousState.removed_by,
       })
-      .eq("id", input.subTopicId);
+      .eq("id", input.subTopicId)
+      .select("id")
+      .single();
     console.error("[topics-library] 审计写入失败", auditError.message, rollbackError?.message ?? "");
-    return { ok: false, status: 500, message: rollbackError ? "选题移出失败，状态回滚未完成" : "选题移出失败，状态已回滚" };
+    return { ok: false, status: 500, message: rollbackError || !rolledBack ? "选题移出失败，状态回滚未完成" : "选题移出失败，状态已回滚" };
   }
 
   return { ok: true, value: updated as Record<string, unknown> };

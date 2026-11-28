@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { DEFAULT_RATING_RULE } from "@/lib/breakout-rating";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -63,10 +64,10 @@ export async function queryAdminContentRpcPage({ supabase, query, scope, cursor,
       rpcDurationMs = Math.max(0, performance.now() - rpcStart);
       return result;
     }),
-    supabase.from("profiles")
+    readQueryPages((from, to, signal) => supabase.from("profiles")
       .select("id, name")
       .in("id", scope.visibleUserIds)
-      .order("name", { ascending: true }),
+      .order("name", { ascending: true }).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
   ]);
   return { result, profilesResult, rpcDurationMs };
 }
@@ -178,9 +179,9 @@ export async function loadVideoSettlementExclusions(
   const result: SettlementExclusionLookup = new Map(); // gate:transient-map 请求内结算排除映射，随返回释放
   if (videoIds.length === 0) return result;
   try {
-    const { data, error } = await supabase.from("videos")
+    const { data, error } = await readQueryPages((from, to, signal) => supabase.from("videos")
       .select("id, settlement_excluded, settlement_excluded_reason")
-      .in("id", videoIds).eq("settlement_excluded", true);
+      .in("id", videoIds).eq("settlement_excluded", true).order("id", { ascending: true }).range(from, to).abortSignal(signal));
     if (error) throw error;
     if (!Array.isArray(data)) throw new Error("结算状态查询未返回有效数据");
     for (const row of data as Array<{ id?: string; settlement_excluded?: boolean; settlement_excluded_reason?: string | null }>) {

@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -52,14 +53,14 @@ test("视频复盘只读状态接口接受同一 Supabase 项目内其他团队�
         activeVisibleUserIds: ["actor-a", "owner-b"],
       }),
       createAdminClient: () => ({
-        from: () => ({
+        from: () => pagedQueryDouble(({
           select: () => ({
             in: async () => ({
               data: [{ id: videoId, topic_id: "topic-b", user_id: "owner-b", accounts: { profile_id: "owner-b" } }],
               error: null,
             }),
           }),
-        }),
+        })),
       }) as never,
       resolveVideoTopicLibraryStatuses: async (_client, rows) => {
         visibleRows = rows.map((row) => ({ id: row.id, topic_id: row.topic_id ?? null }));
@@ -121,7 +122,7 @@ test("topic-library-status 失败路径：无效 JSON、权限范围为空、查
       {
         ...baseDeps,
         createAdminClient: () => ({
-          from: () => ({ select: () => ({ in: async () => ({ data: null, error: { message: "db down" } }) }) }),
+          from: () => pagedQueryDouble(({ select: () => ({ in: async () => ({ data: null, error: { message: "db down" } }) }) })),
         }) as never,
       } as never,
     );

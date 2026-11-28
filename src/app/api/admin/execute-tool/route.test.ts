@@ -142,8 +142,10 @@ test("execute-tool 带 confirmation token 时执行待确认动作", async () =>
                 return {
                   eq() {
                     updated = true;
-                    return Promise.resolve({ error: null });
+                    return this;
                   },
+                  select() { return this; },
+                  async maybeSingle() { return { data: { id: "confirm-1" }, error: null }; },
                 };
               },
             };

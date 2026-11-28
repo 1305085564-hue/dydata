@@ -35,7 +35,7 @@ export async function resolveWorkGroupWriteContext(
   if (!permission) return { ok: false, status: 403, message: "用户权限范围加载失败" };
 
   const gate = resolveWorkGroupWriteGate({
-    permissions: permission.permissionInfo.permissions,
+    companyRole: permission.permissionInfo.companyRole,
     actorTeamId: permission.scope.teamId,
   });
   if (!gate.ok) return gate;

@@ -84,7 +84,7 @@ export async function kickUser(
       id: profile.id,
       role: profile.role,
       company_role: profile.company_role,
-      permissions: profile.permissions ?? {},
+      permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 仅传递目标成员兼容资料；canArchiveMember 按角色判定，不用旧 JSON 授权
       team_id: profile.team_id ?? null,
     },
   })) {

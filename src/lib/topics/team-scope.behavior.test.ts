@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadTopicsTeamScope } from "./team-scope";
@@ -31,7 +32,7 @@ function client(fail = false) {
         maybeSingle: async () => result(true),
         then(resolve: (value: unknown) => unknown) { return Promise.resolve(result()).then(resolve); },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   } as never;
 }

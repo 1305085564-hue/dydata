@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
@@ -103,8 +104,8 @@ export async function loadRecentExemptionReviewNotices(
     .map((row) => ({ ...row, exemption_category: legacy ? "waive" as const : row.exemption_category ?? null }));
   if (requests.length === 0) return [];
 
-  const details = await supabase.from("exemption_request_date").select(DAILY_COLUMNS)
-    .in("request_id", requests.map((row) => row.id)).order("request_date", { ascending: true });
+  const details = await readQueryPages((from, to, signal) => supabase.from("exemption_request_date").select(DAILY_COLUMNS)
+    .in("request_id", requests.map((row) => row.id)).order("request_date", { ascending: true }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   // 明细读不到时只能展示已结单的整单结果，部分批准单无从判断就不展示（与旧行为一致）
   return pickRecentReviewNotices(requests, details.error ? [] : (details.data ?? []) as unknown as ReviewNoticeDailyRow[], now);
 }

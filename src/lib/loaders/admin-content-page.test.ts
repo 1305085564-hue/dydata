@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -378,7 +379,7 @@ test("内容列表每次成功读取都重新查询，避免不同写入口留�
       return Promise.resolve({ data: [] as unknown[], error: null }).then(resolve);
     },
   };
-  const supabase = { from: () => emptyThenable } as never;
+  const supabase = { from: () => pagedQueryDouble(emptyThenable) } as never;
   const scope = {
     kind: "self",
     visibleUserIds: ["list-no-cache-test-user"],
@@ -414,7 +415,7 @@ test("内容分页同时读取作品和成员选项", async () => {
     },
   };
   const pending = loadAdminContentListData({
-    supabase: { rpc: () => rpc, from: () => options } as never,
+    supabase: { rpc: () => rpc, from: () => pagedQueryDouble(options) } as never,
     scope: { userId: "user-1", kind: "self", visibleUserIds: ["user-1"], activeVisibleUserIds: ["user-1"] } as never,
     query: { ...parseContentListQuery(new URLSearchParams()), perspective: "company", teamId: null },
   });

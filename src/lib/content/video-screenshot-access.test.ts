@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -159,7 +160,7 @@ function makeCrossCompanySupabase({
           return Promise.resolve(read()).then(resolve, reject);
         },
       };
-      return chain;
+      return pagedQueryDouble(chain);
     },
   };
 

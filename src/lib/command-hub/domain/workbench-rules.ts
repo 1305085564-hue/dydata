@@ -37,12 +37,12 @@ function earliestPendingDate(group: GroupedApprovalItem): string {
   const pending = group.dailyItems.filter((d) => d.status === "pending").map((d) => d.dateStr).sort();
   if (pending[0]) return pending[0];
   const starts = group.items.map((item) => item.start_date).filter(Boolean).sort();
-  return starts[0] ?? group.created_at.slice(0, 10);
+  return starts[0] ?? formatShanghaiDateOnly(new Date(group.created_at));
 }
 
 export function getQueueItemDate(item: ApprovalQueueItem): string {
   if (item.kind === "exemption") return earliestPendingDate(item.group);
-  return (item.appeal.business_date || item.appeal.start_date || item.appeal.created_at).slice(0, 10);
+  return item.appeal.business_date || item.appeal.start_date || formatShanghaiDateOnly(new Date(item.appeal.created_at));
 }
 
 function getQueueItemCreatedAt(item: ApprovalQueueItem): string {

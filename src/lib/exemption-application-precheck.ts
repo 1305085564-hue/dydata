@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { expandShanghaiDateRange } from "@/lib/business-time";
@@ -34,10 +35,10 @@ export async function checkPendingExemptionOverlap(
   const requests = (pendingRows ?? []) as PendingExemptionRequestLike[];
   const requestIds = requests.map((row) => row.id).filter((id): id is string => Boolean(id));
   const { data: pendingDateRows, error: dateError } = requestIds.length > 0
-    ? await client
+    ? await readQueryPages((from, to, signal) => client
         .from("exemption_request_date")
         .select("request_id, request_date, status")
-        .in("request_id", requestIds)
+        .in("request_id", requestIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as PendingExemptionDateLike[], error: null };
 
   if (dateError) return { ok: false, stage: "dates", error: dateError };

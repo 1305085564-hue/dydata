@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AppealRow = {
@@ -89,10 +90,10 @@ export async function loadFulfillmentAppealRows(input: {
   const accountIds = Array.from(new Set(appeals.map((row) => row.account_id).filter((id): id is string => Boolean(id))));
   const videoIds = Array.from(new Set(appeals.map((row) => row.video_id).filter((id): id is string => Boolean(id))));
   const [profilesResult, accountsResult, absenceResult, videosResult] = await Promise.all([
-    input.supabase.from("profiles").select("id, name").in("id", userIds),
+    readQueryPages((from, to, signal) => input.supabase.from("profiles").select("id, name").in("id", userIds).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     accountIds.length > 0 ? input.supabase.from("accounts").select("id, name").in("id", accountIds) : Promise.resolve({ data: [], error: null }),
-    input.supabase.from("fulfillment_records").select("user_id, record_date").in("user_id", Array.from(new Set(appeals.map((row) => row.user_id)))).eq("status", "absent"),
-    videoIds.length > 0 ? input.supabase.from("videos").select("id, video_title, published_at, uploaded_at").in("id", videoIds) : Promise.resolve({ data: [], error: null }),
+    readQueryPages((from, to, signal) => input.supabase.from("fulfillment_records").select("user_id, record_date").in("user_id", Array.from(new Set(appeals.map((row) => row.user_id)))).eq("status", "absent").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+    videoIds.length > 0 ? readQueryPages((from, to, signal) => input.supabase.from("videos").select("id, video_title, published_at, uploaded_at").in("id", videoIds).order("id", { ascending: true }).range(from, to).abortSignal(signal)) : Promise.resolve({ data: [], error: null }),
   ]);
   if (profilesResult.error || accountsResult.error || absenceResult.error) {
     return { error: profilesResult.error ?? accountsResult.error ?? absenceResult.error };

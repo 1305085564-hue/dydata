@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -206,7 +207,7 @@ export async function queryScopedReports(input: {
 export async function loadProfiles(supabase: SupabaseClient, ids: string[]) {
   if (ids.length === 0) return [];
   const result = await queryProfiles<Record<string, unknown>[]>((fields) =>
-    supabase.from("profiles").select(fields).in("id", ids),
+    readQueryPages((from, to, signal) => supabase.from("profiles").select(fields).in("id", ids).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
   );
   assertSupabaseQuerySucceeded(result.error, "加载协作成员失败");
   return (result.data ?? []).map(mapProfileRow);

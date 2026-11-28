@@ -168,7 +168,7 @@ export function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<st
     name: profile.name ?? null,
     role: profile.role,
     ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
-    permissions: profile.permissions ?? {},
+    permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 归档快照与失败回滚须保留原始字段，不用旧 JSON 授权
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
@@ -182,7 +182,7 @@ export function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): R
   return {
     role: profile.role,
     ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
-    permissions: profile.permissions ?? {},
+    permissions: profile.permissions ?? {}, // gate:legacy-permissions-ok 归档快照与失败回滚须保留原始字段，不用旧 JSON 授权
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,

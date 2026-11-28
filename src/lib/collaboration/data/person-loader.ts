@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -43,7 +44,7 @@ async function loadVideosForReports(supabase: SupabaseClient, rows: Collaboratio
   if (rows.length === 0) return [];
   const dates = rows.flatMap((row) => [row.report_date, getCollaborationWorkDate(row)]).sort();
   const { startUtc, endUtc } = reportRangeToUtc(dates[0]!, dates.at(-1)!);
-  const result = await supabase
+  const result = await readQueryPages((from, to, signal) => supabase
     .from("videos")
     .select("id, account_id, video_title, published_at, uploaded_at, anomaly_status")
     .in("account_id", unique(rows.map((row) => row.account_id)))
@@ -51,7 +52,7 @@ async function loadVideosForReports(supabase: SupabaseClient, rows: Collaboratio
     .or(
       `and(published_at.gte.${startUtc},published_at.lt.${endUtc}),and(uploaded_at.gte.${startUtc},uploaded_at.lt.${endUtc})`,
     )
-    .order("uploaded_at", { ascending: false });
+    .order("uploaded_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   assertSupabaseQuerySucceeded(result.error, "加载视频异常状态失败");
   return (result.data ?? []) as CollaborationVideo[];
 }

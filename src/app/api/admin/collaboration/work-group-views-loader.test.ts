@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -96,7 +97,7 @@ function createFakeSupabase(db: Record<string, Array<Record<string, unknown>>>, 
         queries.push(table);
         const detail = { table, fields: "", isRosterQuery: false };
         queryDetails.push(detail);
-        return chain(table, "", detail);
+        return pagedQueryDouble(chain(table, "", detail));
       },
     },
   };

@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -87,7 +88,7 @@ test("读取：只查本人、近 7 天已结单与待审单，两类结果合�
           resolve({ data: isPending ? [] : [request("r1", { request_status: "rejected" })], error: null });
         },
       };
-      return builder;
+      return pagedQueryDouble(builder);
     },
   };
   const notices = await loadRecentExemptionReviewNotices(supabase as never, "user-1", NOW);

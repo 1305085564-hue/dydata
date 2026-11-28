@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import test, { afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 
@@ -60,7 +61,7 @@ function createFactories(serverClient: ServerClient): ClientFactories {
     getTeamOptions: async () => [],
     getCurrentPermissionContext: async () => createPermissionContext(),
     createServiceClient: () => ({
-      from: () => createDefaultServiceFromBuilder(),
+      from: () => pagedQueryDouble(createDefaultServiceFromBuilder()),
       auth: { admin: { getUserById: async () => ({ data: { user: null }, error: null }) } },
     }) as unknown as ReturnType<ClientFactories["createServiceClient"]>,
   };
@@ -93,6 +94,7 @@ function createAdminListFactories(params: {
   teamLookups?: string[];
   authLookups?: string[];
   requestError?: { message: string };
+  requestPages?: number[];
   permissionContext?: PermissionContext;
   teamName?: string;
 }): ClientFactories {
@@ -105,9 +107,11 @@ function createAdminListFactories(params: {
     createServiceClient: () => ({
       from: (table: string) => {
         if (table === "team_join_requests") {
-          return {
+          return pagedQueryDouble({
             select: (columns: string) => {
               params.requestSelects.push(columns);
+              let pageFrom = 0;
+              let pageTo = 999;
               const query = {
                 eq: (column: string, value: string) => {
                   params.requestFilters?.push(`eq:${column}:${value}`);
@@ -117,26 +121,29 @@ function createAdminListFactories(params: {
                   params.requestFilters?.push(`or:${filters}`);
                   return query;
                 },
-                order: async () => ({
-                  data: params.requestError ? null : params.requests,
-                  error: params.requestError ?? null,
-                }),
+                order() { return query; },
+                range(from: number, to: number) { pageFrom = from; pageTo = to; return query; },
+                abortSignal() { return query; },
+                then(resolve: (value: QueryResult<typeof params.requests>) => unknown) {
+                  params.requestPages?.push(pageFrom);
+                  return Promise.resolve({ data: params.requestError ? null : params.requests.slice(pageFrom, pageTo + 1), error: params.requestError ?? null }).then(resolve);
+                },
               };
               return query;
             },
-          };
+          });
         }
         if (table === "profiles") {
-          return {
+          return pagedQueryDouble({
             select: () => ({
               in: async (_column: string, ids: string[]) => {
                 params.profileLookups?.push(...ids);
                 return { data: params.profiles.filter((profile) => ids.includes(profile.id)), error: null };
               },
             }),
-          };
+          });
         }
-        return {
+        return pagedQueryDouble({
           select: () => ({
             eq: (_column: string, id: string) => ({
               maybeSingle: async () => {
@@ -149,7 +156,7 @@ function createAdminListFactories(params: {
               },
             }),
           }),
-        };
+        });
       },
       auth: {
         admin: {
@@ -168,13 +175,13 @@ function createAdminListFactories(params: {
 
 function createInsertClient(result: QueryResult<{ id: string }>): ServerClient {
   return {
-    from: () => ({
+    from: () => pagedQueryDouble(({
       insert: () => ({
         select: () => ({
           single: async () => result,
         }),
       }),
-    }),
+    })),
     rpc: async () => ({ data: null, error: null }),
   } as unknown as ServerClient;
 }
@@ -185,18 +192,18 @@ function createDeleteClient(result: QueryResult<null>): ServerClient {
   });
 
   return {
-    from: () => ({
+    from: () => pagedQueryDouble(({
       delete: () => deleteChain,
-    }),
+    })),
     rpc: async () => ({ data: null, error: null }),
   } as unknown as ServerClient;
 }
 
 function createRpcClient(result: QueryResult<{ ok: boolean; reason?: string; status?: "approved" | "rejected" }>): ServerClient {
   return {
-    from: () => ({
+    from: () => pagedQueryDouble(({
       insert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
-    }),
+    })),
     rpc: async () => result,
   } as unknown as ServerClient;
 }
@@ -246,7 +253,7 @@ test("cancelJoinRequest 影响 1 行返回 ok", async () => {
 test("待审批入团申请通过服务端公开目录显示目标公司，不依赖跨公司 teams 直连", async () => {
   const selectedColumns: string[] = [];
   const serverClient = {
-    from: () => ({
+    from: () => pagedQueryDouble(({
       select: (columns: string) => {
         selectedColumns.push(columns);
         return {
@@ -265,7 +272,7 @@ test("待审批入团申请通过服务端公开目录显示目标公司，不�
           }),
         };
       },
-    }),
+    })),
   } as unknown as ServerClient;
   setTeamJoinServiceClientsForTest({
     ...createFactories(serverClient),
@@ -462,4 +469,23 @@ test("待审批身份查询被拒绝时直接返回错误，不能退回高权�
   }));
   assert.deepEqual(await listPendingRequestsForAdmin(), { ok: false, error: "permission denied" });
   assert.deepEqual(authLookups, []);
+});
+
+
+test("入团审批超过千条时完整读两页，其他团队申请不进入队列或资料补全", async () => {
+  const requests = Array.from({ length: 1501 }, (_, index) => ({
+    id: `request-${String(index).padStart(4, "0")}`, applicant_user_id: `user-${index}`, target_team_id: "team-1", created_at: "2026-11-28",
+  }));
+  const requestPages: number[] = [];
+  const authLookups: string[] = [];
+  setTeamJoinServiceClientsForTest(createAdminListFactories({
+    requests: [...requests, { id: "foreign", applicant_user_id: "outsider", target_team_id: "team-2", created_at: "2026-11-28" }],
+    requestPages, authLookups, requestSelects: [], profiles: [], users: [],
+  }));
+  const result = await listPendingRequestsForAdmin();
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.data.map(row => row.id), requests.map(row => row.id));
+  assert.equal(new Set(result.data.map(row => row.id)).size, 1501);
+  assert.deepEqual(requestPages, [0, 1000]);
+  assert.equal(authLookups.includes("outsider"), false);
 });

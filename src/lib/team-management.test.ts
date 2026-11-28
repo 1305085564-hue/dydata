@@ -52,9 +52,10 @@ test("admin 只能查看并编辑自己团队成员", () => {
     name: "十八",
     role: "admin",
     team_id: "team-1",
-    permissions: { manage_members: true },
+    permissions: {},
   });
 
+  assert.equal(access.canEditMembers, true);
   assert.equal(access.level, "admin");
   assert.deepEqual(access.teamIds, ["team-1"]);
 });
@@ -111,7 +112,7 @@ test("组长成员管理页只看得到自己团队成员", () => {
   assert.deepEqual(filterVisibleTeamManagementProfiles(access, profiles).map((profile) => profile.id), ["a"]);
 });
 
-test("可用组长候选人仅来自本团队 admin 且不在屏蔽名单", () => {
+test("固定矩阵下所有 admin 都是管理层，不再按旧权限 JSON 分出组长候选人", () => {
   const access = resolveTeamManagementAccess({
     id: "admin-1",
     name: "负责人甲",
@@ -127,6 +128,12 @@ test("可用组长候选人仅来自本团队 admin 且不在屏蔽名单", () =
     { id: "codex-1", name: "Codex", email: "codex-admin-demo@dydata.local", role: "admin", team_id: "team-1" },
   ];
 
-  assert.deepEqual(filterUsableLeaderCandidates(access, profiles).map((profile) => profile.id), ["leader-1"]);
+  assert.deepEqual(filterUsableLeaderCandidates(access, profiles).map((profile) => profile.id), []);
   assert.equal(isIgnoredTeamManagementUser({ name: "Codex", email: "x@dydata.local" }), true);
+});
+
+test("组员伪造旧管理权限仍不能编辑团队成员", () => {
+  const access = resolveTeamManagementAccess({ id: "member", name: "组员", role: "member", company_role: "member", team_id: "team-1", permissions: { manage_members: true } });
+  assert.equal(access.canEditMembers, false);
+  assert.deepEqual(filterUsableLeaderCandidates(access, []), []);
 });

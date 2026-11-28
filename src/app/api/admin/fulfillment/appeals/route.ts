@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextRequest, NextResponse } from "next/server";
 
 import { filterScopedRows } from "@/lib/admin/cockpit";
@@ -6,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emit } from "@/lib/notifications/server";
 import { isActiveMembership } from "@/lib/member-lifecycle";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
@@ -82,7 +83,7 @@ export async function buildFulfillmentAppealsGetResponse(
   // gate:transient-map 请求内按 user_id 映射申诉成员姓名，随响应返回释放
   const profileMap = new Map<string, { name: string | null }>();
   if (relatedUserIds.length > 0) {
-    const profilesResult = await auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds);
+    const profilesResult = await readQueryPages((from, to, signal) => auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
     if (profilesResult.error) {
       return toStringErrorResponse({
         code: "DEPENDENCY_FAILED",
@@ -117,9 +118,14 @@ type MutationLayers = {
   todoStatus: LayerStatus;
 };
 
-async function handlePost(request: Request, observation: MutationObservation, layers: MutationLayers) {
+export async function buildFulfillmentAppealsPostResponse(
+  request: Request,
+  observation: MutationObservation,
+  layers: MutationLayers,
+  deps = { createClient, createAdminClient, emit },
+) {
   observation.mark("auth");
-  const supabase = await createClient();
+  const supabase = await deps.createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
@@ -154,7 +160,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
   }
 
   observation.mark("read");
-  const admin = createAdminClient();
+  const admin = deps.createAdminClient();
   const { data: account, error: accountError } = await admin
     .from("accounts")
     .select("id, profile_id, name")
@@ -246,21 +252,21 @@ async function handlePost(request: Request, observation: MutationObservation, la
   layers.businessSucceeded = true;
 
   const { data: requester } = await admin.from("profiles").select("name, team_id").eq("id", user.id).single();
-  const { data: candidates } = await admin
+  const { data: candidates } = await readQueryPages((from, to, signal) => admin
     .from("profiles")
-    .select("id, role, company_role, permissions, team_id, membership_status")
-    .in("role", ["owner", "admin"]);
+    .select("id, role, company_role, team_id, membership_status")
+    .in("role", ["owner", "admin"]).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   const recipients = (candidates ?? [])
     .filter((profile) => {
       if (profile.id === user.id || !isActiveMembership(profile)) return false;
       const role = resolveProfileCompanyRole(profile.role, profile.company_role);
       return !role.conflict
-        && (role.companyRole === "company_owner" || (role.companyRole === "admin" && profile.permissions?.manage_members === true))
+        && hasFixedPermission(role.companyRole, "manage_members")
         && profile.team_id === requester?.team_id;
     })
     .map((profile) => profile.id);
 
-  const notification = await emit({
+  const notification = await deps.emit({
     recipients,
     type: "fulfillment.appeal",
     category: "todo",
@@ -302,7 +308,7 @@ export async function POST(request: Request) {
       todoStatus: "skipped",
     };
     observation.setDetail?.(layers);
-    const response = await handlePost(request, observation, layers);
+    const response = await buildFulfillmentAppealsPostResponse(request, observation, layers);
     observation.setDetail?.(layers);
     return appendObservedMutationResult(response, observation);
   });

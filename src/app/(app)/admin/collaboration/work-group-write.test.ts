@@ -7,6 +7,7 @@ const TEAM_A = "team-a";
 
 function makeDeps(overrides: {
   permissions?: Record<string, boolean>;
+  companyRole?: "admin" | "member";
   teamId?: string | null;
   context?: unknown | null;
 } = {}) {
@@ -18,6 +19,7 @@ function makeDeps(overrides: {
         : {
             permissionInfo: {
               userId: "actor-1",
+              companyRole: overrides.companyRole ?? "admin",
               permissions: overrides.permissions ?? { manage_members: true },
             },
             scope: { teamId: overrides.teamId === undefined ? TEAM_A : overrides.teamId },
@@ -34,7 +36,7 @@ function makeDeps(overrides: {
 }
 
 test("没有 manage_members 的小队写操作被拒，且不碰数据库、不刷新页面", async () => {
-  const { deps, calls } = makeDeps({ permissions: { view_analytics: true } });
+  const { deps, calls } = makeDeps({ companyRole: "member", permissions: { manage_members: true } });
 
   const result = await runWorkGroupAction(
     {
@@ -67,7 +69,7 @@ test("权限范围加载失败或无团队归属时拒绝，不允许以任意�
 });
 
 test("通过门禁时把操作人本公司 teamId 传给执行体，成功后刷新数据管理页", async () => {
-  const { deps, calls } = makeDeps();
+  const { deps, calls } = makeDeps({ permissions: {} });
 
   const result = await runWorkGroupAction(
     {
@@ -87,7 +89,7 @@ test("通过门禁时把操作人本公司 teamId 传给执行体，成功后刷
 });
 
 test("执行体失败时不刷新页面，失败原因原样透传", async () => {
-  const { deps, calls } = makeDeps();
+  const { deps, calls } = makeDeps({ permissions: {} });
 
   const result = await runWorkGroupAction(
     { run: async () => ({ ok: false as const, status: 409, message: "同一部/二部内已有同名小队" }) },

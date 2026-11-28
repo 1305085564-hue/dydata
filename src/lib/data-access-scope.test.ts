@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -56,7 +57,7 @@ function makeFakeSupabase(rows: Array<{
     // Make it thenable so `await supabase.from(...).select(...)` resolves
     return chain as typeof chain & { then: typeof chain.then };
   }
-  return { from: () => builder() };
+  return { from: () => pagedQueryDouble(builder()) };
 }
 
 // ---------------------------------------------------------------------------

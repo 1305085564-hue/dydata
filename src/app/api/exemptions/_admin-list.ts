@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatShanghaiDateOnly } from "@/lib/business-time";
@@ -60,7 +61,7 @@ export async function loadAdminExemptionList(input: {
   const rows = (data ?? []) as ExemptionRequestRow[];
   const requestIds = rows.map((row) => row.id);
   const datesResult = requestIds.length > 0
-    ? await input.supabase.from("exemption_request_date").select("id, request_id, request_date, reason, status, feedback, reviewed_by, reviewed_at").in("request_id", requestIds)
+    ? await readQueryPages((from, to, signal) => input.supabase.from("exemption_request_date").select("id, request_id, request_date, reason, status, feedback, reviewed_by, reviewed_at").in("request_id", requestIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [], error: null };
   if (datesResult.error) return databaseFailure("读取申请日期明细失败", datesResult.error);
   const datesByRequest = new Map<string, Array<Record<string, unknown>>>();
@@ -74,7 +75,7 @@ export async function loadAdminExemptionList(input: {
   const allProfileIds = Array.from(new Set([...applicantIds, ...reviewerIds]));
 
   const profilesResult = allProfileIds.length > 0
-    ? await input.supabase.from("profiles").select("id, name, team_id").in("id", allProfileIds)
+    ? await readQueryPages((from, to, signal) => input.supabase.from("profiles").select("id, name, team_id").in("id", allProfileIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as ProfileRow[], error: null };
 
   if (profilesResult.error) {
@@ -111,12 +112,12 @@ export async function loadAdminExemptionList(input: {
 
     let grantsResult: { data?: unknown; error?: unknown } | null = null;
     try {
-      grantsResult = await (input.supabase
+      grantsResult = await (readQueryPages((from, to, signal) => input.supabase
         .from("exemption_grant")
         .select("user_id, start_date, end_date, grant_type, exemption_category, status")
         .in("user_id", applicantIds)
         .eq("status", "active")
-        .or(`grant_type.eq.permanent,and(start_date.lt.${nextMonthStart},or(end_date.is.null,end_date.gte.${currentMonthStart}))`) as unknown as Promise<{ data?: unknown; error?: unknown }>);
+        .or(`grant_type.eq.permanent,and(start_date.lt.${nextMonthStart},or(end_date.is.null,end_date.gte.${currentMonthStart}))`).order("id", { ascending: true }).range(from, to).abortSignal(signal)) as unknown as Promise<{ data?: unknown; error?: unknown }>);
     } catch (err) {
       console.error("[exemptions] 当月出勤统计失败", err);
     }

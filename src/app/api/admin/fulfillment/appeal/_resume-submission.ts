@@ -55,11 +55,13 @@ export async function resumeAppealSubmission(
 
   const result = await response.json().catch(() => ({})) as { id?: string; video_id?: string };
   deps.markWriteRequest?.();
-  const { error: clearError } = await supabase
+  const { data: clearedAppeal, error: clearError } = await supabase
     .from("fulfillment_appeals")
     .update({ submission_payload: null })
     .eq("id", appealId)
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .select("id")
+    .maybeSingle();
 
   if (clearError) {
     console.warn(`[appeal ${appealId}] 数据已写入，但清空暂存失败`, clearError);
@@ -68,6 +70,6 @@ export async function resumeAppealSubmission(
   return {
     success: true,
     videoId: result.id ?? result.video_id ?? null,
-    cleared: !clearError,
+    cleared: !clearError && Boolean(clearedAppeal),
   };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -36,6 +36,7 @@ const EMPTY_EXEMPTIONS = { "db-error-leak": {}, "exemption-category-copy": {}, "
 
 async function createFixture() {
   const fixture = await mkdtemp(path.join(tmpdir(), "forbidden-list-gate-"));
+  await symlink(path.join(root, "node_modules"), path.join(fixture, "node_modules"), "dir");
   await mkdir(path.join(fixture, "scripts"), { recursive: true });
   await mkdir(path.join(fixture, "src", "app", "api", "demo"), { recursive: true });
   await mkdir(path.join(fixture, "supabase", "migrations"), { recursive: true });
@@ -199,4 +200,59 @@ test("当前仓库通过统一禁用清单", async () => {
   const result = await run(process.execPath, [path.join(root, "scripts", "forbidden-list-gate.mjs"), `--base=${base}`], root);
   assert.equal(result.code, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /统一禁用清单通过/);
+});
+
+test("旧权限字段门禁覆盖可选、方括号与跨行访问，可信固定矩阵索引不误伤", () => {
+  const rule = SCAN_RULES.find((item) => item.id === "legacy-permissions");
+  const files = {
+    "src/bad.ts": 'const a = profile.permissions?.manage_members;\nconst b = profile["permissions"]["manage_members"];\nconst c = permissions\n  ?.manage_members;\n',
+    "src/good.ts": 'const a = hasFixedPermission(role, "manage_members");\nconst b = core.permissions[key];\n// profile.permissions?.manage_members\nconst label = "profile.permissions?.manage_members";\n// gate:legacy-permissions-ok 归档快照，不作授权\nconst snapshot = profile.permissions;\n',
+  };
+  assert.deepEqual(countScanRule(rule, files), { "src/bad.ts": 3 });
+});
+
+test("时间戳切日期门禁覆盖字段、跨行、方括号和组合兜底，数组与纯日期不误伤", () => {
+  const rule = SCAN_RULES.find((item) => item.id === "timestamp-date-slice");
+  const files = {
+    "src/bad.ts": 'const a = row.created_at.slice(0, 10);\nconst b = row["updatedAt"]\n .substring(0, 10);\nconst c = (row.business_date || row.published_at).slice(0, 10);\n',
+    "src/good.ts": 'const a = items.slice(0, 10);\nconst b = row.report_date.slice(0, 10);\n// gate:timestamp-date-ok 外部字段为纯日历校验\nconst c = row.created_at.slice(0, 10);\nconst d = "row.createdAt.slice(0, 10)";\n',
+    "src/lib/business-time.ts": 'const a = row.created_at.slice(0, 10);',
+  };
+  assert.deepEqual(countScanRule(rule, files), { "src/bad.ts": 3 });
+});
+
+test("两类永久门禁实际阻断新文件，删除违规后恢复绿灯", async () => {
+  const fixture = await createFixture();
+  try {
+    const file = path.join(fixture, "src", "bad.ts");
+    for (const [source, label] of [
+      ['export const check = profile["permissions"]?.manage_members;', "旧权限字段绕过固定矩阵"],
+      ['export const day = row.createdAt.substring(0, 10);', "业务时间戳直接切日期"],
+    ]) {
+      await writeFile(file, source);
+      const result = await runGate(fixture);
+      assert.equal(result.code, 1, result.stdout);
+      assert.ok(result.stderr.includes(label), result.stderr);
+      assert.match(result.stderr, /该用什么/);
+    }
+    await rm(file);
+    assert.equal((await runGate(fixture)).code, 0);
+  } finally { await rm(fixture, { recursive: true, force: true }); }
+});
+
+test("日期门禁不把 map/sort 的数组接收者当作时间戳", () => {
+  const rule = SCAN_RULES.find((item) => item.id === "timestamp-date-slice");
+  assert.deepEqual(countScanRule(rule, { "src/arrays.ts": `const a = items.sort((a,b) => a.created_at.localeCompare(b.created_at)).slice(0, 10);
+const b = items.map(item => item.createdAt).slice(0, 10);
+const c = (row.created_at ? items : []).slice(0, 10);` }), {});
+});
+
+test(".ts 泛型箭头函数不会让后续旧权限和日期违规漏检", () => {
+  const prefix = 'const identity = <T>(value: T) => value;\n';
+  for (const [id, source] of [
+    ["legacy-permissions", prefix + 'const bad = profile.permissions?.manage_members;'],
+    ["timestamp-date-slice", prefix + 'const bad = row.created_at.slice(0, 10);'],
+  ]) {
+    assert.deepEqual(countScanRule(SCAN_RULES.find(item => item.id === id), { "src/generic.ts": source }), { "src/generic.ts": 1 });
+  }
 });

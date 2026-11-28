@@ -5,6 +5,7 @@ import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
 import { buildDependencyPreview, requireDependencyConfirmation } from "@/lib/ai-config/key-dependencies";
 import { toCanonicalModelId } from "@/lib/ai-config/canonical-model";
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import {
   normalizeProtocolBaseUrl,
   normalizeProviderProtocol,
@@ -231,10 +232,14 @@ export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Re
     const preview = await buildDependencyPreview(supabase, { scope: "model", id: canonicalModelId });
     requireDependencyConfirmation(preview, data.confirm_impact === true, "停用模型");
   }
-  const { data: currentRows, error: readError } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, is_enabled, disabled_by_model")
-    .eq("canonical_model_id", canonicalModelId);
+  const { data: currentRows, error: readError } = await readQueryPages<
+    { id: string; is_enabled: boolean; disabled_by_model: boolean | null }, { message: string }
+  >(
+    (from, to, signal) => supabase.from("ai_provider_key_models")
+      .select("id, is_enabled, disabled_by_model")
+      .eq("canonical_model_id", canonicalModelId)
+      .order("id", { ascending: true }).range(from, to).abortSignal(signal),
+  );
   if (readError) {
     if (/disabled_by_model/i.test(readError.message ?? "")) {
       throw Object.assign(new Error("数据库尚未执行 AI 供应开关迁移，暂不能批量停用或恢复模型"), { status: 409 });
@@ -242,18 +247,23 @@ export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Re
     throw new Error(readError.message);
   }
   const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
+  if (snapshot.length === 0) throw validationError("模型供应不存在，请刷新后重试", 404);
   const changedRows = isEnabled
     ? snapshot.filter((row) => row.disabled_by_model === true)
     : snapshot.filter((row) => row.is_enabled);
   if (changedRows.length === 0) {
     return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
   }
-  const { error: updateError } = await supabase
+  const { count: updatedCount, error: updateError } = await supabase
     .from("ai_provider_key_models")
     .update(isEnabled
       ? { is_enabled: true, disabled_by_model: false }
-      : { is_enabled: false, disabled_by_model: true })
-    .in("id", changedRows.map((row) => row.id));
+      : { is_enabled: false, disabled_by_model: true }, { count: "exact" })
+    .in("id", changedRows.map((row) => row.id))
+    .select("id");
   if (updateError) throw new Error(updateError.message);
+  if (updatedCount !== changedRows.length) {
+    throw validationError("部分模型供应已变化，本次调整未全部生效，请刷新后核对", 409);
+  }
   return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
 }

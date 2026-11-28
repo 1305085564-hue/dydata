@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildPermissionRequestApplyResponse } from "./route";
@@ -31,7 +32,7 @@ function fixture(options: { user?: string | null; requester?: Row; missingRoleCo
             return Promise.resolve({ data: error ? null : recipients.filter((row) => filters.every((filter) => filter(row))), error }).then(resolve);
           },
         };
-        return query;
+        return pagedQueryDouble(query);
       },
     }) as never,
     emit: async (input: Parameters<typeof import("@/lib/notifications/server").emit>[0]) => {

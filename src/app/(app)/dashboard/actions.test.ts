@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -70,8 +71,8 @@ function createSupabaseStub(options: {
     requestFilters,
     supabase: {
       from(table: string) {
-        if (table === "exemption_request_date") return requestDateBuilder;
-        return table === "profiles" ? profileBuilder : requestBuilder;
+        if (table === "exemption_request_date") return pagedQueryDouble(requestDateBuilder);
+        return pagedQueryDouble(table === "profiles" ? profileBuilder : requestBuilder);
       },
     } as never,
   };

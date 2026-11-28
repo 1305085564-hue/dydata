@@ -1,7 +1,8 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 import { UUID_PATTERN, requireAdminServiceClient, requireActiveVisibleUsers, requireOwnerOrAdminRole, readJsonBody } from "../../_shared";
 import { emit } from "@/lib/notifications/server";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { clearCollaborationMonthCache } from "@/lib/loaders/collaboration-month-cache";
 import { toStringErrorResponse } from "@/lib/errors";
@@ -110,15 +111,15 @@ export async function buildReopenFulfillmentAppealResponse(
     .eq("source_id", appealId);
 
   const requester = await auth.supabase.from("profiles").select("name, team_id").eq("id", appealResult.data.user_id).maybeSingle();
-  const candidates = await auth.supabase
+  const candidates = await readQueryPages((from, to, signal) => auth.supabase
     .from("profiles")
-    .select("id, role, company_role, permissions, team_id, membership_status")
-    .in("role", ["owner", "admin"]);
+    .select("id, role, company_role, team_id, membership_status")
+    .in("role", ["owner", "admin"]).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   const recipients = (candidates.data ?? [])
     .filter((profile) => {
       if (!isActiveMembership(profile) || profile.team_id !== requester.data?.team_id) return false;
       const role = resolveProfileCompanyRole(profile.role, profile.company_role);
-      return !role.conflict && (role.companyRole === "company_owner" || (role.companyRole === "admin" && profile.permissions?.manage_members === true));
+      return !role.conflict && hasFixedPermission(role.companyRole, "manage_members");
     })
     .map((profile) => profile.id);
   const notification = await deps.emit({

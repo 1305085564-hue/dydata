@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export async function saveOwnProfileName(supabase: SupabaseClient, userId: string, name: string) {
+  const { data, error } = await supabase.from("profiles").update({ name })
+    .eq("id", userId).select("id").maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "未保存：成员资料不存在，请刷新后重试" };
+  return { success: true } as const;
+}
+
 /** 本人账号更新必须返回实际命中的记录，零行不能当作保存成功。 */
 export async function saveOwnAccountUpdate(
   supabase: SupabaseClient,

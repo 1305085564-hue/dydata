@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { DataAccessScope } from "@/lib/data-access-scope";
@@ -209,29 +210,16 @@ export function isMissingReviewNoteColumnError(error: { code?: string; message?:
 async function loadPendingRows(supabase: SupabaseClient, scope: OrphanScope) {
   if (!scope.teamId) return [];
 
-  const rows: OrphanExemptionRequestRecord[] = [];
-  let offset = 0;
-
-  while (true) {
-    let query = supabase
-      .from("exemption_request")
-      .select(ORPHAN_REQUEST_SELECT)
-      .eq("request_status", "pending");
-    query = query.eq("team_id", scope.teamId as string);
-
-    const result = await query
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(offset, offset + ORPHAN_QUERY_PAGE_SIZE - 1);
-    if (result.error) throw new Error("读取待归属申请失败");
-
-    const page = (result.data ?? []) as unknown as OrphanExemptionRequestRecord[];
-    rows.push(...page);
-    if (page.length < ORPHAN_QUERY_PAGE_SIZE) break;
-    offset += ORPHAN_QUERY_PAGE_SIZE;
-  }
-
-  return rows;
+  const result = await readQueryPages((from, to, signal) => supabase
+    .from("exemption_request")
+    .select(ORPHAN_REQUEST_SELECT)
+    .eq("request_status", "pending")
+    .eq("team_id", scope.teamId as string)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, to).abortSignal(signal), { pageSize: ORPHAN_QUERY_PAGE_SIZE });
+  if (result.error) throw new Error("读取待归属申请失败");
+  return (result.data ?? []) as unknown as OrphanExemptionRequestRecord[];
 }
 
 export async function loadOrphanExemptionRequests({
@@ -246,7 +234,7 @@ export async function loadOrphanExemptionRequests({
   const rows = await loadPendingRows(supabase, scope);
   const applicantIds = Array.from(new Set(rows.map((row) => row.applicant_user_id).filter((id): id is string => Boolean(id))));
   const profilesResult = applicantIds.length > 0
-    ? await supabase.from("profiles").select("id, name, team_id, membership_status").in("id", applicantIds)
+    ? await readQueryPages((from, to, signal) => supabase.from("profiles").select("id, name, team_id, membership_status").in("id", applicantIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as OrphanApplicantProfile[], error: null };
   if (profilesResult.error) throw new Error("读取待归属申请人信息失败");
 

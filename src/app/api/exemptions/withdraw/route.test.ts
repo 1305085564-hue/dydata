@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextResponse } from "next/server";
@@ -25,7 +26,7 @@ test("登录用户撤回：只动自己的待审批申请，返回撤回条数",
           resolve({ data: table === "exemption_request" ? [{ id: "r1" }] : [], error: null });
         },
       };
-      return builder;
+      return pagedQueryDouble(builder);
     },
   };
   const response = await buildWithdrawExemptionResponse({

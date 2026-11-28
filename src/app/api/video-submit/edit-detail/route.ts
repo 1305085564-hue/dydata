@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextRequest, NextResponse } from "next/server";
 
 import { isUuidLike } from "../stability";
@@ -35,12 +36,12 @@ export async function GET(request: NextRequest) {
       return { data, error };
     },
     listReportsByAccountAndDate: async (id, date) => {
-      const { data, error } = await supabase
+      const { data, error } = await readQueryPages((from, to, signal) => supabase
         .from("daily_reports")
         .select(EDIT_DETAIL_REPORT_SELECT)
         .eq("account_id", id)
         .eq("report_date", date)
-        .eq("is_void", false)
+        .eq("is_void", false).order("id", { ascending: true }).range(from, to).abortSignal(signal))
         // 同一账号同一天允许多条作品；精确 report_id 由 route-core 负责选中，
         // 这里不能先 limit(2) 把第三条作品截掉。
       return { data, error };

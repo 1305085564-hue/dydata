@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 
 import { emit } from "@/lib/notifications/server";
@@ -83,18 +84,18 @@ export async function buildPermissionRequestApplyResponse(
   if (!requesterTeamId) return NextResponse.json({ error: "请先申请加入团队" }, { status: 403 });
 
   // 权限申请只发公司负责人：角色调整由负责人在成员管理里决定，组长没有这个权限，发给他们只会变成无法处理的待办
-  let { data: adminProfiles, error: adminError } = await admin
+  let { data: adminProfiles, error: adminError } = await readQueryPages((from, to, signal) => admin
     .from("profiles")
     .select("id, role, company_role, membership_status")
     .in("role", ["owner", "admin"])
-    .eq("team_id", requesterTeamId);
+    .eq("team_id", requesterTeamId).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
   if (adminError?.message?.includes("company_role")) {
-    const legacy = await admin
+    const legacy = await readQueryPages((from, to, signal) => admin
       .from("profiles")
       .select("id, role, membership_status")
       .in("role", ["owner", "admin"])
-    .eq("team_id", requesterTeamId);
+    .eq("team_id", requesterTeamId).order("id", { ascending: true }).range(from, to).abortSignal(signal));
     adminProfiles = legacy.data as typeof adminProfiles;
     adminError = legacy.error;
   }

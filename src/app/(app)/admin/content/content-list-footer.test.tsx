@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import React from "react";
@@ -193,7 +194,7 @@ test("列表加载器在评级筛选与账号筛选下均返回准确未筛选�
         error: null,
       });
     },
-    from: () => profilesQuery,
+    from: () => pagedQueryDouble(profilesQuery),
   };
 
   const scope = {

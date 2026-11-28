@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import {
@@ -92,7 +93,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
 
   return {
     ...profile,
-    data_scope: inferDataScope(profile.role, profile.permissions, null),
+    data_scope: inferDataScope(profile.role, profile.permissions, null), // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
   };
 }
 
@@ -120,13 +121,13 @@ export async function loadCompanyVisibleRows(
   // 团队成员与历史归档成员两查互不依赖，并行取（省一次串行往返）
   const [teamResult, historicalResult] = await Promise.all([
     loadWithMembershipFallback({
-      loadWithMembership: async () => supabase.from("profiles").select("id, membership_status").eq("team_id", teamId),
-      loadWithoutMembership: async () => supabase.from("profiles").select("id").eq("team_id", teamId),
+      loadWithMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status").eq("team_id", teamId).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+      loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id").eq("team_id", teamId).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     }),
     loadWithMembershipFallback({
       loadWithMembership: async () =>
-        supabase.from("profiles").select("id, membership_status, archive_snapshot, archived_by"),
-      loadWithoutMembership: async () => supabase.from("profiles").select("id, archive_snapshot, archived_by"),
+        readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+      loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     }),
   ]);
   assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
@@ -173,7 +174,7 @@ export async function buildDataAccessScope(
   const kind = resolveDataScope(
     profile.role,
     profile.data_scope,
-    profile.permissions,
+    profile.permissions, // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
     profile.company_role,
   ) as DataAccessScopeKind;
   // Team scope comes only from the trusted profile. Request parameters must
@@ -206,7 +207,7 @@ export async function buildDataAccessScope(
     userId,
     role,
     companyRole,
-    permissions: fixedPermissions(companyRole, profile.permissions),
+    permissions: fixedPermissions(companyRole, profile.permissions), // gate:legacy-permissions-ok 旧签名兼容参数；inferDataScope/resolveDataScope/fixedPermissions 均按固定角色生成，忽略旧 JSON
     teamId: effectiveTeamId,
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),
@@ -292,8 +293,8 @@ export async function resolveVideoReviewReadOnlyScope(
   // 只纳入曾有公司归属的档案；写操作继续使用未扩展的当前操作者范围和各自校验。
   const rows = await loadWithMembershipFallback({
     loadWithMembership: async () =>
-      supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by"),
-    loadWithoutMembership: async () => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by"),
+      readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+    loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
   });
   assertSupabaseQuerySucceeded(rows.error, "加载团队只读成员范围失败");
   const allRows = (rows.data ?? []) as CompanyHistoricalRow[];

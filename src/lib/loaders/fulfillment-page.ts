@@ -1,3 +1,4 @@
+import { loadFulfillmentRangeRows } from "./fulfillment-range-query";
 import { cachedFulfillmentCalendar } from "@/lib/fulfillment/calendar-cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFulfillmentFilterOptions, loadPendingExemptions } from "./fulfillment-page-queries";
@@ -420,7 +421,7 @@ export async function loadFulfillmentCalendar(
     (async () => {
       const rpcStartedAt = performance.now();
       try {
-        return await supabase.rpc("get_fulfillment_range", {
+        return await loadFulfillmentRangeRows(supabase, {
           p_start_date: range.startDate,
           p_end_date: range.endDate,
           p_visible_user_ids: options.visibleUserIds,
