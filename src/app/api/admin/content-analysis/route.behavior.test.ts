@@ -30,7 +30,7 @@ test("content-analysis 依赖抛错时返回明确 500、脱敏文案、requestI
     assert.equal(body.auditStatus, "skipped");
 
     const aiFail = await buildContentAnalysisResponse(request({ video_id: "video-1" }), {
-      requireScopedAdminVideo: async () => ({ video: { id: "video-1" } } as never),
+      requireScopedAdminVideo: async () => ({ video: { id: "video-1", user_id: "author" }, actor: { permissions: { review_content: true } }, scope: { activeVisibleUserIds: ["author"] } } as never),
       generateContentAnalysisForAccess: async () => { throw new Error("upstream 502 raw json"); },
     });
     assert.equal(aiFail.status, 500);
@@ -61,7 +61,7 @@ test("content-analysis 已知业务错误保留状态与错误码，正文不采
     ["CONTENT_ANALYSIS_FAILED", 500, "后台服务暂时不可用，稍后重试"],
   ] as const) {
     const response = await buildContentAnalysisResponse(request({ video_id: "video-1" }), {
-      requireScopedAdminVideo: async () => ({ video: { id: "video-1" } } as never),
+      requireScopedAdminVideo: async () => ({ video: { id: "video-1", user_id: "author" }, actor: { permissions: { review_content: true } }, scope: { activeVisibleUserIds: ["author"] } } as never),
       generateContentAnalysisForAccess: async () => { throw new ContentAnalysisError('SQL private error', code, status); },
     });
     assert.equal(response.status, status);

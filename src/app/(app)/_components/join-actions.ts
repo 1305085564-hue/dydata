@@ -1,8 +1,9 @@
 "use server";
 
+import { validActionIds } from "@/lib/server-action-input";
+import { getCurrentUserContext } from "@/lib/current-user-context";
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
 import { cancelJoinRequest, createJoinRequest } from "@/lib/team-join/service";
 
 export type JoinActionResult = { ok: true } | { ok: false; error: string };
@@ -10,15 +11,13 @@ export type JoinActionResult = { ok: true } | { ok: false; error: string };
 export async function submitJoinRequestAction(
   targetTeamId: string,
 ): Promise<JoinActionResult> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth?.user;
+  const { user } = await getCurrentUserContext();
 
   if (!user) {
     return { ok: false, error: "请先登录" };
   }
 
-  if (!targetTeamId) {
+  if (!validActionIds(targetTeamId)) {
     return { ok: false, error: "团队还没选" };
   }
 
@@ -42,13 +41,13 @@ export async function submitJoinRequestAction(
 export async function cancelJoinRequestAction(
   requestId: string,
 ): Promise<JoinActionResult> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth?.user;
+  const { user } = await getCurrentUserContext();
 
   if (!user) {
     return { ok: false, error: "请先登录" };
   }
+
+  if (!validActionIds(requestId)) return { ok: false, error: "申请编号格式不正确" };
 
   const result = await cancelJoinRequest({
     requestId,

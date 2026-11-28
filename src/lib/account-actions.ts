@@ -1,5 +1,6 @@
 "use server";
 
+import { actionName, actionRemark, validActionIds } from "@/lib/server-action-input";
 import { saveOwnAccountUpdate, saveOwnProfileName } from "@/lib/account-updates";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -35,7 +36,7 @@ export async function updateProfile(name: string) {
   const actor = await getActiveActionUserId();
   if ("error" in actor) return actor;
 
-  const trimmed = name?.trim();
+  const trimmed = typeof name === "string" ? name.trim() : "";
   if (!trimmed) return { error: "显示名称不能为空" };
   if (trimmed.length > 20) return { error: "显示名称最多 20 个字符" };
 
@@ -51,7 +52,7 @@ export async function createAccount(name: string, contentDirection?: string, rem
   const actor = await getActiveActionUserId();
   if ("error" in actor) return actor;
 
-  if (!name?.trim()) return { error: "账号名称不能为空" };
+  if (!actionName.safeParse(name).success || (contentDirection !== undefined && (typeof contentDirection !== "string" || contentDirection.length > 500)) || !actionRemark.optional().safeParse(remark).success) return { error: "账号名称、方向或备注格式不正确" };
   if (isUuidLike(name)) return { error: "账号名不能是一串系统编号，换个正常的账号名称" };
 
   const { error } = await createAdminClient().from("accounts").insert({
@@ -61,7 +62,7 @@ export async function createAccount(name: string, contentDirection?: string, rem
     remark: remark?.trim() || null,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: "创建账号失败，请稍后重试" };
 
   revalidatePath("/dashboard");
   return { success: true };
@@ -71,7 +72,8 @@ export async function updateAccountName(accountId: string, newName: string) {
   const actor = await getActiveActionUserId();
   if ("error" in actor) return actor;
 
-  const trimmed = newName?.trim();
+  if (!validActionIds(accountId) || !actionName.safeParse(newName).success) return { error: "账号编号或名称格式不正确" };
+  const trimmed = newName.trim();
   if (!trimmed) return { error: "账号名称不能为空" };
   if (trimmed.length > 30) return { error: "账号名称最多 30 个字符" };
   if (isUuidLike(trimmed)) return { error: "账号名称不能是一串系统编号" };
@@ -88,7 +90,8 @@ export async function updateAccountRemark(accountId: string, newRemark: string) 
   const actor = await getActiveActionUserId();
   if ("error" in actor) return actor;
 
-  const trimmed = newRemark?.trim();
+  if (!validActionIds(accountId) || !actionRemark.safeParse(newRemark).success) return { error: "账号编号或备注格式不正确" };
+  const trimmed = newRemark.trim();
   if (trimmed && trimmed.length > 30) return { error: "备注最多 30 个字符" };
 
   const result = await saveOwnAccountUpdate(createAdminClient(), actor.userId, accountId, { remark: trimmed || null });

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export async function saveOwnProfileName(supabase: SupabaseClient, userId: string, name: string) {
   const { data, error } = await supabase.from("profiles").update({ name })
     .eq("id", userId).select("id").maybeSingle();
-  if (error) return { error: error.message };
+  if (error) return { error: "保存失败，请稍后重试" };
   if (!data) return { error: "未保存：成员资料不存在，请刷新后重试" };
   return { success: true } as const;
 }
@@ -17,7 +17,7 @@ export async function saveOwnAccountUpdate(
 ) {
   const { data, error } = await supabase.from("accounts").update(patch)
     .eq("id", accountId).eq("profile_id", userId).select("id");
-  if (error) return { error: error.message };
+  if (error) return { error: "保存失败，请稍后重试" };
   if (!data?.length) return { error: "未保存：账号不存在或无权限修改" };
   return { success: true } as const;
 }

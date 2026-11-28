@@ -122,9 +122,9 @@ test("管理操作库错返回固定中文，真实错误保留在服务端", as
   try {
     for (const [invoke, message, role] of [
       [() => actions.createTeam("新团队"), "创建团队失败，请稍后重试", "owner"],
-      [() => actions.updateMemberTeam("target-1", "team-2"), "加载成员资料失败，请稍后重试", "admin"],
-      [() => actions.resetMemberPassword("target-1", "test-password"), "加载成员资料失败，请稍后重试", "owner"],
-      [() => actions.changeRole("target-1", "admin"), "加载成员资料失败，请稍后重试", "owner"],
+      [() => actions.updateMemberTeam("323e4567-e89b-42d3-a456-426614174003", "223e4567-e89b-42d3-a456-426614174002"), "加载成员资料失败，请稍后重试", "admin"],
+      [() => actions.resetMemberPassword("323e4567-e89b-42d3-a456-426614174003", "test-password"), "加载成员资料失败，请稍后重试", "owner"],
+      [() => actions.changeRole("323e4567-e89b-42d3-a456-426614174003", "admin"), "加载成员资料失败，请稍后重试", "owner"],
     ]) {
       permissionValue.role = role;
       const result = await invoke();

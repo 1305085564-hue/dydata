@@ -38,7 +38,7 @@ export function operationFailure(
 ): Extract<MemberLifecycleOperationResult, { ok: false }> {
   const firstError = errorMessage(error);
   const rollbackDetail = rollbackErrors.length > 0
-    ? `；补偿失败：${rollbackErrors.join("；")}`
+    ? "；补偿未完成，请联系管理员"
     : "";
   console.error("[member-lifecycle] operation failed", {
     operation,
@@ -48,7 +48,7 @@ export function operationFailure(
   });
   return {
     ok: false,
-    error: `${stage}失败：${firstError}${rollbackDetail}`,
+    error: `${stage}失败，请稍后重试${rollbackDetail}`,
     firstError,
   };
 }
@@ -133,9 +133,9 @@ export async function loadTargetProfile(client: MemberLifecycleClient, targetId:
       .maybeSingle<MemberLifecycleProfileRow>();
     if (fallback.error) {
       if (isMissingLifecycleColumnError(fallback.error)) {
-        return { error: "成员生命周期数据库迁移未完成，请先执行 member_lifecycle migration" };
+        return { error: "成员管理服务尚未就绪，请联系管理员" };
       }
-      return { error: fallback.error.message ?? "加载成员资料失败" };
+      return { error: "加载成员资料失败，请稍后重试" };
     }
     if (!fallback.data) return { error: "用户不存在" };
     return { profile: fallback.data };
@@ -143,9 +143,9 @@ export async function loadTargetProfile(client: MemberLifecycleClient, targetId:
 
   if (result.error) {
     if (isMissingLifecycleColumnError(result.error)) {
-      return { error: "成员生命周期数据库迁移未完成，请先执行 member_lifecycle migration" };
+      return { error: "成员管理服务尚未就绪，请联系管理员" };
     }
-    return { error: result.error.message ?? "加载成员资料失败" };
+    return { error: "加载成员资料失败，请稍后重试" };
   }
   if (!result.data) return { error: "用户不存在" };
   return { profile: result.data };
@@ -158,7 +158,7 @@ export async function loadName(
 ) {
   if (!id) return { name: null as string | null };
   const result = await client.from(table).select("name").eq("id", id).maybeSingle<{ name: string | null }>();
-  if (result.error) return { error: result.error.message ?? "加载团队名称失败" };
+  if (result.error) return { error: "加载团队名称失败，请稍后重试" };
   return { name: result.data?.name ?? null };
 }
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { validActionIds } from "@/lib/server-action-input";
 import { revalidatePath } from "next/cache";
 
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -29,6 +30,7 @@ const MEMBER_MANAGEMENT_ONLY = {
 };
 
 export async function createWorkGroupAction(input: { name: string; kind: string }) {
+  if (!input) return { ok: false as const, status: 400, message: "小队参数格式不正确" };
   return runWorkGroupAction(
     {
       run: (context) =>
@@ -44,6 +46,7 @@ export async function createWorkGroupAction(input: { name: string; kind: string 
 }
 
 export async function renameWorkGroupAction(input: { groupId: string; name: string }) {
+  if (!input || !validActionIds(input.groupId)) return { ok: false as const, status: 400, message: "小队编号格式不正确" };
   return runWorkGroupAction(
     {
       run: (context) =>
@@ -59,6 +62,7 @@ export async function renameWorkGroupAction(input: { groupId: string; name: stri
 }
 
 export async function deleteWorkGroupAction(input: { groupId: string }) {
+  if (!input || !validActionIds(input.groupId)) return { ok: false as const, status: 400, message: "小队编号格式不正确" };
   return runWorkGroupAction(
     {
       run: (context) =>
