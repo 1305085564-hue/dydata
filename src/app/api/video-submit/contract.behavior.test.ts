@@ -223,6 +223,11 @@ for (const [stage, expectedCode, expectedMessage] of [
     const rollbacks: string[] = [];
     const database = {
       auth: { getUser: async () => ({ data: { user: { id: userId } } }) },
+      rpc: async (name: string) => {
+        assert.equal(name, "rollback_new_video_submission");
+        rollbacks.push("videos");
+        return { data: "deleted", error: null };
+      },
       from(table: string) {
         let action = "read";
         let payload: Record<string, unknown> = {};
@@ -246,9 +251,7 @@ for (const [stage, expectedCode, expectedMessage] of [
           select() { return query; }, eq() { return query; }, in() { return query; },
           limit: async () => ({ data: [], error: null }),
           single: async () => resolve(),
-          maybeSingle: async () => table === "videos"
-            ? { data: { id: "videos-1", user_id: userId, account_id: "account-1", lifecycle_state: "active" }, error: null }
-            : { data: null, error: null },
+          maybeSingle: async () => ({ data: null, error: null }),
           insert(value: Record<string, unknown>) { action = "insert"; payload = value; return query; },
           update(value: Record<string, unknown>) { action = "update"; payload = value; return query; },
           delete() { action = "delete"; return query; },
@@ -277,7 +280,7 @@ for (const [stage, expectedCode, expectedMessage] of [
       assert.equal(body.businessSucceeded, false);
       assert.doesNotMatch(JSON.stringify(body), /private_table|42501|permission denied/);
       assert.ok(serverLogs.some((args) => args[1] === raw || (args[1] as { message?: string })?.message === raw.message));
-      assert.ok(rollbacks.includes("videos"));
+      assert.equal(rollbacks.includes("videos"), stage !== "video");
       if (stage === "video") assert.deepEqual(writes, ["video"]);
       if (stage === "snapshot") assert.deepEqual(writes, ["video", "snapshot"]);
       if (stage === "report") assert.deepEqual(writes, ["video", "snapshot", "report"]);

@@ -1,7 +1,7 @@
 import { buildScopedProfileOptions } from "@/lib/content/content-owner";
 import { DEFAULT_EVALUATION_STANDARDS, type EvaluationStandards } from "@/lib/evaluation-standards";
 import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
-import { attachSettlementExclusionsToVideos, buildSettlementExclusionMapFromVideos, loadVideoSettlementExclusions, queryAdminContentRpcPage, resolveAdminContentUnfilteredTotal } from "./admin-content-rpc";
+import { isMissingSettlementColumn, attachSettlementExclusionsToVideos, buildSettlementExclusionMapFromVideos, loadVideoSettlementExclusions, queryAdminContentRpcPage, resolveAdminContentUnfilteredTotal } from "./admin-content-rpc";
 import { loadPageTopicLibraryStatuses } from "./admin-content-topic-library";
 import { attachPlayChangeSignals, findPreviousVideoByVisibleId, type PreviousSnapshotRow, type PreviousVideoCandidateRow } from "./admin-content-play-signals";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -484,7 +484,7 @@ export async function loadAdminContentVideoDetail({
     .eq("id", normalizedVideoId)
     .eq("lifecycle_state", lifecycleState)
     .maybeSingle();
-  if (videoResult.error && /settlement_excluded|schema cache|column .* does not exist/i.test(videoResult.error.message ?? "")) {
+  if (isMissingSettlementColumn(videoResult.error)) {
     videoResult = await supabase
       .from("videos")
       .select(CONTENT_VIDEO_SELECT_BASE)

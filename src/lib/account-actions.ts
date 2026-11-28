@@ -1,5 +1,6 @@
 "use server";
 
+import { saveOwnAccountUpdate } from "@/lib/account-updates";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -79,13 +80,8 @@ export async function updateAccountName(accountId: string, newName: string) {
   if (trimmed.length > 30) return { error: "账号名称最多 30 个字符" };
   if (isUuidLike(trimmed)) return { error: "账号名称不能是一串系统编号" };
 
-  const { error } = await createAdminClient()
-    .from("accounts")
-    .update({ name: trimmed })
-    .eq("id", accountId)
-    .eq("profile_id", actor.userId);
-
-  if (error) return { error: error.message };
+  const result = await saveOwnAccountUpdate(createAdminClient(), actor.userId, accountId, { name: trimmed });
+  if (result.error) return { error: result.error };
 
   revalidatePath("/dashboard");
   revalidatePath("/admin");
@@ -99,13 +95,8 @@ export async function updateAccountRemark(accountId: string, newRemark: string) 
   const trimmed = newRemark?.trim();
   if (trimmed && trimmed.length > 30) return { error: "备注最多 30 个字符" };
 
-  const { error } = await createAdminClient()
-    .from("accounts")
-    .update({ remark: trimmed || null })
-    .eq("id", accountId)
-    .eq("profile_id", actor.userId);
-
-  if (error) return { error: error.message };
+  const result = await saveOwnAccountUpdate(createAdminClient(), actor.userId, accountId, { remark: trimmed || null });
+  if (result.error) return { error: result.error };
 
   revalidatePath("/dashboard");
   revalidatePath("/admin");

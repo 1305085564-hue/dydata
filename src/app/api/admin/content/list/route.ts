@@ -1,3 +1,4 @@
+import { SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE, SettlementStatusUnavailableError } from "@/lib/loaders/admin-content-rpc";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -115,6 +116,9 @@ export async function buildAdminContentListResponse(
       includeTopicLibraryStatuses: true,
     });
   } catch (error) {
+    if (error instanceof SettlementStatusUnavailableError) {
+      return NextResponse.json({ error: SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE, settlementStatus: "unknown" }, { status: 503 });
+    }
     if (error instanceof Error && error.message === "CONTENT_LIST_CURSOR_STALE") {
       return NextResponse.json({ error: "列表数据已更新，请从第一页重新加载", staleCursor: true }, { status: 409 });
     }

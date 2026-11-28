@@ -1,3 +1,4 @@
+import { deriveResumePending } from "@/app/api/exemptions/_fulfillment-appeals";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,8 +10,8 @@ function readQuery(request: NextRequest) {
   return { accountId, recordDate };
 }
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+export async function buildAppealStatusResponse(request: NextRequest, deps = { createClient, createAdminClient }) {
+  const supabase = await deps.createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
@@ -19,10 +20,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "账号和业务日期格式不正确" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const admin = deps.createAdminClient();
   const { data: appeal, error } = await admin
     .from("fulfillment_appeals")
     .select("id, record_date, reason, status, decision_reason, submission_payload, created_at, handled_at")
+    .eq("review_mode", "pre_submit")
     .eq("user_id", user.id)
     .eq("account_id", accountId)
     .eq("record_date", recordDate)
@@ -32,8 +34,9 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: "读取补交审批状态失败" }, { status: 500 });
   if (!appeal) return NextResponse.json({ appeal: null });
 
+  const resumePending = deriveResumePending(appeal.status, appeal.submission_payload, "pre_submit") === true;
   let resumeError: string | null = null;
-  if (appeal.status === "approved" && appeal.submission_payload) {
+  if (resumePending) {
     const notification = await admin
       .from("notifications")
       .select("body")
@@ -56,10 +59,14 @@ export async function GET(request: NextRequest) {
       reason: appeal.reason,
       status: appeal.status,
       decisionReason: appeal.decision_reason ?? null,
-      resumePending: appeal.status === "approved" && Boolean(appeal.submission_payload),
+      resumePending,
       resumeError,
       createdAt: appeal.created_at,
       handledAt: appeal.handled_at,
     },
   });
+}
+
+export async function GET(request: NextRequest) {
+  return buildAppealStatusResponse(request);
 }

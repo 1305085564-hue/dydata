@@ -279,7 +279,7 @@ test("buildSubmissionScreenshotFileResponse: 团队 A 主管读取本团队组�
 });
 
 // 5. Permission Request Notifications Isolation
-test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知公司负责人，任何团队的管理员都不再收到", async () => {
+test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知本团队公司负责人，其他团队不能收到", async () => {
   const emittedRecipients: string[][] = [];
 
   const mockAdminSupabase = {
@@ -296,16 +296,19 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知�
                 };
               },
             }),
-            in: async (_col: string, _vals: unknown[]) => {
+            in: (_col: string, _vals: unknown[]) => ({
+              eq: async (column: string, teamId: unknown) => {
+              assert.equal(column, "team_id");
+              assert.equal(teamId, TEAM_A);
               return {
                 data: [
                   { id: MANAGER_A_ID, role: "admin", company_role: "admin", permissions: { manage_members: true }, team_id: TEAM_A, membership_status: "active" },
                   { id: MANAGER_B_ID, role: "admin", company_role: "admin", permissions: { manage_members: true }, team_id: TEAM_B, membership_status: "active" },
-                  { id: "company-owner-1", role: "owner", company_role: "company_owner", permissions: {}, team_id: TEAM_B, membership_status: "active" },
+                  { id: "company-owner-1", role: "owner", company_role: "company_owner", permissions: {}, team_id: TEAM_A, membership_status: "active" },
                 ],
                 error: null,
               };
-            },
+            } }),
           }),
         };
       }

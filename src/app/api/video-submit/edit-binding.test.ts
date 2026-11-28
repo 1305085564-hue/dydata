@@ -60,6 +60,10 @@ function buildAdapter(input: {
       if (input.videoError) return { data: null, error: { message: input.videoError } };
       return { data: (input.videos ?? []) as never, error: null };
     },
+    loadDailyReportsByVideoId: async (videoId, userId, accountId) => ({
+      data: (input.reports ?? []).filter((row) => row.video_id === videoId && row.user_id === userId && row.account_id === accountId) as never,
+      error: input.reportError ? { message: input.reportError } : null,
+    }),
     loadDailyReportsByAccountAndDate: async () => {
       calls.loadReports++;
       if (input.reportError) return { data: null, error: { message: input.reportError } };

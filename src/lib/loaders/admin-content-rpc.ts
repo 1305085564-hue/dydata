@@ -154,35 +154,44 @@ export async function resolveAdminContentUnfilteredTotal({
   return typeof rawTotal === "number" ? Math.max(matchedTotal, rawTotal) : null;
 }
 
-/** 只读补查当前页作品的不计优结算标记；仅拉取被排除的行，且在旧库未跑迁移或测试桩缺表时优雅降级。 */
+/** 仅已知结算列缺失可兼容旧库；其他错误不能被解释为“未排除结算”。 */
+export function isMissingSettlementColumn(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { code, message } = error as { code?: string; message?: string };
+  return (code === "42703" || code === "PGRST204" || /column .* does not exist|Could not find.*column/i.test(message ?? ""))
+    && /\bsettlement_excluded(?:_reason)?\b/.test(message ?? "");
+}
+
+export const SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE = "作品结算状态暂无法确认，请稍后重试";
+
+export class SettlementStatusUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super(SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE, { cause });
+  }
+}
+
+/** 补查失败时拒绝生成正常结算结果，交由列表入口展示错误。 */
 export async function loadVideoSettlementExclusions(
   supabase: SupabaseClient,
   videoIds: string[],
 ): Promise<SettlementExclusionLookup> {
   const result: SettlementExclusionLookup = new Map(); // gate:transient-map 请求内结算排除映射，随返回释放
-  if (videoIds.length === 0 || typeof supabase.from !== "function") return result;
+  if (videoIds.length === 0) return result;
   try {
-    const query = supabase.from("videos");
-    if (!query || typeof query.select !== "function") return result;
-    const { data, error } = await query
+    const { data, error } = await supabase.from("videos")
       .select("id, settlement_excluded, settlement_excluded_reason")
-      .in("id", videoIds)
-      .eq("settlement_excluded", true);
-    if (error || !Array.isArray(data)) return result;
-    for (const row of data as Array<{
-      id?: string;
-      settlement_excluded?: boolean | null;
-      settlement_excluded_reason?: string | null;
-    }>) {
+      .in("id", videoIds).eq("settlement_excluded", true);
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error("结算状态查询未返回有效数据");
+    for (const row of data as Array<{ id?: string; settlement_excluded?: boolean; settlement_excluded_reason?: string | null }>) {
       if (row.id && row.settlement_excluded === true) {
-        result.set(String(row.id), {
-          excluded: true,
-          reason: row.settlement_excluded_reason ?? null,
-        });
+        result.set(String(row.id), { excluded: true, reason: row.settlement_excluded_reason ?? null });
       }
     }
-  } catch {
-    return result;
+  } catch (error) {
+    if (isMissingSettlementColumn(error)) return result;
+    console.error("[admin-content] load-settlement-status", error);
+    throw new SettlementStatusUnavailableError(error);
   }
   return result;
 }

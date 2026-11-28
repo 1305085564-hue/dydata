@@ -1,3 +1,4 @@
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import {
   isReviewExemptionAction,
   isReviewFulfillmentAppealAction,
@@ -100,8 +101,8 @@ export function formatPostSubmitInterval(appeal: Pick<ExemptionRequest, "elapsed
     return `发布距上传约 ${hours} 小时`;
   }
   if (appeal.published_at && appeal.uploaded_at) {
-    const pub = appeal.published_at.slice(0, 10);
-    const up = appeal.uploaded_at.slice(0, 10);
+    const pub = formatShanghaiDateOnly(new Date(appeal.published_at));
+    const up = formatShanghaiDateOnly(new Date(appeal.uploaded_at));
     return `发布 ${pub} → 上传 ${up}`;
   }
   return null;

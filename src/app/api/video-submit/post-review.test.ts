@@ -450,3 +450,39 @@ test("数据图 screenshot_1 携带有效发布时间凭据且按分钟对齐时
   assert.equal(result.ok, true);
   assert.equal(result.ok && result.postReviewTrigger, null);
 });
+
+for (const scenario of ["admin-without-json", "query-error", "no-recipient", "zero-delivered"] as const) {
+  test(`12：事后核查收件人真实送达结果 ${scenario}`, async (context) => {
+    const logs = context.mock.method(console, "error", () => {});
+    let notified: string[] = [];
+    let emitCalled = false;
+    const candidates = [
+      { id: ADMIN_ID, role: "admin", company_role: "admin", permissions: {}, team_id: TEAM_ID, membership_status: "active" },
+      { id: "other-team", role: "owner", team_id: "other-team", membership_status: "active" },
+      { id: "archived", role: "owner", team_id: TEAM_ID, membership_status: "archived" },
+      { id: "conflict", role: "admin", company_role: "company_owner", team_id: TEAM_ID },
+    ];
+    const admin = {
+      from(table: string) {
+        if (table === "fulfillment_appeals") return { insert: () => ({ select: () => ({ single: async () => ({ data: { id: "review" }, error: null }) }) }) };
+        return { select: () => ({ in: async () => ({ data: scenario === "no-recipient" ? [] : candidates, error: scenario === "query-error" ? { code: "57014", message: "synthetic recipient lookup timeout" } : null }) }) };
+      },
+    };
+    const outcome = await createPostSubmitReviewAndNotify({
+      admin: admin as never, userId: USER_ID, submitter: "小李", teamId: TEAM_ID,
+      accountId: ACCOUNT_ID, accountName: "账号", recordDate: "2026-01-01", videoId: "video", dailyReportId: "report",
+      nowIso: "2026-01-05T00:00:00Z", normalized: makeNormalized(),
+      trigger: { reason: "expired", publishedDate: "2026-01-01", elapsedHours: 96, ocrPublishedAtText: null },
+      requestId: "recipient-regression",
+    }, async (input) => {
+      emitCalled = true; notified = input.recipients;
+      return { ok: true, inserted: scenario === "zero-delivered" ? 0 : 1 };
+    });
+    assert.equal(outcome.appealId, "review");
+    assert.equal(outcome.status, scenario === "admin-without-json" ? "created" : "partial");
+    assert.equal(outcome.todoStatus, scenario === "admin-without-json" ? "succeeded" : "failed");
+    if (scenario === "admin-without-json") assert.deepEqual(notified, [ADMIN_ID]);
+    if (scenario === "query-error" || scenario === "no-recipient") assert.equal(emitCalled, false);
+    if (scenario === "query-error") assert.ok(logs.mock.calls.some(({ arguments: args }) => args.some((arg) => String(arg).includes("synthetic recipient lookup timeout"))));
+  });
+}

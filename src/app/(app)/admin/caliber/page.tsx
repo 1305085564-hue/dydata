@@ -8,6 +8,7 @@ import { loadEvaluationSettings } from "@/lib/evaluation-standards-store";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { CALIBER } from "@/lib/metrics/caliber";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SubmissionRule } from "./submission-rule";
 import { EvaluationStandardsTabs } from "./evaluation-standards-tabs";
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ const rules = [
   },
   {
     title: "补交门禁",
-    rule: <>发布时间超过 <strong>{CALIBER.submitGraceHours} 小时</strong>才来填，不能直接交，要先申请补交</>,
+    rule: <SubmissionRule />,
     reason: "防止事后补录造假",
     value: `${CALIBER.submitGraceHours} 小时`,
   },

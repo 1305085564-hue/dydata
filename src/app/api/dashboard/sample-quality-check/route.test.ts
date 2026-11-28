@@ -85,6 +85,7 @@ function buildDeps(overrides: Partial<RouteDeps> = {}): RouteDeps {
       groupId: null,
       kind: "self",
       visibleUserIds: ["member-1"],
+      activeVisibleUserIds: ["member-1"],
     })) as never,
     callAiJson: (async () =>
       ({

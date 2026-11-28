@@ -80,6 +80,16 @@ export function buildScreenshotReplacementHistoryRows(input: {
   });
 }
 
+/** 补偿失败必须留痕，但不能覆盖最初的业务错误。 */
+async function compensateAndLog(compensate?: () => Promise<unknown>) {
+  try {
+    const error = await compensate?.();
+    if (error) console.error("[video-submit] rollback failed", error);
+  } catch (error) {
+    console.error("[video-submit] rollback failed", error);
+  }
+}
+
 /**
  * 持久化失败矩阵的统一执行器。每个写入步骤按声明顺序运行，任一步失败都先执行
  * 同一组补偿动作，再把内部阶段码交给路由映射用户文案。
@@ -95,7 +105,7 @@ export async function runSubmissionPersistencePipeline(
     try {
       const result = await step.run();
       if (!result.error) continue;
-      await compensate();
+      await compensateAndLog(compensate);
       return {
         ok: false,
         stage: step.stage,
@@ -104,7 +114,7 @@ export async function runSubmissionPersistencePipeline(
         compensated: true,
       };
     } catch (error) {
-      await compensate();
+      await compensateAndLog(compensate);
       return {
         ok: false,
         stage: step.stage,
@@ -126,6 +136,7 @@ export async function persistSubmissionTags(input: {
   loadPrevious: () => Promise<{ data: unknown[]; error?: { message: string } | null }>;
   writeManualTags: () => Promise<SubmissionTagWriteResult>;
   restorePrevious: (rows: unknown[]) => Promise<void>;
+  registerRollback?: (action: () => Promise<void>) => void;
 }): Promise<{ ok: true } | { ok: false; error: { message: string } }> {
   const previous = await input.loadPrevious();
   if (previous.error) return { ok: false, error: previous.error };
@@ -135,6 +146,7 @@ export async function persistSubmissionTags(input: {
     await input.restorePrevious(previous.data);
     return { ok: false, error: manualResult.error };
   }
+  input.registerRollback?.(() => input.restorePrevious(previous.data));
   return { ok: true };
 }
 
@@ -147,12 +159,12 @@ export async function runSubmissionPersistenceStep<T>(
   try {
     const result = await step();
     if (result.error) {
-      await compensate?.();
+      await compensateAndLog(compensate);
       return { ok: false, stage, error: result.error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage], compensated: Boolean(compensate) };
     }
     return { ok: true, data: result.data };
   } catch (error) {
-    await compensate?.();
+    await compensateAndLog(compensate);
     return { ok: false, stage, error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage], compensated: Boolean(compensate) };
   }
 }

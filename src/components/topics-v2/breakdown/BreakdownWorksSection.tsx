@@ -1,3 +1,4 @@
+import { formatShanghaiDateOnly } from "@/lib/business-time";
 import Link from "next/link";
 import { FileText, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -163,7 +164,7 @@ export function BreakdownWorksSection({
 
                           <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                             <span>{work.displayName || "未知作者"}</span>
-                            <span>{work.publishedAt ? "发布日" : "上传日"} {(work.publishedAt ?? work.uploadedAt)?.slice(0, 10) || "—"}</span>
+                            <span>{work.publishedAt ? "发布日" : "上传日"} {(work.publishedAt ?? work.uploadedAt) ? formatShanghaiDateOnly(new Date((work.publishedAt ?? work.uploadedAt)!)) : "—"}</span>
                           </div>
                         </Card>
                       );

@@ -118,15 +118,13 @@ test("整月长期免交不会产生漏交，今天已交仍计入已交数", ()
   }), { submittedCount: 1, missedCount: 0 });
 });
 
-// BUG_FOUND：submission-status 的请假/免交优先级与真实月历不同；保留可执行待修断言。
-test.todo("同一天同时存在请假和免交时，统计应与月历展示同一状态", () => {
+test("同一天同时存在请假和免交时，统计应与月历展示同一状态", () => {
   const patch = { waiveDates: ["2026-11-05"], leaveDates: ["2026-11-05"] };
   assert.ok(calendarButtons(patch).get("2026-11-05")?.includes('title="已豁免"'));
   assert.equal(getDateStatus({ ...options, ...patch, date: "2026-11-05" }).status, "waived");
 });
 
-// BUG_FOUND：月历优先显示未来日期，统计却先计入未来日期上的请假/免交记录。
-test.todo("未来日期上的提前豁免记录不应被统计为已经完成", () => {
+test("未来日期上的提前豁免记录不应被统计为已经完成", () => {
   const patch = { leaveDates: ["2026-11-11"] };
   assert.ok(calendarButtons(patch).get("2026-11-11")?.includes('disabled=""'));
   assert.equal(getDateStatus({ ...options, ...patch, date: "2026-11-11" }).status, "future");

@@ -34,6 +34,7 @@ type QueryOutcome<T> = { data: T[] | null; error: { message: string } | null };
 
 export interface EditBindingDbAdapter {
   loadVideoById(videoId: string): Promise<QueryOutcome<EditBindingVideoRow>>;
+  loadDailyReportsByVideoId(videoId: string, userId: string, accountId: string): Promise<QueryOutcome<EditBindingReportRow>>;
   loadDailyReportsByAccountAndDate(accountId: string, bizDate: string): Promise<QueryOutcome<EditBindingReportRow>>;
   load24hSnapshotsByVideoId(videoId: string): Promise<QueryOutcome<EditBindingSnapshotRow>>;
 }
@@ -92,7 +93,10 @@ export async function validateEditSubmissionBinding(
   if (video.account_id !== input.accountId) {
     return { ok: false, status: 409, error: "编辑视频与提交账号不一致" };
   }
-  const { data: reports, error: reportError } = await adapter.loadDailyReportsByAccountAndDate(input.accountId, input.bizDate);
+  const bound = await adapter.loadDailyReportsByVideoId(input.videoId, input.userId, input.accountId);
+  const { data: reports, error: reportError } = bound.error || bound.data?.length
+    ? bound
+    : await adapter.loadDailyReportsByAccountAndDate(input.accountId, input.bizDate);
   if (reportError) {
     console.error("[video-submit/edit-binding] load-report", reportError);
     return { ok: false, status: 500, error: "加载原日报失败，请稍后重试" };
