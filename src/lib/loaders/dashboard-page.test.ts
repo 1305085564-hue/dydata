@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -158,7 +159,7 @@ function createSupabaseMock(
   return {
     calls,
     from(table: string) {
-      return {
+      return pagedQueryDouble({
         select(columns: string) {
           const call: QueryCall = {
             table,
@@ -218,7 +219,7 @@ function createSupabaseMock(
         insert() {
           return Promise.resolve({ data: [], error: null });
         },
-      };
+      });
     },
   };
 }

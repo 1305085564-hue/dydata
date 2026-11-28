@@ -1,6 +1,6 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
-
 import {
   averageMetricRows,
   getCurrentMetricRow,
@@ -116,7 +116,7 @@ function createSupabaseStub(responses: ResponseMap) {
     queries,
     client: {
       from(table: string) {
-        return buildQuery(table);
+        return pagedQueryDouble(buildQuery(table));
       },
     },
   };
@@ -277,7 +277,7 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
     })]: { team_id: "team-1" },
     [responseKey({
       table: "profiles",
-      selected: "id",
+      selected: "id", orderBy: { column: "id", ascending: true },
       filters: [{ type: "eq", column: "team_id", value: "team-1" }],
     })]: [{ id: "user-1" }, { id: "user-2" }],
     [responseKey({
@@ -287,7 +287,7 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
     })]: [{ id: "acc-1" }, { id: "acc-2" }],
     [responseKey({
       table: "videos",
-      selected: "id",
+      selected: "id", orderBy: { column: "id", ascending: true },
       filters: [
         { type: "in", column: "account_id", value: ["acc-1", "acc-2"] },
         { type: "neq", column: "id", value: "video-current" },
@@ -334,7 +334,7 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
   const responses: ResponseMap = {
     [responseKey({
       table: "profiles",
-      selected: "id",
+      selected: "id", orderBy: { column: "id", ascending: true },
       filters: [{ type: "eq", column: "team_id", value: "team-1" }],
     })]: [{ id: "user-1" }],
     [responseKey({
@@ -344,7 +344,7 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
     })]: [{ id: "acc-1" }],
     [responseKey({
       table: "videos",
-      selected: "id",
+      selected: "id", orderBy: { column: "id", ascending: true },
       filters: [
         { type: "in", column: "account_id", value: ["acc-1"] },
         { type: "neq", column: "id", value: "video-current" },
@@ -551,7 +551,7 @@ test("当前视频快照查询失败时抛错，不伪装成没有对照数据",
         eq() { return query; },
         maybeSingle: async () => ({ data: null, error: { message: "snapshot unavailable" } }),
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   };
 

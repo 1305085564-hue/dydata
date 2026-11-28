@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import React from "react";
@@ -36,7 +37,7 @@ function makeVideo(overrides: Partial<VideoRow> = {}): VideoRow {
 test("loadVideoSettlementExclusions 只挂载被标为不计优结算的作品，旧库缺列时优雅降级", async () => {
   const okClient = {
     from() {
-      return {
+      return pagedQueryDouble({
         select() {
           return {
             in() {
@@ -57,7 +58,7 @@ test("loadVideoSettlementExclusions 只挂载被标为不计优结算的作品�
             },
           };
         },
-      };
+      });
     },
   } as unknown as SupabaseClient;
 
@@ -78,7 +79,7 @@ test("loadVideoSettlementExclusions 只挂载被标为不计优结算的作品�
 
   const legacyClient = {
     from() {
-      return {
+      return pagedQueryDouble({
         select() {
           return {
             in() {
@@ -90,7 +91,7 @@ test("loadVideoSettlementExclusions 只挂载被标为不计优结算的作品�
             },
           };
         },
-      };
+      });
     },
   } as unknown as SupabaseClient;
   const fallback = await loadVideoSettlementExclusions(legacyClient, ["video-1"]);

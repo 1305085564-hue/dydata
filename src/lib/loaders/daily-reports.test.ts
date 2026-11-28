@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -21,11 +22,11 @@ function createQueryRecorder() {
     gte(...args: unknown[]) { calls.push({ method: "gte", args }); return query; },
     lte(...args: unknown[]) { calls.push({ method: "lte", args }); return query; },
     single(...args: unknown[]) { calls.push({ method: "single", args }); return query; },
-    then(resolve: (value: { data: null; error: null }) => unknown) {
-      return Promise.resolve({ data: null, error: null }).then(resolve);
+    then(resolve: (value: { data: never[]; error: null }) => unknown) {
+      return Promise.resolve({ data: [], error: null }).then(resolve);
     },
   };
-  return { client: { from: () => query }, calls };
+  return { client: { from: () => pagedQueryDouble(query) }, calls };
 }
 
 test("日报 loader 保留近期查询的字段、过滤与排序契约", async () => {
@@ -47,6 +48,7 @@ test("日报 loader 保留范围、日期与空结果查询契约", async () => 
     { method: "select", args: ["user_id"] },
     { method: "eq", args: ["report_date", "2026-10-04"] },
     { method: "in", args: ["user_id", ["user-1", "user-2"]] },
+    { method: "order", args: ["id", { ascending: true }] },
   ]);
 
   calls.length = 0;
@@ -76,6 +78,7 @@ test("日报 loader 保留单条修正、计数与归属读取契约", async () 
   assert.deepEqual(calls, [
     { method: "select", args: ["id"] },
     { method: "eq", args: ["user_id", "user-1"] },
+    { method: "order", args: ["id", { ascending: true }] },
   ]);
 
   calls.length = 0;

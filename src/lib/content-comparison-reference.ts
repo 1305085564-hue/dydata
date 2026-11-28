@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatShanghaiDateOnly, shanghaiDayStartIso } from "@/lib/business-time";
@@ -405,13 +406,13 @@ async function getRecentTeamVideoIds(
   if (accountIds.length === 0) return [];
 
   const teamVideos = requireQueryRows(
-    await supabase
+    await readQueryPages((from, to, signal) => supabase
       .from("videos")
       .select("id")
       .eq("lifecycle_state", "active")
       .in("account_id", accountIds)
       .neq("id", videoId)
-      .gte("published_at", getTeamReferenceWindowStartIso()),
+      .gte("published_at", getTeamReferenceWindowStartIso()).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     "加载近 7 天团队视频失败",
   );
 
@@ -442,10 +443,10 @@ async function getTeamAccountIds(
   if (!teamId) return [];
 
   const members = requireQueryRows(
-    await supabase
+    await readQueryPages((from, to, signal) => supabase
       .from("profiles")
       .select("id")
-      .eq("team_id", teamId),
+      .eq("team_id", teamId).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     "加载对照团队成员失败",
   );
   const activeUserIdSet = activeUserIds ? new Set(activeUserIds) : null;

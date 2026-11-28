@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -37,7 +38,7 @@ function database(mode: "create" | "read") {
         maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
         then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: rows, error: null }).then(resolve); },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   };
 }

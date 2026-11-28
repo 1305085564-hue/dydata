@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createClient } from "@supabase/supabase-js";
+import { createCloudBaseDataClient } from "@/lib/cloudbase/data-client";
 import { NextRequest } from "next/server";
 import { saveOwnProfileName } from "@/lib/account-updates";
 import { handleSetModelEnabled } from "@/lib/ai-config/batch-actions";
@@ -13,10 +13,10 @@ type Row = Record<string, unknown>;
 
 // 使用真实查询SDK，只替换HTTP数据库边界，保留maybeSingle/精确计数/分页语义。
 function database(tables: Record<string, Row[]>, updated: Row[], updatedCount = updated.length) {
-  return createClient("https://db.invalid", "synthetic-test-key", {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { fetch: async (input, init) => {
-      const url = new URL(String(input));
+  return createCloudBaseDataClient({
+    role: "browser",
+    fetcher: async (input, init) => {
+      const url = new URL(String(input), "https://db.invalid");
       const table = url.pathname.split("/").at(-1)!;
       const headers = new Headers(init?.headers);
       const isUpdate = init?.method === "PATCH";
@@ -28,7 +28,7 @@ function database(tables: Record<string, Row[]>, updated: Row[], updatedCount = 
         status: 200,
         headers: { "content-type": "application/json", "content-range": `0-${Math.max(rows.length - 1, 0)}/${isUpdate ? updatedCount : (tables[table] ?? []).length}` },
       });
-    } },
+    },
   });
 }
 
@@ -86,13 +86,20 @@ test("已删除模型无供应时返回404；供应无需变化时保持幂等�
   assert.equal(result.changedSupplyCount, 0);
 });
 
+test("1500条供应跨页读取完整；更新回传仅1000条但精确计数1500时仍正确确认全量生效", async () => {
+  const result = await handleSetModelEnabled(database({ ai_provider_key_models: supplies(1500) }, supplies(1000), 1500), {
+    model_id: "model-a", is_enabled: true,
+  });
+  assert.equal(result.changedSupplyCount, 1500);
+  assert.equal(result.affectedCount, 1500);
+});
 
 function rollbackDatabase(row: Row) {
   let writes = 0;
-  return createClient("https://db.invalid", "synthetic-test-key", {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { fetch: async (input, init) => {
-      const url = new URL(String(input));
+  return createCloudBaseDataClient({
+    role: "browser",
+    fetcher: async (input, init) => {
+      const url = new URL(String(input), "https://db.invalid");
       const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
       if (url.pathname.includes("/rpc/")) return reply({ code: "PGRST202", message: "migration pending" }, 404);
       if (url.pathname.endsWith("/audit_logs")) return reply({ message: "audit unavailable" }, 500);
@@ -106,7 +113,7 @@ function rollbackDatabase(row: Row) {
         return reply(row);
       }
       return reply(url.searchParams.has("name") ? [] : [row]);
-    } },
+    },
   });
 }
 

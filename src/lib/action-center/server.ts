@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -268,10 +269,10 @@ export async function loadPendingExemptionSource({
   const rawRows = (data ?? []) as unknown as PendingExemptionRow[];
   const requestIds = rawRows.map((row) => row.id).filter(Boolean);
   const detailsResult = requestIds.length > 0
-    ? await client
+    ? await readQueryPages((from, to, signal) => client
         .from("exemption_request_date")
         .select("request_id, request_date, status, reason")
-        .in("request_id", requestIds)
+        .in("request_id", requestIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as PendingExemptionDateLike[], error: null };
   if (detailsResult.error) throw new Error("读取审批日期明细失败");
 
@@ -283,7 +284,7 @@ export async function loadPendingExemptionSource({
     new Set(rows.map((row) => row.applicant_user_id).filter((id): id is string => Boolean(id))),
   );
   const profilesResult = applicantIds.length > 0
-    ? await client.from("profiles").select("id, name").in("id", applicantIds)
+    ? await readQueryPages((from, to, signal) => client.from("profiles").select("id, name").in("id", applicantIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as Array<{ id: string; name: string | null }>, error: null };
   if (profilesResult.error) throw new Error("读取审批成员信息失败");
 

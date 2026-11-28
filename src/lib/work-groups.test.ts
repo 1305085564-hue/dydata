@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -176,12 +177,12 @@ function createFakeSupabase(
             ? { code: "42703", message: 'column "work_peer_group_id" does not exist' }
             : null
         : null;
-      return {
+      return pagedQueryDouble({
         select: () => query([...table(name)], readError),
         insert: (payload: Row | Row[]) => insertBuilder(name, payload),
         update: (patch: Row) => updateBuilder(name, patch),
         delete: () => deleteBuilder(name),
-      };
+      });
     },
   };
 

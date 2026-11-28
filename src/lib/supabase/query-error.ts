@@ -1,3 +1,5 @@
+import { readQueryPages, type PagedQueryOptions } from "./paged-query";
+export { SUPABASE_DEFAULT_PAGE_SIZE } from "./paged-query";
 // 实际连接腾讯云 CloudBase，目录名是历史遗留。
 type SupabaseErrorLike = {
   message?: string;
@@ -13,7 +15,6 @@ export type SupabaseMaybeRowResult<T> = {
   error: SupabaseErrorLike;
 };
 
-export const SUPABASE_DEFAULT_PAGE_SIZE = 1000;
 
 export class SupabaseQueryFailure extends Error {
   readonly publicMessage: string;
@@ -60,21 +61,8 @@ export function requireMaybeQueryRow<T>(
 export async function fetchAllQueryPages<T>(
   runPage: (from: number, to: number) => PromiseLike<SupabaseQueryPageResult<T>>,
   context: string,
-  options?: { pageSize?: number },
+  options?: PagedQueryOptions,
 ): Promise<T[]> {
-  const pageSize = options?.pageSize ?? SUPABASE_DEFAULT_PAGE_SIZE;
-  if (!Number.isInteger(pageSize) || pageSize <= 0) {
-    throw new Error("pageSize 必须是正整数");
-  }
-
-  const rows: T[] = [];
-  let from = 0;
-  while (true) {
-    const result = await runPage(from, from + pageSize - 1);
-    const page = requireQueryRows(result, context);
-    rows.push(...page);
-    if (page.length < pageSize) break;
-    from += pageSize;
-  }
-  return rows;
+  const result = await readQueryPages(runPage, options);
+  return requireQueryRows(result, context);
 }

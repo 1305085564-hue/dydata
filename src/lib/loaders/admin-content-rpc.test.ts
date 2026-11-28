@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -21,7 +22,7 @@ test("内容列表 RPC 同时接收公司配置的五项留存差线", async () 
       rpcCapture.current = args;
       return Promise.resolve({ data: { diagnostics: { evaluationStandardsVersion: 2 } }, error: null });
     },
-    from: () => profilesQuery,
+    from: () => pagedQueryDouble(profilesQuery),
   };
   const standards = {
     ...structuredClone(DEFAULT_EVALUATION_STANDARDS),

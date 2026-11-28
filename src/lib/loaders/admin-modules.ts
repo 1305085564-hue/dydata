@@ -1,3 +1,5 @@
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { getPermissionManagerCapabilities } from "@/lib/admin-permission-policy";
 import { isMissingMembershipStatusError, isActiveMembership } from "@/lib/member-lifecycle";
 import {
@@ -226,10 +228,15 @@ async function loadGovernanceAverages(
     recentAccountAvgQuery = recentAccountAvgQuery.in("user_id", visibleUserIds);
   }
 
-  const [{ data: recentForAvg }, { data: recentAccountAvg }] = await Promise.all([
-    recentForAvgQuery,
-    recentAccountAvgQuery,
+  const [recentForAvgResult, recentAccountAvgResult] = await Promise.all([
+    readQueryPages((from, to, signal) => recentForAvgQuery.order("id").range(from, to).abortSignal(signal)),
+    readQueryPages((from, to, signal) => recentAccountAvgQuery.order("id").range(from, to).abortSignal(signal)),
   ]);
+
+  assertSupabaseQuerySucceeded(recentForAvgResult.error, "加载成员均值失败");
+  assertSupabaseQuerySucceeded(recentAccountAvgResult.error, "加载账号均值失败");
+  const recentForAvg = recentForAvgResult.data;
+  const recentAccountAvg = recentAccountAvgResult.data;
 
   const { avgByKey: avgPlayBySubmitter, dayCountByKey: dayCountBySubmitter } = calculateAverageStats(
     recentForAvg,
@@ -273,14 +280,15 @@ export async function loadAdminGovernanceData({
     fullReportsQuery = fullReportsQuery.in("user_id", visibleUserIds);
   }
 
-  const [{ data: fullReports }, averages] = await Promise.all([
-    fullReportsQuery.order("uploaded_at", { ascending: false }),
+  const [reportsResult, averages] = await Promise.all([
+    readQueryPages((from, to, signal) => fullReportsQuery.order("uploaded_at", { ascending: false }).order("id").range(from, to).abortSignal(signal)),
     loadGovernanceAverages(supabase, queryDate, visibleUserIds),
   ]);
 
+  assertSupabaseQuerySucceeded(reportsResult.error, "加载治理日报失败");
   return {
     queryDate,
-    fullReports: fullReports ?? [],
+    fullReports: reportsResult.data ?? [],
     ...averages,
   };
 }
@@ -355,10 +363,10 @@ async function loadAdminModuleProfiles(
 
   let lastError: { message?: string } | null = null;
   for (const select of variants) {
-    const result = await adminSupabase
+    const result = await readQueryPages((from, to, signal) => adminSupabase
       .from("profiles")
       .select(select)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
     if (!result.error) {
       return ((result.data ?? []) as unknown as AdminModuleProfileRow[]).map((profile) => ({
@@ -417,7 +425,7 @@ async function hydrateArchivedByNames(
   ));
   if (ids.length === 0) return profiles;
 
-  const result = await adminSupabase.from("profiles").select("id, name").in("id", ids);
+  const result = await readQueryPages((from, to, signal) => adminSupabase.from("profiles").select("id, name").in("id", ids).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   if (result.error) throw new Error(result.error.message ?? "加载归档人信息失败");
   const names = new Map((result.data ?? []).map((profile) => [profile.id as string, profile.name as string | null]));
 

@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -113,10 +114,10 @@ test("行动中枢待审批来源携带 exemption_category 并在标题区分请
             resolve({ data: rows, count: 1, error: null });
           },
         };
-        return query;
+        return pagedQueryDouble(query);
       }
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -124,10 +125,10 @@ test("行动中枢待审批来源携带 exemption_category 并在标题区分请
               },
             };
           },
-        };
+        });
       }
       if (table === "exemption_request_date") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -135,7 +136,7 @@ test("行动中枢待审批来源携带 exemption_category 并在标题区分请
               },
             };
           },
-        };
+        });
       }
       throw new Error(`unexpected table ${table}`);
     },
@@ -184,10 +185,10 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
             resolve({ data: rows, count: 1, error: null });
           },
         };
-        return query;
+        return pagedQueryDouble(query);
       }
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -195,10 +196,10 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
               },
             };
           },
-        };
+        });
       }
       if (table === "exemption_request_date") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -206,7 +207,7 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
               },
             };
           },
-        };
+        });
       }
       throw new Error(`unexpected table ${table}`);
     },
@@ -242,7 +243,7 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
   const client = {
     from(table: string) {
       if (table === "exemption_request") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq() { return this; },
           order() { return this; },
@@ -251,10 +252,10 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
           then(resolve: (value: { data: typeof rows; count: number; error: null }) => void) {
             resolve({ data: rows, count: 1, error: null });
           },
-        };
+        });
       }
       if (table === "exemption_request_date") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -262,10 +263,10 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
               },
             };
           },
-        };
+        });
       }
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select() {
             return {
               in() {
@@ -273,7 +274,7 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
               },
             };
           },
-        };
+        });
       }
       throw new Error(`unexpected table ${table}`);
     },

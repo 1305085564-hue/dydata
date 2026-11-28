@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import {
@@ -161,12 +162,12 @@ async function loadApprovedRequestGrantsFallback(
   supabase: DashboardSupabase,
   userId: string,
 ): Promise<ExemptionGrantLike[]> {
-  const primary = await supabase
+  const primary = await readQueryPages((from, to, signal) => supabase
     .from("exemption_request")
     .select("applicant_user_id, exemption_type, exemption_category, start_date, end_date, created_at")
     .eq("applicant_user_id", userId)
     .eq("request_status", "approved")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
   if (!isMissingExemptionRequestCategoryError(primary.error)) {
     assertSupabaseQuerySucceeded(primary.error, "加载已审批豁免失败");
@@ -181,12 +182,12 @@ async function loadApprovedRequestGrantsFallback(
     }));
   }
 
-  const fallback = await supabase
+  const fallback = await readQueryPages((from, to, signal) => supabase
     .from("exemption_request")
     .select("applicant_user_id, exemption_type, start_date, end_date, created_at")
     .eq("applicant_user_id", userId)
     .eq("request_status", "approved")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
   assertSupabaseQuerySucceeded(fallback.error, "加载已审批豁免失败");
 
@@ -209,12 +210,12 @@ async function loadUserExemptionGrants(
     return loadApprovedRequestGrantsFallback(supabase, userId);
   }
 
-  const primary = await supabase
+  const primary = await readQueryPages((from, to, signal) => supabase
     .from("exemption_grant")
     .select("user_id, start_date, end_date, grant_type, exemption_category, status, created_at")
     .eq("user_id", userId)
     .eq("status", "active")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
   if (!isMissingExemptionGrantTableError(primary.error)) {
     assertSupabaseQuerySucceeded(primary.error, "加载豁免记录失败");
@@ -250,10 +251,10 @@ async function loadPendingExemptionData(
   const pendingRows = (requestResult.data ?? []) as PendingExemptionRequestRow[];
   const requestIds = pendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
   const detailsResult = requestIds.length > 0
-    ? await supabase
+    ? await readQueryPages((from, to, signal) => supabase
         .from("exemption_request_date")
         .select("request_id, request_date, status")
-        .in("request_id", requestIds)
+        .in("request_id", requestIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as PendingExemptionDateLike[], error: null };
 
   assertSupabaseQuerySucceeded(detailsResult.error, "加载待审批豁免日期失败");
@@ -303,10 +304,10 @@ async function loadLastSubmissionPreferencesByAccount(
     .map((report) => report.video_id)
     .filter((id): id is string => Boolean(id)))];
   const videosResult = videoIds.length > 0
-    ? await supabase
+    ? await readQueryPages((from, to, signal) => supabase
         .from("videos")
         .select("id, script_author_user_id, video_editor_user_id, operator_user_id")
-        .in("id", videoIds)
+        .in("id", videoIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [], error: null };
   assertSupabaseQuerySucceeded(videosResult.error, "加载最近作品署名失败");
   const videos = videosResult.data ?? [];
@@ -326,14 +327,14 @@ async function loadLastSubmissionPreferencesByAccount(
       team_id: string | null;
       membership_status?: string | null;
     }>({
-      loadWithMembership: async () => await membershipSupabase
+      loadWithMembership: async () => await readQueryPages((from, to, signal) => membershipSupabase
         .from("profiles")
         .select("id, team_id, membership_status")
-        .in("id", candidateMemberIds),
-      loadWithoutMembership: async () => await membershipSupabase
+        .in("id", candidateMemberIds).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+      loadWithoutMembership: async () => await readQueryPages((from, to, signal) => membershipSupabase
         .from("profiles")
         .select("id, team_id")
-        .in("id", candidateMemberIds),
+        .in("id", candidateMemberIds).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     });
     visibleMemberIds = resolveVisibleActiveMemberIds({
       userId,
@@ -474,7 +475,7 @@ export async function loadDashboardPageData({
     lastSubmissionPreferencesByAccount,
   ] = await Promise.all([
     accountIds.length
-      ? supabase
+      ? readQueryPages((from, to, signal) => supabase
           .from("daily_reports")
           .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
@@ -482,10 +483,10 @@ export async function loadDashboardPageData({
           .lte("report_date", today)
           .eq("is_void", false)
           .order("published_at", { ascending: false, nullsFirst: false })
-          .order("uploaded_at", { ascending: false })
+          .order("uploaded_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal))
       : Promise.resolve({ data: [], error: null }),
     accountIds.length
-      ? supabase
+      ? readQueryPages((from, to, signal) => supabase
           .from("daily_reports")
           .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
@@ -493,27 +494,26 @@ export async function loadDashboardPageData({
           .lte("report_date", today)
           .eq("is_void", false)
           .order("published_at", { ascending: false, nullsFirst: false })
-          .order("uploaded_at", { ascending: false })
+          .order("uploaded_at", { ascending: false }).order("id", { ascending: true }).range(from, to).abortSignal(signal))
       : Promise.resolve({ data: [], error: null }),
     accountIds.length
-      ? supabase
+      ? readQueryPages((from, to, signal) => supabase
           .from("daily_reports")
           .select("report_date, published_at")
           .in("account_id", accountIds)
           .gte("report_date", sixtyDaysAgo)
           .lte("report_date", today)
-          .eq("is_void", false)
+          .eq("is_void", false).order("id", { ascending: true }).range(from, to).abortSignal(signal))
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadPendingExemptionData(supabase, userId),
     loadRecentExemptionReviewNotices(supabase, userId),
     adminSupabase
-      ? adminSupabase
+      ? readQueryPages((from, to, signal) => adminSupabase
           .from("fulfillment_records")
           .select("record_date, status, reason")
           .eq("user_id", userId)
-          .gte("record_date", reportLookupStart)
-          .lte("record_date", today)
+          .gte("record_date", reportLookupStart).lte("record_date", today).order("id", { ascending: true }).range(from, to).abortSignal(signal))
       : Promise.resolve({ data: [], error: null }),
     loadLastSubmissionPreferencesByAccount(
       supabase,

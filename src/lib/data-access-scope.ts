@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import {
@@ -120,13 +121,13 @@ export async function loadCompanyVisibleRows(
   // 团队成员与历史归档成员两查互不依赖，并行取（省一次串行往返）
   const [teamResult, historicalResult] = await Promise.all([
     loadWithMembershipFallback({
-      loadWithMembership: async () => supabase.from("profiles").select("id, membership_status").eq("team_id", teamId),
-      loadWithoutMembership: async () => supabase.from("profiles").select("id").eq("team_id", teamId),
+      loadWithMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status").eq("team_id", teamId).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+      loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id").eq("team_id", teamId).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     }),
     loadWithMembershipFallback({
       loadWithMembership: async () =>
-        supabase.from("profiles").select("id, membership_status, archive_snapshot, archived_by"),
-      loadWithoutMembership: async () => supabase.from("profiles").select("id, archive_snapshot, archived_by"),
+        readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+      loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     }),
   ]);
   assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
@@ -292,8 +293,8 @@ export async function resolveVideoReviewReadOnlyScope(
   // 只纳入曾有公司归属的档案；写操作继续使用未扩展的当前操作者范围和各自校验。
   const rows = await loadWithMembershipFallback({
     loadWithMembership: async () =>
-      supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by"),
-    loadWithoutMembership: async () => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by"),
+      readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status, team_id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+    loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, team_id, archive_snapshot, archived_by").order("id", { ascending: true }).range(from, to).abortSignal(signal)),
   });
   assertSupabaseQuerySucceeded(rows.error, "加载团队只读成员范围失败");
   const allRows = (rows.data ?? []) as CompanyHistoricalRow[];

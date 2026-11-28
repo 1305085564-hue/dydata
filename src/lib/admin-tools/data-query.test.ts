@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -19,7 +20,7 @@ function createFakeQueryClient(results: Record<string, { data: unknown; error: {
           return Promise.resolve(results[table] ?? { data: [], error: null }).then(resolve, reject);
         },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   };
 }
@@ -49,7 +50,7 @@ test("任务状态先按可信成员范围查库，再次过滤返回行", async
   };
   const result = await getTaskStatus(
     { taskType: "daily_review" },
-    { from: () => query } as never,
+    { from: () => pagedQueryDouble(query) } as never,
     { actorId: "owner", actorRole: "admin", actorCompanyRole: "company_owner", actorPermissions: { use_ai_assist: true }, activeVisibleUserIds: ["own"] },
   );
 

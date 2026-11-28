@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -26,7 +27,7 @@ function createFakeSupabase(subTopics: Array<Record<string, unknown>>, claims: A
         maybeSingle: async () => execute(true),
         then(resolve: (value: unknown) => unknown) { return Promise.resolve(execute()).then(resolve); },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   } as never;
 }
@@ -75,9 +76,9 @@ test("选题关联查询失败返回固定中文 500，并记录真实错误", a
   console.error = (...args: unknown[]) => { logs.push(args); };
   try {
     const client = { from: (table: string) => {
-      if (table === "profiles") return (createFakeSupabase([], []) as { from: (table: string) => unknown }).from(table);
+      if (table === "profiles") return pagedQueryDouble((createFakeSupabase([], []) as { from: (table: string) => unknown }).from(table));
       const query = { select: () => query, eq: () => query, in: () => query, maybeSingle: async () => ({ data: null, error: raw }) };
-      return query;
+      return pagedQueryDouble(query);
     } } as never;
     const result = await validateTopicForSubmission(client, TOPIC_ID, actor);
     assert.deepEqual(result, { ok: false, status: 500, message: "加载所选选题失败，请稍后重试" });

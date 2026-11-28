@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -22,7 +23,7 @@ test("豁免管理列表在查询层按可见申请人过滤", async () => {
   };
 
   const result = await loadAdminExemptionList({
-    supabase: { from: () => query } as never,
+    supabase: { from: () => pagedQueryDouble(query) } as never,
     statuses: ["pending"],
     limit: 100,
     visibleUserIds: ["leader-1", "member-1"],
@@ -46,7 +47,7 @@ test("豁免管理查询失败只向浏览器返回固定文案", async (t) => {
   };
 
   const result = await loadAdminExemptionList({
-    supabase: { from: () => query } as never,
+    supabase: { from: () => pagedQueryDouble(query) } as never,
     statuses: ["pending"],
     limit: 100,
     visibleUserIds: null,
@@ -91,15 +92,16 @@ test("豁免列表查询携带 exemption_category 供待审/历史/行动中枢�
   const result = await loadAdminExemptionList({
     supabase: {
       from: (table: string) => {
-        if (table === "exemption_request") return query;
+        if (table === "exemption_request") return pagedQueryDouble(query);
+        if (table === "exemption_request_date") return pagedQueryDouble({ select: () => ({ in: async () => ({ data: [], error: null }) }) });
         if (table === "profiles") {
-          return {
-            select: () => ({ in: () => ({}) }),
-          };
+          return pagedQueryDouble({
+            select: () => ({ in: async () => ({ data: [], error: null }) }),
+          });
         }
-        return {
+        return pagedQueryDouble({
           select: () => ({ in: () => ({ eq: () => ({ or: async () => ({ data: [] }) }) }) }),
-        };
+        });
       },
     } as never,
     statuses: ["approved", "rejected"],
@@ -178,9 +180,9 @@ test("后端出勤聚合：grant 跨月时只计入当月交集天数", async ()
   const result = await loadAdminExemptionList({
     supabase: {
       from: (table: string) => {
-        if (table === "exemption_request") return reqQuery;
-        if (table === "exemption_grant") return grantQuery;
-        return { select: () => ({ in: () => ({ data: [] }) }) };
+        if (table === "exemption_request") return pagedQueryDouble(reqQuery);
+        if (table === "exemption_grant") return pagedQueryDouble(grantQuery);
+        return pagedQueryDouble({ select: () => ({ in: () => ({ data: [] }) }) });
       },
     } as never,
     statuses: ["pending"],
@@ -256,9 +258,9 @@ test("后端出勤聚合：permanent 计入当月全部自然日天数", async (
   const result = await loadAdminExemptionList({
     supabase: {
       from: (table: string) => {
-        if (table === "exemption_request") return reqQuery;
-        if (table === "exemption_grant") return grantQuery;
-        return { select: () => ({ in: () => ({ data: [] }) }) };
+        if (table === "exemption_request") return pagedQueryDouble(reqQuery);
+        if (table === "exemption_grant") return pagedQueryDouble(grantQuery);
+        return pagedQueryDouble({ select: () => ({ in: () => ({ data: [] }) }) });
       },
     } as never,
     statuses: ["pending"],
@@ -317,9 +319,9 @@ test("后端出勤聚合：查询报错时不填充 applicant_month_stats 字段
   const result = await loadAdminExemptionList({
     supabase: {
       from: (table: string) => {
-        if (table === "exemption_request") return reqQuery;
-        if (table === "exemption_grant") return failingGrantQuery;
-        return { select: () => ({ in: () => ({ data: [] }) }) };
+        if (table === "exemption_request") return pagedQueryDouble(reqQuery);
+        if (table === "exemption_grant") return pagedQueryDouble(failingGrantQuery);
+        return pagedQueryDouble({ select: () => ({ in: () => ({ data: [] }) }) });
       },
     } as never,
     statuses: ["pending"],

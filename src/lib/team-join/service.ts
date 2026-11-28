@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
@@ -60,16 +61,24 @@ type PendingSelectBuilder = {
   };
 };
 
+type ProfilePageQuery = QueryResult<ProfileNameRow[]> & {
+  order(column: string, options: { ascending: boolean }): ProfilePageQuery;
+  range(from: number, to: number): ProfilePageQuery;
+  abortSignal(signal: AbortSignal): ProfilePageQuery;
+};
+
 type ProfileSelectBuilder = {
   select(columns: string): {
-    in(column: string, values: string[]): QueryResult<ProfileNameRow[]>;
+    in(column: string, values: string[]): ProfilePageQuery;
   };
 };
 
-type PendingRequestQuery = {
+type PendingRequestQuery = QueryResult<TeamJoinRow[]> & {
   or(filters: string): PendingRequestQuery;
   eq(column: string, value: string): PendingRequestQuery;
-  order(column: string, options: { ascending: boolean }): QueryResult<TeamJoinRow[]>;
+  order(column: string, options: { ascending: boolean }): PendingRequestQuery;
+  range(from: number, to: number): PendingRequestQuery;
+  abortSignal(signal: AbortSignal): PendingRequestQuery;
 };
 
 type PendingRequestSelectBuilder = {
@@ -247,14 +256,17 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
   const { userId, teamId, permissions } = permissionContext.permissionInfo;
   const canReadTeamRequests = permissions.manage_members === true && teamId !== null;
   const adminClient = clientFactories.createServiceClient();
-  let query = adminClient
-    .from("team_join_requests")
-    .select("id, applicant_user_id, target_team_id, created_at")
-    .eq("status", "pending");
-  query = canReadTeamRequests
-    ? query.or(`applicant_user_id.eq.${userId},target_team_id.eq.${teamId}`)
-    : query.eq("applicant_user_id", userId);
-  const { data, error } = await query.order("created_at", { ascending: true });
+  const { data, error } = await readQueryPages((from, to, signal) => {
+    let query = adminClient
+      .from("team_join_requests")
+      .select("id, applicant_user_id, target_team_id, created_at")
+      .eq("status", "pending");
+    query = canReadTeamRequests
+      ? query.or(`applicant_user_id.eq.${userId},target_team_id.eq.${teamId}`)
+      : query.eq("applicant_user_id", userId);
+    return query.order("created_at", { ascending: true })
+      .order("id", { ascending: true }).range(from, to).abortSignal(signal);
+  });
 
   if (error) {
     return { ok: false, error: error.message ?? "SELECT_FAILED" };
@@ -269,7 +281,7 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
   const applicantUserIds = Array.from(new Set(visibleRequests.map((row) => row.applicant_user_id)));
   const nameByUserId = new Map<string, string>();
   if (applicantUserIds.length > 0) {
-    const { data: profiles, error: profilesError } = await adminClient.from("profiles").select("id, name").in("id", applicantUserIds);
+    const { data: profiles, error: profilesError } = await readQueryPages((from, to, signal) => adminClient.from("profiles").select("id, name").in("id", applicantUserIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
     if (profilesError) {
       return { ok: false, error: profilesError.message ?? "SELECT_FAILED" };
     }

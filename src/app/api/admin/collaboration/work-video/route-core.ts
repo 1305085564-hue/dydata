@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -82,14 +83,14 @@ export async function loadActiveVideosForAccount(
   const window = buildShanghaiBusinessDayWindow(reportDate);
   if (!window) return [];
 
-  const result = await supabase
+  const result = await readQueryPages((from, to, signal) => supabase
     .from("videos")
     .select("id, user_id, account_id, video_title, published_at, uploaded_at, accounts!inner(profile_id)")
     .eq("account_id", accountId)
     .eq("lifecycle_state", "active")
     .or(
       `and(published_at.gte.${window.start},published_at.lt.${window.end}),and(uploaded_at.gte.${window.start},uploaded_at.lt.${window.end})`,
-    );
+    ).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   assertSupabaseQuerySucceeded(result.error, "读取视频复盘作品失败");
 
   return ((result.data ?? []) as Array<{

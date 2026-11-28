@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -15,7 +16,7 @@ function baseDeps(overrides: Record<string, unknown> = {}) {
     }),
     canAccessAdminPath: () => true,
     resolveVideoReviewReadOnlyScope: async (_client: unknown, value: unknown) => value,
-    createAdminClient: () => ({ from: () => ({ select: () => ({ in: async () => ({ data: [], error: null }) }) }) }) as never,
+    createAdminClient: () => ({ from: () => pagedQueryDouble(({ select: () => ({ in: async () => ({ data: [], error: null }) }) })) }) as never,
     assertSupabaseQuerySucceeded: (error: { message: string } | null) => {
       if (error) throw new Error(error.message);
     },
@@ -42,7 +43,7 @@ test("成员选项失败路径：未登录、无路径权限、无权限范围�
   await assert.rejects(
     buildComparisonMembersResponse(baseDeps({
       createAdminClient: () => ({
-        from: () => ({ select: () => ({ in: async () => ({ data: null, error: { message: "db down" } }) }) }),
+        from: () => pagedQueryDouble(({ select: () => ({ in: async () => ({ data: null, error: { message: "db down" } }) }) })),
       }),
       assertSupabaseQuerySucceeded: (error: { message: string } | null) => {
         if (error) throw new Error("加载可对比成员失败");
@@ -88,7 +89,7 @@ test("视频复盘成员选项包含同一 Supabase 项目内其他团队的在�
       visibleUserIds: ["actor-a", "owner-b", "former-b"],
       activeVisibleUserIds: ["actor-a", "owner-b"],
     }),
-    createAdminClient: () => ({ from: () => query }) as never,
+    createAdminClient: () => ({ from: () => pagedQueryDouble(query) }) as never,
     assertSupabaseQuerySucceeded: (error) => {
       if (error) throw new Error(error.message);
     },

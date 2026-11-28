@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const RECENT_USER_DAILY_REPORT_SELECT =
@@ -18,11 +19,11 @@ export function loadDailyReportUserIdsForDate(
   date: string,
   userIds: string[],
 ) {
-  return supabase
+  return readQueryPages((from, to, signal) => supabase
     .from("daily_reports")
     .select("user_id")
     .eq("report_date", date)
-    .in("user_id", userIds);
+    .in("user_id", userIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 }
 
 export function loadActiveDailyReports(
@@ -52,7 +53,7 @@ export function loadDailyReportForCorrection(supabase: SupabaseClient, metricsId
 }
 
 export function countDailyReportsForUser(supabase: SupabaseClient, userId: string) {
-  return supabase.from("daily_reports").select("id").eq("user_id", userId);
+  return readQueryPages((from, to, signal) => supabase.from("daily_reports").select("id").eq("user_id", userId).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 }
 
 export function loadDailyReportForUser(

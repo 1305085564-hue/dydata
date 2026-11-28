@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import test from "node:test";
@@ -39,7 +40,7 @@ function createMockScopeSupabase(rows: Array<{
       let selectedCols = "";
       let filterTeamId: string | null = null;
 
-      return {
+      return pagedQueryDouble({
         select(cols: string) {
           selectedCols = cols;
           return this;
@@ -63,7 +64,7 @@ function createMockScopeSupabase(rows: Array<{
             error: null,
           }));
         },
-      };
+      });
     },
   };
 }
@@ -285,7 +286,7 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知�
   const mockAdminSupabase = {
     from: (table: string) => {
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select: (_cols: string) => ({
             eq: (col: string, val: unknown) => ({
               single: async () => {
@@ -310,7 +311,7 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限只通知�
               };
             } }),
           }),
-        };
+        });
       }
       throw new Error(`Unexpected table ${table}`);
     },

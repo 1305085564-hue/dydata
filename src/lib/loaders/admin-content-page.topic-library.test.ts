@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -115,7 +116,7 @@ function buildSupabase(options: { failTables?: Set<string> } = {}) {
         }).then(resolve, reject);
       },
     };
-    return builder;
+    return pagedQueryDouble(builder);
   };
   return { supabase: { rpc: async () => rpcResult, from } as never, queries };
 }

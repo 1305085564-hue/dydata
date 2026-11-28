@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -97,7 +98,7 @@ function fakeMemberClient(profileResult: unknown) {
         insert() { throw new Error("失败路径不得写入"); },
         update() { throw new Error("失败路径不得写入"); },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   } as never;
 }
@@ -190,7 +191,7 @@ for (const membership of ["unauthenticated", "archived"] as const) {
             insert() { counts.writes += 1; throw new Error("不得写入"); },
             update() { counts.writes += 1; throw new Error("不得写入"); },
           };
-          return query;
+          return pagedQueryDouble(query);
         },
       }) as never,
       createAdminClient: () => {
@@ -251,13 +252,13 @@ for (const [stage, expectedCode, expectedMessage] of [
           select() { return query; }, eq() { return query; }, in() { return query; },
           limit: async () => ({ data: [], error: null }),
           single: async () => resolve(),
-          maybeSingle: async () => ({ data: null, error: null }),
+          maybeSingle: async () => action === "read" ? ({ data: null, error: null }) : resolve(),
           insert(value: Record<string, unknown>) { action = "insert"; payload = value; return query; },
           update(value: Record<string, unknown>) { action = "update"; payload = value; return query; },
           delete() { action = "delete"; return query; },
           then(resolveResult: (value: unknown) => unknown) { return Promise.resolve(resolve()).then(resolveResult); },
         };
-        return query;
+        return pagedQueryDouble(query);
       },
     };
     const original = console.error;

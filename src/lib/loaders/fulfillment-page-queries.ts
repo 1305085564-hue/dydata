@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   materializePendingExemptionRequestRows,
@@ -17,10 +18,10 @@ export async function loadFulfillmentFilterOptions(
 ): Promise<FulfillmentCalendarData["filterOptions"]> {
   if (visibleUserIds.length === 0) return { teams: [] };
 
-  const { data: profileRows, error } = await supabase
+  const { data: profileRows, error } = await readQueryPages((from, to, signal) => supabase
     .from("profiles")
     .select("team_id")
-    .in("id", visibleUserIds);
+    .in("id", visibleUserIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
 
   if (error) {
     throw new Error(error.message || "加载发布管理筛选项失败");
@@ -59,15 +60,15 @@ export async function loadPendingExemptions(
     .or(`end_date.is.null,end_date.gte.${input.startDate}`);
 
   if (input.teamId) query = query.eq("team_id", input.teamId);
-  const { data, error } = await query.order("created_at", { ascending: false });
+  const { data, error } = await readQueryPages((from, to, signal) => query.order("created_at", { ascending: false }).order("id").range(from, to).abortSignal(signal));
   if (error) throw new Error(error.message || "加载待审批请假失败");
   const rows = (data ?? []) as FulfillmentPendingExemption[];
   const requestIds = rows.map((row) => row.id).filter(Boolean);
   const detailsResult = requestIds.length > 0
-    ? await supabase
+    ? await readQueryPages((from, to, signal) => supabase
         .from("exemption_request_date")
         .select("request_id, request_date, status, reason")
-        .in("request_id", requestIds)
+        .in("request_id", requestIds).order("id", { ascending: true }).range(from, to).abortSignal(signal))
     : { data: [] as PendingExemptionDateLike[], error: null };
 
   if (detailsResult.error) throw new Error(detailsResult.error.message || "加载待审批请假日期失败");

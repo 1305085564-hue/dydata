@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -31,7 +32,7 @@ function makeFakeSupabase(rows: Array<{
     };
     return chain as typeof chain & { then: typeof chain.then };
   }
-  return { from: () => builder() };
+  return { from: () => pagedQueryDouble(builder()) };
 }
 
 const companyRows = [

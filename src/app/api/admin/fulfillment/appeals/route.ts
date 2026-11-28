@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextRequest, NextResponse } from "next/server";
 
 import { filterScopedRows } from "@/lib/admin/cockpit";
@@ -82,7 +83,7 @@ export async function buildFulfillmentAppealsGetResponse(
   // gate:transient-map 请求内按 user_id 映射申诉成员姓名，随响应返回释放
   const profileMap = new Map<string, { name: string | null }>();
   if (relatedUserIds.length > 0) {
-    const profilesResult = await auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds);
+    const profilesResult = await readQueryPages((from, to, signal) => auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
     if (profilesResult.error) {
       return toStringErrorResponse({
         code: "DEPENDENCY_FAILED",
@@ -251,10 +252,10 @@ export async function buildFulfillmentAppealsPostResponse(
   layers.businessSucceeded = true;
 
   const { data: requester } = await admin.from("profiles").select("name, team_id").eq("id", user.id).single();
-  const { data: candidates } = await admin
+  const { data: candidates } = await readQueryPages((from, to, signal) => admin
     .from("profiles")
     .select("id, role, company_role, team_id, membership_status")
-    .in("role", ["owner", "admin"]);
+    .in("role", ["owner", "admin"]).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   const recipients = (candidates ?? [])
     .filter((profile) => {
       if (profile.id === user.id || !isActiveMembership(profile)) return false;

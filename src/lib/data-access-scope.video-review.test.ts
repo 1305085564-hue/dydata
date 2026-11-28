@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -23,7 +24,7 @@ test("视频复盘只读范围保留本人和有归档快照的历史成员，�
     { id: "archived-never-affiliated", team_id: null, membership_status: "archived", archive_snapshot: null, archived_by: null },
   ];
   const supabase = {
-    from: () => ({ select: () => Promise.resolve({ data: profiles, error: null }) }),
+    from: () => pagedQueryDouble(({ select: () => Promise.resolve({ data: profiles, error: null }) })),
   };
 
   const result = await resolveVideoReviewReadOnlyScope(supabase as never, scope);

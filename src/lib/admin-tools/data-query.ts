@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatShanghaiDateOnly } from "@/lib/business-time";
@@ -98,11 +99,11 @@ export async function getAnomalousData(
       loadWithMembershipFallback({
         loadWithMembership: async () => {
           const query = supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member");
-          return query.in("id", activeVisibleUserIds);
+          return readQueryPages((from, to, signal) => query.in("id", activeVisibleUserIds).order("id").range(from, to).abortSignal(signal));
         },
         loadWithoutMembership: async () => {
           const query = supabase.from("profiles").select("id, name, status").eq("role", "member");
-          return query.in("id", activeVisibleUserIds);
+          return readQueryPages((from, to, signal) => query.in("id", activeVisibleUserIds).order("id").range(from, to).abortSignal(signal));
         },
       }),
       loadDailyReportUserIdsForDate(supabase, date, activeVisibleUserIds),
@@ -141,7 +142,7 @@ export async function getAnomalousData(
       .select("user_id, start_date, end_date, status")
       .eq("status", "active");
     query = query.in("user_id", context.activeVisibleUserIds);
-    const { data: grants, error: grantsError } = await query;
+    const { data: grants, error: grantsError } = await readQueryPages((from, to, signal) => query.order("id").range(from, to).abortSignal(signal));
 
     if (grantsError) {
       return { success: false, error: grantsError.message || "读取豁免记录失败" };

@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { UUID_PATTERN } from "@/lib/api-path-validation";
@@ -53,8 +54,8 @@ export async function assertProfilesExist(supabase: SupabaseClient, userIds: str
   const ids = unique(userIds);
   if (ids.length === 0) return true;
   const result = await loadWithMembershipFallback({
-    loadWithMembership: async () => supabase.from("profiles").select("id, membership_status").in("id", ids),
-    loadWithoutMembership: async () => supabase.from("profiles").select("id").in("id", ids),
+    loadWithMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id, membership_status").in("id", ids).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
+    loadWithoutMembership: async () => readQueryPages((from, to, signal) => supabase.from("profiles").select("id").in("id", ids).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
   });
   assertSupabaseQuerySucceeded(result.error, "校验归属成员失败");
   const rows = (result.data ?? []) as Array<{ id: string; membership_status?: string | null }>;

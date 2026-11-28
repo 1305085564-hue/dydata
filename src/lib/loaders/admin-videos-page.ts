@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
@@ -145,8 +146,8 @@ export async function loadAdminVideosPageData({
   }
 
   const [videosResult, profilesResult, accountsResult] = await Promise.all([
-    videosQuery,
-    supabase.from("profiles").select("id, name").order("name", { ascending: true }),
+    mode === "initial" ? videosQuery : readQueryPages((from, to, signal) => videosQuery.order("id").range(from, to).abortSignal(signal)),
+    readQueryPages((from, to, signal) => supabase.from("profiles").select("id, name").order("name", { ascending: true }).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
   ]);
   assertSupabaseQuerySucceeded(videosResult.error, "加载视频列表失败");

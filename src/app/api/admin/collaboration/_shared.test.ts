@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -577,14 +578,14 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     range() { return Promise.resolve({ data: [], error: null }); },
   };
   await queryScopedReports({
-    supabase: { from: () => listBuilder } as never,
+    supabase: { from: () => pagedQueryDouble(listBuilder) } as never,
     visibleUserIds: ["owner-1"],
     start: "2026-07-01",
     end: "2026-07-31",
     assignedUserId: "writer-1",
   });
   await queryScopedReports({
-    supabase: { from: () => listBuilder } as never,
+    supabase: { from: () => pagedQueryDouble(listBuilder) } as never,
     visibleUserIds: ["owner-1"],
     start: STATS_START_DATE,
     end: "2026-10-10",
@@ -603,7 +604,7 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     gte(...args: unknown[]) { singleCalls.push(["gte", ...args]); return this; },
     maybeSingle() { return Promise.resolve({ data: null, error: null }); },
   };
-  await loadAttributionReport({ from: () => singleBuilder } as never, "report-1");
+  await loadAttributionReport({ from: () => pagedQueryDouble(singleBuilder) } as never, "report-1");
   assert.ok(singleCalls.some((call) => call[0] === "gte" && call[1] === "report_date" && call[2] === STATS_START_DATE));
 });
 
@@ -628,7 +629,7 @@ test("日报聚合查询超过 Supabase 单页上限时会继续分页，避免�
           });
         },
       };
-      return builder;
+      return pagedQueryDouble(builder);
     },
   };
 
@@ -670,7 +671,7 @@ test("个人卡资料补全与当月视频在日报返回后并行加载", async
           order() { return this; },
           range() { return Promise.resolve({ data: [personReport], error: null }); },
         };
-        return builder;
+        return pagedQueryDouble(builder);
       }
       if (table === "profiles") {
         const builder = {
@@ -684,17 +685,17 @@ test("个人卡资料补全与当月视频在日报返回后并行加载", async
             return Promise.resolve({ data: profiles, error: null });
           },
         };
-        return builder;
+        return pagedQueryDouble(builder);
       }
       if (table === "accounts") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           async in() {
             accountsStarted = true;
             await accountsGate;
             return { data: accounts, error: null };
           },
-        };
+        });
       }
       if (table === "videos") {
         const builder = {
@@ -704,7 +705,7 @@ test("个人卡资料补全与当月视频在日报返回后并行加载", async
           or() { return this; },
           order() { return Promise.resolve({ data: [], error: null }); },
         };
-        return builder;
+        return pagedQueryDouble(builder);
       }
       throw new Error(`unexpected table: ${table}`);
     },
@@ -763,18 +764,18 @@ test("达人视角先查本人名下账号，再按 account_id 精确取日报�
   };
   const supabase = {
     from(table: string) {
-      if (table === "daily_reports") return makeReportBuilder();
+      if (table === "daily_reports") return pagedQueryDouble(makeReportBuilder());
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq() { return this; },
           maybeSingle() {
             return Promise.resolve({ data: profiles.find((item) => item.id === "owner-1"), error: null });
           },
-        };
+        });
       }
       if (table === "accounts") {
-        return {
+        return pagedQueryDouble({
           select() { return this; },
           eq(column: string, value: string) {
             if (column === "profile_id") ownedProfileFilters.push(value);
@@ -784,7 +785,7 @@ test("达人视角先查本人名下账号，再按 account_id 精确取日报�
             });
           },
           in() { return Promise.resolve({ data: accounts, error: null }); },
-        };
+        });
       }
       if (table === "videos") {
         const videoBuilder = {
@@ -794,7 +795,7 @@ test("达人视角先查本人名下账号，再按 account_id 精确取日报�
           or() { return this; },
           order() { return Promise.resolve({ data: [], error: null }); },
         };
-        return videoBuilder;
+        return pagedQueryDouble(videoBuilder);
       }
       throw new Error(`unexpected table: ${table}`);
     },
@@ -838,11 +839,11 @@ test("共享岗位数据集的 currentRows 只包含所选月份", async () => {
   };
   const supabase = {
     from(table: string) {
-      if (table === "daily_reports") return builder;
-      return {
+      if (table === "daily_reports") return pagedQueryDouble(builder);
+      return pagedQueryDouble({
         select() { return this; },
         in() { return Promise.resolve({ data: [], error: null }); },
-      };
+      });
     },
   };
   const dataset = await loadCollaborationMonthDataset({

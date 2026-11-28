@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
@@ -48,7 +49,7 @@ function database(tables: Record<string, Row[]>, options: { cap?: number; emptyA
         maybeSingle: async () => execute(true),
         then(resolve: (value: unknown) => unknown) { return Promise.resolve(execute()).then(resolve); },
       };
-      return query;
+      return pagedQueryDouble(query);
     },
   };
 }
@@ -156,7 +157,7 @@ test("24：使用埋点落库返回SDK error时不回执成功", async () => {
     method: "POST", body: JSON.stringify({ eventType: "page_view", path: "/dashboard" }),
   }), {
     getCurrentUserContext: async () => ({ user: { id: "user-1" } }) as never,
-    createAdminClient: () => ({ from: () => ({ insert: async () => ({ data: null, error: { message: "unavailable" } }) }) }) as never,
+    createAdminClient: () => ({ from: () => pagedQueryDouble(({ insert: async () => ({ data: null, error: { message: "unavailable" } }) })) }) as never,
   });
   assert.deepEqual(await response.json(), { ok: false, skipped: true });
 });

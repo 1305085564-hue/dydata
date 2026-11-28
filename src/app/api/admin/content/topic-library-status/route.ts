@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildDataAccessScope, resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
@@ -111,10 +112,10 @@ async function resolveStatusesResponse(
       if (batch.length) batches.push(batch);
     }
     const batchResults = await Promise.all(batches.map((batch) =>
-      adminSupabase
+      readQueryPages((from, to, signal) => adminSupabase
         .from("videos")
         .select("id, topic_id, user_id, accounts!inner(profile_id)")
-        .in("id", batch),
+        .in("id", batch).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     ));
     const videoRows: Array<{ id: string; topic_id: string | null }> = [];
     for (const { data, error } of batchResults) {

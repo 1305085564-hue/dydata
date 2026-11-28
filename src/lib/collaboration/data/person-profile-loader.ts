@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EvaluationStandards } from "@/lib/evaluation-standards";
 
@@ -94,10 +95,10 @@ async function loadVideoAnomalyStatuses(
   if (videoIds.length === 0) return anomalies;
   const results = await Promise.all(
     batchesOf(videoIds).map((batch) =>
-      supabase
+      readQueryPages((from, to, signal) => supabase
         .from("videos")
         .select("id, anomaly_status")
-        .in("id", batch)
+        .in("id", batch).order("id", { ascending: true }).range(from, to).abortSignal(signal))
         .then((result) => {
           assertSupabaseQuerySucceeded(result.error, "读取视频异常状态失败");
           return (result.data ?? []) as Array<{ id: string; anomaly_status: string | null }>;

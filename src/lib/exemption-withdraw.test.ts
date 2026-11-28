@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -40,7 +41,7 @@ function fakeClient(state: {
         resolve({ data: failing ? null : source().filter(matches), error: failing ? { message: "boom" } : null });
       },
     };
-    return builder;
+    return pagedQueryDouble(builder);
   }
   return { client: { from } as never, state, deletedFilters };
 }

@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -166,7 +167,7 @@ test("C8 行为验证：员工读取近 7 天审批结果横幅可同时拿到�
           return resolveResult({ data: [], error: null });
         },
       };
-      return builder;
+      return pagedQueryDouble(builder);
     },
   };
 

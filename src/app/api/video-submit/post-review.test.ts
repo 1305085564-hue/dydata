@@ -1,3 +1,4 @@
+import { pagedQueryDouble } from "@/lib/testing/paged-query-double";
 import { createPublishTimeEvidence, publishImageDigest } from "@/lib/publish-time-evidence";
 import { before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -80,7 +81,7 @@ function fakeAppealSupabase(rows: Array<{ id: string; submission_payload: unknow
     eq() { return chain; },
     order: async () => ({ data: rows, error: null }),
   };
-  return { from: () => chain } as never;
+  return { from: () => pagedQueryDouble(chain) } as never;
 }
 
 test("超 72 小时提交不再 409 拦截，而是放行并携带 expired 事后核查触发器", async () => {
@@ -161,7 +162,7 @@ test("同作品重复提交仍然 409 SUBMISSION_DUPLICATE 拦截（旧行为保
           error: null,
         }),
       };
-      return chain;
+      return pagedQueryDouble(chain);
     },
   });
   const duplicateResponse = await checkCreateDuplicateSubmission({
@@ -182,7 +183,7 @@ test("createPostSubmitReviewAndNotify 成功写入事后核查单并推送管理
   const admin = {
     from(table: string) {
       if (table === "fulfillment_appeals") {
-        return {
+        return pagedQueryDouble({
           insert(row: Record<string, unknown>) {
             insertedRows.push(row);
             return {
@@ -191,10 +192,10 @@ test("createPostSubmitReviewAndNotify 成功写入事后核查单并推送管理
               }),
             };
           },
-        };
+        });
       }
       if (table === "profiles") {
-        return {
+        return pagedQueryDouble({
           select: () => ({
             in: async () => ({
               data: [
@@ -204,7 +205,7 @@ test("createPostSubmitReviewAndNotify 成功写入事后核查单并推送管理
               error: null,
             }),
           }),
-        };
+        });
       }
       throw new Error(`unexpected table ${table}`);
     },
@@ -251,13 +252,13 @@ test("事后核查单写入失败或待办推送失败时绝不伪造成功，�
   try {
     const failingInsertAdmin = {
       from() {
-        return {
+        return pagedQueryDouble({
           insert: () => ({
             select: () => ({
               single: async () => ({ data: null, error: { message: "column review_mode does not exist" } }),
             }),
           }),
-        };
+        });
       },
     };
     const failed = await createPostSubmitReviewAndNotify({
@@ -284,15 +285,15 @@ test("事后核查单写入失败或待办推送失败时绝不伪造成功，�
     const partialAdmin = {
       from(table: string) {
         if (table === "fulfillment_appeals") {
-          return {
+          return pagedQueryDouble({
             insert: () => ({
               select: () => ({
                 single: async () => ({ data: { id: "appeal-partial-1" }, error: null }),
               }),
             }),
-          };
+          });
         }
-        return { select: () => ({ in: async () => ({ data: [], error: null }) }) };
+        return pagedQueryDouble({ select: () => ({ in: async () => ({ data: [], error: null }) }) });
       },
     };
     const partial = await createPostSubmitReviewAndNotify(
@@ -346,7 +347,7 @@ test("buildVideoSubmitResponse 对重复提交保持 409，不进入事后核查
           return { data: null, error: null };
         },
       };
-      return chain;
+      return pagedQueryDouble(chain);
     },
   };
   const deps: VideoSubmitDeps = {
@@ -464,8 +465,8 @@ for (const scenario of ["admin-without-json", "query-error", "no-recipient", "ze
     ];
     const admin = {
       from(table: string) {
-        if (table === "fulfillment_appeals") return { insert: () => ({ select: () => ({ single: async () => ({ data: { id: "review" }, error: null }) }) }) };
-        return { select: () => ({ in: async () => ({ data: scenario === "no-recipient" ? [] : candidates, error: scenario === "query-error" ? { code: "57014", message: "synthetic recipient lookup timeout" } : null }) }) };
+        if (table === "fulfillment_appeals") return pagedQueryDouble({ insert: () => ({ select: () => ({ single: async () => ({ data: { id: "review" }, error: null }) }) }) });
+        return pagedQueryDouble({ select: () => ({ in: async () => ({ data: scenario === "no-recipient" ? [] : candidates, error: scenario === "query-error" ? { code: "57014", message: "synthetic recipient lookup timeout" } : null }) }) });
       },
     };
     const outcome = await createPostSubmitReviewAndNotify({

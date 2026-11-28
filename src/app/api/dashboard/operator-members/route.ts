@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 
 import { buildOperatorMemberOptions, type OperatorMemberRow } from "@/lib/operator-members";
@@ -90,7 +91,7 @@ export async function GET() {
         query = currentProfile.team_id
           ? query.eq("team_id", currentProfile.team_id)
           : query.eq("id", user.id);
-        return query;
+        return readQueryPages((from, to, signal) => query.order("id").range(from, to).abortSignal(signal));
       },
       loadWithoutMembership: async () => {
         let query = adminSupabase
@@ -99,7 +100,7 @@ export async function GET() {
         query = currentProfile.team_id
           ? query.eq("team_id", currentProfile.team_id)
           : query.eq("id", user.id);
-        return query;
+        return readQueryPages((from, to, signal) => query.order("id").range(from, to).abortSignal(signal));
       },
     }) as Promise<OperatorMembersQueryResult>,
     loadTeams: async (teamIds) => teamIds.length

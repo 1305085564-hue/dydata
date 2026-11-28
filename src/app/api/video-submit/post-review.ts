@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { logApiError } from "@/lib/api-logger";
 import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
@@ -57,10 +58,10 @@ function buildPostReviewSummaryPayload(input: {
 
 async function resolveTeamAdminRecipients(admin: AdminSupabaseLike, userId: string, teamId: string | null): Promise<string[]> {
   if (!teamId) throw new Error("申请人没有可信团队，无法解析审批收件人");
-  const { data: candidates, error } = await admin
+  const { data: candidates, error } = await readQueryPages((from, to, signal) => admin
     .from("profiles")
     .select("id, role, company_role, permissions, team_id, membership_status")
-    .in("role", ["owner", "admin"]);
+    .in("role", ["owner", "admin"]).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   if (error) throw error;
   return (candidates ?? [])
     .filter((profile) => {

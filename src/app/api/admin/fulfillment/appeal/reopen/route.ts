@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 import { UUID_PATTERN, requireAdminServiceClient, requireActiveVisibleUsers, requireOwnerOrAdminRole, readJsonBody } from "../../_shared";
 import { emit } from "@/lib/notifications/server";
@@ -110,10 +111,10 @@ export async function buildReopenFulfillmentAppealResponse(
     .eq("source_id", appealId);
 
   const requester = await auth.supabase.from("profiles").select("name, team_id").eq("id", appealResult.data.user_id).maybeSingle();
-  const candidates = await auth.supabase
+  const candidates = await readQueryPages((from, to, signal) => auth.supabase
     .from("profiles")
     .select("id, role, company_role, team_id, membership_status")
-    .in("role", ["owner", "admin"]);
+    .in("role", ["owner", "admin"]).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   const recipients = (candidates.data ?? [])
     .filter((profile) => {
       if (!isActiveMembership(profile) || profile.team_id !== requester.data?.team_id) return false;

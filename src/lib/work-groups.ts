@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { observeMutation, type ObserveMutationDeps } from "./observed-mutation";
 import {
@@ -53,10 +54,10 @@ export async function loadWorkGroupRoster(
   const teamIds = normalizeTeamIds(input.teamIds);
   if (teamIds.length === 0) return { ready: true, roster: [] };
 
-  const result = await supabase
+  const result = await readQueryPages((from, to, signal) => supabase
     .from("profiles")
     .select("id, name, team_id, work_peer_group_id, work_operator_group_id")
-    .in("team_id", teamIds);
+    .in("team_id", teamIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   if (isWorkGroupSchemaMissing(result.error)) return { ready: false, roster: [] };
   assertSupabaseQuerySucceeded(result.error, "加载工种小队成员名单失败");
 
@@ -82,11 +83,11 @@ export async function loadWorkGroupDirectory(
   if (teamIds.length === 0) return { ready: true, groups: [], roster: [] };
 
   const [groupsResult, rosterResult] = await Promise.all([
-    supabase
+    readQueryPages((from, to, signal) => supabase
       .from("work_groups")
       .select("id, team_id, name, kind, created_at, created_by")
       .in("team_id", teamIds)
-      .order("name", { ascending: true }),
+      .order("name", { ascending: true }).order("id", { ascending: true }).range(from, to).abortSignal(signal)),
     input.includeRoster === false
       ? Promise.resolve({ ready: true, roster: [] as WorkGroupDirectory["roster"] })
       : loadWorkGroupRoster(supabase, { teamIds }),

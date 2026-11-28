@@ -1,3 +1,4 @@
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
@@ -49,10 +50,10 @@ export async function buildComparisonMembersResponse(deps: ComparisonMembersDepe
     return NextResponse.json({ profiles: [] });
   }
 
-  const result = await client
+  const result = await readQueryPages((from, to, signal) => client
     .from("profiles")
     .select("id, name, membership_status")
-    .in("id", activeVisibleUserIds);
+    .in("id", activeVisibleUserIds).order("id", { ascending: true }).range(from, to).abortSignal(signal));
   deps.assertSupabaseQuerySucceeded(result.error, "加载可对比成员失败");
 
   const activeSet = new Set(activeVisibleUserIds);
