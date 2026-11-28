@@ -29,7 +29,7 @@ type Row = Record<string, unknown>;
 type DbResult = { data: unknown; error: { code?: string; message: string } | null };
 
 // 数据库边界 fake：真实路由、预检、写入编排、回滚都不替换。数据库唯一键在执行 insert 时生效。
-function fixture(state: "active" | "trashed" | "purged" | "other" | "new" = "active", failSnapshot = false, failSource = false) {
+function fixture(state: "active" | "trashed" | "purged" | "other" | "new" = "active", failSnapshot = false, failSource: boolean | "missing" = false) {
   const tables: Record<string, Row[]> = {
     profiles: [{ id: USER, name: "合成成员", team_id: "team-own", membership_status: "active" }],
     accounts: [{ id: ACCOUNT, profile_id: USER, name: "合成账号" }],
@@ -97,7 +97,7 @@ function fixture(state: "active" | "trashed" | "purged" | "other" | "new" = "act
           if (op !== "select") {
             writes.push({ table, op, role });
             if (failed && role === "admin") return { data: null, error: { message: "synthetic rollback failure" } };
-            if (failSource && table === "daily_reports" && Object.hasOwn(patch, "data_source")) return { data: null, error: { message: "source save failed" } };
+            if (failSource && table === "daily_reports" && Object.hasOwn(patch, "data_source")) return { data: null, error: failSource === "missing" ? null : { message: "source save failed" } };
             if (failSnapshot && table === "video_metrics_snapshots") {
               failed = true;
               return { data: null, error: new Error("synthetic snapshot business failure") };
@@ -249,6 +249,15 @@ test("16：标签替换成功后来源保存失败，外层回滚恢复原标签
   assert.equal(response.status, 500);
   assert.equal((await response.json()).code, "REPORT_SOURCE_PERSIST_FAILED");
   assert.deepEqual(f.tables.video_tags, previous);
+  assert.equal(f.tables.videos[0].video_title, "原始标题");
+  assert.equal(f.tables.daily_reports[0].title, "原始日报");
+});
+
+test("日报来源保存命中零行：完整提交入口明确失败并回滚，不回执保存成功", async () => {
+  const f = fixture("active", false, "missing");
+  const response = await buildVideoSubmitResponse(request(true), f.deps);
+  assert.equal(response.status, 500);
+  assert.equal((await response.json()).code, "REPORT_SOURCE_PERSIST_FAILED");
   assert.equal(f.tables.videos[0].video_title, "原始标题");
   assert.equal(f.tables.daily_reports[0].title, "原始日报");
 });

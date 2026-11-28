@@ -1,6 +1,6 @@
 "use server";
 
-import { saveOwnAccountUpdate } from "@/lib/account-updates";
+import { saveOwnAccountUpdate, saveOwnProfileName } from "@/lib/account-updates";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -39,12 +39,8 @@ export async function updateProfile(name: string) {
   if (!trimmed) return { error: "显示名称不能为空" };
   if (trimmed.length > 20) return { error: "显示名称最多 20 个字符" };
 
-  const { error } = await createAdminClient()
-    .from("profiles")
-    .update({ name: trimmed })
-    .eq("id", actor.userId);
-
-  if (error) return { error: error.message };
+  const result = await saveOwnProfileName(createAdminClient(), actor.userId, trimmed);
+  if (result.error) return { error: result.error };
 
   revalidatePath("/dashboard");
   revalidatePath("/admin");

@@ -278,8 +278,8 @@ async function handleVideoSubmit(
 
   if (existingVideo) {
     rollbackActions.push(async () => {
-      const { error } = await adminSupabase.from("videos").update(stripSubmissionId(existingVideo)).eq("id", existingVideo.id);
-      if (error) throw error;
+      const { data, error } = await adminSupabase.from("videos").update(stripSubmissionId(existingVideo)).eq("id", existingVideo.id).select("id").maybeSingle();
+      if (error || !data) throw error ?? new Error("视频记录恢复未生效");
     });
   }
 
@@ -362,8 +362,8 @@ async function handleVideoSubmit(
 
   if (existingSnapshot) {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("video_metrics_snapshots").update(stripSubmissionId(existingSnapshot)).eq("id", existingSnapshot.id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("video_metrics_snapshots").update(stripSubmissionId(existingSnapshot)).eq("id", existingSnapshot.id).select("id").maybeSingle();
+      if (error || !data) throw error ?? new Error("视频快照恢复未生效");
     });
   } else {
     rollbackActions.push(async () => {
@@ -401,8 +401,8 @@ async function handleVideoSubmit(
 
   if (existingReport) {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("daily_reports").update(stripSubmissionId(existingReport)).eq("id", existingReport.id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("daily_reports").update(stripSubmissionId(existingReport)).eq("id", existingReport.id).select("id").maybeSingle();
+      if (error || !data) throw error ?? new Error("日报记录恢复未生效");
     });
   } else {
     const createdReportId = persistedReport.id;
@@ -432,8 +432,8 @@ async function handleVideoSubmit(
     hasManualEdit: normalized.manual_edit,
     screenshotsRefreshed: normalized.screenshots_refreshed || screenshotReplacementHistoryRows.length > 0,
   });
-  const { error: dataSourceError } = await supabase.from("daily_reports").update({ data_source: dataSource }).eq("id", persistedReport.id);
-  if (dataSourceError) {
+  const { data: sourceReport, error: dataSourceError } = await supabase.from("daily_reports").update({ data_source: dataSource }).eq("id", persistedReport.id).select("id").maybeSingle();
+  if (dataSourceError || !sourceReport) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
     console.error("[video-submit] persist-source", dataSourceError);

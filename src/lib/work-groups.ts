@@ -262,10 +262,10 @@ export async function renameWorkGroup(
     detail: JSON.stringify({ previous_name: group.name, next_name: renamed.name }),
   });
   if (!audit.ok) {
-    const rollback = await supabase.from("work_groups").update({ name: group.name }).eq("id", group.id);
+    const rollback = await supabase.from("work_groups").update({ name: group.name }).eq("id", group.id).select("id").maybeSingle();
     return failure(
       500,
-      rollback.error ? auditRollbackIncompleteMessage("重命名") : auditRollbackMessage("重命名"),
+      rollback.error || !rollback.data ? auditRollbackIncompleteMessage("重命名") : auditRollbackMessage("重命名"),
     );
   }
 

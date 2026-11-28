@@ -66,12 +66,15 @@ export async function consumeApprovedAppealPayload(input: {
   const { appeal } = input;
   try {
     if (!appeal || !appealCoversSubmission(appeal.submission_payload, input.submitted)) return "skipped";
-    const { error } = await input.admin
+    const { data, error } = await input.admin
       .from("fulfillment_appeals")
       .update({ submission_payload: null })
       .eq("id", appeal.id)
-      .eq("status", "approved");
+      .eq("status", "approved")
+      .select("id")
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return "failed";
     return "cleared";
   } catch (error) {
     console.error(`[video-submit] appeal ${appeal?.id} 已凭资格提交，但清空暂存失败`, error);

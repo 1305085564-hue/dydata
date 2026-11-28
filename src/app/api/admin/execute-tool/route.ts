@@ -190,7 +190,7 @@ export async function buildExecuteToolResponse(
       },
     });
 
-    const { error } = await auth.supabase
+    const { data: updated, error } = await auth.supabase
       .from("admin_actions")
       .update({
         result: runResult.success ? "success" : "failed",
@@ -200,7 +200,10 @@ export async function buildExecuteToolResponse(
         confirmed_at: executedAt,
         executed_at: executedAt,
       })
-      .eq("id", confirmationToken);
+      .eq("id", confirmationToken)
+      .eq("result", "pending_confirm")
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       return toStringErrorResponse({
@@ -210,6 +213,9 @@ export async function buildExecuteToolResponse(
         requestId,
         error: error.message,
       });
+    }
+    if (!updated) {
+      return NextResponse.json({ success: false, error: "确认记录不存在或已变化，执行结果未能登记，请核对后刷新" }, { status: 409 });
     }
 
     return NextResponse.json({

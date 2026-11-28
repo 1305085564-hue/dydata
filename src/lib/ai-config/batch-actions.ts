@@ -242,18 +242,23 @@ export async function handleSetModelEnabled(supabase: AiConfigSupabase, data: Re
     throw new Error(readError.message);
   }
   const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean; disabled_by_model: boolean | null }>;
+  if (snapshot.length === 0) throw validationError("模型供应不存在，请刷新后重试", 404);
   const changedRows = isEnabled
     ? snapshot.filter((row) => row.disabled_by_model === true)
     : snapshot.filter((row) => row.is_enabled);
   if (changedRows.length === 0) {
     return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: 0 };
   }
-  const { error: updateError } = await supabase
+  const { count: updatedCount, error: updateError } = await supabase
     .from("ai_provider_key_models")
     .update(isEnabled
       ? { is_enabled: true, disabled_by_model: false }
-      : { is_enabled: false, disabled_by_model: true })
-    .in("id", changedRows.map((row) => row.id));
+      : { is_enabled: false, disabled_by_model: true }, { count: "exact" })
+    .in("id", changedRows.map((row) => row.id))
+    .select("id");
   if (updateError) throw new Error(updateError.message);
+  if (updatedCount !== changedRows.length) {
+    throw validationError("部分模型供应已变化，本次调整未全部生效，请刷新后核对", 409);
+  }
   return { modelId: canonicalModelId, is_enabled: isEnabled, affectedCount: snapshot.length, changedSupplyCount: changedRows.length };
 }

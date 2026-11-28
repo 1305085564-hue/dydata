@@ -38,7 +38,7 @@ function submitted(title: string, patch: Record<string, unknown> = {}) {
   return result.normalized;
 }
 
-function fakeAdmin(result: { error: unknown } = { error: null }) {
+function fakeAdmin(result: { data?: unknown; error: unknown } = { data: { id: "appeal-1" }, error: null }) {
   const calls: Array<{ patch: unknown; filters: Array<[string, unknown]> }> = [];
   const admin = {
     from(table: string) {
@@ -48,6 +48,8 @@ function fakeAdmin(result: { error: unknown } = { error: null }) {
       const builder = {
         update(patch: unknown) { call.patch = patch; return builder; },
         eq(column: string, value: unknown) { call.filters.push([column, value]); return builder; },
+        select() { return builder; },
+        async maybeSingle() { return result; },
         then(resolve: (value: { error: unknown }) => void) { resolve(result); },
       };
       return builder;
@@ -95,6 +97,11 @@ test("清空失败只记日志，不影响本次提交结果", async () => {
   } finally {
     console.error = originalError;
   }
+});
+
+test("申请并发删除或已非批准状态：清空命中零行时不能声称已清空", async () => {
+  const { admin } = fakeAdmin({ data: null, error: null });
+  assert.equal(await consumeApprovedAppealPayload({ admin, appeal: { id: "appeal-1", submission_payload: payload("作品 A") }, submitted: submitted("作品 A") }), "failed");
 });
 
 test("补交批准只放行申请的那条作品：同标题同发布日改了数字仍放行，同日另一条被拦", () => {

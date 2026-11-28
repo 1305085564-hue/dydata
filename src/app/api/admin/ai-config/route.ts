@@ -232,8 +232,9 @@ async function applyMutation(
     if (entity === "key") {
       await runAiConfigWrite(supabase, "update_ai_config_key", { p_key_id: targetId, p_patch: patch, p_base_url: normalizedKeyBaseUrl });
     } else {
-      const { error } = await supabase.from(table).update(patch).eq("id", targetId);
+      const { data: updated, error } = await supabase.from(table).update(patch).eq("id", targetId).select("id").maybeSingle();
       if (error) throw new Error(error.message);
+      if (!updated) throw mutationError("接入点不存在或已被删除，请刷新后重试", 404);
     }
   }
   return { affectedCount: 0, sharedAddressImpact };
