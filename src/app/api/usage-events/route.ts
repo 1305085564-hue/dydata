@@ -36,11 +36,12 @@ export async function buildUsageEventResponse(
   }
 
   try {
-    await deps.createAdminClient().from("usage_events").insert({
+    const { error } = await deps.createAdminClient().from("usage_events").insert({
       user_id: user.id,
       path: parsed.data.path,
       event_type: parsed.data.eventType,
     });
+    if (error) return NextResponse.json({ ok: false, skipped: true }, { status: 202 });
   } catch {
     return NextResponse.json({ ok: false, skipped: true }, { status: 202 });
   }

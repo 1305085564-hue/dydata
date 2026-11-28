@@ -8,15 +8,22 @@ type FulfillmentRequest = (
 export async function fetchFulfillmentAppeals(
   request: FulfillmentRequest = fetch,
 ): Promise<FulfillmentAppeal[]> {
-  const response = await request("/api/admin/fulfillment/appeals?limit=150");
-  const payload = (await response.json()) as {
-    appeals?: FulfillmentAppeal[];
-    error?: string;
+  const load = async (status: string, offset = 0) => {
+    const response = await request(`/api/admin/fulfillment/appeals?status=${status}&limit=150&offset=${offset}`);
+    const payload = (await response.json()) as { appeals?: FulfillmentAppeal[]; error?: string };
+    if (!response.ok) throw new Error(payload.error || "申诉加载失败");
+    return Array.isArray(payload.appeals) ? payload.appeals : [];
   };
-  if (!response.ok) {
-    throw new Error(payload.error || "申诉加载失败");
-  }
-  return Array.isArray(payload.appeals) ? payload.appeals : [];
+  const pendingPromise = (async () => {
+    const pending: FulfillmentAppeal[] = [];
+    while (true) {
+      const page = await load("pending", pending.length);
+      pending.push(...page);
+      if (page.length === 0) return pending;
+    }
+  })();
+  const [pending, handled] = await Promise.all([pendingPromise, load("handled")]);
+  return [...pending, ...handled];
 }
 
 export async function fetchFulfillmentSettings(

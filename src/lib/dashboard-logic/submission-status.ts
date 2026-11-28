@@ -38,24 +38,24 @@ export interface DateStatusOptions {
 export function getDateStatus(options: DateStatusOptions): SubmissionStatusResult {
   const { date, today, submittedDates, waiveDates = [], leaveDates = [], pendingDates = [] } = options;
 
+  // 未来日期
+  if (date > today) {
+    return {
+      status: "future",
+      label: "未到",
+      description: "该日期还没到，无需提交。",
+      tone: "future",
+      isCompleted: false,
+      canBackfill: false,
+    };
+  }
+
   // 已提交
   if (submittedDates.includes(date)) {
     return {
       status: "submitted",
       label: "已交",
       description: "当天已提交数据。",
-      tone: "submitted",
-      isCompleted: true,
-      canBackfill: false,
-    };
-  }
-
-  // 请假
-  if (leaveDates.includes(date)) {
-    return {
-      status: "on_leave",
-      label: "请假",
-      description: "当天已请假，视作已完成，无需再提交。",
       tone: "submitted",
       isCompleted: true,
       canBackfill: false,
@@ -74,24 +74,24 @@ export function getDateStatus(options: DateStatusOptions): SubmissionStatusResul
     };
   }
 
+  // 请假
+  if (leaveDates.includes(date)) {
+    return {
+      status: "on_leave",
+      label: "请假",
+      description: "当天已请假，视作已完成，无需再提交。",
+      tone: "submitted",
+      isCompleted: true,
+      canBackfill: false,
+    };
+  }
+
   if (pendingDates.includes(date)) {
     return {
       status: "pending",
       label: "审批中",
       description: "该日期已有待审批申请，审批完成前不能重复申请。",
       tone: "pending",
-      isCompleted: false,
-      canBackfill: false,
-    };
-  }
-
-  // 未来日期
-  if (date > today) {
-    return {
-      status: "future",
-      label: "未到",
-      description: "该日期还没到，无需提交。",
-      tone: "future",
       isCompleted: false,
       canBackfill: false,
     };

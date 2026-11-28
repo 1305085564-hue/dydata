@@ -13,9 +13,9 @@ import {
 
 const MAX_EXPORT_ROWS = 10_000;
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const adminSupabase = createAdminClient();
+export async function buildExportResponse(request: NextRequest, deps = { createClient, createAdminClient, getUserPermissions }) {
+  const supabase = await deps.createClient();
+  const adminSupabase = deps.createAdminClient();
 
   const {
     data: { user },
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const permissionInfo = await getUserPermissions();
+  const permissionInfo = await deps.getUserPermissions();
   if (!permissionInfo || permissionInfo.permissions.export_data !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
@@ -98,16 +98,18 @@ export async function GET(request: NextRequest) {
   const PAGE_SIZE = 2000;
   const allRows: DailyReportExcelRow[] = [];
 
-  for (let offset = 0; offset < totalCount; offset += PAGE_SIZE) {
+  let lastPageSize = 0;
+  for (let offset = 0; offset < totalCount; offset += lastPageSize) {
     let pageQuery = adminSupabase
       .from("daily_reports")
       .select(
-        "report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id"
+        "id, report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id"
       )
       .eq("is_void", false)
       .order("published_at", { ascending: false, nullsFirst: false })
       .order("report_date", { ascending: false })
       .order("submitter", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     {
@@ -127,6 +129,7 @@ export async function GET(request: NextRequest) {
 
     if (!pageData || pageData.length === 0) break;
 
+    lastPageSize = pageData.length;
     const pageRows = pageData.map((report) => ({
       日期: getPublishedDateForStats(report) ?? "",
       提交人: report.submitter,
@@ -150,6 +153,9 @@ export async function GET(request: NextRequest) {
     allRows.push(...pageRows);
   }
 
+  if (allRows.length !== totalCount) {
+    return NextResponse.json({ error: "导出数据不完整，请重试", expected: totalCount, actual: allRows.length }, { status: 500 });
+  }
   const buf = await buildDailyReportWorkbookBuffer(allRows);
   const filename = `抖音数据日报${from ? `_${from}` : ""}${to ? `_至_${to}` : ""}.xlsx`;
 
@@ -159,4 +165,8 @@ export async function GET(request: NextRequest) {
       "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
     },
   });
+}
+
+export async function GET(request: NextRequest) {
+  return buildExportResponse(request);
 }

@@ -79,17 +79,22 @@ export async function buildPermissionRequestApplyResponse(
   }
   const requesterName = toTrimmedString(requesterProfile.name) || "未知用户";
 
+  const requesterTeamId = toTrimmedString(requesterProfile.team_id);
+  if (!requesterTeamId) return NextResponse.json({ error: "请先申请加入团队" }, { status: 403 });
+
   // 权限申请只发公司负责人：角色调整由负责人在成员管理里决定，组长没有这个权限，发给他们只会变成无法处理的待办
   let { data: adminProfiles, error: adminError } = await admin
     .from("profiles")
     .select("id, role, company_role, membership_status")
-    .in("role", ["owner", "admin"]);
+    .in("role", ["owner", "admin"])
+    .eq("team_id", requesterTeamId);
 
   if (adminError?.message?.includes("company_role")) {
     const legacy = await admin
       .from("profiles")
       .select("id, role, membership_status")
-      .in("role", ["owner", "admin"]);
+      .in("role", ["owner", "admin"])
+    .eq("team_id", requesterTeamId);
     adminProfiles = legacy.data as typeof adminProfiles;
     adminError = legacy.error;
   }

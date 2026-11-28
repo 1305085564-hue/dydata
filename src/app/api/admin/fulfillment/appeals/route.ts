@@ -32,16 +32,25 @@ export async function buildFulfillmentAppealsGetResponse(
   if ("response" in auth) return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const status = request.nextUrl.searchParams.get("status")?.trim() ?? "";
+  if (status && !APPEAL_STATUSES.has(status) && status !== "handled") {
+    return NextResponse.json({ error: "申诉状态不正确" }, { status: 400 });
+  }
   const limitValue = Number.parseInt(request.nextUrl.searchParams.get("limit") ?? "", 10);
   const limit = Number.isFinite(limitValue) ? Math.max(1, Math.min(limitValue, 200)) : 50;
 
+  const offsetValue = Number.parseInt(request.nextUrl.searchParams.get("offset") ?? "", 10);
+  const offset = Number.isFinite(offsetValue) ? Math.max(0, offsetValue) : 0;
+  const visibleIds = status === "pending" ? auth.scope.activeVisibleUserIds : auth.scope.visibleUserIds;
   const buildAppealsQuery = (columns: string) => {
     let query = auth.supabase
       .from("fulfillment_appeals")
       .select(columns)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true });
     if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
-    return query.in("user_id", auth.scope.visibleUserIds).limit(limit);
+    if (status === "handled") query = query.in("status", ["approved", "rejected"]);
+    if (!status) query = query.or(`status.neq.pending,user_id.in.(${auth.scope.activeVisibleUserIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
+    return query.in("user_id", visibleIds).range(offset, offset + limit - 1);
   };
 
   let appealsResult = await buildAppealsQuery(

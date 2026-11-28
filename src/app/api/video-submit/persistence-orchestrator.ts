@@ -31,7 +31,9 @@ export async function rollbackSafely(actions: RollbackAction[]) {
     try {
       await action();
     } catch (error) {
-      errors.push(error instanceof Error ? error : new Error("回滚失败"));
+      errors.push(error instanceof Error ? error : new Error(
+        error && typeof error === "object" && "message" in error ? String(error.message) : String(error),
+      ));
     }
   }
   if (!errors.length) return null;
@@ -99,12 +101,19 @@ export async function loadValidatedEditBinding(input: {
         const { data, error } = await supabase.from("videos").select(EDIT_BINDING_VIDEO_SELECT).eq("id", videoId).limit(2);
         return { data: (data ?? null) as never, error };
       },
+      loadDailyReportsByVideoId: async (videoId, ownerId, accountId) => {
+        const { data, error } = await supabase.from("daily_reports").select(EDIT_BINDING_REPORT_SELECT)
+          .eq("video_id", videoId).eq("user_id", ownerId).eq("account_id", accountId).eq("is_void", false).limit(2);
+        return { data: (data ?? null) as never, error };
+      },
       loadDailyReportsByAccountAndDate: async (accountId, bizDate) => {
         const { data, error } = await supabase
           .from("daily_reports")
           .select(EDIT_BINDING_REPORT_SELECT)
           .eq("account_id", accountId)
           .eq("report_date", bizDate)
+          .eq("user_id", userId)
+          .is("video_id", null)
           .eq("is_void", false)
           .limit(2);
         return { data: (data ?? null) as never, error };
@@ -127,9 +136,11 @@ export async function replaceSubmissionManualTags(input: {
   adminSupabase: AdminSupabaseLike;
   videoId: string;
   normalized: NormalizedVideoSubmit;
+  rollbackActions: RollbackAction[];
 }) {
   const { supabase, adminSupabase, videoId, normalized } = input;
   return persistSubmissionTags({
+    registerRollback: (action) => input.rollbackActions.push(action),
     loadPrevious: async () => {
       const result = await supabase
         .from("video_tags")

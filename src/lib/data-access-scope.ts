@@ -113,7 +113,7 @@ type CompanyHistoricalRow = CompanyVisibleRow & {
  * buildDataAccessScope 的 team 分支与 resolveCollaborationScope 共用同一份口径，
  * 保证组长范围与组员在数据管理内放宽后的范围结构同源。模块私有，不导出。
  */
-async function loadCompanyVisibleRows(
+export async function loadCompanyVisibleRows(
   supabase: ScopeSupabase,
   teamId: string,
 ): Promise<CompanyVisibleRow[]> {

@@ -446,9 +446,9 @@ function buildSampleQualityPrompt(context: SampleQualityContext, checkedAt: stri
   ].join("\n");
 }
 
-function canAccessReport(scope: DataAccessScope | null, report: DailyReportRow, actorUserId: string) {
-  if (!scope) return report.user_id === actorUserId;
-  return scope.visibleUserIds.includes(report.user_id);
+function canAccessReport(scope: DataAccessScope | null, report: DailyReportRow) {
+  if (!scope) return false;
+  return scope.activeVisibleUserIds.includes(report.user_id);
 }
 
 /** 把 AI 调用失败的原始信息翻成用户能看懂的一句话，原始信息只写服务端日志。 */
@@ -479,8 +479,8 @@ export async function buildSampleQualityCheckResponse(
   const scope = await deps.buildDataAccessScope(adminSupabase, user.id);
   const context = await deps.loadContext(adminSupabase, reportId);
   if (!context) return NextResponse.json({ error: "日报不存在" }, { status: 404 });
-  if (!canAccessReport(scope, context.report, user.id)) {
-    return NextResponse.json({ error: "无权查看这条日报" }, { status: 403 });
+  if (!canAccessReport(scope, context.report)) {
+    return NextResponse.json({ error: "无权修改这条日报的质检结果" }, { status: 403 });
   }
 
   const checkedAt = deps.now().toISOString();

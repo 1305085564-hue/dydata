@@ -1,3 +1,4 @@
+import { SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE, SettlementStatusUnavailableError } from "@/lib/loaders/admin-content-rpc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import {
@@ -99,7 +100,11 @@ export async function ContentDataContainer({
           lifecycleState: view === "trash" ? "trashed" : "active",
         })
       : Promise.resolve(null),
-  ]);
+  ]).catch((error) => {
+    if (error instanceof SettlementStatusUnavailableError) return [null, null] as const;
+    throw error;
+  });
+  if (!data) return <p role="alert">{SETTLEMENT_STATUS_UNAVAILABLE_MESSAGE}</p>;
   if (directVideoId && !directVideoDetail) notFound();
 
   return (

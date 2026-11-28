@@ -1,6 +1,6 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { logApiError } from "@/lib/api-logger";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { emit, type EmitResult } from "@/lib/notifications/server";
 import { formatPostSubmitReviewReason } from "@/lib/video-submit-deadline";
@@ -56,17 +56,18 @@ function buildPostReviewSummaryPayload(input: {
 }
 
 async function resolveTeamAdminRecipients(admin: AdminSupabaseLike, userId: string, teamId: string | null): Promise<string[]> {
-  if (!teamId) return [];
-  const { data: candidates } = await admin
+  if (!teamId) throw new Error("申请人没有可信团队，无法解析审批收件人");
+  const { data: candidates, error } = await admin
     .from("profiles")
     .select("id, role, company_role, permissions, team_id, membership_status")
     .in("role", ["owner", "admin"]);
+  if (error) throw error;
   return (candidates ?? [])
     .filter((profile) => {
       if (profile.id === userId || !isActiveMembership(profile)) return false;
       const role = resolveProfileCompanyRole(profile.role, profile.company_role);
       return !role.conflict
-        && (role.companyRole === "company_owner" || (role.companyRole === "admin" && profile.permissions?.manage_members === true))
+        && hasFixedPermission(role.companyRole, "manage_members")
         && profile.team_id === teamId;
     })
     .map((profile) => profile.id);
@@ -184,6 +185,7 @@ export async function createPostSubmitReviewAndNotify(
   let notification: EmitResult;
   try {
     const recipients = await resolveTeamAdminRecipients(input.admin, input.userId, input.teamId);
+    if (recipients.length === 0) throw new Error("本团队没有可投递的审批收件人");
     const titleLabel = input.normalized.video_title ? `《${input.normalized.video_title}》` : "未命名作品";
     notification = await emitFn({
       recipients,
@@ -208,10 +210,10 @@ export async function createPostSubmitReviewAndNotify(
       },
     });
   } catch (error) {
-    notification = { ok: false, inserted: 0, error: error instanceof Error ? error.message : "emit failed" };
+    notification = { ok: false, inserted: 0, error: error && typeof error === "object" && "message" in error ? String(error.message) : String(error) };
   }
 
-  if (!notification.ok) {
+  if (!notification.ok || notification.inserted === 0) {
     logApiError(
       {
         requestId,
@@ -225,7 +227,7 @@ export async function createPostSubmitReviewAndNotify(
           triggerReason: input.trigger.reason,
         },
       },
-      notification.error ?? "post-submit todo emit failed",
+      notification.error ?? "post-submit todo delivered to zero recipients",
     );
     return {
       required: true,

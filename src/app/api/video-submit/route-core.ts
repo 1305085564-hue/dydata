@@ -51,8 +51,7 @@ import {
   loadValidatedEditBinding,
   replaceSubmissionManualTags,
   restoreVideoSubmission,
-  rollbackNewVideoSubmission,
-  rollbackSafely,
+  rollbackNewVideoSubmission, rollbackSafely,
   type RollbackAction,
 } from "./persistence-orchestrator";
 
@@ -160,7 +159,7 @@ async function handleVideoSubmit(
   }
 
   if (normalized.topic_id) {
-    const topicAssociation = await validateTopicForSubmission(deps.createAdminClient(), normalized.topic_id);
+    const topicAssociation = await validateTopicForSubmission(deps.createAdminClient(), normalized.topic_id, { userId, teamId: typedProfile.team_id });
     if (!topicAssociation.ok) {
       return videoSubmitErrorResponse(
         request,
@@ -248,6 +247,9 @@ async function handleVideoSubmit(
     if (fetchedVideo && fetchedVideo.user_id !== userId) {
       return NextResponse.json({ error: "视频记录已被其他成员占用" }, { status: 409 });
     }
+    if (fetchedVideo && normalized.mode !== "edit") {
+      return NextResponse.json({ error: "这条已经上传过,无需重复提交", code: "SUBMISSION_DUPLICATE" }, { status: 409 });
+    }
     existingVideo = fetchedVideo;
   }
 
@@ -279,10 +281,6 @@ async function handleVideoSubmit(
       const { error } = await adminSupabase.from("videos").update(stripSubmissionId(existingVideo)).eq("id", existingVideo.id);
       if (error) throw error;
     });
-  } else {
-    rollbackActions.push(async () => {
-      await rollbackNewVideoSubmission(submissionVideoId, userId);
-    });
   }
 
   observation?.mark("write-video");
@@ -296,11 +294,14 @@ async function handleVideoSubmit(
       .eq("id", submissionVideoId)
       .select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT)
       .single()
-    : supabase.from("videos").insert(videoPayload).select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT).single(), rollbackAndMark);
+    : supabase.from("videos").insert(videoPayload).select(submitResponseFields.VIDEO_SUBMIT_RESPONSE_SELECT).single(), existingVideo ? rollbackAndMark : undefined);
+  if (!videoStep.ok && (videoStep.error as { code?: string } | null)?.code === "23505" && normalized.mode !== "edit")
+    return NextResponse.json({ error: "这条已经上传过,无需重复提交", code: "SUBMISSION_DUPLICATE" }, { status: 409 });
   if (!videoStep.ok || !videoStep.data) {
     console.error("[video-submit] persist-video", videoStep.ok ? null : videoStep.error);
     return NextResponse.json({ error: "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
   }
+  if (!existingVideo) rollbackActions.push(() => rollbackNewVideoSubmission(submissionVideoId, userId, async (params) => adminSupabase.rpc("rollback_new_video_submission", params)));
   const persistedVideo = videoStep.data;
   const snapshotPayload = buildSnapshotPayload(normalized, persistedVideo.id);
   const { data: queriedSnapshot, error: existingSnapshotError } = editBinding && editBinding.ok
@@ -416,7 +417,7 @@ async function handleVideoSubmit(
     supabase,
     adminSupabase,
     videoId: persistedVideo.id,
-    normalized,
+    normalized, rollbackActions,
   });
   if (!tagResult.ok) {
     const rollbackError = await rollbackAndMark();

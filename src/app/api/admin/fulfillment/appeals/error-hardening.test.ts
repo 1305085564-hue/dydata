@@ -42,7 +42,8 @@ test("GET /api/admin/fulfillment/appeals 库查询报错收口，返回中文 er
       order() { return this; },
       eq() { return this; },
       in() { return this; },
-      limit() {
+      or() { return this; },
+      range() {
         return Promise.resolve({
           data: null,
           error: { message: "permission denied for table fulfillment_appeals" },

@@ -1,237 +1,87 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
 import { buildPermissionRequestApplyResponse } from "./route";
 
-function makeRequest(body: unknown) {
-  return new Request("https://dydata.cc/api/permission-requests/apply", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-function makeSupabaseClient(userId: string | null) {
-  return {
-    auth: {
-      getUser: async () => ({ data: { user: userId ? { id: userId } : null } }),
-    },
-  } as unknown as Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>>;
-}
-
-test("未登录调用返回 401，不发通知", async () => {
-  let emitCalled = false;
-  const res = await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), {
-    createClient: async () => makeSupabaseClient(null),
-    createAdminClient: () => ({}) as never,
-    emit: async () => {
-      emitCalled = true;
-      return { ok: true, inserted: 0 };
-    },
-  });
-
-  assert.equal(res.status, 401);
-  assert.equal(emitCalled, false);
-});
-
-test("权限申请只通知公司负责人：组长/团队管理员不再收到，负责人不受团队限制", async () => {
-  const emitInputs: Array<Record<string, unknown>> = [];
-  const res = await buildPermissionRequestApplyResponse(
-    makeRequest({ moduleTitle: "转化中心", currentPath: "/conversion-hub" }),
-    {
-      createClient: async () => makeSupabaseClient("member-1"),
-      createAdminClient: () =>
-        ({
-          from: (table: string) => {
-            if (table === "profiles") {
-              return {
-                select: () => ({
-                  eq: (_col: string, val: string) => ({
-                    single: async () => ({ data: { id: val, name: "组员小李", team_id: "team-a" }, error: null }),
-                  }),
-                  in: async () => ({
-                    data: [
-                      { id: "owner-1", role: "owner", permissions: {}, team_id: null },
-                      { id: "owner-2", role: "owner", company_role: "company_owner", permissions: {}, team_id: "team-b" },
-                      { id: "archived-owner", role: "owner", permissions: {}, team_id: null, membership_status: "archived" },
-                      { id: "same-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a" },
-                      { id: "archived-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a", membership_status: "archived" },
-                      { id: "other-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-b" },
-                      { id: "group-leader", role: "admin", permissions: { manage_members: false }, team_id: "team-a" },
-                      { id: "member-1", role: "member", permissions: {}, team_id: "team-a" },
-                    ],
-                    error: null,
-                  }),
-                }),
-              };
-            }
-            throw new Error(`unexpected table ${table}`);
-          },
-        }) as never,
-      emit: async (input) => {
-        emitInputs.push(input as unknown as Record<string, unknown>);
-        return { ok: true, inserted: (input.recipients as string[]).length };
-      },
-    },
-  );
-
-  const body = await res.json();
-  assert.equal(res.status, 200);
-  assert.equal(body.ok, true);
-  assert.equal(emitInputs.length, 1);
-  const emitted = emitInputs[0];
-  assert.deepEqual(new Set(emitted.recipients as string[]), new Set(["owner-1", "owner-2"]));
-  assert.equal(emitted.actionLabel, "前往成员管理调整角色");
-  assert.equal(emitted.category, "todo");
-  assert.equal(emitted.sourceType, "permission_request");
-  assert.equal(emitted.sourceId, "member-1:转化中心");
-  assert.equal(emitted.actionUrl, "/admin/modules?member=member-1");
-});
-
-test("归档的负责人不会继续收到权限申请通知", async () => {
-  const emitInputs: Array<Record<string, unknown>> = [];
-  const res = await buildPermissionRequestApplyResponse(
-    makeRequest({ moduleTitle: "转化中心" }),
-    {
-      createClient: async () => makeSupabaseClient("member-1"),
-      createAdminClient: () =>
-        ({
-          from: (table: string) => {
-            if (table === "profiles") {
-              return {
-                select: () => ({
-                  eq: (_col: string, val: string) => ({
-                    single: async () => ({ data: { id: val, name: "组员小李", team_id: "team-a" }, error: null }),
-                  }),
-                  in: async () => ({
-                    data: [
-                      { id: "owner-1", role: "owner", permissions: {}, team_id: null },
-                      { id: "archived-owner", role: "owner", permissions: {}, team_id: null, membership_status: "archived" },
-                      { id: "same-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a" },
-                      { id: "archived-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a", membership_status: "archived" },
-                    ],
-                    error: null,
-                  }),
-                }),
-              };
-            }
-            throw new Error(`unexpected table ${table}`);
-          },
-        }) as never,
-      emit: async (input) => {
-        emitInputs.push(input as unknown as Record<string, unknown>);
-        return { ok: true, inserted: (input.recipients as string[]).length };
-      },
-    },
-  );
-
-  assert.equal(res.status, 200);
-  assert.equal(emitInputs.length, 1);
-  assert.deepEqual(new Set(emitInputs[0].recipients as string[]), new Set(["owner-1"]));
-});
-
-test("归档申请人不能继续发起权限申请", async () => {
-  let emitCalled = false;
-  const res = await buildPermissionRequestApplyResponse(
-    makeRequest({ moduleTitle: "转化中心" }),
-    {
-      createClient: async () => makeSupabaseClient("archived-member"),
-      createAdminClient: () =>
-        ({
-          from: () => ({
-            select: () => ({
-              eq: () => ({
-                single: async () => ({
-                  data: {
-                    id: "archived-member",
-                    name: "归档成员",
-                    team_id: "team-a",
-                    membership_status: "archived",
-                  },
-                  error: null,
-                }),
-              }),
-            }),
-          }),
-        }) as never,
-      emit: async () => {
-        emitCalled = true;
-        return { ok: true, inserted: 1 };
-      },
-    },
-  );
-
-  assert.equal(res.status, 403);
-  assert.equal(emitCalled, false);
-});
-
-test("没有可通知的公司负责人时安全返回提示，不报 500", async () => {
-  const res = await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), {
-    createClient: async () => makeSupabaseClient("member-1"),
-    createAdminClient: () =>
-      ({
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              single: async () => ({ data: { id: "member-1", name: "组员小李" }, error: null }),
-            }),
-            in: async () => ({ data: [], error: null }),
-          }),
-        }),
-      }) as never,
-    emit: async () => {
-      throw new Error("emit 不应被调用");
-    },
-  });
-
-  assert.equal(res.status, 200);
-  const body = await res.json();
-  assert.equal(body.ok, true);
-  assert.equal(body.notified, 0);
-  assert.ok(typeof body.warning === "string" && body.warning.length > 0);
-});
-
-test("重复申请使用稳定 sourceId，交给 emit 的 upsert 去重", async () => {
-  const emitInputs: Array<Record<string, unknown>> = [];
+type Row = Record<string, unknown>;
+function fixture(options: { user?: string | null; requester?: Row; missingRoleColumn?: boolean; lookupError?: boolean } = {}) {
+  const recipients: Row[] = [
+    { id: "owner-a", role: "owner", team_id: "team-a" },
+    { id: "owner-b", role: "owner", team_id: "team-b" },
+    { id: "archived-owner", role: "owner", team_id: "team-a", membership_status: "archived" },
+    { id: "admin-a", role: "admin", team_id: "team-a", permissions: {} },
+    { id: "conflict", role: "admin", company_role: "company_owner", team_id: "team-a" },
+  ];
+  const requester = { id: "member-1", name: "小李", team_id: "team-a", membership_status: "active", ...options.requester };
+  const emitted: Array<Parameters<typeof import("@/lib/notifications/server").emit>[0]> = [];
+  const selections: string[] = [];
   const deps = {
-    createClient: async () => makeSupabaseClient("member-1"),
-    createAdminClient: () =>
-      ({
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              single: async () => ({ data: { id: "member-1", name: "组员小李" }, error: null }),
-            }),
-            in: async () => ({
-              data: [{ id: "owner-1", role: "owner", permissions: {} }],
-              error: null,
-            }),
-          }),
-        }),
-      }) as never,
+    createClient: async () => ({ auth: { getUser: async () => ({ data: { user: options.user === null ? null : { id: "member-1" } } }) } }) as never,
+    createAdminClient: () => ({
+      from: () => {
+        const filters: Array<(row: Row) => boolean> = [];
+        let columns = "";
+        const query = {
+          select(value: string) { columns = value; selections.push(value); return query; },
+          eq(key: string, value: unknown) { filters.push((row) => row[key] === value); return query; },
+          in(key: string, values: unknown[]) { filters.push((row) => values.includes(row[key])); return query; },
+          single: async () => ({ data: requester, error: null }),
+          then(resolve: (value: unknown) => unknown) {
+            const error = options.lookupError ? { message: "database timeout" }
+              : options.missingRoleColumn && columns.includes("company_role") ? { message: "column company_role does not exist" } : null;
+            return Promise.resolve({ data: error ? null : recipients.filter((row) => filters.every((filter) => filter(row))), error }).then(resolve);
+          },
+        };
+        return query;
+      },
+    }) as never,
     emit: async (input: Parameters<typeof import("@/lib/notifications/server").emit>[0]) => {
-      emitInputs.push(input as unknown as Record<string, unknown>);
-      return { ok: true, inserted: 1 };
+      emitted.push(input); return { ok: true, inserted: input.recipients.length };
     },
   };
+  const request = (body: unknown = { moduleTitle: "转化中心", currentPath: "/conversion-hub", team_id: "team-b" }) =>
+    new Request("https://dydata.cc/api/permission-requests/apply", { method: "POST", body: JSON.stringify(body) });
+  return { deps, request, emitted, selections, recipients };
+}
 
-  await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), deps);
-  await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), deps);
-
-  assert.equal(emitInputs.length, 2);
-  assert.equal(emitInputs[0].sourceId, emitInputs[1].sourceId);
+test("权限申请仅通知可信团队的在职负责人，不接受请求体伪造团队", async () => {
+  const f = fixture();
+  const response = await buildPermissionRequestApplyResponse(f.request(), f.deps);
+  assert.equal(response.status, 200);
+  assert.deepEqual(f.emitted[0].recipients, ["owner-a"]);
+  assert.equal(f.emitted[0].actionUrl, "/admin/modules?member=member-1");
 });
 
-test("请求体缺少 moduleTitle 时返回 400，不调用 emit", async () => {
-  let emitCalled = false;
-  const res = await buildPermissionRequestApplyResponse(makeRequest({}), {
-    createClient: async () => makeSupabaseClient("member-1"),
-    createAdminClient: () => ({}) as never,
-    emit: async () => {
-      emitCalled = true;
-      return { ok: true, inserted: 0 };
-    },
-  });
+test("旧库 company_role 缺列时兼容查询仍只通知申请人本团队", async () => {
+  const f = fixture({ missingRoleColumn: true });
+  assert.equal((await buildPermissionRequestApplyResponse(f.request(), f.deps)).status, 200);
+  assert.equal(f.selections.length, 3);
+  assert.deepEqual(f.emitted[0].recipients, ["owner-a"]);
+});
 
-  assert.equal(res.status, 400);
-  assert.equal(emitCalled, false);
+for (const [options, expectedStatus] of [[{ user: null }, 401], [{ requester: { membership_status: "archived" } }, 403], [{ requester: { team_id: null } }, 403]] as const) {
+  test(`未登录、归档或无团队不能发权限申请 ${JSON.stringify(options)}`, async () => {
+    const f = fixture(options);
+    const response = await buildPermissionRequestApplyResponse(f.request(), f.deps);
+    assert.equal(response.status, expectedStatus);
+    assert.equal(f.emitted.length, 0);
+  });
+}
+
+test("查询失败明确报错；本团队无负责人时提示未通知", async () => {
+  const failed = fixture({ lookupError: true });
+  assert.equal((await buildPermissionRequestApplyResponse(failed.request(), failed.deps)).status, 500);
+  assert.equal(failed.emitted.length, 0);
+  const empty = fixture(); empty.recipients.length = 0;
+  const response = await buildPermissionRequestApplyResponse(empty.request(), empty.deps);
+  const body = await response.json();
+  assert.equal(body.notified, 0);
+  assert.match(body.warning, /没有可通知/);
+});
+
+test("重复申请保留稳定去重标识，缺少模块返回400", async () => {
+  const f = fixture();
+  await buildPermissionRequestApplyResponse(f.request(), f.deps);
+  await buildPermissionRequestApplyResponse(f.request(), f.deps);
+  assert.equal(f.emitted[0].sourceId, f.emitted[1].sourceId);
+  assert.equal((await buildPermissionRequestApplyResponse(f.request({}), f.deps)).status, 400);
 });

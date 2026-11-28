@@ -1,3 +1,5 @@
+import { loadTopicsTeamScope } from "@/lib/topics/team-scope";
+import type { DataAccessScope } from "@/lib/data-access-scope";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -9,13 +11,26 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export async function validateTopicForSubmission(
   supabase: SupabaseClient,
   topicId: string | null,
+  actor: { userId: string; teamId: string | null },
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
   if (!topicId) return { ok: true };
 
+  if (!actor.teamId) return { ok: false, status: 403, message: "请先申请加入团队" };
+  let scope: DataAccessScope;
+  try {
+    scope = await loadTopicsTeamScope(supabase, {
+      userId: actor.userId, role: "member", permissions: {}, teamId: actor.teamId,
+      kind: "self", visibleUserIds: [actor.userId], activeVisibleUserIds: [actor.userId],
+    }, actor.teamId, actor.userId);
+  } catch (error) {
+    console.error("[video-submit] load-topic-team-scope", error);
+    return { ok: false, status: 500, message: "加载所选选题失败，请稍后重试" };
+  }
   const { data: topic, error } = await supabase
     .from("sub_topics")
     .select("id, library_status")
     .eq("id", topicId)
+    .in("created_by", scope.visibleUserIds)
     .maybeSingle();
   if (error) {
     console.error("[video-submit] load-topic-association", error);

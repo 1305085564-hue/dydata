@@ -213,7 +213,8 @@ async function createLateReview() {
     dailyReportId: REPORT, nowIso: "2026-11-24T08:00:00.000Z", normalized: validated.normalized,
     trigger: { reason: "expired", publishedDate: "2026-11-20", elapsedHours: 96, ocrPublishedAtText: null },
   }, async () => ({ ok: true, inserted: 0 }));
-  assert.equal(result.status, "created");
+  assert.equal(result.status, "partial");
+  assert.equal(result.todoStatus, "failed");
   assert.equal(inserted.review_mode, "post_submit");
   return result;
 }
