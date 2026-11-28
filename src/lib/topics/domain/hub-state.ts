@@ -9,7 +9,7 @@ import type {
 } from "@/components/topics-v2/types";
 import { DEFAULT_MORE_FILTERS } from "@/components/topics-v2/types";
 import type { V2TopicLibraryBootstrap } from "@/lib/topics/v2-client-contract";
-import { isTopicWritingByCurrentUser } from "@/components/topics-v2/topic-writing-state";
+import { isTopicWritingByCurrentUser } from "@/lib/topics/domain/topic-writing-state";
 import type { SortByOption } from "./pool-view";
 
 export function useTopicHubState(

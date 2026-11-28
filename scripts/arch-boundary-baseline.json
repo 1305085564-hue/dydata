@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "cycles": {},
+  "boundaries": {
+    "src/lib/topics/data/hub-actions.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/topics/data/hub-actions.ts -> src/components/ui/feedback-toast.tsx": "客户端数据 hook 仍绑定 UI 反馈入口；后续改为调用者注入回调，本批避免扩大 hooks 契约。",
+    "src/lib/topics/data/hub.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/topics/data/work-breakdown.ts -> src/components/ui/feedback-toast.tsx": "客户端数据 hook 仍绑定 UI 反馈入口；后续改为调用者注入回调，本批避免扩大 hooks 契约。",
+    "src/lib/topics/data/work-breakdown.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/topics/domain/hub-state.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/topics/domain/pool-view.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/topics/domain/work-breakdown.ts -> src/components/topics-v2/types.ts": "选题库既有组件契约与筛选默认值；后续整体下沉共享契约，本批只迁移三个独立纯函数，避免扩大类型迁移。",
+    "src/lib/video-submit-workflow/selectors.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit-workflow/types.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit-workflow/upload-progress.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit/data/screenshots.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit/domain/form-rules.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit/domain/submit-gaps.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit/domain/submit-gaps.ts -> src/components/submission/填报表单状态.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。",
+    "src/lib/video-submit/domain/video-submit-form-model.ts -> src/components/submission/提交状态机.ts": "提交状态机及字段契约现仍由组件目录持有；完整下沉会牵涉本批禁止修改的 src/app/api/，留待专批迁移。"
+  }
+}

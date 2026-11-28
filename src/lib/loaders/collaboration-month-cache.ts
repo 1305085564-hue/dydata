@@ -78,8 +78,6 @@ export async function loadCachedCollaborationMonthDataset(
   return payload;
 }
 
-export function collaborationMonthCacheStats() { return collaborationMonthCache.stats; }
-
 export const __internal = {
   buildCacheKey,
   COLLABORATION_MONTH_CACHE_TTL_MS,

@@ -172,16 +172,6 @@ export type ContentReviewReadinessStatus =
   | "missing_segments"
   | "ready";
 
-export const TAG_ENUMS: Record<TagDimension, string[]> = {
-  "题材": ["大盘复盘", "板块机会", "个股拆解", "情绪周期", "战法教学", "风险提醒", "热点追踪", "盘前预判"],
-  "表达形式": ["结论先行", "问答式", "清单式", "案例拆解", "情绪点评", "故事引入", "观点输出"],
-  "CTA类型": ["关注", "评论", "私信", "看主页", "进群", "无明显CTA"],
-  "内容结构": ["先结论后逻辑", "先冲突后解释", "三段式", "总分总", "盘面现象→原因→操作", "错误案例→正确做法"],
-  "目标受众": ["新手股民", "短线交易者", "老股民", "上班族投资者", "追热点用户"],
-  "话题": ["干货", "复盘", "复盘干货", "视频转推"],
-  "关键词": [],
-};
-
 export interface Video {
   id: string;
   account_id: string;
@@ -280,18 +270,6 @@ export interface VideoTag {
   confidence: number | null;
   reason: string | null;
   reviewed_by: string | null;
-  created_at: string;
-}
-
-export interface MarketContextDaily {
-  id: string;
-  context_date: string;
-  is_trading_day: boolean;
-  market_change: Record<string, number> | null;
-  market_sentiment: MarketSentiment | null;
-  hot_sectors: string[] | null;
-  source: string;
-  updated_by: string | null;
   created_at: string;
 }
 

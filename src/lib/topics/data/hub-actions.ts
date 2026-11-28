@@ -3,8 +3,8 @@ import {
   fetchTopicJson,
   isTeamMembershipRequiredError,
 } from "@/lib/topics/v2-client-contract";
-import { runFeishuCreationFlow } from "@/components/topics-v2/feishu-creation-flow";
-import { isTopicWritingByCurrentUser } from "@/components/topics-v2/topic-writing-state";
+import { runFeishuCreationFlow } from "@/lib/topics/domain/feishu-creation-flow";
+import { isTopicWritingByCurrentUser } from "@/lib/topics/domain/topic-writing-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getErrorMessage } from "./hub";
 import type { useTopicHubState } from "../domain/hub-state";

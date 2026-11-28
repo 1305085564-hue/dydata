@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   buildTopicPoolQuery,
   createTopicPoolRequestCoordinator,
-} from "./topic-navigation";
+} from "@/lib/topics/domain/topic-navigation";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

@@ -4,6 +4,8 @@ import path from "node:path";
 import process from "node:process";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { execFileSync } from "node:child_process";
+import { ARCH_BASELINE_PATH, checkArchitecture } from "./lib/arch-boundary-check.mjs";
 
 const root = process.cwd();
 const ignored = new Set(["node_modules", ".next", ".git", "output"]);
@@ -271,6 +273,24 @@ function parseMigrationFunctionDefinitions(source) {
   });
 }
 
+function readArchitectureBase(ref) {
+  const files = execFileSync("git", ["ls-tree", "-r", "--name-only", ref, "--", "src"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter((file) => /\.(?:ts|tsx|js|jsx|mjs|cjs)$/.test(file));
+  const library = files.filter((file) => file.startsWith("src/lib/"));
+  if (library.length === 0) return Object.fromEntries(files.map((file) => [file, ""]));
+  const output = execFileSync("git", ["cat-file", "--batch"], { cwd: root, input: library.map((file) => `${ref}:${file}\n`).join(""), maxBuffer: 64 * 1024 * 1024 });
+  const sources = Object.fromEntries(files.map((file) => [file, ""]));
+  let offset = 0;
+  for (const file of library) {
+    const end = output.indexOf(10, offset);
+    const header = output.subarray(offset, end).toString("utf8");
+    const size = Number(header.split(" ")[2]);
+    if (!Number.isInteger(size)) throw new Error(`无法读取基线模块 ${file}: ${header}`);
+    sources[file] = output.subarray(end + 1, end + 1 + size).toString("utf8");
+    offset = end + 1 + size + 1;
+  }
+  return sources;
+}
+
 const args = process.argv.slice(2);
 const reportMode = args.includes("--report");
 const baseRef = parseBaseArg(args);
@@ -354,6 +374,19 @@ if (process.exitCode !== 2) {
     return currentCap === null ? baseCap : (baseCap === null ? currentCap : Math.min(currentCap, baseCap));
   };
   const allViolations = [];
+  const architectureBaselineRaw = await fs.readFile(path.join(root, ARCH_BASELINE_PATH), "utf8").catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  const baseArchitectureRaw = await gitShow(baseRef, ARCH_BASELINE_PATH);
+  const architecture = checkArchitecture(
+    Object.fromEntries(records.map((item) => [item.path, item.source])),
+    architectureBaselineRaw === null ? {} : JSON.parse(architectureBaselineRaw),
+    baseArchitectureRaw === null ? null : JSON.parse(baseArchitectureRaw),
+    baseArchitectureRaw === null ? readArchitectureBase(baseRef) : {},
+  );
+  if (architectureBaselineRaw === null && baseArchitectureRaw !== null) allViolations.push({ type: "architecture-baseline", path: ARCH_BASELINE_PATH, detail: "禁止删除架构基线文件；清空已消除的条目即可。" });
+  allViolations.push(...architecture.violations);
   const migrationPaths = [...new Set([...changedMigrationPaths, ...untrackedMigrationPaths])].sort();
   for (const migrationPath of migrationPaths) {
     const absolute = path.join(root, migrationPath);
@@ -431,6 +464,7 @@ if (process.exitCode !== 2) {
   allViolations.push(...baselineFileViolations);
 
   const isNewViolation = (item) => {
+    if (["runtime-cycle", "layer-boundary", "architecture-baseline"].includes(item.type)) return true;
     if (item.type === "baseline-file-increase" || item.type === "migration-function-timezone" || item.type === "utc-business-date" || item.type === "hardcoded-shanghai-timezone") return true;
     // 棘轮只拦本次改动到的文件：已经合进基座的超限不拦无关改动（否则门禁对所有人常红、被当噪音放过），
     // 但会列在 legacyViolations 里；谁再碰这个文件，谁就得先把它压回上限以下。
@@ -459,6 +493,7 @@ if (process.exitCode !== 2) {
       baselineLines: baselineLineLimit,
     },
     splitList,
+    architecture: { moduleCount: architecture.moduleCount, components: architecture.components, cycles: architecture.cycles, boundaries: architecture.boundaries },
     categories,
     changedPaths: [...changedPaths].sort(),
     untrackedPaths: [...untrackedPaths].sort(),
@@ -486,6 +521,7 @@ if (process.exitCode !== 2) {
       console.error(JSON.stringify({ ...report, categories: undefined, splitList: undefined }, null, 2));
       process.exitCode = 1;
     } else {
+      console.log(`architecture gate: ${architecture.moduleCount} modules, ${architecture.components.length} runtime cycles, ${architecture.boundaries.length} baseline boundaries`);
       console.log("maintainability gate: pass");
     }
   }

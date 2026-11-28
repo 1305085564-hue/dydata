@@ -51,10 +51,9 @@ test("服务端范围中的负责人团队参与内容页团队视角解析", ()
 });
 
 test("团队分页指纹使用权限范围团队而不是可选 URL teamId", () => {
-  const loaderSource = readFileSync(
-    resolve(process.cwd(), "src/lib/loaders/admin-content-page.ts"),
-    "utf8",
-  );
+  const loaderSource = ["admin-content-entry", "admin-content-pagination"].map((name) => readFileSync(
+    resolve(process.cwd(), `src/lib/loaders/${name}.ts`), "utf8",
+  )).join("\n");
 
   assert.match(loaderSource, /bindContentListQueryToEffectiveScope\(args\.query,\s*resolvedScope\.teamId\)/);
   assert.match(loaderSource, /if \(effectiveQuery\.cursor && \(!cursor \|\| cursor\.queryFingerprint !== queryFingerprint\)\)/);

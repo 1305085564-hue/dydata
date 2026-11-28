@@ -79,10 +79,6 @@ export function filterActiveMemberships<T extends { membership_status?: string |
   return rows.filter((row) => isActiveMembership(row));
 }
 
-export function filterArchivedMemberships<T extends { membership_status?: string | null }>(rows: T[]) {
-  return rows.filter((row) => isArchivedMembership(row));
-}
-
 export function isMissingMembershipStatusError(error: { message?: string } | null | undefined) {
   const message = error?.message ?? "";
   return (
