@@ -44,13 +44,6 @@ export function createRequestContext(input: {
   };
 }
 
-export function childRequestContext(
-  context: RequestContext,
-  overrides: Partial<Omit<RequestContext, "requestId" | "startedAt">>,
-): RequestContext {
-  return { ...context, ...overrides };
-}
-
 export function requestContextLogFields(context: RequestContext) {
   return {
     requestId: context.requestId,

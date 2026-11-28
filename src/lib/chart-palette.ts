@@ -10,9 +10,6 @@ export const CATEGORICAL_COLORS = [
   "#6F6B2F", // 深苔橄榄
 ] as const;
 
-export const CATEGORICAL_LABEL_ALPHA = 0.12;
-export const CATEGORICAL_AMBIENT_ALPHA = 0.08;
-
 export const CHART_COLORS = {
   primary: "#D97757",    // Claude 暖橙（主线）
   secondary: CATEGORICAL_COLORS[0], // 表达色靛青（无语义辅线）

@@ -22,8 +22,6 @@ export function clearFulfillmentCalendarCache() {
   calendarCache.clear();
 }
 
-export function fulfillmentCalendarCacheStats() { return calendarCache.stats; }
-
 /** 只缓存成功结果；失效前发出的读取不能在写入之后重新污染缓存。 */
 export async function cachedFulfillmentCalendar(
   scope: CalendarCacheScope,

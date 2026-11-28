@@ -1,18 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getTeamMeta } from "@/lib/teams";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { UserPermissionInfo } from "@/lib/current-permission-context";
 import type { UserRole } from "@/types";
-
-export const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
-  "多日豁免必须填写开始和结束日期",
-  "开始日期不能晚于结束日期",
-  "豁免至少选择1天",
-  "永久豁免必须填写原因",
-  "豁免理由不能超过 500 个字符",
-]);
 
 export function hasActiveScopeAccess(scope: DataAccessScope | null, userId: string) {
   if (!scope) return false;
@@ -23,28 +14,6 @@ export function resolveTargetRuntimeRole(profile: { role?: unknown; company_role
   const resolution = resolveProfileCompanyRole(profile.role, profile.company_role);
   if (resolution.conflict || !resolution.companyRole) return null;
   return resolution.companyRole === "company_owner" ? "owner" : resolution.companyRole;
-}
-
-export async function getProfileTeamId(
-  _supabase: SupabaseClient,
-  userId: string,
-) {
-  const adminSupabase = createAdminClient();
-  const profileResult = await adminSupabase
-    .from("profiles")
-    .select("team_id")
-    .eq("id", userId)
-    .maybeSingle();
-  if (!profileResult.error && profileResult.data) {
-    return profileResult.data.team_id ?? null;
-  }
-
-  const { data, error } = await adminSupabase.auth.admin.getUserById(userId);
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return getTeamMeta(data.user?.user_metadata).teamId;
 }
 
 export async function getTeamNameMap(
