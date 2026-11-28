@@ -12,7 +12,7 @@ import {
   parseTopicLibraryBootstrapResponse,
   parseTopicPoolResponse,
 } from "@/lib/topics/v2-client-contract";
-import { isTopicWritingByCurrentUser } from "./topic-writing-state";
+import { isTopicWritingByCurrentUser } from "@/lib/topics/domain/topic-writing-state";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 

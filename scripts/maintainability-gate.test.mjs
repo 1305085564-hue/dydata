@@ -1,16 +1,20 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile, mkdir, symlink, cp } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+
+import { checkArchitecture, scanArchitecture, runtimeImports } from "./lib/arch-boundary-check.mjs";
 
 const root = process.cwd();
 const gateSource = await readFile(path.join(root, "scripts/maintainability-gate.mjs"), "utf8");
 
 async function createFixture() {
   const fixture = await mkdtemp(path.join(tmpdir(), "maintainability-gate-"));
-  await mkdir(path.join(fixture, "scripts"), { recursive: true });
+  await mkdir(path.join(fixture, "scripts", "lib"), { recursive: true });
+  await symlink(path.join(root, "node_modules"), path.join(fixture, "node_modules"), "dir");
+  await cp(path.join(root, "scripts/lib/arch-boundary-check.mjs"), path.join(fixture, "scripts/lib/arch-boundary-check.mjs"));
   await mkdir(path.join(fixture, "src"), { recursive: true });
   await writeFile(path.join(fixture, "scripts/maintainability-gate.mjs"), gateSource);
   await writeFile(path.join(fixture, "src", "sample.ts"), "export const value = 1;\n");
@@ -424,4 +428,100 @@ test("ratchet overflow already in the base blocks only when that file is touched
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
+});
+
+test("运行时图解析别名、相对路径、index、tsx/mjs，并打印闭合环路", () => {
+  const sources = {
+    "src/lib/a.ts": 'import { b } from "@/lib/dir"; export const a = () => b;',
+    "src/lib/dir/index.tsx": 'export { b } from "../b.mjs";',
+    "src/lib/b.mjs": 'import { a } from "./a"; export const b = () => a;',
+  };
+  const result = checkArchitecture(sources);
+  assert.equal(result.components.length, 1);
+  assert.equal(result.violations.length, 3);
+  assert.match(result.violations[0].detail, /src\/lib\/a\.ts -> src\/lib\/dir\/index\.tsx -> src\/lib\/b\.mjs -> src\/lib\/a\.ts/);
+});
+
+test("纯类型 import/export 不形成运行时环，混合导入、side effect 和动态字面量纳入图", () => {
+  assert.deepEqual(runtimeImports("x.ts", `
+import type { A } from "./types";
+import { type B } from "./types-b";
+export type { C } from "./types-c";
+export { type D } from "./types-d";
+import { type E, value } from "./mixed";
+import "./side-effect";
+export * from "./barrel";
+const generic = <T>(v: T) => v;
+const later = import("./dynamic");
+const common = require("./common");
+`), ["./mixed", "./side-effect", "./barrel", "./dynamic", "./common"]);
+  assert.equal(scanArchitecture({ "src/lib/a.ts": 'import type { B } from "./b";', "src/lib/b.ts": 'import "./a"; export interface B {}' }).components.length, 0);
+  assert.equal(scanArchitecture({ "src/lib/a.ts": 'export { type B, value } from "./b.js";', "src/lib/b.ts": 'import "./a"; export const value = 1; export interface B {}' }).components.length, 1);
+});
+
+test("分层同时约束运行时和纯类型引用，排除测试与字符串注释", () => {
+  const result = checkArchitecture({
+    "src/lib/a.ts": 'import { view } from "@/components/card"; import type { Model } from "../app/model"; const text = "import x from @/app/x";',
+    "src/lib/a.test.ts": 'import "@/components/test-only";',
+    "src/components/card.tsx": 'export const view = 1;',
+    "src/app/model.ts": 'export interface Model {}',
+    "src/components/test-only.tsx": '',
+  });
+  assert.equal(result.boundaries.length, 2);
+  assert.equal(result.violations.length, 2);
+  assert.ok(result.violations.every((entry) => entry.detail.includes("共享逻辑应下沉到 src/lib/")));
+});
+
+test("循环与分层基线只减不增，首次安装也不能豁免新增依赖", () => {
+  const original = { "src/lib/a.ts": 'import "./b";', "src/lib/b.ts": 'import "./a";', "src/components/card.tsx": '' };
+  const before = scanArchitecture(original);
+  const baseline = { cycles: Object.fromEntries(before.cycles.map((entry) => [entry.key, "原有环，分批解耦"])), boundaries: {} };
+  assert.equal(checkArchitecture(original, baseline, null, original).violations.length, 0);
+  const changed = { ...original, "src/lib/b.ts": 'import "./a"; import "@/components/card";' };
+  const grown = { ...baseline, boundaries: { "src/lib/b.ts -> src/components/card.tsx": "新加理由也不放行" } };
+  assert.ok(checkArchitecture(changed, grown, baseline).violations.some((entry) => entry.type === "architecture-baseline"));
+  assert.ok(checkArchitecture(changed, grown, null, original).violations.some((entry) => entry.type === "architecture-baseline"));
+  const broken = { ...original, "src/lib/b.ts": 'export const b = 1;' };
+  assert.equal(checkArchitecture(broken, { cycles: {}, boundaries: {} }, baseline).violations.length, 0);
+  const noReason = { ...baseline, cycles: { ...baseline.cycles, [before.cycles[0].key]: " " } };
+  assert.ok(checkArchitecture(original, noReason, baseline).violations.some((entry) => entry.detail.includes("缺少保留理由")));
+});
+
+test("已豁免节点内再加新的环边也必须拦截", () => {
+  const original = { "src/lib/a.ts": 'import "./b";', "src/lib/b.ts": 'import "./c";', "src/lib/c.ts": 'import "./a";' };
+  const baseline = { cycles: Object.fromEntries(scanArchitecture(original).cycles.map(entry => [entry.key, "原有环"])), boundaries: {} };
+  const changed = { ...original, "src/lib/a.ts": 'import "./b"; import "./c";' };
+  assert.deepEqual(checkArchitecture(changed, baseline, baseline).violations.map(entry => entry.type), ["runtime-cycle"]);
+});
+
+test("真实命令阻断未跟踪运行时环和反向导入，移除后恢复", async () => {
+  const fixture = await createFixture();
+  try {
+    await mkdir(path.join(fixture, "src/lib"), { recursive: true });
+    await mkdir(path.join(fixture, "src/components"), { recursive: true });
+    const a = path.join(fixture, "src/lib/a.ts");
+    const b = path.join(fixture, "src/lib/b.mjs");
+    await writeFile(a, 'import "./b.mjs";');
+    await writeFile(b, 'import "@/lib/a";');
+    await assertBlocked(fixture, "runtime cycle", /runtime-cycle/);
+    await rm(b);
+    await writeFile(path.join(fixture, "src/components/card.tsx"), 'export const view = 1;');
+    await writeFile(a, 'import { view } from "@/components/card";');
+    await assertBlocked(fixture, "reverse import", /layer-boundary/);
+    await rm(a);
+    assert.equal((await runGate(fixture)).code, 0);
+  } finally { await rm(fixture, { recursive: true, force: true }); }
+});
+
+test("别名中的 ./ 和 ../ 仍能识别环与反向依赖，import() 类型也守边界", () => {
+  const sources = {
+    "src/lib/a.ts": 'import "@/lib/./b"; type View = import("@/components/card").Props;',
+    "src/lib/b.ts": 'import "./a"; import "@/lib/../components/card";',
+    "src/components/card.tsx": 'export interface Props {}',
+  };
+  const result = checkArchitecture(sources);
+  assert.equal(result.components.length, 1);
+  assert.equal(result.violations.filter(entry => entry.type === "runtime-cycle").length, 2);
+  assert.equal(result.violations.filter(entry => entry.type === "layer-boundary").length, 2);
+  assert.equal(scanArchitecture({ "src/lib/a.ts": 'type B = import("./b").B;', "src/lib/b.ts": 'import "./a"; export interface B {}' }).components.length, 0);
 });

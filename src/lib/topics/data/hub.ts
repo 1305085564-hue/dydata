@@ -12,7 +12,7 @@ import {
   TopicRequestError,
   type V2TopicLibraryBootstrap,
 } from "@/lib/topics/v2-client-contract";
-import { buildTopicPoolQuery } from "@/components/topics-v2/topic-navigation";
+import { buildTopicPoolQuery } from "@/lib/topics/domain/topic-navigation";
 import type { useTopicHubState } from "../domain/hub-state";
 
 type TopicHubState = ReturnType<typeof useTopicHubState>;

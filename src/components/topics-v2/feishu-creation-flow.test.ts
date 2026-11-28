@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { runFeishuCreationFlow } from "./feishu-creation-flow";
+import { runFeishuCreationFlow } from "@/lib/topics/domain/feishu-creation-flow";
 
 const topic = { id: "sub-1", title: "测试选题", hook: "三秒讲透" };
 
