@@ -9,6 +9,7 @@ import { type PreviousSnapshotRow } from "@/lib/loaders/admin-content-play-signa
 import { attachSettlementExclusionsToVideos,buildSettlementExclusionMapFromVideos,isMissingSettlementColumn,loadVideoSettlementExclusions } from "@/lib/loaders/admin-content-rpc";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { assertSupabaseQuerySucceeded,fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { classifyVideoTopicKind } from "@/lib/topics/library";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
@@ -49,7 +50,7 @@ export async function loadAdminContentPageData({
         })
       : null);
 
-  // 单次请求受 Supabase 默认 1000 行上限截断，必须稳定分页取全，否则老视频会静默消失
+  // 单次请求受 Supabase 默认 1000 行上限截断，必须稳定分页取全，否则老视频/成员会静默消失
   const [videosRaw, profiles] = await Promise.all([
     fetchAllQueryPages<RawVideoRow>(
       (from, to) =>
@@ -63,10 +64,16 @@ export async function loadAdminContentPageData({
           .range(from, to),
       "加载内容视频失败",
     ),
-    supabase.from("profiles").select("id, name").order("name", { ascending: true }).then((result) => {
-      assertSupabaseQuerySucceeded(result.error, "加载成员列表失败");
-      return result.data ?? [];
-    }),
+    fetchAllQueryPages<{ id: string; name: string }>(
+      (from, to) =>
+        supabase
+          .from("profiles")
+          .select("id, name")
+          .order("name", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to),
+      "加载成员列表失败",
+    ),
   ]);
 
   const allVideos = normalizeVideoRows(videosRaw).sort(
@@ -78,20 +85,34 @@ export async function loadAdminContentPageData({
   const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
   const visibleVideoIds = videos.map((video) => video.id);
+  // 200 条 video_id 一对多关联快照/拆段仍可能突破默认 1000 行上限，批内同样按唯一主键稳定翻页
   const [snapshotRows, segmentRows, topicTags, settlementExclusions] = await Promise.all([
     visibleVideoIds.length > 0
       ? selectInBatchesParallel<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
-          Promise.resolve(supabase
-            .from("video_metrics_snapshots")
-            .select(CONTENT_SNAPSHOT_SELECT)
-            .eq("snapshot_type", "24h")
-            .in("video_id", batch)
-            .order("captured_at", { ascending: false })),
+          readQueryPages((from, to, signal) =>
+            supabase
+              .from("video_metrics_snapshots")
+              .select(CONTENT_SNAPSHOT_SELECT)
+              .eq("snapshot_type", "24h")
+              .in("video_id", batch)
+              .order("captured_at", { ascending: false })
+              .order("id", { ascending: true })
+              .range(from, to)
+              .abortSignal(signal),
+          ),
         )
       : Promise.resolve([]),
     visibleVideoIds.length > 0
       ? selectInBatchesParallel<SegmentRow>(visibleVideoIds, (batch) =>
-          Promise.resolve(supabase.from("video_content_segments").select("video_id").in("video_id", batch)),
+          readQueryPages((from, to, signal) =>
+            supabase
+              .from("video_content_segments")
+              .select("video_id")
+              .in("video_id", batch)
+              .order("id", { ascending: true })
+              .range(from, to)
+              .abortSignal(signal),
+          ),
         )
       : Promise.resolve([]),
     loadContentQualityTopicTags(supabase, visibleVideoIds),

@@ -1,6 +1,7 @@
 import { type ContentQualityTopicContext } from "@/lib/content-quality";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { attachPlayChangeSignals,findPreviousVideoByVisibleId,type PreviousSnapshotRow,type PreviousVideoCandidateRow } from "@/lib/loaders/admin-content-play-signals";
+import { readQueryPages } from "@/lib/supabase/paged-query";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { ContentReviewReadiness,Video } from "@/types";
 import type { LoaderSupabase,RawVideoRow,VideoRow } from "./admin-content-contract";
@@ -16,12 +17,15 @@ export async function loadContentQualityTopicTags(
   try {
     const rows = await selectInBatchesParallel<{ video_id: string; tag_value: string | null }>(
       videoIds,
-      (batch) => Promise.resolve(
+      (batch) => readQueryPages((from, to, signal) =>
         supabase
           .from("video_tags")
           .select("video_id, tag_value")
           .eq("tag_dimension", "话题")
-          .in("video_id", batch),
+          .in("video_id", batch)
+          .order("id", { ascending: true })
+          .range(from, to)
+          .abortSignal(signal),
       ),
     );
     for (const row of rows) {
@@ -214,12 +218,17 @@ export async function loadPlayChangeSignals({
   const { data: previousSnapshots } = previousVideoIds.length > 0
     ? {
         data: await selectInBatches<PreviousSnapshotRow>(previousVideoIds, (batch) =>
-          Promise.resolve(supabase
-            .from("video_metrics_snapshots")
-            .select(PREVIOUS_SNAPSHOT_SELECT)
-            .eq("snapshot_type", "24h")
-            .in("video_id", batch)
-            .order("captured_at", { ascending: false })),
+          readQueryPages((from, to, signal) =>
+            supabase
+              .from("video_metrics_snapshots")
+              .select(PREVIOUS_SNAPSHOT_SELECT)
+              .eq("snapshot_type", "24h")
+              .in("video_id", batch)
+              .order("captured_at", { ascending: false })
+              .order("id", { ascending: true })
+              .range(from, to)
+              .abortSignal(signal),
+          ),
         ),
       }
     : { data: [] };
