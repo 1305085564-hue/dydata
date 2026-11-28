@@ -89,10 +89,9 @@ test("审计失败措辞三态互不相同：已回滚 / 回滚未完成 / 已�
 });
 
 test("管理写操作不再静默吞审计错误：actions.ts 只用统一出口且每个结果都被检查", () => {
-  const source = readFileSync(
-    new URL("../app/(app)/admin/actions.ts", import.meta.url),
-    "utf8",
-  );
+  const source = ["audit", "exemptions", "members", "teams"].map((name) => readFileSync(
+    new URL(`../app/(app)/admin/action-modules/${name}.ts`, import.meta.url), "utf8",
+  )).join("\n");
 
   assert.doesNotMatch(
     source,
